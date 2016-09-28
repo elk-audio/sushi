@@ -1,0 +1,113 @@
+#!/bin/bash
+
+######################
+#  Helper Functions  #
+######################
+
+help() {
+    echo "Generate Cmake build directories for project"
+    echo ""
+    echo "Usage:"
+    echo ""
+	echo "$(basename $0) [options]"
+	echo ""
+    echo "Options:"
+    echo ""
+    echo "    -t : one of debug, release, all (default=all)"
+    echo "    -b : build projects after launching CMake (default=false)"
+    echo "    -o : base output directory (default=\$PROJECT_DIR/build)"
+}
+
+######################
+#  Global Variables  #
+######################
+
+TARGET_BUILD=all
+GENERATE_DEBUG=true
+GENERATE_RELEASE=true
+BUILD_PROJECTS=false
+PROJECT_DIR_REL="`dirname \"$0\"`"
+PROJECT_DIR=`python -c "import os; print(os.path.abspath(\"$PROJECT_DIR_REL\"))"`
+BUILD_DIR=$PROJECT_DIR/build
+
+
+######################
+#  Argument parsing  #
+######################
+
+while getopts ":t:o:bh" opt; do
+    case $opt in
+        t)
+            TARGET_BUILD=$OPTARG
+            ;;
+
+        b)
+            BUILD_PROJECTS=true
+            ;;
+
+        o)
+            BUILD_DIR="$OPTARG"
+            ;;
+
+        h)
+            help
+            exit 1
+            ;;
+
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            help
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            help
+            exit 1
+            ;;
+    esac
+done
+
+if [[ "$TARGET_BUILD" == "debug" ]]
+then
+    GENERATE_RELEASE=false
+elif [[ "$TARGET_BUILD" == "release" ]]
+then
+    GENERATE_DEBUG=false
+elif [[ "$TARGET_BUILD" != "all" ]]
+then
+    help
+    exit 0
+fi
+
+######################
+#  Script Processing #
+######################
+
+mkdir -p $BUILD_DIR
+OLD_DIR=$PWD
+cd $BUILD_DIR
+
+if $GENERATE_RELEASE
+then
+    echo "Generating Release build directory:"
+    mkdir -p $BUILD_DIR/release
+    cd $BUILD_DIR/release 
+    cmake -DCMAKE_BUILD_TYPE=Release $PROJECT_DIR
+    if $BUILD_PROJECTS; then
+        make
+    fi
+fi
+
+if $GENERATE_DEBUG
+then
+    echo "Generating Debug build directory:"
+    mkdir -p $BUILD_DIR/debug
+    cd $BUILD_DIR/debug
+    cmake -DCMAKE_BUILD_TYPE=Debug $PROJECT_DIR
+    if $BUILD_PROJECTS; then
+        make
+    fi
+fi
+
+cd $OLD_DIR
+
