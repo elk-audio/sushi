@@ -1,10 +1,11 @@
 #include "biquad_filter.h"
 
 #include <cmath>
+#include <algorithm>
 
 namespace biquad {
 
-const int TIME_CONSTANTS_IN_SMOOTHING_FILTER = 5;
+const int TIME_CONSTANTS_IN_SMOOTHING_FILTER = 3;
 
 inline float process_one_pole(const OnePoleCoefficients coefficients, const float input, float &z)
 {
@@ -54,6 +55,15 @@ BiquadFilter::BiquadFilter(const BiquadCoefficients &coefficients) :
 {
 }
 
+void BiquadFilter::reset()
+{
+    /* Clear everything that is time-dependant in the filters processing to
+     * put the filter in a default state */
+    _delay_registers = {0.0, 0.0};
+    _coefficients = _coefficient_targets;
+    std::fill(_smoothing_registers, _smoothing_registers + NUMBER_OF_BIQUAD_COEF, 0.0);
+}
+
 void BiquadFilter::set_smoothing(int buffer_size)
 {
     /* Coefficient changes are smoothed through a one pole lowpass filter
@@ -81,8 +91,8 @@ void BiquadFilter::process(const float *input, float *output, int samples)
         _coefficients.b2 = process_one_pole(_smoothing_coefficients, _coefficient_targets.b2, _smoothing_registers[2]);
         _coefficients.a1 = process_one_pole(_smoothing_coefficients, _coefficient_targets.a1, _smoothing_registers[3]);
         _coefficients.a2 = process_one_pole(_smoothing_coefficients, _coefficient_targets.a2, _smoothing_registers[4]);
-        // process actual filter data
 
+        // process actual filter data
         float x = input[n];
         float y = _coefficients.b0 * x + _delay_registers.z1;
         _delay_registers.z1 = _coefficients.b1 * x - _coefficients.a1 * y + _delay_registers.z2;

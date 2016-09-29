@@ -2,7 +2,7 @@
 
 namespace gain_plugin {
 
-GainPlugin::GainPlugin() : _gain(1)
+GainPlugin::GainPlugin()
 {}
 
 GainPlugin::~GainPlugin()

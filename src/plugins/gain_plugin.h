@@ -26,7 +26,7 @@ public:
 
 private:
     AudioProcessorConfig _configuration;
-    float _gain;
+    float _gain{1.0f};
 };
 
 }// namespace gain_plugin

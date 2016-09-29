@@ -32,9 +32,9 @@ private:
     biquad::BiquadFilter _filter;
     AudioProcessorConfig _configuration;
 
-    float _freq;
-    float _gain;
-    float _q;
+    float _freq{1000.0f};
+    float _gain{0.0f};
+    float _q{1.0f};
 };
 
 }// namespace equalizer_plugin

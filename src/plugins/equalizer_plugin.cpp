@@ -12,7 +12,7 @@ AudioProcessorStatus EqualizerPlugin::init(const AudioProcessorConfig& configura
 {
     _configuration = configuration;
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
-    // _filter.reset();
+    _filter.reset();
     return AudioProcessorStatus::OK;
 }
 
@@ -39,6 +39,9 @@ void EqualizerPlugin::set_parameter(unsigned int parameter_id, float value)
 
 void EqualizerPlugin::process(const float *in_buffer, float *out_buffer)
 {
+    /* Recalculates the coefficients once per audio chunk, this makes for
+     * predictable cpu load for every chunk */
+
     biquad::BiquadCoefficients coefficients;
     biquad::calc_biquad_peak(coefficients, _configuration.sample_rate, _freq, _q, _gain);
     _filter.set_coefficients(coefficients);

@@ -2,13 +2,12 @@
  * @brief Biquad filter implementation
  * @copyright MIND Music Labs AB, Stockholm
  *
- * A general biquad filter implementation with automatic coefficient smoothing
+ * A general biquad filter implementation with coefficient smoothing
  */
 
 #ifndef EQUALIZER_BIQUADFILTER_H
 #define EQUALIZER_BIQUADFILTER_H
 
-#include <atomic>
 namespace biquad {
 
 const int NUMBER_OF_BIQUAD_COEF = 5;
@@ -21,7 +20,6 @@ struct BiquadCoefficients
     float a1;
     float a2;
 };
-
 
 struct BiquadDelayRegisters
 {
@@ -55,6 +53,10 @@ public:
     ~BiquadFilter()
     { };
 
+    /*
+     * Resets the processing state
+     */
+    void reset();
     /*
      * Sets the parameters for smoothing filter changes
      */
