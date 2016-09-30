@@ -27,6 +27,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
+                      src/engine/engine.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -38,6 +39,7 @@ set(COMPILATION_UNITS src/main.cpp
 set(EXTRA_CLION_SOURCES include/public_header.h
                         src/logging.h
                         src/options.h
+                        src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
