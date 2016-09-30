@@ -26,13 +26,24 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 ##################
 
 set(COMPILATION_UNITS src/main.cpp
-                      src/logging.cpp)
+                      src/logging.cpp
+                      src/engine/engine.cpp
+                      src/plugins/gain_plugin.cpp
+                      src/plugins/passthrough_plugin.cpp
+                      src/plugins/equalizer_plugin.cpp
+                      src/plugins/biquad_filter.cpp)
 
 
 # Enumerate all the headers separately so that CLion can index them
 
-set(EXTRA_CLION_SOURCES src/logging.h
-                        src/options.h)
+set(EXTRA_CLION_SOURCES include/public_header.h
+                        src/logging.h
+                        src/options.h
+                        src/engine/engine.h
+                        src/plugins/gain_plugin.h
+                        src/plugins/passthrough_plugin.h
+                        src/plugins/equalizer_plugin.h
+                        src/plugins/biquad_filter.h)
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
@@ -61,8 +72,7 @@ include_directories(${INCLUDE_DIRS})
 # to point to statically linked libraries,
 # example:
 
-# set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/static_library/lib/libstaticlibrary.a"
-#                    pthread)
+set(LINK_LIBRARIES pthread)
  
 if (APPLE)
     link_directories(/usr/local/lib)
@@ -84,4 +94,5 @@ add_executable(sushi ${SOURCE_FILES})
 # Explicitly add external statically linked dependencies here,
 # example:
 # add_dependencies(sushi static_library)
-# target_link_libraries(sushi "${LINK_LIBRARIES}")
+
+target_link_libraries(sushi "${LINK_LIBRARIES}")
