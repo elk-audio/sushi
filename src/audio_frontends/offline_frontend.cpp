@@ -10,7 +10,6 @@ MIND_GET_LOGGER;
 OfflineFrontend::~OfflineFrontend()
 {
     cleanup();
-    delete _file_buffer;
 }
 
 AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config)
@@ -54,15 +53,25 @@ AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* co
     }
 
     // Initialize buffers
-    _file_buffer = new float(config->_n_channels * AUDIO_CHUNK_SIZE);
+    _file_buffer = new float[config->_n_channels * AUDIO_CHUNK_SIZE];
 
     return ret_code;
 }
 
 void OfflineFrontend::cleanup()
 {
-    sf_close(_input_file);
-    sf_close(_output_file);
+    if (_input_file)
+    {
+        sf_close(_input_file);
+    }
+    if (_output_file)
+    {
+        sf_close(_output_file);
+    }
+    if (_file_buffer)
+    {
+        delete _file_buffer;
+    }
 }
 
 void OfflineFrontend::run()

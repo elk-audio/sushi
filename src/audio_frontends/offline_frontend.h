@@ -39,7 +39,10 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend()
+    OfflineFrontend() :
+            _input_file(nullptr),
+            _output_file(nullptr),
+            _file_buffer(nullptr)
     {}
 
     virtual ~OfflineFrontend();
