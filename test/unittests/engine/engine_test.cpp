@@ -40,19 +40,16 @@ TEST_F(TestEngine, TestInstantiation)
  */
 TEST_F(TestEngine, TestProcess)
 {
-    float in_buffer[AUDIO_CHUNK_SIZE];
-    float out_buffer[AUDIO_CHUNK_SIZE];
-    std::fill(in_buffer, in_buffer + AUDIO_CHUNK_SIZE, 1);
-
     SushiBuffer buffer;
-    buffer.left_in = in_buffer;
-    buffer.left_out = out_buffer;
-    buffer.right_in = in_buffer;
-    buffer.right_out = out_buffer;
-    _module_under_test->process_chunk(&buffer);
-
-    for (auto& i : out_buffer)
+    for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
     {
-        ASSERT_FLOAT_EQ(1, i);
+        buffer.left_in[n] = 1.0f;
+        buffer.right_in[n] = 1.0f;
+    }
+    _module_under_test->process_chunk(&buffer);
+    for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
+    {
+        ASSERT_FLOAT_EQ(1.0f, buffer.left_out[n]);
+        ASSERT_FLOAT_EQ(1.0f, buffer.right_out[n]);
     }
 }
