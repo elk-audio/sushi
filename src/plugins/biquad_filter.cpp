@@ -1,7 +1,16 @@
 #include "biquad_filter.h"
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <algorithm>
+
+#ifdef __APPLE__
+static inline double exp10(double val)
+{
+    return pow(10.0, val);
+}
+
+#endif
 
 namespace biquad {
 
@@ -23,11 +32,11 @@ void calc_biquad_peak(biquad::BiquadCoefficients& filter, float samplerate, floa
     double a0 = 1 + alpha / A;
 
     // Calculating normalized filter coefficients
-    filter.a1 = -2 * w0_cos / a0;
-    filter.a2 = (1 - alpha / A) / a0;
-    filter.b0 = (1 + alpha * A) /a0;
+    filter.a1 = static_cast<float>(-2 * w0_cos / a0);
+    filter.a2 = static_cast<float>((1 - alpha / A) / a0);
+    filter.b0 = static_cast<float>((1 + alpha * A) /a0);
     filter.b1 = filter.a1;
-    filter.b2 = (1 - alpha * A) / a0;
+    filter.b2 = static_cast<float>((1 - alpha * A) / a0);
 }
 
 void calc_biquad_lowpass(biquad::BiquadCoefficients&  filter, float samplerate, float frequency)
