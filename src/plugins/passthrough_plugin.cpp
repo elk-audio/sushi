@@ -10,12 +10,12 @@ PassthroughPlugin::PassthroughPlugin()
 PassthroughPlugin::~PassthroughPlugin()
 {}
 
-AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig& configuration)
+AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig& /* configuration */)
 {
     return AudioProcessorStatus::OK;
 }
 
-void PassthroughPlugin::set_parameter(unsigned int parameter_id, float value)
+void PassthroughPlugin::set_parameter(unsigned int /* parameter_id */, float /* value */)
 {}
 
 void PassthroughPlugin::process(const float *in_buffer, float *out_buffer)
