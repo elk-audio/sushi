@@ -5,6 +5,7 @@
 #include "plugins/equalizer_plugin.h"
 
 #include <algorithm>
+#include <cstring>
 
 namespace sushi_engine {
 
@@ -28,17 +29,17 @@ SushiBuffer::~SushiBuffer()
 
 void SushiBuffer::clear()
 {
-    memset(left_in, 0, _sizeof(float) * _size);
-    memset(right_in, 0, _sizeof(float) * _size);
-    memset(left_out, 0, _sizeof(float) * _size);
-    memset(right_out, 0, _sizeof(float) * _size);
+    memset(left_in, 0, sizeof(float) * _size);
+    memset(right_in, 0, sizeof(float) * _size);
+    memset(left_out, 0, sizeof(float) * _size);
+    memset(right_out, 0, sizeof(float) * _size);
 }
 
 void SushiBuffer::input_from_interleaved(const float *interleaved_buf)
 {
     float* lin = left_in;
     float* rin = right_in;
-    for (auto n=0; n<_size; n++)
+    for (unsigned int n=0; n<_size; n++)
     {
         *lin++ = *interleaved_buf++;
         *rin++ = *interleaved_buf++;
@@ -49,7 +50,7 @@ void SushiBuffer::output_to_interleaved(float *interleaved_buf)
 {
     float* lout = left_out;
     float* rout = right_out;
-    for (auto n=0; n<_size; n++)
+    for (unsigned int n=0; n<_size; n++)
     {
         *interleaved_buf++ = *lout++;
         *interleaved_buf++ = *rout++;
@@ -76,6 +77,7 @@ void set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProces
 
     std::unique_ptr<AudioProcessorBase> gain_r(new gain_plugin::GainPlugin());
     gain_r->init(config);
+    // gain_r->set_parameter(gain_plugin::GAIN, 2.0f);
     graph[RIGHT].push_back(std::move(gain_r));
 }
 

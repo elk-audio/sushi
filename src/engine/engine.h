@@ -24,7 +24,7 @@ enum channel_id
 
 struct SushiBuffer
 {
-    SushiBuffer(const unsigned int size);
+    SushiBuffer(const unsigned int size=AUDIO_CHUNK_SIZE);
 
     ~SushiBuffer();
 
