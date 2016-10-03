@@ -74,7 +74,8 @@ enum OptionIndex
     OPT_IDX_UNKNOWN,
     OPT_IDX_HELP,
     OPT_IDX_LOG_LEVEL,
-    OPT_IDX_LOG_FILE
+    OPT_IDX_LOG_FILE,
+    OPT_IDX_OUTPUT_FILE
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -94,7 +95,7 @@ const option::Descriptor usage[] =
         "",         // shortopt
         "",         // longopt
         SushiArg::Unknown, // check_arg
-        "Sushi for C++. Copyright 2016 MIND Music Labs\n\nUSAGE: sushi [options]\n\nOptions:" // help
+        "Sensus Universal Sound Host Interface offline engine.\nCopyright 2016 MIND Music Labs\n\nUSAGE: sushi [options] input_filename\n\nOptions:" // help
     },
     {
         OPT_IDX_HELP,
@@ -119,6 +120,14 @@ const option::Descriptor usage[] =
         "log-file",
         SushiArg::NonEmpty,
         "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+    },
+    {
+        OPT_IDX_OUTPUT_FILE,
+        OPT_TYPE_UNUSED,
+        "o",
+        "output",
+        SushiArg::NonEmpty,
+        "\t\t-o <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

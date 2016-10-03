@@ -21,9 +21,10 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
 
     OfflineFrontendConfiguration(const unsigned int sample_rate,
+                                 const unsigned int n_channels,
                                  const std::string input_filename,
                                  const std::string output_filename) :
-            BaseAudioFrontendConfiguration(sample_rate),
+            BaseAudioFrontendConfiguration(sample_rate, n_channels),
             _input_filename(input_filename),
             _output_filename(output_filename)
     {}
@@ -43,7 +44,7 @@ public:
 
     virtual ~OfflineFrontend();
 
-    AudioFrontendInitStatus init(const BaseAudioFrontendConfiguration* config) override;
+    AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config) override;
 
     void cleanup() override;
 
@@ -54,7 +55,7 @@ private:
     SNDFILE*    _output_file;
     SF_INFO     _soundfile_info;
 
-    sushi_engine::SushiBuffer _buffer(AUDIO_CHUNK_SIZE);
+    sushi_engine::SushiBuffer _buffer{AUDIO_CHUNK_SIZE};
     float*  _file_buffer;
 };
 

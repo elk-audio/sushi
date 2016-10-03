@@ -31,19 +31,22 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
-                      src/plugins/biquad_filter.cpp)
+                      src/plugins/biquad_filter.cpp
+                      src/audio_frontends/offline_frontend.cpp)
 
 
 # Enumerate all the headers separately so that CLion can index them
 
-set(EXTRA_CLION_SOURCES include/public_header.h
-                        src/logging.h
+set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
+                        include/plugin_interface.h
                         src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
-                        src/plugins/biquad_filter.h)
+                        src/plugins/biquad_filter.h
+                        src/audio_frontends/base_audio_frontend.h
+                        src/audio_frontends/offline_frontend.h)
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
@@ -64,15 +67,10 @@ endif()
 include_directories(${INCLUDE_DIRS})
 
 #################################
-#  Statically linked libraries  #
+#  Linked libraries  #
 #################################
 
-# Eventually define here the CMake var
-# LINK_LIBRARIES
-# to point to statically linked libraries,
-# example:
-
-set(LINK_LIBRARIES pthread)
+set(LINK_LIBRARIES sndfile pthread)
  
 if (APPLE)
     link_directories(/usr/local/lib)

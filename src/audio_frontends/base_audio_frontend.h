@@ -49,7 +49,7 @@ public:
         delete _engine;
     }
 
-    virtual AudioFrontendInitStatus init(const BaseAudioFrontendConfiguration* config)
+    virtual AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config)
     {
         _config = config;
 
@@ -72,9 +72,9 @@ public:
 
     }
 
-    virtual void cleanup();
+    virtual void cleanup() = 0;
 
-    virtual void run();
+    virtual void run() = 0;
 
 protected:
     BaseAudioFrontendConfiguration* _config;

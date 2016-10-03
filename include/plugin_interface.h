@@ -8,7 +8,7 @@
 #define PLUGIN_INTERFACE_H
 
 /* The number of samples to process in one chunk. It is defined as a 
-compile time constant to give more room for omptimizations */ 
+compile time constant to give more room for optimizations */
 static constexpr unsigned int AUDIO_CHUNK_SIZE = 64;
 
 /* Return Status Enum */
