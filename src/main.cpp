@@ -92,16 +92,15 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Main body
     ////////////////////////////////////////////////////////////////////////////////
-    sushi::audio_frontend::OfflineFrontendConfiguration offline_config(48000,
-                                                                       2,
-                                                                       input_filename,
+    sushi_engine::SushiEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    sushi::audio_frontend::OfflineFrontendConfiguration offline_config(input_filename,
                                                                        output_filename);
-    sushi::audio_frontend::OfflineFrontend frontend;
+    sushi::audio_frontend::OfflineFrontend frontend(&engine);
     auto fe_ret_code = frontend.init(&offline_config);
     if (fe_ret_code != sushi::audio_frontend::AudioFrontendInitStatus::OK)
     {
         fprintf(stderr, "Error initializing frontend, check logs for details.\n");
-        exit(1);
+        std::exit(1);
     }
 
     frontend.run();

@@ -7,6 +7,7 @@
 
 #define SUSHI_LOG_LEVEL_DEFAULT "info"
 #define SUSHI_LOG_FILENAME_DEFAULT "log"
+#define SUSHI_SAMPLE_RATE_DEFAULT 48000
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse

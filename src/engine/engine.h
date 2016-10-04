@@ -51,6 +51,16 @@ public:
 
     virtual ~EngineBase() {}
 
+    unsigned int sample_rate()
+    {
+        return _sample_rate;
+    }
+
+    unsigned int n_channels()
+    {
+        return MAX_CHANNELS;
+    }
+
     virtual void process_chunk(SushiBuffer *buffer) = 0;
 
 protected:
@@ -59,7 +69,7 @@ protected:
 
 
 
-class SushiEngine : protected EngineBase
+class SushiEngine : public EngineBase
 {
 public:
     SushiEngine(unsigned int sample_rate);

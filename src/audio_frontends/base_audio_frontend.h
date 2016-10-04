@@ -22,54 +22,29 @@ enum class AudioFrontendInitStatus
     INVALID_OUTPUT_FILE
 };
 
-// TODO: rename public fields without leading _
 struct BaseAudioFrontendConfiguration
 {
-    BaseAudioFrontendConfiguration(const unsigned int sample_rate,
-                                   const unsigned int n_channels) :
-            _sample_rate(sample_rate),
-            _n_channels(n_channels)
+    BaseAudioFrontendConfiguration()
     {}
 
     virtual ~BaseAudioFrontendConfiguration()
     {}
-
-    unsigned int _sample_rate;
-    unsigned int _n_channels;
 };
 
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend()
+    BaseAudioFrontend(sushi_engine::EngineBase* engine) :
+            _engine(engine)
     {}
 
     virtual ~BaseAudioFrontend()
-    {
-        delete _engine;
-    }
+    {}
 
     virtual AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config)
     {
         _config = config;
-
-        if (   (config->_sample_rate < 1)
-            || (config->_sample_rate > MAX_SAMPLE_RATE)
-            || ( ((config->_sample_rate) % 2) != 0)     )
-        {
-            return AudioFrontendInitStatus::INVALID_SAMPLE_RATE;
-        }
-
-        if (   (config->_n_channels < 1)
-            || (config->_n_channels > MAX_N_CHANNELS)  )
-        {
-            return AudioFrontendInitStatus::INVALID_N_CHANNELS;
-        }
-
-        _engine = new sushi_engine::SushiEngine(_config->_sample_rate);
-
         return AudioFrontendInitStatus::OK;
-
     }
 
     virtual void cleanup() = 0;
@@ -78,7 +53,7 @@ public:
 
 protected:
     BaseAudioFrontendConfiguration* _config;
-    sushi_engine::SushiEngine* _engine;
+    sushi_engine::EngineBase* _engine;
 };
 
 

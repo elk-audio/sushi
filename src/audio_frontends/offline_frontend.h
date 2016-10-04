@@ -20,32 +20,33 @@ namespace audio_frontend {
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
 
-    OfflineFrontendConfiguration(const unsigned int sample_rate,
-                                 const unsigned int n_channels,
-                                 const std::string input_filename,
+    OfflineFrontendConfiguration(const std::string input_filename,
                                  const std::string output_filename) :
-            BaseAudioFrontendConfiguration(sample_rate, n_channels),
-            _input_filename(input_filename),
-            _output_filename(output_filename)
+            input_filename(input_filename),
+            output_filename(output_filename)
     {}
 
     virtual ~OfflineFrontendConfiguration()
     {}
 
-    std::string _input_filename;
-    std::string _output_filename;
+    std::string input_filename;
+    std::string output_filename;
 };
 
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend() :
+    OfflineFrontend(sushi_engine::EngineBase* engine) :
+            BaseAudioFrontend(engine),
             _input_file(nullptr),
             _output_file(nullptr),
             _file_buffer(nullptr)
     {}
 
-    virtual ~OfflineFrontend();
+    virtual ~OfflineFrontend()
+    {
+        cleanup();
+    }
 
     AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config) override;
 
