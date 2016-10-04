@@ -58,21 +58,26 @@ void OfflineFrontend::cleanup()
     if (_input_file)
     {
         sf_close(_input_file);
+        _input_file = nullptr;
     }
     if (_output_file)
     {
         sf_close(_output_file);
+        _output_file = nullptr;
     }
     if (_file_buffer)
     {
         delete _file_buffer;
+        _file_buffer = nullptr;
     }
 }
 
 void OfflineFrontend::run()
 {
     int readcount;
-    while ( (readcount = static_cast<int>(sf_readf_float(_input_file, _file_buffer, AUDIO_CHUNK_SIZE))) )
+    while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
+                                                         _file_buffer,
+                                                         static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
         _buffer.input_from_interleaved(_file_buffer);
         _engine->process_chunk(&_buffer);
@@ -80,7 +85,7 @@ void OfflineFrontend::run()
 
         // Should we check the number of samples effectively written?
         // Not done in libsndfile's example
-        sf_writef_float(_output_file, _file_buffer, readcount);
+        sf_writef_float(_output_file, _file_buffer, static_cast<sf_count_t>(readcount));
     }
 }
 
