@@ -10,6 +10,9 @@ namespace sushi {
 
 namespace audio_frontend {
 
+/**
+ * @brief Error codes returned from init()
+ */
 enum class AudioFrontendInitStatus
 {
     OK,
@@ -18,6 +21,9 @@ enum class AudioFrontendInitStatus
     INVALID_OUTPUT_FILE
 };
 
+/**
+ * @brief Dummy base class to hold frontends configurations
+ */
 struct BaseAudioFrontendConfiguration
 {
     BaseAudioFrontendConfiguration()
@@ -27,6 +33,9 @@ struct BaseAudioFrontendConfiguration
     {}
 };
 
+/**
+ * @brief Base class for Engine Frontends.
+ */
 class BaseAudioFrontend
 {
 public:
@@ -37,14 +46,29 @@ public:
     virtual ~BaseAudioFrontend()
     {}
 
+    /**
+     * @brief Initialize frontend with the given configuration.
+     *        If anything can go wrong during initialization, partially allocated
+     *        resources should be freed by calling cleanup().
+     *
+     * @param config Should be an object of the proper derived configuration class.
+     * @return AudioFrontendInitStatus::OK in case of success,
+     *         or different error code otherwise.
+     */
     virtual AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config)
     {
         _config = config;
         return AudioFrontendInitStatus::OK;
     }
 
+    /**
+     * @brief Free resources allocated during init.
+     */
     virtual void cleanup() = 0;
 
+    /**
+     * @brief Run engine main loop.
+     */
     virtual void run() = 0;
 
 protected:
