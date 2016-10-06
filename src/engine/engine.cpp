@@ -1,4 +1,5 @@
 #include "engine.h"
+
 #include "plugin_interface.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
@@ -8,54 +9,6 @@
 #include <cstring>
 
 namespace sushi_engine {
-
-SampleBuffer::SampleBuffer(const unsigned int size) :
-    _size(size)
-{
-    left_in = new float[size];
-    right_in = new float[size];
-    left_out = new float[size];
-    right_out = new float[size];
-    clear();
-}
-
-SampleBuffer::~SampleBuffer()
-{
-    delete left_in;
-    delete right_in;
-    delete left_out;
-    delete right_out;
-}
-
-void SampleBuffer::clear()
-{
-    memset(left_in, 0, sizeof(float) * _size);
-    memset(right_in, 0, sizeof(float) * _size);
-    memset(left_out, 0, sizeof(float) * _size);
-    memset(right_out, 0, sizeof(float) * _size);
-}
-
-void SampleBuffer::input_from_interleaved(const float *interleaved_buf)
-{
-    float* lin = left_in;
-    float* rin = right_in;
-    for (unsigned int n=0; n<_size; n++)
-    {
-        *lin++ = *interleaved_buf++;
-        *rin++ = *interleaved_buf++;
-    }
-}
-
-void SampleBuffer::output_to_interleaved(float *interleaved_buf)
-{
-    float* lout = left_out;
-    float* rout = right_out;
-    for (unsigned int n=0; n<_size; n++)
-    {
-        *interleaved_buf++ = *lout++;
-        *interleaved_buf++ = *rout++;
-    }
-}
 
 void set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> &graph, unsigned int sample_rate)
 {

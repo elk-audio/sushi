@@ -40,6 +40,7 @@ set(COMPILATION_UNITS src/main.cpp
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
                         include/plugin_interface.h
+                        src/library/sample_buffer.h
                         src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h

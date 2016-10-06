@@ -15,7 +15,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_LOGGING")
 SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/engine/engine_test.cpp
-               unittests/audio_frontends/offline_frontend_test.cpp)
+               unittests/audio_frontends/offline_frontend_test.cpp
+               unittests/library/sample_buffer_test.cpp)
 
 ##########################################
 #  Include directories relative to test  #

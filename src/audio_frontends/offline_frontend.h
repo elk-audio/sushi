@@ -59,7 +59,7 @@ private:
     SNDFILE*    _output_file;
     SF_INFO     _soundfile_info;
 
-    sushi_engine::SampleBuffer _buffer{AUDIO_CHUNK_SIZE};
+    SampleBuffer _buffer{AUDIO_CHUNK_SIZE};
     float*  _file_buffer;
 };
 

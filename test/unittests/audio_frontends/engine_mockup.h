@@ -16,7 +16,7 @@ public:
     ~EngineMockup()
     {}
 
-    void process_chunk(SushiBuffer* buffer) override
+    void process_chunk(SampleBuffer* buffer) override
     {
         for (unsigned n=0; n<AUDIO_CHUNK_SIZE; n++)
         {

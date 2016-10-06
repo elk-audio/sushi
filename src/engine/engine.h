@@ -9,6 +9,7 @@
 #define SUSHI_ENGINE_H
 
 #include "plugin_interface.h"
+#include "library/sample_buffer.h"
 
 #include <vector>
 #include <memory>
@@ -20,27 +21,6 @@ enum channel_id
     LEFT = 0,
     RIGHT,
     MAX_CHANNELS,
-};
-
-struct SampleBuffer
-{
-    SampleBuffer(const unsigned int size=AUDIO_CHUNK_SIZE);
-
-    ~SampleBuffer();
-
-    void clear();
-
-    void input_from_interleaved(const float *interleaved_buf);
-
-    void output_to_interleaved(float *interleaved_buf);
-
-    float *left_in;
-    float *right_in;
-    float *left_out;
-    float *right_out;
-
-private:
-    unsigned int _size;
 };
 
 class EngineBase
