@@ -22,11 +22,11 @@ enum channel_id
     MAX_CHANNELS,
 };
 
-struct SushiBuffer
+struct SampleBuffer
 {
-    SushiBuffer(const unsigned int size=AUDIO_CHUNK_SIZE);
+    SampleBuffer(const unsigned int size=AUDIO_CHUNK_SIZE);
 
-    ~SushiBuffer();
+    ~SampleBuffer();
 
     void clear();
 
@@ -61,7 +61,7 @@ public:
         return MAX_CHANNELS;
     }
 
-    virtual void process_chunk(SushiBuffer *buffer) = 0;
+    virtual void process_chunk(SampleBuffer *buffer) = 0;
 
 protected:
     unsigned int _sample_rate;
@@ -76,7 +76,7 @@ public:
 
     ~SushiEngine();
 
-    void process_chunk(SushiBuffer *buffer) override;
+    void process_chunk(SampleBuffer *buffer) override;
 
 protected:
     std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> _audio_graph{MAX_CHANNELS};

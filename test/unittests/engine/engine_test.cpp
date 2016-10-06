@@ -40,7 +40,7 @@ TEST_F(TestEngine, TestInstantiation)
  */
 TEST_F(TestEngine, TestProcess)
 {
-    SushiBuffer buffer;
+    SampleBuffer buffer;
     for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
     {
         buffer.left_in[n] = 1.0f;
@@ -54,7 +54,7 @@ TEST_F(TestEngine, TestProcess)
     }
 }
 
-TEST(TestSushiBuffer, test_deinterleave_buffer)
+TEST(TestSampleBuffer, test_deinterleave_buffer)
 {
     float interleaved_buffer[AUDIO_CHUNK_SIZE * 2];
     for (unsigned int n=0; n<AUDIO_CHUNK_SIZE*2; n+=2)
@@ -62,7 +62,7 @@ TEST(TestSushiBuffer, test_deinterleave_buffer)
         interleaved_buffer[n] = 0.0f;
         interleaved_buffer[n+1] = 1.0f;
     }
-    SushiBuffer buffer;
+    SampleBuffer buffer;
     buffer.input_from_interleaved(&interleaved_buffer[0]);
 
     for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
@@ -73,9 +73,9 @@ TEST(TestSushiBuffer, test_deinterleave_buffer)
 
 }
 
-TEST(TestSushiBuffer, test_interleave_buffer)
+TEST(TestSampleBuffer, test_interleave_buffer)
 {
-    SushiBuffer buffer;
+    SampleBuffer buffer;
     for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
     {
         buffer.left_out[n] = 0.0f;

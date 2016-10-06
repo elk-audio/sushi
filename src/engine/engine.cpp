@@ -9,7 +9,7 @@
 
 namespace sushi_engine {
 
-SushiBuffer::SushiBuffer(const unsigned int size) :
+SampleBuffer::SampleBuffer(const unsigned int size) :
     _size(size)
 {
     left_in = new float[size];
@@ -19,7 +19,7 @@ SushiBuffer::SushiBuffer(const unsigned int size) :
     clear();
 }
 
-SushiBuffer::~SushiBuffer()
+SampleBuffer::~SampleBuffer()
 {
     delete left_in;
     delete right_in;
@@ -27,7 +27,7 @@ SushiBuffer::~SushiBuffer()
     delete right_out;
 }
 
-void SushiBuffer::clear()
+void SampleBuffer::clear()
 {
     memset(left_in, 0, sizeof(float) * _size);
     memset(right_in, 0, sizeof(float) * _size);
@@ -35,7 +35,7 @@ void SushiBuffer::clear()
     memset(right_out, 0, sizeof(float) * _size);
 }
 
-void SushiBuffer::input_from_interleaved(const float *interleaved_buf)
+void SampleBuffer::input_from_interleaved(const float *interleaved_buf)
 {
     float* lin = left_in;
     float* rin = right_in;
@@ -46,7 +46,7 @@ void SushiBuffer::input_from_interleaved(const float *interleaved_buf)
     }
 }
 
-void SushiBuffer::output_to_interleaved(float *interleaved_buf)
+void SampleBuffer::output_to_interleaved(float *interleaved_buf)
 {
     float* lout = left_out;
     float* rout = right_out;
@@ -108,7 +108,7 @@ SushiEngine::~SushiEngine()
 }
 
 
-void SushiEngine::process_chunk(SushiBuffer *buffer)
+void SushiEngine::process_chunk(SampleBuffer *buffer)
 {
     /* process left and right separately */
     process_channel_graph(_audio_graph[LEFT], buffer->left_in, buffer->left_out);
