@@ -16,12 +16,16 @@ public:
     ~EngineMockup()
     {}
 
-    void process_chunk(SampleBuffer* buffer) override
+    void process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer *out_buffer) override
     {
+        float* left_out = out_buffer->channel(LEFT);
+        float* right_out = out_buffer->channel(RIGHT);
+        float* left_in = in_buffer->channel(LEFT);
+        float* right_in = in_buffer->channel(RIGHT);
         for (unsigned n=0; n<AUDIO_CHUNK_SIZE; n++)
         {
-            buffer->left_out[n] = buffer->left_in[n];
-            buffer->right_out[n] = buffer->right_in[n];
+            left_out[n] = left_in[n];
+            right_out[n] = right_in[n];
         }
     }
 };

@@ -80,7 +80,7 @@ void OfflineFrontend::run()
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
         _buffer.input_from_interleaved(_file_buffer);
-        _engine->process_chunk(&_buffer);
+        _engine->process_chunk(&_buffer, &_buffer);
         _buffer.output_to_interleaved(_file_buffer);
 
         // Should we check the number of samples effectively written?

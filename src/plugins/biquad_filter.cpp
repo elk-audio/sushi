@@ -32,7 +32,7 @@ void calc_biquad_peak(biquad::BiquadCoefficients& filter, float samplerate, floa
     double a0 = 1 + alpha / A;
 
     // Calculating normalized filter coefficients
-    filter.a1 = static_cast<float>(-2 * w0_cos / a0);
+    filter.a1 = static_cast<float>(-2.0f * w0_cos / a0);
     filter.a2 = static_cast<float>((1 - alpha / A) / a0);
     filter.b0 = static_cast<float>((1 + alpha * A) /a0);
     filter.b1 = filter.a1;
@@ -48,9 +48,9 @@ void calc_biquad_lowpass(biquad::BiquadCoefficients&  filter, float samplerate, 
     float a0 = 1 + alpha;
 
     // Calculating normalized filter coefficients
-    filter.a1 = -2 * w0_cos / a0;
+    filter.a1 = -2.0f * w0_cos / a0;
     filter.a2 = (1 - alpha) / a0;
-    filter.b0 = (1 - w0_cos) * 2 / a0;
+    filter.b0 = (1 - w0_cos) * 2.0f / a0;
     filter.b1 = (1- w0_cos) / a0;
     filter.b2 = filter.b0;
 }

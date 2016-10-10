@@ -59,7 +59,7 @@ private:
     SNDFILE*    _output_file;
     SF_INFO     _soundfile_info;
 
-    SampleBuffer _buffer{AUDIO_CHUNK_SIZE};
+    SampleChunkBuffer _buffer{2};
     float*  _file_buffer;
 };
 
