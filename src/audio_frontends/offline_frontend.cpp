@@ -79,9 +79,9 @@ void OfflineFrontend::run()
                                                          _file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        _buffer.input_from_interleaved(_file_buffer);
+        _buffer.from_interleaved(_file_buffer);
         _engine->process_chunk(&_buffer, &_buffer);
-        _buffer.output_to_interleaved(_file_buffer);
+        _buffer.to_interleaved(_file_buffer);
 
         // Should we check the number of samples effectively written?
         // Not done in libsndfile's example

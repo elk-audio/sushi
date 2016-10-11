@@ -135,7 +135,7 @@ public:
     /**
      * @brief Copy interleaved audio data from interleaved_buf to this buffer.
      */
-    void input_from_interleaved(const float* interleaved_buf)
+    void from_interleaved(const float* interleaved_buf)
     {
         switch (_channel_count)
         {
@@ -171,7 +171,7 @@ public:
     /**
      * @brief Copy buffer data in interleaved format to interleaved_buf
      */
-    void output_to_interleaved(float* interleaved_buf)
+    void to_interleaved(float* interleaved_buf)
     {
         switch (_channel_count)
         {

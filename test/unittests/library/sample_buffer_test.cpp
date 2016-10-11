@@ -68,7 +68,7 @@ TEST(TestSampleBuffer, test_deinterleave_buffer)
 {
     float interleaved_buffer[6] = {1, 2, 1, 2, 1, 2};
     SampleBuffer<3> buffer(2);
-    buffer.input_from_interleaved(interleaved_buffer);
+    buffer.from_interleaved(interleaved_buffer);
     for (unsigned int n = 0; n < 3; ++n)
     {
         ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[n]);
@@ -77,7 +77,7 @@ TEST(TestSampleBuffer, test_deinterleave_buffer)
 
     float interleaved_3_ch[9] = {1, 2, 3, 1, 2, 3, 1, 2, 3};
     SampleBuffer<3> buffer_3ch(3);
-    buffer_3ch.input_from_interleaved(interleaved_3_ch);
+    buffer_3ch.from_interleaved(interleaved_3_ch);
     for (unsigned int n = 0; n < 3; ++n)
     {
         ASSERT_FLOAT_EQ(1.0f, buffer_3ch.channel(0)[n]);
@@ -95,7 +95,7 @@ TEST(TestSampleBuffer, test_interleave_buffer)
         buffer.channel(1)[n] = 1.0f;
     }
     float interleaved_buffer[AUDIO_CHUNK_SIZE * 2];
-    buffer.output_to_interleaved(interleaved_buffer);
+    buffer.to_interleaved(interleaved_buffer);
     for (unsigned int n = 0; n < (AUDIO_CHUNK_SIZE * 2) ; n+=2)
     {
         ASSERT_FLOAT_EQ(interleaved_buffer[n], 0.0f);
@@ -110,7 +110,7 @@ TEST(TestSampleBuffer, test_interleave_buffer)
         buffer_3ch.channel(1)[n] = 1.0f;
         buffer_3ch.channel(2)[n] = 2.0f;
     }
-    buffer_3ch.output_to_interleaved(interleaved_3ch);
+    buffer_3ch.to_interleaved(interleaved_3ch);
     for (unsigned int n = 0; n < (AUDIO_CHUNK_SIZE * 3); n+=3)
     {
         ASSERT_FLOAT_EQ(0.5f, interleaved_3ch[n]);
