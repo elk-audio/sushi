@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Main body
     ////////////////////////////////////////////////////////////////////////////////
-    sushi_engine::SushiEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    sushi::engine::SushiEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::audio_frontend::OfflineFrontendConfiguration offline_config(input_filename,
                                                                        output_filename);
     sushi::audio_frontend::OfflineFrontend frontend(&engine);

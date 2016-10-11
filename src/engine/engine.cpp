@@ -61,7 +61,7 @@ SushiEngine::~SushiEngine()
 }
 
 
-void SushiEngine::process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer *out_buffer)
+void SushiEngine::process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer)
 {
     /* process left and right separately */
     process_channel_graph(_audio_graph[LEFT], in_buffer->channel(LEFT), out_buffer->channel(LEFT));
@@ -69,6 +69,5 @@ void SushiEngine::process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer 
 }
 
 
-
-
-} // sushi_engine
+} // namespace engine
+} // namespace sushi

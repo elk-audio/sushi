@@ -6,7 +6,8 @@
 #define private public
 
 constexpr unsigned int SAMPLE_RATE = 44000;
-using namespace sushi_engine;
+using namespace sushi;
+using namespace sushi::engine;
 
 /*
 * Enginge tests

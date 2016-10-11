@@ -3,7 +3,8 @@
 
 #include "engine/engine.h"
 
-using namespace sushi_engine;
+using namespace sushi;
+using namespace sushi::engine;
 
 // Bypass processor
 class EngineMockup : public EngineBase

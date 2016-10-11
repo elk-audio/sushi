@@ -14,7 +14,8 @@
 #include <vector>
 #include <memory>
 
-namespace sushi_engine {
+namespace sushi {
+namespace engine {
 
 enum channel_id
 {
@@ -29,7 +30,8 @@ public:
     EngineBase(unsigned int sample_rate) : _sample_rate(sample_rate)
     {}
 
-    virtual ~EngineBase() {}
+    virtual ~EngineBase()
+    {}
 
     unsigned int sample_rate()
     {
@@ -41,12 +43,11 @@ public:
         return MAX_CHANNELS;
     }
 
-    virtual void process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer *out_buffer) = 0;
+    virtual void process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer) = 0;
 
 protected:
     unsigned int _sample_rate;
 };
-
 
 
 class SushiEngine : public EngineBase
@@ -56,11 +57,12 @@ public:
 
     ~SushiEngine();
 
-    void process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer *out_buffer) override;
+    void process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer) override;
 
 protected:
     std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> _audio_graph{MAX_CHANNELS};
 };
 
-}; // sushi_engine
+} // namespace engine
+} // namespace sushi
 #endif //SUSHI_ENGINE_H

@@ -36,7 +36,7 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend(sushi_engine::EngineBase* engine) :
+    OfflineFrontend(engine::EngineBase* engine) :
             BaseAudioFrontend(engine),
             _input_file(nullptr),
             _output_file(nullptr),
