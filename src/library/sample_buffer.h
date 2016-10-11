@@ -14,7 +14,9 @@
 
 #include "plugin_interface.h"
 
-template<unsigned int size=AUDIO_CHUNK_SIZE>
+namespace sushi {
+
+template<unsigned int size = AUDIO_CHUNK_SIZE>
 class SampleBuffer
 {
 public:
@@ -24,24 +26,27 @@ public:
         clear();
     }
 
-    SampleBuffer() : _channel_count(0),
-                     _buffer(nullptr)
-    {
-    }
+
+    SampleBuffer() noexcept : _channel_count(0),
+                              _buffer(nullptr)
+    {}
+
 
     // Copy constructor
-    SampleBuffer(const SampleBuffer& o) : _channel_count(o._channel_count),
+    SampleBuffer(const SampleBuffer &o) : _channel_count(o._channel_count),
                                           _buffer(new float[size * o._channel_count])
     {
         std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
     }
 
-    // Copy Constructor that takes r-values
-    SampleBuffer(SampleBuffer&& o) noexcept : _channel_count(o._channel_count),
+
+    // Move Constructor
+    SampleBuffer(SampleBuffer &&o) noexcept : _channel_count(o._channel_count),
                                               _buffer(o._buffer)
     {
         o._buffer = nullptr;
     }
+
 
     // Destructor
     ~SampleBuffer()
@@ -49,8 +54,9 @@ public:
         delete[] _buffer;
     }
 
+
     // Copy assignment operator
-    SampleBuffer& operator = (const SampleBuffer& o)
+    SampleBuffer &operator=(const SampleBuffer &o)
     {
         if (this != &o)  // Avoid self-assignment
         {
@@ -65,10 +71,11 @@ public:
         return *this;
     }
 
-    // copy assignment for r-values
-    SampleBuffer& operator = (SampleBuffer&& o) noexcept
+
+    // Move assignment operator
+    SampleBuffer &operator=(SampleBuffer &&o) noexcept
     {
-        if (this != &o)  // Doubtful if neccesary
+        if (this != &o)  // Avoid self-assignment
         {
             delete[] _buffer;
             _channel_count = o._channel_count;
@@ -105,7 +112,7 @@ public:
     /**
      * @brief Gets the number of channels in the buffer.
      */
-    unsigned int channel_count()
+    unsigned int channel_count() const
     {
         return _channel_count;
     }
@@ -113,7 +120,7 @@ public:
     /**
      * @brief Copy interleaved audio data from interleaved_buf to this buffer.
      */
-    void input_from_interleaved(const float *interleaved_buf)
+    void input_from_interleaved(const float* interleaved_buf)
     {
         switch (_channel_count)
         {
@@ -149,7 +156,7 @@ public:
     /**
      * @brief Copy buffer data in interleaved format to interleaved_buf
      */
-    void output_to_interleaved(float *interleaved_buf)
+    void output_to_interleaved(float* interleaved_buf)
     {
         switch (_channel_count)
         {
@@ -187,15 +194,100 @@ public:
      */
     void apply_gain(float gain)
     {
-
+        for (int i = 0; i < size * _channel_count; ++i)
+        {
+            _buffer[i] *= gain;
+        }
     }
 
+    /**
+    * @brief Apply a fixed gain to a given channel.
+    */
+    void apply_gain(float gain, int channel)
+    {
+        float* data = _buffer + size * channel;
+        for (int i = 0; i < size; ++i)
+        {
+            data[i] *= gain;
+        }
+    }
 
-//private:
+    /**
+     * @brief Sums the content of source into this buffer.
+     *
+     * source has to be either a 1 channel buffer or have the same number of channels
+     * as the destination buffer.
+     */
+    void add(const SampleBuffer &source)
+    {
+        if (source.channel_count() == 1) // mono input, add to all dest channels
+        {
+            for (int channel = 0; channel < _channel_count; ++channel)
+            {
+                float* dest = _buffer + size * channel;
+                for (int i = 0; i < size; ++i)
+                {
+                    dest[i] += source._buffer[i];
+                }
+            }
+        } else if (source.channel_count() == _channel_count)
+        {
+            for (int i = 0; i < size * _channel_count; ++i)
+            {
+                _buffer[i] += source._buffer[i];
+            }
+        }
+    }
+
+    /**
+     * @brief Sums one channel of source buffer into one channel of the buffer.
+     */
+
+    void add(int source_channel, int dest_channel, SampleBuffer &source)
+    {
+        float* source_data = source._buffer + size * source_channel;
+        float* dest_data = _buffer + size * dest_channel;
+        for (int i = 0; i < size; ++i)
+        {
+            dest_data[i] += source_data[i];
+        }
+    }
+
+    /**
+    * @brief Sums the content of SampleBuffer source into this buffer after applying a gain.
+     *
+     * source has to be either a 1 channel buffer or have the same number of channels
+     * as the destination buffer.
+    */
+    void add_with_gain(const SampleBuffer &source, float gain)
+    {
+        if (source.channel_count() == 1)
+        {
+            for (int channel = 0; channel < _channel_count; ++channel)
+            {
+                float* dest = _buffer + size * channel;
+                for (int i = 0; i < size; ++i)
+                {
+                    dest[i] += source._buffer[i] * gain;
+                }
+            }
+        } else if (source.channel_count() == _channel_count)
+        {
+            for (int i = 0; i < size * _channel_count; ++i)
+            {
+                _buffer[i] += source._buffer[i] * gain;
+            }
+        }
+    }
+
+private:
     unsigned int _channel_count;
     float* _buffer;
 };
 
-typedef SampleBuffer<2> SampleChunkBuffer;
+typedef SampleBuffer<AUDIO_CHUNK_SIZE> SampleChunkBuffer;
+
+} // namespace sushi
+
 
 #endif //SUSHI_SAMPLEBUFFER_H
