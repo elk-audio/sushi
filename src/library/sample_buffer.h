@@ -20,19 +20,26 @@ template<unsigned int size = AUDIO_CHUNK_SIZE>
 class SampleBuffer
 {
 public:
+    /**
+     * @brief Construct a zeroed buffer with specified number of channels
+     */
     SampleBuffer(unsigned int channel_count) : _channel_count(channel_count),
                                                _buffer(new float[size * channel_count])
     {
         clear();
     }
 
-
+    /**
+     * @brief Construct an empty buffer object with 0 channels.
+     */
     SampleBuffer() noexcept : _channel_count(0),
                               _buffer(nullptr)
     {}
 
 
-    // Copy constructor
+    /**
+     * @brief Copy constructor.
+     */
     SampleBuffer(const SampleBuffer &o) : _channel_count(o._channel_count),
                                           _buffer(new float[size * o._channel_count])
     {
@@ -40,7 +47,9 @@ public:
     }
 
 
-    // Move Constructor
+    /**
+     * @brief Move constructor.
+     */
     SampleBuffer(SampleBuffer &&o) noexcept : _channel_count(o._channel_count),
                                               _buffer(o._buffer)
     {
@@ -48,14 +57,18 @@ public:
     }
 
 
-    // Destructor
+    /**
+     * @brief Destroy the buffer.
+     */
     ~SampleBuffer()
     {
         delete[] _buffer;
     }
 
 
-    // Copy assignment operator
+    /**
+     * @brief Assign to this buffer.
+     */
     SampleBuffer &operator=(const SampleBuffer &o)
     {
         if (this != &o)  // Avoid self-assignment
@@ -72,7 +85,9 @@ public:
     }
 
 
-    // Move assignment operator
+    /**
+     * @brief Assign to this buffer using move semantics.
+     */
     SampleBuffer &operator=(SampleBuffer &&o) noexcept
     {
         if (this != &o)  // Avoid self-assignment

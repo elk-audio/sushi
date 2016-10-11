@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include "plugin_interface.h"
+#include "logging.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 #include "plugins/equalizer_plugin.h"
@@ -8,9 +9,13 @@
 #include <algorithm>
 #include <cstring>
 
-namespace sushi_engine {
+namespace sushi {
+namespace engine {
 
-void set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> &graph, unsigned int sample_rate)
+MIND_GET_LOGGER;
+
+void
+set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> &graph, unsigned int sample_rate)
 {
     /* Set up identical left and right channels with 2 hardcoded plugins each*/
     AudioProcessorConfig config;
@@ -63,9 +68,15 @@ SushiEngine::~SushiEngine()
 
 void SushiEngine::process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer)
 {
-    /* process left and right separately */
-    process_channel_graph(_audio_graph[LEFT], in_buffer->channel(LEFT), out_buffer->channel(LEFT));
-    process_channel_graph(_audio_graph[RIGHT], in_buffer->channel(RIGHT), out_buffer->channel(RIGHT));
+    for (int channel = 0; channel < in_buffer->channel_count(); ++channel)
+    {
+        if (channel >= _audio_graph.size() || channel >= out_buffer->channel_count())
+        {
+            MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", channel, in_buffer->channel_count());
+            break;
+        }
+        process_channel_graph(_audio_graph[channel], in_buffer->channel(channel), out_buffer->channel(channel));
+    }
 }
 
 
