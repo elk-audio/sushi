@@ -17,7 +17,7 @@ public:
     ~EngineMockup()
     {}
 
-    void process_chunk(SampleChunkBuffer *in_buffer ,SampleChunkBuffer *out_buffer) override
+    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE> *in_buffer ,SampleBuffer<AUDIO_CHUNK_SIZE> *out_buffer) override
     {
         float* left_out = out_buffer->channel(LEFT);
         float* right_out = out_buffer->channel(RIGHT);

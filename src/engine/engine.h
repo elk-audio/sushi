@@ -43,7 +43,7 @@ public:
         return MAX_CHANNELS;
     }
 
-    virtual void process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer) = 0;
+    virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
 protected:
     unsigned int _sample_rate;
@@ -57,7 +57,7 @@ public:
 
     ~SushiEngine();
 
-    void process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer) override;
+    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 protected:
     std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> _audio_graph{MAX_CHANNELS};

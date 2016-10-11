@@ -66,7 +66,7 @@ SushiEngine::~SushiEngine()
 }
 
 
-void SushiEngine::process_chunk(SampleChunkBuffer* in_buffer, SampleChunkBuffer* out_buffer)
+void SushiEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
     for (int channel = 0; channel < in_buffer->channel_count(); ++channel)
     {

@@ -41,8 +41,8 @@ TEST_F(TestEngine, TestInstantiation)
  */
 /*TEST_F(TestEngine, TestProcess)
 {
-    SampleChunkBuffer in_buffer;
-    SampleChunkBuffer out_buffer;
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer;
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer;
     /*float* left = in_buffer.channel(LEFT);
     float* right = in_buffer.channel(RIGHT);
     for (unsigned int n=0; n<AUDIO_CHUNK_SIZE; n++)
