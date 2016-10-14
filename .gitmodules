@@ -1,0 +1,3 @@
+[submodule "third-party/EASTL"]
+	path = third-party/EASTL
+	url = https://github.com/electronicarts/EASTL.git

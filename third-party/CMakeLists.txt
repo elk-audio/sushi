@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 include(ExternalProject)
 
+add_subdirectory(EASTL)
+
 #####################################################
 #  External Projects definitions (non-Cmake based)  #
 #####################################################
