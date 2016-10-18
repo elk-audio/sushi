@@ -21,7 +21,7 @@ enum class AudioProcessorStatus
 
 struct AudioProcessorConfig
 {
-    unsigned int sample_rate;
+    int sample_rate;
 };
 
 class AudioProcessorBase
@@ -41,7 +41,7 @@ be zeroed */
 /* Optional, makes for the second most minimal interface if included.
 Called before process() if called from the realtime environment.
 More can be added for setting other types of parameters (bool, int..) */
-    virtual void set_parameter(unsigned int parameter_id, float value) = 0;
+    virtual void set_parameter(int parameter_id, float value) = 0;
 
 /* Called by the host from the real time processing environment once for
 every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays 

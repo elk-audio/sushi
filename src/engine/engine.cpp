@@ -15,7 +15,7 @@ namespace engine {
 MIND_GET_LOGGER;
 
 void
-set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> &graph, unsigned int sample_rate)
+set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> &graph, int sample_rate)
 {
     /* Set up identical left and right channels with 2 hardcoded plugins each*/
     AudioProcessorConfig config;
@@ -55,7 +55,7 @@ void process_channel_graph(std::vector<std::unique_ptr<AudioProcessorBase>> &cha
 }
 
 
-SushiEngine::SushiEngine(unsigned int sample_rate) : EngineBase::EngineBase(sample_rate)
+SushiEngine::SushiEngine(int sample_rate) : EngineBase::EngineBase(sample_rate)
 {
     set_up_processing_graph(_audio_graph, _sample_rate);
 }
@@ -74,7 +74,7 @@ void SushiEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     out_buffer->clear();
     for (int ch = 0; ch < in_buffer->channel_count(); ++ch)
     {
-        if (ch >= _audio_graph.size() || ch >= out_buffer->channel_count())
+        if (ch >= static_cast<int>(_audio_graph.size()) || ch >= out_buffer->channel_count())
         {
             MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", ch, in_buffer->channel_count());
             break;

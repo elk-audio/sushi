@@ -25,13 +25,13 @@ AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* co
         MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
         return AudioFrontendInitStatus::INVALID_INPUT_FILE;
     }
-    if (static_cast<unsigned int>(_soundfile_info.channels) != _engine->n_channels())
+    if (_soundfile_info.channels != _engine->n_channels())
     {
         MIND_LOG_ERROR("Mismatch in number of channels of audio file, which is {}", _soundfile_info.channels);
         cleanup();
         return AudioFrontendInitStatus::INVALID_N_CHANNELS;
     }
-    auto sample_rate_file = static_cast<unsigned int>(_soundfile_info.samplerate);
+    auto sample_rate_file = _soundfile_info.samplerate;
     if (sample_rate_file != _engine->sample_rate())
     {
         MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",

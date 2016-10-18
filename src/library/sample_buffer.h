@@ -15,16 +15,16 @@
 #include "constants.h"
 
 namespace sushi {
-//static constexpr unsigned int AUDIO_CHUNK_SIZE = 64;
+//static constexpr int AUDIO_CHUNK_SIZE = 64;
 
-template<unsigned int size>
+template<int size>
 class SampleBuffer
 {
 public:
     /**
      * @brief Construct a zeroed buffer with specified number of channels
      */
-    SampleBuffer(unsigned int channel_count) : _channel_count(channel_count),
+    SampleBuffer(int channel_count) : _channel_count(channel_count),
                                                _buffer(new float[size * channel_count])
     {
         clear();
@@ -112,7 +112,7 @@ public:
     /**
     * @brief Returns a writeable pointer to a specific channel in the buffer. No bounds checking.
     */
-    float* channel(unsigned int channel)
+    float* channel(int channel)
     {
         return _buffer + channel * size;
     }
@@ -120,7 +120,7 @@ public:
     /**
     * @brief Returns a read-only pointer to a specific channel in the buffer. No bounds checking.
     */
-    const float* channel(unsigned int channel) const
+    const float* channel(int channel) const
     {
         return _buffer + channel * size;
     }
@@ -128,7 +128,7 @@ public:
     /**
      * @brief Gets the number of channels in the buffer.
      */
-    unsigned int channel_count() const
+    int channel_count() const
     {
         return _channel_count;
     }
@@ -144,7 +144,7 @@ public:
             {
                 float* l_in = _buffer;
                 float* r_in = _buffer + size;
-                for (unsigned int n = 0; n < size; ++n)
+                for (int n = 0; n < size; ++n)
                 {
                     *l_in++ = *interleaved_buf++;
                     *r_in++ = *interleaved_buf++;
@@ -158,9 +158,9 @@ public:
             }
             default:
             {
-                for (unsigned int n = 0; n < size; ++n)
+                for (int n = 0; n < size; ++n)
                 {
-                    for (unsigned int c = 0; c < _channel_count; ++c)
+                    for (int c = 0; c < _channel_count; ++c)
                     {
                         _buffer[n + c * _channel_count] = *interleaved_buf++;
                     }
@@ -180,7 +180,7 @@ public:
             {
                 float* l_out = _buffer;
                 float* r_out = _buffer + size;
-                for (unsigned int n = 0; n < size; ++n)
+                for (int n = 0; n < size; ++n)
                 {
                     *interleaved_buf++ = *l_out++;
                     *interleaved_buf++ = *r_out++;
@@ -194,9 +194,9 @@ public:
             }
             default:
             {
-                for (unsigned int n = 0; n < size; ++n)
+                for (int n = 0; n < size; ++n)
                 {
-                    for (unsigned int c = 0; c < _channel_count; ++c)
+                    for (int c = 0; c < _channel_count; ++c)
                     {
                         *interleaved_buf++ = _buffer[n + c * size];
                     }
@@ -297,7 +297,7 @@ public:
     }
 
 private:
-    unsigned int _channel_count;
+    int _channel_count;
     float* _buffer;
 };
 

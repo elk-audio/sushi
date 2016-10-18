@@ -19,7 +19,7 @@ AudioProcessorStatus EqualizerPlugin::init(const AudioProcessorConfig &configura
     return AudioProcessorStatus::OK;
 }
 
-void EqualizerPlugin::set_parameter(unsigned int parameter_id, float value)
+void EqualizerPlugin::set_parameter(int parameter_id, float value)
 {
     switch (parameter_id)
     {

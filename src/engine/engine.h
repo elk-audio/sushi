@@ -27,18 +27,18 @@ enum channel_id
 class EngineBase
 {
 public:
-    EngineBase(unsigned int sample_rate) : _sample_rate(sample_rate)
+    EngineBase(int sample_rate) : _sample_rate(sample_rate)
     {}
 
     virtual ~EngineBase()
     {}
 
-    unsigned int sample_rate()
+    int sample_rate()
     {
         return _sample_rate;
     }
 
-    unsigned int n_channels()
+    int n_channels()
     {
         return MAX_CHANNELS;
     }
@@ -46,14 +46,14 @@ public:
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
 protected:
-    unsigned int _sample_rate;
+    int _sample_rate;
 };
 
 
 class SushiEngine : public EngineBase
 {
 public:
-    SushiEngine(unsigned int sample_rate);
+    SushiEngine(int sample_rate);
 
     ~SushiEngine();
 

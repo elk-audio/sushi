@@ -17,7 +17,7 @@ AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig & /* con
     return AudioProcessorStatus::OK;
 }
 
-void PassthroughPlugin::set_parameter(unsigned int /* parameter_id */, float /* value */)
+void PassthroughPlugin::set_parameter(int /* parameter_id */, float /* value */)
 {}
 
 void

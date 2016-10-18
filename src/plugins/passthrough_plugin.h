@@ -22,7 +22,7 @@ public:
 
     AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
 
-    void set_parameter(unsigned int parameter_id, float value) override;
+    void set_parameter(int parameter_id, float value) override;
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 };

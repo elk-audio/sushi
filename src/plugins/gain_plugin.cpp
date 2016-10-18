@@ -17,7 +17,7 @@ AudioProcessorStatus GainPlugin::init(const AudioProcessorConfig &configuration)
     return AudioProcessorStatus::OK;
 }
 
-void GainPlugin::set_parameter(unsigned int parameter_id, float value)
+void GainPlugin::set_parameter(int parameter_id, float value)
 {
     switch (parameter_id)
     {
