@@ -1,5 +1,8 @@
+#include <cassert>
+
 #include "equalizer_plugin.h"
 
+namespace sushi {
 namespace equalizer_plugin {
 
 EqualizerPlugin::EqualizerPlugin()
@@ -8,7 +11,7 @@ EqualizerPlugin::EqualizerPlugin()
 EqualizerPlugin::~EqualizerPlugin()
 {}
 
-AudioProcessorStatus EqualizerPlugin::init(const AudioProcessorConfig& configuration)
+AudioProcessorStatus EqualizerPlugin::init(const AudioProcessorConfig &configuration)
 {
     _configuration = configuration;
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
@@ -37,16 +40,21 @@ void EqualizerPlugin::set_parameter(unsigned int parameter_id, float value)
     }
 }
 
-void EqualizerPlugin::process(const float *in_buffer, float *out_buffer)
+void EqualizerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
+    /* For now, this plugin only supports mono in/out. */
+    assert(in_buffer->channel_count() == 1);
+    assert(out_buffer->channel_count() == 1);
+
     /* Recalculates the coefficients once per audio chunk, this makes for
      * predictable cpu load for every chunk */
 
     biquad::BiquadCoefficients coefficients;
     biquad::calc_biquad_peak(coefficients, _configuration.sample_rate, _freq, _q, _gain);
     _filter.set_coefficients(coefficients);
-    _filter.process(in_buffer, out_buffer, AUDIO_CHUNK_SIZE);
+    _filter.process(in_buffer->channel(0), out_buffer->channel(0), AUDIO_CHUNK_SIZE);
 }
 
 
 }// namespace equalizer_plugin
+}// namespace sushi

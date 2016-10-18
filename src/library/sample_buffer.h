@@ -12,11 +12,12 @@
 #include <algorithm>
 #include <cassert>
 
-#include "plugin_interface.h"
+#include "constants.h"
 
 namespace sushi {
+//static constexpr unsigned int AUDIO_CHUNK_SIZE = 64;
 
-template<unsigned int size = AUDIO_CHUNK_SIZE>
+template<unsigned int size>
 class SampleBuffer
 {
 public:
@@ -119,10 +120,10 @@ public:
     /**
     * @brief Returns a read-only pointer to a specific channel in the buffer. No bounds checking.
     */
-    /*const float* channel(unsigned int channel)
+    const float* channel(unsigned int channel) const
     {
         return _buffer + channel * size;
-    }*/
+    }
 
     /**
      * @brief Gets the number of channels in the buffer.

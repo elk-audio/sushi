@@ -39,19 +39,19 @@ set_up_processing_graph(std::vector<std::vector<std::unique_ptr<AudioProcessorBa
     graph[RIGHT].push_back(std::move(gain_r));
 }
 
-void process_channel_graph(std::vector<std::unique_ptr<AudioProcessorBase>> &channel, float* in, float* out)
+void process_channel_graph(std::vector<std::unique_ptr<AudioProcessorBase>> &channel,
+                                                    const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
+                                                    SampleBuffer<AUDIO_CHUNK_SIZE>& out)
 {
-    float buffer[AUDIO_CHUNK_SIZE];
-    float* in_tmp = in;
-    float* out_tmp = buffer;
-    for (auto &n : channel)
-    {
-        n->process(in_tmp, out_tmp);
-        in_tmp = out_tmp;
-    }
-    std::copy(out_tmp, out_tmp + AUDIO_CHUNK_SIZE, out);
+    SampleBuffer<AUDIO_CHUNK_SIZE> buf_1 = in;
+    SampleBuffer<AUDIO_CHUNK_SIZE> buf_2(in.channel_count());
 
-    //std::for_each(channel.begin(), channel.end(), [](AudioProcessorBase* p){p->process(in_tmp, out_tmp); in_tmp = out_tmp; });
+    for (auto &p : channel)
+    {
+        p->process(&buf_1, &buf_2);
+        std::swap(buf_1, buf_2);
+    }
+    out = buf_1;
 }
 
 
@@ -68,14 +68,23 @@ SushiEngine::~SushiEngine()
 
 void SushiEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-    for (int channel = 0; channel < in_buffer->channel_count(); ++channel)
+    /* For now, process every channel in in_buffer separately and put the result in
+     * the corresponding channel in out_buffer */
+
+    out_buffer->clear();
+    for (int ch = 0; ch < in_buffer->channel_count(); ++ch)
     {
-        if (channel >= _audio_graph.size() || channel >= out_buffer->channel_count())
+        if (ch >= _audio_graph.size() || ch >= out_buffer->channel_count())
         {
-            MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", channel, in_buffer->channel_count());
+            MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", ch, in_buffer->channel_count());
             break;
         }
-        process_channel_graph(_audio_graph[channel], in_buffer->channel(channel), out_buffer->channel(channel));
+        SampleBuffer<AUDIO_CHUNK_SIZE> in(1);
+        SampleBuffer<AUDIO_CHUNK_SIZE> out(1);
+        in.add(ch, 0, *in_buffer);
+
+        process_channel_graph(_audio_graph[ch], in, out);
+        out_buffer->add(ch, 0, out);
     }
 }
 

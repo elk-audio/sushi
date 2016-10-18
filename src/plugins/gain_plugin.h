@@ -6,6 +6,8 @@
 #define GAIN_PLUGIN_H
 
 #include "plugin_interface.h"
+
+namespace sushi {
 namespace gain_plugin {
 
 enum gain_parameter_id
@@ -17,12 +19,14 @@ class GainPlugin : public AudioProcessorBase
 {
 public:
     GainPlugin();
+
     ~GainPlugin();
-    AudioProcessorStatus init(const AudioProcessorConfig& configuration) override ;
 
-    void set_parameter(unsigned int parameter_id, float value) override ;
+    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
 
-    void process(const float *in_buffer, float *out_buffer) override;
+    void set_parameter(unsigned int parameter_id, float value) override;
+
+    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:
     AudioProcessorConfig _configuration;
@@ -30,4 +34,5 @@ private:
 };
 
 }// namespace gain_plugin
+}// namespace sushi
 #endif // GAIN_PLUGIN_H

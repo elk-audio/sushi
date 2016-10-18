@@ -8,6 +8,7 @@
 #include "plugin_interface.h"
 #include "biquad_filter.h"
 
+namespace sushi {
 namespace equalizer_plugin {
 
 enum equalizer_parameter_id
@@ -21,12 +22,14 @@ class EqualizerPlugin : public AudioProcessorBase
 {
 public:
     EqualizerPlugin();
+
     ~EqualizerPlugin();
-    AudioProcessorStatus init(const AudioProcessorConfig& configuration) override ;
 
-    void set_parameter(unsigned int parameter_id, float value) override ;
+    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
 
-    void process(const float *in_buffer, float *out_buffer) override;
+    void set_parameter(unsigned int parameter_id, float value) override;
+
+    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:
     biquad::BiquadFilter _filter;
@@ -38,4 +41,5 @@ private:
 };
 
 }// namespace equalizer_plugin
+}// namespace sushi
 #endif // EQUALIZER_PLUGIN_H

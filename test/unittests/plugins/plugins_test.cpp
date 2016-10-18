@@ -8,6 +8,26 @@
 
 #define private public
 
+using namespace sushi;
+
+void fill_sample_buffer(SampleBuffer<AUDIO_CHUNK_SIZE>& buffer, float value)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        std::fill(buffer.channel(ch), buffer.channel(ch) + AUDIO_CHUNK_SIZE, value);
+    }
+}
+
+void assert_buffer_value(float value, SampleBuffer<AUDIO_CHUNK_SIZE>& buffer)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+        {
+            ASSERT_FLOAT_EQ(value, buffer.channel(ch)[i]);
+        }
+    }
+}
 
 /*
  * Tests for passthrough unit gain plugin
@@ -46,14 +66,11 @@ TEST_F(TestPassthroughPlugin, TestInitialization)
 // Fill a buffer with ones and test that they are passed through unchanged
 TEST_F(TestPassthroughPlugin, TestProcess)
 {
-    float in_buffer[AUDIO_CHUNK_SIZE];
-    float out_buffer[AUDIO_CHUNK_SIZE];
-    std::fill(in_buffer, in_buffer + AUDIO_CHUNK_SIZE, 1.0);
-    _module_under_test->process(in_buffer, out_buffer);
-    for (auto& i : out_buffer)
-    {
-        ASSERT_FLOAT_EQ(1.0, i);
-    }
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
+    fill_sample_buffer(in_buffer, 1.0f);
+    _module_under_test->process(&in_buffer, &out_buffer);
+    assert_buffer_value(1.0, out_buffer);
 }
 
 /*
@@ -93,16 +110,12 @@ TEST_F(TestGainPlugin, TestInitialization)
 // Fill a buffer with ones, set gain to 2 and process it
 TEST_F(TestGainPlugin, TestProcess)
 {
-    float in_buffer[AUDIO_CHUNK_SIZE];
-    float out_buffer[AUDIO_CHUNK_SIZE];
-    std::fill(in_buffer, in_buffer + AUDIO_CHUNK_SIZE, 1.0);
-
-    _module_under_test->set_parameter(gain_plugin::gain_parameter_id::GAIN, 2);
-    _module_under_test->process(in_buffer, out_buffer);
-    for (auto& i : out_buffer)
-    {
-        ASSERT_FLOAT_EQ(2.0, i);
-    }
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
+    fill_sample_buffer(in_buffer, 1.0f);
+    _module_under_test->set_parameter(gain_plugin::gain_parameter_id::GAIN, 2.0f);
+    _module_under_test->process(&in_buffer, &out_buffer);
+    assert_buffer_value(2.0f, out_buffer);
 }
 
 /*
@@ -145,19 +158,16 @@ TEST_F(TestEqualizerPlugin, TestInitialization)
 // Test silence in -> silence out
 TEST_F(TestEqualizerPlugin, TestProcess)
 {
-    float in_buffer[AUDIO_CHUNK_SIZE];
-    float out_buffer[AUDIO_CHUNK_SIZE];
-    std::fill(in_buffer, in_buffer + AUDIO_CHUNK_SIZE, 0);
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
+    fill_sample_buffer(in_buffer, 0.0f);
 
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::FREQUENCY, 4000);
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::GAIN, 2);
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::Q, 1);
-    _module_under_test->process(in_buffer, out_buffer);
+    _module_under_test->process(&in_buffer, &out_buffer);
 
-    for (auto& i : out_buffer)
-    {
-        ASSERT_FLOAT_EQ(0, i);
-    }
+    assert_buffer_value(0.0f, out_buffer);
 }
 
 

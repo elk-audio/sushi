@@ -9,21 +9,24 @@
 #define PASSTHROUGH_PLUGIN_H
 
 #include "plugin_interface.h"
-namespace passthrough_plugin {
 
+namespace sushi {
+namespace passthrough_plugin {
 
 class PassthroughPlugin : public AudioProcessorBase
 {
 public:
     PassthroughPlugin();
+
     ~PassthroughPlugin();
-    AudioProcessorStatus init(const AudioProcessorConfig& configuration) override ;
 
-    void set_parameter(unsigned int parameter_id, float value) override ;
+    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
 
-    void process(const float *in_buffer, float *out_buffer) override;
+    void set_parameter(unsigned int parameter_id, float value) override;
+
+    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 };
 
 }// namespace passthrough_plugin
-
+}// namespace sushi
 #endif //PASSTHROUGH_PLUGIN_H

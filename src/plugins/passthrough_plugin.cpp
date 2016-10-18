@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <cassert>
 
 #include "passthrough_plugin.h"
 
+namespace sushi {
 namespace passthrough_plugin {
 
 PassthroughPlugin::PassthroughPlugin()
@@ -10,7 +12,7 @@ PassthroughPlugin::PassthroughPlugin()
 PassthroughPlugin::~PassthroughPlugin()
 {}
 
-AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig& /* configuration */)
+AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig & /* configuration */)
 {
     return AudioProcessorStatus::OK;
 }
@@ -18,10 +20,19 @@ AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig& /* conf
 void PassthroughPlugin::set_parameter(unsigned int /* parameter_id */, float /* value */)
 {}
 
-void PassthroughPlugin::process(const float *in_buffer, float *out_buffer)
+void
+PassthroughPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-    std::copy(in_buffer, in_buffer + AUDIO_CHUNK_SIZE, out_buffer);
+    /* For now, assume equal number of channels in/out */
+    assert(in_buffer->channel_count() == out_buffer->channel_count());
+    for (int i = 0; i < in_buffer->channel_count(); ++i)
+    {
+        std::copy(in_buffer->channel(i), in_buffer->channel(i) + AUDIO_CHUNK_SIZE, out_buffer->channel(i));
+    }
+    // or simply:
+    // *out_buffer = in_buffer;
 }
 
 
 }// namespace passthrough_plugin
+}// namespace sushi
