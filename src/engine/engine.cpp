@@ -68,10 +68,9 @@ SushiEngine::~SushiEngine()
 
 void SushiEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-    /* For now, process every channel in in_buffer separately and put the result in
+    /* For now, process every channel in in_buffer separately and copy the result to
      * the corresponding channel in out_buffer */
 
-    out_buffer->clear();
     for (int ch = 0; ch < in_buffer->channel_count(); ++ch)
     {
         if (ch >= static_cast<int>(_audio_graph.size()) || ch >= out_buffer->channel_count())
@@ -81,10 +80,10 @@ void SushiEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         }
         SampleBuffer<AUDIO_CHUNK_SIZE> in(1);
         SampleBuffer<AUDIO_CHUNK_SIZE> out(1);
-        in.add(ch, 0, *in_buffer);
+        in.replace(ch, 0, *in_buffer);
 
         process_channel_graph(_audio_graph[ch], in, out);
-        out_buffer->add(ch, 0, out);
+        out_buffer->replace(0, ch, out);
     }
 }
 

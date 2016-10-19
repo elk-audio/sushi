@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include "gtest/gtest.h"
+#include "test_utils.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
@@ -9,25 +10,6 @@
 #define private public
 
 using namespace sushi;
-
-void fill_sample_buffer(SampleBuffer<AUDIO_CHUNK_SIZE>& buffer, float value)
-{
-    for (int ch = 0; ch < buffer.channel_count(); ++ch)
-    {
-        std::fill(buffer.channel(ch), buffer.channel(ch) + AUDIO_CHUNK_SIZE, value);
-    }
-}
-
-void assert_buffer_value(float value, SampleBuffer<AUDIO_CHUNK_SIZE>& buffer)
-{
-    for (int ch = 0; ch < buffer.channel_count(); ++ch)
-    {
-        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
-        {
-            ASSERT_FLOAT_EQ(value, buffer.channel(ch)[i]);
-        }
-    }
-}
 
 /*
  * Tests for passthrough unit gain plugin
@@ -68,9 +50,9 @@ TEST_F(TestPassthroughPlugin, TestProcess)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    fill_sample_buffer(in_buffer, 1.0f);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->process(&in_buffer, &out_buffer);
-    assert_buffer_value(1.0, out_buffer);
+    test_utils::assert_buffer_value(1.0, out_buffer);
 }
 
 /*
@@ -112,10 +94,10 @@ TEST_F(TestGainPlugin, TestProcess)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    fill_sample_buffer(in_buffer, 1.0f);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->set_parameter(gain_plugin::gain_parameter_id::GAIN, 2.0f);
     _module_under_test->process(&in_buffer, &out_buffer);
-    assert_buffer_value(2.0f, out_buffer);
+    test_utils::assert_buffer_value(2.0f, out_buffer);
 }
 
 /*
@@ -160,14 +142,14 @@ TEST_F(TestEqualizerPlugin, TestProcess)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    fill_sample_buffer(in_buffer, 0.0f);
+    test_utils::fill_sample_buffer(in_buffer, 0.0f);
 
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::FREQUENCY, 4000);
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::GAIN, 2);
     _module_under_test->set_parameter(equalizer_plugin::equalizer_parameter_id::Q, 1);
     _module_under_test->process(&in_buffer, &out_buffer);
 
-    assert_buffer_value(0.0f, out_buffer);
+    test_utils::assert_buffer_value(0.0f, out_buffer);
 }
 
 

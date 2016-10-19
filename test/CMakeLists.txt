@@ -23,6 +23,7 @@ SET(TEST_FILES unittests/sample_test.cpp
 ##########################################
 
 set(INCLUDE_DIRS "${INCLUDE_DIRS}"
+                 ${PROJECT_SOURCE_DIR}/test/unittests
                  ${PROJECT_SOURCE_DIR}/test/gtest_1_7_0/include)
 
 include_directories(${INCLUDE_DIRS})
