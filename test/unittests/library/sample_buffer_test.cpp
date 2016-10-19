@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include "gtest/gtest.h"
+#include "test_utils.h"
 #include "library/sample_buffer.h"
 
 #define private public
@@ -143,6 +144,22 @@ TEST (TestSampleBuffer, test_gain)
     {
         ASSERT_FLOAT_EQ(buffer.channel(0)[n], 6.0f);
         ASSERT_FLOAT_EQ(buffer.channel(1)[n], 6.0f);
+    }
+}
+
+TEST(TestSampleBuffer, test_replace)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer_1(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(2);
+    test_utils::fill_sample_buffer(buffer_1, 1.0f);
+    test_utils::fill_sample_buffer(buffer_2, 2.0f);
+
+    // copy ch 1 of buffer 2 to ch 0 of buffer_1
+    buffer_1.replace(1, 0, buffer_2);
+    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
+    {
+        ASSERT_FLOAT_EQ(buffer_1.channel(0)[n], 2.0f);
+        ASSERT_FLOAT_EQ(buffer_1.channel(1)[n], 1.0f);
     }
 }
 

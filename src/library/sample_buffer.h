@@ -229,6 +229,16 @@ public:
     }
 
     /**
+     * @brief Copy data channel by channel into this buffer from source buffer. No bounds checking.
+     */
+    void replace(int source_channel, int dest_channel, SampleBuffer &source)
+    {
+        std::copy(source.channel(source_channel),
+                  source.channel(source_channel) + size,
+                  _buffer + (dest_channel * size));
+    }
+
+    /**
      * @brief Sums the content of source into this buffer.
      *
      * source has to be either a 1 channel buffer or have the same number of channels
