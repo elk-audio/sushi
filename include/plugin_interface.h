@@ -11,7 +11,7 @@
 namespace sushi {
 
 /* Return Status Enum */
-enum class AudioProcessorStatus
+enum class StompBoxStatus
 {
     OK,
     ERROR,
@@ -19,16 +19,16 @@ enum class AudioProcessorStatus
     MEMORY_ERROR,
 };
 
-struct AudioProcessorConfig
+struct StompBoxConfig
 {
     int sample_rate;
 };
 
-class AudioProcessorBase
+class StompBox
 {
 public:
 
-    virtual ~AudioProcessorBase()
+    virtual ~StompBox()
     {};
 
 /* (Re)initialize the plugin instance. This is called from the host's non-
@@ -36,7 +36,7 @@ realtime environment at startup and configuration changes.
 Not called at the same time as process(). When returning OK, the plugin 
 should be in a default state, i.e. filter registers, reverb tails, etc should 
 be zeroed */
-    virtual AudioProcessorStatus init(const AudioProcessorConfig &configuration) = 0;
+    virtual StompBoxStatus init(const StompBoxConfig &configuration) = 0;
 
 /* Optional, makes for the second most minimal interface if included.
 Called before process() if called from the realtime environment.

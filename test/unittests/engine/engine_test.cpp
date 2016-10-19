@@ -22,14 +22,14 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new SushiEngine(SAMPLE_RATE);
+        _module_under_test = new AudioEngine(SAMPLE_RATE);
     }
 
     void TearDown()
     {
         delete _module_under_test;
     }
-    SushiEngine* _module_under_test;
+    AudioEngine* _module_under_test;
 };
 
 TEST_F(TestEngine, TestInstantiation)

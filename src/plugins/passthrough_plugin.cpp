@@ -12,9 +12,9 @@ PassthroughPlugin::PassthroughPlugin()
 PassthroughPlugin::~PassthroughPlugin()
 {}
 
-AudioProcessorStatus PassthroughPlugin::init(const AudioProcessorConfig & /* configuration */)
+StompBoxStatus PassthroughPlugin::init(const StompBoxConfig & /* configuration */)
 {
-    return AudioProcessorStatus::OK;
+    return StompBoxStatus::OK;
 }
 
 void PassthroughPlugin::set_parameter(int /* parameter_id */, float /* value */)

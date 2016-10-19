@@ -18,14 +18,14 @@ enum equalizer_parameter_id
     Q
 };
 
-class EqualizerPlugin : public AudioProcessorBase
+class EqualizerPlugin : public StompBox
 {
 public:
     EqualizerPlugin();
 
     ~EqualizerPlugin();
 
-    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
+    StompBoxStatus init(const StompBoxConfig &configuration) override;
 
     void set_parameter(int parameter_id, float value) override;
 
@@ -33,7 +33,7 @@ public:
 
 private:
     biquad::BiquadFilter _filter;
-    AudioProcessorConfig _configuration;
+    StompBoxConfig _configuration;
 
     float _freq{1000.0f};
     float _gain{0.0f};

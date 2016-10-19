@@ -13,14 +13,14 @@
 namespace sushi {
 namespace passthrough_plugin {
 
-class PassthroughPlugin : public AudioProcessorBase
+class PassthroughPlugin : public StompBox
 {
 public:
     PassthroughPlugin();
 
     ~PassthroughPlugin();
 
-    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
+    StompBoxStatus init(const StompBoxConfig &configuration) override;
 
     void set_parameter(int parameter_id, float value) override;
 

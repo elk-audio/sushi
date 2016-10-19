@@ -15,21 +15,21 @@ enum gain_parameter_id
     GAIN = 1
 };
 
-class GainPlugin : public AudioProcessorBase
+class GainPlugin : public StompBox
 {
 public:
     GainPlugin();
 
     ~GainPlugin();
 
-    AudioProcessorStatus init(const AudioProcessorConfig &configuration) override;
+    StompBoxStatus init(const StompBoxConfig &configuration) override;
 
     void set_parameter(int parameter_id, float value) override;
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:
-    AudioProcessorConfig _configuration;
+    StompBoxConfig _configuration;
     float _gain{1.0f};
 };
 

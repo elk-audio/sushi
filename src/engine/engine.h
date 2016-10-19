@@ -24,13 +24,13 @@ enum channel_id
     MAX_CHANNELS,
 };
 
-class EngineBase
+class BaseEngine
 {
 public:
-    EngineBase(int sample_rate) : _sample_rate(sample_rate)
+    BaseEngine(int sample_rate) : _sample_rate(sample_rate)
     {}
 
-    virtual ~EngineBase()
+    virtual ~BaseEngine()
     {}
 
     int sample_rate()
@@ -50,17 +50,17 @@ protected:
 };
 
 
-class SushiEngine : public EngineBase
+class AudioEngine : public BaseEngine
 {
 public:
-    SushiEngine(int sample_rate);
+    AudioEngine(int sample_rate);
 
-    ~SushiEngine();
+    ~AudioEngine();
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 protected:
-    std::vector<std::vector<std::unique_ptr<AudioProcessorBase>>> _audio_graph{MAX_CHANNELS};
+    std::vector<std::vector<std::unique_ptr<StompBox>>> _audio_graph{MAX_CHANNELS};
 };
 
 } // namespace engine

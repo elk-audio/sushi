@@ -29,7 +29,7 @@ protected:
     {
         delete _module_under_test;
     }
-    AudioProcessorBase* _module_under_test;
+    StompBox* _module_under_test;
 };
 
 TEST_F(TestPassthroughPlugin, TestInstantiation)
@@ -39,7 +39,7 @@ TEST_F(TestPassthroughPlugin, TestInstantiation)
 
 TEST_F(TestPassthroughPlugin, TestInitialization)
 {
-    AudioProcessorConfig c;
+    StompBoxConfig c;
     c.sample_rate = 44000;
     _module_under_test->init(c);
     ASSERT_TRUE(_module_under_test);
@@ -73,7 +73,7 @@ protected:
     {
         delete _module_under_test;
     }
-    AudioProcessorBase* _module_under_test;
+    StompBox* _module_under_test;
 };
 
 TEST_F(TestGainPlugin, TestInstantiation)
@@ -83,10 +83,10 @@ TEST_F(TestGainPlugin, TestInstantiation)
 
 TEST_F(TestGainPlugin, TestInitialization)
 {
-    AudioProcessorConfig c;
+    StompBoxConfig c;
     c.sample_rate = 44000;
-    AudioProcessorStatus status = _module_under_test->init(c);
-    ASSERT_EQ(AudioProcessorStatus::OK, status);
+    StompBoxStatus status = _module_under_test->init(c);
+    ASSERT_EQ(StompBoxStatus::OK, status);
 }
 
 // Fill a buffer with ones, set gain to 2 and process it
@@ -111,7 +111,7 @@ protected:
     }
     void SetUp()
     {
-        AudioProcessorConfig c;
+        StompBoxConfig c;
         c.sample_rate = 44000;
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
         _module_under_test->init(c);
@@ -121,7 +121,7 @@ protected:
     {
         delete _module_under_test;
     }
-    AudioProcessorBase* _module_under_test;
+    StompBox* _module_under_test;
 };
 
 TEST_F(TestEqualizerPlugin, TestInstantiation)
@@ -131,10 +131,10 @@ TEST_F(TestEqualizerPlugin, TestInstantiation)
 
 TEST_F(TestEqualizerPlugin, TestInitialization)
 {
-    AudioProcessorConfig c;
+    StompBoxConfig c;
     c.sample_rate = 44000;
-    AudioProcessorStatus status = _module_under_test->init(c);
-    ASSERT_EQ(AudioProcessorStatus::OK, status);
+    StompBoxStatus status = _module_under_test->init(c);
+    ASSERT_EQ(StompBoxStatus::OK, status);
 }
 
 // Test silence in -> silence out

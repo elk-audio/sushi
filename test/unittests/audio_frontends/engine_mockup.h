@@ -7,11 +7,11 @@ using namespace sushi;
 using namespace sushi::engine;
 
 // Bypass processor
-class EngineMockup : public EngineBase
+class EngineMockup : public BaseEngine
 {
 public:
     EngineMockup(unsigned int sample_rate) :
-        EngineBase(sample_rate)
+        BaseEngine(sample_rate)
     {}
 
     ~EngineMockup()

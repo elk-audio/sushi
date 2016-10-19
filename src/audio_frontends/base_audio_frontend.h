@@ -39,7 +39,7 @@ struct BaseAudioFrontendConfiguration
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend(engine::EngineBase* engine) :
+    BaseAudioFrontend(engine::BaseEngine* engine) :
             _engine(engine)
     {}
 
@@ -73,7 +73,7 @@ public:
 
 protected:
     BaseAudioFrontendConfiguration* _config;
-    engine::EngineBase* _engine;
+    engine::BaseEngine* _engine;
 };
 
 

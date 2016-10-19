@@ -11,12 +11,12 @@ EqualizerPlugin::EqualizerPlugin()
 EqualizerPlugin::~EqualizerPlugin()
 {}
 
-AudioProcessorStatus EqualizerPlugin::init(const AudioProcessorConfig &configuration)
+StompBoxStatus EqualizerPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
     _filter.reset();
-    return AudioProcessorStatus::OK;
+    return StompBoxStatus::OK;
 }
 
 void EqualizerPlugin::set_parameter(int parameter_id, float value)

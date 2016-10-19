@@ -11,10 +11,10 @@ GainPlugin::GainPlugin()
 GainPlugin::~GainPlugin()
 {}
 
-AudioProcessorStatus GainPlugin::init(const AudioProcessorConfig &configuration)
+StompBoxStatus GainPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
-    return AudioProcessorStatus::OK;
+    return StompBoxStatus::OK;
 }
 
 void GainPlugin::set_parameter(int parameter_id, float value)
