@@ -231,7 +231,7 @@ public:
     /**
      * @brief Copy data channel by channel into this buffer from source buffer. No bounds checking.
      */
-    void replace(int source_channel, int dest_channel, SampleBuffer &source)
+    void replace(int dest_channel, int source_channel, SampleBuffer &source)
     {
         std::copy(source.channel(source_channel),
                   source.channel(source_channel) + size,
@@ -269,7 +269,7 @@ public:
      * @brief Sums one channel of source buffer into one channel of the buffer.
      */
 
-    void add(int source_channel, int dest_channel, SampleBuffer &source)
+    void add(int dest_channel, int source_channel, SampleBuffer &source)
     {
         float* source_data = source._buffer + size * source_channel;
         float* dest_data = _buffer + size * dest_channel;

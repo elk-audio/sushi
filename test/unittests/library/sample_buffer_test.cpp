@@ -155,7 +155,7 @@ TEST(TestSampleBuffer, test_replace)
     test_utils::fill_sample_buffer(buffer_2, 2.0f);
 
     // copy ch 1 of buffer 2 to ch 0 of buffer_1
-    buffer_1.replace(1, 0, buffer_2);
+    buffer_1.replace(0, 1, buffer_2);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
         ASSERT_FLOAT_EQ(buffer_1.channel(0)[n], 2.0f);
