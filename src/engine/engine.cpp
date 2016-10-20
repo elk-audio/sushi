@@ -14,7 +14,7 @@ namespace engine {
 
 MIND_GET_LOGGER;
 
-void set_up_processing_graph(eastl::vector<std::vector<std::unique_ptr<StompBox>>> &graph, int sample_rate)
+void set_up_processing_graph(eastl::vector<eastl::vector<std::unique_ptr<StompBox>>> &graph, int sample_rate)
 {
     /* Set up identical left and right channels with 2 hardcoded plugins each*/
     StompBoxConfig config;
