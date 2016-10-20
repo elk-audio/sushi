@@ -39,19 +39,18 @@ set_up_processing_graph(std::vector<std::vector<std::unique_ptr<StompBox>>> &gra
     graph[RIGHT].push_back(std::move(gain_r));
 }
 
-void process_channel_graph(std::vector<std::unique_ptr<StompBox>> &channel,
+void AudioEngine::process_channel_graph(std::vector<std::unique_ptr<StompBox>> &channel,
                                                     const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
                                                     SampleBuffer<AUDIO_CHUNK_SIZE>& out)
 {
-    SampleBuffer<AUDIO_CHUNK_SIZE> buf_1 = in;
-    SampleBuffer<AUDIO_CHUNK_SIZE> buf_2(in.channel_count());
+    _tmp_bfr_1 = in;
 
     for (auto &p : channel)
     {
-        p->process(&buf_1, &buf_2);
-        std::swap(buf_1, buf_2);
+        p->process(&_tmp_bfr_1, &_tmp_bfr_2);
+        std::swap(_tmp_bfr_1, _tmp_bfr_2);
     }
-    out = buf_1;
+    out = _tmp_bfr_1;
 }
 
 
@@ -78,12 +77,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", ch, in_buffer->channel_count());
             break;
         }
-        SampleBuffer<AUDIO_CHUNK_SIZE> in(1);
-        SampleBuffer<AUDIO_CHUNK_SIZE> out(1);
-        in.replace(0, ch, *in_buffer);
-
-        process_channel_graph(_audio_graph[ch], in, out);
-        out_buffer->replace(ch, 0, out);
+        _tmp_bfr_in.replace(0, ch, *in_buffer);
+        process_channel_graph(_audio_graph[ch],_tmp_bfr_in, _tmp_bfr_out);
+        out_buffer->replace(ch, 0, _tmp_bfr_out);
     }
 }
 

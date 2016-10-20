@@ -60,7 +60,16 @@ public:
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 protected:
+    void process_channel_graph(std::vector<std::unique_ptr<StompBox>> &channel,
+                               const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
+                               SampleBuffer<AUDIO_CHUNK_SIZE>& out);
     std::vector<std::vector<std::unique_ptr<StompBox>>> _audio_graph{MAX_CHANNELS};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_in{1};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_out{1};
+
+    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_1{1};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_2{1};
+
 };
 
 } // namespace engine
