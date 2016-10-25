@@ -66,7 +66,7 @@ protected:
     void process_channel_graph(eastl::vector<std::unique_ptr<StompBox>> &channel,
                                const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
                                SampleBuffer<AUDIO_CHUNK_SIZE>& out);
-    eastl::vector<std::vector<std::unique_ptr<StompBox>>> _audio_graph{MAX_CHANNELS};
+    eastl::vector<eastl::vector<std::unique_ptr<StompBox>>> _audio_graph{MAX_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_in{1};
     SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_out{1};
 
