@@ -1,6 +1,9 @@
-//
-// Created by gustav on 10/18/16.
-//
+/**
+ * @Brief Compile time constants
+ * @copyright MIND Music Labs AB, Stockholm
+ *
+ *
+ */
 
 #ifndef SUSHI_CONSTANTS_H
 #define SUSHI_CONSTANTS_H

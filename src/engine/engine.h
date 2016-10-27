@@ -8,14 +8,15 @@
 #ifndef SUSHI_ENGINE_H
 #define SUSHI_ENGINE_H
 
-#include "plugin_interface.h"
-#include "library/sample_buffer.h"
-
-#include "library/mind_allocator.h"
-#include "EASTL/vector.h"
-
 #include <vector>
 #include <memory>
+
+#include "EASTL/vector.h"
+
+#include "plugin_interface.h"
+#include "plugin_chain.h"
+#include "library/sample_buffer.h"
+#include "library/mind_allocator.h"
 
 namespace sushi {
 namespace engine {
@@ -63,15 +64,9 @@ public:
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 protected:
-    void process_channel_graph(eastl::vector<std::unique_ptr<StompBox>> &channel,
-                               const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
-                               SampleBuffer<AUDIO_CHUNK_SIZE>& out);
-    eastl::vector<eastl::vector<std::unique_ptr<StompBox>>> _audio_graph{MAX_CHANNELS};
+    eastl::vector<PluginChain> _audio_graph{MAX_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_in{1};
     SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_out{1};
-
-    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_1{1};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_2{1};
 };
 
 } // namespace engine
