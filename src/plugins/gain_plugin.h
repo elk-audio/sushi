@@ -6,6 +6,7 @@
 #define GAIN_PLUGIN_H
 
 #include "plugin_interface.h"
+#include "library/plugin_parameters.h"
 
 namespace sushi {
 namespace gain_plugin {
@@ -31,6 +32,7 @@ public:
 private:
     StompBoxConfig _configuration;
     float _gain{1.0f};
+    FloatStompBoxParameter* _gain_parameter;
 };
 
 }// namespace gain_plugin
