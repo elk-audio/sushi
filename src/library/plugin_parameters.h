@@ -104,26 +104,26 @@ public:
                                    _value(default_value),
                                    _max_range(max_value),
                                    _min_range(min_value) {}
-    
+
     ~StompBoxParameter() {};
 
     T value()
     {
-        return _value.load();
+        return _value;
     }
 
     void set(T value)
     {
-        _value.store(_preProcessor->process(value));
+        _value = _preProcessor->process(value);
     }
 
     std::string as_string() override
     {
-        return std::to_string(_value.load());
+        return std::to_string(_value);
     }
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _preProcessor;
-    std::atomic<T> _value;
+    T _value;
     T _max_range;
     T _min_range;
 };
