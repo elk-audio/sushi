@@ -14,8 +14,7 @@ namespace engine {
 
 MIND_GET_LOGGER;
 
-void
-set_up_processing_graph(std::vector<std::vector<std::unique_ptr<StompBox>>> &graph, int sample_rate)
+void set_up_processing_graph(eastl::vector<eastl::vector<std::unique_ptr<StompBox>>> &graph, int sample_rate)
 {
     /* Set up identical left and right channels with 2 hardcoded plugins each*/
     StompBoxConfig config;
@@ -39,7 +38,7 @@ set_up_processing_graph(std::vector<std::vector<std::unique_ptr<StompBox>>> &gra
     graph[RIGHT].push_back(std::move(gain_r));
 }
 
-void AudioEngine::process_channel_graph(std::vector<std::unique_ptr<StompBox>> &channel,
+void AudioEngine::process_channel_graph(eastl::vector<std::unique_ptr<StompBox>> &channel,
                                                     const SampleBuffer<AUDIO_CHUNK_SIZE>& in,
                                                     SampleBuffer<AUDIO_CHUNK_SIZE>& out)
 {

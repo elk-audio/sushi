@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 #include "test_utils.h"
 #include "engine/engine.cpp"
+#include "library/mind_allocator.cpp"
 
 #define private public
 

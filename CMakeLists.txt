@@ -28,6 +28,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/engine/engine.cpp
+                      src/library/mind_allocator.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -41,6 +42,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
                         include/plugin_interface.h
                         src/library/sample_buffer.h
+                        src/library/mind_allocator.h
                         src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
@@ -58,6 +60,8 @@ set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
+                 "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
+                 "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 # /usr/local doesn't get added by default in Mac OS X
@@ -71,7 +75,7 @@ include_directories(${INCLUDE_DIRS})
 #  Linked libraries  #
 #################################
 
-set(LINK_LIBRARIES sndfile pthread)
+set(LINK_LIBRARIES EASTL sndfile pthread )
  
 if (APPLE)
     link_directories(/usr/local/lib)
