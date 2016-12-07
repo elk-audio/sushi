@@ -66,7 +66,16 @@ template<typename T>
 class ParameterPreProcessor
 {
 public:
-    virtual T process(T raw_value) {return raw_value;}
+    ParameterPreProcessor(T max, T min): _max_range(max), _min_range(min) {}
+    virtual T process(T raw_value) {return clip(raw_value);}
+
+protected:
+    T clip(T raw_value)
+    {
+        return (raw_value > _max_range? _max_range : (raw_value < _min_range? _min_range : raw_value));
+    }
+    T _max_range;
+    T _min_range;
 };
 
 /**
@@ -76,9 +85,11 @@ template<typename T>
 class dBToLinPreProcessor : public ParameterPreProcessor<T>
 {
 public:
+    dBToLinPreProcessor(T max, T min): ParameterPreProcessor<T>(max, min) {}
     T process(T raw_value) override
     {
-        return std::pow(10, raw_value / static_cast<T>(20));
+
+        return std::pow(10, this->clip(raw_value) / static_cast<T>(20));
     }
 };
 
@@ -95,37 +106,61 @@ public:
      * @brief Construct a parameter
      */
     StompBoxParameter(const std::string& name,
-                      T max_value,
-                      T min_value,
                       T default_value,
-                      ParameterPreProcessor<T>* preProcessor = nullptr) :
+                      ParameterPreProcessor<T>* preProcessor) :
                                    BaseStompBoxParameter(name, enumerated_type),
                                    _preProcessor(preProcessor),
-                                   _value(default_value),
-                                   _max_range(max_value),
-                                   _min_range(min_value) {}
+                                   _raw_value(default_value),
+                                   _value(preProcessor->process(default_value)) {}
 
     ~StompBoxParameter() {};
 
+    /**
+     * @brief Returns the parameter's current value.
+     */
     T value()
     {
         return _value;
     }
 
+    /**
+     * @brief Returns the parameter's unprocessed value.
+     */
+    T raw_value()
+    {
+        return _value;
+    }
+
+    /**
+     * @brief Set the value of the parameter. Called automatically from the host.
+     * For changin the value from inside the plugin, call set_asychronously() intead.
+     */
     void set(T value)
     {
+        _raw_value = value;
         _value = _preProcessor->process(value);
     }
 
+    /**
+     * @brief Tell the host to change the value of the parameter. This should be used
+     * instead of set() if the plugin itself wants to change the value of a parameter.
+     */
+    void set_asychronously(T value)
+    {
+        // TODO - implement!
+    }
+
+    /**
+     * @brief Returns the parameter's value as a string, i.e. "1.25".
+     */
     std::string as_string() override
     {
-        return std::to_string(_value);
+        return std::to_string(_raw_value);
     }
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _preProcessor;
+    T _raw_value;
     T _value;
-    T _max_range;
-    T _min_range;
 };
 
 typedef dBToLinPreProcessor<float> FloatdBToLinPreProcessor;
