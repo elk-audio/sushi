@@ -60,7 +60,8 @@ protected:
 };
 
 /**
- * @brief Parameter preprocessor for scaling or non-linear mapping
+ * @brief Parameter preprocessor for scaling or non-linear mapping. This basic,
+ * templated base class only supports clipping to a pre-defined range.
  */
 template<typename T>
 class ParameterPreProcessor
@@ -93,12 +94,32 @@ public:
 };
 
 /**
+ * @brief Formatter used to format the parameter value to a string
+ */
+template<typename T>
+class ParameterFormatPolicy
+{
+protected:
+    std::string format(T value) {return std::to_string(value);}
+};
+
+// template specializations
+template <>
+class ParameterFormatPolicy<bool>
+{
+protected:
+    std::string format(bool value) {return value? "True": "False";}
+};
+
+
+
+/**
  * @brief Templated plugin parameter, works out of the box for native
  * types like float, int, etc. Needs specialization for more complex
  * types, for which the template type should likely be a pointer.
  */
 template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter : public BaseStompBoxParameter
+class StompBoxParameter : public BaseStompBoxParameter, private ParameterFormatPolicy<T>
 {
 public:
     /**
@@ -154,8 +175,9 @@ public:
      */
     std::string as_string() override
     {
-        return std::to_string(_raw_value);
+        return ParameterFormatPolicy<T>::format(_raw_value);
     }
+
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _preProcessor;
     T _raw_value;
@@ -168,6 +190,11 @@ typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxPar
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
 
+/*template <>
+inline std::string StompBoxParameter<bool, StompBoxParameterType::BOOL>::as_string()
+{
+    return _raw_value? "True" : "False";
+}*/
 
 }  // namespace sushi
 
