@@ -88,7 +88,6 @@ public:
     dBToLinPreProcessor(T max, T min): ParameterPreProcessor<T>(max, min) {}
     T process(T raw_value) override
     {
-
         return std::pow(10, this->clip(raw_value) / static_cast<T>(20));
     }
 };
