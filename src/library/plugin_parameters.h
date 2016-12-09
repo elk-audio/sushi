@@ -46,7 +46,7 @@ public:
      * @brief Returns the parameters value as a formatted string
      * TODO: Ponder over if we want units included here or as a separate string
      */
-    virtual std::string as_string() { return "";} //Need to be implemented, otherwise no vtable will be generated
+    virtual const std::string as_string() { return "";} //Needs to be implemented, otherwise no vtable will be generated
 
     /**
      * @brief Returns the name of the parameter, i.e. "Oscillator pitch"
@@ -58,6 +58,7 @@ protected:
     std::string _name;  // TODO: consider fixed length eastl string here to avoid memory allocations when changing
     StompBoxParameterType _type;
 };
+
 
 /**
  * @brief Parameter preprocessor for scaling or non-linear mapping. This basic,
@@ -93,6 +94,7 @@ public:
     }
 };
 
+
 /**
  * @brief Formatter used to format the parameter value to a string
  */
@@ -100,16 +102,17 @@ template<typename T>
 class ParameterFormatPolicy
 {
 protected:
-    std::string format(T value) {return std::to_string(value);}
+    const std::string format(T value) {return std::to_string(value);}
 };
 
-// template specializations
-template <>
-class ParameterFormatPolicy<bool>
+/*
+ * The format() function can then be specialized for types that need special handling.
+ */
+template <> const inline std::string ParameterFormatPolicy<bool>::format(bool value)
 {
-protected:
-    std::string format(bool value) {return value? "True": "False";}
-};
+    return value? "True": "False";
+}
+
 
 
 
@@ -148,7 +151,7 @@ public:
      */
     T raw_value()
     {
-        return _value;
+        return _raw_value;
     }
 
     /**
@@ -172,8 +175,9 @@ public:
 
     /**
      * @brief Returns the parameter's value as a string, i.e. "1.25".
+     * TODO - Think about which value we actually want here, raw or processed!
      */
-    std::string as_string() override
+    const std::string as_string() override
     {
         return ParameterFormatPolicy<T>::format(_raw_value);
     }
@@ -184,17 +188,17 @@ private:
     T _value;
 };
 
+
+/*
+ * The templated forms are not intended to be accessed directly.
+ * Instead, the typedefs below provide direct access to the right
+ * type combinations.
+ */
 typedef dBToLinPreProcessor<float> FloatdBToLinPreProcessor;
 
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
-
-/*template <>
-inline std::string StompBoxParameter<bool, StompBoxParameterType::BOOL>::as_string()
-{
-    return _raw_value? "True" : "False";
-}*/
 
 }  // namespace sushi
 

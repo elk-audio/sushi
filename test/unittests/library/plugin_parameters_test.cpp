@@ -79,9 +79,9 @@ TEST_F(TestStompBoxParameter, TestDefaultValue)
 
 TEST_F(TestStompBoxParameter, TestSet)
 {
-    _module_under_test_float.set(3.25f);
-    EXPECT_FLOAT_EQ(3.25f, _module_under_test_float.value());
-    EXPECT_FLOAT_EQ(3.25f, _module_under_test_float.raw_value());
+    _module_under_test_float.set(13.25f);
+    EXPECT_FLOAT_EQ(10.0f, _module_under_test_float.value());
+    EXPECT_FLOAT_EQ(13.25f, _module_under_test_float.raw_value());
 
     _module_under_test_int.set(5);
     EXPECT_EQ(5, _module_under_test_int.value());
