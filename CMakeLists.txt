@@ -75,7 +75,7 @@ include_directories(${INCLUDE_DIRS})
 #  Linked libraries  #
 #################################
 
-set(LINK_LIBRARIES EASTL sndfile pthread )
+set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp )
  
 if (APPLE)
     link_directories(/usr/local/lib)

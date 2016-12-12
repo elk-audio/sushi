@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
 
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
+    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -66,6 +67,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_LOG_FILE:
             log_filename.assign(opt.arg);
+            break;
+
+        case OPT_IDX_CONFIG_FILE:
+            config_filename.assign(opt.arg);
             break;
 
         case OPT_IDX_OUTPUT_FILE:
@@ -93,6 +98,8 @@ int main(int argc, char* argv[])
     // Main body
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    // TODO: fill here with valid value
+    engine.init_from_json(config_filename);
     sushi::audio_frontend::OfflineFrontendConfiguration offline_config(input_filename,
                                                                        output_filename);
     sushi::audio_frontend::OfflineFrontend frontend(&engine);
