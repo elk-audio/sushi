@@ -54,9 +54,9 @@ class TestStompBoxParameter : public ::testing::Test
 protected:
     TestStompBoxParameter() {}
 
-    FloatStompBoxParameter _module_under_test_float{"FloatParameter", 1.0f, new ParameterPreProcessor<float>(10, -10)};
-    IntStompBoxParameter _module_under_test_int{"IntParameter", 0, new ParameterPreProcessor<int>(10, -10)};
-    BoolStompBoxParameter _module_under_test_bool{"BoolParameter", false, new ParameterPreProcessor<bool>(1, 0)};
+    FloatStompBoxParameter _module_under_test_float{"FloatParameter", "float_parameter", 1.0f, new ParameterPreProcessor<float>(10, -10)};
+    IntStompBoxParameter _module_under_test_int{"IntParameter", "int_parameter" , 0, new ParameterPreProcessor<int>(10, -10)};
+    BoolStompBoxParameter _module_under_test_bool{"BoolParameter", "bool_parameter", false, new ParameterPreProcessor<bool>(1, 0)};
 };
 
 TEST_F(TestStompBoxParameter, TestType)

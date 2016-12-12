@@ -33,8 +33,10 @@ namespace sushi {
 class BaseStompBoxParameter
 {
 public:
-    BaseStompBoxParameter(const std::string& name, StompBoxParameterType type) : _name(name),
-                                                                                 _type(type) {}
+    BaseStompBoxParameter(const std::string& label,
+                          const std::string& id,
+                          StompBoxParameterType type) : _label(label), _id(id), _type(type) {}
+
     virtual ~BaseStompBoxParameter() {}
 
     /**
@@ -49,13 +51,19 @@ public:
     virtual const std::string as_string() { return "";} //Needs to be implemented, otherwise no vtable will be generated
 
     /**
-     * @brief Returns the name of the parameter, i.e. "Oscillator pitch"
+     * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
      */
-    const std::string name() {return _name;}
+    const std::string label() {return _label;}
+
+    /**
+    * @brief Returns a unique identifier to the parameter i.e. "oscillator_2_pitch"
+    */
+    const std::string id() {return _id;}
 
 
 protected:
-    std::string _name;  // TODO: consider fixed length eastl string here to avoid memory allocations when changing
+    std::string _label;
+    std::string _id;  // TODO: consider fixed length eastl string here to avoid memory allocations when changing
     StompBoxParameterType _type;
 };
 
@@ -128,10 +136,11 @@ public:
     /**
      * @brief Construct a parameter
      */
-    StompBoxParameter(const std::string& name,
+    StompBoxParameter(const std::string& label,
+                      const std::string& id,
                       T default_value,
                       ParameterPreProcessor<T>* preProcessor) :
-                                   BaseStompBoxParameter(name, enumerated_type),
+                                   BaseStompBoxParameter(label, id, enumerated_type),
                                    _preProcessor(preProcessor),
                                    _raw_value(default_value),
                                    _value(preProcessor->process(default_value)) {}
