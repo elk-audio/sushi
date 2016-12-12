@@ -7,6 +7,8 @@
 #ifndef PLUGIN_INTERFACE_H
 #define PLUGIN_INTERFACE_H
 
+#include <string>
+
 #include "library/sample_buffer.h"
 namespace sushi {
 
@@ -19,6 +21,7 @@ enum class StompBoxStatus
     MEMORY_ERROR,
 };
 
+// TODO: this is more like host config than plugin config, maybe change the name?
 struct StompBoxConfig
 {
     int sample_rate;
@@ -31,22 +34,43 @@ public:
     virtual ~StompBox()
     {};
 
-/* (Re)initialize the plugin instance. This is called from the host's non-
-realtime environment at startup and configuration changes. 
-Not called at the same time as process(). When returning OK, the plugin 
-should be in a default state, i.e. filter registers, reverb tails, etc should 
-be zeroed */
+    /**
+     * @brief (Re)initialize the plugin instance. This is called from the host's non-
+     *         realtime environment at startup and configuration changes.
+     *         Not caled at the same time as process(). When returning OK, the plugin
+     *         should e in a default state, i.e. filter registers, reverb tails, etc should
+     *         be zerod
+     * @param configuration Host configuration object
+     *
+     * @return error code, checked by the host
+     */
     virtual StompBoxStatus init(const StompBoxConfig &configuration) = 0;
 
-/* Optional, makes for the second most minimal interface if included.
-Called before process() if called from the realtime environment.
-More can be added for setting other types of parameters (bool, int..) */
+    // TODO: in the future this and other properties could be defined in e.g. a text file inside a plugin bundle directory,
+    //       so the host can avoid to instantiate the plugins just to access these properties
+    /**
+     * @brief The host calls this function to retrieve a unique identifier (as string) for the given plugin.
+     * @return Uuid string
+     */
+    virtual std::string unique_id() const = 0;
+
+    //TODO : remove now that we have parameters class
+    /**
+     * @brief Optional, makes for the second most minimal interface if included.
+     * Called before process() if called from the realtime environment.
+     * More can be added for setting other types of parameters (bool, int..)
+     */
     virtual void set_parameter(int parameter_id, float value) = 0;
 
-/* Called by the host from the real time processing environment once for
-every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays 
-of audio data. The function should handle the case when in_buffer and 
-out_buffer points to the same memory location, for replacement processing.*/
+    /**
+     * @brief Called by the host from the real time processing environment once for
+     * every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays
+     * of audio data. The function should handle the case when in_buffer and
+     * out_buffer points to the same memory location, for replacement processing.
+     *
+     * @param in_buffer Pointer to input samples buffer
+     * @param out_buffer Pointer to output samples buffer, which is not necessarily pre-zeroed
+     */
     virtual void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 };
 
