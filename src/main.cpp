@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cstdlib>
 
+#include <json/json.h>
+
 #include "logging.h"
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
@@ -94,12 +96,31 @@ int main(int argc, char* argv[])
 
     MIND_GET_LOGGER;
 
+    // JSON configuration parsing
+
+    MIND_LOG_INFO("Reading configuration file {}", config_filename);
+    std::ifstream file(config_filename);
+    if (!file.good())
+    {
+        MIND_LOG_ERROR("Couldn't open JSON configuration file: {}", config_filename);
+        std::exit(1);
+    }
+
+    Json::Value config;
+    Json::Reader reader;
+    bool parse_ok = reader.parse(file, config, false);
+    if (!parse_ok)
+    {
+        MIND_LOG_ERROR("Error parsing JSON configuration file, {}", reader.getFormattedErrorMessages());
+        std::exit(1);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////
     // Main body
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
-    // TODO: fill here with valid value
-    engine.init_from_json(config_filename);
+    engine.init_from_json_array(config["stompbox_chains"]);
     sushi::audio_frontend::OfflineFrontendConfiguration offline_config(input_filename,
                                                                        output_filename);
     sushi::audio_frontend::OfflineFrontend frontend(&engine);

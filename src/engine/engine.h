@@ -76,11 +76,11 @@ public:
 
     /**
      * @brief Statically initialize engine and stompbox processing chains from definition in a JSON file
-     * @param config_file path to configuration file
+     * @param stompboxes_defs path to configuration file
      * @return EngineInitStatus::OK in case of success,
      *         different error code otherwise
      */
-    EngineInitStatus init_from_json(const std::string& config_file);
+    EngineInitStatus init_from_json_array(const Json::Value &stompboxes_defs);
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
@@ -93,7 +93,7 @@ private:
     /**
      * @brief Instantiate a plugin instance of a given type
      * @param uid String unique id
-     * @return Unique pointer to plugin instance if uid is valid,
+     * @return Pointer to plugin instance if uid is valid,
      *         nullptr otherwise
      */
     StompBox* _make_stompbox_from_unique_id(const std::string &uid);

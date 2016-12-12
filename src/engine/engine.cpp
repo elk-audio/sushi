@@ -73,41 +73,9 @@ EngineInitStatus AudioEngine::_fill_chain_from_json_definition(const int chain_i
 }
 
 // TODO: eventually when configuration complexity grows, move this stuff in a separate class
-EngineInitStatus AudioEngine::init_from_json(const std::string &config_file)
+EngineInitStatus AudioEngine::init_from_json_array(const Json::Value &chains)
 {
-    // Open and parse JSON file
-
-    MIND_LOG_INFO("Reading configuration file {}", config_file);
-    std::ifstream file(config_file);
-    if (!file.good())
-    {
-        MIND_LOG_ERROR("Couldn't open JSON configuration file: {}", config_file);
-        return EngineInitStatus::IO_ERROR;
-    }
-
-    Json::Value config;
-    Json::Reader reader;
-    bool parse_ok = reader.parse(file, config, false);
-    if (!parse_ok)
-    {
-        MIND_LOG_ERROR("Error parsing JSON configuration file, {}", reader.getFormattedErrorMessages());
-        return EngineInitStatus::INVALID_CONFIGURATION_FILE;
-    }
-
-    // Global engine configuration - sample_rate with sanity checks
-    const Json::Value& sample_rate = config["host_config"]["samplerate"];
-    if (sample_rate.isInt() && (sample_rate.asInt() > 1) && (sample_rate.asInt() < 1'000'000) )
-    {
-        _sample_rate = sample_rate.asInt();
-    }
-    else
-    {
-        // MIND_LOG_ERROR("Invalid sampling rate specified");
-        return EngineInitStatus::INVALID_SAMPLE_RATE;
-    }
-
     // Temp workaround: verify that the given JSON has only two independent chains
-    const Json::Value& chains = config["stompbox_chains"];
     if (! (chains.isArray() && (chains.size() == MAX_CHANNELS) ) )
     {
         MIND_LOG_ERROR("Wrong number of stompbox chains in configuration file");
