@@ -125,9 +125,16 @@ int main(int argc, char* argv[])
                                                                        output_filename);
     sushi::audio_frontend::OfflineFrontend frontend(&engine);
     auto fe_ret_code = frontend.init(&offline_config);
-    if (fe_ret_code != sushi::audio_frontend::AudioFrontendInitStatus::OK)
+    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
         fprintf(stderr, "Error initializing frontend, check logs for details.\n");
+        std::exit(1);
+    }
+
+    fe_ret_code = frontend.add_sequencer_events_from_json_def(config["events"]);
+    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+    {
+        fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");
         std::exit(1);
     }
 

@@ -1,5 +1,7 @@
 
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 
 #include "gtest/gtest.h"
 #include "test_utils.h"
@@ -67,7 +69,6 @@ TEST_F(TestEngine, TestInitFromJSON)
     {
         EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
     }
-
 
     // Initialize with a file cointaining 0.5 on both channels
     std::string test_config_file(test_data_dir);
