@@ -30,12 +30,9 @@ enum channel_id
     MAX_CHANNELS,
 };
 
-enum class EngineInitStatus
+enum class EngineReturnStatus
 {
     OK,
-    IO_ERROR,
-    INVALID_CONFIGURATION_FILE,
-    INVALID_SAMPLE_RATE,
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
     INVALID_STOMPBOX_CHAIN
@@ -62,6 +59,11 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
+    // FIXME: temp workaround for testing sequencer before PluginParameter implementation is in place
+    virtual EngineReturnStatus set_stompbox_parameter(const std::string& instance_id,
+                                                      const std::string& param_id,
+                                                      const float value) = 0;
+
 protected:
     int _sample_rate;
 };
@@ -80,9 +82,13 @@ public:
      * @return EngineInitStatus::OK in case of success,
      *         different error code otherwise
      */
-    EngineInitStatus init_from_json_array(const Json::Value &stompboxes_defs);
+    EngineReturnStatus init_from_json_array(const Json::Value &stompboxes_defs);
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+
+    EngineReturnStatus set_stompbox_parameter(const std::string& instance_id,
+                                              const std::string& param_id,
+                                              const float value) override;
 
 protected:
     eastl::vector<PluginChain> _audio_graph{MAX_CHANNELS};
@@ -105,7 +111,7 @@ private:
      * @return EngineInitStatus::OK if all plugins in the definitions are instantiated correctly,
      *         different error code otherwise
      */
-    EngineInitStatus _fill_chain_from_json_definition(const int chain_idx,
+    EngineReturnStatus _fill_chain_from_json_definition(const int chain_idx,
                                                       const Json::Value &stompbox_defs);
 
     // TODO: eventually port to EASTL

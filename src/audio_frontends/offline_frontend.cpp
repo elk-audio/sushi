@@ -1,16 +1,19 @@
 #include <logging.h>
 #include "offline_frontend.h"
 
+#include <cmath>
+#include <iostream>
+
 namespace sushi {
 
 namespace audio_frontend {
 
 MIND_GET_LOGGER;
 
-AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config)
+AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto ret_code = BaseAudioFrontend::init(config);
-    if (ret_code != AudioFrontendInitStatus::OK)
+    if (ret_code != AudioFrontendStatus::OK)
     {
         return ret_code;
     }
@@ -23,13 +26,13 @@ AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* co
     {
         cleanup();
         MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
-        return AudioFrontendInitStatus::INVALID_INPUT_FILE;
+        return AudioFrontendStatus::INVALID_INPUT_FILE;
     }
     if (_soundfile_info.channels != _engine->n_channels())
     {
         MIND_LOG_ERROR("Mismatch in number of channels of audio file, which is {}", _soundfile_info.channels);
         cleanup();
-        return AudioFrontendInitStatus::INVALID_N_CHANNELS;
+        return AudioFrontendStatus::INVALID_N_CHANNELS;
     }
     auto sample_rate_file = _soundfile_info.samplerate;
     if (sample_rate_file != _engine->sample_rate())
@@ -44,13 +47,46 @@ AudioFrontendInitStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* co
     {
         cleanup();
         MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
-        return AudioFrontendInitStatus::INVALID_OUTPUT_FILE;
+        return AudioFrontendStatus::INVALID_OUTPUT_FILE;
     }
 
     // Initialize buffers
     _file_buffer = new float[_engine->n_channels() * AUDIO_CHUNK_SIZE];
 
     return ret_code;
+}
+
+AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Json::Value &events)
+{
+    if (events.isArray())
+    {
+        _event_queue.reserve(events.size());
+        for(const Json::Value& e : events)
+        {
+            int sample = static_cast<int>( std::round(e["time"].asDouble() * static_cast<double>(_engine->sample_rate()) ) );
+            auto data = e["data"];
+            _event_queue.push_back(std::make_tuple(sample,
+                                                   data["stompbox_instance"].asString(),
+                                                   data["parameter_id"].asString(),
+                                                   data["value"].asFloat()) );
+        }
+
+        // Sort events by reverse time (lambda function compares first tuple element)
+        std::sort(std::begin(_event_queue), std::end(_event_queue),
+                  [](std::tuple<int, std::string, std::string, float> const &t1,
+                     std::tuple<int, std::string, std::string, float> const &t2)
+                  {
+                      return std::get<0>(t1) >= std::get<0>(t2);
+                  }
+        );
+    }
+    else
+    {
+        MIND_LOG_ERROR("Invalid format for events in configuration file");
+        return AudioFrontendStatus ::INVALID_SEQUENCER_DATA;
+    }
+
+    return AudioFrontendStatus ::OK;
 }
 
 void OfflineFrontend::cleanup()
@@ -75,14 +111,28 @@ void OfflineFrontend::cleanup()
 void OfflineFrontend::run()
 {
     int readcount;
+    int samplecount = 0;
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          _file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
+        samplecount += readcount;
+        // Process all events until the end of the frame
+        while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
+        {
+            auto next_event = _event_queue.back();
+            _engine->set_stompbox_parameter(std::get<1>(next_event),
+                                            std::get<2>(next_event),
+                                            std::get<3>(next_event));
+            _event_queue.pop_back();
+        }
+
+        // Render audio buffer
         _buffer.from_interleaved(_file_buffer);
         _engine->process_chunk(&_buffer, &_buffer);
         _buffer.to_interleaved(_file_buffer);
 
+        // Write to file
         // Should we check the number of samples effectively written?
         // Not done in libsndfile's example
         sf_writef_float(_output_file, _file_buffer, static_cast<sf_count_t>(readcount));
