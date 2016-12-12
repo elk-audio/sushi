@@ -7,6 +7,7 @@
 
 #define SUSHI_LOG_LEVEL_DEFAULT "info"
 #define SUSHI_LOG_FILENAME_DEFAULT "log"
+#define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +20,7 @@ struct SushiArg : public option::Arg
     static void print_error(const char* msg1, const option::Option& opt, const char* msg2)
     {
         fprintf(stderr, "%s", msg1);
-        fwrite(opt.name, opt.namelen, 1, stderr);
+        fwrite(opt.name, static_cast<size_t>(opt.namelen), 1, stderr);
         fprintf(stderr, "%s", msg2);
     }
 
@@ -76,6 +77,7 @@ enum OptionIndex
     OPT_IDX_HELP,
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
+    OPT_IDX_CONFIG_FILE,
     OPT_IDX_OUTPUT_FILE
 };
 
@@ -121,6 +123,14 @@ const option::Descriptor usage[] =
         "log-file",
         SushiArg::NonEmpty,
         "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+    },
+    {
+        OPT_IDX_CONFIG_FILE,
+        OPT_TYPE_UNUSED,
+        "c",
+        "config-file",
+        SushiArg::NonEmpty,
+        "\t\t-c <filename>, --config-file=<filename> \tSpecify configuration JSON file [default=" SUSHI_JSON_FILENAME_DEFAULT "]."
     },
     {
         OPT_IDX_OUTPUT_FILE,
