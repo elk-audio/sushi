@@ -64,19 +64,35 @@ public:
                                                  int max_value,
                                                  int min_value,
                                                  IntParameterPreProcessor* customPreProcessor = nullptr) override
-    {}
+    {
+        if (!customPreProcessor)
+        {
+            customPreProcessor = new IntParameterPreProcessor(max_value, min_value);
+        }
+        IntStompBoxParameter* param = new IntStompBoxParameter(label, id, default_value, customPreProcessor);
+        this->register_parameter(param);
+        return param;
+    };
 
     BoolStompBoxParameter* register_bool_parameter(const std::string& label,
                                                    const std::string& id,
                                                    bool default_value,
                                                    BoolParameterPreProcessor* customPreProcessor = nullptr) override
-    {}
+    {
+        if (!customPreProcessor)
+        {
+            customPreProcessor = new BoolParameterPreProcessor(true, false);
+        }
+        BoolStompBoxParameter* param = new BoolStompBoxParameter(label, id, default_value, customPreProcessor);
+        this->register_parameter(param);
+        return param;
+    };
 
 
 private:
     void register_parameter(BaseStompBoxParameter* parameter)
     {
-        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(), std::move(std::unique_ptr<BaseStompBoxParameter>(parameter))));
+        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(), std::unique_ptr<BaseStompBoxParameter>(parameter)));
     }
 
     std::unique_ptr<StompBox> _instance;

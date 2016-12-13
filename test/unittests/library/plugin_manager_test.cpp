@@ -11,7 +11,7 @@ class TestPlugin : public StompBox
 public:
     TestPlugin() {}
 
-    StompBoxStatus init(const StompBoxConfig &configuration) override {}
+    StompBoxStatus init(const StompBoxConfig& /*configuration*/) override {return StompBoxStatus::OK;}
 
     std::string unique_id() const override {return "test_plugin";}
 
@@ -65,4 +65,10 @@ TEST_F(StompBoxManagerTest, TestParameterHandling)
     ASSERT_EQ(StompBoxParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
     static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("param_1"))->set(6.0f);
     EXPECT_FLOAT_EQ(6.0f, static_cast<FloatStompBoxParameter*>(test_param)->value());
+
+    test_param = _module_under_test->register_int_parameter("Param 2", "param_2", 1, 10, 0);
+    EXPECT_EQ(StompBoxParameterType::INT, test_param->type());
+
+    test_param = _module_under_test->register_bool_parameter("Param 3", "param_3", true);
+    EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
 }
