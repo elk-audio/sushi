@@ -24,16 +24,18 @@ public:
     PluginChain() = default;
     ~PluginChain() = default;
     MIND_DECLARE_NON_COPYABLE(PluginChain)
-    /*
-     * Add a stompbox instance to the chain. The chain takes ownership of the instance and will
-     * destroy it when the chain is destroyed
+    /**
+     * @brief Adds a plugin to the end of the chain.
+     * @param The plugin to add.
      */
     void add(StompBox* plugin)
     {
-        _chain.push_back(std::unique_ptr<StompBox>(plugin));
+        _chain.push_back(plugin);
     }
-    /*
-     * Process the entire chain and put the result in out.
+    /**
+     * @brief Process the entire chain and store the result in out.
+     * @param in input buffer.
+     * @param out output buffer.
      */
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>& in, SampleBuffer<AUDIO_CHUNK_SIZE>& out)
     {
@@ -47,7 +49,7 @@ public:
     }
 
 private:
-    eastl::vector<std::unique_ptr<StompBox>> _chain;
+    eastl::vector<StompBox*> _chain;
     SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_1{1};
     SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_2{1};
 };
