@@ -8,6 +8,8 @@
 #define PLUGIN_INTERFACE_H
 
 #include "library/sample_buffer.h"
+#include "library/plugin_parameters.h"
+
 namespace sushi {
 
 /* Return Status Enum */
@@ -19,8 +21,44 @@ enum class StompBoxStatus
     MEMORY_ERROR,
 };
 
+/**
+ * @brief Controller object that gives the plugin an entry point to
+ * call host functions like registering parameters.
+ * Should not be accessed during calls to process()!?
+ */
+class StompBoxController
+{
+public:
+    /**
+     * @brief registers and returns a StompBoxParameter that will be
+     * managed by the host.
+     * If no preprocessor is supplied a standard max-min clip preprocessor
+     * will be contructed and attached to the parameter
+     */
+    virtual FloatStompBoxParameter* register_float_parameter(std::string label,
+                                                             std::string id,
+                                                            float default_value = 0,
+                                                            float max_value,
+                                                            float min,
+                                                            FloatParameterPreProcessor* customPreProcessor = nullptr) = 0;
+
+    virtual IntStompBoxParameter* register_int_parameter(std::string label,
+                                                         std::string id,
+                                                         int default_value,
+                                                         int max_value ,
+                                                         int min,
+                                                         IntParameterPreProcessor* customPreProcessor = nullptr) = 0;
+
+    virtual BoolStompBoxParameter* register_bool_parameter(std::string label,
+                                                           std::string id,
+                                                           bool default_value,
+                                                           BoolParameterPreProcessor* customPreProcessor = nullptr) = 0;
+
+};
+
 struct StompBoxConfig
 {
+    StompBoxController* controller;
     int sample_rate;
 };
 
