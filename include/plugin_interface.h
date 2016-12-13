@@ -37,22 +37,22 @@ public:
      * If no preprocessor is supplied a standard max-min clip preprocessor
      * will be contructed and attached to the parameter
      */
-    virtual FloatStompBoxParameter* register_float_parameter(std::string label,
-                                                             std::string id,
-                                                            float default_value = 0,
+    virtual FloatStompBoxParameter* register_float_parameter(const std::string& label,
+                                                             const std::string& id,
+                                                            float default_value ,
                                                             float max_value,
                                                             float min,
                                                             FloatParameterPreProcessor* customPreProcessor = nullptr) = 0;
 
-    virtual IntStompBoxParameter* register_int_parameter(std::string label,
-                                                         std::string id,
+    virtual IntStompBoxParameter* register_int_parameter(const std::string& label,
+                                                         const std::string& id,
                                                          int default_value,
                                                          int max_value ,
                                                          int min,
                                                          IntParameterPreProcessor* customPreProcessor = nullptr) = 0;
 
-    virtual BoolStompBoxParameter* register_bool_parameter(std::string label,
-                                                           std::string id,
+    virtual BoolStompBoxParameter* register_bool_parameter(const std::string& label,
+                                                           const std::string& id,
                                                            bool default_value,
                                                            BoolParameterPreProcessor* customPreProcessor = nullptr) = 0;
 
