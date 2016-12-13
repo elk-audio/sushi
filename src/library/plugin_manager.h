@@ -5,14 +5,14 @@
  *
  */
 
-
 #ifndef SUSHI_PLUGIN_MANAGER_H
 #define SUSHI_PLUGIN_MANAGER_H
 
+#include "library/plugin_parameters.h"
 #include "plugin_interface.h"
-#include "plugin_parameters.h"
 
-#include <EASTL>
+#include <map>
+namespace sushi {
 
 /**
  * @brief internal wrapper class for StompBox instances that keeps track
@@ -22,34 +22,66 @@
 class StompBoxManager : public StompBoxController
 {
 public:
+    MIND_DECLARE_NON_COPYABLE(StompBoxManager)
+    /**
+     * @brief Create a new StompboxManager that takes ownership of instance
+     * and will delete it when the manager is deleted.
+     */
+    StompBoxManager(StompBox* instance) : _instance(instance) {}
 
-    FloatStompBoxParameter* register_float_parameter(std::string label,
-                                                     std::string id,
-                                                     float default_value = 0,
+    virtual ~StompBoxManager() {};
+
+    /**
+     * @brief Return a pointer to the stompbox instance.
+     */
+    StompBox* instance() {return _instance.get();}
+
+    /**
+     * @brief Return the parameter with the given unique id
+     */
+    BaseStompBoxParameter* get_parameter(const std::string& id) {return _parameters.at(id).get();}
+
+    // Parameter registration functions inherited from StompBoxController
+    FloatStompBoxParameter* register_float_parameter(const std::string& label,
+                                                     const std::string& id,
+                                                     float default_value,
                                                      float max_value,
                                                      float min_value,
-                                                     FloatParameterPreProcessor* customPreProcessor = nullptr) override;
+                                                     FloatParameterPreProcessor* customPreProcessor = nullptr) override
+    {
+        if (!customPreProcessor)
+        {
+            customPreProcessor = new FloatParameterPreProcessor(max_value, min_value);
+        }
+        FloatStompBoxParameter* param = new FloatStompBoxParameter(label, id, default_value, customPreProcessor);
+        this->register_parameter(param);
+        return param;
+    };
 
-    IntStompBoxParameter* register_int_parameter(std::string label,
-                                                 std::string id,
+    IntStompBoxParameter* register_int_parameter(const std::string& label,
+                                                 const std::string& id,
                                                  int default_value,
                                                  int max_value,
                                                  int min_value,
-                                                 IntParameterPreProcessor* customPreProcessor = nullptr) override;
+                                                 IntParameterPreProcessor* customPreProcessor = nullptr) override
+    {}
 
-    BoolStompBoxParameter* register_bool_parameter(std::string label,
-                                                   std::string id,
+    BoolStompBoxParameter* register_bool_parameter(const std::string& label,
+                                                   const std::string& id,
                                                    bool default_value,
-                                                   BoolParameterPreProcessor* customPreProcessor = nullptr) override;
+                                                   BoolParameterPreProcessor* customPreProcessor = nullptr) override
+    {}
 
-    // 
-    std::unique_ptr<StompBox> _instance;
+
 private:
-    void register_parameter(BaseStompBoxParameter* parameter);
+    void register_parameter(BaseStompBoxParameter* parameter)
+    {
+        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(), std::move(std::unique_ptr<BaseStompBoxParameter>(parameter))));
+    }
 
-
-
-    eastl::vector<std::unique_ptr<BaseStompBoxParameter>> _parameters;
+    std::unique_ptr<StompBox> _instance;
+    std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
 };
 
+} // end namespace sushi
 #endif //SUSHI_PLUGIN_MANAGER_H
