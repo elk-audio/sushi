@@ -25,6 +25,11 @@ public:
 
     StompBoxStatus init(const StompBoxConfig &configuration) override;
 
+    std::string unique_id() const override
+    {
+        return std::string("sushi.testing.gain");
+    }
+
     void set_parameter(int parameter_id, float value) override;
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;

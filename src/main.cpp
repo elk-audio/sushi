@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cstdlib>
 
+#include <json/json.h>
+
 #include "logging.h"
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
@@ -48,6 +50,7 @@ int main(int argc, char* argv[])
 
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
+    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -66,6 +69,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_LOG_FILE:
             log_filename.assign(opt.arg);
+            break;
+
+        case OPT_IDX_CONFIG_FILE:
+            config_filename.assign(opt.arg);
             break;
 
         case OPT_IDX_OUTPUT_FILE:
@@ -89,17 +96,45 @@ int main(int argc, char* argv[])
 
     MIND_GET_LOGGER;
 
+    // JSON configuration parsing
+
+    MIND_LOG_INFO("Reading configuration file {}", config_filename);
+    std::ifstream file(config_filename);
+    if (!file.good())
+    {
+        MIND_LOG_ERROR("Couldn't open JSON configuration file: {}", config_filename);
+        std::exit(1);
+    }
+
+    Json::Value config;
+    Json::Reader reader;
+    bool parse_ok = reader.parse(file, config, false);
+    if (!parse_ok)
+    {
+        MIND_LOG_ERROR("Error parsing JSON configuration file, {}", reader.getFormattedErrorMessages());
+        std::exit(1);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////
     // Main body
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    engine.init_from_json_array(config["stompbox_chains"]);
     sushi::audio_frontend::OfflineFrontendConfiguration offline_config(input_filename,
                                                                        output_filename);
     sushi::audio_frontend::OfflineFrontend frontend(&engine);
     auto fe_ret_code = frontend.init(&offline_config);
-    if (fe_ret_code != sushi::audio_frontend::AudioFrontendInitStatus::OK)
+    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
         fprintf(stderr, "Error initializing frontend, check logs for details.\n");
+        std::exit(1);
+    }
+
+    fe_ret_code = frontend.add_sequencer_events_from_json_def(config["events"]);
+    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+    {
+        fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");
         std::exit(1);
     }
 

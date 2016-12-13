@@ -13,12 +13,13 @@ namespace audio_frontend {
 /**
  * @brief Error codes returned from init()
  */
-enum class AudioFrontendInitStatus
+enum class AudioFrontendStatus
 {
     OK,
     INVALID_N_CHANNELS,
     INVALID_INPUT_FILE,
-    INVALID_OUTPUT_FILE
+    INVALID_OUTPUT_FILE,
+    INVALID_SEQUENCER_DATA
 };
 
 /**
@@ -55,10 +56,10 @@ public:
      * @return AudioFrontendInitStatus::OK in case of success,
      *         or different error code otherwise.
      */
-    virtual AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config)
+    virtual AudioFrontendStatus init(BaseAudioFrontendConfiguration* config)
     {
         _config = config;
-        return AudioFrontendInitStatus::OK;
+        return AudioFrontendStatus::OK;
     }
 
     /**
