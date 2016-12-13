@@ -1,6 +1,11 @@
+
 #include "gtest/gtest.h"
+#include <fstream>
+
+#define private public
 #include "audio_frontends/offline_frontend.cpp"
 #include "engine_mockup.h"
+
 
 using ::testing::internal::posix::GetEnv;
 
@@ -44,7 +49,7 @@ TEST_F(TestOfflineFrontend, test_wav_processing)
     std::string output_file_name("./test_out.wav");
     OfflineFrontendConfiguration config(test_data_file, "./test_out.wav");
     auto ret_code = _module_under_test->init(&config);
-    if (ret_code != AudioFrontendInitStatus::OK)
+    if (ret_code != AudioFrontendStatus::OK)
     {
         EXPECT_TRUE(false) << "Error initializing Frontend";
     }
@@ -79,7 +84,7 @@ TEST_F(TestOfflineFrontend, test_invalid_input_file)
 {
     OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav");
     auto ret_code = _module_under_test->init(&config);
-    ASSERT_EQ(AudioFrontendInitStatus::INVALID_INPUT_FILE, ret_code);
+    ASSERT_EQ(AudioFrontendStatus::INVALID_INPUT_FILE, ret_code);
 }
 
 TEST_F(TestOfflineFrontend, test_channel_match)
@@ -95,5 +100,41 @@ TEST_F(TestOfflineFrontend, test_channel_match)
     test_data_file.append("/mono.wav");
     OfflineFrontendConfiguration config(test_data_file, "./test_out.wav");
     auto ret_code = _module_under_test->init(&config);
-    ASSERT_EQ(AudioFrontendInitStatus::INVALID_N_CHANNELS, ret_code);
+    ASSERT_EQ(AudioFrontendStatus::INVALID_N_CHANNELS, ret_code);
 }
+
+TEST_F(TestOfflineFrontend, test_add_sequencer_events)
+{
+    char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
+    if (test_data_dir == nullptr)
+    {
+        EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
+    }
+
+    // Initialize with a file cointaining 0.5 on both channels
+    std::string test_config_file(test_data_dir);
+    test_config_file.append("/config.json");
+
+    std::ifstream file(test_config_file);
+    Json::Value config;
+    Json::Reader reader;
+    bool parse_ok = reader.parse(file, config, false);
+    if (!parse_ok)
+    {
+        EXPECT_TRUE(false) << "Error parsing JSON config file\n";
+    }
+
+    _module_under_test->add_sequencer_events_from_json_def(config["events"]);
+
+    auto event_q = _module_under_test->_event_queue;
+    ASSERT_EQ(event_q.size(), 4u);
+
+    // Check that queue is sorted by time
+    auto jt = --event_q.end();
+    for(auto it = event_q.begin(); it != jt; ++it)
+    {
+        ASSERT_GE(std::get<0>(*it), std::get<0>(*(it+1)));
+    }
+
+}
+

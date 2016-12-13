@@ -9,7 +9,10 @@
 #include "base_audio_frontend.h"
 
 #include <string>
+#include <tuple>
+#include <vector>
 
+#include <json/json.h>
 #include <sndfile.h>
 
 namespace sushi {
@@ -48,7 +51,14 @@ public:
         cleanup();
     }
 
-    AudioFrontendInitStatus init(BaseAudioFrontendConfiguration* config) override;
+    AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
+
+    /**
+     * @brief Parse timestamped events from JSON structure and put them into an internal queueu.
+     * @param events
+     * @return AudioFrontendStatus::OK if successful, other error code otherwise
+     */
+    AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value& events);
 
     void cleanup() override;
 
@@ -61,6 +71,10 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{2};
     float*  _file_buffer;
+
+    // FIXME: quick workaround to implement event processing before having defined
+    //        an Event class. Change in the future when that will be available.
+    std::vector<std::tuple<int, std::string, std::string, float>> _event_queue;
 };
 
 }; // end namespace audio_frontend
