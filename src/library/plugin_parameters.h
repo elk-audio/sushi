@@ -203,6 +203,10 @@ private:
  * Instead, the typedefs below provide direct access to the right
  * type combinations.
  */
+typedef StompBoxParameterPreProcessor<float> FloatParameterPreProcessor;
+typedef StompBoxParameterPreProcessor<int> IntParameterPreProcessor;
+typedef StompBoxParameterPreProcessor<bool> BoolParameterPreProcessor;
+
 typedef dBToLinPreProcessor<float> FloatdBToLinPreProcessor;
 
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
