@@ -39,7 +39,15 @@ public:
     /**
      * @brief Return the parameter with the given unique id
      */
-    BaseStompBoxParameter* get_parameter(const std::string& id) {return _parameters.at(id).get();}
+    BaseStompBoxParameter* get_parameter(const std::string& id)
+    {
+        auto parameter = _parameters.find(id);
+        if (parameter == _parameters.end())
+        {
+            return nullptr;
+        }
+        return parameter->second.get();
+    }
 
     // Parameter registration functions inherited from StompBoxController
     FloatStompBoxParameter* register_float_parameter(const std::string& label,
@@ -92,7 +100,8 @@ public:
 private:
     void register_parameter(BaseStompBoxParameter* parameter)
     {
-        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(), std::unique_ptr<BaseStompBoxParameter>(parameter)));
+        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(),
+                                                                  std::unique_ptr<BaseStompBoxParameter>(parameter)));
     }
 
     std::unique_ptr<StompBox> _instance;
