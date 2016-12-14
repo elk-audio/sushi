@@ -17,6 +17,7 @@
 #include "plugin_chain.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
+#include "library/plugin_manager.h"
 
 class StompBox;
 
@@ -35,6 +36,7 @@ enum class EngineReturnStatus
     OK,
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
+    INVALID_PARAMETER_UID,
     INVALID_STOMPBOX_CHAIN
 };
 
@@ -115,7 +117,7 @@ private:
                                                       const Json::Value &stompbox_defs);
 
     // TODO: eventually port to EASTL
-    std::map<std::string, StompBox*> _instances_id_to_stompbox;
+    std::map<std::string, std::unique_ptr<StompBoxManager>> _instances_id_to_stompbox;
 };
 
 } // namespace engine

@@ -41,14 +41,14 @@ public:
                                                              const std::string& id,
                                                             float default_value ,
                                                             float max_value,
-                                                            float min,
+                                                            float min_value,
                                                             FloatParameterPreProcessor* customPreProcessor = nullptr) = 0;
 
     virtual IntStompBoxParameter* register_int_parameter(const std::string& label,
                                                          const std::string& id,
                                                          int default_value,
                                                          int max_value ,
-                                                         int min,
+                                                         int min_value,
                                                          IntParameterPreProcessor* customPreProcessor = nullptr) = 0;
 
     virtual BoolStompBoxParameter* register_bool_parameter(const std::string& label,

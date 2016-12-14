@@ -23,10 +23,6 @@ public:
     }
 };
 
-// A simple test case
-/*TEST (SampleTest, SimpleTestCase) {
-    ASSERT_TRUE (1);
-}*/
 
 class StompBoxManagerTest : public ::testing::Test
 {
@@ -71,4 +67,7 @@ TEST_F(StompBoxManagerTest, TestParameterHandling)
 
     test_param = _module_under_test->register_bool_parameter("Param 3", "param_3", true);
     EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
+
+    //test that an unknown parameter returns a null pointer
+    EXPECT_EQ(nullptr, _module_under_test->get_parameter("not_registered"));
 }

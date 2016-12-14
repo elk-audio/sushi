@@ -14,10 +14,9 @@ GainPlugin::~GainPlugin()
 StompBoxStatus GainPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
-    _gain_parameter = new FloatStompBoxParameter("Gain", "gain", 0, new FloatdBToLinPreProcessor(24, -24));
-    _gain_parameter->set(0.0);
+    // For now, leave it at linear gain, later we should use log gain.
+    _gain_parameter = configuration.controller->register_float_parameter("Gain", "gain", 0, 24, 0);
 
-    // register_parameter(_gain_parameter);
     return StompBoxStatus::OK;
 }
 
@@ -39,8 +38,9 @@ void GainPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sample
     assert(in_buffer->channel_count() == out_buffer->channel_count());
 
     /* With SampleBuffer operations */
+    float gain = _gain_parameter->value();
     out_buffer->clear();
-    out_buffer->add_with_gain(*in_buffer, _gain);
+    out_buffer->add_with_gain(*in_buffer, gain);
 }
 
 
