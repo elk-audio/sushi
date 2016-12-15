@@ -26,15 +26,15 @@ TEST_F(TestParameterPreProcessor, TestClipping)
 }
 
 
-class TestFloatdBToLinPreProcessor : public ::testing::Test
+class TestdBToLinPreProcessor : public ::testing::Test
 {
 protected:
-    TestFloatdBToLinPreProcessor() {}
+    TestdBToLinPreProcessor() {}
 
-    FloatdBToLinPreProcessor _module_under_test{-24, 24};
+    dBToLinPreProcessor _module_under_test{-24.0f, 24.0f};
 };
 
-TEST_F(TestFloatdBToLinPreProcessor, TestProcessing)
+TEST_F(TestdBToLinPreProcessor, TestProcessing)
 {
     EXPECT_NEAR(1.0, _module_under_test.process(0.0f), test_utils::DECIBEL_ERROR);
     EXPECT_NEAR(2.0, _module_under_test.process(6.0f), test_utils::DECIBEL_ERROR);

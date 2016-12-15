@@ -14,7 +14,7 @@ GainPlugin::~GainPlugin()
 StompBoxStatus GainPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
-    _gain_parameter = configuration.controller->register_float_parameter("gain", "Gain", 0.0, new FloatdBToLinPreProcessor(-120.0, 120.0));
+    _gain_parameter = configuration.controller->register_float_parameter("gain", "Gain", 0.0f, new dBToLinPreProcessor(-120.0f, 120.0f));
     return StompBoxStatus::OK;
 }
 

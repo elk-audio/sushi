@@ -90,21 +90,6 @@ protected:
 };
 
 /**
- * @brief Preprocessor example to map from decibels to linear gain.
- */
-template<typename T>
-class dBToLinPreProcessor : public ParameterPreProcessor<T>
-{
-public:
-    dBToLinPreProcessor(T max, T min): ParameterPreProcessor<T>(max, min) {}
-    T process(T raw_value) override
-    {
-        return std::pow(10, this->clip(raw_value) / static_cast<T>(20));
-    }
-};
-
-
-/**
  * @brief Formatter used to format the parameter value to a string
  */
 template<typename T>
@@ -206,11 +191,23 @@ typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
 typedef ParameterPreProcessor<int> IntParameterPreProcessor;
 typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 
-typedef dBToLinPreProcessor<float> FloatdBToLinPreProcessor;
-
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
+
+/**
+ * @brief Preprocessor example to map from decibels to linear gain.
+ */
+class dBToLinPreProcessor : public FloatParameterPreProcessor
+{
+public:
+    dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+    float process(float raw_value) override
+    {
+        return powf(10.0f, this->clip(raw_value) / 20.0f);
+    }
+};
+
 
 }  // namespace sushi
 
