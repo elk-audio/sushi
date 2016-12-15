@@ -12,6 +12,10 @@
 using namespace sushi;
 namespace test_utils {
 
+// Enough leeway to approximate 6dB to 2 times amplification.
+const float DECIBEL_ERROR = 0.01;
+
+
 inline void fill_sample_buffer(SampleBuffer <AUDIO_CHUNK_SIZE> &buffer, float value)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
@@ -27,6 +31,17 @@ inline void assert_buffer_value(float value, SampleBuffer <AUDIO_CHUNK_SIZE> &bu
         for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
         {
             ASSERT_FLOAT_EQ(value, buffer.channel(ch)[i]);
+        }
+    }
+};
+
+inline void assert_buffer_value(float value, SampleBuffer <AUDIO_CHUNK_SIZE> &buffer, float error_margin)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+        {
+            ASSERT_NEAR(value, buffer.channel(ch)[i], error_margin);
         }
     }
 };

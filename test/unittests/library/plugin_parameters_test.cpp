@@ -1,14 +1,11 @@
 #include "gtest/gtest.h"
 
 #include "library/plugin_parameters.h"
+#include "test_utils.h"
 
 #define private public
 
 using namespace sushi;
-
-// Enough leeway to approximate 6dB to 2 times amplification.
-const float DECIBEL_ERROR = 0.01;
-
 
 class TestParameterPreProcessor : public ::testing::Test
 {
@@ -39,9 +36,9 @@ protected:
 
 TEST_F(TestFloatdBToLinPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(1.0, _module_under_test.process(0.0f), DECIBEL_ERROR);
-    EXPECT_NEAR(2.0, _module_under_test.process(6.0f), DECIBEL_ERROR);
-    EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), DECIBEL_ERROR);
+    EXPECT_NEAR(1.0, _module_under_test.process(0.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(2.0, _module_under_test.process(6.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), test_utils::DECIBEL_ERROR);
 }
 
 /*

@@ -97,9 +97,9 @@ TEST_F(TestGainPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     FloatStompBoxParameter* gain_param = static_cast<FloatStompBoxParameter*>(_manager->get_parameter("gain"));
     ASSERT_TRUE(gain_param);
-    gain_param->set(2.0f);
+    gain_param->set(6.0f);
     _module_under_test->process(&in_buffer, &out_buffer);
-    test_utils::assert_buffer_value(2.0f, out_buffer);
+    test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }
 
 /*

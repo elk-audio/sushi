@@ -15,7 +15,7 @@ StompBoxStatus GainPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
     // For now, leave it at linear gain, later we should use log gain.
-    _gain_parameter = configuration.controller->register_float_parameter("Gain", "gain", 0, 24, 0);
+    _gain_parameter = configuration.controller->register_float_parameter("Gain", "gain", 0, 24, 0, new FloatdBToLinPreProcessor(24, -24));
 
     return StompBoxStatus::OK;
 }
