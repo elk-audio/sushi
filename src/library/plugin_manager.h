@@ -50,48 +50,45 @@ public:
     }
 
     // Parameter registration functions inherited from StompBoxController
-    FloatStompBoxParameter* register_float_parameter(const std::string& label,
-                                                     const std::string& id,
+
+    FloatStompBoxParameter* register_float_parameter(const std::string& id,
+                                                     const std::string& label,
                                                      float default_value,
-                                                     float max_value,
-                                                     float min_value,
-                                                     FloatParameterPreProcessor* customPreProcessor = nullptr) override
+                                                     FloatParameterPreProcessor* custom_pre_processor) override
     {
-        if (!customPreProcessor)
+        if (!custom_pre_processor)
         {
-            customPreProcessor = new FloatParameterPreProcessor(max_value, min_value);
+            custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
         }
-        FloatStompBoxParameter* param = new FloatStompBoxParameter(label, id, default_value, customPreProcessor);
+        FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, default_value, custom_pre_processor);
         this->register_parameter(param);
         return param;
     };
 
-    IntStompBoxParameter* register_int_parameter(const std::string& label,
-                                                 const std::string& id,
+    IntStompBoxParameter* register_int_parameter(const std::string& id,
+                                                 const std::string& label,
                                                  int default_value,
-                                                 int max_value,
-                                                 int min_value,
-                                                 IntParameterPreProcessor* customPreProcessor = nullptr) override
+                                                 IntParameterPreProcessor* custom_pre_processor) override
     {
-        if (!customPreProcessor)
+        if (!custom_pre_processor)
         {
-            customPreProcessor = new IntParameterPreProcessor(max_value, min_value);
+            custom_pre_processor = new IntParameterPreProcessor(0, 127);
         }
-        IntStompBoxParameter* param = new IntStompBoxParameter(label, id, default_value, customPreProcessor);
+        IntStompBoxParameter* param = new IntStompBoxParameter(id, label, default_value, custom_pre_processor);
         this->register_parameter(param);
         return param;
     };
 
-    BoolStompBoxParameter* register_bool_parameter(const std::string& label,
-                                                   const std::string& id,
+    BoolStompBoxParameter* register_bool_parameter(const std::string& id,
+                                                   const std::string& label,
                                                    bool default_value,
-                                                   BoolParameterPreProcessor* customPreProcessor = nullptr) override
+                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr) override
     {
-        if (!customPreProcessor)
+        if (!custom_pre_processor)
         {
-            customPreProcessor = new BoolParameterPreProcessor(true, false);
+            custom_pre_processor = new BoolParameterPreProcessor(true, false);
         }
-        BoolStompBoxParameter* param = new BoolStompBoxParameter(label, id, default_value, customPreProcessor);
+        BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, default_value, custom_pre_processor);
         this->register_parameter(param);
         return param;
     };

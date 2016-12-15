@@ -12,7 +12,7 @@ class TestParameterPreProcessor : public ::testing::Test
 protected:
     TestParameterPreProcessor() {}
 
-    ParameterPreProcessor<float> _module_under_test{10, -10};
+    ParameterPreProcessor<float> _module_under_test{-10, 10};
 };
 
 TEST_F(TestParameterPreProcessor, TestClipping)
@@ -31,7 +31,7 @@ class TestFloatdBToLinPreProcessor : public ::testing::Test
 protected:
     TestFloatdBToLinPreProcessor() {}
 
-    FloatdBToLinPreProcessor _module_under_test{24, -24};
+    FloatdBToLinPreProcessor _module_under_test{-24, 24};
 };
 
 TEST_F(TestFloatdBToLinPreProcessor, TestProcessing)
@@ -51,9 +51,9 @@ class TestStompBoxParameter : public ::testing::Test
 protected:
     TestStompBoxParameter() {}
 
-    FloatStompBoxParameter _module_under_test_float{"FloatParameter", "float_parameter", 1.0f, new ParameterPreProcessor<float>(10, -10)};
-    IntStompBoxParameter _module_under_test_int{"IntParameter", "int_parameter" , 0, new ParameterPreProcessor<int>(10, -10)};
-    BoolStompBoxParameter _module_under_test_bool{"BoolParameter", "bool_parameter", false, new ParameterPreProcessor<bool>(1, 0)};
+    FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", 1.0f, new ParameterPreProcessor<float>(-10, 10)};
+    IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", 0, new ParameterPreProcessor<int>(-10, 10)};
+    BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", false, new ParameterPreProcessor<bool>(0, 1)};
 };
 
 TEST_F(TestStompBoxParameter, TestType)

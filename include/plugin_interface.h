@@ -37,24 +37,20 @@ public:
      * If no preprocessor is supplied a standard max-min clip preprocessor
      * will be contructed and attached to the parameter
      */
-    virtual FloatStompBoxParameter* register_float_parameter(const std::string& label,
-                                                             const std::string& id,
-                                                            float default_value ,
-                                                            float max_value,
-                                                            float min_value,
-                                                            FloatParameterPreProcessor* customPreProcessor = nullptr) = 0;
+    virtual FloatStompBoxParameter* register_float_parameter(const std::string& id,
+                                                             const std::string& label,
+                                                             float default_value,
+                                                             FloatParameterPreProcessor* custom_pre_processor) = 0;
 
-    virtual IntStompBoxParameter* register_int_parameter(const std::string& label,
-                                                         const std::string& id,
+    virtual IntStompBoxParameter* register_int_parameter(const std::string& id,
+                                                         const std::string& label,
                                                          int default_value,
-                                                         int max_value ,
-                                                         int min_value,
-                                                         IntParameterPreProcessor* customPreProcessor = nullptr) = 0;
+                                                         IntParameterPreProcessor* custom_pre_processor) = 0;
 
-    virtual BoolStompBoxParameter* register_bool_parameter(const std::string& label,
-                                                           const std::string& id,
+    virtual BoolStompBoxParameter* register_bool_parameter(const std::string& id,
+                                                           const std::string& label,
                                                            bool default_value,
-                                                           BoolParameterPreProcessor* customPreProcessor = nullptr) = 0;
+                                                           BoolParameterPreProcessor* custom_pre_processor) = 0;
 
 };
 

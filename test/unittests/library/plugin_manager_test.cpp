@@ -53,17 +53,17 @@ TEST_F(StompBoxManagerTest, TestInstanciation)
 
 TEST_F(StompBoxManagerTest, TestParameterHandling)
 {
-    BaseStompBoxParameter* test_param = _module_under_test->register_float_parameter("Param 1", "param_1", 1, 10, 0);
+    BaseStompBoxParameter* test_param = _module_under_test->register_float_parameter("param_1", "Param 1", 1, new FloatParameterPreProcessor(0.0, 10.0));
 
     // access the parameter through its id and verify type and that you can set its value.
     ASSERT_EQ(StompBoxParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
     static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("param_1"))->set(6.0f);
     EXPECT_FLOAT_EQ(6.0f, static_cast<FloatStompBoxParameter*>(test_param)->value());
 
-    test_param = _module_under_test->register_int_parameter("Param 2", "param_2", 1, 10, 0);
+    test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
     EXPECT_EQ(StompBoxParameterType::INT, test_param->type());
 
-    test_param = _module_under_test->register_bool_parameter("Param 3", "param_3", true);
+    test_param = _module_under_test->register_bool_parameter("param_3", "Param 3", true);
     EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
 
     //test that an unknown parameter returns a null pointer

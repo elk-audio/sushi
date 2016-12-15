@@ -14,9 +14,9 @@ EqualizerPlugin::~EqualizerPlugin()
 StompBoxStatus EqualizerPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
-    _frequency = _configuration.controller->register_float_parameter("Frequency", "frequency", 1000, 20000, 20);
-    _gain = _configuration.controller->register_float_parameter("Gain", "gain", 0, 24, -24, new FloatdBToLinPreProcessor(24, -24));
-    _q = _configuration.controller->register_float_parameter("Q", "q", 1, 10, 0);
+    _frequency = _configuration.controller->register_float_parameter("frequency", "Frequency", 1000.0, new FloatParameterPreProcessor(20.0, 20'000));
+    _gain = _configuration.controller->register_float_parameter("gain", "Gain", 0, new FloatdBToLinPreProcessor(24, -24));
+    _q = _configuration.controller->register_float_parameter("q", "Q", 1, new FloatParameterPreProcessor(0.0, 10.0));
 
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
     _filter.reset();
