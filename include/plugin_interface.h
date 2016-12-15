@@ -40,17 +40,17 @@ public:
     virtual FloatStompBoxParameter* register_float_parameter(const std::string& id,
                                                              const std::string& label,
                                                              float default_value,
-                                                             FloatParameterPreProcessor* custom_pre_processor) = 0;
+                                                             FloatParameterPreProcessor* custom_pre_processor = nullptr) = 0;
 
     virtual IntStompBoxParameter* register_int_parameter(const std::string& id,
                                                          const std::string& label,
                                                          int default_value,
-                                                         IntParameterPreProcessor* custom_pre_processor) = 0;
+                                                         IntParameterPreProcessor* custom_pre_processor = nullptr) = 0;
 
     virtual BoolStompBoxParameter* register_bool_parameter(const std::string& id,
                                                            const std::string& label,
                                                            bool default_value,
-                                                           BoolParameterPreProcessor* custom_pre_processor) = 0;
+                                                           BoolParameterPreProcessor* custom_pre_processor = nullptr) = 0;
 
 };
 
