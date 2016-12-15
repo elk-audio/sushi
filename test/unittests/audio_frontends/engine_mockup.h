@@ -29,6 +29,13 @@ public:
             right_out[n] = right_in[n];
         }
     }
+
+    EngineReturnStatus set_stompbox_parameter(const std::string& /*instance_id*/,
+                                              const std::string& /*param_id*/,
+                                              const float /*value*/) override
+    {
+        return EngineReturnStatus::OK;
+    }
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H
