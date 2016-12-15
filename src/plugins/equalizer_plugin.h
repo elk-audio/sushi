@@ -11,13 +11,6 @@
 namespace sushi {
 namespace equalizer_plugin {
 
-enum equalizer_parameter_id
-{
-    FREQUENCY = 1,
-    GAIN,
-    Q
-};
-
 class EqualizerPlugin : public StompBox
 {
 public:
@@ -32,17 +25,15 @@ public:
         return std::string("sushi.testing.equalizer");
     }
 
-    void set_parameter(int parameter_id, float value) override;
-
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:
     biquad::BiquadFilter _filter;
     StompBoxConfig _configuration;
 
-    float _freq{1000.0f};
-    float _gain{0.0f};
-    float _q{1.0f};
+    FloatStompBoxParameter* _frequency;
+    FloatStompBoxParameter* _gain;
+    FloatStompBoxParameter* _q;
 };
 
 }// namespace equalizer_plugin

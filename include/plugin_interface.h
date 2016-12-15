@@ -91,14 +91,6 @@ public:
      */
     virtual std::string unique_id() const = 0;
 
-    //TODO : remove now that we have parameters class
-    /**
-     * @brief Optional, makes for the second most minimal interface if included.
-     * Called before process() if called from the realtime environment.
-     * More can be added for setting other types of parameters (bool, int..)
-     */
-    virtual void set_parameter(int parameter_id, float value) = 0;
-
     /**
      * @brief Called by the host from the real time processing environment once for
      * every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays

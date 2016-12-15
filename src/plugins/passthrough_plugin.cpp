@@ -17,9 +17,6 @@ StompBoxStatus PassthroughPlugin::init(const StompBoxConfig & /* configuration *
     return StompBoxStatus::OK;
 }
 
-void PassthroughPlugin::set_parameter(int /* parameter_id */, float /* value */)
-{}
-
 void
 PassthroughPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
