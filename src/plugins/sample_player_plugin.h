@@ -6,11 +6,15 @@
 #ifndef SUSHI_SAMPLER_PLUGIN_H
 #define SUSHI_SAMPLER_PLUGIN_H
 
+#include <array>
 
 #include "plugin_interface.h"
+#include "plugins/sample_player_voice.h"
 
 namespace sushi {
 namespace sample_player_plugin {
+
+constexpr size_t TOTAL_POLYPHONY = 8;
 
 class SamplePlayerPlugin : public StompBox
 {
@@ -32,6 +36,7 @@ private:
     StompBoxConfig _configuration;
 
     FloatStompBoxParameter* _volume_parameter;
+    std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
 
 }// namespace sample_player_plugin
