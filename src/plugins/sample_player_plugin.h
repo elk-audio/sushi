@@ -30,6 +30,8 @@ public:
         return std::string("sushi.testing.sampler");
     }
 
+    void process_events(void* events, bool realtime);
+
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:

@@ -18,6 +18,32 @@ StompBoxStatus SamplePlayerPlugin::init(const StompBoxConfig &configuration)
     return StompBoxStatus::OK;
 }
 
+void SamplePlayerPlugin::process_events(void* events, bool realtime)
+{
+    int note;
+    int offset;
+    // noteon
+    for (auto voice : _voices)
+    {
+        if (!voice.active())
+        {
+            voice.note_on(note, 1.0f, offset);
+            break;
+        }
+    }
+
+    // note off
+    for (auto voice : _voices)
+    {
+        if (voice.active() && voice.current_note() == note)
+        {
+            voice.note_off(1.0f, offset);
+            break;
+        }
+    }
+}
+
+
 void SamplePlayerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
 

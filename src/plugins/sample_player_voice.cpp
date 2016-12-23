@@ -12,8 +12,9 @@ inline float Sample::at(float position)
 
     float pos_int = std::floor(position);
     float weight = position - pos_int;
-    int sample_pos = static_cast<int>(pos_int);
 
+    // lrint is claimed to be faster than a cast from float to integer
+    int sample_pos = static_cast<int>(lrint(pos_int));
     float sample_low = (sample_pos < _length) ? _data[sample_pos] : 0.0f;
     float sample_high = (sample_pos + 1 < _length) ? _data[sample_pos + 1] : 0.0f;
 
