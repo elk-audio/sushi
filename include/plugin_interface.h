@@ -11,6 +11,7 @@
 
 #include "library/sample_buffer.h"
 #include "library/plugin_parameters.h"
+#include "library/plugin_events.h"
 
 namespace sushi {
 

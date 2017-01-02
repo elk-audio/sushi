@@ -43,6 +43,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         include/plugin_interface.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
+                        src/library/plugin_events.h
                         src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
