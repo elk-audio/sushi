@@ -6,6 +6,7 @@
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 #include "plugins/equalizer_plugin.h"
+#include "plugins/sample_player_plugin.h"
 
 
 namespace sushi {
@@ -36,6 +37,10 @@ StompBox* AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
     else if (uid == "sushi.testing.equalizer")
     {
         instance = new equalizer_plugin::EqualizerPlugin();
+    }
+    else if (uid == "sushi.testing.sampleplayer")
+    {
+        instance = new sample_player_plugin::SamplePlayerPlugin();
     }
 
     return instance;
@@ -152,6 +157,17 @@ EngineReturnStatus AudioEngine::set_stompbox_parameter(const std::string &instan
         }
         default: {}
     }
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::send_stompbox_event(const std::string& instance_id, BaseMindEvent* event)
+{
+    auto stompbox_instance = _instances_id_to_stompbox.find(instance_id);
+    if (stompbox_instance == _instances_id_to_stompbox.end())
+    {
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    stompbox_instance->second->instance()->process_event(event);
     return EngineReturnStatus::OK;
 }
 

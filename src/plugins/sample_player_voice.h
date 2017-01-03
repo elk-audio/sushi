@@ -25,7 +25,7 @@ enum class SamplePlayMode
 class Sample
 {
 public:
-    Sample();
+    Sample() : _data(nullptr), _length(0) {}
 
     Sample(const float* sample, int length) : _data(sample), _length(length) {}
 

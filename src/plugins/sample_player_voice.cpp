@@ -13,7 +13,7 @@ inline float Sample::at(float position)
     float pos_int = std::floor(position);
     float weight = position - pos_int;
 
-    // lrint is claimed to be faster than a cast from float to integer
+    /* lrint is claimed to be faster than a cast from float to integer */
     int sample_pos = static_cast<int>(lrint(pos_int));
     float sample_low = (sample_pos < _length) ? _data[sample_pos] : 0.0f;
     float sample_high = (sample_pos + 1 < _length) ? _data[sample_pos + 1] : 0.0f;
@@ -33,6 +33,7 @@ inline float Sample::at(float position)
 void Voice::note_on(int note, float velocity, int offset)
 {
     assert(offset < AUDIO_CHUNK_SIZE);
+
     /* Completely ignore any currently playing note, it will be cut off abruptly */
     _state = SamplePlayMode::STARTING;
     _velocity = velocity;
@@ -40,7 +41,7 @@ void Voice::note_on(int note, float velocity, int offset)
     _stop_offset = AUDIO_CHUNK_SIZE;
     _playback_pos = 0.0f;
     _current_note = note;
-    _playback_speed = powf(2, note - 60);
+    _playback_speed = powf(2, (note - 60)/12.0f);
 }
 
 /* No release functionality handled atm, notes are simply cut off
@@ -68,6 +69,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
     }
     /* Handle only mono samples for now */
     float* out = output_buffer.channel(0);
+
     for (int i = _start_offset; i < _stop_offset; i++)
     {
         out[i] += _sample->at(_playback_pos) * _velocity;

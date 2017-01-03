@@ -25,6 +25,8 @@ public:
         return std::string("sushi.testing.equalizer");
     }
 
+    void process_event(BaseMindEvent* /*event*/) {}
+
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:

@@ -65,16 +65,40 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
         {
             int sample = static_cast<int>( std::round(e["time"].asDouble() * static_cast<double>(_engine->sample_rate()) ) );
             auto data = e["data"];
-            _event_queue.push_back(std::make_tuple(sample,
-                                                   data["stompbox_instance"].asString(),
-                                                   data["parameter_id"].asString(),
-                                                   data["value"].asFloat()) );
+            if (e["type"] == "parameter_change")
+            {
+                _event_queue.push_back(std::make_tuple(sample,
+                                                       data["stompbox_instance"].asString(),
+                                                       new ParameterChangeEvent(MindEventType::FLOAT_PARAMETER_CHANGE,
+                                                                                sample % AUDIO_CHUNK_SIZE,
+                                                                                data["parameter_id"].asString(),
+                                                                                data["value"].asFloat())));
+
+            }
+            else if (e["type"] == "note_on")
+            {
+                _event_queue.push_back(std::make_tuple(sample,
+                                                      data["stompbox_instance"].asString(),
+                                                       new KeyboardEvent(MindEventType::NOTE_ON,
+                                                                        sample % AUDIO_CHUNK_SIZE,
+                                                                        data["note"].asInt(),
+                                                                        data["velocity"].asFloat())));
+            }
+            else if (e["type"] == "note_off")
+            {
+                _event_queue.push_back(std::make_tuple(sample,
+                                                       data["stompbox_instance"].asString(),
+                                                       new KeyboardEvent(MindEventType::NOTE_OFF,
+                                                                         sample % AUDIO_CHUNK_SIZE,
+                                                                         data["note"].asInt(),
+                                                                         data["velocity"].asFloat())));
+            }
         }
 
         // Sort events by reverse time (lambda function compares first tuple element)
         std::sort(std::begin(_event_queue), std::end(_event_queue),
-                  [](std::tuple<int, std::string, std::string, float> const &t1,
-                     std::tuple<int, std::string, std::string, float> const &t2)
+                  [](std::tuple<int, std::string, BaseMindEvent*> const &t1,
+                     std::tuple<int, std::string, BaseMindEvent*> const &t2)
                   {
                       return std::get<0>(t1) >= std::get<0>(t2);
                   }
@@ -121,10 +145,32 @@ void OfflineFrontend::run()
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
         {
             auto next_event = _event_queue.back();
-            _engine->set_stompbox_parameter(std::get<1>(next_event),
-                                            std::get<2>(next_event),
-                                            std::get<3>(next_event));
+            auto plugin_event = std::get<2>(next_event);
+            switch (plugin_event->type())
+            {
+                case MindEventType::BOOL_PARAMETER_CHANGE:
+                case MindEventType::INT_PARAMETER_CHANGE:
+                case MindEventType::FLOAT_PARAMETER_CHANGE:
+                {
+                    auto typed_event = static_cast<ParameterChangeEvent*>(std::get<2>(next_event));
+                    _engine->set_stompbox_parameter(std::get<1>(next_event),
+                                                    typed_event->id(),
+                                                    typed_event->value());
+                    break;
+                }
+                case MindEventType::NOTE_ON:
+                case MindEventType::NOTE_OFF:
+                {
+                    _engine->send_stompbox_event(std::get<1>(next_event), std::get<2>(next_event));
+                    break;
+                }
+                default:
+                    break;
+            }
+
             _event_queue.pop_back();
+            // TODO don't delete things in the audio thread.
+            delete plugin_event;
         }
 
         // Render audio buffer

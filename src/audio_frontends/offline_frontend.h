@@ -7,6 +7,7 @@
 #define SUSHI_OFFLINE_FRONTEND_H
 
 #include "base_audio_frontend.h"
+#include "library/plugin_events.h"
 
 #include <string>
 #include <tuple>
@@ -74,7 +75,7 @@ private:
 
     // FIXME: quick workaround to implement event processing before having defined
     //        an Event class. Change in the future when that will be available.
-    std::vector<std::tuple<int, std::string, std::string, float>> _event_queue;
+    std::vector<std::tuple<int, std::string, BaseMindEvent*>> _event_queue;
 };
 
 }; // end namespace audio_frontend

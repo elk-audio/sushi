@@ -33,8 +33,9 @@ enum class MindEventType
 class BaseMindEvent
 {
 public:
+    virtual ~BaseMindEvent() {}
     MindEventType type() { return _type;};
-    virtual bool is_real_time();
+    virtual bool is_real_time() = 0;
     int sample_offset() {return _sample_offset;}
 
 protected:
@@ -46,10 +47,10 @@ protected:
 /**
  * @brief Event class for all keyboard events.
  */
-class KeyboardEvent : BaseMindEvent
+class KeyboardEvent : public BaseMindEvent
 {
 public:
-    KeyboardEvent(MindEventType type, int offset, int note, float velocity) : KeyboardEvent::BaseMindEvent(_type, offset),
+    KeyboardEvent(MindEventType type, int offset, int note, float velocity) : BaseMindEvent(type, offset),
                                                                               _note(note),
                                                                               _velocity(velocity)
     {
@@ -58,6 +59,8 @@ public:
                type == MindEventType::NOTE_AFTERTOUCH);
     }
     bool is_real_time() override { return true;}
+    int note() {return _note;}
+    float velocity() {return _velocity;}
 
 protected:
     int _note;
@@ -87,6 +90,28 @@ protected:
     uint8_t _midi_byte_0;
     uint8_t _midi_byte_1;
     uint8_t _midi_byte_2;
+};
+
+class ParameterChangeEvent : public BaseMindEvent
+{
+public:
+    ParameterChangeEvent(MindEventType type, int offset, const std::string& id, float value) : BaseMindEvent(type, offset),
+                                                                                              _id(id),
+                                                                                              _value(value)
+    {
+        assert(type == MindEventType::FLOAT_PARAMETER_CHANGE ||
+               type == MindEventType::INT_PARAMETER_CHANGE ||
+               type == MindEventType::BOOL_PARAMETER_CHANGE);
+    }
+    const std::string& id() { return _id;}
+
+    float value(){return _value;}
+
+    bool is_real_time() override { return true;}
+
+protected:
+    std::string _id;
+    float _value;
 };
 
 /* TODO replace this with our own iterable container class or wrapper.*/

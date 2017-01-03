@@ -1,57 +1,110 @@
 #include <cassert>
-
+#include <sndfile.h>
+#include <iostream>
 #include "sample_player_plugin.h"
+#include "logging.h"
+
 
 namespace sushi {
 namespace sample_player_plugin {
 
+MIND_GET_LOGGER;
+
 SamplePlayerPlugin::SamplePlayerPlugin()
 {}
 
+
 SamplePlayerPlugin::~SamplePlayerPlugin()
-{}
+{
+    delete(_sample_buffer);
+}
+
 
 StompBoxStatus SamplePlayerPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
     _volume_parameter = configuration.controller->register_float_parameter("volume", "Volume", 0.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
+    if (load_sample_file(SAMPLE_FILE) != 0)
+    {
+        MIND_LOG_ERROR("Sample file not found");
+        return StompBoxStatus::ERROR;
+    }
     return StompBoxStatus::OK;
 }
 
-void SamplePlayerPlugin::process_events(void* events, bool realtime)
-{
-    int note;
-    int offset;
-    // noteon
-    for (auto voice : _voices)
-    {
-        if (!voice.active())
-        {
-            voice.note_on(note, 1.0f, offset);
-            break;
-        }
-    }
 
-    // note off
-    for (auto voice : _voices)
+void SamplePlayerPlugin::process_event(BaseMindEvent* event)
+{
+    switch (event->type())
     {
-        if (voice.active() && voice.current_note() == note)
+        case MindEventType::NOTE_ON:
         {
-            voice.note_off(1.0f, offset);
+            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            for (auto& voice : _voices)
+            {
+                if (!voice.active())
+                {
+                    voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                    break;
+                }
+                // TODO - better voice stealing algorithm
+                //_voices[0].note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+            }
             break;
         }
+        case MindEventType::NOTE_OFF:
+        {
+            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            for (auto& voice : _voices)
+            {
+                if (voice.active() && voice.current_note() == key_event->note())
+                {
+                    voice.note_off(key_event->velocity(), event->sample_offset());
+                    break;
+                }
+            }
+            break;
+        }
+        default: break;
     }
 }
 
 
-void SamplePlayerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
+void SamplePlayerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* /*in_buffer*/, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-
-
     float gain = _volume_parameter->value();
-    /* With SampleBuffer operations */
+    _buffer.clear();
     out_buffer->clear();
-    out_buffer->add_with_gain(*in_buffer, gain);
+    for (auto& voice : _voices)
+    {
+        voice.render(*out_buffer);
+    }
+    out_buffer->add_with_gain(_buffer, gain);
+}
+
+
+int SamplePlayerPlugin::load_sample_file(const std::string& file_name)
+{
+    SNDFILE*    sample_file;
+    SF_INFO     soundfile_info = {};
+
+    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
+    {
+        return -1;
+    }
+    assert(soundfile_info.channels == 1);
+
+    // Read sample data
+    _sample_buffer = new float[soundfile_info.frames];
+    int samples = sf_readf_float(sample_file, _sample_buffer, soundfile_info.frames);
+    assert(samples == soundfile_info.frames);
+
+    _sample.set_sample(_sample_buffer, soundfile_info.frames);
+    for (auto& voice : _voices)
+    {
+        voice.set_sample(&_sample);
+    }
+    return 0;
 }
 
 
