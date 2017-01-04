@@ -24,6 +24,7 @@ enum class SamplePlayMode
  */
 class Sample
 {
+    MIND_DECLARE_NON_COPYABLE(Sample);
 public:
     Sample() : _data(nullptr), _length(0) {}
 
@@ -45,7 +46,7 @@ public:
      * @param position The position in the sample buffer.
      * @return A linearily interpolated sample value.
      */
-    float at(float position);
+    float at(float position) const;
 
 private:
     const float* _data{nullptr};
@@ -73,6 +74,7 @@ enum class EnvelopeState
  */
 class Envelope
 {
+    MIND_DECLARE_NON_COPYABLE(Envelope);
 public:
     Envelope() {};
 
@@ -98,6 +100,12 @@ public:
      * @return The current envelope level.
      */
     float tick(int samples = 0);
+
+    /**
+     * @brief Get the envelopes current level without advancing it.
+     * @return The current envelope level.
+     */
+    float level() const {return _current_level;}
 
     /**
      * @brief Analogous to the gate signal on an analog envelope. Setting gate
@@ -134,6 +142,7 @@ private:
 
 class Voice
 {
+    MIND_DECLARE_NON_COPYABLE(Voice);
 public:
     Voice() {};
 

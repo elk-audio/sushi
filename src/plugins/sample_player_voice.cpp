@@ -6,19 +6,16 @@
 
 namespace sample_player_voice {
 
-inline float Sample::at(float position)
+inline float Sample::at(float position) const
 {
     assert(position >= 0);
 
-    float pos_int = std::floor(position);
-    float weight = position - pos_int;
-
-    /* lrint is claimed to be faster than a cast from float to integer */
-    int sample_pos = static_cast<int>(lrint(pos_int));
+    int sample_pos = static_cast<int>(position);
+    float weight = position - std::floor(position);
     float sample_low = (sample_pos < _length) ? _data[sample_pos] : 0.0f;
     float sample_high = (sample_pos + 1 < _length) ? _data[sample_pos + 1] : 0.0f;
 
-    return (sample_high * weight + sample_low * (1 - weight));
+    return (sample_high * weight + sample_low * (1.0f - weight));
 }
 
 
@@ -33,10 +30,6 @@ void Envelope::set_parameters(float attack, float decay, float sustain, float re
 
 inline float Envelope::tick(int samples)
 {
-    if (samples == 0)
-    {
-        return _current_level;
-    }
     /* The _samplerate * time factors could be precomputed when updating
      * parameters in order to save some cpu time in the realtime loop. */
     switch (_state)
@@ -78,7 +71,7 @@ inline float Envelope::tick(int samples)
     return _current_level;
 }
 
-inline void Envelope::gate(bool gate)
+void Envelope::gate(bool gate)
 {
     if (gate) /* If the envelope is running, it's simply restarted here */
     {
@@ -92,7 +85,7 @@ inline void Envelope::gate(bool gate)
     }
 }
 
-inline void Envelope::reset()
+void Envelope::reset()
 {
     _state = EnvelopeState::OFF;
     _current_level = 0.0f;
@@ -125,10 +118,7 @@ void Voice::note_on(int note, float velocity, int offset)
     _envelope.gate(true);
 }
 
-/* No release functionality handled atm, notes are simply cut off
- * when a note off is received. Release velocity is not handled
- * either. Has any synth ever supported it?
- */
+/* Release velocity is ignored atm. Has any synth ever supported it? */
 void Voice::note_off(float /*velocity*/, int offset)
 {
     assert(offset < AUDIO_CHUNK_SIZE);
@@ -159,7 +149,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
     }
     /* If there is a note off event, set the envelope to off and
      * render the rest of the chunk */
-    /*if (_state == SamplePlayMode::STOPPING)
+    if (_state == SamplePlayMode::STOPPING)
     {
         _envelope.gate(false);
         for (int i = _stop_offset + 1 ; i < AUDIO_CHUNK_SIZE; ++i)
@@ -167,7 +157,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
             out[i] += _sample->at(_playback_pos) * _velocity * _envelope.tick(1);
             _playback_pos += _playback_speed;
         }
-    }*/
+    }
 
     /* Handle state changes and reset render limits */
     switch (_state)

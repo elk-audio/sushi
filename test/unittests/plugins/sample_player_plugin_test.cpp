@@ -85,6 +85,12 @@ TEST_F(TestADSREnvelope, TestParameterLimits)
     float level = _module_under_test.tick(2);
     level = _module_under_test.tick(2);
     EXPECT_FLOAT_EQ(0.5f, level);
+
+    /* Reset and test with tick(0) */
+    _module_under_test.reset();
+    level = _module_under_test.tick(0);
+    EXPECT_FLOAT_EQ(0.0f, level);
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.level());
 }
 
 /* Test the Voice class */
