@@ -48,16 +48,28 @@ void SamplePlayerPlugin::process_event(BaseMindEvent* event)
     {
         case MindEventType::NOTE_ON:
         {
+            bool voice_allocated = false;
             KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
             for (auto& voice : _voices)
             {
                 if (!voice.active())
                 {
                     voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                    voice_allocated = true;
                     break;
                 }
-                // TODO - better voice stealing algorithm
-                //_voices[0].note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+            }
+            // TODO - improve voice stealing algorithm
+            if (!voice_allocated)
+            {
+                for (auto& voice : _voices)
+                {
+                    if (!voice.stopping())
+                    {
+                        voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                        break;
+                    }
+                 }
             }
             break;
         }
