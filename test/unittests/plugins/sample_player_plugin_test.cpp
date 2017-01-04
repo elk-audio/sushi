@@ -33,6 +33,59 @@ TEST_F(TestSampleWrapper, TestSampleInterpolation)
     EXPECT_FLOAT_EQ(1.5f, _module_under_test.at(2.5f));
 }
 
+/* Test the envelope class */
+class TestADSREnvelope : public ::testing::Test
+{
+protected:
+    TestADSREnvelope() {}
+
+    void SetUp()
+    {
+        _module_under_test.set_samplerate(100);
+        _module_under_test.set_parameters(1, 1, 0.5, 1);
+    }
+    Envelope _module_under_test;
+};
+
+TEST_F(TestADSREnvelope, TestNormalOperation)
+{
+    EXPECT_TRUE(_module_under_test.is_off());
+    _module_under_test.gate(true);
+    EXPECT_FALSE(_module_under_test.is_off());
+
+    /* Test Attack phase */
+    float level = _module_under_test.tick(50);
+    EXPECT_NEAR(0.5f, level, 0.001);
+    level = _module_under_test.tick(50);
+    /* this should be around the maximum peak */
+    EXPECT_NEAR(1.0f, level, 0.001);
+    /* Move into the decay phase */
+    level = _module_under_test.tick(50);
+    EXPECT_NEAR(0.75f, level, 0.001);
+    /* Now we should be in the sustain phase */
+    level = _module_under_test.tick(200);
+    EXPECT_FLOAT_EQ(0.5f, level);
+
+    /* Set gate off and go to decay phase */
+    _module_under_test.gate(false);
+    level = _module_under_test.tick(50);
+    EXPECT_NEAR(0.25f, level, 0.001);
+    level = _module_under_test.tick(55);
+    EXPECT_FLOAT_EQ(0.0f, level);
+    EXPECT_TRUE(_module_under_test.is_off());
+}
+
+TEST_F(TestADSREnvelope, TestParameterLimits)
+{
+    _module_under_test.set_parameters(0, 0, 0.5f, 0);
+    EXPECT_TRUE(_module_under_test.is_off());
+    _module_under_test.gate(true);
+    EXPECT_FALSE(_module_under_test.is_off());
+    /* Only 1 state transition per tick, so tick is called twice */
+    float level = _module_under_test.tick(2);
+    level = _module_under_test.tick(2);
+    EXPECT_FLOAT_EQ(0.5f, level);
+}
 
 /* Test the Voice class */
 class TestSamplerVoice : public ::testing::Test
@@ -45,6 +98,7 @@ protected:
     {
         _module_under_test.set_sample(&_sample);
         _module_under_test.set_samplerate(44100);
+        _module_under_test.set_envelope(0,0,1,0);
     }
 
     void TearDown()

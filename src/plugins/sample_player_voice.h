@@ -52,6 +52,85 @@ private:
     int  _length{0};
 };
 
+/**
+ * @brief Too avoid divisions by zero and extensive branching, we limit the
+ * attack, decay and sustain times to some extremely short value and not 0.
+ */
+constexpr float SHORTEST_ENVELOPE_TIME = 0.00001f;
+
+
+enum class EnvelopeState
+{
+    OFF,
+    ATTACK,
+    DECAY,
+    SUSTAIN,
+    RELEASE,
+};
+
+/**
+ * @brief A basic, linear slope, ADSR envelope class.
+ */
+class Envelope
+{
+public:
+    Envelope() {};
+
+    /**
+     * @brief Set the envelope parameters.
+     * @param attack Attack time in seconds.
+     * @param decay Decay time in seconds.
+     * @param sustain Sustain level, 0 - 1.
+     * @param release Release time in seconds.
+     */
+    void set_parameters(float attack, float decay, float sustain, float release);
+
+    /**
+     * @brief Set the current samplerate
+     * @param samplerate The samplerate in samples/second.
+     */
+    void set_samplerate(float samplerate) {_samplerate = samplerate;}
+
+    /**
+     * @brief Advance the envelope a given number of samples. and return
+     *        its current value.
+     * @param samples The number of samples to 'tick' the envelope.
+     * @return The current envelope level.
+     */
+    float tick(int samples = 0);
+
+    /**
+     * @brief Analogous to the gate signal on an analog envelope. Setting gate
+     *        to true will start the envelope in the attack phase and setting
+     *        it to false will start the release phase.
+     * @param gate Set to true for note on and false at note off.
+     */
+    void gate(bool gate);
+
+    /**
+     * @brief Returns true if the envelope is off, ie. the release phase is finished.
+     * @return
+     */
+    bool is_off() {return _state == EnvelopeState::OFF;}
+
+    /**
+     * @brief Resets the envelope to 0 immediately. Bypassing any long release
+     *        phase.
+     */
+    void reset();
+
+private:
+    float _attack{0};
+    float _decay{0};
+    float _sustain{1};
+    float _release{0.1};
+    float _current_level{0};
+    float _release_level{0};
+    float _samplerate{44100};
+
+    EnvelopeState _state{EnvelopeState::OFF};
+};
+
 
 class Voice
 {
@@ -64,7 +143,11 @@ public:
      * @brief Runtime samplerate configuration.
      * @param samplerate The playback samplerate.
      */
-    void set_samplerate(int samplerate) {_samplerate = samplerate;}
+    void set_samplerate(int samplerate)
+    {
+        _samplerate = samplerate;
+        _envelope.set_samplerate(samplerate);
+    }
 
     /**
      * @brief Runtime sample configuration
@@ -73,10 +156,24 @@ public:
     void set_sample(Sample* sample) {_sample = sample;}
 
     /**
+     * @brief Set the envelope parameters.
+     */
+    void set_envelope(float attack, float decay, float sustain, float release)
+    {
+        _envelope.set_parameters(attack, decay, sustain, release);
+    }
+
+    /**
      * @brief Is currently playing sound.
      * @return True if currently playing sound.
      */
     bool active() {return (_state != SamplePlayMode::STOPPED);}
+
+    /**
+     * @brief Is currently in the release phase but still playing.
+     * @return True if note is currently off but still sounding.
+     */
+    bool stopping() {return _state == SamplePlayMode::STOPPING;}
 
     /**
      * @brief Return the current note being played, if any.
@@ -115,6 +212,7 @@ private:
     int _samplerate{44100};
     Sample* _sample;
     SamplePlayMode _state{SamplePlayMode::STOPPED};
+    Envelope _envelope;
     int _current_note;
     float _playback_speed;
     float _velocity;

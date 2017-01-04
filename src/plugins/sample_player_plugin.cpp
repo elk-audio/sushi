@@ -23,7 +23,16 @@ SamplePlayerPlugin::~SamplePlayerPlugin()
 StompBoxStatus SamplePlayerPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
-    _volume_parameter = configuration.controller->register_float_parameter("volume", "Volume", 0.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
+    _volume_parameter  = configuration.controller->register_float_parameter("volume", "Volume", 0.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
+    _attack_parameter  = configuration.controller->register_float_parameter("attack", "Attack", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+    _decay_parameter   = configuration.controller->register_float_parameter("decay", "Decay", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+    _sustain_parameter = configuration.controller->register_float_parameter("sustain", "Sustain", 1.0f, new FloatParameterPreProcessor(0.0f, 1.0f));
+    _release_parameter = configuration.controller->register_float_parameter("release", "Release", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+
+    for (auto& voice : _voices)
+    {
+        voice.set_samplerate(configuration.sample_rate);
+    }
     if (load_sample_file(SAMPLE_FILE) != 0)
     {
         MIND_LOG_ERROR("Sample file not found");
@@ -73,10 +82,16 @@ void SamplePlayerPlugin::process_event(BaseMindEvent* event)
 void SamplePlayerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* /*in_buffer*/, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
     float gain = _volume_parameter->value();
+    float attack = _attack_parameter->value();
+    float decay = _decay_parameter->value();
+    float sustain = _sustain_parameter->value();
+    float release = _release_parameter->value();
+
     _buffer.clear();
     out_buffer->clear();
     for (auto& voice : _voices)
     {
+        voice.set_envelope(attack, decay, sustain, release);
         voice.render(*out_buffer);
     }
     out_buffer->add_with_gain(_buffer, gain);

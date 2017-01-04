@@ -45,6 +45,13 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
     FloatStompBoxParameter* _volume_parameter;
+    FloatStompBoxParameter* _attack_parameter;
+    FloatStompBoxParameter* _decay_parameter;
+    FloatStompBoxParameter* _sustain_parameter;
+    FloatStompBoxParameter* _release_parameter;
+
+
+
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
 
