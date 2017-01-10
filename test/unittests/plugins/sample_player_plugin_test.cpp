@@ -49,9 +49,9 @@ protected:
 
 TEST_F(TestADSREnvelope, TestNormalOperation)
 {
-    EXPECT_TRUE(_module_under_test.is_off());
+    EXPECT_TRUE(_module_under_test.finished());
     _module_under_test.gate(true);
-    EXPECT_FALSE(_module_under_test.is_off());
+    EXPECT_FALSE(_module_under_test.finished());
 
     /* Test Attack phase */
     float level = _module_under_test.tick(50);
@@ -72,15 +72,15 @@ TEST_F(TestADSREnvelope, TestNormalOperation)
     EXPECT_NEAR(0.25f, level, 0.001);
     level = _module_under_test.tick(55);
     EXPECT_FLOAT_EQ(0.0f, level);
-    EXPECT_TRUE(_module_under_test.is_off());
+    EXPECT_TRUE(_module_under_test.finished());
 }
 
 TEST_F(TestADSREnvelope, TestParameterLimits)
 {
     _module_under_test.set_parameters(0, 0, 0.5f, 0);
-    EXPECT_TRUE(_module_under_test.is_off());
+    EXPECT_TRUE(_module_under_test.finished());
     _module_under_test.gate(true);
-    EXPECT_FALSE(_module_under_test.is_off());
+    EXPECT_FALSE(_module_under_test.finished());
     /* Only 1 state transition per tick, so tick is called twice */
     float level = _module_under_test.tick(2);
     level = _module_under_test.tick(2);

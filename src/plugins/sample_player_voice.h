@@ -119,7 +119,7 @@ public:
      * @brief Returns true if the envelope is off, ie. the release phase is finished.
      * @return
      */
-    bool is_off() {return _state == EnvelopeState::OFF;}
+    bool finished() {return _state == EnvelopeState::OFF;}
 
     /**
      * @brief Resets the envelope to 0 immediately. Bypassing any long release

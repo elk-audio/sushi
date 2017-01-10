@@ -9,6 +9,7 @@ namespace sample_player_voice {
 inline float Sample::at(float position) const
 {
     assert(position >= 0);
+    assert(_data);
 
     int sample_pos = static_cast<int>(position);
     float weight = position - std::floor(position);
@@ -147,6 +148,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
         out[i] += _sample->at(_playback_pos) * _velocity * _envelope.tick(1);
         _playback_pos += _playback_speed;
     }
+
     /* If there is a note off event, set the envelope to off and
      * render the rest of the chunk */
     if (_state == SamplePlayMode::STOPPING)
@@ -168,7 +170,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
             break;
 
         case SamplePlayMode::STOPPING:
-            if (_envelope.is_off())
+            if (_envelope.finished())
             {
                 _state = SamplePlayMode::STOPPED;
             }
