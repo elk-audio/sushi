@@ -33,8 +33,8 @@ namespace sushi {
 class BaseStompBoxParameter
 {
 public:
-    BaseStompBoxParameter(const std::string& label,
-                          const std::string& id,
+    BaseStompBoxParameter(const std::string& id,
+                          const std::string& label,
                           StompBoxParameterType type) : _label(label), _id(id), _type(type) {}
 
     virtual ~BaseStompBoxParameter() {}
@@ -76,7 +76,7 @@ template<typename T>
 class ParameterPreProcessor
 {
 public:
-    ParameterPreProcessor(T max, T min): _max_range(max), _min_range(min) {}
+    ParameterPreProcessor(T min, T max): _min_range(min), _max_range(max) {}
     virtual T process(T raw_value) {return clip(raw_value);}
 
 protected:
@@ -84,24 +84,10 @@ protected:
     {
         return (raw_value > _max_range? _max_range : (raw_value < _min_range? _min_range : raw_value));
     }
-    T _max_range;
+
     T _min_range;
+    T _max_range;
 };
-
-/**
- * @brief Preprocessor example to map from decibels to linear gain.
- */
-template<typename T>
-class dBToLinPreProcessor : public ParameterPreProcessor<T>
-{
-public:
-    dBToLinPreProcessor(T max, T min): ParameterPreProcessor<T>(max, min) {}
-    T process(T raw_value) override
-    {
-        return std::pow(10, this->clip(raw_value) / static_cast<T>(20));
-    }
-};
-
 
 /**
  * @brief Formatter used to format the parameter value to a string
@@ -122,8 +108,6 @@ template <> const inline std::string ParameterFormatPolicy<bool>::format(bool va
 }
 
 
-
-
 /**
  * @brief Templated plugin parameter, works out of the box for native
  * types like float, int, etc. Needs specialization for more complex
@@ -136,14 +120,14 @@ public:
     /**
      * @brief Construct a parameter
      */
-    StompBoxParameter(const std::string& label,
-                      const std::string& id,
+    StompBoxParameter(const std::string& id,
+                      const std::string& label,
                       T default_value,
-                      ParameterPreProcessor<T>* preProcessor) :
-                                   BaseStompBoxParameter(label, id, enumerated_type),
-                                   _preProcessor(preProcessor),
+                      ParameterPreProcessor<T>* pre_processor) :
+                                   BaseStompBoxParameter(id, label, enumerated_type),
+                                   _pre_processor(pre_processor),
                                    _raw_value(default_value),
-                                   _value(preProcessor->process(default_value)) {}
+                                   _value(pre_processor->process(default_value)) {}
 
     ~StompBoxParameter() {};
 
@@ -170,7 +154,7 @@ public:
     void set(T value)
     {
         _raw_value = value;
-        _value = _preProcessor->process(value);
+        _value = _pre_processor->process(value);
     }
 
     /**
@@ -192,7 +176,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ParameterPreProcessor<T>> _preProcessor;
+    std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
     T _raw_value;
     T _value;
 };
@@ -203,11 +187,27 @@ private:
  * Instead, the typedefs below provide direct access to the right
  * type combinations.
  */
-typedef dBToLinPreProcessor<float> FloatdBToLinPreProcessor;
+typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
+typedef ParameterPreProcessor<int> IntParameterPreProcessor;
+typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
+
+/**
+ * @brief Preprocessor example to map from decibels to linear gain.
+ */
+class dBToLinPreProcessor : public FloatParameterPreProcessor
+{
+public:
+    dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+    float process(float raw_value) override
+    {
+        return powf(10.0f, this->clip(raw_value) / 20.0f);
+    }
+};
+
 
 }  // namespace sushi
 

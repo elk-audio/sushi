@@ -1,21 +1,18 @@
 #include "gtest/gtest.h"
 
 #include "library/plugin_parameters.h"
+#include "test_utils.h"
 
 #define private public
 
 using namespace sushi;
-
-// Enough leeway to approximate 6dB to 2 times amplification.
-const float DECIBEL_ERROR = 0.01;
-
 
 class TestParameterPreProcessor : public ::testing::Test
 {
 protected:
     TestParameterPreProcessor() {}
 
-    ParameterPreProcessor<float> _module_under_test{10, -10};
+    ParameterPreProcessor<float> _module_under_test{-10, 10};
 };
 
 TEST_F(TestParameterPreProcessor, TestClipping)
@@ -29,19 +26,19 @@ TEST_F(TestParameterPreProcessor, TestClipping)
 }
 
 
-class TestFloatdBToLinPreProcessor : public ::testing::Test
+class TestdBToLinPreProcessor : public ::testing::Test
 {
 protected:
-    TestFloatdBToLinPreProcessor() {}
+    TestdBToLinPreProcessor() {}
 
-    FloatdBToLinPreProcessor _module_under_test{24, -24};
+    dBToLinPreProcessor _module_under_test{-24.0f, 24.0f};
 };
 
-TEST_F(TestFloatdBToLinPreProcessor, TestProcessing)
+TEST_F(TestdBToLinPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(1.0, _module_under_test.process(0.0f), DECIBEL_ERROR);
-    EXPECT_NEAR(2.0, _module_under_test.process(6.0f), DECIBEL_ERROR);
-    EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), DECIBEL_ERROR);
+    EXPECT_NEAR(1.0, _module_under_test.process(0.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(2.0, _module_under_test.process(6.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), test_utils::DECIBEL_ERROR);
 }
 
 /*
@@ -54,9 +51,9 @@ class TestStompBoxParameter : public ::testing::Test
 protected:
     TestStompBoxParameter() {}
 
-    FloatStompBoxParameter _module_under_test_float{"FloatParameter", "float_parameter", 1.0f, new ParameterPreProcessor<float>(10, -10)};
-    IntStompBoxParameter _module_under_test_int{"IntParameter", "int_parameter" , 0, new ParameterPreProcessor<int>(10, -10)};
-    BoolStompBoxParameter _module_under_test_bool{"BoolParameter", "bool_parameter", false, new ParameterPreProcessor<bool>(1, 0)};
+    FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", 1.0f, new ParameterPreProcessor<float>(-10, 10)};
+    IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", 0, new ParameterPreProcessor<int>(-10, 10)};
+    BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", false, new ParameterPreProcessor<bool>(0, 1)};
 };
 
 TEST_F(TestStompBoxParameter, TestType)

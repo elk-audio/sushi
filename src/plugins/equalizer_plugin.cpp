@@ -14,30 +14,13 @@ EqualizerPlugin::~EqualizerPlugin()
 StompBoxStatus EqualizerPlugin::init(const StompBoxConfig &configuration)
 {
     _configuration = configuration;
+    _frequency = _configuration.controller->register_float_parameter("frequency", "Frequency", 1000.0f, new FloatParameterPreProcessor(20.0f, 20000.0f));
+    _gain = _configuration.controller->register_float_parameter("gain", "Gain", 0, new dBToLinPreProcessor(-24.0f, 24.0f));
+    _q = _configuration.controller->register_float_parameter("q", "Q", 1, new FloatParameterPreProcessor(0.0f, 10.0f));
+
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
     _filter.reset();
     return StompBoxStatus::OK;
-}
-
-void EqualizerPlugin::set_parameter(int parameter_id, float value)
-{
-    switch (parameter_id)
-    {
-        case equalizer_parameter_id::FREQUENCY:
-        {
-            _freq = value;
-            break;
-        }
-        case equalizer_parameter_id::GAIN:
-        {
-            _gain = value;
-            break;
-        }
-        case equalizer_parameter_id::Q:
-        {
-            _q = value;
-        }
-    }
 }
 
 void EqualizerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
@@ -46,11 +29,16 @@ void EqualizerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, S
     assert(in_buffer->channel_count() == 1);
     assert(out_buffer->channel_count() == 1);
 
+    /* Read the current parameter values */
+    float frequency = _frequency->value();
+    float gain = _gain->value();
+    float q = _q->value();
+
     /* Recalculates the coefficients once per audio chunk, this makes for
      * predictable cpu load for every chunk */
 
     biquad::BiquadCoefficients coefficients;
-    biquad::calc_biquad_peak(coefficients, _configuration.sample_rate, _freq, _q, _gain);
+    biquad::calc_biquad_peak(coefficients, _configuration.sample_rate, frequency, q, gain);
     _filter.set_coefficients(coefficients);
     _filter.process(in_buffer->channel(0), out_buffer->channel(0), AUDIO_CHUNK_SIZE);
 }

@@ -57,7 +57,12 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
             }
             _audio_graph[chain_idx].add(instance);
             auto instance_id = stompbox_def["id"].asString();
-            _instances_id_to_stompbox[instance_id] = instance;
+            _instances_id_to_stompbox[instance_id] = std::make_unique<StompBoxManager>(instance);
+
+            StompBoxConfig config;
+            config.sample_rate = _sample_rate;
+            config.controller = _instances_id_to_stompbox[instance_id].get();
+            instance->init(config);
         }
     }
     else
@@ -118,10 +123,35 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 EngineReturnStatus AudioEngine::set_stompbox_parameter(const std::string &instance_id, const std::string &param_id,
                                                        const float value)
 {
-    std::cout << "Instance:  " << instance_id
-              << ",  param:  " << param_id
-              << ",  value:  " << value << std::endl;
-
+    auto stompbox_instance = _instances_id_to_stompbox.find(instance_id);
+    if (stompbox_instance == _instances_id_to_stompbox.end())
+    {
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    auto parameter = stompbox_instance->second->get_parameter(param_id);
+    if ( !parameter)
+    {
+        return EngineReturnStatus::INVALID_PARAMETER_UID;
+    }
+    switch(parameter->type())
+    {
+        case StompBoxParameterType::FLOAT:
+        {
+            static_cast<FloatStompBoxParameter*>(parameter)->set(value);
+            break;
+        }
+        case StompBoxParameterType::INT:
+        {
+            static_cast<IntStompBoxParameter*>(parameter)->set(static_cast<int>(value));
+            break;
+        }
+        case StompBoxParameterType::BOOL:
+        {
+            static_cast<IntStompBoxParameter*>(parameter)->set(value > 0.5f ? true : false);
+            break;
+        }
+        default: {}
+    }
     return EngineReturnStatus::OK;
 }
 

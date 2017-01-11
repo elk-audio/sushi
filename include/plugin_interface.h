@@ -10,6 +10,8 @@
 #include <string>
 
 #include "library/sample_buffer.h"
+#include "library/plugin_parameters.h"
+
 namespace sushi {
 
 /* Return Status Enum */
@@ -21,9 +23,40 @@ enum class StompBoxStatus
     MEMORY_ERROR,
 };
 
-// TODO: this is more like host config than plugin config, maybe change the name?
+/**
+ * @brief Controller object that gives the plugin an entry point to
+ * call host functions like registering parameters.
+ * Should not be accessed during calls to process()!?
+ */
+class StompBoxController
+{
+public:
+    /**
+     * @brief registers and returns a StompBoxParameter that will be
+     * managed by the host.
+     * If no preprocessor is supplied a standard max-min clip preprocessor
+     * will be contructed and attached to the parameter
+     */
+    virtual FloatStompBoxParameter* register_float_parameter(const std::string& id,
+                                                             const std::string& label,
+                                                             float default_value,
+                                                             FloatParameterPreProcessor* custom_pre_processor = nullptr) = 0;
+
+    virtual IntStompBoxParameter* register_int_parameter(const std::string& id,
+                                                         const std::string& label,
+                                                         int default_value,
+                                                         IntParameterPreProcessor* custom_pre_processor = nullptr) = 0;
+
+    virtual BoolStompBoxParameter* register_bool_parameter(const std::string& id,
+                                                           const std::string& label,
+                                                           bool default_value,
+                                                           BoolParameterPreProcessor* custom_pre_processor = nullptr) = 0;
+
+};
+
 struct StompBoxConfig
 {
+    StompBoxController* controller;
     int sample_rate;
 };
 
@@ -53,14 +86,6 @@ public:
      * @return Uuid string
      */
     virtual std::string unique_id() const = 0;
-
-    //TODO : remove now that we have parameters class
-    /**
-     * @brief Optional, makes for the second most minimal interface if included.
-     * Called before process() if called from the realtime environment.
-     * More can be added for setting other types of parameters (bool, int..)
-     */
-    virtual void set_parameter(int parameter_id, float value) = 0;
 
     /**
      * @brief Called by the host from the real time processing environment once for
