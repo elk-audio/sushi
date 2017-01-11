@@ -55,7 +55,7 @@ private:
 
 /**
  * @brief Too avoid divisions by zero and extensive branching, we limit the
- * attack, decay and sustain times to some extremely short value and not 0.
+ * attack, decay and release times to some extremely short value and not 0.
  */
 constexpr float SHORTEST_ENVELOPE_TIME = 0.00001f;
 
@@ -94,7 +94,7 @@ public:
     void set_samplerate(float samplerate) {_samplerate = samplerate;}
 
     /**
-     * @brief Advance the envelope a given number of samples. and return
+     * @brief Advance the envelope a given number of samples and return
      *        its current value.
      * @param samples The number of samples to 'tick' the envelope.
      * @return The current envelope level.

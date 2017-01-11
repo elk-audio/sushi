@@ -64,7 +64,7 @@ void SamplePlayerPlugin::process_event(BaseMindEvent* event)
             {
                 for (auto& voice : _voices)
                 {
-                    if (!voice.stopping())
+                    if (voice.stopping())
                     {
                         voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
                         break;
