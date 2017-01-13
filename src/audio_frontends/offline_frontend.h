@@ -75,7 +75,7 @@ private:
 
     // FIXME: quick workaround to implement event processing before having defined
     //        an Event class. Change in the future when that will be available.
-    std::vector<std::tuple<int, std::string, BaseMindEvent*>> _event_queue;
+    std::vector<std::tuple<int, std::string, BaseEvent*>> _event_queue;
 };
 
 }; // end namespace audio_frontend

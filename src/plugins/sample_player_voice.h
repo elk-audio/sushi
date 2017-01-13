@@ -57,7 +57,7 @@ private:
  * @brief Too avoid divisions by zero and extensive branching, we limit the
  * attack, decay and release times to some extremely short value and not 0.
  */
-constexpr float SHORTEST_ENVELOPE_TIME = 0.00001f;
+constexpr float SHORTEST_ENVELOPE_TIME = 1.0e-5f;
 
 
 enum class EnvelopeState
@@ -91,7 +91,7 @@ public:
      * @brief Set the current samplerate
      * @param samplerate The samplerate in samples/second.
      */
-    void set_samplerate(float samplerate) {_samplerate = samplerate;}
+    void set_samplerate(int samplerate) { _samplerate = samplerate;}
 
     /**
      * @brief Advance the envelope a given number of samples and return
@@ -128,17 +128,15 @@ public:
     void reset();
 
 private:
-    float _attack{0};
-    float _decay{0};
-    float _sustain{1};
-    float _release{0.1};
+    float _attack_factor{0};
+    float _decay_factor{0};
+    float _sustain_level{1};
+    float _release_factor{0.1};
     float _current_level{0};
-    float _release_level{0};
     float _samplerate{44100};
 
     EnvelopeState _state{EnvelopeState::OFF};
 };
-
 
 class Voice
 {
@@ -224,7 +222,7 @@ private:
     Envelope _envelope;
     int _current_note;
     float _playback_speed;
-    float _velocity;
+    float _velocity_gain;
     float _playback_pos{0};
     int _start_offset{0};
     int _stop_offset{0};

@@ -15,7 +15,7 @@ namespace sushi {
 /**
  * TODO - Very incomplete list of message types we might need.
  */
-enum class MindEventType
+enum class EventType
 {
     NOTE_ON,
     NOTE_OFF,
@@ -30,33 +30,33 @@ enum class MindEventType
     STRING_PARAMETER_CHANGE,
 };
 
-class BaseMindEvent
+class BaseEvent
 {
 public:
-    virtual ~BaseMindEvent() {}
-    MindEventType type() { return _type;};
+    virtual ~BaseEvent() {}
+    EventType type() { return _type;};
     virtual bool is_real_time() = 0;
     int sample_offset() {return _sample_offset;}
 
 protected:
-    BaseMindEvent(MindEventType type, int offset) : _type(type), _sample_offset(offset) {}
-    MindEventType _type;
+    BaseEvent(EventType type, int offset) : _type(type), _sample_offset(offset) {}
+    EventType _type;
     int _sample_offset;
 };
 
 /**
  * @brief Event class for all keyboard events.
  */
-class KeyboardEvent : public BaseMindEvent
+class KeyboardEvent : public BaseEvent
 {
 public:
-    KeyboardEvent(MindEventType type, int offset, int note, float velocity) : BaseMindEvent(type, offset),
+    KeyboardEvent(EventType type, int offset, int note, float velocity) : BaseEvent(type, offset),
                                                                               _note(note),
                                                                               _velocity(velocity)
     {
-        assert(type == MindEventType::NOTE_ON ||
-               type == MindEventType::NOTE_OFF ||
-               type == MindEventType::NOTE_AFTERTOUCH);
+        assert(type == EventType::NOTE_ON ||
+               type == EventType::NOTE_OFF ||
+               type == EventType::NOTE_AFTERTOUCH);
     }
     bool is_real_time() override { return true;}
     int note() {return _note;}
@@ -72,10 +72,10 @@ protected:
  * handle midi natively. Could come in handy, or me might duplicate the entire
  * midi functionality in our own events.
  */
-class WrappedMidiEvent : public BaseMindEvent
+class WrappedMidiEvent : public BaseEvent
 {
 public:
-    WrappedMidiEvent(int offset, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : WrappedMidiEvent::BaseMindEvent(MindEventType::WRAPPED_MIDI_EVENT, offset),
+    WrappedMidiEvent(int offset, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : WrappedMidiEvent::BaseEvent(EventType::WRAPPED_MIDI_EVENT, offset),
                                                                                    _midi_byte_0(byte_0),
                                                                                    _midi_byte_1(byte_1),
                                                                                    _midi_byte_2(byte_2) {}
@@ -92,16 +92,16 @@ protected:
     uint8_t _midi_byte_2;
 };
 
-class ParameterChangeEvent : public BaseMindEvent
+class ParameterChangeEvent : public BaseEvent
 {
 public:
-    ParameterChangeEvent(MindEventType type, int offset, const std::string& id, float value) : BaseMindEvent(type, offset),
+    ParameterChangeEvent(EventType type, int offset, const std::string& id, float value) : BaseEvent(type, offset),
                                                                                               _id(id),
                                                                                               _value(value)
     {
-        assert(type == MindEventType::FLOAT_PARAMETER_CHANGE ||
-               type == MindEventType::INT_PARAMETER_CHANGE ||
-               type == MindEventType::BOOL_PARAMETER_CHANGE);
+        assert(type == EventType::FLOAT_PARAMETER_CHANGE ||
+               type == EventType::INT_PARAMETER_CHANGE ||
+               type == EventType::BOOL_PARAMETER_CHANGE);
     }
     const std::string& id() { return _id;}
 
@@ -116,7 +116,7 @@ protected:
 
 /* TODO replace this with our own iterable container class or wrapper.*/
 
-typedef std::vector<BaseMindEvent*> EventList;
+typedef std::vector<BaseEvent*> EventList;
 
 } // namespace sushi
 

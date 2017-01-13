@@ -22,24 +22,26 @@ inline float Sample::at(float position) const
 
 void Envelope::set_parameters(float attack, float decay, float sustain, float release)
 {
-    _attack  = (attack > SHORTEST_ENVELOPE_TIME ? attack : SHORTEST_ENVELOPE_TIME);
-    _decay   = (decay > SHORTEST_ENVELOPE_TIME ? decay : SHORTEST_ENVELOPE_TIME);
-    _sustain = sustain;
-    _release = (release > SHORTEST_ENVELOPE_TIME ? release : SHORTEST_ENVELOPE_TIME);
+    if (attack < SHORTEST_ENVELOPE_TIME) attack = SHORTEST_ENVELOPE_TIME;
+    if (decay < SHORTEST_ENVELOPE_TIME) decay = SHORTEST_ENVELOPE_TIME;
+    if (release < SHORTEST_ENVELOPE_TIME) release = SHORTEST_ENVELOPE_TIME;
+
+    _attack_factor  = 1 / (_samplerate * attack);
+    _decay_factor   = (1.0f - sustain) / (_samplerate * decay);
+    _sustain_level = sustain;
+    _release_factor = sustain / (_samplerate * release);
 }
 
 
 inline float Envelope::tick(int samples)
 {
-    /* The _samplerate * time factors could be precomputed when updating
-     * parameters in order to save some cpu time in the realtime loop. */
     switch (_state)
     {
         case EnvelopeState::OFF:
             break;
 
         case EnvelopeState::ATTACK:
-            _current_level += samples / (_samplerate * _attack );
+            _current_level += samples * _attack_factor;
             if (_current_level >= 1)
             {
                 _state = EnvelopeState::DECAY;
@@ -48,11 +50,11 @@ inline float Envelope::tick(int samples)
             break;
 
         case EnvelopeState::DECAY:
-            _current_level -= (1.0f - _sustain) * samples / (_samplerate * _decay);
-            if (_current_level <= _sustain)
+            _current_level -= samples * _decay_factor;
+            if (_current_level <= _sustain_level)
             {
                 _state = EnvelopeState::SUSTAIN;
-                _current_level = _sustain;
+                _current_level = _sustain_level;
             }
             break;
 
@@ -61,7 +63,7 @@ inline float Envelope::tick(int samples)
             break;
 
         case EnvelopeState::RELEASE:
-            _current_level -= (1.0f - _release_level) * samples / (_samplerate * _release);
+            _current_level -= samples * _release_factor;
             if (_current_level < 0.0f)
             {
                 _state = EnvelopeState::OFF;
@@ -81,8 +83,13 @@ void Envelope::gate(bool gate)
     }
     else /* Gate off - go to release phase */
     {
+        /* if the envelope enters the release phase from the attack or decay
+         * phase, the release factor must be rescaled to give the correct slope */
+        if (_state != EnvelopeState::SUSTAIN && _sustain_level > 0)
+        {
+            _release_factor *= (_current_level / _sustain_level );
+        }
         _state = EnvelopeState::RELEASE;
-        _release_level = _current_level;
     }
 }
 
@@ -110,11 +117,13 @@ void Voice::note_on(int note, float velocity, int offset)
 
     /* Completely ignore any currently playing note, it will be cut off abruptly */
     _state = SamplePlayMode::STARTING;
-    _velocity = velocity;
+    /* Quadratic velocity curve */
+    _velocity_gain = velocity * velocity;
     _start_offset = offset;
     _stop_offset = AUDIO_CHUNK_SIZE;
     _playback_pos = 0.0f;
     _current_note = note;
+    /* The root note of the sample is assumed to be C4 */
     _playback_speed = powf(2, (note - 60)/12.0f);
     _envelope.gate(true);
 }
@@ -145,7 +154,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
 
     for (int i = _start_offset; i < _stop_offset; ++i)
     {
-        out[i] += _sample->at(_playback_pos) * _velocity * _envelope.tick(1);
+        out[i] += _sample->at(_playback_pos) * _velocity_gain * _envelope.tick(1);
         _playback_pos += _playback_speed;
     }
 
@@ -156,7 +165,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
         _envelope.gate(false);
         for (int i = _stop_offset + 1 ; i < AUDIO_CHUNK_SIZE; ++i)
         {
-            out[i] += _sample->at(_playback_pos) * _velocity * _envelope.tick(1);
+            out[i] += _sample->at(_playback_pos) * _velocity_gain * _envelope.tick(1);
             _playback_pos += _playback_speed;
         }
     }

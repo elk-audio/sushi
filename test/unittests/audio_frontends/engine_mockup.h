@@ -38,7 +38,7 @@ public:
     }
 
     EngineReturnStatus send_stompbox_event(const std::string& /*instance_id*/,
-                                           BaseMindEvent* /*event*/)
+                                           BaseEvent* /*event*/)
     {
         return EngineReturnStatus::OK;
     }

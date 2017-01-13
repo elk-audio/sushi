@@ -160,7 +160,7 @@ EngineReturnStatus AudioEngine::set_stompbox_parameter(const std::string &instan
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::send_stompbox_event(const std::string& instance_id, BaseMindEvent* event)
+EngineReturnStatus AudioEngine::send_stompbox_event(const std::string& instance_id, BaseEvent* event)
 {
     auto stompbox_instance = _instances_id_to_stompbox.find(instance_id);
     if (stompbox_instance == _instances_id_to_stompbox.end())

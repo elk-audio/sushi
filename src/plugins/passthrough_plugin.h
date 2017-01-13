@@ -27,7 +27,7 @@ public:
         return std::string("sushi.testing.passthrough");
     }
 
-    void process_event(BaseMindEvent* /*event*/) {}
+    void process_event(BaseEvent* /*event*/) {}
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 };

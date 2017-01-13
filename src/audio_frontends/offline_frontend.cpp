@@ -69,7 +69,7 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        data["stompbox_instance"].asString(),
-                                                       new ParameterChangeEvent(MindEventType::FLOAT_PARAMETER_CHANGE,
+                                                       new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE,
                                                                                 sample % AUDIO_CHUNK_SIZE,
                                                                                 data["parameter_id"].asString(),
                                                                                 data["value"].asFloat())));
@@ -79,7 +79,7 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                       data["stompbox_instance"].asString(),
-                                                       new KeyboardEvent(MindEventType::NOTE_ON,
+                                                       new KeyboardEvent(EventType::NOTE_ON,
                                                                         sample % AUDIO_CHUNK_SIZE,
                                                                         data["note"].asInt(),
                                                                         data["velocity"].asFloat())));
@@ -88,7 +88,7 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        data["stompbox_instance"].asString(),
-                                                       new KeyboardEvent(MindEventType::NOTE_OFF,
+                                                       new KeyboardEvent(EventType::NOTE_OFF,
                                                                          sample % AUDIO_CHUNK_SIZE,
                                                                          data["note"].asInt(),
                                                                          data["velocity"].asFloat())));
@@ -97,8 +97,8 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
 
         // Sort events by reverse time (lambda function compares first tuple element)
         std::sort(std::begin(_event_queue), std::end(_event_queue),
-                  [](std::tuple<int, std::string, BaseMindEvent*> const &t1,
-                     std::tuple<int, std::string, BaseMindEvent*> const &t2)
+                  [](std::tuple<int, std::string, BaseEvent*> const &t1,
+                     std::tuple<int, std::string, BaseEvent*> const &t2)
                   {
                       return std::get<0>(t1) >= std::get<0>(t2);
                   }
@@ -148,9 +148,9 @@ void OfflineFrontend::run()
             auto plugin_event = std::get<2>(next_event);
             switch (plugin_event->type())
             {
-                case MindEventType::BOOL_PARAMETER_CHANGE:
-                case MindEventType::INT_PARAMETER_CHANGE:
-                case MindEventType::FLOAT_PARAMETER_CHANGE:
+                case EventType::BOOL_PARAMETER_CHANGE:
+                case EventType::INT_PARAMETER_CHANGE:
+                case EventType::FLOAT_PARAMETER_CHANGE:
                 {
                     auto typed_event = static_cast<ParameterChangeEvent*>(std::get<2>(next_event));
                     _engine->set_stompbox_parameter(std::get<1>(next_event),
@@ -158,8 +158,8 @@ void OfflineFrontend::run()
                                                     typed_event->value());
                     break;
                 }
-                case MindEventType::NOTE_ON:
-                case MindEventType::NOTE_OFF:
+                case EventType::NOTE_ON:
+                case EventType::NOTE_OFF:
                 {
                     _engine->send_stompbox_event(std::get<1>(next_event), std::get<2>(next_event));
                     break;

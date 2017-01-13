@@ -15,7 +15,7 @@ public:
 
     std::string unique_id() const override {return "test_plugin";}
 
-    void process_event(BaseMindEvent* /*event*/) override {}
+    void process_event(BaseEvent* /*event*/) override {}
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override
     {

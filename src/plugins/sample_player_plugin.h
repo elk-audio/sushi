@@ -32,12 +32,12 @@ public:
         return std::string("sushi.testing.sampleplayer");
     }
 
-    void process_event(BaseMindEvent* event) override ;
+    void process_event(BaseEvent* event) override ;
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
 private:
-    int load_sample_file(const std::string& file_name);
+    StompBoxStatus load_sample_file(const std::string &file_name);
     StompBoxConfig _configuration;
 
     float*  _sample_buffer{nullptr};
@@ -50,10 +50,9 @@ private:
     FloatStompBoxParameter* _sustain_parameter;
     FloatStompBoxParameter* _release_parameter;
 
-
-
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
+
 
 }// namespace sample_player_plugin
 }// namespace sushi

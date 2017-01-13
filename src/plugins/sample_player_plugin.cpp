@@ -33,20 +33,20 @@ StompBoxStatus SamplePlayerPlugin::init(const StompBoxConfig &configuration)
     {
         voice.set_samplerate(configuration.sample_rate);
     }
-    if (load_sample_file(SAMPLE_FILE) != 0)
+    auto status = load_sample_file(SAMPLE_FILE);
+    if (status != StompBoxStatus::OK)
     {
         MIND_LOG_ERROR("Sample file not found");
-        return StompBoxStatus::ERROR;
     }
-    return StompBoxStatus::OK;
+    return status;
 }
 
 
-void SamplePlayerPlugin::process_event(BaseMindEvent* event)
+void SamplePlayerPlugin::process_event(BaseEvent* event)
 {
     switch (event->type())
     {
-        case MindEventType::NOTE_ON:
+        case EventType::NOTE_ON:
         {
             bool voice_allocated = false;
             KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
@@ -73,7 +73,7 @@ void SamplePlayerPlugin::process_event(BaseMindEvent* event)
             }
             break;
         }
-        case MindEventType::NOTE_OFF:
+        case EventType::NOTE_OFF:
         {
             KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
             for (auto& voice : _voices)
@@ -110,14 +110,14 @@ void SamplePlayerPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* /*in_buff
 }
 
 
-int SamplePlayerPlugin::load_sample_file(const std::string& file_name)
+StompBoxStatus SamplePlayerPlugin::load_sample_file(const std::string &file_name)
 {
     SNDFILE*    sample_file;
     SF_INFO     soundfile_info = {};
 
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
-        return -1;
+        return StompBoxStatus::ERROR;
     }
     assert(soundfile_info.channels == 1);
 
@@ -131,7 +131,7 @@ int SamplePlayerPlugin::load_sample_file(const std::string& file_name)
     {
         voice.set_sample(&_sample);
     }
-    return 0;
+    return StompBoxStatus::OK;
 }
 
 

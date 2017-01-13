@@ -91,10 +91,8 @@ public:
     /**
      * @brief Called by the host when there are events to process.
      * @param event The event to process.
-     * @param realtime If set to true, the event is set to occur
-     *        during the next call to process().
      */
-    virtual void process_event(BaseMindEvent* event) = 0;
+    virtual void process_event(BaseEvent* event) = 0;
     /**
      * @brief Called by the host from the real time processing environment once for
      * every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays

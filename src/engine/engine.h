@@ -66,7 +66,7 @@ public:
                                                       const std::string& param_id,
                                                       const float value) = 0;
 
-    virtual EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseMindEvent* event) = 0;
+    virtual EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseEvent* event) = 0;
 
 protected:
     int _sample_rate;
@@ -94,7 +94,7 @@ public:
                                               const std::string& param_id,
                                               const float value) override;
 
-    EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseMindEvent* event) override;
+    EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseEvent* event) override;
 
 protected:
     eastl::vector<PluginChain> _audio_graph{MAX_CHANNELS};
