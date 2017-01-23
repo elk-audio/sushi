@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "library/plugin_manager.h"
-
 #define private public
+
+#include "library/plugin_manager.h"
 
 using namespace sushi;
 

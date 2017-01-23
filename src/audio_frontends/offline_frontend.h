@@ -73,9 +73,8 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{2};
     float*  _file_buffer;
 
-    // FIXME: quick workaround to implement event processing before having defined
-    //        an Event class. Change in the future when that will be available.
-    std::vector<std::tuple<int, std::string, BaseEvent*>> _event_queue;
+    // TODO - Not really a queue in offline mode, just a list of events sorted by time
+    std::vector<std::tuple<int, BaseEvent*>> _event_queue;
 };
 
 }; // end namespace audio_frontend

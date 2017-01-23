@@ -60,9 +60,11 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
                 MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_idx);
                 return EngineReturnStatus::INVALID_STOMPBOX_UID;
             }
-            _audio_graph[chain_idx].add(instance);
+
             auto instance_id = stompbox_def["id"].asString();
             _instances_id_to_stompbox[instance_id] = std::make_unique<StompBoxManager>(instance);
+            // TODO - look over ownership here - see ardours use of shared_ptr for instance
+            _audio_graph[chain_idx].add(_instances_id_to_stompbox[instance_id].get());
 
             StompBoxConfig config;
             config.sample_rate = _sample_rate;
@@ -100,9 +102,7 @@ EngineReturnStatus AudioEngine::init_from_json_array(const Json::Value &chains)
     {
         return ret_code;
     }
-
     return EngineReturnStatus::OK;
-
 }
 
 
@@ -119,58 +119,23 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             break;
         }
         _tmp_bfr_in.replace(0, ch, *in_buffer);
-        _audio_graph[ch].process(_tmp_bfr_in, _tmp_bfr_out);
+        _audio_graph[ch].process_audio(&_tmp_bfr_in, &_tmp_bfr_out);
         out_buffer->replace(ch, 0, _tmp_bfr_out);
     }
 }
 
-// FIXME: temp implementation until PluginInterface is not complete
-EngineReturnStatus AudioEngine::set_stompbox_parameter(const std::string &instance_id, const std::string &param_id,
-                                                       const float value)
+
+EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
 {
-    auto stompbox_instance = _instances_id_to_stompbox.find(instance_id);
-    if (stompbox_instance == _instances_id_to_stompbox.end())
+    assert(event);
+    auto processor_node = _instances_id_to_stompbox.find(event->target_id());
+    if (processor_node == _instances_id_to_stompbox.end())
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    auto parameter = stompbox_instance->second->get_parameter(param_id);
-    if ( !parameter)
-    {
-        return EngineReturnStatus::INVALID_PARAMETER_UID;
-    }
-    switch(parameter->type())
-    {
-        case StompBoxParameterType::FLOAT:
-        {
-            static_cast<FloatStompBoxParameter*>(parameter)->set(value);
-            break;
-        }
-        case StompBoxParameterType::INT:
-        {
-            static_cast<IntStompBoxParameter*>(parameter)->set(static_cast<int>(value));
-            break;
-        }
-        case StompBoxParameterType::BOOL:
-        {
-            static_cast<IntStompBoxParameter*>(parameter)->set(value > 0.5f ? true : false);
-            break;
-        }
-        default: {}
-    }
+    processor_node->second->process_event(event);
     return EngineReturnStatus::OK;
 }
-
-EngineReturnStatus AudioEngine::send_stompbox_event(const std::string& instance_id, BaseEvent* event)
-{
-    auto stompbox_instance = _instances_id_to_stompbox.find(instance_id);
-    if (stompbox_instance == _instances_id_to_stompbox.end())
-    {
-        return EngineReturnStatus::INVALID_STOMPBOX_UID;
-    }
-    stompbox_instance->second->instance()->process_event(event);
-    return EngineReturnStatus::OK;
-}
-
 
 } // namespace engine
 } // namespace sushi

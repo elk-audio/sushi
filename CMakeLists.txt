@@ -29,6 +29,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/engine/engine.cpp
                       src/library/mind_allocator.cpp
+                      src/library/plugin_manager.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -46,7 +47,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/plugin_events.h
+                        src/library/processor.h
+                        src/library/plugin_manager.h
                         src/engine/engine.h
+                        src/engine/plugin_chain.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h

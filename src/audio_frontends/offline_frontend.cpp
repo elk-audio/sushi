@@ -68,8 +68,8 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             if (e["type"] == "parameter_change")
             {
                 _event_queue.push_back(std::make_tuple(sample,
-                                                       data["stompbox_instance"].asString(),
                                                        new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE,
+                                                                                data["stompbox_instance"].asString(),
                                                                                 sample % AUDIO_CHUNK_SIZE,
                                                                                 data["parameter_id"].asString(),
                                                                                 data["value"].asFloat())));
@@ -78,8 +78,8 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             else if (e["type"] == "note_on")
             {
                 _event_queue.push_back(std::make_tuple(sample,
-                                                      data["stompbox_instance"].asString(),
                                                        new KeyboardEvent(EventType::NOTE_ON,
+                                                                        data["stompbox_instance"].asString(),
                                                                         sample % AUDIO_CHUNK_SIZE,
                                                                         data["note"].asInt(),
                                                                         data["velocity"].asFloat())));
@@ -87,8 +87,8 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             else if (e["type"] == "note_off")
             {
                 _event_queue.push_back(std::make_tuple(sample,
-                                                       data["stompbox_instance"].asString(),
                                                        new KeyboardEvent(EventType::NOTE_OFF,
+                                                                         data["stompbox_instance"].asString(),
                                                                          sample % AUDIO_CHUNK_SIZE,
                                                                          data["note"].asInt(),
                                                                          data["velocity"].asFloat())));
@@ -97,8 +97,8 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
 
         // Sort events by reverse time (lambda function compares first tuple element)
         std::sort(std::begin(_event_queue), std::end(_event_queue),
-                  [](std::tuple<int, std::string, BaseEvent*> const &t1,
-                     std::tuple<int, std::string, BaseEvent*> const &t2)
+                  [](std::tuple<int, BaseEvent*> const &t1,
+                     std::tuple<int, BaseEvent*> const &t2)
                   {
                       return std::get<0>(t1) >= std::get<0>(t2);
                   }
@@ -145,28 +145,8 @@ void OfflineFrontend::run()
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
         {
             auto next_event = _event_queue.back();
-            auto plugin_event = std::get<2>(next_event);
-            switch (plugin_event->type())
-            {
-                case EventType::BOOL_PARAMETER_CHANGE:
-                case EventType::INT_PARAMETER_CHANGE:
-                case EventType::FLOAT_PARAMETER_CHANGE:
-                {
-                    auto typed_event = static_cast<ParameterChangeEvent*>(std::get<2>(next_event));
-                    _engine->set_stompbox_parameter(std::get<1>(next_event),
-                                                    typed_event->id(),
-                                                    typed_event->value());
-                    break;
-                }
-                case EventType::NOTE_ON:
-                case EventType::NOTE_OFF:
-                {
-                    _engine->send_stompbox_event(std::get<1>(next_event), std::get<2>(next_event));
-                    break;
-                }
-                default:
-                    break;
-            }
+            auto plugin_event = std::get<1>(next_event);
+            _engine->send_rt_event(std::get<1>(next_event));
 
             _event_queue.pop_back();
             // TODO don't delete things in the audio thread.

@@ -1,14 +1,15 @@
 #include <algorithm>
 
 #include "gtest/gtest.h"
+
+#define private public
+
 #include "test_utils.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/biquad_filter.cpp"
-#include "library/plugin_manager.h"
-
-#define private public
+#include "library/plugin_manager.cpp"
 
 using namespace sushi;
 

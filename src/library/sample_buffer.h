@@ -311,6 +311,7 @@ private:
     float* _buffer;
 };
 
+typedef SampleBuffer<AUDIO_CHUNK_SIZE> ChunkSampleBuffer;
 } // namespace sushi
 
 

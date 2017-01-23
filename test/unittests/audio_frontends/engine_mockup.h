@@ -30,15 +30,7 @@ public:
         }
     }
 
-    EngineReturnStatus set_stompbox_parameter(const std::string& /*instance_id*/,
-                                              const std::string& /*param_id*/,
-                                              const float /*value*/) override
-    {
-        return EngineReturnStatus::OK;
-    }
-
-    EngineReturnStatus send_stompbox_event(const std::string& /*instance_id*/,
-                                           BaseEvent* /*event*/)
+    EngineReturnStatus send_rt_event(BaseEvent* /*event*/)
     {
         return EngineReturnStatus::OK;
     }

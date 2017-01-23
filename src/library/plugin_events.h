@@ -35,12 +35,16 @@ class BaseEvent
 public:
     virtual ~BaseEvent() {}
     EventType type() { return _type;};
+    const std::string& target_id() {return _target_id;}
     virtual bool is_real_time() = 0;
     int sample_offset() {return _sample_offset;}
 
 protected:
-    BaseEvent(EventType type, int offset) : _type(type), _sample_offset(offset) {}
+    BaseEvent(EventType type, const std::string& target, int offset) : _type(type),
+                                                                _target_id(target),
+                                                                _sample_offset(offset) {}
     EventType _type;
+    std::string _target_id;
     int _sample_offset;
 };
 
@@ -50,9 +54,9 @@ protected:
 class KeyboardEvent : public BaseEvent
 {
 public:
-    KeyboardEvent(EventType type, int offset, int note, float velocity) : BaseEvent(type, offset),
-                                                                              _note(note),
-                                                                              _velocity(velocity)
+    KeyboardEvent(EventType type, const std::string& target, int offset, int note, float velocity) : BaseEvent(type, target, offset),
+                                                                                                     _note(note),
+                                                                                                     _velocity(velocity)
     {
         assert(type == EventType::NOTE_ON ||
                type == EventType::NOTE_OFF ||
@@ -75,10 +79,10 @@ protected:
 class WrappedMidiEvent : public BaseEvent
 {
 public:
-    WrappedMidiEvent(int offset, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : WrappedMidiEvent::BaseEvent(EventType::WRAPPED_MIDI_EVENT, offset),
-                                                                                   _midi_byte_0(byte_0),
-                                                                                   _midi_byte_1(byte_1),
-                                                                                   _midi_byte_2(byte_2) {}
+    WrappedMidiEvent(int offset, std::string& target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : WrappedMidiEvent::BaseEvent(EventType::WRAPPED_MIDI_EVENT, target, offset),
+                                                                                                        _midi_byte_0(byte_0),
+                                                                                                        _midi_byte_1(byte_1),
+                                                                                                        _midi_byte_2(byte_2) {}
 
     uint8_t midi_byte_0() {return _midi_byte_0;}
     uint8_t midi_byte_1() {return _midi_byte_1;}
@@ -95,22 +99,22 @@ protected:
 class ParameterChangeEvent : public BaseEvent
 {
 public:
-    ParameterChangeEvent(EventType type, int offset, const std::string& id, float value) : BaseEvent(type, offset),
-                                                                                              _id(id),
-                                                                                              _value(value)
+    ParameterChangeEvent(EventType type, const std::string& target, int offset, const std::string& param_id, float value) : BaseEvent(type, target, offset),
+                                                                                                                            _param_id(param_id),
+                                                                                                                            _value(value)
     {
         assert(type == EventType::FLOAT_PARAMETER_CHANGE ||
                type == EventType::INT_PARAMETER_CHANGE ||
                type == EventType::BOOL_PARAMETER_CHANGE);
     }
-    const std::string& id() { return _id;}
+    const std::string& param_id() { return _param_id;}
 
     float value(){return _value;}
 
     bool is_real_time() override { return true;}
 
 protected:
-    std::string _id;
+    std::string _param_id;
     float _value;
 };
 
