@@ -53,12 +53,12 @@ public:
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
      */
-    const std::string label() {return _label;}
+    const std::string& label() {return _label;}
 
     /**
     * @brief Returns a unique identifier to the parameter i.e. "oscillator_2_pitch"
     */
-    const std::string id() {return _id;}
+    const std::string& id() {return _id;}
 
 
 protected:
@@ -106,7 +106,10 @@ template <> const inline std::string ParameterFormatPolicy<bool>::format(bool va
 {
     return value? "True": "False";
 }
-
+template <> const inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value)
+{
+    return *value;
+}
 
 /**
  * @brief Templated plugin parameter, works out of the box for native
@@ -181,6 +184,56 @@ private:
     T _value;
 };
 
+/* Partial specialization for pointer type parameters */
+template<typename T, StompBoxParameterType enumerated_type>
+class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter, private ParameterFormatPolicy<T *>
+{
+public:
+    StompBoxParameter(const std::string& id,
+                      const std::string& label,
+                      T * default_value) : BaseStompBoxParameter(id, label, enumerated_type),
+                                           _value(default_value) {}
+
+    ~StompBoxParameter() {};
+
+    /**
+     * @brief Returns the parameter's current value.
+     */
+    T * value()
+    {
+        return _value.get();
+    }
+
+    void set(T * value)
+    {
+        /* Note, not atomic and we still need to figure out a data ownership strategy
+         * and avoid deleting in the audio thread */
+        _value.reset(value);
+    }
+
+    /**
+     * @brief Tell the host to change the value of the parameter. This should be used
+     * instead of set() if the plugin itself wants to change the value of a parameter.
+     */
+    void set_asychronously(T * value)
+    {
+        // TODO - implement!
+    }
+
+    /**
+     * @brief Returns the parameter's value as a string, i.e. "1.25".
+     * TODO - Think about which value we actually want here, raw or processed!
+     */
+    const std::string as_string() override
+    {
+        return ParameterFormatPolicy<T *>::format(_value.get());
+    }
+
+private:
+    std::unique_ptr<T> _value;
+};
+
+
 
 /*
  * The templated forms are not intended to be accessed directly.
@@ -194,6 +247,8 @@ typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
+
+typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxParameter;
 
 /**
  * @brief Preprocessor example to map from decibels to linear gain.

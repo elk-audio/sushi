@@ -68,6 +68,12 @@ TEST_F(StompBoxManagerTest, TestParameterHandling)
     test_param = _module_under_test->register_bool_parameter("param_3", "Param 3", true);
     EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
 
+    test_param = _module_under_test->register_string_parameter("param_4", "Param 4", "4");
+    ASSERT_EQ(StompBoxParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
+    static_cast<StringStompBoxParameter*>(_module_under_test->get_parameter("param_4"))->set(new std::string("four"));
+    EXPECT_EQ("four", test_param->as_string());
+
+
     //test that an unknown parameter returns a null pointer
     EXPECT_EQ(nullptr, _module_under_test->get_parameter("not_registered"));
 }

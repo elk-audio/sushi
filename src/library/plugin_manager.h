@@ -81,6 +81,15 @@ public:
         return param;
     }
 
+    StringStompBoxParameter* register_string_parameter(const std::string& id,
+                                                       const std::string& label,
+                                                       const std::string& default_value) override
+    {
+        StringStompBoxParameter* param = new StringStompBoxParameter(id, label, new std::string(default_value));
+        this->register_parameter(param);
+        return param;
+    }
+
     /* Inherited from Processor */
     void process_event(BaseEvent* event) override;
 

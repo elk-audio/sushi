@@ -53,6 +53,9 @@ public:
                                                            bool default_value,
                                                            BoolParameterPreProcessor* custom_pre_processor = nullptr) = 0;
 
+    virtual StringStompBoxParameter* register_string_parameter(const std::string& id,
+                                                               const std::string& label,
+                                                               const std::string& default_value) = 0;
 };
 
 struct StompBoxConfig

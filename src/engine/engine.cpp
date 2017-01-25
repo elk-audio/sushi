@@ -128,7 +128,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
 {
     assert(event);
-    auto processor_node = _instances_id_to_stompbox.find(event->target_id());
+    auto processor_node = _instances_id_to_stompbox.find(event->processor_id());
     if (processor_node == _instances_id_to_stompbox.end())
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
