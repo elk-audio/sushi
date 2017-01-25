@@ -43,15 +43,15 @@ public:
      * @param in input buffer.
      * @param out output buffer.
      */
-    void process_audio(const ChunkSampleBuffer* in, ChunkSampleBuffer* out)
+    void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
     {
-        _bfr_1 = *in;
+        _bfr_1 = in;
         for (auto &plugin : _chain)
         {
-            plugin->process_audio(&_bfr_1, &_bfr_2);
+            plugin->process_audio(_bfr_1, _bfr_2);
             std::swap(_bfr_1, _bfr_2);
         }
-        *out = _bfr_1;
+        out = _bfr_1;
     }
 
 private:

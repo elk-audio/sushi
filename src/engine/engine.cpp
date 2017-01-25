@@ -119,7 +119,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             break;
         }
         _tmp_bfr_in.replace(0, ch, *in_buffer);
-        _audio_graph[ch].process_audio(&_tmp_bfr_in, &_tmp_bfr_out);
+        _audio_graph[ch].process_audio(_tmp_bfr_in, _tmp_bfr_out);
         out_buffer->replace(ch, 0, _tmp_bfr_out);
     }
 }

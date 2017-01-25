@@ -29,8 +29,7 @@ public:
      * @param in_buffer Input SampleBuffer
      * @param out_buffer Output SampleBuffer
      */
-    virtual void process_audio(const SampleBuffer <AUDIO_CHUNK_SIZE>* in_buffer,
-                               SampleBuffer <AUDIO_CHUNK_SIZE>* out_buffer) = 0;
+    virtual void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) = 0;
 
     // TODO - Might want to replace string ids with uuids for more consistent lookup performance
     /**

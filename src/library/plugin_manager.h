@@ -84,8 +84,8 @@ public:
     /* Inherited from Processor */
     void process_event(BaseEvent* event) override;
 
-    void process_audio(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override
-    {_instance->process(in_buffer, out_buffer);}
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
+    {_instance->process(&in_buffer, &out_buffer);}
 
 
 private:
