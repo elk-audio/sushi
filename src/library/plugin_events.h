@@ -197,6 +197,31 @@ protected:
     std::string _param_id;
 };
 
+/**
+ * @brief Class for binarydata parameter changes
+ */
+class DataParameterChangeEvent : public DataPayloadEvent
+{
+public:
+    DataParameterChangeEvent(const std::string& processor,
+                             int offset,
+                             const std::string& param_id,
+                             char* value) : DataPayloadEvent(EventType::DATA_PARAMETER_CHANGE,
+                                                             processor,
+                                                             offset,
+                                                             static_cast<void*>(value)),
+                                            _param_id(param_id) {}
+
+    const std::string& param_id() { return _param_id;}
+
+    char* value(){return static_cast<char*>(_data);}
+
+    bool is_real_time() override { return true;}
+
+protected:
+    std::string _param_id;
+};
+
 /* TODO replace this with our own iterable container class or wrapper.*/
 
 typedef std::vector<BaseEvent*> EventList;

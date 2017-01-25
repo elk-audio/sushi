@@ -110,6 +110,12 @@ template <> const inline std::string ParameterFormatPolicy<std::string*>::format
 {
     return *value;
 }
+template <> const inline std::string ParameterFormatPolicy<char*>::format(char* /*value*/)
+{
+    /* This parameter type is intended to transfer opaque binary data, and
+     * consequently there is no format policy that would work. */
+    return "Binary data";
+}
 
 /**
  * @brief Templated plugin parameter, works out of the box for native
@@ -247,8 +253,11 @@ typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
-
 typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxParameter;
+/* Eventually we might want to wrap the pointer in a struct
+ * with size and data pointer instead of a raw char pointer */
+typedef StompBoxParameter<char*, StompBoxParameterType::DATA> DataStompBoxParameter;
+
 
 /**
  * @brief Preprocessor example to map from decibels to linear gain.

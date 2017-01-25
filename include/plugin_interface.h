@@ -56,6 +56,10 @@ public:
     virtual StringStompBoxParameter* register_string_parameter(const std::string& id,
                                                                const std::string& label,
                                                                const std::string& default_value) = 0;
+
+    virtual DataStompBoxParameter* register_data_parameter(const std::string& id,
+                                                           const std::string& label,
+                                                           char* default_value) = 0;
 };
 
 struct StompBoxConfig

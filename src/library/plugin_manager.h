@@ -90,6 +90,15 @@ public:
         return param;
     }
 
+    virtual DataStompBoxParameter* register_data_parameter(const std::string& id,
+                                                           const std::string& label,
+                                                           char* default_value) override
+    {
+        DataStompBoxParameter* param = new DataStompBoxParameter(id, label, default_value);
+        this->register_parameter(param);
+        return param;
+    }
+
     /* Inherited from Processor */
     void process_event(BaseEvent* event) override;
 

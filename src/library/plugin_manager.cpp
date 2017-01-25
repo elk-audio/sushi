@@ -47,6 +47,24 @@ void StompBoxManager::process_event(BaseEvent* event)
             }
             break;
         }
+        case EventType::STRING_PARAMETER_CHANGE:
+        {
+            auto typed_event = static_cast<StringParameterChangeEvent*>(event);
+            auto parameter = get_parameter(typed_event->param_id());
+            if (parameter && parameter->type() == StompBoxParameterType::STRING)
+            {
+                static_cast<StringStompBoxParameter*>(parameter)->set(typed_event->value());
+            }
+        }
+        case EventType::DATA_PARAMETER_CHANGE:
+        {
+            auto typed_event = static_cast<DataParameterChangeEvent*>(event);
+            auto parameter = get_parameter(typed_event->param_id());
+            if (parameter && parameter->type() == StompBoxParameterType::DATA)
+            {
+                static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
+            }
+        }
         /* Non managed events are simply passed on to the instance */
         default:
             _instance->process_event(event);
