@@ -94,15 +94,14 @@ public:
                     delete[] _buffer;
                     _buffer = new float[size * o._channel_count];
                 }
-                _channel_count = o._channel_count;
                 std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
             }
             else
             {
-                _channel_count = o._channel_count;
-                _own_buffer = false;
                 _buffer = o._buffer;
             }
+            _own_buffer = o._own_buffer;
+            _channel_count = o._channel_count;
         }
         return *this;
     }
@@ -120,6 +119,7 @@ public:
                 delete[] _buffer;
             }
             _channel_count = o._channel_count;
+            _own_buffer = o._own_buffer;
             _buffer = o._buffer;
             o._buffer = nullptr;
         }
@@ -127,8 +127,8 @@ public:
     }
 
     /**
-     * @brief Create a SampleBuffer from another SampleBuffers sample data, without
-     *        copying or taking ownership of the data. Optionally only a subset of
+     * @brief Create a SampleBuffer from another SampleBuffer, without copying or
+     *        taking ownership of the data. Optionally only a subset of
      *        the source buffers channels can be wrapped.
      * @param source The SampleBuffer whose data is wrapped.
      * @param start_channel The first channel to wrap. Defaults to 0.
