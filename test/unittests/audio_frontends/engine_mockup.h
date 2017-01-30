@@ -36,6 +36,13 @@ public:
     {
         return EngineReturnStatus::OK;
     }
+
+    EngineReturnStatus send_stompbox_event(const std::string& /*instance_id*/,
+                                           BaseEvent* /*event*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

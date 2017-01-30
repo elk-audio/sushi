@@ -24,6 +24,7 @@ public:
     {
         return std::string("sushi.testing.gain");
     }
+    void process_event(BaseEvent* /*event*/) {}
 
     void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 

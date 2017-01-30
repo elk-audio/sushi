@@ -32,6 +32,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
+                      src/plugins/sample_player_plugin.cpp
+                      src/plugins/sample_player_voice.cpp
                       src/plugins/biquad_filter.cpp
                       src/audio_frontends/offline_frontend.cpp)
 
@@ -43,10 +45,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         include/plugin_interface.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
+                        src/library/plugin_events.h
                         src/engine/engine.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
+                        src/plugins/sample_player_plugin.h
+                        src/plugins/sample_player_voice.h
                         src/plugins/biquad_filter.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h)
