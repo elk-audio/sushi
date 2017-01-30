@@ -145,17 +145,16 @@ public:
         SampleBuffer buffer;
         buffer._own_buffer = false;
         buffer._channel_count = number_of_channels;
-        buffer. _buffer = source._buffer + size * start_channel;
+        buffer._buffer = source._buffer + size * start_channel;
         return buffer;
     }
 
+    /**
+     * @brief Defaulted version of the above function.
+     */
     static SampleBuffer create_non_owning_buffer(const SampleBuffer& source)
     {
-        SampleBuffer buffer;
-        buffer._own_buffer = false;
-        buffer._channel_count = source._channel_count;
-        buffer. _buffer = source._buffer;
-        return buffer;
+        return create_non_owning_buffer(source, 0, source.channel_count());
     }
 
     /**
@@ -303,6 +302,8 @@ public:
      */
     void add(const SampleBuffer &source)
     {
+        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+
         if (source.channel_count() == 1) // mono input, add to all dest channels
         {
             for (int channel = 0; channel < _channel_count; ++channel)
@@ -325,7 +326,6 @@ public:
     /**
      * @brief Sums one channel of source buffer into one channel of the buffer.
      */
-
     void add(int dest_channel, int source_channel, SampleBuffer &source)
     {
         float* source_data = source._buffer + size * source_channel;
@@ -344,6 +344,8 @@ public:
     */
     void add_with_gain(const SampleBuffer &source, float gain)
     {
+        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+
         if (source.channel_count() == 1)
         {
             for (int channel = 0; channel < _channel_count; ++channel)
