@@ -29,9 +29,9 @@ public:
     PluginChain()
     {
         _max_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
-        _max_output_channels = 2;
-        _current_input_channels = 0;
-        _current_output_channels = 0;
+        _max_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _current_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _current_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
     }
 
     ~PluginChain() = default;
@@ -54,18 +54,33 @@ public:
      */
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
     {
-        _bfr_1.clear();
-        _bfr_1.add(in);
+        /* Alias the internal buffers to get the right channel count */
+        ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_1, 0, _current_input_channels);
+        ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, _current_input_channels);
+        in_bfr.clear();
+        in_bfr.add(in);
         for (auto &plugin : _chain)
         {
-            ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_1, 0, plugin->input_channels());
-            ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, plugin->output_channels());
             plugin->process_audio(in_bfr, out_bfr);
-            std::swap(_bfr_1, _bfr_2);
+            std::swap(in_bfr, out_bfr);
         }
-        ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, _current_output_channels);
-        out.add(out_bfr);
+        /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
+         * processing chain was empty */
+        out.add(in_bfr);
     }
+
+    void set_input_channels(int channels) override
+    {
+        Processor::set_input_channels(channels);
+        update_channel_config();
+    }
+
+    void set_output_channels(int channels) override
+    {
+        Processor::set_output_channels(channels);
+        update_channel_config();
+    }
+
 
 private:
     /**

@@ -3,7 +3,6 @@
 #define private public
 
 #include "library/plugin_manager.h"
-#include "engine/plugin_chain.cpp"
 
 using namespace sushi;
 

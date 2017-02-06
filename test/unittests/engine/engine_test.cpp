@@ -83,7 +83,8 @@ TEST_F(TestEngine, TestInitFromJSON)
         EXPECT_TRUE(false) << "Error parsing JSON config file\n";
     }
 
-    _module_under_test->init_from_json_array(config["stompbox_chains"]);
+    EngineReturnStatus status = _module_under_test->init_from_json_array(config["stompbox_chains"]);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
 
     auto chain_l = &_module_under_test->_audio_graph[0]._chain;
     auto chain_r = &_module_under_test->_audio_graph[1]._chain;

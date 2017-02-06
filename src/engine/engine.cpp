@@ -85,18 +85,21 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
 // TODO: eventually when configuration complexity grows, move this stuff in a separate class
 EngineReturnStatus AudioEngine::init_from_json_array(const Json::Value &chains)
 {
-    // Temp workaround: verify that the given JSON has only two independent chains
-    if (! (chains.isArray() && (chains.size() == MAX_CHANNELS) ) )
+    /* TODO, eventually remove the restrictions on no of channels */
+    if (chains.isArray() && ((chains.size() > MAX_CHANNELS) || (chains.size() == 0)))
     {
         MIND_LOG_ERROR("Wrong number of stompbox chains in configuration file");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-
+    _audio_graph[LEFT].set_input_channels(1);
+    _audio_graph[LEFT].set_output_channels(1);
     EngineReturnStatus ret_code = _fill_chain_from_json_definition(LEFT, chains[LEFT]["stompboxes"]);
     if (ret_code != EngineReturnStatus::OK)
     {
         return ret_code;
     }
+    _audio_graph[RIGHT].set_input_channels(1);
+    _audio_graph[RIGHT].set_output_channels(1);
     ret_code = _fill_chain_from_json_definition(RIGHT, chains[RIGHT]["stompboxes"]);
     if (ret_code != EngineReturnStatus::OK)
     {
@@ -108,19 +111,33 @@ EngineReturnStatus AudioEngine::init_from_json_array(const Json::Value &chains)
 
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-    /* For now, process every channel in in_buffer separately and copy the result to
-     * the corresponding channel in out_buffer */
+    /* Put the channels from in_buffer into the audio graph based on the graphs channel count
+     * Note that its assumed that number of input and output channels are equal. */
 
-    for (int ch = 0; ch < in_buffer->channel_count(); ++ch)
+    int start_channel = 0;
+    int no_of_channels;
+    for (auto graph = _audio_graph.begin(); graph != _audio_graph.end(); ++graph)
     {
-        if (ch >= static_cast<int>(_audio_graph.size()) || ch >= out_buffer->channel_count())
+        no_of_channels = (*graph).input_channels();
+        if (start_channel + no_of_channels <= in_buffer->channel_count())
         {
-            MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", ch, in_buffer->channel_count());
+            ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
+                                                                                  start_channel,
+                                                                                  no_of_channels);
+            ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
+                                                                                   start_channel,
+                                                                                   no_of_channels);
+            (*graph).process_audio(ch_in, ch_out);
+            start_channel += no_of_channels;
+        } else
+        {
             break;
         }
-        _tmp_bfr_in.replace(0, ch, *in_buffer);
-        _audio_graph[ch].process_audio(_tmp_bfr_in, _tmp_bfr_out);
-        out_buffer->replace(ch, 0, _tmp_bfr_out);
+    }
+    if (start_channel <= in_buffer->channel_count())
+    {
+        MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", start_channel,
+                         in_buffer->channel_count());
     }
 }
 
