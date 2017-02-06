@@ -9,6 +9,7 @@
 #define SUSHI_PLUGIN_CHAIN_H
 
 #include <memory>
+#include <cassert>
 
 #include "plugin_interface.h"
 #include "library/sample_buffer.h"
@@ -19,20 +20,28 @@
 namespace sushi {
 namespace engine {
 
+/* for now, chains have at most stereo capability */
+constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 2;
+
 class PluginChain : public Processor
 {
 public:
-    PluginChain() = default;
+    PluginChain()
+    {
+        _max_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _max_output_channels = 2;
+        _current_input_channels = 0;
+        _current_output_channels = 0;
+    }
+
     ~PluginChain() = default;
     MIND_DECLARE_NON_COPYABLE(PluginChain)
     /**
      * @brief Adds a plugin to the end of the chain.
      * @param The plugin to add.
      */
-    void add(Processor* processor)
-    {
-        _chain.push_back(processor);
-    }
+    void add(Processor* processor);
+
     /**
      * @brief handles events sent to this processor only and not sub-processors
      */
@@ -45,19 +54,28 @@ public:
      */
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
     {
-        _bfr_1 = in;
+        _bfr_1.clear();
+        _bfr_1.add(in);
         for (auto &plugin : _chain)
         {
-            plugin->process_audio(_bfr_1, _bfr_2);
+            ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_1, 0, plugin->input_channels());
+            ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, plugin->output_channels());
+            plugin->process_audio(in_bfr, out_bfr);
             std::swap(_bfr_1, _bfr_2);
         }
-        out = _bfr_1;
+        ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, _current_output_channels);
+        out.add(out_bfr);
     }
 
 private:
+    /**
+     * @brief Loops through the chain of plugins and negotiatiates channel configuration.
+     */
+    void update_channel_config();
+
     eastl::vector<Processor*> _chain;
-    SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_1{1};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_2{1};
+    ChunkSampleBuffer _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS};
+    ChunkSampleBuffer _bfr_2{PLUGIN_CHAIN_MAX_CHANNELS};
 };
 
 

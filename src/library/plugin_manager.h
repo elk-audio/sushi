@@ -28,7 +28,13 @@ public:
      * @brief Create a new StompboxManager that takes ownership of instance
      * and will delete it when the manager is deleted.
      */
-    StompBoxManager(StompBox* instance) : _instance(instance) {}
+    StompBoxManager(StompBox* instance) : _instance(instance)
+    {
+        _max_input_channels = 2;
+        _max_output_channels = 2;
+        _current_input_channels = 2;
+        _current_output_channels = 2;
+    }
 
     virtual ~StompBoxManager() {};
 
