@@ -24,12 +24,8 @@ class StompBox;
 namespace sushi {
 namespace engine {
 
-enum channel_id
-{
-    LEFT = 0,
-    RIGHT,
-    MAX_CHANNELS,
-};
+/* Maximum number of parallell chains, chains are not dynamically allocated yet */
+constexpr int MAX_CHAINS = 2;
 
 enum class EngineReturnStatus
 {
@@ -54,9 +50,9 @@ public:
         return _sample_rate;
     }
 
-    int n_channels()
+    virtual int n_channels(int /*chain*/)
     {
-        return MAX_CHANNELS;
+        return 2;
     }
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
@@ -76,6 +72,13 @@ public:
     ~AudioEngine();
 
     /**
+     * @brief Return the number of configured channels for a specific processing chain
+     * @param chain The index to the chain
+     * @return Number of channels the chain is configured to use.
+     */
+    int n_channels(int chain) override;
+    
+    /**
      * @brief Statically initialize engine and stompbox processing chains from definition in a JSON file
      * @param stompboxes_defs path to configuration file
      * @return EngineInitStatus::OK in case of success,
@@ -88,9 +91,7 @@ public:
     EngineReturnStatus send_rt_event(BaseEvent* event) override;
 
 protected:
-    eastl::vector<PluginChain> _audio_graph{MAX_CHANNELS};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_in{1};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _tmp_bfr_out{1};
+    eastl::vector<PluginChain> _audio_graph{MAX_CHAINS};
 
 private:
     /**
@@ -109,11 +110,16 @@ private:
      *         different error code otherwise
      */
     EngineReturnStatus _fill_chain_from_json_definition(const int chain_idx,
-                                                      const Json::Value &stompbox_defs);
+                                                        const Json::Value &stompbox_def);
 
     // TODO: eventually port to EASTL
     std::map<std::string, std::unique_ptr<StompBoxManager>> _instances_id_to_stompbox;
 };
+
+/**
+ * @brief Freestanding function to handle stereo/mono setup from json.
+ */
+EngineReturnStatus set_up_channel_config(PluginChain& chain, const Json::Value& mode);
 
 } // namespace engine
 } // namespace sushi

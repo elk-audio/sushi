@@ -19,15 +19,7 @@ public:
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE> *in_buffer ,SampleBuffer<AUDIO_CHUNK_SIZE> *out_buffer) override
     {
-        float* left_out = out_buffer->channel(LEFT);
-        float* right_out = out_buffer->channel(RIGHT);
-        float* left_in = in_buffer->channel(LEFT);
-        float* right_in = in_buffer->channel(RIGHT);
-        for (unsigned n=0; n<AUDIO_CHUNK_SIZE; n++)
-        {
-            left_out[n] = left_in[n];
-            right_out[n] = right_in[n];
-        }
+        *out_buffer = *in_buffer;
     }
 
     EngineReturnStatus send_rt_event(BaseEvent* /*event*/)
