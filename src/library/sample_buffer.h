@@ -25,7 +25,8 @@ public:
      * @brief Construct a zeroed buffer with specified number of channels
      */
     SampleBuffer(int channel_count) : _channel_count(channel_count),
-                                               _buffer(new float[size * channel_count])
+                                      _own_buffer(true),
+                                      _buffer(new float[size * channel_count])
     {
         clear();
     }
@@ -34,6 +35,7 @@ public:
      * @brief Construct an empty buffer object with 0 channels.
      */
     SampleBuffer() noexcept : _channel_count(0),
+                              _own_buffer(true),
                               _buffer(nullptr)
     {}
 
@@ -42,9 +44,16 @@ public:
      * @brief Copy constructor.
      */
     SampleBuffer(const SampleBuffer &o) : _channel_count(o._channel_count),
-                                          _buffer(new float[size * o._channel_count])
+                                          _own_buffer(o._own_buffer)
     {
-        std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
+        if (o._own_buffer)
+        {
+            _buffer = new float[size * o._channel_count];
+            std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
+        } else
+        {
+            _buffer = o._buffer;
+        }
     }
 
 
@@ -52,6 +61,7 @@ public:
      * @brief Move constructor.
      */
     SampleBuffer(SampleBuffer &&o) noexcept : _channel_count(o._channel_count),
+                                              _own_buffer(o._own_buffer),
                                               _buffer(o._buffer)
     {
         o._buffer = nullptr;
@@ -63,7 +73,10 @@ public:
      */
     ~SampleBuffer()
     {
-        delete[] _buffer;
+        if (_own_buffer)
+        {
+            delete[] _buffer;
+        }
     }
 
 
@@ -74,13 +87,21 @@ public:
     {
         if (this != &o)  // Avoid self-assignment
         {
-            if (_channel_count != o._channel_count && o._channel_count != 0)
+            if (o._own_buffer)
             {
-                delete[] _buffer;
-                _buffer = new float[size * o._channel_count];
+                if (_channel_count != o._channel_count && o._channel_count != 0)
+                {
+                    delete[] _buffer;
+                    _buffer = new float[size * o._channel_count];
+                }
+                std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
             }
+            else
+            {
+                _buffer = o._buffer;
+            }
+            _own_buffer = o._own_buffer;
             _channel_count = o._channel_count;
-            std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
         }
         return *this;
     }
@@ -93,12 +114,47 @@ public:
     {
         if (this != &o)  // Avoid self-assignment
         {
-            delete[] _buffer;
+            if (_own_buffer)
+            {
+                delete[] _buffer;
+            }
             _channel_count = o._channel_count;
+            _own_buffer = o._own_buffer;
             _buffer = o._buffer;
             o._buffer = nullptr;
         }
         return *this;
+    }
+
+    /**
+     * @brief Create a SampleBuffer from another SampleBuffer, without copying or
+     *        taking ownership of the data. Optionally only a subset of
+     *        the source buffers channels can be wrapped.
+     * @param source The SampleBuffer whose data is wrapped.
+     * @param start_channel The first channel to wrap. Defaults to 0.
+     * @param number_of_channels Must not exceed the channelcount of the source buffer
+     *                           minus start_channel.
+     * @return The created, non-owning SampleBuffer.
+     */
+    static SampleBuffer create_non_owning_buffer(const SampleBuffer& source,
+                                                 int start_channel,
+                                                 int number_of_channels)
+    {
+        assert(number_of_channels + start_channel <= source._channel_count);
+
+        SampleBuffer buffer;
+        buffer._own_buffer = false;
+        buffer._channel_count = number_of_channels;
+        buffer._buffer = source._buffer + size * start_channel;
+        return buffer;
+    }
+
+    /**
+     * @brief Defaulted version of the above function.
+     */
+    static SampleBuffer create_non_owning_buffer(const SampleBuffer& source)
+    {
+        return create_non_owning_buffer(source, 0, source.channel_count());
     }
 
     /**
@@ -246,6 +302,8 @@ public:
      */
     void add(const SampleBuffer &source)
     {
+        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+
         if (source.channel_count() == 1) // mono input, add to all dest channels
         {
             for (int channel = 0; channel < _channel_count; ++channel)
@@ -268,7 +326,6 @@ public:
     /**
      * @brief Sums one channel of source buffer into one channel of the buffer.
      */
-
     void add(int dest_channel, int source_channel, SampleBuffer &source)
     {
         float* source_data = source._buffer + size * source_channel;
@@ -287,6 +344,8 @@ public:
     */
     void add_with_gain(const SampleBuffer &source, float gain)
     {
+        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+
         if (source.channel_count() == 1)
         {
             for (int channel = 0; channel < _channel_count; ++channel)
@@ -308,9 +367,11 @@ public:
 
 private:
     int _channel_count;
+    bool _own_buffer;
     float* _buffer;
 };
 
+typedef SampleBuffer<AUDIO_CHUNK_SIZE> ChunkSampleBuffer;
 } // namespace sushi
 
 

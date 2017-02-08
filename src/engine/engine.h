@@ -61,12 +61,7 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
-    // FIXME: temp workaround for testing sequencer before PluginParameter implementation is in place
-    virtual EngineReturnStatus set_stompbox_parameter(const std::string& instance_id,
-                                                      const std::string& param_id,
-                                                      const float value) = 0;
-
-    virtual EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseEvent* event) = 0;
+    virtual EngineReturnStatus send_rt_event(BaseEvent* event) = 0;
 
 protected:
     int _sample_rate;
@@ -90,11 +85,7 @@ public:
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
-    EngineReturnStatus set_stompbox_parameter(const std::string& instance_id,
-                                              const std::string& param_id,
-                                              const float value) override;
-
-    EngineReturnStatus send_stompbox_event(const std::string& instance_id, BaseEvent* event) override;
+    EngineReturnStatus send_rt_event(BaseEvent* event) override;
 
 protected:
     eastl::vector<PluginChain> _audio_graph{MAX_CHANNELS};

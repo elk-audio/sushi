@@ -54,6 +54,42 @@ TEST(TestSampleBuffer, TestAssignement)
     EXPECT_EQ(4, move_copy.channel_count());
     EXPECT_FLOAT_EQ(2.0f, move_copy.channel(0)[10]);
     EXPECT_EQ(data, move_copy.channel(0));
+
+    // Test assignment of empty buffers
+    SampleBuffer<AUDIO_CHUNK_SIZE> empty_buffer;
+    SampleBuffer<AUDIO_CHUNK_SIZE> empty_test_buffer = empty_buffer;
+
+    EXPECT_EQ(empty_buffer.channel_count(), empty_test_buffer.channel_count());
+    EXPECT_EQ(nullptr, empty_buffer.channel(0));
+
+    // Assign empty buffer to non-empty buffer
+    SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer_3(2);
+    test_buffer_3 = empty_buffer;
+    EXPECT_EQ(nullptr, empty_buffer.channel(0));
+
+}
+
+TEST(TestSampleBuffer, test_non_owning_buffer)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer(4);
+    float* data = test_buffer.channel(0);
+    std::fill(data, data + AUDIO_CHUNK_SIZE * 2, 2.0f);
+    std::fill(data + AUDIO_CHUNK_SIZE * 2, data + AUDIO_CHUNK_SIZE * 4, 4.0f);
+    {
+        /* Create a non owning buffer and assert that is wraps the same data
+         * And doesn't destroy the data when it goes out of scope  */
+        SampleBuffer<AUDIO_CHUNK_SIZE> non_owning_buffer = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(test_buffer, 0, 2);
+        test_utils::assert_buffer_value(2.0f, non_owning_buffer);
+        non_owning_buffer = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(test_buffer, 2, 2);
+        test_utils::assert_buffer_value(4.0f, non_owning_buffer);
+        /* Excercise assignment and move contructors */
+        SampleBuffer<AUDIO_CHUNK_SIZE> new_buffer;
+        SampleBuffer<AUDIO_CHUNK_SIZE> new_buffer_2;
+        new_buffer = non_owning_buffer;
+        new_buffer_2 = std::move(non_owning_buffer);
+    }
+    /* Touch the sample data to provoke a crash if it was accidentally deleted */
+    EXPECT_FLOAT_EQ(2.0f, *test_buffer.channel(1));
 }
 
 TEST(TestSampleBuffer, test_initialization)
