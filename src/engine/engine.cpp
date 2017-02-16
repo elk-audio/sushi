@@ -140,10 +140,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
      * Note that its assumed that number of input and output channels are equal. */
 
     int start_channel = 0;
-    int no_of_channels;
-    for (auto graph = _audio_graph.begin(); graph != _audio_graph.end(); ++graph)
+    for (auto& graph : _audio_graph)
     {
-        no_of_channels = (*graph).input_channels();
+        int no_of_channels = graph.input_channels();
         if (start_channel + no_of_channels <= in_buffer->channel_count())
         {
             ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
@@ -152,7 +151,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
                                                                                    start_channel,
                                                                                    no_of_channels);
-            (*graph).process_audio(ch_in, ch_out);
+            graph.process_audio(ch_in, ch_out);
             start_channel += no_of_channels;
         } else
         {
@@ -161,7 +160,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     }
     if (start_channel < in_buffer->channel_count())
     {
-        MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed", start_channel,
+        MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed",
+                         start_channel,
                          in_buffer->channel_count());
     }
 }

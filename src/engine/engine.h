@@ -24,7 +24,7 @@ class StompBox;
 namespace sushi {
 namespace engine {
 
-/* Maximum number of parallell chains, chains are not dynamically allocated yet */
+/* Maximum number of parallel chains, chains are not dynamically allocated yet */
 constexpr int MAX_CHAINS = 2;
 
 enum class EngineReturnStatus
