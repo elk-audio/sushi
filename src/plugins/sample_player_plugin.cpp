@@ -105,7 +105,7 @@ void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */,
     for (auto& voice : _voices)
     {
         voice.set_envelope(attack, decay, sustain, release);
-        voice.render(out_buffer);
+        voice.render(_buffer);
     }
     out_buffer.add_with_gain(_buffer, gain);
 }

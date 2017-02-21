@@ -28,6 +28,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/engine/engine.cpp
+                      src/engine/plugin_chain.cpp
                       src/library/mind_allocator.cpp
                       src/library/plugin_manager.cpp
                       src/plugins/gain_plugin.cpp

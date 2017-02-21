@@ -9,6 +9,7 @@
 #define SUSHI_PLUGIN_CHAIN_H
 
 #include <memory>
+#include <cassert>
 
 #include "library/sample_buffer.h"
 #include "library/processor.h"
@@ -18,20 +19,28 @@
 namespace sushi {
 namespace engine {
 
+/* for now, chains have at most stereo capability */
+constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 2;
+
 class PluginChain : public Processor
 {
 public:
-    PluginChain() = default;
+    PluginChain()
+    {
+        _max_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _max_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _current_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+        _current_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+    }
+
     ~PluginChain() = default;
     MIND_DECLARE_NON_COPYABLE(PluginChain)
     /**
      * @brief Adds a plugin to the end of the chain.
      * @param The plugin to add.
      */
-    void add(Processor* processor)
-    {
-        _chain.push_back(processor);
-    }
+    void add(Processor* processor);
+
     /**
      * @brief handles events sent to this processor only and not sub-processors
      */
@@ -44,19 +53,43 @@ public:
      */
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
     {
-        _bfr_1 = in;
+        /* Alias the internal buffers to get the right channel count */
+        ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_1, 0, _current_input_channels);
+        ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, _current_input_channels);
+        in_bfr.clear();
+        in_bfr.add(in);
         for (auto &plugin : _chain)
         {
-            plugin->process_audio(_bfr_1, _bfr_2);
-            std::swap(_bfr_1, _bfr_2);
+            plugin->process_audio(in_bfr, out_bfr);
+            std::swap(in_bfr, out_bfr);
         }
-        out = _bfr_1;
+        /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
+         * processing chain was empty */
+        out.add(in_bfr);
     }
 
+    void set_input_channels(int channels) override
+    {
+        Processor::set_input_channels(channels);
+        update_channel_config();
+    }
+
+    void set_output_channels(int channels) override
+    {
+        Processor::set_output_channels(channels);
+        update_channel_config();
+    }
+
+
 private:
+    /**
+     * @brief Loops through the chain of plugins and negotiatiates channel configuration.
+     */
+    void update_channel_config();
+
     eastl::vector<Processor*> _chain;
-    SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_1{1};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _bfr_2{1};
+    ChunkSampleBuffer _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS};
+    ChunkSampleBuffer _bfr_2{PLUGIN_CHAIN_MAX_CHANNELS};
 };
 
 

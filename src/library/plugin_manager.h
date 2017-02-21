@@ -23,6 +23,9 @@ enum class StompBoxStatus
     MEMORY_ERROR,
 };
 
+/* Assume that all Stompboxes handle stereo */
+constexpr int STOMPBOX_MAX_CHANNELS = 2;
+
 /**
  * @brief internal wrapper class for StompBox instances that keeps track
  * of all the host-related configuration.
@@ -37,7 +40,12 @@ public:
      * and will delete it when the manager is deleted.
      */
     InternalPlugin()
-    {};
+    {
+        _max_input_channels = STOMPBOX_MAX_CHANNELS;
+        _max_output_channels = STOMPBOX_MAX_CHANNELS;
+        _current_input_channels = STOMPBOX_MAX_CHANNELS;
+        _current_output_channels = STOMPBOX_MAX_CHANNELS;
+    };
 
     virtual ~InternalPlugin() {};
 
