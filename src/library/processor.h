@@ -43,12 +43,12 @@ public:
     int max_output_channels() {return _max_output_channels;}
     int input_channels() {return  _current_input_channels;}
     int output_channels() {return _current_output_channels;}
-    void set_input_channels(int channels)
+    virtual void set_input_channels(int channels)
     {
         assert( channels <= _max_input_channels);
         _current_input_channels  = channels;
     }
-    void set_output_channels(int channels)
+    virtual void set_output_channels(int channels)
     {
         assert(channels <= _max_output_channels);
         _current_output_channels  = channels;

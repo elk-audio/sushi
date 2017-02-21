@@ -15,6 +15,8 @@
 #include <map>
 namespace sushi {
 
+/* Assume that all Stompboxes handle stereo */
+constexpr int STOMPBOX_MAX_CHANNELS = 2;
 /**
  * @brief internal wrapper class for StompBox instances that keeps track
  * of all the host-related configuration.
@@ -28,7 +30,13 @@ public:
      * @brief Create a new StompboxManager that takes ownership of instance
      * and will delete it when the manager is deleted.
      */
-    StompBoxManager(StompBox* instance) : _instance(instance) {}
+    StompBoxManager(StompBox* instance) : _instance(instance)
+    {
+        _max_input_channels = STOMPBOX_MAX_CHANNELS;
+        _max_output_channels = STOMPBOX_MAX_CHANNELS;
+        _current_input_channels = STOMPBOX_MAX_CHANNELS;
+        _current_output_channels = STOMPBOX_MAX_CHANNELS;
+    }
 
     virtual ~StompBoxManager() {};
 

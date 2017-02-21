@@ -5,6 +5,7 @@
     "stompbox_chains" : [
         {
             "id" : "left",
+            "mode" : "mono",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
@@ -22,6 +23,7 @@
         },
         {
             "id" : "right",
+            "mode" : "stereo",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.gain",
