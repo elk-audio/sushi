@@ -8,28 +8,27 @@
 #ifndef PASSTHROUGH_PLUGIN_H
 #define PASSTHROUGH_PLUGIN_H
 
-#include "plugin_interface.h"
+#include "library/plugin_manager.h"
 
 namespace sushi {
 namespace passthrough_plugin {
 
-class PassthroughPlugin : public StompBox
+class PassthroughPlugin : public InternalPlugin
 {
 public:
     PassthroughPlugin();
 
     ~PassthroughPlugin();
 
-    StompBoxStatus init(const StompBoxConfig &configuration) override;
-
-    std::string unique_id() const override
+    const std::string unique_id() override
     {
         return std::string("sushi.testing.passthrough");
     }
 
-    void process_event(BaseEvent* /*event*/) {}
+    // void process_event(BaseEvent* /*event*/) {}
 
-    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
 };
 
 }// namespace passthrough_plugin

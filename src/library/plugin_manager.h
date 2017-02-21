@@ -9,40 +9,44 @@
 #define SUSHI_PLUGIN_MANAGER_H
 
 #include "library/plugin_parameters.h"
-#include "plugin_interface.h"
 #include "library/processor.h"
 
+#include <algorithm>
 #include <map>
 namespace sushi {
+
+enum class StompBoxStatus
+{
+    OK,
+    ERROR,
+    PARAMETER_ERROR,
+    MEMORY_ERROR,
+};
 
 /**
  * @brief internal wrapper class for StompBox instances that keeps track
  * of all the host-related configuration.
  */
 
-class StompBoxManager : public StompBoxController, public Processor
+class InternalPlugin : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(StompBoxManager)
+    MIND_DECLARE_NON_COPYABLE(InternalPlugin)
     /**
      * @brief Create a new StompboxManager that takes ownership of instance
      * and will delete it when the manager is deleted.
      */
-    StompBoxManager(StompBox* instance) : _instance(instance) {}
+    InternalPlugin()
+    {};
 
-    virtual ~StompBoxManager() {};
+    virtual ~InternalPlugin() {};
 
-    /**
-     * @brief Return a pointer to the stompbox instance.
-     */
-    StompBox* instance() {return _instance.get();}
-
-    // Parameter registration functions inherited from StompBoxController
+    // Parameter registration functions
 
     FloatStompBoxParameter* register_float_parameter(const std::string& id,
                                                      const std::string& label,
                                                      float default_value,
-                                                     FloatParameterPreProcessor* custom_pre_processor) override
+                                                     FloatParameterPreProcessor* custom_pre_processor)
     {
         if (!custom_pre_processor)
         {
@@ -56,7 +60,7 @@ public:
     IntStompBoxParameter* register_int_parameter(const std::string& id,
                                                  const std::string& label,
                                                  int default_value,
-                                                 IntParameterPreProcessor* custom_pre_processor) override
+                                                 IntParameterPreProcessor* custom_pre_processor)
     {
         if (!custom_pre_processor)
         {
@@ -70,7 +74,7 @@ public:
     BoolStompBoxParameter* register_bool_parameter(const std::string& id,
                                                    const std::string& label,
                                                    bool default_value,
-                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr) override
+                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr)
     {
         if (!custom_pre_processor)
         {
@@ -83,7 +87,7 @@ public:
 
     StringStompBoxParameter* register_string_parameter(const std::string& id,
                                                        const std::string& label,
-                                                       const std::string& default_value) override
+                                                       const std::string& default_value)
     {
         StringStompBoxParameter* param = new StringStompBoxParameter(id, label, new std::string(default_value));
         this->register_parameter(param);
@@ -92,7 +96,7 @@ public:
 
     virtual DataStompBoxParameter* register_data_parameter(const std::string& id,
                                                            const std::string& label,
-                                                           char* default_value) override
+                                                           char* default_value)
     {
         DataStompBoxParameter* param = new DataStompBoxParameter(id, label, default_value);
         this->register_parameter(param);
@@ -102,8 +106,16 @@ public:
     /* Inherited from Processor */
     void process_event(BaseEvent* event) override;
 
-    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
-    {_instance->process(&in_buffer, &out_buffer);}
+    // TODO: base implementation needed otherwise make_unique fails if this class is abstract.
+    //       Investigate better
+    virtual void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
+    {
+        // Pass-through behaviour
+        for (int i = 0; i < in_buffer.channel_count(); ++i)
+        {
+            std::copy(in_buffer.channel(i), in_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_buffer.channel(i));
+        }
+    }
 
 
 private:
@@ -126,7 +138,6 @@ private:
                                                                   std::unique_ptr<BaseStompBoxParameter>(parameter)));
     }
 
-    std::unique_ptr<StompBox> _instance;
     std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
 };
 

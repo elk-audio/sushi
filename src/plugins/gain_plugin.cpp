@@ -6,27 +6,21 @@ namespace sushi {
 namespace gain_plugin {
 
 GainPlugin::GainPlugin()
-{}
+{
+    _gain_parameter = register_float_parameter("gain", "Gain", 0.0f, new dBToLinPreProcessor(-120.0f, 120.0f));
+}
 
 GainPlugin::~GainPlugin()
 {}
-
-StompBoxStatus GainPlugin::init(const StompBoxConfig &configuration)
-{
-    _configuration = configuration;
-    _gain_parameter = configuration.controller->register_float_parameter("gain", "Gain", 0.0f, new dBToLinPreProcessor(-120.0f, 120.0f));
-    return StompBoxStatus::OK;
-}
-
-void GainPlugin::process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
+void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* For now, assume equal number of channels in/out */
-    assert(in_buffer->channel_count() == out_buffer->channel_count());
+    assert(in_buffer.channel_count() == out_buffer.channel_count());
 
     float gain = _gain_parameter->value();
     /* With SampleBuffer operations */
-    out_buffer->clear();
-    out_buffer->add_with_gain(*in_buffer, gain);
+    out_buffer.clear();
+    out_buffer.add_with_gain(in_buffer, gain);
 }
 
 

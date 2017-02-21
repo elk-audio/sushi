@@ -8,7 +8,7 @@
 
 #include <array>
 
-#include "plugin_interface.h"
+#include "library/plugin_manager.h"
 #include "plugins/sample_player_voice.h"
 
 namespace sushi {
@@ -16,29 +16,27 @@ namespace sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
 // TODO - Fix string parameter support so we can inject the sample path instead
+// (and have it relative to project structure, right now this fails when built in another location)
 static const std::string SAMPLE_FILE = "../../../test/data/Kawai-K11-GrPiano-C4_mono.wav";
 
-class SamplePlayerPlugin : public StompBox
+class SamplePlayerPlugin : public InternalPlugin
 {
 public:
     SamplePlayerPlugin();
 
     ~SamplePlayerPlugin();
 
-    StompBoxStatus init(const StompBoxConfig &configuration) override;
-
-    std::string unique_id() const override
+    const std::string unique_id() override
     {
         return std::string("sushi.testing.sampleplayer");
     }
 
     void process_event(BaseEvent* event) override ;
 
-    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
     StompBoxStatus load_sample_file(const std::string &file_name);
-    StompBoxConfig _configuration;
 
     float*  _sample_buffer{nullptr};
     sample_player_voice::Sample _sample;

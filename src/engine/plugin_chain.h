@@ -10,7 +10,6 @@
 
 #include <memory>
 
-#include "plugin_interface.h"
 #include "library/sample_buffer.h"
 #include "library/processor.h"
 

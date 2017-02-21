@@ -5,31 +5,29 @@
 #ifndef GAIN_PLUGIN_H
 #define GAIN_PLUGIN_H
 
-#include "plugin_interface.h"
-#include "library/plugin_parameters.h"
+#include "library/plugin_manager.h"
 
 namespace sushi {
 namespace gain_plugin {
 
-class GainPlugin : public StompBox
+class GainPlugin : public InternalPlugin
 {
 public:
     GainPlugin();
 
     ~GainPlugin();
 
-    StompBoxStatus init(const StompBoxConfig &configuration) override;
 
-    std::string unique_id() const override
+    const std::string unique_id() override
     {
         return std::string("sushi.testing.gain");
     }
-    void process_event(BaseEvent* /*event*/) {}
 
-    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+    // void process_event(BaseEvent* /*event*/) {}
+
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    StompBoxConfig _configuration;
     FloatStompBoxParameter* _gain_parameter;
 };
 

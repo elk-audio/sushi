@@ -36,7 +36,7 @@ public:
      * @brief Unique processor identifier
      * @return
      */
-    const std::string& id() { return _id;}
+    virtual const std::string unique_id() { return _uuid;}
 
 
     int max_input_channels() {return _max_input_channels;}
@@ -61,7 +61,7 @@ public:
 
 protected:
 
-    std::string _id{""};
+    std::string _uuid{""};
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
     int _max_input_channels{0};

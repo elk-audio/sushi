@@ -92,11 +92,11 @@ TEST_F(TestEngine, TestInitFromJSON)
     ASSERT_EQ(chain_r->size(), 3u);
 
     /* TODO - Is this casting a good idea */
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_l->at(0))->instance()->unique_id(), "sushi.testing.passthrough");
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_l->at(1))->instance()->unique_id(), "sushi.testing.gain");
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_l->at(2))->instance()->unique_id(), "sushi.testing.gain");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(0))->unique_id(), "sushi.testing.passthrough");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(1))->unique_id(), "sushi.testing.gain");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(2))->unique_id(), "sushi.testing.gain");
 
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_r->at(0))->instance()->unique_id(), "sushi.testing.gain");
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_r->at(1))->instance()->unique_id(), "sushi.testing.passthrough");
-    ASSERT_EQ(static_cast<StompBoxManager*>(chain_r->at(2))->instance()->unique_id(), "sushi.testing.gain");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(0))->unique_id(), "sushi.testing.gain");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(1))->unique_id(), "sushi.testing.passthrough");
+    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(2))->unique_id(), "sushi.testing.gain");
 }

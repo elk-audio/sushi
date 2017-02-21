@@ -6,20 +6,18 @@
 
 using namespace sushi;
 
-class TestPlugin : public StompBox
+class TestPlugin : public InternalPlugin
 {
 public:
     TestPlugin() {}
 
-    StompBoxStatus init(const StompBoxConfig& /*configuration*/) override {return StompBoxStatus::OK;}
+    const std::string unique_id() override { return "test_plugin"; }
 
-    std::string unique_id() const override {return "test_plugin";}
+    // void process_event(BaseEvent* /*event*/) override {}
 
-    void process_event(BaseEvent* /*event*/) override {}
-
-    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
     {
-        *out_buffer = *in_buffer;
+        out_buffer = in_buffer;
     }
 };
 
@@ -32,24 +30,20 @@ protected:
     }
     void SetUp()
     {
-        _test_plugin = new TestPlugin;
-        _module_under_test = new StompBoxManager(_test_plugin);
+        _module_under_test = new TestPlugin;
     }
 
     void TearDown()
     {
-        // _test_plugin is managed by the StompBoxManager and should not be deleted
         delete(_module_under_test);
     }
-    TestPlugin* _test_plugin;
-    StompBoxManager* _module_under_test;
+    InternalPlugin* _module_under_test;
 };
 
 
 TEST_F(StompBoxManagerTest, TestInstanciation)
 {
-    EXPECT_TRUE(_module_under_test->instance());
-    EXPECT_EQ("test_plugin", _module_under_test->instance()->unique_id());
+    EXPECT_EQ("test_plugin", _module_under_test->unique_id());
 }
 
 

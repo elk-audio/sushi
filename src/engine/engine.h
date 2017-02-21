@@ -99,7 +99,7 @@ private:
      * @return Pointer to plugin instance if uid is valid,
      *         nullptr otherwise
      */
-    StompBox* _make_stompbox_from_unique_id(const std::string &uid);
+    std::unique_ptr<InternalPlugin> _make_stompbox_from_unique_id(const std::string &uid);
 
     /**
      * @brief Instantiate plugins from a JSON chain definition and put them in given chain.
@@ -109,10 +109,10 @@ private:
      *         different error code otherwise
      */
     EngineReturnStatus _fill_chain_from_json_definition(const int chain_idx,
-                                                      const Json::Value &stompbox_defs);
+                                                        const Json::Value &stompbox_defs);
 
     // TODO: eventually port to EASTL
-    std::map<std::string, std::unique_ptr<StompBoxManager>> _instances_id_to_stompbox;
+    std::map<std::string, std::unique_ptr<InternalPlugin>> _instances_id_to_stompbox;
 };
 
 } // namespace engine
