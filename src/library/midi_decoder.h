@@ -12,6 +12,9 @@
 namespace sushi {
 namespace midi {
 
+/**
+ * @brief Enum to represent a midi message type.
+ */
 enum class MessageType
 {
     NOTE_OFF,
@@ -103,42 +106,39 @@ NoteOffMessage decode_note_off(const uint8_t* data);
 NoteOnMessage decode_note_on(const uint8_t* data);
 
 /**
- * @brief Decode a midi note on message.
+ * @brief Decode a midi control change message.
  * @param data Message data.
  * @return Decoded message.
  */
 ControlChangeMessage decode_control_change(const uint8_t* data);
 
 /**
- * @brief Decode a midi note on message.
+ * @brief Decode a midi polyphonic key pressure (aftertouch) message.
  * @param data Message data.
  * @return Decoded message.
  */
 PolyKeyPressureMessage decode_poly_key_pressure(const uint8_t* data);
 
 /**
- * @brief Decode a midi note on message.
+ * @brief Decode a midi program change message.
  * @param data Message data.
  * @return Decoded message.
  */
 ProgramChangeMessage decode_program_change(const uint8_t* data);
 
 /**
- * @brief Decode a midi note on message.
+ * @brief Decode a midi channel pressure (non-polyphonic aftertouch) message.
  * @param data Message data.
  * @return Decoded message.
  */
 ChannelPressureMessage decode_channel_pressure(const uint8_t* data);
 
 /**
- * @brief Decode a midi note on message.
+ * @brief Decode a midi pitch bend message.
  * @param data Message data.
  * @return Decoded message.
  */
 PitchBendMessage decode_pitch_bend(const uint8_t* data);
-
-
-int get_midi_channel(const uint8_t byte);
 
 } // end namespace midi
 } // end namespace sushi

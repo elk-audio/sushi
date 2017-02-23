@@ -1,4 +1,5 @@
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
 
 #include "library/midi_decoder.h"
 
@@ -19,7 +20,6 @@ inline uint8_t decode_channel(uint8_t byte)
 {
     return byte & 0x0F;
 }
-
 
 
 MessageType decode_message_type(const uint8_t* data, size_t size)
