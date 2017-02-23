@@ -93,16 +93,11 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
                 MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_idx);
                 return EngineReturnStatus::INVALID_STOMPBOX_UID;
             }
+
             auto instance_id = stompbox_def["id"].asString();
             _instances_id_to_stompbox[instance_id] = std::move(instance);
             // TODO - look over ownership here - see ardours use of shared_ptr for instance
             _audio_graph[chain_idx].add(_instances_id_to_stompbox[instance_id].get());
-
-            // TODO WIP : rivedi in base a nuovo sistema init / set sample rate
-            // StompBoxConfig config;
-            // config.sample_rate = _sample_rate;
-            // config.controller = _instances_id_to_stompbox[instance_id].get();
-            // instance->init(config);
         }
     }
     else

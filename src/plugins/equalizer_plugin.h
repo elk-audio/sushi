@@ -18,6 +18,8 @@ public:
 
     ~EqualizerPlugin();
 
+    virtual ProcessorReturnCode init(const int sample_rate) override;
+
     const std::string unique_id() override
     {
         return std::string("sushi.testing.equalizer");
@@ -28,6 +30,7 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
+    float _sample_rate;
     biquad::BiquadFilter _filter;
 
     FloatStompBoxParameter* _frequency;

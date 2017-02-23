@@ -13,10 +13,29 @@
 
 namespace sushi {
 
+enum class ProcessorReturnCode
+{
+    OK,
+    ERROR,
+    PARAMETER_ERROR,
+    MEMORY_ERROR,
+};
+
 class Processor
 {
 public:
     virtual ~Processor() {};
+
+    /**
+     * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
+     * all of the initialization that can fail, should be done here. See also deinit() for deallocating
+     * any resources reserved here.
+     * @param sample_rate Host sample rate
+     */
+    virtual ProcessorReturnCode init(const int /* sample_rate */)
+    {
+        return ProcessorReturnCode::OK;
+    }
 
     /**
      * @brief Process a single realtime event that is to take place during the next call to process

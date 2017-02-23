@@ -17,13 +17,10 @@ public:
 
     ~GainPlugin();
 
-
     const std::string unique_id() override
     {
         return std::string("sushi.testing.gain");
     }
-
-    // void process_event(BaseEvent* /*event*/) {}
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

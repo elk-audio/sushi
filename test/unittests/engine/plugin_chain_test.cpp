@@ -16,6 +16,12 @@ public:
         _max_input_channels = 2;
         _max_output_channels = 2;
     }
+
+    ProcessorReturnCode init(const int /* sample_rate */) override
+    {
+        return ProcessorReturnCode::OK;
+    }
+
     void process_event(BaseEvent* /*event*/) override{}
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
     {

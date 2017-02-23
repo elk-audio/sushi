@@ -169,13 +169,8 @@ protected:
     void SetUp()
     {
         _module_under_test = new SamplePlayerPlugin();
-        // TODO: review after new initialization system
-        // _manager = new sushi::InternalPlugin(_module_under_test);
-        // StompBoxConfig c;
-        // c.sample_rate = 44000;
-        // c.controller = static_cast<StompBoxController*>(_manager);
-        // StompBoxStatus status = _module_under_test->init(c);
-        // ASSERT_EQ(StompBoxStatus::OK, status);
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
     void TearDown()

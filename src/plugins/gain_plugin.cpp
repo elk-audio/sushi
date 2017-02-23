@@ -12,6 +12,7 @@ GainPlugin::GainPlugin()
 
 GainPlugin::~GainPlugin()
 {}
+
 void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* For now, assume equal number of channels in/out */

@@ -41,11 +41,7 @@ TEST_F(TestPassthroughPlugin, TestInstantiation)
 
 TEST_F(TestPassthroughPlugin, TestInitialization)
 {
-    // TODO: put again the tests after revising initialization process
-    //       (now temporarily in the constructor)
-    // StompBoxConfig c;
-    // c.sample_rate = 44000;
-    // _module_under_test->init(c);
+    _module_under_test->init(48000);
     ASSERT_TRUE(_module_under_test);
 }
 
@@ -72,12 +68,8 @@ protected:
     void SetUp()
     {
         _module_under_test = new gain_plugin::GainPlugin();
-        // TODO: revise after initialization methods are set
-        // StompBoxConfig c;
-        // c.sample_rate = 44000;
-        // c.controller = static_cast<StompBoxController*>(_manager);
-        // StompBoxStatus status = _module_under_test->init(c);
-        // ASSERT_EQ(StompBoxStatus::OK, status);
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
     void TearDown()
@@ -117,12 +109,8 @@ protected:
     {
 
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
-        // TODO: revise after new initialization system
-        // StompBoxConfig c;
-        // c.sample_rate = 44000;
-        // c.controller = _manager;
-        // StompBoxStatus status = _module_under_test->init(c);
-        // ASSERT_EQ(StompBoxStatus::OK, status);
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
     void TearDown()

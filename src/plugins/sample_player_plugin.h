@@ -26,6 +26,8 @@ public:
 
     ~SamplePlayerPlugin();
 
+    virtual ProcessorReturnCode init(const int sample_rate) override;
+
     const std::string unique_id() override
     {
         return std::string("sushi.testing.sampleplayer");
@@ -36,7 +38,7 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    StompBoxStatus load_sample_file(const std::string &file_name);
+    ProcessorReturnCode load_sample_file(const std::string &file_name);
 
     float*  _sample_buffer{nullptr};
     sample_player_voice::Sample _sample;

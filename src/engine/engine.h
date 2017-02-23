@@ -19,6 +19,7 @@
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 
+// TODO: this not needed anymore, remove it
 class StompBox;
 
 namespace sushi {

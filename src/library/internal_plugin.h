@@ -15,14 +15,6 @@
 #include <map>
 namespace sushi {
 
-enum class StompBoxStatus
-{
-    OK,
-    ERROR,
-    PARAMETER_ERROR,
-    MEMORY_ERROR,
-};
-
 /* Assume that all Stompboxes handle stereo */
 constexpr int STOMPBOX_MAX_CHANNELS = 2;
 
