@@ -80,7 +80,12 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    return setup_ports();
+}
 
+
+AudioFrontendStatus JackFrontend::setup_ports()
+{
     /* Setup and register ports */
     int port_no = 0;
     for (auto& port : _output_ports)
@@ -166,7 +171,15 @@ int JackFrontend::internal_process_callback(jack_nframes_t nframes)
         MIND_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
     }
-    /* Send all events to their processors */
+    process_events();
+    process_midi();
+    process_audio(nframes);
+    return 0;
+}
+
+
+void inline JackFrontend::process_events()
+{
     while (!_event_queue.isEmpty())
     {
         auto event = _event_queue.pop();
@@ -175,7 +188,18 @@ int JackFrontend::internal_process_callback(jack_nframes_t nframes)
             _engine->send_rt_event(event.item);
         }
     }
+}
 
+
+void inline JackFrontend::process_midi()
+{
+
+
+}
+
+
+void inline JackFrontend::process_audio(jack_nframes_t nframes)
+{
     /* Get pointers to audio buffers from ports */
     std::array<const float*, MAX_FRONTEND_CHANNELS> in_data;
     std::array<float*, MAX_FRONTEND_CHANNELS> out_data;
@@ -203,7 +227,6 @@ int JackFrontend::internal_process_callback(jack_nframes_t nframes)
             std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data[i] + frames);
         }
     }
-    return 0;
 }
 
 }; // end namespace audio_frontend

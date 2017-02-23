@@ -85,11 +85,16 @@ private:
     /* Set up the jack client and associated ports */
     AudioFrontendStatus setup_client(const std::string client_name, const std::string server_name);
 
+    AudioFrontendStatus setup_ports();
     /* Call after activation to connect the frontend ports to system ports */
     AudioFrontendStatus connect_ports();
 
     /* Internal process callback function */
     int internal_process_callback(jack_nframes_t nframes);
+
+    void process_events();
+    void process_midi();
+    void process_audio(jack_nframes_t nframes);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
