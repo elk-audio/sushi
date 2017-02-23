@@ -25,9 +25,9 @@ StompBoxStatus SamplePlayerPlugin::init(const StompBoxConfig &configuration)
     _configuration = configuration;
     _volume_parameter  = configuration.controller->register_float_parameter("volume", "Volume", 0.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
     _attack_parameter  = configuration.controller->register_float_parameter("attack", "Attack", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
-    _decay_parameter   = configuration.controller->register_float_parameter("decay", "Decay", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+    _decay_parameter   = configuration.controller->register_float_parameter("decay", "Decay", 0.5f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _sustain_parameter = configuration.controller->register_float_parameter("sustain", "Sustain", 1.0f, new FloatParameterPreProcessor(0.0f, 1.0f));
-    _release_parameter = configuration.controller->register_float_parameter("release", "Release", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+    _release_parameter = configuration.controller->register_float_parameter("release", "Release", 1.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _sample_file_parameter = configuration.controller->register_string_parameter("sample_file", "Sample File", SAMPLE_FILE);
 
     for (auto& voice : _voices)

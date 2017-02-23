@@ -37,7 +37,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
                       src/plugins/biquad_filter.cpp
-                      src/audio_frontends/offline_frontend.cpp)
+                      src/audio_frontends/offline_frontend.cpp
+                      src/audio_frontends/jack_frontend.cpp)
 
 
 # Enumerate all the headers separately so that CLion can index them
@@ -59,7 +60,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/sample_player_voice.h
                         src/plugins/biquad_filter.h
                         src/audio_frontends/base_audio_frontend.h
-                        src/audio_frontends/offline_frontend.h)
+                        src/audio_frontends/offline_frontend.h
+                        src/audio_frontends/jack_frontend.h)
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
@@ -85,7 +87,7 @@ include_directories(${INCLUDE_DIRS})
 #  Linked libraries  #
 #################################
 
-set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp )
+set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp jack)
  
 if (APPLE)
     link_directories(/usr/local/lib)
