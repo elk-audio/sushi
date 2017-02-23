@@ -8,7 +8,7 @@
 #ifndef PASSTHROUGH_PLUGIN_H
 #define PASSTHROUGH_PLUGIN_H
 
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 namespace sushi {
 namespace passthrough_plugin {

@@ -5,7 +5,7 @@
 #include "test_utils.h"
 #include "plugins/sample_player_voice.cpp"
 #include "plugins/sample_player_plugin.cpp"
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 
 using namespace sushi;

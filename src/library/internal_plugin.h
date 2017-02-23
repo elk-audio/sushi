@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef SUSHI_PLUGIN_MANAGER_H
-#define SUSHI_PLUGIN_MANAGER_H
+#ifndef SUSHI_INTERNAL_PLUGIN_H
+#define SUSHI_INTERNAL_PLUGIN_H
 
 #include "library/plugin_parameters.h"
 #include "library/processor.h"
@@ -150,4 +150,4 @@ private:
 };
 
 } // end namespace sushi
-#endif //SUSHI_PLUGIN_MANAGER_H
+#endif //SUSHI_INTERNAL_PLUGIN_H

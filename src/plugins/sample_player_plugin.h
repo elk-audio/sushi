@@ -8,7 +8,7 @@
 
 #include <array>
 
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 #include "plugins/sample_player_voice.h"
 
 namespace sushi {

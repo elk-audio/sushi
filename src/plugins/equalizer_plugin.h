@@ -5,7 +5,7 @@
 #ifndef EQUALIZER_PLUGIN_H
 #define EQUALIZER_PLUGIN_H
 
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 #include "biquad_filter.h"
 
 namespace sushi {

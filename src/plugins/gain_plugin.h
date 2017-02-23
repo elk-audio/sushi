@@ -5,7 +5,7 @@
 #ifndef GAIN_PLUGIN_H
 #define GAIN_PLUGIN_H
 
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 namespace sushi {
 namespace gain_plugin {

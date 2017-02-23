@@ -17,7 +17,7 @@
 #include "plugin_chain.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 class StompBox;
 

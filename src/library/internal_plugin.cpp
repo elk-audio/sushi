@@ -1,4 +1,4 @@
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 namespace sushi {
 

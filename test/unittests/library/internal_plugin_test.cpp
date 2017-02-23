@@ -2,7 +2,7 @@
 
 #define private public
 
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 using namespace sushi;
 
