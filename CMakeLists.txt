@@ -30,6 +30,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/engine.cpp
                       src/engine/plugin_chain.cpp
                       src/library/mind_allocator.cpp
+                      src/library/midi_decoder.cpp
                       src/library/plugin_manager.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
@@ -48,6 +49,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         include/plugin_interface.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
+                        src/library/midi_decoder.h
                         src/library/plugin_events.h
                         src/library/processor.h
                         src/library/plugin_manager.h
