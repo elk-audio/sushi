@@ -106,16 +106,16 @@ public:
     /* Inherited from Processor */
     void process_event(BaseEvent* event) override;
 
-    // TODO: base implementation needed otherwise make_unique fails if this class is abstract.
-    //       Investigate better
-    virtual void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
-    {
-        // Pass-through behaviour
-        for (int i = 0; i < in_buffer.channel_count(); ++i)
-        {
-            std::copy(in_buffer.channel(i), in_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_buffer.channel(i));
-        }
-    }
+    // // TODO: base implementation needed otherwise make_unique fails if this class is abstract.
+    // //       Investigate better
+    // virtual void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override
+    // {
+    //     // Pass-through behaviour
+    //     for (int i = 0; i < in_buffer.channel_count(); ++i)
+    //     {
+    //         std::copy(in_buffer.channel(i), in_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_buffer.channel(i));
+    //     }
+    // }
 
 
 private:
