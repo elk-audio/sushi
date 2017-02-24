@@ -1,9 +1,11 @@
 #include <thread>
 #include <deque>
 
+#include <jack/midiport.h>
 #include "logging.h"
 #include "jack_frontend.h"
 #include "library/random_note_player.h"
+#include "library/midi_decoder.h"
 namespace sushi {
 
 namespace audio_frontend {
@@ -45,13 +47,13 @@ void JackFrontend::run()
     // TODO - get the sample rate in here somehow.
 
     bool run = true;
-   /* This runs the randomizer loop to generate random midi notes */
-    std::thread rand_thread(dev_util::random_note_player, &_event_queue, &run);
+    /* This runs the randomizer loop to generate random midi notes */
+    //std::thread rand_thread(dev_util::random_note_player, &_event_queue, &run);
 
     sleep(1000);
     run = false;
     sleep(1);
-    rand_thread.join();
+    //rand_thread.join();
 }
 
 
@@ -86,7 +88,6 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
 
 AudioFrontendStatus JackFrontend::setup_ports()
 {
-    /* Setup and register ports */
     int port_no = 0;
     for (auto& port : _output_ports)
     {
@@ -115,10 +116,18 @@ AudioFrontendStatus JackFrontend::setup_ports()
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
+    _midi_port = jack_port_register(_client, "midi_input", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+    if (!_midi_port)
+    {
+        MIND_LOG_ERROR("Failed to open Jack Midi input port.");
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
     return AudioFrontendStatus::OK;
 }
 
-
+/*
+ * Searches for external ports and tries to autoconnect them with sushis ports.
+ */
 AudioFrontendStatus JackFrontend::connect_ports()
 {
     const char** out_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsInput);
@@ -158,22 +167,32 @@ AudioFrontendStatus JackFrontend::connect_ports()
             }
         }
     }
-
     jack_free(in_ports);
+
+    const char** midi_ports = jack_get_ports(_client, nullptr, JACK_DEFAULT_MIDI_TYPE, JackPortIsPhysical|JackPortIsOutput);
+    if (midi_ports)
+    {
+        int ret = jack_connect(_client, jack_port_name(_midi_port), midi_ports[0]);
+        if (ret != 0)
+        {
+            MIND_LOG_WARNING("Failed to connect Midi port, error {}.", ret);
+        }
+    }
+    jack_free(midi_ports);
     return AudioFrontendStatus::OK;
 }
 
 
-int JackFrontend::internal_process_callback(jack_nframes_t nframes)
+int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
 {
-    if (nframes < 64 || nframes % 64)
+    if (no_frames < 64 || no_frames % 64)
     {
         MIND_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
     }
     process_events();
-    process_midi();
-    process_audio(nframes);
+    process_midi(no_frames);
+    process_audio(no_frames);
     return 0;
 }
 
@@ -191,14 +210,51 @@ void inline JackFrontend::process_events()
 }
 
 
-void inline JackFrontend::process_midi()
+void inline JackFrontend::process_midi(jack_nframes_t no_frames)
 {
-
-
+    auto* buffer = jack_port_get_buffer(_midi_port, no_frames);
+    auto no_events = jack_midi_get_event_count(buffer);
+    for (auto i = 0u; i < no_events; ++i)
+    {
+        jack_midi_event_t midi_event;
+        int ret = jack_midi_event_get(&midi_event, buffer, i);
+        if (ret != 0)
+        {
+            break;
+        }
+        midi::MessageType type = midi::decode_message_type(midi_event.buffer, midi_event.size);
+        switch (type)
+        {
+            case midi::MessageType::NOTE_ON:
+            {
+                midi::NoteOnMessage msg = midi::decode_note_on(midi_event.buffer);
+                MIND_LOG_ERROR("Note: {}, vel: {}.", msg.note, msg.velocity);
+                auto event = new KeyboardEvent(EventType::NOTE_ON,
+                                               "sampler_0_r",
+                                               0,
+                                               msg.note,
+                                               static_cast<float>(msg.velocity) / midi::MAX_VALUE);
+                _engine->send_rt_event(event);
+                break;
+            }
+            case midi::MessageType::NOTE_OFF:
+            {
+                midi::NoteOffMessage msg = midi::decode_note_off(midi_event.buffer);
+                auto event = new KeyboardEvent(EventType::NOTE_OFF,
+                                               "sampler_0_r",
+                                               0,
+                                               msg.note,
+                                               static_cast<float>(msg.velocity) / midi::MAX_VALUE);
+                _engine->send_rt_event(event);
+                break;
+            }
+            default: break;
+        }
+    }
 }
 
 
-void inline JackFrontend::process_audio(jack_nframes_t nframes)
+void inline JackFrontend::process_audio(jack_nframes_t no_frames)
 {
     /* Get pointers to audio buffers from ports */
     std::array<const float*, MAX_FRONTEND_CHANNELS> in_data;
@@ -206,15 +262,15 @@ void inline JackFrontend::process_audio(jack_nframes_t nframes)
 
     for (size_t i = 0; i < in_data.size(); ++i)
     {
-        in_data[i] = static_cast<float*>(jack_port_get_buffer(_input_ports[i], nframes));
+        in_data[i] = static_cast<float*>(jack_port_get_buffer(_input_ports[i], no_frames));
     }
     for (size_t i = 0; i < in_data.size(); ++i)
     {
-        out_data[i] = static_cast<float*>(jack_port_get_buffer(_output_ports[i], nframes));
+        out_data[i] = static_cast<float*>(jack_port_get_buffer(_output_ports[i], no_frames));
     }
 
     /* And process audio in chunks of size AUDIO_CHUNK_SIZE */
-    for (jack_nframes_t frames = 0; frames < nframes; frames += AUDIO_CHUNK_SIZE)
+    for (jack_nframes_t frames = 0; frames < no_frames; frames += AUDIO_CHUNK_SIZE)
     {
         for (size_t i = 0; i < _input_ports.size(); ++i)
         {

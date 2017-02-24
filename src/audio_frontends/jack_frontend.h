@@ -93,11 +93,12 @@ private:
     int internal_process_callback(jack_nframes_t nframes);
 
     void process_events();
-    void process_midi();
-    void process_audio(jack_nframes_t nframes);
+    void process_midi(jack_nframes_t no_frames);
+    void process_audio(jack_nframes_t no_frames);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
+    jack_port_t* _midi_port;
     jack_client_t* _client{nullptr};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
