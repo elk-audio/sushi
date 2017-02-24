@@ -31,6 +31,5 @@ void PluginChain::update_channel_config()
     return;
 }
 
-
 } // namespace engine
 } // namespace sushi

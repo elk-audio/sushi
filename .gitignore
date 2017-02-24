@@ -40,6 +40,8 @@
 scratch/
 */scratch
 build/
+cmake-build-debug/
+cmake-build-release/
 
 # Windows folders
 *.ini

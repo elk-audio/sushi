@@ -49,9 +49,10 @@ int AudioEngine::n_channels(int chain)
     return 0;
 }
 
-StompBox* AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
+std::unique_ptr<InternalPlugin> AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
 {
-    StompBox* instance = nullptr;
+    InternalPlugin* instance = nullptr;
+
     if (uid == "sushi.testing.passthrough")
     {
         instance = new passthrough_plugin::PassthroughPlugin();
@@ -69,7 +70,7 @@ StompBox* AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
         instance = new sample_player_plugin::SamplePlayerPlugin();
     }
 
-    return instance;
+    return std::unique_ptr<InternalPlugin>(instance);
 }
 
 EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain_idx,
@@ -92,15 +93,11 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
                 MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_idx);
                 return EngineReturnStatus::INVALID_STOMPBOX_UID;
             }
+
             auto instance_id = stompbox_def["id"].asString();
-            _instances_id_to_stompbox[instance_id] = std::make_unique<StompBoxManager>(instance);
+            _instances_id_to_stompbox[instance_id] = std::move(instance);
             // TODO - look over ownership here - see ardours use of shared_ptr for instance
             _audio_graph[chain_idx].add(_instances_id_to_stompbox[instance_id].get());
-
-            StompBoxConfig config;
-            config.sample_rate = _sample_rate;
-            config.controller = _instances_id_to_stompbox[instance_id].get();
-            instance->init(config);
         }
     }
     else

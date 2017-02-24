@@ -5,33 +5,33 @@
 #ifndef EQUALIZER_PLUGIN_H
 #define EQUALIZER_PLUGIN_H
 
-#include "plugin_interface.h"
+#include "library/internal_plugin.h"
 #include "biquad_filter.h"
 
 namespace sushi {
 namespace equalizer_plugin {
 
-class EqualizerPlugin : public StompBox
+class EqualizerPlugin : public InternalPlugin
 {
 public:
     EqualizerPlugin();
 
     ~EqualizerPlugin();
 
-    StompBoxStatus init(const StompBoxConfig &configuration) override;
+    virtual ProcessorReturnCode init(const int sample_rate) override;
 
-    std::string unique_id() const override
+    const std::string unique_id() override
     {
         return std::string("sushi.testing.equalizer");
     }
 
-    void process_event(BaseEvent* /*event*/) {}
+    // void process_event(BaseEvent* /*event*/) {}
 
-    void process(const SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
+    float _sample_rate;
     biquad::BiquadFilter _filter;
-    StompBoxConfig _configuration;
 
     FloatStompBoxParameter* _frequency;
     FloatStompBoxParameter* _gain;
