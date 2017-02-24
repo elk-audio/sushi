@@ -39,7 +39,7 @@ void InternalPlugin::process_event(BaseEvent* event)
                 }
                 case StompBoxParameterType::BOOL:
                 {
-                    static_cast<IntStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f);
+                    static_cast<BoolStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f? true : false);
                     break;
                 }
                 default:
