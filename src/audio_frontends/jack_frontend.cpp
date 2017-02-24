@@ -22,6 +22,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     }
 
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
+    _autoconnect_ports = jack_config->autoconnect_ports;
     return setup_client(jack_config->client_name, jack_config->server_name);
 }
 
@@ -43,7 +44,10 @@ void JackFrontend::run()
     {
         MIND_LOG_ERROR("Failed to activate Jack client, error {}.", status);
     }
-    connect_ports();
+    if (_autoconnect_ports)
+    {
+        connect_ports();
+    }
     // TODO - get the sample rate in here somehow.
 
     bool run = true;

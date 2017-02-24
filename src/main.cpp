@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
     bool use_jack = false;
+    bool connect_ports = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -90,6 +91,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_USE_JACK:
             use_jack = true;
+            break;
+
+        case OPT_IDX_CONNECT_PORTS:
+            connect_ports = true;
             break;
 
         case OPT_IDX_JACK_CLIENT:
@@ -147,7 +152,9 @@ int main(int argc, char* argv[])
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
     if (use_jack)
     {
-        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name, jack_server_name);
+        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
+                                                                         jack_server_name,
+                                                                         connect_ports);
         frontend = new sushi::audio_frontend::JackFrontend(&engine);
     }
     else

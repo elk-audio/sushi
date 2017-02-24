@@ -28,9 +28,11 @@ constexpr int MAX_EVENTS_PER_CHUNK = 100;
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     JackFrontendConfiguration(const std::string client_name,
-                              const std::string server_name) :
+                              const std::string server_name,
+                              bool autoconnect_ports) :
             client_name(client_name),
-            server_name(server_name)
+            server_name(server_name),
+            autoconnect_ports(autoconnect_ports)
     {}
 
     virtual ~JackFrontendConfiguration()
@@ -38,6 +40,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 
     std::string client_name;
     std::string server_name;
+    bool autoconnect_ports;
 };
 
 class JackFrontend : public BaseAudioFrontend
@@ -100,6 +103,7 @@ private:
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
     jack_port_t* _midi_port;
     jack_client_t* _client{nullptr};
+    bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};

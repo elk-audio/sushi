@@ -82,6 +82,7 @@ enum OptionIndex
     OPT_IDX_CONFIG_FILE,
     OPT_IDX_OUTPUT_FILE,
     OPT_IDX_USE_JACK,
+    OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER
 };
@@ -152,6 +153,14 @@ const option::Descriptor usage[] =
         "jack",
         SushiArg::Optional,
         "\t\t-j --jack \tUse Jack realtime audio frontend."
+    },
+    {
+        OPT_IDX_CONNECT_PORTS,
+        OPT_TYPE_DISABLED,
+        "",
+        "connect-ports",
+        SushiArg::Optional,
+        "\t\t-j --jack \tTry to automatically connect ports at startup."
     },
     {
         OPT_IDX_JACK_CLIENT,
