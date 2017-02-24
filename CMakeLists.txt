@@ -37,7 +37,9 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
                       src/plugins/biquad_filter.cpp
-                      src/audio_frontends/offline_frontend.cpp)
+                      src/audio_frontends/offline_frontend.cpp
+                      #src/library/vst2x_plugin.cpp
+    )
 
 
 # Enumerate all the headers separately so that CLion can index them
@@ -59,19 +61,24 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/sample_player_voice.h
                         src/plugins/biquad_filter.h
                         src/audio_frontends/base_audio_frontend.h
-                        src/audio_frontends/offline_frontend.h)
+                        src/audio_frontends/offline_frontend.h
+                        #src/library/vst2x_plugin.h
+    )
 
-set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
+set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}" )
 
 #########################
 #  Include Directories  #
 #########################
+
+set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
+                 "${VST_SDK_PATH}/vstsdk2.4/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 # /usr/local doesn't get added by default in Mac OS X
