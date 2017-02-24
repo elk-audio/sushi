@@ -50,12 +50,12 @@ void JackFrontend::run()
     }
     // TODO - get the sample rate in here somehow.
 
-    bool run = true;
+    //bool run = true;
     /* This runs the randomizer loop to generate random midi notes */
     //std::thread rand_thread(dev_util::random_note_player, &_event_queue, &run);
 
     sleep(1000);
-    run = false;
+    //run = false;
     sleep(1);
     //rand_thread.join();
 }

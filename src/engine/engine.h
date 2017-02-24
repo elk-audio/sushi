@@ -17,8 +17,9 @@
 #include "plugin_chain.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
+// TODO: this not needed anymore, remove it
 class StompBox;
 
 namespace sushi {
@@ -100,7 +101,7 @@ private:
      * @return Pointer to plugin instance if uid is valid,
      *         nullptr otherwise
      */
-    StompBox* _make_stompbox_from_unique_id(const std::string &uid);
+    std::unique_ptr<InternalPlugin> _make_stompbox_from_unique_id(const std::string &uid);
 
     /**
      * @brief Instantiate plugins from a JSON chain definition and put them in given chain.
@@ -113,7 +114,7 @@ private:
                                                         const Json::Value &stompbox_def);
 
     // TODO: eventually port to EASTL
-    std::map<std::string, std::unique_ptr<StompBoxManager>> _instances_id_to_stompbox;
+    std::map<std::string, std::unique_ptr<InternalPlugin>> _instances_id_to_stompbox;
 };
 
 /**

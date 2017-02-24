@@ -1,8 +1,8 @@
-#include "library/plugin_manager.h"
+#include "library/internal_plugin.h"
 
 namespace sushi {
 
-void StompBoxManager::process_event(BaseEvent* event)
+void InternalPlugin::process_event(BaseEvent* event)
 {
     assert(event);
     switch (event->type())
@@ -39,7 +39,7 @@ void StompBoxManager::process_event(BaseEvent* event)
                 }
                 case StompBoxParameterType::BOOL:
                 {
-                    static_cast<IntStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f ? true : false);
+                    static_cast<BoolStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f? true : false);
                     break;
                 }
                 default:
@@ -65,9 +65,9 @@ void StompBoxManager::process_event(BaseEvent* event)
                 static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
             }
         }
-        /* Non managed events are simply passed on to the instance */
+
         default:
-            _instance->process_event(event);
+            break;
     }
 }
 } // end namespace sushi

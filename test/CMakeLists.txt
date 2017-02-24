@@ -21,8 +21,9 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
-               unittests/library/plugin_manager_test.cpp
-               unittests/library/plugin_events_test.cpp)
+        unittests/library/internal_plugin_test.cpp
+               unittests/library/plugin_events_test.cpp
+        )
 
 ##########################################
 #  Include directories relative to test  #

@@ -11,7 +11,6 @@
 #include <memory>
 #include <cassert>
 
-#include "plugin_interface.h"
 #include "library/sample_buffer.h"
 #include "library/processor.h"
 
@@ -36,6 +35,7 @@ public:
 
     ~PluginChain() = default;
     MIND_DECLARE_NON_COPYABLE(PluginChain)
+
     /**
      * @brief Adds a plugin to the end of the chain.
      * @param The plugin to add.

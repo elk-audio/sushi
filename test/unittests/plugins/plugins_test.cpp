@@ -9,7 +9,7 @@
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/biquad_filter.cpp"
-#include "library/plugin_manager.cpp"
+#include "library/internal_plugin.cpp"
 
 using namespace sushi;
 
@@ -31,7 +31,7 @@ protected:
     {
         delete _module_under_test;
     }
-    StompBox* _module_under_test;
+    InternalPlugin* _module_under_test;
 };
 
 TEST_F(TestPassthroughPlugin, TestInstantiation)
@@ -41,9 +41,7 @@ TEST_F(TestPassthroughPlugin, TestInstantiation)
 
 TEST_F(TestPassthroughPlugin, TestInitialization)
 {
-    StompBoxConfig c;
-    c.sample_rate = 44000;
-    _module_under_test->init(c);
+    _module_under_test->init(48000);
     ASSERT_TRUE(_module_under_test);
 }
 
@@ -53,7 +51,7 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    _module_under_test->process(&in_buffer, &out_buffer);
+    _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0, out_buffer);
 }
 
@@ -66,23 +64,18 @@ protected:
     TestGainPlugin()
     {
     }
+
     void SetUp()
     {
         _module_under_test = new gain_plugin::GainPlugin();
-        _manager = new StompBoxManager(_module_under_test);
-        StompBoxConfig c;
-        c.sample_rate = 44000;
-        c.controller = static_cast<StompBoxController*>(_manager);
-        StompBoxStatus status = _module_under_test->init(c);
-        ASSERT_EQ(StompBoxStatus::OK, status);
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
     void TearDown()
     {
-        delete _manager;
     }
-    StompBox* _module_under_test;
-    StompBoxManager* _manager;
+    InternalPlugin* _module_under_test;
 };
 
 TEST_F(TestGainPlugin, TestInstantiation)
@@ -96,10 +89,10 @@ TEST_F(TestGainPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    FloatStompBoxParameter* gain_param = static_cast<FloatStompBoxParameter*>(_manager->get_parameter("gain"));
+    FloatStompBoxParameter* gain_param = static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("gain"));
     ASSERT_TRUE(gain_param);
     gain_param->set(6.0f);
-    _module_under_test->process(&in_buffer, &out_buffer);
+    _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }
 
@@ -116,20 +109,14 @@ protected:
     {
 
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
-        _manager = new StompBoxManager(_module_under_test);
-        StompBoxConfig c;
-        c.sample_rate = 44000;
-        c.controller = _manager;
-        StompBoxStatus status = _module_under_test->init(c);
-        ASSERT_EQ(StompBoxStatus::OK, status);
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
     void TearDown()
     {
-        delete _manager;
     }
-    StompBox* _module_under_test;
-    StompBoxManager* _manager;
+    InternalPlugin* _module_under_test;
 };
 
 TEST_F(TestEqualizerPlugin, TestInstantiation)
@@ -145,20 +132,20 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 0.0f);
 
     // Get the registered parameters, check they exist and call set on them.
-    FloatStompBoxParameter* freq_param = static_cast<FloatStompBoxParameter*>(_manager->get_parameter("frequency"));
+    FloatStompBoxParameter* freq_param = static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("frequency"));
     ASSERT_TRUE(freq_param);
 
-    FloatStompBoxParameter* gain_param = static_cast<FloatStompBoxParameter*>(_manager->get_parameter("gain"));
+    FloatStompBoxParameter* gain_param = static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("gain"));
     ASSERT_TRUE(gain_param);
 
-    FloatStompBoxParameter* q_param = static_cast<FloatStompBoxParameter*>(_manager->get_parameter("q"));
+    FloatStompBoxParameter* q_param = static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("q"));
     ASSERT_TRUE(q_param);
 
     freq_param->set(4000.0f);
     gain_param->set(6.0f);
     q_param->set(1.0f);
 
-    _module_under_test->process(&in_buffer, &out_buffer);
+    _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
 
