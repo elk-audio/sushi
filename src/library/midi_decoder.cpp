@@ -28,8 +28,8 @@ MessageType decode_message_type(const uint8_t* data, size_t size)
     {
         return MessageType::UNKNOWN;
     }
-    uint8_t first_4_bytes = data[0] >> 4;
-    switch (first_4_bytes)
+    uint8_t first_4_bits = data[0] >> 4;
+    switch (first_4_bits)
     {
         case NOTE_OFF_PREFIX:
             if (size == 3) return MessageType::NOTE_OFF;

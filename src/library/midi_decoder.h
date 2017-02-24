@@ -12,6 +12,14 @@
 namespace sushi {
 namespace midi {
 
+/* Max value for midi velocity, pressure, controller value, etc. */
+constexpr int MAX_VALUE = 127;
+/* Max value for midi pitch bend (14 bit value). */
+constexpr int MAX_PITCH_BEND = 16384;
+/* Middle value for pitch bend */
+constexpr int PITCH_BEND_MIDDLE = 8192;
+
+
 /**
  * @brief Enum to represent a midi message type.
  */
