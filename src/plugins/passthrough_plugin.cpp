@@ -17,10 +17,7 @@ PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     /* For now, assume equal number of channels in/out */
     assert(in_buffer.channel_count() == out_buffer.channel_count());
-    for (int i = 0; i < in_buffer.channel_count(); ++i)
-    {
-        std::copy(in_buffer.channel(i), in_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_buffer.channel(i));
-    }
+    out_buffer = in_buffer;
 }
 
 
