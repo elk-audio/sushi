@@ -163,7 +163,7 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
     if (_state == SamplePlayMode::STOPPING)
     {
         _envelope.gate(false);
-        for (int i = _stop_offset + 1 ; i < AUDIO_CHUNK_SIZE; ++i)
+        for (int i = _stop_offset; i < AUDIO_CHUNK_SIZE; ++i)
         {
             out[i] += _sample->at(_playback_pos) * _velocity_gain * _envelope.tick(1);
             _playback_pos += _playback_speed;
