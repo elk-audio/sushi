@@ -89,7 +89,7 @@ include_directories(${INCLUDE_DIRS})
 #  Linked libraries  #
 #################################
 
-set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp jack)
+set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp)
  
 if (APPLE)
     link_directories(/usr/local/lib)
@@ -112,4 +112,4 @@ add_executable(sushi ${SOURCE_FILES})
 # example:
 # add_dependencies(sushi static_library)
 
-target_link_libraries(sushi "${LINK_LIBRARIES}")
+target_link_libraries(sushi "${LINK_LIBRARIES}" jack)
