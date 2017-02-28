@@ -85,10 +85,10 @@ TEST_F(TestEngine, TestInitFromJSON)
     EngineReturnStatus status = _module_under_test->init_from_json_array(config["stompbox_chains"]);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    EXPECT_EQ(1, _module_under_test->_audio_graph[0].input_channels());
-    EXPECT_EQ(1, _module_under_test->_audio_graph[0].output_channels());
-    EXPECT_EQ(2, _module_under_test->_audio_graph[1].input_channels());
-    EXPECT_EQ(2, _module_under_test->_audio_graph[1].output_channels());
+    EXPECT_EQ(2, _module_under_test->_audio_graph[0].input_channels());
+    EXPECT_EQ(2, _module_under_test->_audio_graph[0].output_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1].input_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1].output_channels());
 
     auto chain_l = &_module_under_test->_audio_graph[0]._chain;
     auto chain_r = &_module_under_test->_audio_graph[1]._chain;
@@ -96,7 +96,7 @@ TEST_F(TestEngine, TestInitFromJSON)
     ASSERT_EQ(chain_l->size(), 3u);
 
     ASSERT_EQ(chain_r->size(), 3u);
-    EXPECT_EQ(2, _module_under_test->_audio_graph[1].input_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1].input_channels());
 
     /* TODO - Is this casting a good idea */
     ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(0))->unique_id(), "sushi.testing.passthrough");
