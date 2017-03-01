@@ -9,6 +9,8 @@
 #define SUSHI_LOG_FILENAME_DEFAULT "log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
+#define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -78,7 +80,11 @@ enum OptionIndex
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_CONFIG_FILE,
-    OPT_IDX_OUTPUT_FILE
+    OPT_IDX_OUTPUT_FILE,
+    OPT_IDX_USE_JACK,
+    OPT_IDX_CONNECT_PORTS,
+    OPT_IDX_JACK_CLIENT,
+    OPT_IDX_JACK_SERVER
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -139,6 +145,38 @@ const option::Descriptor usage[] =
         "output",
         SushiArg::NonEmpty,
         "\t\t-o <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+    },
+    {
+        OPT_IDX_USE_JACK,
+        OPT_TYPE_DISABLED,
+        "j",
+        "jack",
+        SushiArg::Optional,
+        "\t\t-j --jack \tUse Jack realtime audio frontend."
+    },
+    {
+        OPT_IDX_CONNECT_PORTS,
+        OPT_TYPE_DISABLED,
+        "",
+        "connect-ports",
+        SushiArg::Optional,
+        "\t\t-j --jack \tTry to automatically connect ports at startup."
+    },
+    {
+        OPT_IDX_JACK_CLIENT,
+        OPT_TYPE_UNUSED,
+        "",
+        "client-name",
+        SushiArg::NonEmpty,
+        "\t\t --client-name=<jack client name> \tSpecify name of Jack client [default=sushi]."
+    },
+    {
+        OPT_IDX_JACK_SERVER,
+        OPT_TYPE_UNUSED,
+        "",
+        "server-name",
+        SushiArg::NonEmpty,
+        "\t\t --server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
