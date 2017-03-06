@@ -27,6 +27,10 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
+                      src/audio_frontends/offline_frontend.cpp
+                      src/audio_frontends/jack_frontend.cpp
+                      src/control_frontends/base_control_frontend.cpp
+                      src/control_frontends/osc_frontend.cpp
                       src/engine/engine.cpp
                       src/engine/plugin_chain.cpp
                       src/library/mind_allocator.cpp
@@ -37,9 +41,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
-                      src/plugins/biquad_filter.cpp
-                      src/audio_frontends/offline_frontend.cpp
-                      src/audio_frontends/jack_frontend.cpp)
+                      src/plugins/biquad_filter.cpp )
 
 
 # Enumerate all the headers separately so that CLion can index them
@@ -47,6 +49,11 @@ set(COMPILATION_UNITS src/main.cpp
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
                         include/plugin_interface.h
+                        src/audio_frontends/base_audio_frontend.h
+                        src/audio_frontends/offline_frontend.h
+                        src/audio_frontends/jack_frontend.h
+                        src/control_frontends/base_control_frontend.h
+                        src/control_frontends/osc_frontend.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
@@ -61,9 +68,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
                         src/plugins/biquad_filter.h
-                        src/audio_frontends/base_audio_frontend.h
-                        src/audio_frontends/offline_frontend.h
-                        src/audio_frontends/jack_frontend.h)
+                        )
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
@@ -76,6 +81,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
+                 "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 # /usr/local doesn't get added by default in Mac OS X
@@ -89,7 +95,8 @@ include_directories(${INCLUDE_DIRS})
 #  Linked libraries  #
 #################################
 
-set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp)
+set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
+                    EASTL sndfile pthread jsoncpp )
  
 if (APPLE)
     link_directories(/usr/local/lib)
@@ -111,5 +118,6 @@ add_executable(sushi ${SOURCE_FILES})
 # Explicitly add external statically linked dependencies here,
 # example:
 # add_dependencies(sushi static_library)
+add_dependencies(sushi liblo)
 
 target_link_libraries(sushi "${LINK_LIBRARIES}" jack)

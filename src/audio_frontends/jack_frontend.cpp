@@ -20,7 +20,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
-
+    _osc_control = std::make_unique<control_frontend::OSCFrontend>(&_event_queue);
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     return setup_client(jack_config->client_name, jack_config->server_name);
@@ -50,10 +50,11 @@ void JackFrontend::run()
     }
     // TODO - get the sample rate in here somehow.
 
-    //bool run = true;
     /* This runs the randomizer loop to generate random midi notes */
+    //bool run = true;
     //std::thread rand_thread(dev_util::random_note_player, &_event_queue, &run);
 
+    _osc_control->run();
     sleep(1000);
     //run = false;
     sleep(1);

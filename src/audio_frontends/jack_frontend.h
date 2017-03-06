@@ -10,6 +10,7 @@
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/circular_fifo.h"
+#include "control_frontends/osc_frontend.h"
 
 #include <string>
 #include <tuple>
@@ -110,6 +111,10 @@ private:
 
     // This is a nice and simple by the book fifo queue, but we need to replace it eventually
     ableton::link::CircularFifo<BaseEvent*, MAX_EVENTS_PER_CHUNK> _event_queue;
+
+
+
+    std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
 };
 
 }; // end namespace jack_frontend

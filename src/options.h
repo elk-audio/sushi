@@ -160,7 +160,7 @@ const option::Descriptor usage[] =
         "",
         "connect-ports",
         SushiArg::Optional,
-        "\t\t-j --jack \tTry to automatically connect ports at startup."
+        "\t\t--connect-ports \tTry to automatically connect ports at startup."
     },
     {
         OPT_IDX_JACK_CLIENT,
