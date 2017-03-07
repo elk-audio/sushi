@@ -9,10 +9,6 @@ project(sushi)
 set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -fno-rtti")
 set(PROJECT_LINK_FLAGS "")
 
-# Platform specific stuff
-if (APPLE)
-    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -framework IOKit -framework CoreFoundation")
-endif()
 
 # Build optimization flags
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
@@ -39,7 +35,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/biquad_filter.cpp
                       src/audio_frontends/offline_frontend.cpp
                       #src/library/vst2x_plugin.cpp
-    )
+                      src/library/vst2x_host_callback.cpp
+        )
 
 
 # Enumerate all the headers separately so that CLion can index them
@@ -52,6 +49,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/plugin_events.h
                         src/library/processor.h
                         src/library/internal_plugin.h
+                        src/library/vst2x_plugin_loader.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/plugins/gain_plugin.h
@@ -63,9 +61,30 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
                         #src/library/vst2x_plugin.h
+                        src/library/vst2x_host_callback.h
+        )
+
+
+# Platform-specific sources
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(PLATFORM_SPECIFIC_SOURCES
+        src/library/vst2x_plugin_loader_linux.cpp
     )
 
-set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}" )
+elseif(APPLE)
+    set(PLATFORM_SPECIFIC_SOURCES
+        src/library/vst2x_plugin_loader_mac.mm
+    )
+endif()
+
+if(APPLE)
+    set_source_files_properties(${PLATFORM_SPECIFIC_SOURCES}
+        PROPERTIES COMPILE_FLAGS
+        "-x objective-c++"
+    )
+endif()
+
+set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
 
 #########################
 #  Include Directories  #
@@ -78,7 +97,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
-                 "${VST_SDK_PATH}/vstsdk2.4/pluginterfaces/vst2.x"
+                 "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 # /usr/local doesn't get added by default in Mac OS X
@@ -96,6 +115,13 @@ set(LINK_LIBRARIES EASTL sndfile pthread jsoncpp )
  
 if (APPLE)
     link_directories(/usr/local/lib)
+    # set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -framework IOKit -framework CoreFoundation")
+    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS}"
+                           "-framework AppKit"
+                           "-framework Carbon"
+                           "-framework CoreFoundation"
+                           "-framework Foundation"
+        )
 endif()
 
 #############################################
