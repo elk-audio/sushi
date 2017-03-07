@@ -15,7 +15,6 @@
 #include "constants.h"
 
 namespace sushi {
-//static constexpr int AUDIO_CHUNK_SIZE = 64;
 
 template<int size>
 class SampleBuffer
@@ -87,21 +86,27 @@ public:
     {
         if (this != &o)  // Avoid self-assignment
         {
-            if (o._own_buffer)
+            if (_own_buffer)
             {
-                if (_channel_count != o._channel_count && o._channel_count != 0)
+                if (_channel_count != o._channel_count)
                 {
                     delete[] _buffer;
-                    _buffer = new float[size * o._channel_count];
+                    _buffer = (o._channel_count > 0)? (new float[size * o._channel_count]) : nullptr;
+                    _channel_count = o._channel_count;
                 }
-                std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
             }
             else
             {
-                _buffer = o._buffer;
+                /* TODO - Consider what should happen if you assign to a non-owning
+                 * buffer with a buffer with different number of channels.
+                 * Currently we disallow this by an assert.
+                 * Perhaps this scenario should trigger a re-allocation of the buffer,
+                 * memory that the SampleBuffer then takes ownership of. But that
+                 * solution also loses the connection to the buffer originally
+                 * owning the data buffer. */
+                assert(_channel_count == o._channel_count);
             }
-            _own_buffer = o._own_buffer;
-            _channel_count = o._channel_count;
+            std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
         }
         return *this;
     }
@@ -337,7 +342,7 @@ public:
     }
 
     /**
-    * @brief Sums the content of SampleBuffer source into this buffer after applying a gain.
+     * @brief Sums the content of SampleBuffer source into this buffer after applying a gain.
      *
      * source has to be either a 1 channel buffer or have the same number of channels
      * as the destination buffer.
