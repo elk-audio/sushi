@@ -74,6 +74,7 @@ protected:
 
     void TearDown()
     {
+        delete _module_under_test;
     }
     InternalPlugin* _module_under_test;
 };
@@ -115,6 +116,7 @@ protected:
 
     void TearDown()
     {
+        delete _module_under_test;
     }
     InternalPlugin* _module_under_test;
 };

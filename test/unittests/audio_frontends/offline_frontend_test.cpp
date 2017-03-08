@@ -28,6 +28,11 @@ protected:
 
     void TearDown()
     {
+        for (auto& msg : _module_under_test->_event_queue)
+        {
+            // If the events are not consumed, delete them manually
+            delete std::get<1>(msg);
+        }
         delete _module_under_test;
     }
 

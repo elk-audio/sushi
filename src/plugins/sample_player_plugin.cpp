@@ -37,7 +37,7 @@ ProcessorReturnCode SamplePlayerPlugin::init(const int sample_rate)
 
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
-    delete(_sample_buffer);
+    delete[] _sample_buffer;
 }
 
 void SamplePlayerPlugin::process_event(BaseEvent* event)
@@ -69,7 +69,7 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
                         voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
                         break;
                     }
-                 }
+                }
             }
             break;
         }
@@ -124,6 +124,7 @@ ProcessorReturnCode SamplePlayerPlugin::load_sample_file(const std::string &file
     assert(soundfile_info.channels == 1);
 
     // Read sample data
+    delete _sample_buffer;
     _sample_buffer = new float[soundfile_info.frames];
     int samples = sf_readf_float(sample_file, _sample_buffer, soundfile_info.frames);
     assert(samples == soundfile_info.frames);
@@ -133,6 +134,7 @@ ProcessorReturnCode SamplePlayerPlugin::load_sample_file(const std::string &file
     {
         voice.set_sample(&_sample);
     }
+    sf_close(sample_file);
     return ProcessorReturnCode::OK;
 }
 
