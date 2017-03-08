@@ -41,7 +41,7 @@ protected:
     }
 
     OSCFrontend* _module_under_test;
-    ableton::link::CircularFifo<BaseEvent*, 100> _event_queue;
+    EventFifo _event_queue;
     int _server_port{24024};
     lo_address _address;
 };
@@ -51,16 +51,16 @@ TEST_F(TestOSCFrontend, test_send_parameter_change_event)
     lo_send(_address, "/parameter_change", "ssf", "sampler", "volume", 5.0f);
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_event_queue.isEmpty());
+    ASSERT_FALSE(_event_queue.empty());
     auto event = _event_queue.pop();
-    ASSERT_TRUE(event.valid);
-    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event.item->type());
-    auto typed_event = static_cast<ParameterChangeEvent*>(event.item);
+    ASSERT_TRUE(event);
+    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event->type());
+    auto typed_event = static_cast<ParameterChangeEvent*>(event);
     EXPECT_EQ("sampler", typed_event->processor_id());
     EXPECT_EQ("volume", typed_event->param_id());
     EXPECT_FLOAT_EQ(5.0f, typed_event->value());
 
-    delete event.item;
+    delete event;
 }
 
 TEST_F(TestOSCFrontend, test_send_keyboard_event)
@@ -68,14 +68,14 @@ TEST_F(TestOSCFrontend, test_send_keyboard_event)
     lo_send(_address, "/keyboard_event", "ssif", "sampler", "note_on", 46, 0.8f);
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_event_queue.isEmpty());
+    ASSERT_FALSE(_event_queue.empty());
     auto event = _event_queue.pop();
-    ASSERT_TRUE(event.valid);
-    EXPECT_EQ(EventType::NOTE_ON, event.item->type());
-    auto typed_event = static_cast<KeyboardEvent*>(event.item);
+    ASSERT_TRUE(event);
+    EXPECT_EQ(EventType::NOTE_ON, event->type());
+    auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ("sampler", typed_event->processor_id());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_FLOAT_EQ(0.8f, typed_event->velocity());
 
-    delete event.item;
+    delete event;
 }

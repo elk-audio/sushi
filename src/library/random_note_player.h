@@ -8,7 +8,7 @@
 #define SUSHI_RANDOM_NOTE_PLAYER_H
 
 #include "library/plugin_events.h"
-#include "library/circular_fifo.h"
+#include "library/event_fifo.h"
 
 namespace sushi {
 namespace dev_util {
@@ -17,7 +17,7 @@ namespace dev_util {
  * @brief Test function for pushing random midi note messages to the event queue.
  *        Produces eerie electro acoustic patterns that dont sound half bad.
  */
-int random_note_player(ableton::link::CircularFifo<BaseEvent*, 100>* queue, bool* loop)
+int random_note_player(EventFifo* queue, bool* loop)
 {
     std::deque<int> notes;
     while(*loop)

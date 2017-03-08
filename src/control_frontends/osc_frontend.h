@@ -25,7 +25,7 @@ constexpr int DEFAULT_SERVER_PORT = 24024;
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(ableton::link::CircularFifo<BaseEvent*, 100>* queue) :
+    OSCFrontend(EventFifo* queue) :
             BaseControlFrontend(queue),
             _osc_server(nullptr),
             _server_port(DEFAULT_SERVER_PORT) {}

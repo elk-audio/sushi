@@ -204,12 +204,12 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
 
 void inline JackFrontend::process_events()
 {
-    while (!_event_queue.isEmpty())
+    while (!_event_queue.empty())
     {
         auto event = _event_queue.pop();
-        if (event.valid)
+        if (event)
         {
-            _engine->send_rt_event(event.item);
+            _engine->send_rt_event(event);
         }
     }
 }

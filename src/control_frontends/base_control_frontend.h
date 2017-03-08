@@ -11,7 +11,7 @@
 #include <string>
 
 #include "library/plugin_events.h"
-#include "library/circular_fifo.h"
+#include "library/event_fifo.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -19,7 +19,7 @@ namespace control_frontend {
 class BaseControlFrontend
 {
 public:
-    BaseControlFrontend(ableton::link::CircularFifo<BaseEvent*, 100>* queue) :
+    BaseControlFrontend(EventFifo* queue) :
             _queue(queue) {}
 
     virtual ~BaseControlFrontend() {};
@@ -31,7 +31,7 @@ public:
     void send_keyboard_event(const std::string& processor, EventType type, int note, float value);
 
 private:
-    ableton::link::CircularFifo<BaseEvent*, 100>* _queue;
+    EventFifo* _queue;
 };
 
 }; // namespace control_frontend

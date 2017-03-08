@@ -9,7 +9,7 @@
 
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
-#include "library/circular_fifo.h"
+#include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 
 #include <string>
@@ -109,10 +109,7 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
 
-    // This is a nice and simple by the book fifo queue, but we need to replace it eventually
-    ableton::link::CircularFifo<BaseEvent*, MAX_EVENTS_PER_CHUNK> _event_queue;
-
-
+    EventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
 };
