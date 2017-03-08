@@ -20,13 +20,17 @@ public:
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE> *in_buffer ,SampleBuffer<AUDIO_CHUNK_SIZE> *out_buffer) override
     {
         *out_buffer = *in_buffer;
+        process_called = true;
     }
 
     EngineReturnStatus send_rt_event(BaseEvent* /*event*/)
     {
+        got_event = true;
         return EngineReturnStatus::OK;
     }
 
+    bool process_called{false};
+    bool got_event{false};
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

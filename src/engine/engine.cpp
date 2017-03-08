@@ -170,6 +170,7 @@ EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
     auto processor_node = _instances_id_to_stompbox.find(event->processor_id());
     if (processor_node == _instances_id_to_stompbox.end())
     {
+        MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
     processor_node->second->process_event(event);
