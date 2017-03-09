@@ -1,5 +1,6 @@
 #include <thread>
 #include <deque>
+#include <unistd.h>
 
 #include <jack/midiport.h>
 #include "logging.h"
