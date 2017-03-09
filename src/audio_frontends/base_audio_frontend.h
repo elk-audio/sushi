@@ -24,7 +24,7 @@ enum class AudioFrontendStatus
 };
 
 /**
- * @brief Dummy base class to hold frontends configurations
+ * @brief Dummy base class to hold frontend configurations
  */
 struct BaseAudioFrontendConfiguration
 {

@@ -98,6 +98,7 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
             _instances_id_to_stompbox[instance_id] = std::move(instance);
             // TODO - look over ownership here - see ardours use of shared_ptr for instance
             _audio_graph[chain_idx].add(_instances_id_to_stompbox[instance_id].get());
+            _instances_id_to_stompbox[instance_id]->init(_sample_rate);
         }
     }
     else

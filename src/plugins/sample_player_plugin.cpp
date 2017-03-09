@@ -88,7 +88,9 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
             }
             break;
         }
-        default: break;
+        default:
+            InternalPlugin::process_event(event);
+            break;
     }
 }
 
