@@ -35,7 +35,8 @@ MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
     std::transform(min_log_level.begin(), min_log_level.end(), log_level_lowercase.begin(), ::tolower);
     if (level_map.count(log_level_lowercase) > 0)
     {
-        Logger::_min_log_level = level_map[log_level_lowercase];
+        // Logger::_min_log_level = level_map[log_level_lowercase];
+        spdlog::set_level(level_map[log_level_lowercase]);
     }
     else
     {
