@@ -61,6 +61,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/processor.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
+                        src/library/event_pipe.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/plugins/gain_plugin.h

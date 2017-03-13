@@ -10,6 +10,7 @@
 
 #include "library/sample_buffer.h"
 #include "library/plugin_events.h"
+#include "library/event_pipe.h"
 
 namespace sushi {
 
@@ -57,6 +58,14 @@ public:
      */
     virtual const std::string unique_id() { return _uuid;}
 
+    /**
+     * @brief Set an output pipe for events.
+     * @param output_pipe the output EventPipe that should receive events
+     */
+    virtual void set_event_output(EventPipe* pipe)
+    {
+        _output_pipe = pipe;
+    }
 
     int max_input_channels() {return _max_input_channels;}
     int max_output_channels() {return _max_output_channels;}
@@ -80,7 +89,14 @@ public:
 
 protected:
 
+    void output_event(BaseEvent* event)
+    {
+        if (_output_pipe)
+            _output_pipe->send_event(event);
+    }
+
     std::string _uuid{""};
+
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
     int _max_input_channels{0};
@@ -90,6 +106,10 @@ protected:
     int _current_output_channels{0};
 
     bool _enabled{true};
+
+private:
+    /* This could easily be turned into a list if it is neccesary to broadcast events */
+    EventPipe* _output_pipe{nullptr};
 };
 
 /**

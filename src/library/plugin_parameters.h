@@ -272,7 +272,6 @@ public:
     }
 };
 
-
 }  // namespace sushi
 
 #endif //SUSHI_PLUGIN_PARAMETERS_H
