@@ -51,8 +51,15 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    EventFifo event_queue;
+    ASSERT_TRUE(event_queue.empty());
+    _module_under_test->set_event_output(&event_queue);
+    KeyboardEvent event(EventType::NOTE_ON, "plugin", 0, 0, 0);
+
+    _module_under_test->process_event(&event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0, out_buffer);
+    ASSERT_FALSE(event_queue.empty());
 }
 
 /*
