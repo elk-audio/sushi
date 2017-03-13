@@ -59,6 +59,25 @@ void PluginChain::update_channel_config()
     return;
 }
 
+void PluginChain::process_event(BaseEvent* event)
+{
+    switch (event->type())
+    {
+        /* Keyboard events are cached so they can be passed on
+         * to the first processor in the chain */
+        case EventType::NOTE_ON:
+        case EventType::NOTE_OFF:
+        case EventType::NOTE_AFTERTOUCH:
+        case EventType::WRAPPED_MIDI_EVENT:
+            _event_buffer.push(event);
+            break;
+
+            /* Handle events sent to this processor here */
+        default:
+           break;
+    }
+}
+
 void PluginChain::send_event(BaseEvent* event)
 {
     switch (event->type())
@@ -72,7 +91,7 @@ void PluginChain::send_event(BaseEvent* event)
             _event_buffer.push(event);
             break;
 
-        /* Other events are passed on upwards unprocessed */
+            /* Other events are passed on upstream unprocessed */
         default:
             output_event(event);
     }

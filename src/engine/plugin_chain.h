@@ -46,7 +46,7 @@ public:
     /**
      * @brief handles events sent to this processor only and not sub-processors
      */
-    void process_event(BaseEvent* /*event*/) override {}
+    void process_event(BaseEvent* event) override;
 
     /**
      * @brief Process the entire chain and store the result in out.
