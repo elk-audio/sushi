@@ -28,7 +28,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
         return AudioFrontendStatus::INVALID_INPUT_FILE;
     }
-    if (_soundfile_info.channels != _engine->n_channels(0))
+    if (_soundfile_info.channels != _engine->n_channels_in_chain(0))
     {
         MIND_LOG_ERROR("Mismatch in number of channels of audio file, which is {}", _soundfile_info.channels);
         cleanup();
@@ -51,7 +51,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     }
 
     // Initialize buffers
-    _file_buffer = new float[_engine->n_channels(0) * AUDIO_CHUNK_SIZE];
+    _file_buffer = new float[_engine->n_channels_in_chain(0) * AUDIO_CHUNK_SIZE];
 
     return ret_code;
 }

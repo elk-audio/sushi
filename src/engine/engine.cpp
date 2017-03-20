@@ -40,7 +40,7 @@ AudioEngine::AudioEngine(int sample_rate) : BaseEngine::BaseEngine(sample_rate)
 AudioEngine::~AudioEngine()
 {}
 
-int AudioEngine::n_channels(int chain)
+int AudioEngine::n_channels_in_chain(int chain)
 {
     if (chain < MAX_CHAINS)
     {

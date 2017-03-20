@@ -18,6 +18,7 @@
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
+#include "library/midi_decoder.h"
 
 // TODO: this not needed anymore, remove it
 class StompBox;
@@ -51,10 +52,55 @@ public:
         return _sample_rate;
     }
 
-    virtual int n_channels(int /*chain*/)
+    virtual void set_audio_input_channels(int channels)
+    {
+        _audio_inputs = channels;
+    }
+
+    virtual void set_audio_output_channels(int channels)
+    {
+        _audio_outputs = channels;
+    }
+
+    virtual void set_midi_input_ports(int channels)
+    {
+        _midi_inputs = channels;
+    }
+
+    virtual void set_midi_output_ports(int channels)
+    {
+        _midi_outputs = channels;
+    }
+
+    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*chain_id*/) = 0;
+
+    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*chain_id*/) = 0;
+
+    virtual EngineReturnStatus connect_audio_stereo_input(int /*right_channel*/,
+                                                          int /*left_channel*/,
+                                                          const std::string& /*chain_id*/) = 0;
+
+    virtual EngineReturnStatus connect_audio_stereo_output(int /*right_channel*/,
+                                                           int /*left_channel*/,
+                                                           const std::string& /*chain_id*/) = 0;
+
+    virtual EngineReturnStatus connect_midi_cc_data(int /*midi_port*/,
+                                                    int /*cc_no*/,
+                                                    const std::string& /*processor_id*/,
+                                                    const std::string& /*parameter*/,
+                                                    int midi_channel = midi::MidiChannel::OMNI) = 0;
+
+    virtual EngineReturnStatus connect_midi_kb_data(int midi_port,
+                                                    const std::string& chain_id
+                                                    int midi_channel = midi::MidiChannel::OMNI) = 0;
+
+
+    virtual int n_channels_in_chain(int /*chain*/)
     {
         return 2;
     }
+
+    virtual void process_midi(const uint8_t* data, size_t size);
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
@@ -62,6 +108,10 @@ public:
 
 protected:
     int _sample_rate;
+    int _audio_inputs{0};
+    int _audio_outputs{0};
+    int _midi_inputs{0};
+    int _midi_outputs{0};
 };
 
 
@@ -70,15 +120,56 @@ class AudioEngine : public BaseEngine
 public:
     AudioEngine(int sample_rate);
 
-    ~AudioEngine();
+     ~AudioEngine();
 
     /**
-     * @brief Return the number of configured channels for a specific processing chain
+ * @brief Connect an audio input to a chain.
+ */
+    EngineReturnStatus connect_audio_mono_input(int channel, const std::string& /*chain_id*/) override;
+
+    /**
+     * @brief Connect a chain to an audio output.
+     */
+    EngineReturnStatus connect_audio_mono_output(int channel, const std::string& /*chain_id*/) override;
+
+    /**
+     * @brief Connect 2 audio inputs to a stereo chain.
+     */
+    EngineReturnStatus connect_audio_stereo_input(int right_channel,
+                                                  int left_channel,
+                                                  const std::string& /*chain_id*/) override;
+
+    /**
+     * @brief Connect a stereo chain to 2 audio outputs.
+     */
+    EngineReturnStatus connect_audio_stereo_output(int right_channel,
+                                                   int left_channel,
+                                                   const std::string& /*chain_id*/) override;
+
+    /**
+     * @brief Connect midi cc data to a named parameter on a processor
+     */
+    EngineReturnStatus connect_midi_cc_data(int midi_port,
+                                            int cc_no,
+                                            const std::string& processor_id,
+                                            const std::string& parameter
+                                            int midi_channel = midi::MidiChannel::OMNI) override;
+
+    /**
+     * @brief Connect midi keyboard data to a specific chain
+     */
+    EngineReturnStatus connect_midi_kb_data(int midi_port,
+                                            const std::string& chain_id,
+                                            int midi_channel = midi::MidiChannel::OMNI) override;
+
+    /**
+     * @brief Return the number of configured channels for a specific processing chainn
+     *
      * @param chain The index to the chain
      * @return Number of channels the chain is configured to use.
      */
-    int n_channels(int chain) override;
-    
+    int n_channels_in_chain(int chain) override;
+
     /**
      * @brief Statically initialize engine and stompbox processing chains from definition in a JSON file
      * @param stompboxes_defs path to configuration file
@@ -86,6 +177,8 @@ public:
      *         different error code otherwise
      */
     EngineReturnStatus init_from_json_array(const Json::Value &stompboxes_defs);
+
+    void process_midi(const uint8_t* data, size_t size) override;
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
