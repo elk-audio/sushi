@@ -17,6 +17,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
                unittests/engine/plugin_chain_test.cpp
                unittests/engine/engine_test.cpp
+               unittests/engine/midi_dispatcher_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/audio_frontends/jack_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp

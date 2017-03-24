@@ -72,27 +72,45 @@ public:
         _midi_outputs = channels;
     }
 
-    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*chain_id*/) = 0;
+    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
 
-    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*chain_id*/) = 0;
+    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
 
     virtual EngineReturnStatus connect_audio_stereo_input(int /*right_channel*/,
                                                           int /*left_channel*/,
-                                                          const std::string& /*chain_id*/) = 0;
+                                                          const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
 
     virtual EngineReturnStatus connect_audio_stereo_output(int /*right_channel*/,
                                                            int /*left_channel*/,
-                                                           const std::string& /*chain_id*/) = 0;
+                                                           const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
 
     virtual EngineReturnStatus connect_midi_cc_data(int /*midi_port*/,
                                                     int /*cc_no*/,
                                                     const std::string& /*processor_id*/,
                                                     const std::string& /*parameter*/,
-                                                    int midi_channel = midi::MidiChannel::OMNI) = 0;
+                                                    int midi_channel)
+    {
+        return EngineReturnStatus::OK;
+    }
 
     virtual EngineReturnStatus connect_midi_kb_data(int midi_port,
-                                                    const std::string& chain_id
-                                                    int midi_channel = midi::MidiChannel::OMNI) = 0;
+                                                    const std::string& chain_id,
+                                                    int midi_channel)
+    {
+        return EngineReturnStatus::OK;
+    }
 
 
     virtual int n_channels_in_chain(int /*chain*/)
@@ -100,7 +118,7 @@ public:
         return 2;
     }
 
-    virtual void process_midi(const uint8_t* data, size_t size);
+    virtual void process_midi(const uint8_t* data, size_t size) {};
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
@@ -125,26 +143,26 @@ public:
     /**
  * @brief Connect an audio input to a chain.
  */
-    EngineReturnStatus connect_audio_mono_input(int channel, const std::string& /*chain_id*/) override;
+    EngineReturnStatus connect_audio_mono_input(int channel, const std::string& chain_id) override;
 
     /**
      * @brief Connect a chain to an audio output.
      */
-    EngineReturnStatus connect_audio_mono_output(int channel, const std::string& /*chain_id*/) override;
+    EngineReturnStatus connect_audio_mono_output(int channel, const std::string& chain_id) override;
 
     /**
      * @brief Connect 2 audio inputs to a stereo chain.
      */
     EngineReturnStatus connect_audio_stereo_input(int right_channel,
                                                   int left_channel,
-                                                  const std::string& /*chain_id*/) override;
+                                                  const std::string& chain_id) override;
 
     /**
      * @brief Connect a stereo chain to 2 audio outputs.
      */
     EngineReturnStatus connect_audio_stereo_output(int right_channel,
                                                    int left_channel,
-                                                   const std::string& /*chain_id*/) override;
+                                                   const std::string& chain_id) override;
 
     /**
      * @brief Connect midi cc data to a named parameter on a processor
@@ -152,7 +170,7 @@ public:
     EngineReturnStatus connect_midi_cc_data(int midi_port,
                                             int cc_no,
                                             const std::string& processor_id,
-                                            const std::string& parameter
+                                            const std::string& parameter,
                                             int midi_channel = midi::MidiChannel::OMNI) override;
 
     /**
@@ -178,7 +196,7 @@ public:
      */
     EngineReturnStatus init_from_json_array(const Json::Value &stompboxes_defs);
 
-    void process_midi(const uint8_t* data, size_t size) override;
+    void process_midi(int input, int offset, const uint8_t* data, size_t size);
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 

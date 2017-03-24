@@ -33,6 +33,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/engine/engine.cpp
                       src/engine/plugin_chain.cpp
+                      src/engine/midi_dispatcher.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/internal_plugin.cpp
@@ -64,6 +65,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/event_pipe.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
+                        src/engine/midi_dispatcher.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h

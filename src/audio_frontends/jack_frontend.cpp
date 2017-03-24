@@ -6,7 +6,6 @@
 #include "logging.h"
 #include "jack_frontend.h"
 #include "library/random_note_player.h"
-#include "library/midi_decoder.h"
 namespace sushi {
 
 namespace audio_frontend {
