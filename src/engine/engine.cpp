@@ -87,12 +87,12 @@ int AudioEngine::n_channels_in_chain(int chain)
 {
     if (chain < MAX_CHAINS)
     {
-        return _audio_graph[chain].input_channels();
+        return _audio_graph[chain]->input_channels();
     }
     return 0;
 }
 
-std::unique_ptr<InternalPlugin> AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
+std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
 {
     InternalPlugin* instance = nullptr;
 
@@ -113,13 +113,16 @@ std::unique_ptr<InternalPlugin> AudioEngine::_make_stompbox_from_unique_id(const
         instance = new sample_player_plugin::SamplePlayerPlugin();
     }
 
-    return std::unique_ptr<InternalPlugin>(instance);
+    return std::unique_ptr<Processor>(instance);
 }
 
 EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain_idx,
                                                                  const Json::Value &chain_def)
 {
-    EngineReturnStatus status = set_up_channel_config(_audio_graph[chain_idx], chain_def["mode"]);
+    PluginChain* chain = new PluginChain;
+    EngineReturnStatus status = set_up_channel_config(*chain, chain_def["mode"]);
+    _audio_graph.push_back(chain);
+    _instances_id_to_processors[chain_def["id"].asString()] = std::move(std::unique_ptr<Processor>(chain));
     if (status != EngineReturnStatus::OK)
     {
         return status;
@@ -138,10 +141,10 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
             }
 
             auto instance_id = stompbox_def["id"].asString();
-            _instances_id_to_stompbox[instance_id] = std::move(instance);
+            _instances_id_to_processors[instance_id] = std::move(instance);
             // TODO - look over ownership here - see ardours use of shared_ptr for instance
-            _audio_graph[chain_idx].add(_instances_id_to_stompbox[instance_id].get());
-            _instances_id_to_stompbox[instance_id]->init(_sample_rate);
+            chain->add(_instances_id_to_processors[instance_id].get());
+            _instances_id_to_processors[instance_id]->init(_sample_rate);
         }
     }
     else
@@ -183,7 +186,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     int start_channel = 0;
     for (auto& graph : _audio_graph)
     {
-        int no_of_channels = graph.input_channels();
+        int no_of_channels = graph->input_channels();
         if (start_channel + no_of_channels <= in_buffer->channel_count())
         {
             ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
@@ -192,7 +195,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
                                                                                    start_channel,
                                                                                    no_of_channels);
-            graph.process_audio(ch_in, ch_out);
+            graph->process_audio(ch_in, ch_out);
             start_channel += no_of_channels;
         } else
         {
@@ -211,8 +214,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
 {
     assert(event);
-    auto processor_node = _instances_id_to_stompbox.find(event->processor_id());
-    if (processor_node == _instances_id_to_stompbox.end())
+    auto processor_node = _instances_id_to_processors.find(event->processor_id());
+    if (processor_node == _instances_id_to_processors.end())
     {
         MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;

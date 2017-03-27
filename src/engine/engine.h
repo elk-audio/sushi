@@ -203,7 +203,7 @@ public:
     EngineReturnStatus send_rt_event(BaseEvent* event) override;
 
 protected:
-    eastl::vector<PluginChain> _audio_graph{MAX_CHAINS};
+    eastl::vector<PluginChain*> _audio_graph;
 
 private:
     /**
@@ -212,7 +212,7 @@ private:
      * @return Pointer to plugin instance if uid is valid,
      *         nullptr otherwise
      */
-    std::unique_ptr<InternalPlugin> _make_stompbox_from_unique_id(const std::string &uid);
+    std::unique_ptr<Processor> _make_stompbox_from_unique_id(const std::string &uid);
 
     /**
      * @brief Instantiate plugins from a JSON chain definition and put them in given chain.
@@ -225,7 +225,10 @@ private:
                                                         const Json::Value &stompbox_def);
 
     // TODO: eventually port to EASTL
-    std::map<std::string, std::unique_ptr<InternalPlugin>> _instances_id_to_stompbox;
+    // Owns all processors, including plugin chains
+    std::map<std::string, std::unique_ptr<Processor>> _instances_id_to_processors;
+
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 /**
