@@ -33,6 +33,21 @@ EngineReturnStatus set_up_channel_config(PluginChain& chain, const Json::Value& 
     return EngineReturnStatus::OK;
 }
 
+int get_midi_channel_from_json(const Json::Value& value)
+{
+    if (value.isString())
+    {
+        if (value.asString() == "omni" || value.asString() == "all" )
+        {
+            return midi::MidiChannel::OMNI;
+        }
+        return -1;
+    }
+    else
+    {
+        return value.asInt();
+    }
+}
 
 AudioEngine::AudioEngine(int sample_rate) : BaseEngine::BaseEngine(sample_rate)
 {}
@@ -67,11 +82,24 @@ EngineReturnStatus AudioEngine::connect_audio_stereo_output(int right_channel,
 }
 
 EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
-                                        int cc_no,
-                                        const std::string& processor_id,
-                                        const std::string& parameter,
-                                        int midi_channel)
+                                                     int cc_no,
+                                                     const std::string &processor_id,
+                                                     const std::string &parameter,
+                                                     float min_range,
+                                                     float max_range,
+                                                     int midi_channel)
 {
+    if (midi_port >= _midi_inputs || midi_channel < 0 || midi_channel > 16)
+    {
+        return EngineReturnStatus::INVALID_ARGUMENTS;
+    }
+    auto processor_node = _instances_id_to_processors.find(processor_id);
+    if (processor_node == _instances_id_to_processors.end())
+    {
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    // Eventually get the set parameter and its range here
+    _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
     return EngineReturnStatus::OK;
 }
 
@@ -79,6 +107,16 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
                                         const std::string& chain_id,
                                         int midi_channel)
 {
+    if (midi_port >= _midi_inputs)
+    {
+        return EngineReturnStatus::INVALID_ARGUMENTS;
+    }
+    auto processor_node = _instances_id_to_processors.find(chain_id);
+    if (processor_node == _instances_id_to_processors.end())
+    {
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    _midi_dispatcher.connect_kb_to_track(midi_port, chain_id, midi_channel);
     return EngineReturnStatus::OK;
 }
 
@@ -116,8 +154,7 @@ std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std:
     return std::unique_ptr<Processor>(instance);
 }
 
-EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain_idx,
-                                                                 const Json::Value &chain_def)
+EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Value &chain_def)
 {
     PluginChain* chain = new PluginChain;
     EngineReturnStatus status = set_up_channel_config(*chain, chain_def["mode"]);
@@ -136,7 +173,7 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
             auto instance = _make_stompbox_from_unique_id(uid);
             if (instance == nullptr)
             {
-                MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_idx);
+                MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_def["id"].asString());
                 return EngineReturnStatus::INVALID_STOMPBOX_UID;
             }
 
@@ -149,29 +186,64 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const int chain
     }
     else
     {
-        MIND_LOG_ERROR("Invalid format for stompbox chain n. {} in configuration file", chain_idx);
+        MIND_LOG_ERROR("Invalid format for stompbox chain n. {} in configuration file", chain_def["id"].asString());
         return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
     }
     return EngineReturnStatus::OK;
-
 }
 
 // TODO: eventually when configuration complexity grows, move this stuff in a separate class
-EngineReturnStatus AudioEngine::init_from_json_array(const Json::Value &chains)
+EngineReturnStatus AudioEngine::init_chains_from_json_array(const Json::Value &chains)
 {
-    /* TODO, eventually remove the restrictions on no of channels when we
-     * allow dynamically allocated chains */
     if (chains.isArray() && ((chains.size() > MAX_CHAINS) || (chains.size() == 0)))
     {
         MIND_LOG_ERROR("Incorrect number of stompbox chains ({}) in configuration file", chains.size());
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    for (int i = 0; i < static_cast<int>(chains.size()); ++i)
+    for (auto& chain : chains)
     {
-        EngineReturnStatus ret_code = _fill_chain_from_json_definition(i, chains[i]);
+        EngineReturnStatus ret_code = _fill_chain_from_json_definition(chain);
         if (ret_code != EngineReturnStatus::OK)
         {
             return ret_code;
+        }
+    }
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::init_midi_from_json_array(const Json::Value &midi)
+{
+    if (midi.empty())
+    {
+        MIND_LOG_WARNING("No midi connections.");
+        return EngineReturnStatus::OK;
+    }
+    const Json::Value& chain_connections = midi["chain_connections"];
+    for (const Json::Value& con : chain_connections)
+    {
+        auto res = this->connect_midi_kb_data(con["port"].asInt(),
+                                              con["chain"].asString(),
+                                              get_midi_channel_from_json(con["channel"]));
+        if (res != EngineReturnStatus::OK)
+        {
+            MIND_LOG_ERROR("Error {} in setting up midi connections to chain {}.", (int)res, con["chain"].asString());
+            return EngineReturnStatus::INVALID_ARGUMENTS;
+        }
+    }
+    const Json::Value& cc_mappings = midi["cc_mappings"];
+    for (const Json::Value& mapping : cc_mappings)
+    {
+        auto res = this->connect_midi_cc_data(mapping["port"].asInt(),
+                                              mapping["cc_number"].asInt(),
+                                              mapping["processor"].asString(),
+                                              mapping["parameter"].asString(),
+                                              mapping["min_range"].asFloat(),
+                                              mapping["max_range"].asFloat(),
+                                              get_midi_channel_from_json(mapping["channel"]));
+        if (res != EngineReturnStatus::OK)
+        {
+            MIND_LOG_ERROR("Error {} in setting upp midi cc mappings for {}.", (int)res, mapping["processor"].asString());
+            return EngineReturnStatus::INVALID_ARGUMENTS;
         }
     }
     return EngineReturnStatus::OK;

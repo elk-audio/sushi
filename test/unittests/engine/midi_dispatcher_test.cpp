@@ -27,6 +27,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
+    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
@@ -40,6 +41,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
+    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
@@ -53,6 +55,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
     EXPECT_EQ("param", typed_event->param_id());
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_NEAR(0.25, typed_event->value(), 0.01);
+    delete event;
 }
 
 class TestMidiDispatcher : public ::testing::Test
@@ -75,6 +78,11 @@ protected:
 TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 {
     _test_engine.got_event = false;
+    /* Send midi message without connections */
+    _module_under_test.process_midi(1, 0, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG));
+    _module_under_test.process_midi(0, 0, TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG));
+    EXPECT_FALSE(_test_engine.got_event);
+
     /* Connect all midi channels (OMNI) */
     _module_under_test.connect_kb_to_track(1, "processor");
     _module_under_test.process_midi(1, 0, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG));
@@ -91,12 +99,17 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
     _test_engine.got_event = false;
     _module_under_test.process_midi(2, 0, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG));
     EXPECT_FALSE(_test_engine.got_event);
-    //auto ret = _module_under_test.process_midi();
 }
 
 TEST_F(TestMidiDispatcher, TestCCDataConnection)
 {
     _test_engine.got_event = false;
+    /* Test with no connections set */
+    _module_under_test.process_midi(1, 0, TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG));
+    _module_under_test.process_midi(5, 0, TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG));
+    _module_under_test.process_midi(1, 0, TEST_CTRL_CH_MSG_2, sizeof(TEST_CTRL_CH_MSG_2));
+    EXPECT_FALSE(_test_engine.got_event);
+
     /* Connect all midi channels (OMNI) */
     _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 67, 0, 100);
     _module_under_test.process_midi(1, 0, TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG));

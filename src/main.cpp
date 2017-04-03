@@ -146,7 +146,12 @@ int main(int argc, char* argv[])
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
-    engine.init_from_json_array(config["stompbox_chains"]);
+    engine.set_audio_input_channels(2);
+    engine.set_audio_output_channels(2);
+    engine.set_midi_input_ports(1);
+    
+    engine.init_chains_from_json_array(config["stompbox_chains"]);
+    engine.init_midi_from_json_array(config["midi"]);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;

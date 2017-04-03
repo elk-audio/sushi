@@ -19,6 +19,7 @@
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
+#include "engine/midi_dispatcher.h"
 
 // TODO: this not needed anymore, remove it
 class StompBox;
@@ -35,7 +36,8 @@ enum class EngineReturnStatus
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
     INVALID_PARAMETER_UID,
-    INVALID_STOMPBOX_CHAIN
+    INVALID_STOMPBOX_CHAIN,
+    INVALID_ARGUMENTS
 };
 
 class BaseEngine
@@ -98,16 +100,18 @@ public:
 
     virtual EngineReturnStatus connect_midi_cc_data(int /*midi_port*/,
                                                     int /*cc_no*/,
-                                                    const std::string& /*processor_id*/,
-                                                    const std::string& /*parameter*/,
-                                                    int midi_channel)
+                                                    const std::string & /*processor_id*/,
+                                                    const std::string & /*parameter*/,
+                                                    float /*min_range*/,
+                                                    float /*max_range*/,
+                                                    int /*midi_channel*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_midi_kb_data(int midi_port,
-                                                    const std::string& chain_id,
-                                                    int midi_channel)
+    virtual EngineReturnStatus connect_midi_kb_data(int /*midi_port*/,
+                                                    const std::string& /*chain_id*/,
+                                                    int /*midi_channel*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -118,7 +122,7 @@ public:
         return 2;
     }
 
-    virtual void process_midi(const uint8_t* data, size_t size) {};
+    virtual void process_midi(int /*input*/, int /*offset*/, const uint8_t* /*data*/, size_t /*size*/) {};
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
@@ -141,8 +145,8 @@ public:
      ~AudioEngine();
 
     /**
- * @brief Connect an audio input to a chain.
- */
+     * @brief Connect an audio input to a chain.
+     */
     EngineReturnStatus connect_audio_mono_input(int channel, const std::string& chain_id) override;
 
     /**
@@ -169,8 +173,10 @@ public:
      */
     EngineReturnStatus connect_midi_cc_data(int midi_port,
                                             int cc_no,
-                                            const std::string& processor_id,
-                                            const std::string& parameter,
+                                            const std::string &processor_id,
+                                            const std::string &parameter,
+                                            float min_range,
+                                            float max_range,
                                             int midi_channel = midi::MidiChannel::OMNI) override;
 
     /**
@@ -194,9 +200,21 @@ public:
      * @return EngineInitStatus::OK in case of success,
      *         different error code otherwise
      */
-    EngineReturnStatus init_from_json_array(const Json::Value &stompboxes_defs);
+    EngineReturnStatus init_chains_from_json_array(const Json::Value &chains);
 
-    void process_midi(int input, int offset, const uint8_t* data, size_t size);
+    /**
+     * @brief Statically initialize mid connetions to chains and midi cc mappings to parameters.
+     * @param Path to configuration file
+     * @return EngineInitStatus::OK in case of success,
+     *         different error code otherwise
+     */
+    EngineReturnStatus init_midi_from_json_array(const Json::Value &connections_def);
+
+
+    void process_midi(int input, int offset, const uint8_t* data, size_t size) override
+    {
+        _midi_dispatcher.process_midi(input, offset, data, size);
+    }
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
@@ -215,20 +233,18 @@ private:
     std::unique_ptr<Processor> _make_stompbox_from_unique_id(const std::string &uid);
 
     /**
-     * @brief Instantiate plugins from a JSON chain definition and put them in given chain.
-     * @param chain_idx Chain index in internal graph
+     * @brief Instantiate plugins and chain from a JSON chain definition.
      * @param chain_def JSON node with list of stompboxes for this chain
      * @return EngineInitStatus::OK if all plugins in the definitions are instantiated correctly,
      *         different error code otherwise
      */
-    EngineReturnStatus _fill_chain_from_json_definition(const int chain_idx,
-                                                        const Json::Value &stompbox_def);
+    EngineReturnStatus _fill_chain_from_json_definition(const Json::Value &stompbox_def);
 
     // TODO: eventually port to EASTL
     // Owns all processors, including plugin chains
     std::map<std::string, std::unique_ptr<Processor>> _instances_id_to_processors;
 
-    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    midi_dispatcher::MidiDispatcher _midi_dispatcher{this};
 };
 
 /**
@@ -236,6 +252,10 @@ private:
  */
 EngineReturnStatus set_up_channel_config(PluginChain& chain, const Json::Value& mode);
 
+/**
+ * @brief Freestanding helper function.
+ */
+int get_midi_channel_from_json(const Json::Value& value);
 } // namespace engine
 } // namespace sushi
 #endif //SUSHI_ENGINE_H

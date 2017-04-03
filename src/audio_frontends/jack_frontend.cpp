@@ -223,37 +223,9 @@ void inline JackFrontend::process_midi(jack_nframes_t no_frames)
     {
         jack_midi_event_t midi_event;
         int ret = jack_midi_event_get(&midi_event, buffer, i);
-        if (ret != 0)
+        if (ret == 0)
         {
-            break;
-        }
-        midi::MessageType type = midi::decode_message_type(midi_event.buffer, midi_event.size);
-        switch (type)
-        {
-            case midi::MessageType::NOTE_ON:
-            {
-                midi::NoteOnMessage msg = midi::decode_note_on(midi_event.buffer);
-                MIND_LOG_ERROR("Note: {}, vel: {}.", msg.note, msg.velocity);
-                auto event = new KeyboardEvent(EventType::NOTE_ON,
-                                               "sampler_0_r",
-                                               0,
-                                               msg.note,
-                                               static_cast<float>(msg.velocity) / midi::MAX_VALUE);
-                _engine->send_rt_event(event);
-                break;
-            }
-            case midi::MessageType::NOTE_OFF:
-            {
-                midi::NoteOffMessage msg = midi::decode_note_off(midi_event.buffer);
-                auto event = new KeyboardEvent(EventType::NOTE_OFF,
-                                               "sampler_0_r",
-                                               0,
-                                               msg.note,
-                                               static_cast<float>(msg.velocity) / midi::MAX_VALUE);
-                _engine->send_rt_event(event);
-                break;
-            }
-            default: break;
+            _engine->process_midi(0, 0, midi_event.buffer, midi_event.size);
         }
     }
 }

@@ -16,21 +16,19 @@
 #include "library/midi_decoder.h"
 #include "library/plugin_events.h"
 #include "library/processor.h"
-#include "engine/engine.h"
-
 
 namespace sushi {
 namespace engine {
+/* Forward declaration to avoid circular dependancy */
+class BaseEngine;
 namespace midi_dispatcher {
-
-
 
 struct Connection
 {
-    std::string target;
-    std::string parameter;
-    float min_range;
-    float max_range;
+    std::string target{""};
+    std::string parameter{""};
+    float min_range{0};
+    float max_range{0};
 };
 
 class MidiDispatcher
@@ -38,9 +36,16 @@ class MidiDispatcher
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(BaseEngine* engine) : _engine(engine) {}
+    MidiDispatcher(BaseEngine* engine) : _engine(engine)
+    {
+        std::unordered_multimap<int, Connection> map;
+        _kb_routes_by_channel.insert(std::pair<int, std::unordered_multimap<int, Connection>>(0, map));
+        _cc_routes.insert(std::pair<int, std::unordered_multimap<int, Connection>>(0, map));
 
-    ~MidiDispatcher() {}
+    }
+
+    ~MidiDispatcher()
+    {}
 
     /**
      * @brief Connects a midi control change message to a given parameter.
@@ -52,13 +57,13 @@ public:
      * @param channel If not OMNI, only the given channel will be connected.
      * @return true if successfully forwarded midi message
      */
-      bool connect_cc_to_parameter(int midi_input,
-                                   const std::string &processor_id,
-                                   const std::string &parameter_id,
-                                   int cc_no,
-                                   int min_range,
-                                   int max_range,
-                                   int channel = midi::MidiChannel::OMNI);
+    bool connect_cc_to_parameter(int midi_input,
+                                 const std::string &processor_id,
+                                 const std::string &parameter_id,
+                                 int cc_no,
+                                 int min_range,
+                                 int max_range,
+                                 int channel = midi::MidiChannel::OMNI);
 
     /**
      * @brief Connect a midi input to a track/processor chain
@@ -69,8 +74,8 @@ public:
      * @return
      */
     bool connect_kb_to_track(int midi_input,
-                             const std::string& processor_id,
-                             int channel =  midi::MidiChannel::OMNI);
+                             const std::string &processor_id,
+                             int channel = midi::MidiChannel::OMNI);
 
     /**
      * @brief Clears all connections made with connect_kb_to_track
@@ -89,9 +94,9 @@ public:
     void process_midi(int input, int offset, const uint8_t* data, size_t size);
 
 private:
-    void _event_from_cc(const midi::ControlChangeMessage* message, int port);
 
-    BaseEngine* _engine;
+
+    // TODO eventually replace the channel index with vectors/arrays for faster lookup.
     // midi keyboard data connections indexed by input port
     std::unordered_multimap<int, Connection> _kb_routes;
     // midi keyboard data connections indexed by input port/channel
@@ -101,10 +106,25 @@ private:
     std::map<int, std::unordered_multimap<int, Connection>> _cc_routes;
     // midi cc connections indexed by input port/channel/cc no
     std::map<int, std::map<int, std::unordered_multimap<int, Connection>>> _cc_routes_by_channel;
+    BaseEngine* _engine;
 };
 
+typedef  std::unordered_multimap<int, Connection>::const_iterator ConnectionIter;
+
+/**
+ * @brief Helper function to look up iterators matching a route.
+ */
+const std::pair<ConnectionIter, ConnectionIter> get_route_iters_from_nested_map(int key_1, int key_2,
+                                                                                const std::map<int, std::unordered_multimap<int, Connection>> &map);
+/**
+ * @brief Helper function to look up iterators matching a route.
+ */
+const std::pair<ConnectionIter, ConnectionIter> get_route_iters_from_double_nested_map(int key_1, int key_2, int key_3,
+                                                                                       const std::map<int, std::map<int, std::unordered_multimap<int, Connection>>> &map);
+
+
 } // end namespace midi_dispatcher
-} // end namespace engine
+}
 } // end namespace sushi
 
 #endif //SUSHI_MIDI_DISPATCHER_H
