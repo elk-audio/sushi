@@ -1,5 +1,5 @@
 /**
- * @brief Wait free fifo queue for communation between rt and non-rt code
+ * @brief Wait free fifo queue for communication between rt and non-rt code
  * @copyright MIND Music Labs AB, Stockholm
  *
  * The purpose of this is simply to be a wrapper/adapter so that we
@@ -12,12 +12,13 @@
 
 #include "library/circular_fifo.h"
 #include "library/plugin_events.h"
+#include "library/event_pipe.h"
 
 namespace sushi {
 
 constexpr int MAX_EVENTS_IN_QUEUE = 100;
 
-class EventFifo
+class EventFifo : public EventPipe
 {
 public:
 
@@ -30,6 +31,8 @@ public:
     }
 
     inline bool empty() {return _fifo.isEmpty();}
+
+    virtual void send_event(BaseEvent* event) override {push(event);}
 
 private:
     ableton::link::CircularFifo<BaseEvent*, MAX_EVENTS_IN_QUEUE> _fifo;

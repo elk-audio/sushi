@@ -9,9 +9,37 @@ namespace engine {
 void PluginChain::add(Processor* processor)
 {
     _chain.push_back(processor);
+    processor->set_event_output(this);
     update_channel_config();
 }
 
+void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
+{
+    /* Alias the internal buffers to get the right channel count */
+    ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_1, 0, _current_input_channels);
+    ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(_bfr_2, 0, _current_input_channels);
+    in_bfr.clear();
+    in_bfr.add(in);
+
+    for (auto &plugin : _chain)
+    {
+        while (!_event_buffer.empty()) // This should only contain keyboard/note events
+        {
+            plugin->process_event(_event_buffer.pop());
+        }
+        plugin->process_audio(in_bfr, out_bfr);
+        std::swap(in_bfr, out_bfr);
+    }
+
+    /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
+     * processing chain was empty */
+    out.add(in_bfr);
+    /* If there are keyboard events not consumed, pass them on upwards */
+    while (!_event_buffer.empty())
+    {
+        output_event(_event_buffer.pop());
+    }
+}
 
 void PluginChain::update_channel_config()
 {
@@ -29,6 +57,44 @@ void PluginChain::update_channel_config()
         processor->set_output_channels(_current_input_channels);
     }
     return;
+}
+
+void PluginChain::process_event(BaseEvent* event)
+{
+    switch (event->type())
+    {
+        /* Keyboard events are cached so they can be passed on
+         * to the first processor in the chain */
+        case EventType::NOTE_ON:
+        case EventType::NOTE_OFF:
+        case EventType::NOTE_AFTERTOUCH:
+        case EventType::WRAPPED_MIDI_EVENT:
+            _event_buffer.push(event);
+            break;
+
+            /* Handle events sent to this processor here */
+        default:
+           break;
+    }
+}
+
+void PluginChain::send_event(BaseEvent* event)
+{
+    switch (event->type())
+    {
+        /* Keyboard events are cached so they can be passed on
+         * to the next processor in the chain */
+        case EventType::NOTE_ON:
+        case EventType::NOTE_OFF:
+        case EventType::NOTE_AFTERTOUCH:
+        case EventType::WRAPPED_MIDI_EVENT:
+            _event_buffer.push(event);
+            break;
+
+            /* Other events are passed on upstream unprocessed */
+        default:
+            output_event(event);
+    }
 }
 
 } // namespace engine

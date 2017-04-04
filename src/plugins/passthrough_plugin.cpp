@@ -17,7 +17,14 @@ PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     /* For now, assume equal number of channels in/out */
     assert(in_buffer.channel_count() == out_buffer.channel_count());
+    /* Pass audio through */
     out_buffer = in_buffer;
+
+    /* Pass keyboard data/midi through */
+    while (!_event_queue.empty())
+    {
+        output_event(_event_queue.pop());
+    }
 }
 
 

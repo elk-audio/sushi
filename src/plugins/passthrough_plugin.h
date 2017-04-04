@@ -9,6 +9,8 @@
 #define PASSTHROUGH_PLUGIN_H
 
 #include "library/internal_plugin.h"
+#include "library/event_fifo.h"
+
 
 namespace sushi {
 namespace passthrough_plugin {
@@ -25,10 +27,15 @@ public:
         return std::string("sushi.testing.passthrough");
     }
 
-    // void process_event(BaseEvent* /*event*/) {}
+    void process_event(BaseEvent* event) override
+    {
+        _event_queue.push(event);
+    };
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
+private:
+    EventFifo _event_queue;
 };
 
 }// namespace passthrough_plugin
