@@ -68,12 +68,6 @@ inline const std::pair<ConnectionIter, ConnectionIter> get_route_iters_from_doub
     return std::pair<ConnectionIter, ConnectionIter>(empty_map.end(), empty_map.end());
 }
 
-inline const std::pair<ConnectionIter, ConnectionIter>& get_connection_iterators(int key_1, int key_2,
-                                                                          const std::map<int, std::map<int, std::unordered_multimap<int, Connection>>>& map)
-{
-
-}
-
 
 bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                              const std::string &processor_id,

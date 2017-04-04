@@ -67,16 +67,16 @@ EngineReturnStatus AudioEngine::connect_audio_mono_output(int channel, const std
 }
 
 
-EngineReturnStatus AudioEngine::connect_audio_stereo_input(int right_channel,
-                                              int left_channel,
-                                              const std::string& chain_id)
+EngineReturnStatus AudioEngine::connect_audio_stereo_input(int left_channel_idx,
+                                                           int right_channel_idx,
+                                                           const std::string& chain_id)
 {
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::connect_audio_stereo_output(int right_channel,
-                                               int left_channel,
-                                               const std::string& chain_id)
+EngineReturnStatus AudioEngine::connect_audio_stereo_output(int left_channel_idx,
+                                                            int right_channel_idx,
+                                                            const std::string& chain_id)
 {
     return EngineReturnStatus::OK;
 }
@@ -89,7 +89,7 @@ EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
                                                      float max_range,
                                                      int midi_channel)
 {
-    if (midi_port >= _midi_inputs || midi_channel < 0 || midi_channel > 16)
+    if (midi_port >= _midi_inputs || midi_channel < 0 || midi_channel > midi::MidiChannel::OMNI)
     {
         return EngineReturnStatus::INVALID_ARGUMENTS;
     }
@@ -123,7 +123,7 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
 
 int AudioEngine::n_channels_in_chain(int chain)
 {
-    if (chain < MAX_CHAINS)
+    if (chain <= _audio_graph.size())
     {
         return _audio_graph[chain]->input_channels();
     }
@@ -195,7 +195,7 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Val
 // TODO: eventually when configuration complexity grows, move this stuff in a separate class
 EngineReturnStatus AudioEngine::init_chains_from_json_array(const Json::Value &chains)
 {
-    if (chains.isArray() && ((chains.size() > MAX_CHAINS) || (chains.size() == 0)))
+    if (!chains.isArray() || chains.size() == 0)
     {
         MIND_LOG_ERROR("Incorrect number of stompbox chains ({}) in configuration file", chains.size());
         return EngineReturnStatus::INVALID_N_CHANNELS;

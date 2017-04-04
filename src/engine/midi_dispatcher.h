@@ -54,6 +54,8 @@ public:
      * @param processor The processor target
      * @param parameter The parameter to map to
      * @param cc_no The cc id to use
+     * @param min_range Minimum range for this controller
+     * @param max_range Maximum range for this controller
      * @param channel If not OMNI, only the given channel will be connected.
      * @return true if successfully forwarded midi message
      */
@@ -69,12 +71,12 @@ public:
      * @brief Connect a midi input to a track/processor chain
      *        Possibly filtering on midi channel.
      * @param midi_input Index of the midi input
-     * @param track_no The track/plugin chain to send to
+     * @param chain_no The track/plugin chain to send to
      * @param channel If not OMNI, only the given channel will be connected.
      * @return
      */
     bool connect_kb_to_track(int midi_input,
-                             const std::string &processor_id,
+                             const std::string &chain_id,
                              int channel = midi::MidiChannel::OMNI);
 
     /**

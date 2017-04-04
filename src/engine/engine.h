@@ -27,9 +27,6 @@ class StompBox;
 namespace sushi {
 namespace engine {
 
-/* Maximum number of parallel chains, chains are not dynamically allocated yet */
-constexpr int MAX_CHAINS = 2;
-
 enum class EngineReturnStatus
 {
     OK,
@@ -84,15 +81,15 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_input(int /*right_channel*/,
-                                                          int /*left_channel*/,
+    virtual EngineReturnStatus connect_audio_stereo_input(int /*left_channel_idx*/,
+                                                          int /*right_channel_idx*/,
                                                           const std::string& /*chain_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_output(int /*right_channel*/,
-                                                           int /*left_channel*/,
+    virtual EngineReturnStatus connect_audio_stereo_output(int /*left_channel_idx*/,
+                                                           int /*right_channel_idx*/,
                                                            const std::string& /*chain_id*/)
     {
         return EngineReturnStatus::OK;
@@ -157,15 +154,15 @@ public:
     /**
      * @brief Connect 2 audio inputs to a stereo chain.
      */
-    EngineReturnStatus connect_audio_stereo_input(int right_channel,
-                                                  int left_channel,
+    EngineReturnStatus connect_audio_stereo_input(int left_channel_idx,
+                                                  int right_channel_idx,
                                                   const std::string& chain_id) override;
 
     /**
      * @brief Connect a stereo chain to 2 audio outputs.
      */
-    EngineReturnStatus connect_audio_stereo_output(int right_channel,
-                                                   int left_channel,
+    EngineReturnStatus connect_audio_stereo_output(int left_channel_idx,
+                                                   int right_channel_idx,
                                                    const std::string& chain_id) override;
 
     /**
@@ -203,7 +200,7 @@ public:
     EngineReturnStatus init_chains_from_json_array(const Json::Value &chains);
 
     /**
-     * @brief Statically initialize mid connetions to chains and midi cc mappings to parameters.
+     * @brief Statically initialize midi connetions to chains and midi cc mappings to parameters.
      * @param Path to configuration file
      * @return EngineInitStatus::OK in case of success,
      *         different error code otherwise
