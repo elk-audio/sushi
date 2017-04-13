@@ -29,6 +29,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
+                      src/audio_frontends/xenomai_frontend.cpp
+                      src/audio_frontends/xenomai_offline_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/engine/engine.cpp
@@ -53,6 +55,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
                         src/audio_frontends/jack_frontend.h
+                        src/audio_frontends/xenomai_frontend.h
+                        src/audio_frontends/xenomai_offline_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
                         src/library/sample_buffer.h
@@ -86,7 +90,9 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
-                 "${PROJECT_SOURCE_DIR}/third-party")
+                 "${PROJECT_SOURCE_DIR}/third-party"
+                 /usr/xenomai/include
+                 /usr/xenomai/include/mercury)
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -100,11 +106,16 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile pthread jsoncpp )
- 
+                    EASTL sndfile pthread jsoncpp
+                    alchemy mercury copperplate rt)
+
+set(LINK_DIRS /usr/xenomai/lib)
+
 if (APPLE)
-    link_directories(/usr/local/lib)
+    link_directories(${LINK_DIRS} "/usr/local/lib")
 endif()
+
+link_directories(${LINK_DIRS})
 
 #############################################
 #  Subdirectory projects                    #

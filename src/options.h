@@ -84,7 +84,8 @@ enum OptionIndex
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
-    OPT_IDX_JACK_SERVER
+    OPT_IDX_JACK_SERVER,
+    OPT_IDX_USE_XENOMAI
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -177,6 +178,14 @@ const optionparser::Descriptor usage[] =
         "server-name",
         SushiArg::NonEmpty,
         "\t\t --server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
+    },
+    {
+        OPT_IDX_USE_XENOMAI,
+        OPT_TYPE_DISABLED,
+        "x",
+        "xenomai",
+        SushiArg::Optional,
+        "\t\t-x --xenomai \tProcess in Xenomai realtime tastUse Jack realtime audio frontend."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
