@@ -16,40 +16,40 @@
 // Helpers for optionparse
 ////////////////////////////////////////////////////////////////////////////////
 
-struct SushiArg : public option::Arg
+struct SushiArg : public optionparser::Arg
 {
 
-    static void print_error(const char* msg1, const option::Option& opt, const char* msg2)
+    static void print_error(const char* msg1, const optionparser::Option& opt, const char* msg2)
     {
         fprintf(stderr, "%s", msg1);
         fwrite(opt.name, static_cast<size_t>(opt.namelen), 1, stderr);
         fprintf(stderr, "%s", msg2);
     }
 
-    static option::ArgStatus Unknown(const option::Option& option, bool msg)
+    static optionparser::ArgStatus Unknown(const optionparser::Option& option, bool msg)
     {
         if (msg)
         {
             print_error("Unknown option '", option, "'\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
-    static option::ArgStatus NonEmpty(const option::Option& option, bool msg)
+    static optionparser::ArgStatus NonEmpty(const optionparser::Option& option, bool msg)
     {
         if (option.arg != 0 && option.arg[0] != 0)
         {
-            return option::ARG_OK;
+            return optionparser::ARG_OK;
         }
 
         if (msg)
         {
             print_error("Option '", option, "' requires a non-empty argument\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
-    static option::ArgStatus Numeric(const option::Option& option, bool msg)
+    static optionparser::ArgStatus Numeric(const optionparser::Option& option, bool msg)
     {
         char* endptr = 0;
         if (option.arg != 0 && strtol(option.arg, &endptr, 10))
@@ -57,13 +57,13 @@ struct SushiArg : public option::Arg
 
         if (endptr != option.arg && *endptr == 0)
         {
-          return option::ARG_OK;
+          return optionparser::ARG_OK;
         }
         if (msg)
         {
             print_error("Option '", option, "' requires a numeric argument\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
 };
@@ -96,7 +96,7 @@ enum OptionType
 };
 
 // Option descriptors, one for each entry of the OptionIndex enum
-const option::Descriptor usage[] =
+const optionparser::Descriptor usage[] =
 {
     {
         OPT_IDX_UNKNOWN,    // index

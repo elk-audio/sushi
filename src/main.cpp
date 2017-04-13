@@ -29,10 +29,10 @@ int main(int argc, char* argv[])
         argv++;
     }
 
-    option::Stats cl_stats(usage, argc, argv);
-    std::vector<option::Option> cl_options(cl_stats.options_max);
-    std::vector<option::Option> cl_buffer(cl_stats.buffer_max);
-    option::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
+    optionparser::Stats cl_stats(usage, argc, argv);
+    std::vector<optionparser::Option> cl_options(cl_stats.options_max);
+    std::vector<optionparser::Option> cl_buffer(cl_stats.buffer_max);
+    optionparser::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
 
     if (cl_parser.error())
     {
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     }
     if ( (cl_parser.nonOptionsCount() == 0 && cl_parser.optionsCount() == 0) || (cl_options[OPT_IDX_HELP]) )
     {
-        option::printUsage(fwrite, stdout, usage);
+        optionparser::printUsage(fwrite, stdout, usage);
         return 0;
     }
 
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
-        option::Option& opt = cl_buffer[i];
+        optionparser::Option& opt = cl_buffer[i];
         switch(opt.index())
         {
         case OPT_IDX_HELP:
