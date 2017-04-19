@@ -41,7 +41,7 @@ private:
     ProcessorReturnCode load_sample_file(const std::string &file_name);
 
     float*  _sample_buffer{nullptr};
-    sample_player_voice::Sample _sample;
+    dsp::Sample _sample;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
     FloatStompBoxParameter* _volume_parameter;

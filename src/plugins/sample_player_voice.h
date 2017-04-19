@@ -7,6 +7,8 @@
 #define SUSHI_SAMPLE_VOICE_H
 
 #include "library/sample_buffer.h"
+#include "dsp_library/sample_wrapper.h"
+#include "dsp_library/envelopes.h"
 
 namespace sample_player_voice {
 
@@ -19,124 +21,6 @@ enum class SamplePlayMode
 };
 
 
-/**
- * @brief Class to wrap an audio sample into a prettier interface
- */
-class Sample
-{
-    MIND_DECLARE_NON_COPYABLE(Sample);
-public:
-    Sample() : _data(nullptr), _length(0) {}
-
-    Sample(const float* sample, int length) : _data(sample), _length(length) {}
-
-    /**
-     * @brief Set the sample to wrap.
-     * @param sample Pointer to sample array, Sample does not take ownership of the data.
-     * @param length Number of samples in the data.
-     */
-    void set_sample(const float* sample, int length)
-    {
-        _data = sample;
-        _length = length;
-    }
-
-    /**
-     * @brief Return the value at sample position. Does linear interpolation
-     * @param position The position in the sample buffer.
-     * @return A linearily interpolated sample value.
-     */
-    float at(float position) const;
-
-private:
-    const float* _data{nullptr};
-    int  _length{0};
-};
-
-/**
- * @brief Too avoid divisions by zero and extensive branching, we limit the
- * attack, decay and release times to some extremely short value and not 0.
- */
-constexpr float SHORTEST_ENVELOPE_TIME = 1.0e-5f;
-
-
-enum class EnvelopeState
-{
-    OFF,
-    ATTACK,
-    DECAY,
-    SUSTAIN,
-    RELEASE,
-};
-
-/**
- * @brief A basic, linear slope, ADSR envelope class.
- */
-class Envelope
-{
-    MIND_DECLARE_NON_COPYABLE(Envelope);
-public:
-    Envelope() {};
-
-    /**
-     * @brief Set the envelope parameters.
-     * @param attack Attack time in seconds.
-     * @param decay Decay time in seconds.
-     * @param sustain Sustain level, 0 - 1.
-     * @param release Release time in seconds.
-     */
-    void set_parameters(float attack, float decay, float sustain, float release);
-
-    /**
-     * @brief Set the current samplerate
-     * @param samplerate The samplerate in samples/second.
-     */
-    void set_samplerate(int samplerate) { _samplerate = samplerate;}
-
-    /**
-     * @brief Advance the envelope a given number of samples and return
-     *        its current value.
-     * @param samples The number of samples to 'tick' the envelope.
-     * @return The current envelope level.
-     */
-    float tick(int samples = 0);
-
-    /**
-     * @brief Get the envelopes current level without advancing it.
-     * @return The current envelope level.
-     */
-    float level() const {return _current_level;}
-
-    /**
-     * @brief Analogous to the gate signal on an analog envelope. Setting gate
-     *        to true will start the envelope in the attack phase and setting
-     *        it to false will start the release phase.
-     * @param gate Set to true for note on and false at note off.
-     */
-    void gate(bool gate);
-
-    /**
-     * @brief Returns true if the envelope is off, ie. the release phase is finished.
-     * @return
-     */
-    bool finished() {return _state == EnvelopeState::OFF;}
-
-    /**
-     * @brief Resets the envelope to 0 immediately. Bypassing any long release
-     *        phase.
-     */
-    void reset();
-
-private:
-    float _attack_factor{0};
-    float _decay_factor{0};
-    float _sustain_level{1};
-    float _release_factor{0.1};
-    float _current_level{0};
-    float _samplerate{44100};
-
-    EnvelopeState _state{EnvelopeState::OFF};
-};
 
 class Voice
 {
@@ -144,7 +28,7 @@ class Voice
 public:
     Voice() {};
 
-    Voice(int samplerate, Sample* sample) : _samplerate(samplerate), _sample(sample) {}
+    Voice(int samplerate, dsp::Sample* sample) : _samplerate(samplerate), _sample(sample) {}
 
     /**
      * @brief Runtime samplerate configuration.
@@ -160,7 +44,7 @@ public:
      * @brief Runtime sample configuration
      * @param sample
      */
-    void set_sample(Sample* sample) {_sample = sample;}
+    void set_sample(dsp::Sample* sample) {_sample = sample;}
 
     /**
      * @brief Set the envelope parameters.
@@ -217,9 +101,9 @@ public:
 private:
 
     int _samplerate{44100};
-    Sample* _sample;
+    dsp::Sample* _sample;
     SamplePlayMode _state{SamplePlayMode::STOPPED};
-    Envelope _envelope;
+    dsp::AdsrEnvelope _envelope;
     int _current_note;
     float _playback_speed;
     float _velocity_gain;
