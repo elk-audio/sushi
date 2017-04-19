@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <chrono>
 
-#include <jack/midiport.h>
 #include "logging.h"
 #include "xenomai_frontend.h"
 #include "library/random_note_player.h"
@@ -18,10 +17,6 @@ MIND_GET_LOGGER;
 DiskIoHandler::~DiskIoHandler()
 {
     stop();
-    if (_io_thread.joinable())
-    {
-        _io_thread.join();
-    }
     if (_input_file)
     {
         sf_close(_input_file);

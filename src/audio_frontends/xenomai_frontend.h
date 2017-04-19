@@ -20,9 +20,9 @@
 #include <json/json.h>
 #include <sndfile.h>
 
-#include <alchemy/task.h>
-#include <alchemy/timer.h>
-#include <mercury/boilerplate/wrappers.h>
+#include <task.h>
+#include <timer.h>
+//#include <mercury/boilerplate/wrappers.h>
 
 namespace sushi {
 

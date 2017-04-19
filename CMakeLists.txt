@@ -4,10 +4,14 @@ project(sushi)
 ####################
 #  Compiler Flags  #
 ####################
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14  -g -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy")
+#set(PROJECT_LINK_FLAGS "-lsndfile -ljsoncpp -Wl,@/usr/xenomai/lib/modechk.wrappers -lalchemy -lcopperplate -L/usr/xenomai/lib -lcobalt -lmodechk -lpthread -lrt")
+
 
 # Global flags
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -fno-rtti")
-set(PROJECT_LINK_FLAGS "")
+#set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -g -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy ")
+
+set(PROJECT_LINK_FLAGS )
 
 # Platform specific stuff
 if (APPLE)
@@ -28,7 +32,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
-                      src/audio_frontends/jack_frontend.cpp
+#                      src/audio_frontends/jack_frontend.cpp
                       src/audio_frontends/xenomai_frontend.cpp
                       src/audio_frontends/xenomai_offline_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
@@ -54,7 +58,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         include/plugin_interface.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
-                        src/audio_frontends/jack_frontend.h
+#                        src/audio_frontends/jack_frontend.h
                         src/audio_frontends/xenomai_frontend.h
                         src/audio_frontends/xenomai_offline_frontend.h
                         src/control_frontends/base_control_frontend.h
@@ -92,7 +96,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party"
                  /usr/xenomai/include
-                 /usr/xenomai/include/mercury)
+                 /usr/xenomai/include/cobalt
+                 /usr/xenomai/include/xenomai)
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -106,8 +111,7 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile pthread jsoncpp
-                    alchemy mercury copperplate rt)
+                    EASTL sndfile jsoncpp alchemy copperplate cobalt pthread rt)
 
 set(LINK_DIRS /usr/xenomai/lib)
 
@@ -135,4 +139,6 @@ add_executable(sushi ${SOURCE_FILES})
 # add_dependencies(sushi static_library)
 add_dependencies(sushi liblo)
 
-target_link_libraries(sushi "${LINK_LIBRARIES}" jack)
+#target_link_libraries(sushi "${LINK_LIBRARIES}" jack)
+target_link_libraries(sushi "${LINK_LIBRARIES}")
+

@@ -13,7 +13,7 @@
 #include "logging.h"
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
-#include "audio_frontends/jack_frontend.h"
+//#include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_frontend.h"
 
 
@@ -164,11 +164,11 @@ int main(int argc, char* argv[])
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
     if (use_jack)
     {
-        MIND_LOG_INFO("Setting up Jack audio frontend");
-        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
+        MIND_LOG_WARNING("Jack Frontend disabled");
+        /*fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
                                                                          jack_server_name,
                                                                          connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine);
+        frontend = new sushi::audio_frontend::JackFrontend(&engine);*/
     }
     else if (use_xenomai)
     {
