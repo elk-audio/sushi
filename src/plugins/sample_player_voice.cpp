@@ -25,7 +25,7 @@ void Voice::note_on(int note, float velocity, int offset)
     _velocity_gain = velocity * velocity;
     _start_offset = offset;
     _stop_offset = AUDIO_CHUNK_SIZE;
-    _playback_pos = 0.0f;
+    _playback_pos = 0.0;
     _current_note = note;
     /* The root note of the sample is assumed to be C4 */
     _playback_speed = powf(2, (note - 60)/12.0f);

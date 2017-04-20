@@ -107,7 +107,7 @@ private:
     int _current_note;
     float _playback_speed;
     float _velocity_gain;
-    float _playback_pos{0};
+    double _playback_pos{0.0};
     int _start_offset{0};
     int _stop_offset{0};
 };

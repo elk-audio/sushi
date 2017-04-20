@@ -35,7 +35,7 @@ public:
      * @param position The position in the sample buffer.
      * @return A linearily interpolated sample value.
      */
-    float at(float position) const
+    float at(double position) const
     {
         assert(position >= 0);
         assert(_data);
