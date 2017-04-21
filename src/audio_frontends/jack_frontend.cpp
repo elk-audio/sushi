@@ -1,3 +1,4 @@
+#ifdef SUSHI_BUILD_WITH_JACK
 #include <thread>
 #include <deque>
 #include <unistd.h>
@@ -6,8 +7,8 @@
 #include "logging.h"
 #include "jack_frontend.h"
 #include "library/random_note_player.h"
-namespace sushi {
 
+namespace sushi {
 namespace audio_frontend {
 
 MIND_GET_LOGGER;
@@ -263,5 +264,19 @@ void inline JackFrontend::process_audio(jack_nframes_t no_frames)
 }
 
 }; // end namespace audio_frontend
-
 }; // end namespace sushi
+#endif
+#ifndef SUSHI_BUILD_WITH_JACK
+#include <cassert>
+#include "audio_frontends/jack_frontend.h"
+#include "logging.h"
+namespace sushi {
+namespace audio_frontend {
+MIND_GET_LOGGER;
+JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Jack support!");
+    assert(false);
+}}}
+#endif

@@ -6,6 +6,8 @@
 #ifndef SUSHI_XENOMAI_FRONTEND_H
 #define SUSHI_XENOMAI_FRONTEND_H
 
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
@@ -22,7 +24,6 @@
 
 #include <task.h>
 #include <timer.h>
-//#include <mercury/boilerplate/wrappers.h>
 
 namespace sushi {
 
@@ -170,5 +171,32 @@ void xenomai_callback_generator(void* data);
 
 }; // end namespace jack_frontend
 }; // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_XENOMAI
+#ifndef SUSHI_BUILD_WITH_XENOMAI
+/* If Xenomai is disabled in the build, the xenomai frontend is replaced with this
+   dummy frontend whose only purpose is to assert if you try to use it */
+
+#include "base_audio_frontend.h"
+namespace sushi {
+namespace audio_frontend {
+struct XenomaiFrontendConfiguration : public BaseAudioFrontendConfiguration
+{
+    XenomaiFrontendConfiguration(const std::string,
+                              const std::string) {}
+};
+
+class XenomaiFrontend : public BaseAudioFrontend
+{
+public:
+    XenomaiFrontend(engine::BaseEngine* engine);
+    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override {return AudioFrontendStatus::OK;}
+    AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value&) {return AudioFrontendStatus::OK;}
+    void cleanup() override {}
+    void run() override {}
+};
+}; // end namespace audio_frontend
+}; // end namespace sushi
+#endif
 
 #endif //SUSHI_XENOMAI_FRONTEND_H

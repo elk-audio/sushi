@@ -5,7 +5,7 @@
 
 #ifndef SUSHI_JACK_FRONTEND_H
 #define SUSHI_JACK_FRONTEND_H
-
+#ifdef SUSHI_BUILD_WITH_JACK
 
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
@@ -115,7 +115,34 @@ private:
 };
 
 }; // end namespace jack_frontend
-
 }; // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_JACK
+#ifndef SUSHI_BUILD_WITH_JACK
+/* If Jack is disabled in the build config, the jack frontend is replaced with
+   this dummy frontend whose only purpose is to assert if you try to use it */
+
+#include "base_audio_frontend.h"
+namespace sushi {
+namespace audio_frontend {
+struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
+{
+    JackFrontendConfiguration(const std::string,
+                              const std::string,
+                              bool ) {}
+};
+
+class JackFrontend : public BaseAudioFrontend
+{
+public:
+    JackFrontend(engine::BaseEngine* engine);
+    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override
+    {return AudioFrontendStatus::OK;}
+    void cleanup() override {}
+    void run() override {}
+};
+}; // end namespace jack_frontend
+}; // end namespace sushi
+#endif
 
 #endif //SUSHI_JACK_FRONTEND_H

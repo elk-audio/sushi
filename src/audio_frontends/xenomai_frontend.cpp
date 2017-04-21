@@ -1,3 +1,4 @@
+#ifdef SUSHI_BUILD_WITH_XENOMAI
 #include <deque>
 #include <unistd.h>
 #include <chrono>
@@ -264,5 +265,20 @@ void xenomai_callback_generator(void* data)
 }
 
 }; // end namespace audio_frontend
-
 }; // end namespace sushi
+
+#endif
+#ifndef SUSHI_BUILD_WITH_XENOMAI
+#include <cassert>
+#include "audio_frontends/xenomai_frontend.h"
+#include "logging.h"
+namespace sushi {
+namespace audio_frontend {
+MIND_GET_LOGGER;
+XenomaiFrontend::XenomaiFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Xenomai support!");
+    assert(false);
+}}}
+#endif

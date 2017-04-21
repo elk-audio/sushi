@@ -1,15 +1,42 @@
 cmake_minimum_required(VERSION 2.8)
 project(sushi)
 
+##################################
+#  Build and link configuration  #
+##################################
+
+#  Default behaviour is to build and link with everything
+if (DEFINED BUILD_WITH_XENOMAI)
+    set(BUILD_WITH_XENOMAI ${BUILD_WITH_XENOMAI} CACHE BOOL "" )
+    if (DEFINED XENOMAI_FLAVOUR)
+        set(XENOMAI_FLAVOUR  ${XENOMAI_FLAVOUR} CACHE BOOL "")
+    else()
+        set(XENOMAI_FLAVOUR mercury CACHE STRING "")
+    endif()
+else()
+    set(BUILD_WITH_XENOMAI true CACHE BOOL "")
+    set(XENOMAI_FLAVOUR mercury CACHE STRING "")
+endif()
+
+if (DEFINED BUILD_WITH_JACK)
+    set(BUILD_WITH_JACK ${BUILD_WITH_JACK} CACHE BOOL "")
+else()
+    set(BUILD_WITH_JACK true CACHE BOOL "")
+endif()
+
+if(${BUILD_WITH_JACK})
+    add_definitions(-DSUSHI_BUILD_WITH_JACK)
+    message("Building with Jack support.")
+endif()
+if(${BUILD_WITH_XENOMAI})
+    add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
+    message("Building with Xenomai ${XENOMAI_FLAVOUR}")
+endif()
+
 ####################
 #  Compiler Flags  #
 ####################
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14  -g -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy")
-#set(PROJECT_LINK_FLAGS "-lsndfile -ljsoncpp -Wl,@/usr/xenomai/lib/modechk.wrappers -lalchemy -lcopperplate -L/usr/xenomai/lib -lcobalt -lmodechk -lpthread -lrt")
-
-
-# Global flags
-#set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -g -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy ")
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14")
 
 set(PROJECT_LINK_FLAGS )
 
@@ -25,6 +52,12 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-DDEBUG -O0 -g")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 
+if (${BUILD_WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "cobalt")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ ")
+elseif(${BUILD_WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "mercury")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__MERCURY__ ")
+endif()
+
 ##################
 #  Source Files  #
 ##################
@@ -32,9 +65,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
-#                      src/audio_frontends/jack_frontend.cpp
+                      src/audio_frontends/jack_frontend.cpp
                       src/audio_frontends/xenomai_frontend.cpp
-                      src/audio_frontends/xenomai_offline_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/engine/engine.cpp
@@ -58,9 +90,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         include/plugin_interface.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
-#                        src/audio_frontends/jack_frontend.h
+                        src/audio_frontends/jack_frontend.h
                         src/audio_frontends/xenomai_frontend.h
-                        src/audio_frontends/xenomai_offline_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
                         src/library/sample_buffer.h
@@ -94,10 +125,14 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
-                 "${PROJECT_SOURCE_DIR}/third-party"
-                 /usr/xenomai/include
-                 /usr/xenomai/include/cobalt
-                 /usr/xenomai/include/xenomai)
+                 "${PROJECT_SOURCE_DIR}/third-party")
+
+if(${BUILD_WITH_XENOMAI})
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} /usr/xenomai/include
+                                     /usr/xenomai/include/${XENOMAI_FLAVOUR}
+                                     /usr/xenomai/include/xenomai
+                                     /usr/xenomai/include/alchemy)
+endif()
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -111,15 +146,21 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile jsoncpp alchemy copperplate cobalt pthread rt)
+                    EASTL sndfile jsoncpp pthread)
 
-set(LINK_DIRS /usr/xenomai/lib)
+if (BUILD_WITH_XENOMAI)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
+    set(LINK_DIRS /usr/xenomai/lib)
+else()
+    set(LINK_DIRS "")
+endif()
 
 if (APPLE)
-    link_directories(${LINK_DIRS} "/usr/local/lib")
+    set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
 endif()
 
 link_directories(${LINK_DIRS})
+
 
 #############################################
 #  Subdirectory projects                    #
@@ -134,11 +175,13 @@ add_subdirectory(test)
 
 add_executable(sushi ${SOURCE_FILES})
 
-# Explicitly add external statically linked dependencies here,
 # example:
 # add_dependencies(sushi static_library)
 add_dependencies(sushi liblo)
 
-#target_link_libraries(sushi "${LINK_LIBRARIES}" jack)
-target_link_libraries(sushi "${LINK_LIBRARIES}")
+if (${BUILD_WITH_JACK})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} jack)
+endif()
+
+target_link_libraries(sushi ${LINK_LIBRARIES})
 
