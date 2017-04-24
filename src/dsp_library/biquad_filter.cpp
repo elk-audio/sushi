@@ -12,6 +12,7 @@ static inline double exp10(double val)
 
 #endif
 
+namespace dsp {
 namespace biquad {
 
 const int TIME_CONSTANTS_IN_SMOOTHING_FILTER = 3;
@@ -22,7 +23,7 @@ inline float process_one_pole(const OnePoleCoefficients coefficients, const floa
     return z;
 }
 
-void calc_biquad_peak(biquad::BiquadCoefficients& filter, float samplerate, float frequency, float q, float gain)
+void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, float q, float gain)
 {
     double A = sqrt(gain); // Note that the dB to linear gain conversion is done in the parameters preprocessor
     double w0 = 2 * M_PI * frequency / samplerate;
@@ -39,7 +40,7 @@ void calc_biquad_peak(biquad::BiquadCoefficients& filter, float samplerate, floa
     filter.b2 = static_cast<float>((1 - alpha * A) / a0);
 }
 
-void calc_biquad_lowpass(biquad::BiquadCoefficients&  filter, float samplerate, float frequency)
+void calc_biquad_lowpass(Coefficients&  filter, float samplerate, float frequency)
 {
     float w0 = 2 * M_PI * frequency / samplerate;
     float w0_cos = cos(w0);
@@ -59,7 +60,7 @@ BiquadFilter::BiquadFilter()
 {
 }
 
-BiquadFilter::BiquadFilter(const BiquadCoefficients &coefficients) :
+BiquadFilter::BiquadFilter(const Coefficients &coefficients) :
         _coefficient_targets(coefficients)
 {
 }
@@ -85,7 +86,7 @@ void BiquadFilter::set_smoothing(int buffer_size)
     _smoothing_coefficients.a0 = 1 - _smoothing_coefficients.b0;
 }
 
-void BiquadFilter::set_coefficients(const BiquadCoefficients &coefficients)
+void BiquadFilter::set_coefficients(const Coefficients &coefficients)
 {
     _coefficient_targets = coefficients;
 }
@@ -110,3 +111,4 @@ void BiquadFilter::process(const float *input, float *output, int samples)
     }
 }
 } // end namespace biquad
+} // end namespace dsp
