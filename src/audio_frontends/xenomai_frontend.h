@@ -24,6 +24,7 @@
 
 #include <task.h>
 #include <timer.h>
+#include <xenomai/init.h>
 
 namespace sushi {
 

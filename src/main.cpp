@@ -8,9 +8,6 @@
 #include <cstdlib>
 
 #include <json/json.h>
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-#include <xenomai/init.h>
-#endif
 
 #include "logging.h"
 #include "options.h"
