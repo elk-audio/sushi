@@ -31,6 +31,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/audio_frontends/jack_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
+                      src/dsp_library/biquad_filter.cpp
                       src/engine/engine.cpp
                       src/engine/plugin_chain.cpp
                       src/library/mind_allocator.cpp
@@ -40,8 +41,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
-                      src/plugins/sample_player_voice.cpp
-                      src/plugins/biquad_filter.cpp )
+                      src/plugins/sample_player_voice.cpp)
 
 
 # Enumerate all the headers separately so that CLion can index them
@@ -56,6 +56,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/control_frontends/osc_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
+                        src/dsp_library/biquad_filter.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
@@ -70,9 +71,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/sample_player_plugin.h
-                        src/plugins/sample_player_voice.h
-                        src/plugins/biquad_filter.h
-                        )
+                        src/plugins/sample_player_voice.h)
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 

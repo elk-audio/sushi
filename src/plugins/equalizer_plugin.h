@@ -6,7 +6,7 @@
 #define EQUALIZER_PLUGIN_H
 
 #include "library/internal_plugin.h"
-#include "biquad_filter.h"
+#include "dsp_library/biquad_filter.h"
 
 namespace sushi {
 namespace equalizer_plugin {
@@ -31,7 +31,7 @@ public:
 
 private:
     float _sample_rate;
-    biquad::BiquadFilter _filter;
+    dsp::biquad::BiquadFilter _filter;
 
     FloatStompBoxParameter* _frequency;
     FloatStompBoxParameter* _gain;
