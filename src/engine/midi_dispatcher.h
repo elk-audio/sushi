@@ -10,7 +10,8 @@
 
 #include <string>
 #include <map>
-#include <unordered_map>
+#include <array>
+#include <vector>
 
 #include "library/constants.h"
 #include "library/midi_decoder.h"
@@ -36,16 +37,9 @@ class MidiDispatcher
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(BaseEngine* engine) : _engine(engine)
-    {
-        std::unordered_multimap<int, Connection> map;
-        _kb_routes_by_channel.insert(std::pair<int, std::unordered_multimap<int, Connection>>(0, map));
-        _cc_routes.insert(std::pair<int, std::unordered_multimap<int, Connection>>(0, map));
+    MidiDispatcher(BaseEngine* engine) : _engine(engine) {}
 
-    }
-
-    ~MidiDispatcher()
-    {}
+    ~MidiDispatcher() {}
 
     /**
      * @brief Connects a midi control change message to a given parameter.
@@ -97,33 +91,11 @@ public:
 
 private:
 
+    std::map<int, std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>> _kb_routes;
+    std::map<int, std::array<std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
 
-    // TODO eventually replace the channel index with vectors/arrays for faster lookup.
-    // midi keyboard data connections indexed by input port
-    std::unordered_multimap<int, Connection> _kb_routes;
-    // midi keyboard data connections indexed by input port/channel
-    std::map<int, std::unordered_multimap<int, Connection>> _kb_routes_by_channel;
-
-    // midi cc connections indexed by input port/cc no
-    std::map<int, std::unordered_multimap<int, Connection>> _cc_routes;
-    // midi cc connections indexed by input port/channel/cc no
-    std::map<int, std::map<int, std::unordered_multimap<int, Connection>>> _cc_routes_by_channel;
     BaseEngine* _engine;
 };
-
-typedef  std::unordered_multimap<int, Connection>::const_iterator ConnectionIter;
-
-/**
- * @brief Helper function to look up iterators matching a route.
- */
-const std::pair<ConnectionIter, ConnectionIter> get_route_iters_from_nested_map(int key_1, int key_2,
-                                                                                const std::map<int, std::unordered_multimap<int, Connection>> &map);
-/**
- * @brief Helper function to look up iterators matching a route.
- */
-const std::pair<ConnectionIter, ConnectionIter> get_route_iters_from_double_nested_map(int key_1, int key_2, int key_3,
-                                                                                       const std::map<int, std::map<int, std::unordered_multimap<int, Connection>>> &map);
-
 
 } // end namespace midi_dispatcher
 }

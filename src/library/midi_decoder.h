@@ -18,6 +18,9 @@ constexpr int MAX_VALUE = 127;
 constexpr int MAX_PITCH_BEND = 16384;
 /* Middle value for pitch bend */
 constexpr int PITCH_BEND_MIDDLE = 8192;
+/* Maximum controller number for cc messages */
+constexpr int MAX_CONTROLLER_NO = 119;
+
 
 /**
  * @brief Enum to enable OMNI (all channels) as an option.

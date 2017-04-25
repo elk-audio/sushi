@@ -139,5 +139,5 @@ TEST_F(TestEngine, TestInitMidiFromJSON)
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._kb_routes.size());
-    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._cc_routes_by_channel[0].size());
+    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._cc_routes.size());
 }
