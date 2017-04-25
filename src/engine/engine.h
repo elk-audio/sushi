@@ -142,30 +142,6 @@ public:
      ~AudioEngine();
 
     /**
-     * @brief Connect an audio input to a chain.
-     */
-    EngineReturnStatus connect_audio_mono_input(int channel, const std::string& chain_id) override;
-
-    /**
-     * @brief Connect a chain to an audio output.
-     */
-    EngineReturnStatus connect_audio_mono_output(int channel, const std::string& chain_id) override;
-
-    /**
-     * @brief Connect 2 audio inputs to a stereo chain.
-     */
-    EngineReturnStatus connect_audio_stereo_input(int left_channel_idx,
-                                                  int right_channel_idx,
-                                                  const std::string& chain_id) override;
-
-    /**
-     * @brief Connect a stereo chain to 2 audio outputs.
-     */
-    EngineReturnStatus connect_audio_stereo_output(int left_channel_idx,
-                                                   int right_channel_idx,
-                                                   const std::string& chain_id) override;
-
-    /**
      * @brief Connect midi cc data to a named parameter on a processor
      */
     EngineReturnStatus connect_midi_cc_data(int midi_port,
