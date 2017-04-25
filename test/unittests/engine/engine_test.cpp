@@ -51,6 +51,11 @@ TEST_F(TestEngine, TestInstantiation)
  */
 TEST_F(TestEngine, TestProcess)
 {
+    /* Add a plugin chain since the engine by default doesn't have any */
+    PluginChain chain;
+    _module_under_test->_audio_graph.push_back(&chain);
+
+    /* Run tests */
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
@@ -82,21 +87,21 @@ TEST_F(TestEngine, TestInitFromJSON)
         EXPECT_TRUE(false) << "Error parsing JSON config file\n";
     }
 
-    EngineReturnStatus status = _module_under_test->init_from_json_array(config["stompbox_chains"]);
+    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    EXPECT_EQ(2, _module_under_test->_audio_graph[0].input_channels());
-    EXPECT_EQ(2, _module_under_test->_audio_graph[0].output_channels());
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1].input_channels());
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1].output_channels());
+    EXPECT_EQ(2, _module_under_test->_audio_graph[0]->input_channels());
+    EXPECT_EQ(2, _module_under_test->_audio_graph[0]->output_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->input_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->output_channels());
 
-    auto chain_l = &_module_under_test->_audio_graph[0]._chain;
-    auto chain_r = &_module_under_test->_audio_graph[1]._chain;
+    auto chain_l = &_module_under_test->_audio_graph[0]->_chain;
+    auto chain_r = &_module_under_test->_audio_graph[1]->_chain;
 
     ASSERT_EQ(chain_l->size(), 3u);
 
     ASSERT_EQ(chain_r->size(), 3u);
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1].input_channels());
+    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->input_channels());
 
     /* TODO - Is this casting a good idea */
     ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(0))->unique_id(), "sushi.testing.passthrough");
@@ -106,4 +111,33 @@ TEST_F(TestEngine, TestInitFromJSON)
     ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(0))->unique_id(), "sushi.testing.gain");
     ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(1))->unique_id(), "sushi.testing.passthrough");
     ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(2))->unique_id(), "sushi.testing.gain");
+}
+
+TEST_F(TestEngine, TestInitMidiFromJSON)
+{
+    char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
+    if (test_data_dir == nullptr)
+    {
+        EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
+    }
+    std::string test_config_file(test_data_dir);
+    test_config_file.append("/config.json");
+
+    std::ifstream file(test_config_file);
+    Json::Value config;
+    Json::Reader reader;
+    bool parse_ok = reader.parse(file, config, false);
+    if (!parse_ok)
+    {
+        EXPECT_TRUE(false) << "Error parsing JSON config file\n";
+    }
+    /* Set up some processors to connect to first */
+    _module_under_test->set_midi_input_ports(1);
+    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    status = _module_under_test->init_midi_from_json_array(config["midi"]);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._kb_routes.size());
+    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._cc_routes.size());
 }

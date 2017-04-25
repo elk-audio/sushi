@@ -47,7 +47,6 @@ TEST_F(TestJackFrontend, test_operation)
     /* Can't call run directly cause that will freeze the test due to the sleep() call*/
     jack_activate(_module_under_test->_client);
 
-    ASSERT_TRUE(_engine.got_event);
     ASSERT_TRUE(_engine.process_called);
 }
 

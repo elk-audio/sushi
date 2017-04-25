@@ -78,6 +78,26 @@
             }
         }
 
-    ]
+    ],
+    "midi" : {
+        "chain_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "chain": "left"
+            }
+        ],
+        "cc_mappings": [
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 27,
+                "processor": "equalizer_0_l",
+                "parameter": "gain",
+                "min_range": -24,
+                "max_range": 24
+            }
+        ]
+    }
 
 }
