@@ -12,6 +12,7 @@
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
 #include "library/circular_fifo.h"
+#include "library/circularfifo_memory_relaxed_aquire_release.h"
 #include "control_frontends/osc_frontend.h"
 
 #include <string>
@@ -31,7 +32,7 @@ namespace sushi {
 namespace audio_frontend {
 
 // Audio buffer contains ~3 s of audio @ 44 kHz
-typedef ableton::link::CircularFifo<ChunkSampleBuffer, 2000> AudioQueue;
+typedef memory_relaxed_aquire_release::CircularFifo<ChunkSampleBuffer, 2000> AudioQueue;
 
 constexpr auto DISK_IO_PERIODICITY = std::chrono::seconds(1);
 
@@ -152,9 +153,10 @@ private:
     int internal_process_callback();
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{2};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{2};
 
-    AudioQueue _in_audio_queue;
-    AudioQueue _out_audio_queue;
+    AudioQueue _in_audio_queue{_in_buffer};
+    AudioQueue _out_audio_queue{_in_buffer};
 
     DiskIoHandler _disk_io{&_out_audio_queue, &_in_audio_queue};
 

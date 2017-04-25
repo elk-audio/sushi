@@ -82,6 +82,7 @@ void DiskIoHandler::stop()
 void DiskIoHandler::worker()
 {
     ChunkSampleBuffer sample_buffer(_soundfile_info.channels);
+    ChunkSampleBuffer sample_buffer_in(_soundfile_info.channels);
     bool can_send = true;
     bool end_of_file = false;
     // read the first frame to get the initial conditions right (and assume we have at least 64 frames in the file)
@@ -105,12 +106,12 @@ void DiskIoHandler::worker()
             }
         }
         // Write incoming file buffers to disk
-        while (!_in_queue->isEmpty())
+        while (!_in_queue->wasEmpty())
         {
-            auto buffer = _in_queue->pop();
-            if (buffer.valid)
+            bool valid = _in_queue->pop(sample_buffer_in);
+            if (valid)
             {
-                buffer.item.to_interleaved(_out_file_buffer);
+                sample_buffer_in.to_interleaved(_out_file_buffer);
                 sf_writef_float(_output_file, _out_file_buffer, static_cast<sf_count_t>(AUDIO_CHUNK_SIZE));
             }
         }
@@ -222,7 +223,7 @@ void XenomaiFrontend::run()
 
 int XenomaiFrontend::internal_process_callback()
 {
-    if (_in_audio_queue.isEmpty())
+    if (_in_audio_queue.wasEmpty())
     {
         return -1;
     }
@@ -238,9 +239,9 @@ int XenomaiFrontend::internal_process_callback()
         delete plugin_event;
     }
 
-    auto in_buffer = _in_audio_queue.pop();
+    bool valid = _in_audio_queue.pop(_in_buffer);
     _out_buffer.clear();
-    _engine->process_chunk(&in_buffer.item, &_out_buffer);
+    _engine->process_chunk(&_in_buffer, &_out_buffer);
     _out_audio_queue.push(_out_buffer);
     return 0;
 }
