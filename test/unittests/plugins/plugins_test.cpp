@@ -8,7 +8,7 @@
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
-#include "plugins/biquad_filter.cpp"
+#include "dsp_library/biquad_filter.cpp"
 #include "library/internal_plugin.cpp"
 
 using namespace sushi;

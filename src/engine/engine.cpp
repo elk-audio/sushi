@@ -55,31 +55,6 @@ AudioEngine::AudioEngine(int sample_rate) : BaseEngine::BaseEngine(sample_rate)
 AudioEngine::~AudioEngine()
 {}
 
-EngineReturnStatus AudioEngine::connect_audio_mono_input(int channel, const std::string& chain_id)
-{
-    return EngineReturnStatus::OK;
-}
-
-
-EngineReturnStatus AudioEngine::connect_audio_mono_output(int channel, const std::string& chain_id)
-{
-    return EngineReturnStatus::OK;
-}
-
-
-EngineReturnStatus AudioEngine::connect_audio_stereo_input(int left_channel_idx,
-                                                           int right_channel_idx,
-                                                           const std::string& chain_id)
-{
-    return EngineReturnStatus::OK;
-}
-
-EngineReturnStatus AudioEngine::connect_audio_stereo_output(int left_channel_idx,
-                                                            int right_channel_idx,
-                                                            const std::string& chain_id)
-{
-    return EngineReturnStatus::OK;
-}
 
 EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
                                                      int cc_no,
@@ -123,7 +98,7 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
 
 int AudioEngine::n_channels_in_chain(int chain)
 {
-    if (chain <= _audio_graph.size())
+    if (chain <= static_cast<int>(_audio_graph.size()))
     {
         return _audio_graph[chain]->input_channels();
     }

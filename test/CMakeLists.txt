@@ -20,6 +20,8 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
+               unittests/dsp_library/envelope_test.cpp
+               unittests/dsp_library/sample_wrapper_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
