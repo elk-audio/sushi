@@ -10,7 +10,7 @@
 #ifndef SUSHI_REALTIME_FIFO_H
 #define SUSHI_REALTIME_FIFO_H
 
-#include "library/circular_fifo.h"
+#include "library/circularfifo_memory_relaxed_aquire_release.h"
 #include "library/plugin_events.h"
 #include "library/event_pipe.h"
 
@@ -26,16 +26,17 @@ public:
 
     inline BaseEvent* pop()
     {
-        auto item = _fifo.pop();
-        return item.valid ? item.item : nullptr;
+        BaseEvent* item;
+        bool valid = _fifo.pop(item);
+        return valid ? item : nullptr;
     }
 
-    inline bool empty() {return _fifo.isEmpty();}
+    inline bool empty() {return _fifo.wasEmpty();}
 
     virtual void send_event(BaseEvent* event) override {push(event);}
 
 private:
-    ableton::link::CircularFifo<BaseEvent*, MAX_EVENTS_IN_QUEUE> _fifo;
+    memory_relaxed_aquire_release::CircularFifo<BaseEvent*, MAX_EVENTS_IN_QUEUE> _fifo;
 };
 
 } //end namespace sushi
