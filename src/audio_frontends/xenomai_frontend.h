@@ -11,9 +11,8 @@
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
-#include "library/circular_fifo.h"
-#include "library/circularfifo_memory_relaxed_aquire_release.h"
 #include "control_frontends/osc_frontend.h"
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
 #include <string>
 #include <tuple>
