@@ -10,7 +10,7 @@
 #ifndef SUSHI_REALTIME_FIFO_H
 #define SUSHI_REALTIME_FIFO_H
 
-#include "library/circularfifo_memory_relaxed_aquire_release.h"
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "library/plugin_events.h"
 #include "library/event_pipe.h"
 
