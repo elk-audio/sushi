@@ -66,7 +66,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
                         src/library/event_pipe.h
-                        src/library/circularfifo_memory_relaxed_aquire_release.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
