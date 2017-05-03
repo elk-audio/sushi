@@ -68,8 +68,8 @@ EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_ARGUMENTS;
     }
-    auto processor_node = _instances_id_to_processors.find(processor_id);
-    if (processor_node == _instances_id_to_processors.end())
+    auto processor_node = _processors_by_unique_name.find(processor_id);
+    if (processor_node == _processors_by_unique_name.end())
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
@@ -86,8 +86,8 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_ARGUMENTS;
     }
-    auto processor_node = _instances_id_to_processors.find(chain_id);
-    if (processor_node == _instances_id_to_processors.end())
+    auto processor_node = _processors_by_unique_name.find(chain_id);
+    if (processor_node == _processors_by_unique_name.end())
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
@@ -133,8 +133,6 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Val
 {
     PluginChain* chain = new PluginChain;
     EngineReturnStatus status = set_up_channel_config(*chain, chain_def["mode"]);
-    _audio_graph.push_back(chain);
-    _instances_id_to_processors[chain_def["id"].asString()] = std::move(std::unique_ptr<Processor>(chain));
     if (status != EngineReturnStatus::OK)
     {
         return status;
@@ -146,24 +144,45 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Val
         {
             auto uid = stompbox_def["stompbox_uid"].asString();
             auto instance = _make_stompbox_from_unique_id(uid);
+            instance->init(_sample_rate);
             if (instance == nullptr)
             {
                 MIND_LOG_ERROR("Invalid plugin uid {} in configuration file for chain {}", uid, chain_def["id"].asString());
                 return EngineReturnStatus::INVALID_STOMPBOX_UID;
             }
-
-            auto instance_id = stompbox_def["id"].asString();
-            _instances_id_to_processors[instance_id] = std::move(instance);
-            // TODO - look over ownership here - see ardours use of shared_ptr for instance
-            chain->add(_instances_id_to_processors[instance_id].get());
-            _instances_id_to_processors[instance_id]->init(_sample_rate);
+            // TODO - at some point test if the name actually is unique.
+            auto name = stompbox_def["id"].asString();
+            instance->set_name(name);
+            chain->add(instance.get());
+            _register_processor(std::move(instance), name);
         }
+        _audio_graph.push_back(chain);
+        _register_processor(std::move(std::unique_ptr<Processor>(chain)), chain_def["id"].asString());
     }
     else
     {
         MIND_LOG_ERROR("Invalid format for stompbox chain n. {} in configuration file", chain_def["id"].asString());
+        delete chain;
         return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
     }
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> processor, const std::string str_id)
+{
+    auto existing = _processors_by_unique_name.find(str_id);
+    if (existing != _processors_by_unique_name.end())
+    {
+        MIND_LOG_WARNING("Processor with this name already exists");
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    if (processor->id() > _processors_by_unique_id.size())
+    {
+        // Resize the vector manually to be able to insert processors at specific indexes
+        _processors_by_unique_id.resize(_processors_by_unique_id.size() + PROC_ID_ARRAY_INCREMENT, nullptr);
+    }
+    _processors_by_unique_id[processor->id()] = processor.get();
+    _processors_by_unique_name[str_id] = std::move(processor);
     return EngineReturnStatus::OK;
 }
 
@@ -261,14 +280,35 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
 {
     assert(event);
-    auto processor_node = _instances_id_to_processors.find(event->processor_id());
-    if (processor_node == _instances_id_to_processors.end())
+    auto processor_node = _processors_by_unique_name.find(event->processor_id());
+    if (processor_node == _processors_by_unique_name.end())
     {
         MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
     processor_node->second->process_event(event);
     return EngineReturnStatus::OK;
+}
+
+
+std::pair<EngineReturnStatus, uint32_t> AudioEngine::processor_id_from_name(const std::string &unique_name)
+{
+    auto processor_node = _processors_by_unique_name.find(unique_name);
+    if (processor_node == _processors_by_unique_name.end())
+    {
+        return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
+    }
+    return std::make_pair(EngineReturnStatus::OK, processor_node->second->id());
+}
+
+
+std::pair<EngineReturnStatus, const std::string> AudioEngine::unique_name_of_processor(uint32_t uid)
+{
+    if (uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
+    {
+        return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, std::string(""));
+    }
+    return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
 }
 
 } // namespace engine

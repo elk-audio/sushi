@@ -10,6 +10,8 @@
 
 #include <memory>
 #include <map>
+#include <vector>
+#include <utility>
 
 #include "EASTL/vector.h"
 #include <json/json.h>
@@ -26,6 +28,8 @@ class StompBox;
 
 namespace sushi {
 namespace engine {
+
+constexpr int PROC_ID_ARRAY_INCREMENT = 100;
 
 enum class EngineReturnStatus
 {
@@ -125,6 +129,16 @@ public:
 
     virtual EngineReturnStatus send_rt_event(BaseEvent* event) = 0;
 
+    virtual std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string & /*name*/)
+    {
+        return std::make_pair(EngineReturnStatus::OK, 0);
+    };
+
+    virtual std::pair<EngineReturnStatus, const std::string> unique_name_of_processor(uint32_t /*uid*/)
+    {
+        return std::make_pair(EngineReturnStatus::OK, "");
+    };
+
 protected:
     int _sample_rate;
     int _audio_inputs{0};
@@ -193,15 +207,29 @@ public:
 
     EngineReturnStatus send_rt_event(BaseEvent* event) override;
 
+    /**
+     * @brief Get the unique id of a processor given its name
+     * @param unique_name The unique name of a processor
+     * @return the unique id of the processor, only valid if status is EngineReturnStatus::OK
+     */
+    virtual std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string &unique_name) override;
+
+    /**
+     * @brief Get the unique name of a processor of a known unique id
+     * @param uid The unique id of the processor
+     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
+     */
+    virtual std::pair<EngineReturnStatus, const std::string> unique_name_of_processor(uint32_t uid) override;
+
+
 protected:
-    eastl::vector<PluginChain*> _audio_graph;
+    std::vector<PluginChain*> _audio_graph;
 
 private:
     /**
      * @brief Instantiate a plugin instance of a given type
      * @param uid String unique id
-     * @return Pointer to plugin instance if uid is valid,
-     *         nullptr otherwise
+     * @return Pointer to plugin instance if uid is valid, nullptr otherwise
      */
     std::unique_ptr<Processor> _make_stompbox_from_unique_id(const std::string &uid);
 
@@ -213,9 +241,17 @@ private:
      */
     EngineReturnStatus _fill_chain_from_json_definition(const Json::Value &stompbox_def);
 
-    // TODO: eventually port to EASTL
+    /**
+     * @brief Register a newly created processor in all lookup containers
+     *        and take ownership of it.
+     * @param processor Processor to register
+     */
+    EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string str_id);
+
     // Owns all processors, including plugin chains
-    std::map<std::string, std::unique_ptr<Processor>> _instances_id_to_processors;
+    std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
+    // Processors indexed by their unique 32 bit id
+    std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
 
     midi_dispatcher::MidiDispatcher _midi_dispatcher{this};
 };

@@ -43,6 +43,8 @@ TEST_F(TestPassthroughPlugin, TestInitialization)
 {
     _module_under_test->init(48000);
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Passthrough", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.passthrough", _module_under_test->name());
 }
 
 // Fill a buffer with ones and test that they are passed through unchanged
@@ -89,6 +91,8 @@ protected:
 TEST_F(TestGainPlugin, TestInstantiation)
 {
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Gain", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.gain", _module_under_test->name());
 }
 
 // Fill a buffer with ones, set gain to 2 and process it
@@ -131,6 +135,8 @@ protected:
 TEST_F(TestEqualizerPlugin, TestInstantiation)
 {
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Equalizer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.equalizer", _module_under_test->name());
 }
 
 // Test silence in -> silence out

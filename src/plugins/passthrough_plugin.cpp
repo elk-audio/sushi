@@ -7,7 +7,10 @@ namespace sushi {
 namespace passthrough_plugin {
 
 PassthroughPlugin::PassthroughPlugin()
-{}
+{
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
+}
 
 PassthroughPlugin::~PassthroughPlugin()
 {}
