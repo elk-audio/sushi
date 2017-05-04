@@ -302,7 +302,27 @@ std::pair<EngineReturnStatus, uint32_t> AudioEngine::processor_id_from_name(cons
 }
 
 
-std::pair<EngineReturnStatus, const std::string> AudioEngine::unique_name_of_processor(uint32_t uid)
+std::pair<EngineReturnStatus, uint32_t> AudioEngine::parameter_id_from_name(const std::string & processor_name,
+                                                                            const std::string& parameter_name)
+{
+    auto processor_node = _processors_by_unique_name.find(processor_name);
+    if (processor_node == _processors_by_unique_name.end())
+    {
+        return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
+    }
+    ProcessorReturnCode status;
+    uint32_t id;
+    std::tie(status, id) = processor_node->second->parameter_id_from_name(parameter_name);
+    if (status != ProcessorReturnCode::OK)
+    {
+        return  std::make_pair(EngineReturnStatus::INVALID_PARAMETER_UID, 0);
+    }
+    return std::make_pair(EngineReturnStatus::OK, id);
+};
+
+
+
+std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(uint32_t uid)
 {
     if (uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
     {

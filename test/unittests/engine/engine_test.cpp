@@ -142,13 +142,31 @@ TEST_F(TestEngine, TestUidNameMapping)
     std::tie(status, id) = _module_under_test->processor_id_from_name("gain_0_l");
     ASSERT_EQ(EngineReturnStatus::OK, status);
     std::string name;
-    std::tie(status, name) = _module_under_test->unique_name_of_processor(id);
+    std::tie(status, name) = _module_under_test->processor_name_from_id(id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_EQ("gain_0_l", name);
 
     /* Test with name/id that doesn't match any processors */
     std::tie(status, id) = _module_under_test->processor_id_from_name("not_found");
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
-    std::tie(status, name) = _module_under_test->unique_name_of_processor(123456);
+    std::tie(status, name) = _module_under_test->processor_name_from_id(123456);
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
+}
+
+TEST_F(TestEngine, TestParameterLookup)
+{
+    Json::Value config = read_json_config("config.json");
+    ASSERT_FALSE(config.empty());
+    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    uint32_t id;
+    std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "q");
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    std::tie(status, id) = _module_under_test->parameter_id_from_name("not_found", "gain");
+    ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
+
+    std::tie(status, id) = _module_under_test->parameter_id_from_name("gain_0_l", "not_found");
+    ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER_UID, status);
 }

@@ -134,7 +134,13 @@ public:
         return std::make_pair(EngineReturnStatus::OK, 0);
     };
 
-    virtual std::pair<EngineReturnStatus, const std::string> unique_name_of_processor(uint32_t /*uid*/)
+    virtual std::pair<EngineReturnStatus, uint32_t> parameter_id_from_name(const std::string & /*processor_name*/,
+                                                                           const std::string& /*parameter_name*/)
+    {
+        return std::make_pair(EngineReturnStatus::OK, 0);
+    };
+
+    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(uint32_t /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
@@ -212,14 +218,23 @@ public:
      * @param unique_name The unique name of a processor
      * @return the unique id of the processor, only valid if status is EngineReturnStatus::OK
      */
-    virtual std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string &unique_name) override;
+    std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string &unique_name) override;
+
+    /**
+     * @brief Get the unique (per processor) id of a parameter.
+     * @param processor_name The unique name of a processor
+     * @param The unique name of a parameter of the above processor
+     * @return the unique id of the parameter, only valid if status is EngineReturnStatus::OK
+     */
+    std::pair<EngineReturnStatus, uint32_t> parameter_id_from_name(const std::string & /*processor_name*/,
+                                                                   const std::string& /*parameter_name*/);
 
     /**
      * @brief Get the unique name of a processor of a known unique id
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    virtual std::pair<EngineReturnStatus, const std::string> unique_name_of_processor(uint32_t uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(uint32_t uid) override;
 
 
 protected:
