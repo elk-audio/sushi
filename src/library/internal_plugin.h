@@ -71,7 +71,7 @@ public:
                                                    char* default_value);
 
     /* Inherited from Processor */
-    std::pair<ProcessorReturnCode, uint32_t> parameter_id_from_name(const std::string& parameter_name) override;
+    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
 
     void process_event(BaseEvent* event) override;
 

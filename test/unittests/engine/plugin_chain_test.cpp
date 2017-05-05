@@ -82,7 +82,7 @@ TEST_F(PluginChainTest, test_event_bypass_processing)
     _module_under_test.set_event_output(&event_queue);
     _module_under_test.add(&plugin);
 
-    KeyboardEvent event(EventType::NOTE_ON, "plugin", 0, 0, 0);
+    KeyboardEvent event(EventType::NOTE_ON, 0, 0, 0, 0);
 
     _module_under_test.process_event(&event);
     _module_under_test.process_audio(buffer, buffer);

@@ -65,13 +65,29 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
         {
             int sample = static_cast<int>( std::round(e["time"].asDouble() * static_cast<double>(_engine->sample_rate()) ) );
             auto data = e["data"];
+            ObjectId processor_id;
+            sushi::engine::EngineReturnStatus status;
+            std::tie(status, processor_id) = _engine->processor_id_from_name(data["stompbox_instance"].asString());
+            if (status != sushi::engine::EngineReturnStatus::OK)
+            {
+                MIND_LOG_WARNING("Unknown processor name: {}", data["stompbox_instance"].asString());
+                continue;
+            }
             if (e["type"] == "parameter_change")
             {
+                ObjectId parameterId;
+                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["stompbox_instance"].asString(),
+                                                                                data["parameter_name"].asString());
+                if (status != sushi::engine::EngineReturnStatus::OK)
+                {
+                    MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].asString());
+                    continue;
+                }
                 _event_queue.push_back(std::make_tuple(sample,
                                                        new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE,
-                                                                                data["stompbox_instance"].asString(),
+                                                                                processor_id,
                                                                                 sample % AUDIO_CHUNK_SIZE,
-                                                                                data["parameter_id"].asString(),
+                                                                                parameterId,
                                                                                 data["value"].asFloat())));
 
             }
@@ -79,7 +95,7 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        new KeyboardEvent(EventType::NOTE_ON,
-                                                                        data["stompbox_instance"].asString(),
+                                                                        processor_id,
                                                                         sample % AUDIO_CHUNK_SIZE,
                                                                         data["note"].asInt(),
                                                                         data["velocity"].asFloat())));
@@ -88,7 +104,7 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        new KeyboardEvent(EventType::NOTE_OFF,
-                                                                         data["stompbox_instance"].asString(),
+                                                                         processor_id,
                                                                          sample % AUDIO_CHUNK_SIZE,
                                                                          data["note"].asInt(),
                                                                          data["velocity"].asFloat())));

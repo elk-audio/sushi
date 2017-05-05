@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <vector>
+#include "id_generator.h"
 
 namespace sushi {
 
@@ -45,7 +46,7 @@ public:
      * @brief The processor id of the target for this message.
      * @return
      */
-    const std::string& processor_id() {return _processor_id;}
+    ObjectId processor_id() {return _processor_id;}
 
     /**
      * @brief If the message should be handled in the realtime context or not
@@ -62,11 +63,11 @@ public:
     int sample_offset() {return _sample_offset;}
 
 protected:
-    BaseEvent(EventType type, const std::string& target, int offset) : _type(type),
-                                                                _processor_id(target),
-                                                                _sample_offset(offset) {}
+    BaseEvent(EventType type, ObjectId target, int offset) : _type(type),
+                                                             _processor_id(target),
+                                                             _sample_offset(offset) {}
     EventType _type;
-    std::string _processor_id;
+    ObjectId _processor_id;
     int _sample_offset;
 };
 
@@ -76,9 +77,9 @@ protected:
 class KeyboardEvent : public BaseEvent
 {
 public:
-    KeyboardEvent(EventType type, const std::string& target, int offset, int note, float velocity) : BaseEvent(type, target, offset),
-                                                                                                     _note(note),
-                                                                                                     _velocity(velocity)
+    KeyboardEvent(EventType type, ObjectId target, int offset, int note, float velocity) : BaseEvent(type, target, offset),
+                                                                                           _note(note),
+                                                                                           _velocity(velocity)
     {
         assert(type == EventType::NOTE_ON ||
                type == EventType::NOTE_OFF ||
@@ -101,10 +102,10 @@ protected:
 class WrappedMidiEvent : public BaseEvent
 {
 public:
-    WrappedMidiEvent(int offset, std::string& target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : WrappedMidiEvent::BaseEvent(EventType::WRAPPED_MIDI_EVENT, target, offset),
-                                                                                                        _midi_byte_0(byte_0),
-                                                                                                        _midi_byte_1(byte_1),
-                                                                                                        _midi_byte_2(byte_2) {}
+    WrappedMidiEvent(int offset, ObjectId target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : BaseEvent(EventType::WRAPPED_MIDI_EVENT, target, offset),
+                                                                                                    _midi_byte_0(byte_0),
+                                                                                                    _midi_byte_1(byte_1),
+                                                                                                    _midi_byte_2(byte_2) {}
 
     uint8_t midi_byte_0() {return _midi_byte_0;}
     uint8_t midi_byte_1() {return _midi_byte_1;}
@@ -123,22 +124,22 @@ protected:
 class ParameterChangeEvent : public BaseEvent
 {
 public:
-    ParameterChangeEvent(EventType type, const std::string& target, int offset, const std::string& param_id, float value) : BaseEvent(type, target, offset),
-                                                                                                                            _param_id(param_id),
-                                                                                                                            _value(value)
+    ParameterChangeEvent(EventType type, ObjectId target, int offset, ObjectId param_id, float value) : BaseEvent(type, target, offset),
+                                                                                                        _param_id(param_id),
+                                                                                                        _value(value)
     {
         assert(type == EventType::FLOAT_PARAMETER_CHANGE ||
                type == EventType::INT_PARAMETER_CHANGE ||
                type == EventType::BOOL_PARAMETER_CHANGE);
     }
-    const std::string& param_id() { return _param_id;}
+    ObjectId param_id() {return _param_id;}
 
     float value(){return _value;}
 
     bool is_real_time() override { return true;}
 
 protected:
-    std::string _param_id;
+    ObjectId _param_id;
     float _value;
 };
 
@@ -148,9 +149,8 @@ protected:
 class DataPayloadEvent : public BaseEvent
 {
 public:
-    DataPayloadEvent(EventType type, const std::string& processor, int offset, void* data) : BaseEvent(type, processor, offset),
-                                                                                             _data(data) {}
-
+    DataPayloadEvent(EventType type, ObjectId processor, int offset, void* data) : BaseEvent(type, processor, offset),
+                                                                                   _data(data) {}
 
     void* data() {return _data;}
 
@@ -178,23 +178,23 @@ protected:
 class StringParameterChangeEvent : public DataPayloadEvent
 {
 public:
-    StringParameterChangeEvent(const std::string& processor,
+    StringParameterChangeEvent(ObjectId processor,
                                int offset,
-                               const std::string& param_id,
+                               ObjectId param_id,
                                std::string* value) : DataPayloadEvent(EventType::STRING_PARAMETER_CHANGE,
                                                                       processor,
                                                                       offset,
                                                                       static_cast<void*>(value)),
                                                      _param_id(param_id) {}
 
-    const std::string& param_id() { return _param_id;}
+    ObjectId param_id() {return _param_id;}
 
     std::string* value(){return static_cast<std::string*>(_data);}
 
     bool is_real_time() override { return true;}
 
 protected:
-    std::string _param_id;
+    ObjectId _param_id;
 };
 
 /**
@@ -203,23 +203,23 @@ protected:
 class DataParameterChangeEvent : public DataPayloadEvent
 {
 public:
-    DataParameterChangeEvent(const std::string& processor,
+    DataParameterChangeEvent(ObjectId processor,
                              int offset,
-                             const std::string& param_id,
+                             ObjectId param_id,
                              char* value) : DataPayloadEvent(EventType::DATA_PARAMETER_CHANGE,
                                                              processor,
                                                              offset,
                                                              static_cast<void*>(value)),
                                             _param_id(param_id) {}
 
-    const std::string& param_id() { return _param_id;}
+    ObjectId param_id() { return _param_id;}
 
     char* value(){return static_cast<char*>(_data);}
 
     bool is_real_time() override { return true;}
 
 protected:
-    std::string _param_id;
+    ObjectId _param_id;
 };
 
 /* TODO replace this with our own iterable container class or wrapper.*/

@@ -101,8 +101,8 @@ public:
 
     virtual EngineReturnStatus connect_midi_cc_data(int /*midi_port*/,
                                                     int /*cc_no*/,
-                                                    const std::string & /*processor_id*/,
-                                                    const std::string & /*parameter*/,
+                                                    const std::string& /*processor_name*/,
+                                                    const std::string& /*parameter_name*/,
                                                     float /*min_range*/,
                                                     float /*max_range*/,
                                                     int /*midi_channel*/)
@@ -129,18 +129,18 @@ public:
 
     virtual EngineReturnStatus send_rt_event(BaseEvent* event) = 0;
 
-    virtual std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string & /*name*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
     {
         return std::make_pair(EngineReturnStatus::OK, 0);
     };
 
-    virtual std::pair<EngineReturnStatus, uint32_t> parameter_id_from_name(const std::string & /*processor_name*/,
+    virtual std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
                                                                            const std::string& /*parameter_name*/)
     {
         return std::make_pair(EngineReturnStatus::OK, 0);
     };
 
-    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(uint32_t /*id*/)
+    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
@@ -166,8 +166,8 @@ public:
      */
     EngineReturnStatus connect_midi_cc_data(int midi_port,
                                             int cc_no,
-                                            const std::string &processor_id,
-                                            const std::string &parameter,
+                                            const std::string& processor_id,
+                                            const std::string& parameter,
                                             float min_range,
                                             float max_range,
                                             int midi_channel = midi::MidiChannel::OMNI) override;
@@ -218,7 +218,7 @@ public:
      * @param unique_name The unique name of a processor
      * @return the unique id of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, uint32_t> processor_id_from_name(const std::string &unique_name) override;
+    std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& name) override;
 
     /**
      * @brief Get the unique (per processor) id of a parameter.
@@ -226,7 +226,7 @@ public:
      * @param The unique name of a parameter of the above processor
      * @return the unique id of the parameter, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, uint32_t> parameter_id_from_name(const std::string & /*processor_name*/,
+    std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
                                                                    const std::string& /*parameter_name*/);
 
     /**
@@ -234,7 +234,7 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(uint32_t uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
 
 
 protected:
@@ -254,14 +254,14 @@ private:
      * @return EngineInitStatus::OK if all plugins in the definitions are instantiated correctly,
      *         different error code otherwise
      */
-    EngineReturnStatus _fill_chain_from_json_definition(const Json::Value &stompbox_def);
+    EngineReturnStatus _fill_chain_from_json_definition(const Json::Value& stompbox_def);
 
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
-    EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string str_id);
+    EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
 
     // Owns all processors, including plugin chains
     std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;

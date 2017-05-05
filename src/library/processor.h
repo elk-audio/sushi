@@ -81,14 +81,14 @@ public:
      * @brief Returns a unique 32 bit identifier for this processor
      * @return A unique 32 bit identifier
      */
-    uint32_t id() {return _id;}
+    ObjectId id() {return _id;}
 
     /**
      * @brief Returns the id of a parameter with a given name
      * @param parameter_name Name of the parameter
      * @return 32 bit identifier of the parameter
      */
-    virtual std::pair<ProcessorReturnCode, uint32_t> parameter_id_from_name(const std::string& /*parameter_name*/)
+    virtual std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& /*parameter_name*/)
     {
         return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
     }
@@ -144,7 +144,7 @@ private:
     /* This could easily be turned into a list if it is neccesary to broadcast events */
     EventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
-    uint32_t _id{ProcessorIdGenerator::new_id()};
+    ObjectId _id{ProcessorIdGenerator::new_id()};
 
     std::string _unique_name{""};
     std::string _label{""};

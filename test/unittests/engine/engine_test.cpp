@@ -138,7 +138,7 @@ TEST_F(TestEngine, TestUidNameMapping)
     EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    uint32_t id;
+    ObjectId id;
     std::tie(status, id) = _module_under_test->processor_id_from_name("gain_0_l");
     ASSERT_EQ(EngineReturnStatus::OK, status);
     std::string name;
@@ -160,7 +160,7 @@ TEST_F(TestEngine, TestParameterLookup)
     EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    uint32_t id;
+    ObjectId id;
     std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "q");
     ASSERT_EQ(EngineReturnStatus::OK, status);
 

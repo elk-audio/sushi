@@ -56,7 +56,7 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     EventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     _module_under_test->set_event_output(&event_queue);
-    KeyboardEvent event(EventType::NOTE_ON, "plugin", 0, 0, 0);
+    KeyboardEvent event(EventType::NOTE_ON, 0, 0, 0, 0);
 
     _module_under_test->process_event(&event);
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -119,7 +119,6 @@ protected:
     }
     void SetUp()
     {
-
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
         ProcessorReturnCode status = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, status);

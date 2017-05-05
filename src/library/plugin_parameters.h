@@ -14,6 +14,7 @@
 #include <string>
 
 #include "library/constants.h"
+#include "library/id_generator.h"
 
 enum class StompBoxParameterType
 {
@@ -61,19 +62,19 @@ public:
     const std::string& name() const {return _name;}
 
     /**
-     * @brief Returns a 32 bit unique identifier for this parameter
+     * @brief Returns a unique identifier for this parameter
      */
-    uint32_t id() const {return _id;}
+    ObjectId id() const {return _id;}
 
     /**
      * @brief Set a new id
      */
-    void set_id(uint32_t id) {_id = id;}
+    void set_id(ObjectId id) {_id = id;}
 
 protected:
     std::string _label;
     std::string _name;
-    uint32_t _id;
+    ObjectId _id;
     StompBoxParameterType _type;
 };
 

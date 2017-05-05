@@ -20,8 +20,8 @@ public:
     }
 };
 
-typedef uint32_t ProcessorId;
+typedef uint32_t ObjectId;
 
-class ProcessorIdGenerator : public BaseIdGenerator<ProcessorId>
+class ProcessorIdGenerator : public BaseIdGenerator<ObjectId>
 { };
 #endif //SUSHI_ID_GENERATOR_H

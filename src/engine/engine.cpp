@@ -58,8 +58,8 @@ AudioEngine::~AudioEngine()
 
 EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
                                                      int cc_no,
-                                                     const std::string &processor_id,
-                                                     const std::string &parameter,
+                                                     const std::string& processor_id,
+                                                     const std::string& parameter,
                                                      float min_range,
                                                      float max_range,
                                                      int midi_channel)
@@ -73,7 +73,7 @@ EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    // Eventually get the set parameter and its range here
+    /* We have already checked that the processor and parameter exist, so we can assume this will succeed */
     _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
     return EngineReturnStatus::OK;
 }
@@ -91,6 +91,7 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
+    /* We have already checked that the processor exist, so we can assume this will succeed */
     _midi_dispatcher.connect_kb_to_track(midi_port, chain_id, midi_channel);
     return EngineReturnStatus::OK;
 }
@@ -105,7 +106,7 @@ int AudioEngine::n_channels_in_chain(int chain)
     return 0;
 }
 
-std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std::string &uid)
+std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std::string& uid)
 {
     InternalPlugin* instance = nullptr;
 
@@ -129,7 +130,7 @@ std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std:
     return std::unique_ptr<Processor>(instance);
 }
 
-EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Value &chain_def)
+EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Value& chain_def)
 {
     PluginChain* chain = new PluginChain;
     EngineReturnStatus status = set_up_channel_config(*chain, chain_def["mode"]);
@@ -168,7 +169,7 @@ EngineReturnStatus AudioEngine::_fill_chain_from_json_definition(const Json::Val
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> processor, const std::string str_id)
+EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> processor, const std::string& str_id)
 {
     auto existing = _processors_by_unique_name.find(str_id);
     if (existing != _processors_by_unique_name.end())
@@ -280,20 +281,25 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
 {
     assert(event);
-    auto processor_node = _processors_by_unique_name.find(event->processor_id());
-    if (processor_node == _processors_by_unique_name.end())
+    if (event->processor_id() > _processors_by_unique_id.size())
     {
         MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    processor_node->second->process_event(event);
+    auto processor_node = _processors_by_unique_id[event->processor_id()];
+    if (!processor_node)
+    {
+        MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    processor_node->process_event(event);
     return EngineReturnStatus::OK;
 }
 
 
-std::pair<EngineReturnStatus, uint32_t> AudioEngine::processor_id_from_name(const std::string &unique_name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
 {
-    auto processor_node = _processors_by_unique_name.find(unique_name);
+    auto processor_node = _processors_by_unique_name.find(name);
     if (processor_node == _processors_by_unique_name.end())
     {
         return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
@@ -302,7 +308,7 @@ std::pair<EngineReturnStatus, uint32_t> AudioEngine::processor_id_from_name(cons
 }
 
 
-std::pair<EngineReturnStatus, uint32_t> AudioEngine::parameter_id_from_name(const std::string & processor_name,
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(const std::string& processor_name,
                                                                             const std::string& parameter_name)
 {
     auto processor_node = _processors_by_unique_name.find(processor_name);
@@ -311,7 +317,7 @@ std::pair<EngineReturnStatus, uint32_t> AudioEngine::parameter_id_from_name(cons
         return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
     }
     ProcessorReturnCode status;
-    uint32_t id;
+    ObjectId id;
     std::tie(status, id) = processor_node->second->parameter_id_from_name(parameter_name);
     if (status != ProcessorReturnCode::OK)
     {
@@ -322,7 +328,7 @@ std::pair<EngineReturnStatus, uint32_t> AudioEngine::parameter_id_from_name(cons
 
 
 
-std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(uint32_t uid)
+std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(ObjectId uid)
 {
     if (uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
     {

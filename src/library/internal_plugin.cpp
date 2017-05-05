@@ -65,7 +65,7 @@ DataStompBoxParameter* InternalPlugin::register_data_parameter(const std::string
 }
 
 
-std::pair<ProcessorReturnCode, uint32_t> InternalPlugin::parameter_id_from_name(const std::string& parameter_name)
+std::pair<ProcessorReturnCode, ObjectId> InternalPlugin::parameter_id_from_name(const std::string& parameter_name)
 {
     auto parameter = get_parameter(parameter_name);
     if (parameter)
@@ -90,15 +90,12 @@ void InternalPlugin::process_event(BaseEvent* event)
              * some kind of conversion to StompboxEvents here to avoid exposing
              * the internal event structure to 3rd party devs. */
             auto typed_event = static_cast<ParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (!parameter)
+            if (typed_event->param_id() >= _parameters_by_index.size())
             {
-                // TODO - for now, just break until we find a way of signaling an error.
-                /* In fact, if we use uuids for looking up parameters then this situation
-                 * should not occur, instead the error will be caught when translating from
-                 * text parameter id to uuids, and that should be done in the non-rt context */
+                /* Out of bounds index, this should not happen, might replace with an assert. */
                 break;
             }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
             switch (parameter->type())
             {
                 case StompBoxParameterType::FLOAT:
@@ -124,8 +121,12 @@ void InternalPlugin::process_event(BaseEvent* event)
         case EventType::STRING_PARAMETER_CHANGE:
         {
             auto typed_event = static_cast<StringParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (parameter && parameter->type() == StompBoxParameterType::STRING)
+            if (typed_event->param_id() >= _parameters_by_index.size())
+            {
+                break;
+            }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
+            if (parameter->type() == StompBoxParameterType::STRING)
             {
                 static_cast<StringStompBoxParameter*>(parameter)->set(typed_event->value());
             }
@@ -133,8 +134,12 @@ void InternalPlugin::process_event(BaseEvent* event)
         case EventType::DATA_PARAMETER_CHANGE:
         {
             auto typed_event = static_cast<DataParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (parameter && parameter->type() == StompBoxParameterType::DATA)
+            if (typed_event->param_id() >= _parameters_by_index.size())
+            {
+                break;
+            }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
+            if (parameter->type() == StompBoxParameterType::DATA)
             {
                 static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
             }
@@ -147,7 +152,7 @@ void InternalPlugin::process_event(BaseEvent* event)
 
 bool InternalPlugin::register_parameter(BaseStompBoxParameter* parameter)
 {
-    parameter->set_id(static_cast<uint32_t>(_parameters_by_index.size()));
+    parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
     _parameters_by_index.push_back(parameter);
     bool inserted = true;
     std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->name(),
