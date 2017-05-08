@@ -8,30 +8,30 @@ namespace engine {
 namespace midi_dispatcher {
 
 
-inline BaseEvent* make_note_on_event(const Connection &c,
-                                     const midi::NoteOnMessage &msg,
+inline Event make_note_on_event(const Connection &c,
+                                const midi::NoteOnMessage &msg,
+                                int offset)
+{
+    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
+    return Event::make_note_on_event(c.target, offset, msg.note, velocity);
+}
+
+
+inline Event make_note_off_event(const Connection &c,
+                                 const midi::NoteOffMessage &msg,
+                                 int offset)
+{
+    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
+    return Event::make_note_off_event(c.target, offset, msg.note, velocity);
+}
+
+
+inline Event make_param_change_event(const Connection &c,
+                                     const midi::ControlChangeMessage &msg,
                                      int offset)
 {
-    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(EventType::NOTE_ON, c.target, offset, msg.note, velocity);
-}
-
-
-inline BaseEvent* make_note_off_event(const Connection &c,
-                                      const midi::NoteOffMessage &msg,
-                                      int offset)
-{
-    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(EventType::NOTE_OFF, c.target, offset, msg.note, velocity);
-}
-
-
-inline BaseEvent* make_param_change_event(const Connection &c,
-                                          const midi::ControlChangeMessage &msg,
-                                          int offset)
-{
     float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE, c.target, offset, c.parameter, value);
+    return Event::make_parameter_change_event(c.target, offset, c.parameter, value);
 }
 
 

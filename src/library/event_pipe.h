@@ -17,7 +17,7 @@ namespace sushi {
 class EventPipe
 {
 public:
-    virtual void send_event(BaseEvent* event) = 0;
+    virtual void send_event(Event event) = 0;
 
 };
 

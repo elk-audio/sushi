@@ -127,7 +127,7 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
-    virtual EngineReturnStatus send_rt_event(BaseEvent* event) = 0;
+    virtual EngineReturnStatus send_rt_event(Event event) = 0;
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
     {
@@ -211,7 +211,7 @@ public:
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
-    EngineReturnStatus send_rt_event(BaseEvent* event) override;
+    EngineReturnStatus send_rt_event(Event event) override;
 
     /**
      * @brief Get the unique id of a processor given its name

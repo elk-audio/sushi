@@ -73,7 +73,7 @@ public:
     /* Inherited from Processor */
     std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
 
-    void process_event(BaseEvent* event) override;
+    void process_event(Event event) override;
 
 private:
     /**

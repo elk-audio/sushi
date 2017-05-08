@@ -46,7 +46,7 @@ public:
     /**
      * @brief handles events sent to this processor only and not sub-processors
      */
-    void process_event(BaseEvent* event) override;
+    void process_event(Event event) override;
 
     /**
      * @brief Process the entire chain and store the result in out.
@@ -56,7 +56,7 @@ public:
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out);
 
     /* Inherited from EventPipe */
-    void send_event(BaseEvent* event) override;
+    void send_event(Event event) override;
 
     void set_input_channels(int channels) override
     {

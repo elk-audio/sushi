@@ -56,9 +56,9 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     EventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     _module_under_test->set_event_output(&event_queue);
-    KeyboardEvent event(EventType::NOTE_ON, 0, 0, 0, 0);
+    Event event = Event::make_note_on_event(0, 0, 0, 0);
 
-    _module_under_test->process_event(&event);
+    _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0, out_buffer);
     ASSERT_FALSE(event_queue.empty());

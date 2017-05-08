@@ -76,10 +76,9 @@ std::pair<ProcessorReturnCode, ObjectId> InternalPlugin::parameter_id_from_name(
 }
 
 
-void InternalPlugin::process_event(BaseEvent* event)
+void InternalPlugin::process_event(Event event)
 {
-    assert(event);
-    switch (event->type())
+    switch (event.type())
     {
         case EventType::FLOAT_PARAMETER_CHANGE:
         case EventType::INT_PARAMETER_CHANGE:
@@ -89,7 +88,7 @@ void InternalPlugin::process_event(BaseEvent* event)
              * other events are passed on unaltered. Maybe in the future we'll do
              * some kind of conversion to StompboxEvents here to avoid exposing
              * the internal event structure to 3rd party devs. */
-            auto typed_event = static_cast<ParameterChangeEvent*>(event);
+            auto typed_event = event.parameter_change_event();
             if (typed_event->param_id() >= _parameters_by_index.size())
             {
                 /* Out of bounds index, this should not happen, might replace with an assert. */
@@ -120,7 +119,7 @@ void InternalPlugin::process_event(BaseEvent* event)
         }
         case EventType::STRING_PARAMETER_CHANGE:
         {
-            auto typed_event = static_cast<StringParameterChangeEvent*>(event);
+            auto typed_event = event.string_parameter_change_event();
             if (typed_event->param_id() >= _parameters_by_index.size())
             {
                 break;
@@ -130,10 +129,11 @@ void InternalPlugin::process_event(BaseEvent* event)
             {
                 static_cast<StringStompBoxParameter*>(parameter)->set(typed_event->value());
             }
+            break;
         }
         case EventType::DATA_PARAMETER_CHANGE:
         {
-            auto typed_event = static_cast<DataParameterChangeEvent*>(event);
+            auto typed_event = event.data_parameter_change_event();
             if (typed_event->param_id() >= _parameters_by_index.size())
             {
                 break;
@@ -143,6 +143,7 @@ void InternalPlugin::process_event(BaseEvent* event)
             {
                 static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
             }
+            break;
         }
 
         default:

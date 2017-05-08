@@ -44,7 +44,7 @@ public:
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(BaseEvent* event) = 0;
+    virtual void process_event(Event event) = 0;
 
     /**
      * @brief Process a chunk of audio.
@@ -124,7 +124,7 @@ public:
 
 protected:
 
-    void output_event(BaseEvent* event)
+    void output_event(Event event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);

@@ -117,10 +117,10 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     out_buffer.clear();
-    KeyboardEvent note_on(EventType::NOTE_ON, 0, 5, 60, 1.0f);
-    KeyboardEvent note_on2(EventType::NOTE_ON, 0, 50, 65, 1.0f);
-    _module_under_test->process_event(&note_on);
-    _module_under_test->process_event(&note_on2);
+    Event note_on = Event::make_note_on_event(0, 5, 60, 1.0f);
+    Event note_on2 = Event::make_note_on_event(0, 50, 65, 1.0f);
+    _module_under_test->process_event(note_on);
+    _module_under_test->process_event(note_on2);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     // assert that something was written to the buffer

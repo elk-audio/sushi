@@ -43,21 +43,21 @@ SamplePlayerPlugin::~SamplePlayerPlugin()
     delete[] _sample_buffer;
 }
 
-void SamplePlayerPlugin::process_event(BaseEvent* event)
+void SamplePlayerPlugin::process_event(Event event)
 {
-    switch (event->type())
+    switch (event.type())
     {
         case EventType::NOTE_ON:
         {
             bool voice_allocated = false;
-            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (!voice.active())
                 {
-                    voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                    voice.note_on(key_event->note(), key_event->velocity(), event.sample_offset());
                     voice_allocated = true;
                     break;
                 }
@@ -69,7 +69,7 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
                 {
                     if (voice.stopping())
                     {
-                        voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                        voice.note_on(key_event->note(), key_event->velocity(), event.sample_offset());
                         break;
                     }
                 }
@@ -78,14 +78,14 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
         }
         case EventType::NOTE_OFF:
         {
-            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (voice.active() && voice.current_note() == key_event->note())
                 {
-                    voice.note_off(key_event->velocity(), event->sample_offset());
+                    voice.note_off(key_event->velocity(), event.sample_offset());
                     break;
                 }
             }

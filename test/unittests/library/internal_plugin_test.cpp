@@ -61,8 +61,8 @@ TEST_F(InternalPluginTest, TestParameterHandlingViaEvents)
 
     // access the parameter through its id and verify type and that you can set its value.
     ASSERT_EQ(StompBoxParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
-    ParameterChangeEvent event(EventType::FLOAT_PARAMETER_CHANGE, 0, 0, 0, 6.0f);
-    _module_under_test->process_event(&event);
+    Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
+    _module_under_test->process_event(event);
     EXPECT_FLOAT_EQ(6.0f, static_cast<FloatStompBoxParameter*>(test_param)->value());
 
     test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
@@ -74,8 +74,8 @@ TEST_F(InternalPluginTest, TestParameterHandlingViaEvents)
     test_param = _module_under_test->register_string_parameter("param_4", "Param 4", "4");
     ASSERT_EQ(StompBoxParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
     std::string* str_value = new std::string("5");
-    StringParameterChangeEvent event_4(0, 0, 3, str_value);
-    _module_under_test->process_event(&event_4);
+    Event event_4 = Event::make_string_parameter_change_event(0, 0, 3, str_value);
+    _module_under_test->process_event(event_4);
     EXPECT_EQ("5", *static_cast<StringStompBoxParameter*>(_module_under_test->get_parameter("param_4"))->value());
 
     //test that an unknown parameter returns a null pointer

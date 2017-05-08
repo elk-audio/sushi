@@ -23,7 +23,7 @@ public:
 
     virtual ProcessorReturnCode init(const int sample_rate) override;
 
-    // void process_event(BaseEvent* /*event*/) {}
+    // void process_event(Event /*event*/) {}
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

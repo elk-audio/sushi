@@ -26,7 +26,11 @@ PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     /* Pass keyboard data/midi through */
     while (!_event_queue.empty())
     {
-        output_event(_event_queue.pop());
+        Event event;
+        if (_event_queue.pop(event))
+        {
+            output_event(event);
+        }
     }
 }
 

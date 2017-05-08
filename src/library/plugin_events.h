@@ -203,44 +203,53 @@ protected:
 
 
 /**
- * @brief Container class for events
+ * @brief Container class for events. Functionally this take the role of a
+ *        baseclass for event from which you can access the derived event
+ *        classes.
  */
 class Event
 {
 public:
-    EventType type() {return _keyboard_event.type();}
+    Event() {}
 
-    const KeyboardEvent& keyboard_event()
+    EventType type() const {return _base_event.type();}
+
+    ObjectId processor_id() const {return _base_event.processor_id();}
+
+    int sample_offset() const {return _base_event.sample_offset();}
+
+    /* Access functions protected by asserts */
+    const KeyboardEvent* keyboard_event()
     {
         assert(_keyboard_event.type() == EventType::NOTE_ON ||
                _keyboard_event.type() == EventType::NOTE_OFF ||
                _keyboard_event.type() == EventType::NOTE_AFTERTOUCH);
-        return _keyboard_event;
+        return &_keyboard_event;
     }
 
-    const WrappedMidiEvent& wrapper_midi_event() const
+    const WrappedMidiEvent* wrapper_midi_event() const
     {
         assert(_wrapped_midi_event.type() == EventType::WRAPPED_MIDI_EVENT);
-        return _wrapped_midi_event;
+        return &_wrapped_midi_event;
     }
 
-    const ParameterChangeEvent& parameter_change_event() const
+    const ParameterChangeEvent* parameter_change_event() const
     {
         assert(_keyboard_event.type() == EventType::FLOAT_PARAMETER_CHANGE);
-        return _parameter_change_event;
+        return &_parameter_change_event;
     }
-    const StringParameterChangeEvent& string_parameter_change_event() const
+    const StringParameterChangeEvent* string_parameter_change_event() const
     {
         assert(_string_parameter_change_event.type() == EventType::STRING_PARAMETER_CHANGE);
-        return _string_parameter_change_event;
+        return &_string_parameter_change_event;
     }
-    const DataParameterChangeEvent& data_parameter_change_event() const
+    const DataParameterChangeEvent* data_parameter_change_event() const
     {
         assert(_data_parameter_change_event.type() == EventType::DATA_PARAMETER_CHANGE);
-        return _data_parameter_change_event;
+        return &_data_parameter_change_event;
     }
 
-    // Factory functions for constructing
+    /* Factory functions for constructing events */
     static Event make_note_on_event(ObjectId target, int offset, int note, float velocity)
     {
         return make_keyboard_event(EventType::NOTE_ON, target, offset, note, velocity);
@@ -294,6 +303,7 @@ private:
     Event(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
     union
     {
+        BaseEvent                   _base_event;
         KeyboardEvent               _keyboard_event;
         WrappedMidiEvent            _wrapped_midi_event;
         ParameterChangeEvent        _parameter_change_event;
@@ -301,6 +311,10 @@ private:
         DataParameterChangeEvent    _data_parameter_change_event;
     };
 } __attribute__ ((aligned (32)));
+
+/* Currently limiting the size of an event to 32 bytes and forcing it to align
+ * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
+ * but likely not further */
 
 static_assert(sizeof(Event) == 32, "");
 static_assert(std::is_trivially_copyable<Event>::value, "");

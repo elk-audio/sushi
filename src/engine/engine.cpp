@@ -278,18 +278,17 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 }
 
 
-EngineReturnStatus AudioEngine::send_rt_event(BaseEvent* event)
+EngineReturnStatus AudioEngine::send_rt_event(Event event)
 {
-    assert(event);
-    if (event->processor_id() > _processors_by_unique_id.size())
+    if (event.processor_id() > _processors_by_unique_id.size())
     {
-        MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
+        MIND_LOG_WARNING("Invalid stompbox id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    auto processor_node = _processors_by_unique_id[event->processor_id()];
+    auto processor_node = _processors_by_unique_id[event.processor_id()];
     if (!processor_node)
     {
-        MIND_LOG_WARNING("Invalid stompbox id {}.", event->processor_id());
+        MIND_LOG_WARNING("Invalid stompbox id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
     processor_node->process_event(event);
