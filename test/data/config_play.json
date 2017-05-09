@@ -42,7 +42,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_r",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -8.0
             }
         },
@@ -51,7 +51,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "sampler_0_r",
-                "parameter_id" : "sustain",
+                "parameter_name" : "sustain",
                 "value" : 0.8
             }
         },
@@ -60,7 +60,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "sampler_0_r",
-                "parameter_id" : "decay",
+                "parameter_name" : "decay",
                 "value" : 0.5
             }
         },
@@ -123,7 +123,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "sampler_0_r",
-                "parameter_id" : "attack",
+                "parameter_name" : "attack",
                 "value" : 1.0
             }
         },
