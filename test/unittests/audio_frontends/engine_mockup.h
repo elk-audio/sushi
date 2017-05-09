@@ -23,10 +23,9 @@ public:
         process_called = true;
     }
 
-    EngineReturnStatus send_rt_event(BaseEvent* event)
+    EngineReturnStatus send_rt_event(Event /*event*/)
     {
         got_event = true;
-        delete event;
         return EngineReturnStatus::OK;
     }
 

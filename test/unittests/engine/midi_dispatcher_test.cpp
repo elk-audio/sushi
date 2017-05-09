@@ -16,46 +16,45 @@ const uint8_t TEST_CTRL_CH_MSG_2[] = {0xB5, 40, 75}; /* Channel 5, cc 40 */
 const uint8_t TEST_CTRL_CH_MSG_3[] = {0xB5, 39, 75}; /* Channel 5, cc 39 */
 
 
+// mockup functions in the engine:
+
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
-    Connection connection = {"processor", "param", 0, 1};
+    Connection connection = {25, 26, 0, 1};
     NoteOnMessage message = {1, 46, 64};
-    BaseEvent* event = make_note_on_event(connection, message, 10);
-    EXPECT_EQ(EventType::NOTE_ON, event->type());
-    KeyboardEvent* typed_event = static_cast<KeyboardEvent*>(event);
-    EXPECT_EQ("processor", typed_event->processor_id());
+    Event event = make_note_on_event(connection, message, 10);
+    EXPECT_EQ(EventType::NOTE_ON, event.type());
+    auto typed_event = event.keyboard_event();
+    EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
-    Connection connection = {"processor", "param", 0, 1};
+    Connection connection = {25, 26, 0, 1};
     NoteOffMessage message = {1, 46, 64};
-    BaseEvent* event = make_note_off_event(connection, message, 10);
-    EXPECT_EQ(EventType::NOTE_OFF, event->type());
-    KeyboardEvent* typed_event = static_cast<KeyboardEvent*>(event);
-    EXPECT_EQ("processor", typed_event->processor_id());
+    Event event = make_note_off_event(connection, message, 10);
+    EXPECT_EQ(EventType::NOTE_OFF, event.type());
+    auto typed_event = event.keyboard_event();
+    EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
-    Connection connection = {"processor", "param", 0, 1};
+    Connection connection = {25, 26, 0, 1};
     ControlChangeMessage message = {1, 50, 32};
-    BaseEvent* event = make_param_change_event(connection, message, 10);
-    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event->type());
-    ParameterChangeEvent* typed_event = static_cast<ParameterChangeEvent*>(event);
-    EXPECT_EQ("processor", typed_event->processor_id());
-    EXPECT_EQ("param", typed_event->param_id());
+    Event event = make_param_change_event(connection, message, 10);
+    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event.type());
+    auto typed_event = event.parameter_change_event();
+    EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(26u, typed_event->param_id());
     EXPECT_EQ(10, typed_event->sample_offset());
     EXPECT_NEAR(0.25, typed_event->value(), 0.01);
-    delete event;
 }
 
 class TestMidiDispatcher : public ::testing::Test

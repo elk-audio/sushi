@@ -7,7 +7,10 @@ namespace sushi {
 namespace passthrough_plugin {
 
 PassthroughPlugin::PassthroughPlugin()
-{}
+{
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
+}
 
 PassthroughPlugin::~PassthroughPlugin()
 {}
@@ -23,7 +26,11 @@ PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     /* Pass keyboard data/midi through */
     while (!_event_queue.empty())
     {
-        output_event(_event_queue.pop());
+        Event event;
+        if (_event_queue.pop(event))
+        {
+            output_event(event);
+        }
     }
 }
 

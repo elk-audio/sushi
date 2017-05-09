@@ -65,40 +65,53 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
         {
             int sample = static_cast<int>( std::round(e["time"].asDouble() * static_cast<double>(_engine->sample_rate()) ) );
             auto data = e["data"];
+            ObjectId processor_id;
+            sushi::engine::EngineReturnStatus status;
+            std::tie(status, processor_id) = _engine->processor_id_from_name(data["stompbox_instance"].asString());
+            if (status != sushi::engine::EngineReturnStatus::OK)
+            {
+                MIND_LOG_WARNING("Unknown processor name: {}", data["stompbox_instance"].asString());
+                continue;
+            }
             if (e["type"] == "parameter_change")
             {
+                ObjectId parameterId;
+                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["stompbox_instance"].asString(),
+                                                                                data["parameter_name"].asString());
+                if (status != sushi::engine::EngineReturnStatus::OK)
+                {
+                    MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].asString());
+                    continue;
+                }
                 _event_queue.push_back(std::make_tuple(sample,
-                                                       new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE,
-                                                                                data["stompbox_instance"].asString(),
-                                                                                sample % AUDIO_CHUNK_SIZE,
-                                                                                data["parameter_id"].asString(),
-                                                                                data["value"].asFloat())));
+                                                       Event::make_parameter_change_event(processor_id,
+                                                                                          sample % AUDIO_CHUNK_SIZE,
+                                                                                          parameterId,
+                                                                                          data["value"].asFloat())));
 
             }
             else if (e["type"] == "note_on")
             {
                 _event_queue.push_back(std::make_tuple(sample,
-                                                       new KeyboardEvent(EventType::NOTE_ON,
-                                                                        data["stompbox_instance"].asString(),
-                                                                        sample % AUDIO_CHUNK_SIZE,
-                                                                        data["note"].asInt(),
-                                                                        data["velocity"].asFloat())));
+                                                       Event::make_note_on_event(processor_id,
+                                                                                 sample % AUDIO_CHUNK_SIZE,
+                                                                                 data["note"].asInt(),
+                                                                                 data["velocity"].asFloat())));
             }
             else if (e["type"] == "note_off")
             {
                 _event_queue.push_back(std::make_tuple(sample,
-                                                       new KeyboardEvent(EventType::NOTE_OFF,
-                                                                         data["stompbox_instance"].asString(),
-                                                                         sample % AUDIO_CHUNK_SIZE,
-                                                                         data["note"].asInt(),
-                                                                         data["velocity"].asFloat())));
+                                                       Event::make_note_off_event(processor_id,
+                                                                                  sample % AUDIO_CHUNK_SIZE,
+                                                                                  data["note"].asInt(),
+                                                                                  data["velocity"].asFloat())));
             }
         }
 
         // Sort events by reverse time (lambda function compares first tuple element)
         std::sort(std::begin(_event_queue), std::end(_event_queue),
-                  [](std::tuple<int, BaseEvent*> const &t1,
-                     std::tuple<int, BaseEvent*> const &t2)
+                  [](std::tuple<int, Event> const &t1,
+                     std::tuple<int, Event> const &t2)
                   {
                       return std::get<0>(t1) >= std::get<0>(t2);
                   }
@@ -145,12 +158,9 @@ void OfflineFrontend::run()
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
         {
             auto next_event = _event_queue.back();
-            auto plugin_event = std::get<1>(next_event);
             _engine->send_rt_event(std::get<1>(next_event));
 
             _event_queue.pop_back();
-            // TODO don't delete things in the audio thread.
-            delete plugin_event;
         }
 
         // Render audio buffer

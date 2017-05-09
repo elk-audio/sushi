@@ -160,7 +160,7 @@ private:
     DiskIoHandler _disk_io{&_out_audio_queue, &_in_audio_queue};
 
     // TODO - Not really a queue in offline mode, just a list of events sorted by time
-    std::vector<std::tuple<int, BaseEvent*>> _event_queue;
+    std::vector<std::tuple<int, Event>> _event_queue;
 
     int64_t _samplecount{0};
     //std::unique_ptr<control_frontend::OSCFrontend> _osc_control;

@@ -46,65 +46,34 @@ public:
     FloatStompBoxParameter* register_float_parameter(const std::string& id,
                                                      const std::string& label,
                                                      float default_value,
-                                                     FloatParameterPreProcessor* custom_pre_processor)
-    {
-        if (!custom_pre_processor)
-        {
-            custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
-        }
-        FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, default_value, custom_pre_processor);
-        this->register_parameter(param);
-        return param;
-    }
+                                                     FloatParameterPreProcessor* custom_pre_processor);
+
 
     IntStompBoxParameter* register_int_parameter(const std::string& id,
                                                  const std::string& label,
                                                  int default_value,
-                                                 IntParameterPreProcessor* custom_pre_processor)
-    {
-        if (!custom_pre_processor)
-        {
-            custom_pre_processor = new IntParameterPreProcessor(0, 127);
-        }
-        IntStompBoxParameter* param = new IntStompBoxParameter(id, label, default_value, custom_pre_processor);
-        this->register_parameter(param);
-        return param;
-    }
+                                                 IntParameterPreProcessor* custom_pre_processor);
+
 
     BoolStompBoxParameter* register_bool_parameter(const std::string& id,
                                                    const std::string& label,
                                                    bool default_value,
-                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr)
-    {
-        if (!custom_pre_processor)
-        {
-            custom_pre_processor = new BoolParameterPreProcessor(true, false);
-        }
-        BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, default_value, custom_pre_processor);
-        this->register_parameter(param);
-        return param;
-    }
+                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr);
+
 
     StringStompBoxParameter* register_string_parameter(const std::string& id,
                                                        const std::string& label,
-                                                       const std::string& default_value)
-    {
-        StringStompBoxParameter* param = new StringStompBoxParameter(id, label, new std::string(default_value));
-        this->register_parameter(param);
-        return param;
-    }
+                                                       const std::string& default_value);
 
-    virtual DataStompBoxParameter* register_data_parameter(const std::string& id,
-                                                           const std::string& label,
-                                                           char* default_value)
-    {
-        DataStompBoxParameter* param = new DataStompBoxParameter(id, label, default_value);
-        this->register_parameter(param);
-        return param;
-    }
+
+    DataStompBoxParameter* register_data_parameter(const std::string& id,
+                                                   const std::string& label,
+                                                   char* default_value);
 
     /* Inherited from Processor */
-    void process_event(BaseEvent* event) override;
+    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
+
+    void process_event(Event event) override;
 
 private:
     /**
@@ -120,13 +89,16 @@ private:
         return parameter->second.get();
     }
 
-    void register_parameter(BaseStompBoxParameter* parameter)
-    {
-        _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->id(),
-                                                                  std::unique_ptr<BaseStompBoxParameter>(parameter)));
-    }
+    /**
+     * @brief Register a newly created parameter
+     * @param parameter Pointer to a parameter object
+     * @return true if the parameter was successfully registered, false otherwise
+     */
+    bool register_parameter(BaseStompBoxParameter* parameter);
 
     std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
+
+    std::vector<BaseStompBoxParameter*> _parameters_by_index;
 };
 
 } // end namespace sushi

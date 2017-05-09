@@ -52,15 +52,13 @@ TEST_F(TestOSCFrontend, test_send_parameter_change_event)
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
-    auto event = _event_queue.pop();
-    ASSERT_TRUE(event);
-    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event->type());
-    auto typed_event = static_cast<ParameterChangeEvent*>(event);
-    EXPECT_EQ("sampler", typed_event->processor_id());
-    EXPECT_EQ("volume", typed_event->param_id());
+    Event event;
+    ASSERT_TRUE(_event_queue.pop(event));
+    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event.type());
+    auto typed_event = event.parameter_change_event();
+    EXPECT_EQ(0u, typed_event->processor_id());
+    EXPECT_EQ(0u, typed_event->param_id());
     EXPECT_FLOAT_EQ(5.0f, typed_event->value());
-
-    delete event;
 }
 
 TEST_F(TestOSCFrontend, test_send_keyboard_event)
@@ -69,13 +67,11 @@ TEST_F(TestOSCFrontend, test_send_keyboard_event)
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
-    auto event = _event_queue.pop();
-    ASSERT_TRUE(event);
-    EXPECT_EQ(EventType::NOTE_ON, event->type());
-    auto typed_event = static_cast<KeyboardEvent*>(event);
-    EXPECT_EQ("sampler", typed_event->processor_id());
+    Event event;
+    ASSERT_TRUE(_event_queue.pop(event));
+    EXPECT_EQ(EventType::NOTE_ON, event.type());
+    auto typed_event = event.keyboard_event();
+    EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_FLOAT_EQ(0.8f, typed_event->velocity());
-
-    delete event;
 }

@@ -15,6 +15,9 @@
 namespace sushi {
 namespace passthrough_plugin {
 
+static const std::string DEFAULT_NAME = "sushi.testing.passthrough";
+static const std::string DEFAULT_LABEL = "Passthrough";
+
 class PassthroughPlugin : public InternalPlugin
 {
 public:
@@ -22,12 +25,7 @@ public:
 
     ~PassthroughPlugin();
 
-    const std::string unique_id() override
-    {
-        return std::string("sushi.testing.passthrough");
-    }
-
-    void process_event(BaseEvent* event) override
+    void process_event(Event event) override
     {
         _event_queue.push(event);
     };

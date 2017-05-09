@@ -12,12 +12,15 @@ MIND_GET_LOGGER;
 
 SamplePlayerPlugin::SamplePlayerPlugin()
 {
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
     _volume_parameter  = register_float_parameter("volume", "Volume", 0.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
     _attack_parameter  = register_float_parameter("attack", "Attack", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _decay_parameter   = register_float_parameter("decay", "Decay", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _sustain_parameter = register_float_parameter("sustain", "Sustain", 1.0f, new FloatParameterPreProcessor(0.0f, 1.0f));
     _release_parameter = register_float_parameter("release", "Release", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _sample_file_parameter = register_string_parameter("sample_file", "Sample File", SAMPLE_FILE);
+    assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter &&_sample_file_parameter);
 }
 
 ProcessorReturnCode SamplePlayerPlugin::init(const int sample_rate)
@@ -40,21 +43,21 @@ SamplePlayerPlugin::~SamplePlayerPlugin()
     delete[] _sample_buffer;
 }
 
-void SamplePlayerPlugin::process_event(BaseEvent* event)
+void SamplePlayerPlugin::process_event(Event event)
 {
-    switch (event->type())
+    switch (event.type())
     {
         case EventType::NOTE_ON:
         {
             bool voice_allocated = false;
-            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (!voice.active())
                 {
-                    voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                    voice.note_on(key_event->note(), key_event->velocity(), event.sample_offset());
                     voice_allocated = true;
                     break;
                 }
@@ -66,7 +69,7 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
                 {
                     if (voice.stopping())
                     {
-                        voice.note_on(key_event->note(), key_event->velocity(), event->sample_offset());
+                        voice.note_on(key_event->note(), key_event->velocity(), event.sample_offset());
                         break;
                     }
                 }
@@ -75,14 +78,14 @@ void SamplePlayerPlugin::process_event(BaseEvent* event)
         }
         case EventType::NOTE_OFF:
         {
-            KeyboardEvent* key_event = static_cast<KeyboardEvent*>(event);
+            auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (voice.active() && voice.current_note() == key_event->note())
                 {
-                    voice.note_off(key_event->velocity(), event->sample_offset());
+                    voice.note_off(key_event->velocity(), event.sample_offset());
                     break;
                 }
             }

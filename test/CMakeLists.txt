@@ -26,7 +26,8 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
-               unittests/library/plugin_events_test.cpp)
+               unittests/library/plugin_events_test.cpp
+               unittests/library/id_generator_test.cpp)
 
 if (${BUILD_WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)

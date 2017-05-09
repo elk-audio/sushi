@@ -25,7 +25,11 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     {
         while (!_event_buffer.empty()) // This should only contain keyboard/note events
         {
-            plugin->process_event(_event_buffer.pop());
+            Event event;
+            if (_event_buffer.pop(event))
+            {
+                plugin->process_event(event);
+            }
         }
         plugin->process_audio(in_bfr, out_bfr);
         std::swap(in_bfr, out_bfr);
@@ -37,7 +41,11 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     /* If there are keyboard events not consumed, pass them on upwards */
     while (!_event_buffer.empty())
     {
-        output_event(_event_buffer.pop());
+        Event event;
+        if (_event_buffer.pop(event))
+        {
+            output_event(event);
+        }
     }
 }
 
@@ -59,9 +67,9 @@ void PluginChain::update_channel_config()
     return;
 }
 
-void PluginChain::process_event(BaseEvent* event)
+void PluginChain::process_event(Event event)
 {
-    switch (event->type())
+    switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the first processor in the chain */
@@ -78,9 +86,9 @@ void PluginChain::process_event(BaseEvent* event)
     }
 }
 
-void PluginChain::send_event(BaseEvent* event)
+void PluginChain::send_event(Event event)
 {
-    switch (event->type())
+    switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the next processor in the chain */

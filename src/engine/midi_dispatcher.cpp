@@ -8,41 +8,54 @@ namespace engine {
 namespace midi_dispatcher {
 
 
-inline BaseEvent* make_note_on_event(const Connection &c,
-                                     const midi::NoteOnMessage &msg,
+inline Event make_note_on_event(const Connection &c,
+                                const midi::NoteOnMessage &msg,
+                                int offset)
+{
+    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
+    return Event::make_note_on_event(c.target, offset, msg.note, velocity);
+}
+
+
+inline Event make_note_off_event(const Connection &c,
+                                 const midi::NoteOffMessage &msg,
+                                 int offset)
+{
+    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
+    return Event::make_note_off_event(c.target, offset, msg.note, velocity);
+}
+
+
+inline Event make_param_change_event(const Connection &c,
+                                     const midi::ControlChangeMessage &msg,
                                      int offset)
 {
-    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(EventType::NOTE_ON, c.target, offset, msg.note, velocity);
-}
-
-
-inline BaseEvent* make_note_off_event(const Connection &c,
-                                      const midi::NoteOffMessage &msg,
-                                      int offset)
-{
-    float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(EventType::NOTE_OFF, c.target, offset, msg.note, velocity);
-}
-
-
-inline BaseEvent* make_param_change_event(const Connection &c,
-                                          const midi::ControlChangeMessage &msg,
-                                          int offset)
-{
     float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE, c.target, offset, c.parameter, value);
+    return Event::make_parameter_change_event(c.target, offset, c.parameter, value);
 }
 
 
 bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
-                                             const std::string &processor_id,
-                                             const std::string &parameter_id,
+                                             const std::string &processor_name,
+                                             const std::string &parameter_name,
                                              int cc_no,
-                                             int min_range,
-                                             int max_range,
+                                             float min_range,
+                                             float max_range,
                                              int channel)
 {
+    ObjectId processor_id;
+    ObjectId parameter_id;
+    EngineReturnStatus status;
+    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
+    if (status != EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (status != EngineReturnStatus::OK)
+    {
+        return false;
+    }
     Connection connection;
     connection.target = processor_id;
     connection.parameter = parameter_id;
@@ -54,12 +67,19 @@ bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
 
 
 bool MidiDispatcher::connect_kb_to_track(int midi_input,
-                                         const std::string &processor_id,
+                                         const std::string &chain_name,
                                          int channel)
 {
+    ObjectId id;
+    EngineReturnStatus status;
+    std::tie(status, id) = _engine->processor_id_from_name(chain_name);
+    if (status != EngineReturnStatus::OK)
+    {
+        return false;
+    }
     Connection connection;
-    connection.target = processor_id;
-    connection.parameter = "";
+    connection.target = id;
+    connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes[midi_input][channel].push_back(connection);

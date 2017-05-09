@@ -6,7 +6,6 @@
 #include <jack/midiport.h>
 #include "logging.h"
 #include "jack_frontend.h"
-#include "library/random_note_player.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -51,15 +50,8 @@ void JackFrontend::run()
     }
     // TODO - get the sample rate in here somehow.
 
-    /* This runs the randomizer loop to generate random midi notes */
-    //bool run = true;
-    //std::thread rand_thread(dev_util::random_note_player, &_event_queue, &run);
-
     _osc_control->run();
     sleep(1000);
-    //run = false;
-    sleep(1);
-    //rand_thread.join();
 }
 
 
@@ -207,8 +199,8 @@ void inline JackFrontend::process_events()
 {
     while (!_event_queue.empty())
     {
-        auto event = _event_queue.pop();
-        if (event)
+        Event event;
+        if (_event_queue.pop(event))
         {
             _engine->send_rt_event(event);
         }

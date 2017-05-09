@@ -11,6 +11,7 @@
 #include "library/sample_buffer.h"
 #include "library/plugin_events.h"
 #include "library/event_pipe.h"
+#include "library/id_generator.h"
 
 namespace sushi {
 
@@ -19,6 +20,7 @@ enum class ProcessorReturnCode
     OK,
     ERROR,
     PARAMETER_ERROR,
+    PARAMETER_NOT_FOUND,
     MEMORY_ERROR,
 };
 
@@ -42,7 +44,7 @@ public:
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(BaseEvent* event) = 0;
+    virtual void process_event(Event event) = 0;
 
     /**
      * @brief Process a chunk of audio.
@@ -51,12 +53,45 @@ public:
      */
     virtual void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) = 0;
 
-    // TODO - Might want to replace string ids with uuids for more consistent lookup performance
     /**
-     * @brief Unique processor identifier
-     * @return
+     * @brief Returns a unique name for this processor
+     * @return A string that uniquely identifies this processor
      */
-    virtual const std::string unique_id() { return _uuid;}
+    const std::string& name() {return _unique_name;}
+
+    /**
+     * @brief Sets the unique name of the processor.
+     * @param name New Name
+     */
+    void set_name(const std::string& name) {_unique_name = name;}
+
+    /**
+     * @brief Returns display name for this processor
+     * @return Display name as a string
+     */
+    const std::string& label() {return _label;}
+
+    /**
+     * @brief Sets the display name for this processor
+     * @param label New display name
+     */
+    void set_label(const std::string& label) {_label = label;}
+
+    /**
+     * @brief Returns a unique 32 bit identifier for this processor
+     * @return A unique 32 bit identifier
+     */
+    ObjectId id() {return _id;}
+
+    /**
+     * @brief Returns the id of a parameter with a given name
+     * @param parameter_name Name of the parameter
+     * @return 32 bit identifier of the parameter
+     */
+    virtual std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& /*parameter_name*/)
+    {
+        return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
+    }
 
     /**
      * @brief Set an output pipe for events.
@@ -89,13 +124,11 @@ public:
 
 protected:
 
-    void output_event(BaseEvent* event)
+    void output_event(Event event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);
     }
-
-    std::string _uuid{""};
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
@@ -110,6 +143,11 @@ protected:
 private:
     /* This could easily be turned into a list if it is neccesary to broadcast events */
     EventPipe* _output_pipe{nullptr};
+    /* Automatically generated unique id for identifying this processor */
+    ObjectId _id{ProcessorIdGenerator::new_id()};
+
+    std::string _unique_name{""};
+    std::string _label{""};
 };
 
 /**

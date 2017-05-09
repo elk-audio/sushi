@@ -26,10 +26,10 @@ namespace midi_dispatcher {
 
 struct Connection
 {
-    std::string target{""};
-    std::string parameter{""};
-    float min_range{0};
-    float max_range{0};
+    ObjectId target;
+    ObjectId parameter;
+    float min_range;
+    float max_range;
 };
 
 class MidiDispatcher
@@ -54,11 +54,11 @@ public:
      * @return true if successfully forwarded midi message
      */
     bool connect_cc_to_parameter(int midi_input,
-                                 const std::string &processor_id,
-                                 const std::string &parameter_id,
+                                 const std::string &processor_name,
+                                 const std::string &parameter_name,
                                  int cc_no,
-                                 int min_range,
-                                 int max_range,
+                                 float min_range,
+                                 float max_range,
                                  int channel = midi::MidiChannel::OMNI);
 
     /**
@@ -70,7 +70,7 @@ public:
      * @return
      */
     bool connect_kb_to_track(int midi_input,
-                             const std::string &chain_id,
+                             const std::string &chain_name,
                              int channel = midi::MidiChannel::OMNI);
 
     /**

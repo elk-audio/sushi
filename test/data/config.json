@@ -9,14 +9,14 @@
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "local_instance_name_l"
+                    "id" : "passthrough_0_l"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
                     "id" : "gain_0_l"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
+                    "stompbox_uid" : "sushi.testing.equalizer",
                     "id" : "equalizer_0_l"
                 }
             ]
@@ -27,15 +27,15 @@
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "equalizer_0_r"
+                    "id" : "gain_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "local_instance_name_r"
+                    "id" : "passthrough_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "gain_0_r"
+                    "id" : "gain_1_r"
                 }
             ]
         }
@@ -46,7 +46,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_r",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -23.0
             }
         },
@@ -55,7 +55,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_l",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -12.0
             }
         },
@@ -64,7 +64,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_r",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -6.0
             }
         },
@@ -73,7 +73,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_l",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : 0.0
             }
         }

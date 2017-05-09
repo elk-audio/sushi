@@ -8,8 +8,8 @@ void BaseControlFrontend::send_parameter_change_event(const std::string& process
                                                       const std::string& parameter,
                                                       float value)
 {
-    auto event = new ParameterChangeEvent(EventType::FLOAT_PARAMETER_CHANGE, processor, 0, parameter, value);
-    _queue->push(event);
+    // TODO - fix parameter lookup
+    _queue->push(Event::make_parameter_change_event(100, 0, 100, value));
 }
 
 
@@ -18,8 +18,8 @@ void BaseControlFrontend::send_keyboard_event(const std::string& processor,
                                               int note,
                                               float value)
 {
-    auto event = new KeyboardEvent(type, processor, 0, note, value);
-    _queue->push(event);
+    // TODO - fix process lookup
+    _queue->push(Event::make_keyboard_event(type, 100, 0, note, value));
 }
 
 
