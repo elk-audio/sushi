@@ -8,26 +8,27 @@
 
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
+#include <string>
+#include <tuple>
+#include <vector>
+#include <thread>
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <task.h>
+#include <timer.h>
+#include <xenomai/init.h>
+#pragma GCC diagnostic pop
+
+#include <json/json.h>
+#include <sndfile.h>
+
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
-#include <string>
-#include <tuple>
-#include <vector>
-#include <thread>
-
-#include <json/json.h>
-#include <sndfile.h>
-
-#include <task.h>
-#include <timer.h>
-#include <xenomai/init.h>
-
 namespace sushi {
-
 namespace audio_frontend {
 
 // Audio buffer contains ~3 s of audio @ 44 kHz
