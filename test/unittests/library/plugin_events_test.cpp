@@ -45,9 +45,9 @@ TEST (TestPluginEvents, TestFactoryFunction)
     auto wm_event = event.wrapper_midi_event();
     EXPECT_EQ(ObjectId(126), wm_event->processor_id());
     EXPECT_EQ(5, wm_event->sample_offset());
-    EXPECT_EQ(6, wm_event->midi_byte_0());
-    EXPECT_EQ(7, wm_event->midi_byte_1());
-    EXPECT_EQ(8, wm_event->midi_byte_2());
+    EXPECT_EQ(6, wm_event->midi_data()[0]);
+    EXPECT_EQ(7, wm_event->midi_data()[1]);
+    EXPECT_EQ(8, wm_event->midi_data()[2]);
 
     std::string str("Hej");
     event = Event::make_string_parameter_change_event(127, 6, 65, &str);
