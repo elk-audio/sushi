@@ -4,22 +4,20 @@
 namespace sushi {
 namespace control_frontend {
 
-void BaseControlFrontend::send_parameter_change_event(const std::string& processor,
-                                                      const std::string& parameter,
+void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
+                                                      ObjectId parameter,
                                                       float value)
 {
-    // TODO - fix parameter lookup
-    _queue->push(Event::make_parameter_change_event(100, 0, 100, value));
+    _queue->push(Event::make_parameter_change_event(processor, 0, parameter, value));
 }
 
 
-void BaseControlFrontend::send_keyboard_event(const std::string& processor,
+void BaseControlFrontend::send_keyboard_event(ObjectId processor,
                                               EventType type,
                                               int note,
                                               float value)
 {
-    // TODO - fix process lookup
-    _queue->push(Event::make_keyboard_event(type, 100, 0, note, value));
+    _queue->push(Event::make_keyboard_event(type, processor, 0, note, value));
 }
 
 
