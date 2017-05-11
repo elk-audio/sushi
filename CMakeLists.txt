@@ -36,7 +36,7 @@ endif()
 ####################
 #  Compiler Flags  #
 ####################
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14")
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -fno-rtti")
 
 set(PROJECT_LINK_FLAGS )
 
