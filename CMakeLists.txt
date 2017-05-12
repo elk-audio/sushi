@@ -6,7 +6,13 @@ project(sushi)
 ####################
 
 # Global flags
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -fno-rtti")
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -std=c++17 -fno-rtti")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL "7.0")
+        set(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS} -faligned-new")
+    endif()
+endif()
+
 set(PROJECT_LINK_FLAGS "")
 
 # Platform specific stuff
