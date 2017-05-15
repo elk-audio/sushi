@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.2)
 project(sushi)
 
 ##################################
@@ -36,7 +36,14 @@ endif()
 ####################
 #  Compiler Flags  #
 ####################
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -std=c++14 -fno-rtti")
+
+# Global flags
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -std=c++17 -fno-rtti")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
+        set(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS} -faligned-new")
+    endif()
+endif()
 
 set(PROJECT_LINK_FLAGS )
 

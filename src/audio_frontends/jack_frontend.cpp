@@ -20,7 +20,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(&_event_queue);
+    _osc_control = std::make_unique<control_frontend::OSCFrontend>(&_event_queue, _engine);
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     return setup_client(jack_config->client_name, jack_config->server_name);

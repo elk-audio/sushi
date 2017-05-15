@@ -12,6 +12,12 @@
 
 namespace sushi {
 
+/* Currently limiting the size of an event to 32 bytes and forcing it to align
+ * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
+ * but likely not further */
+#ifndef MIND_EVENT_CACHE_ALIGNMENT
+#define MIND_EVENT_CACHE_ALIGNMENT 32
+#endif
 
 /**
  * TODO - Very incomplete list of message types we might need.
@@ -96,9 +102,6 @@ public:
                                                                                                     _midi_data{byte_0, byte_1, byte_2} {}
 
     const uint8_t* midi_data() const {return _midi_data;}
-    uint8_t midi_byte_0() const {return _midi_data[0];}
-    uint8_t midi_byte_1() const {return _midi_data[1];}
-    uint8_t midi_byte_2() const {return _midi_data[2];}
 
 protected:
     uint8_t _midi_data[3];
@@ -207,7 +210,7 @@ protected:
  *        baseclass for event from which you can access the derived event
  *        classes.
  */
-class Event
+class alignas(MIND_EVENT_CACHE_ALIGNMENT) Event
 {
 public:
     Event() {}
@@ -310,13 +313,10 @@ private:
         StringParameterChangeEvent  _string_parameter_change_event;
         DataParameterChangeEvent    _data_parameter_change_event;
     };
-} __attribute__ ((aligned (32)));
+};
 
-/* Currently limiting the size of an event to 32 bytes and forcing it to align
- * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
- * but likely not further */
 
-static_assert(sizeof(Event) == 32, "");
+static_assert(sizeof(Event) == MIND_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<Event>::value, "");
 
 

@@ -26,9 +26,9 @@ public:
 
     virtual void run() = 0;
 
-    void send_parameter_change_event(const std::string& processor, const std::string& parameter, float value);
+    void send_parameter_change_event(ObjectId processor, ObjectId parameter, float value);
 
-    void send_keyboard_event(const std::string& processor, EventType type, int note, float value);
+    void send_keyboard_event(ObjectId processor, EventType type, int note, float value);
 
 private:
     EventFifo* _queue;
