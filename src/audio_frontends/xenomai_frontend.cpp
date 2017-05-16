@@ -12,7 +12,8 @@ namespace audio_frontend {
 
 MIND_GET_LOGGER;
 
-
+constexpr int64_t NANOSECOND_TICKS = 1000000000l;
+constexpr int XENOMAI_FRONTEND_RUN_TIME_SECONDS = 30;
 
 DiskIoHandler::~DiskIoHandler()
 {
@@ -216,14 +217,21 @@ void XenomaiFrontend::run()
     }
 
     RT_TASK processing_task;
-    rt_task_create(&processing_task, "ProcessingTask", 0x8000, 80, 0);
-    int64_t period_ns = AUDIO_CHUNK_SIZE * 1000000000l / _disk_io.samplerate();
+    rt_task_create(&processing_task, "ProcessingTask", 0, 80, 0);
+    if (_disk_io.samplerate() != _engine->sample_rate())
+    {
+        MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
+                         _disk_io.samplerate(),
+                         _engine->sample_rate());
+    }
+    int64_t period_ns = AUDIO_CHUNK_SIZE * NANOSECOND_TICKS / _engine->sample_rate();
     MIND_LOG_INFO("Setting periodic task every {} ms", period_ns / 1000000.0f);
     rt_task_set_periodic(&processing_task, TM_NOW, period_ns);
     rt_task_start(&processing_task, xenomai_callback_generator, static_cast<void*>(this));
 
     //_osc_control->run();
-    sleep(30);
+    // TODO - Create a better way to start/stop if this frontend is to live on.
+    sleep(XENOMAI_FRONTEND_RUN_TIME_SECONDS);
     rt_task_set_periodic(&processing_task, TM_NOW, TM_INFINITE);
     rt_task_join(&processing_task);
     // Leave some time for the disk streaming to finish.
