@@ -57,13 +57,11 @@ protected:
     std::string path;
 };
 
-
 TEST_F(TestJsonConfigurer, TestInstantiation)
 {
     EXPECT_TRUE(_engine);
     EXPECT_TRUE(_config);
 }
-
 
 TEST_F(TestJsonConfigurer, TestInitConfigurer)
 {
@@ -79,7 +77,6 @@ TEST_F(TestJsonConfigurer, TestInitConfigurer)
     status = _config->init_configurer(_engine, path);
     ASSERT_EQ(status, JsonConfigReturnStatus::OK);
 }
-
 
 TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
 {
@@ -160,7 +157,6 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     EXPECT_EQ(status, JsonConfigReturnStatus::OK);
 }
 
-
 TEST_F(TestJsonConfigurer, TestCheckStompboxChainsDefinition)
 {
       /*=====  Case : stompbox chains is not defined  ======*/
@@ -208,7 +204,8 @@ TEST_F(TestJsonConfigurer, TestInitChains)
     EXPECT_EQ(2, _engine->_audio_graph[0]->input_channels());
     EXPECT_EQ(2, _engine->_audio_graph[0]->output_channels());
     EXPECT_EQ(1, _engine->_audio_graph[1]->input_channels());
-    EXPECT_EQ(1, _engine->_audio_graph[1]->output_channels());
+  
+  EXPECT_EQ(1, _engine->_audio_graph[1]->output_channels());
 
     auto chain_l = &_engine->_audio_graph[0]->_chain;
     auto chain_r = &_engine->_audio_graph[1]->_chain;

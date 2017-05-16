@@ -135,10 +135,6 @@ int main(int argc, char* argv[])
 
     Json::Value config;
     Json::Reader reader;
-
-
-    
-
     bool parse_ok = reader.parse(file, config, false);
     if (!parse_ok)
     {

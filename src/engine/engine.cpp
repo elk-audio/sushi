@@ -337,7 +337,6 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
         return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, std::string(""));
     }
     return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
-
 }
 
 EngineReturnStatus AudioEngine::create_empty_plugin_chain(const std::string& chain_name, int chain_channel_count)

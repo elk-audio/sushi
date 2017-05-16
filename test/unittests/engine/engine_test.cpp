@@ -2,16 +2,15 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+
 #include "gtest/gtest.h"
 #include "test_utils.h"
-
 
 #define private public
 #define protected public
 
 #include "engine/engine.cpp"
 #include "library/mind_allocator.cpp"
-
 
 using ::testing::internal::posix::GetEnv;
 
@@ -218,6 +217,3 @@ TEST_F(TestEngine, TestAddPluginToChain)
     status = _module_under_test->add_plugin_to_chain("left","sushi.testing.gain","gain_0_r");
     ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);     
 }
-
-
-
