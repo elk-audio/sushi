@@ -174,6 +174,8 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
     auto existing = _processors_by_unique_name.find(str_id);
     if (existing != _processors_by_unique_name.end())
     {
+        /*=====  TODO: If processor name exists, this deletes the processor*. 
+        A better way is needed here.   ======*/
         MIND_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
@@ -182,6 +184,7 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
         // Resize the vector manually to be able to insert processors at specific indexes
         _processors_by_unique_id.resize(_processors_by_unique_id.size() + PROC_ID_ARRAY_INCREMENT, nullptr);
     }
+    processor->set_name(str_id);
     _processors_by_unique_id[processor->id()] = processor.get();
     _processors_by_unique_name[str_id] = std::move(processor);
     return EngineReturnStatus::OK;
@@ -334,6 +337,74 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
         return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, std::string(""));
     }
     return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
+
+}
+
+EngineReturnStatus AudioEngine::create_empty_plugin_chain(const std::string& chain_name, int chain_channel_count)
+{
+    if((chain_channel_count != 1 && chain_channel_count != 2) || chain_name.empty())
+    {
+        MIND_LOG_ERROR("Invalid number of channels or chain name");
+        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;   
+    }
+
+    PluginChain* chain = new PluginChain;
+    chain->set_input_channels(chain_channel_count);
+    chain->set_output_channels(chain_channel_count);
+    EngineReturnStatus status_create_chain = _register_processor(std::move(std::unique_ptr<Processor>(chain)), chain_name);
+    if(status_create_chain != EngineReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Chain ID already exists in processor list{} ", chain_name);
+        /*=====  No need to delete "chain" as _register_processor deletes it  ======*/        
+        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
+    }
+    _audio_graph.push_back(chain);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
+                                                    const std::string& plugin_uid,
+                                                    const std::string& plugin_name)
+{
+    if(chain_name.empty() || plugin_uid.empty() || plugin_name.empty())
+    {
+        MIND_LOG_ERROR("Invalid parameters passed to add_plugin_to_chain function");
+        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
+    }
+    auto instance = _make_stompbox_from_unique_id(plugin_uid);
+    if (instance == nullptr)
+    {
+        MIND_LOG_ERROR("Invalid plugin uid {} ", plugin_uid);
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    instance->init(_sample_rate);
+    ObjectId id;
+    EngineReturnStatus status;
+    std::tie(status, id) = processor_id_from_name(plugin_name);
+    if(status != EngineReturnStatus::INVALID_STOMPBOX_UID)
+    {
+        MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);   
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;     
+    }
+    std::tie(status, id) = processor_id_from_name(chain_name);
+    if(status != EngineReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Chain name {} does not exist", chain_name);
+        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
+    }
+
+    /**
+        The following static cast assumes that the existing processor
+        is a PluginChain*. This isnt safe.
+        TODO:
+        - Find a way to denote the processor type. 
+          Maybe in the base Processor class?     
+     */
+    
+    auto chain = static_cast<PluginChain*>(_processors_by_unique_id[id]);
+    chain->add(instance.get());
+    status = _register_processor(std::move(instance), plugin_name);
+    return status;
 }
 
 } // namespace engine

@@ -145,6 +145,18 @@ public:
         return std::make_pair(EngineReturnStatus::OK, "");
     };
 
+    virtual EngineReturnStatus create_empty_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
+                                                   const std::string& /*uid*/,
+                                                   const std::string& /*name*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
 protected:
     int _sample_rate;
     int _audio_inputs{0};
@@ -235,6 +247,26 @@ public:
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
     std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
+
+
+    /**
+     * @brief Creates an empty plugin chain owned by the engine.
+     * @param chain_id  The unique id of the chain to be created.
+     * @param chain_channel_count The number of channel count in the plugin chain.
+     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus create_empty_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/);
+
+
+    /**
+     * @brief Adds a plugin to a chain.
+     * @param chain_id  The unique id of the chain to be created.
+     * @param uid The unique id of the plugin.
+     * @param uid The name of the plugin
+     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/, const std::string& /*uid*/,
+                                                                            const std::string& /*name*/);
 
 
 protected:

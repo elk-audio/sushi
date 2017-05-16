@@ -13,6 +13,7 @@
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
+#include "library/json_configurer.h"
 
 
 int main(int argc, char* argv[])
@@ -134,6 +135,10 @@ int main(int argc, char* argv[])
 
     Json::Value config;
     Json::Reader reader;
+
+
+    
+
     bool parse_ok = reader.parse(file, config, false);
     if (!parse_ok)
     {
@@ -149,8 +154,24 @@ int main(int argc, char* argv[])
     engine.set_audio_input_channels(2);
     engine.set_audio_output_channels(2);
     engine.set_midi_input_ports(1);
+
+    /*===========================================================
+    =            Using Jsonconfigurer to init chains            =
+    ===========================================================*/
+    sushi::jsonconfigurer::JsonConfigurer testconfig;
+    sushi::jsonconfigurer::JsonConfigReturnStatus jsonstatus;
+    jsonstatus = testconfig.init_configurer(&engine, config_filename);
+    if(jsonstatus != sushi::jsonconfigurer::JsonConfigReturnStatus::OK)
+    {
+        std::exit(1);
+    }
+    jsonstatus = testconfig.init_chains_from_jsonconfig();
+    if(jsonstatus != sushi::jsonconfigurer::JsonConfigReturnStatus::OK)
+    {
+        std::exit(1);
+    } 
+    /*=====  End of Using Jsonconfigurer to init chains  ======*/
     
-    engine.init_chains_from_json_array(config["stompbox_chains"]);
     engine.init_midi_from_json_array(config["midi"]);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;

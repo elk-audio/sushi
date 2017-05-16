@@ -38,6 +38,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/internal_plugin.cpp
+                      src/library/json_configurer.cpp              
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -61,6 +62,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
+                        src/library/json_configurer.h          
                         src/library/plugin_events.h
                         src/library/processor.h
                         src/library/internal_plugin.h
