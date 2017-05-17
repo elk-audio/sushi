@@ -71,7 +71,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
-                      src/plugins/biquad_filter.cpp
                       src/audio_frontends/offline_frontend.cpp
                       #src/library/vst2x_plugin.cpp
                       src/library/vst2x_host_callback.cpp
@@ -109,7 +108,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
-                        src/plugins/biquad_filter.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
                         #src/library/vst2x_plugin.h
