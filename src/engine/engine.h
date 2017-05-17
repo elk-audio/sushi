@@ -36,8 +36,10 @@ enum class EngineReturnStatus
     OK,
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
-    INVALID_PARAMETER_UID,
+    INVALID_STOMPBOX_NAME,
     INVALID_STOMPBOX_CHAIN,
+    INVALID_PLUGIN_CHAIN,
+    INVALID_PARAMETER_UID,
     INVALID_ARGUMENTS
 };
 
@@ -145,7 +147,7 @@ public:
         return std::make_pair(EngineReturnStatus::OK, "");
     };
 
-    virtual EngineReturnStatus create_empty_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
+    virtual EngineReturnStatus create_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -215,7 +217,6 @@ public:
      */
     EngineReturnStatus init_midi_from_json_array(const Json::Value &connections_def);
 
-
     void process_midi(int input, int offset, const uint8_t* data, size_t size) override
     {
         _midi_dispatcher.process_midi(input, offset, data, size);
@@ -248,26 +249,24 @@ public:
      */
     std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
 
-
     /**
      * @brief Creates an empty plugin chain owned by the engine.
-     * @param chain_id  The unique id of the chain to be created.
-     * @param chain_channel_count The number of channel count in the plugin chain.
+     * @param chain_id The unique id of the chain to be created.
+     * @param chain_channel_count The number of channels in the plugin chain.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus create_empty_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/);
-
+    EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
 
     /**
      * @brief Adds a plugin to a chain.
-     * @param chain_id  The unique id of the chain to be created.
+     * @param chain_id The unique id of the chain to be created.
      * @param uid The unique id of the plugin.
      * @param uid The name of the plugin
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/, const std::string& /*uid*/,
-                                                                            const std::string& /*name*/);
-
+    EngineReturnStatus add_plugin_to_chain(const std::string& chain_id, 
+                                           const std::string& uid,
+                                           const std::string& name) override;
 
 protected:
     std::vector<PluginChain*> _audio_graph;
@@ -295,6 +294,20 @@ private:
      */
     EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
 
+    /**
+     * @brief Checks whether a processor exists in the engine.
+     * @param processor_name The unique name of the processor.
+     * @return Returns true if exists, false if it does not.
+     */
+    bool _processor_exists(const std::string& processor_name);
+
+    /**
+     * @brief Checks whether a processor exists in the engine.
+     * @param uid The unique id of the processor.
+     * @return Returns true if exists, false if it does not.
+     */
+    bool _processor_exists(ObjectId uid);
+
     // Owns all processors, including plugin chains
     std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
     // Processors indexed by their unique 32 bit id
@@ -306,6 +319,12 @@ private:
 /**
  * @brief Freestanding function to handle stereo/mono setup from json.
  */
+
+/**
+    TODO:
+    - remove function after changes
+ */
+
 EngineReturnStatus set_up_channel_config(PluginChain& chain, const Json::Value& mode);
 
 /**

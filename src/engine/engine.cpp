@@ -174,8 +174,8 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
     auto existing = _processors_by_unique_name.find(str_id);
     if (existing != _processors_by_unique_name.end())
     {
-        /*=====  TODO: If processor name exists, this deletes the processor*. 
-        A better way is needed here.   ======*/
+        /*---------- TODO: If processor name exists, this deletes the processor*.
+        A better way is needed here. ----------*/
         MIND_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
@@ -304,7 +304,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(cons
     auto processor_node = _processors_by_unique_name.find(name);
     if (processor_node == _processors_by_unique_name.end())
     {
-        return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
+        return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
     }
     return std::make_pair(EngineReturnStatus::OK, processor_node->second->id());
 }
@@ -316,19 +316,17 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(cons
     auto processor_node = _processors_by_unique_name.find(processor_name);
     if (processor_node == _processors_by_unique_name.end())
     {
-        return  std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
+        return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, 0);
     }
     ProcessorReturnCode status;
     ObjectId id;
     std::tie(status, id) = processor_node->second->parameter_id_from_name(parameter_name);
     if (status != ProcessorReturnCode::OK)
     {
-        return  std::make_pair(EngineReturnStatus::INVALID_PARAMETER_UID, 0);
+        return std::make_pair(EngineReturnStatus::INVALID_PARAMETER_UID, 0);
     }
     return std::make_pair(EngineReturnStatus::OK, id);
 };
-
-
 
 std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(ObjectId uid)
 {
@@ -339,68 +337,101 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
     return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
 }
 
-EngineReturnStatus AudioEngine::create_empty_plugin_chain(const std::string& chain_name, int chain_channel_count)
+bool AudioEngine::_processor_exists(const std::string& name)
 {
-    if((chain_channel_count != 1 && chain_channel_count != 2) || chain_name.empty())
+    auto processor_node = _processors_by_unique_name.find(name);
+    if(processor_node == _processors_by_unique_name.end())
     {
-        MIND_LOG_ERROR("Invalid number of channels or chain name");
-        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;   
+        return false;
+    }
+    return true;
+}
+
+bool AudioEngine::_processor_exists(ObjectId uid)
+{
+    if(uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
+    {
+        return false;
+    }
+    return true;
+}
+
+EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_name, int chain_channel_count)
+{
+    if(chain_name.empty())
+    {
+        MIND_LOG_ERROR("Chain name is not specified");
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+    }
+    if((chain_channel_count != 1 && chain_channel_count != 2))
+    {
+        MIND_LOG_ERROR("Invalid number of channels");
+        return EngineReturnStatus::INVALID_N_CHANNELS;
+    }
+    if(_processor_exists(chain_name))
+    {
+        MIND_LOG_ERROR("Chain name already exists in processor list{} ", chain_name);
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
 
     PluginChain* chain = new PluginChain;
     chain->set_input_channels(chain_channel_count);
     chain->set_output_channels(chain_channel_count);
-    EngineReturnStatus status_create_chain = _register_processor(std::move(std::unique_ptr<Processor>(chain)), chain_name);
-    if(status_create_chain != EngineReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Chain ID already exists in processor list{} ", chain_name);
-        /*=====  No need to delete "chain" as _register_processor deletes it  ======*/        
-        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
-    }
+    EngineReturnStatus status = _register_processor(std::move(std::unique_ptr<Processor>(chain)), chain_name);
     _audio_graph.push_back(chain);
-    return EngineReturnStatus::OK;
+    return status;
 }
 
 EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
                                                     const std::string& plugin_uid,
                                                     const std::string& plugin_name)
 {
-    if(chain_name.empty() || plugin_uid.empty() || plugin_name.empty())
+    EngineReturnStatus status;
+    if(chain_name.empty())
     {
-        MIND_LOG_ERROR("Invalid parameters passed to add_plugin_to_chain function");
-        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
+        MIND_LOG_ERROR("Chain name is not specified");
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+    }
+    if(plugin_uid.empty())
+    {
+        MIND_LOG_ERROR("Plugin UID is not specified");
+        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+    }
+    if(plugin_name.empty())
+    {
+        MIND_LOG_ERROR("Plugin name is not specified");
+        return EngineReturnStatus::INVALID_STOMPBOX_NAME;
+    }
+    if(_processor_exists(plugin_name))
+    {
+        MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);
+        return EngineReturnStatus::INVALID_STOMPBOX_NAME;
     }
     auto instance = _make_stompbox_from_unique_id(plugin_uid);
-    if (instance == nullptr)
+    if(instance == nullptr)
     {
         MIND_LOG_ERROR("Invalid plugin uid {} ", plugin_uid);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    instance->init(_sample_rate);
-    ObjectId id;
-    EngineReturnStatus status;
-    std::tie(status, id) = processor_id_from_name(plugin_name);
-    if(status != EngineReturnStatus::INVALID_STOMPBOX_UID)
-    {
-        MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);   
-        return EngineReturnStatus::INVALID_STOMPBOX_UID;     
-    }
-    std::tie(status, id) = processor_id_from_name(chain_name);
-    if(status != EngineReturnStatus::OK)
+
+    /* Get chain ID and add plugin to chain */
+    ObjectId chain_id;
+    std::tie(status, chain_id) = processor_id_from_name(chain_name);
+    if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
     {
         MIND_LOG_ERROR("Chain name {} does not exist", chain_name);
-        return EngineReturnStatus::INVALID_STOMPBOX_CHAIN;
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
 
+    instance->init(_sample_rate);
     /**
         The following static cast assumes that the existing processor
         is a PluginChain*. This isnt safe.
         TODO:
-        - Find a way to denote the processor type. 
-          Maybe in the base Processor class?     
-     */
-    
-    auto chain = static_cast<PluginChain*>(_processors_by_unique_id[id]);
+        - Find a way to denote the processor type.
+        Maybe in the base Processor class?
+    */
+    auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);
     chain->add(instance.get());
     status = _register_processor(std::move(instance), plugin_name);
     return status;
