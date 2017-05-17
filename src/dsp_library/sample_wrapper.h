@@ -6,6 +6,8 @@
 #ifndef SUSHI_AUDIO_SAMPLE_H
 #define SUSHI_AUDIO_SAMPLE_H
 
+#include <cmath>
+
 namespace dsp {
 
 /**

@@ -19,7 +19,6 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/engine_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
-               unittests/audio_frontends/jack_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
                unittests/dsp_library/sample_wrapper_test.cpp
@@ -29,6 +28,11 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/plugin_events_test.cpp
                unittests/library/id_generator_test.cpp)
+
+if (${BUILD_WITH_JACK})
+    set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
+endif()
+
 
 ##########################################
 #  Include directories relative to test  #
