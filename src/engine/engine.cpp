@@ -247,7 +247,6 @@ EngineReturnStatus AudioEngine::init_midi_from_json_array(const Json::Value &mid
     return EngineReturnStatus::OK;
 }
 
-
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
     /* Put the channels from in_buffer into the audio graph based on the graphs channel count
@@ -280,7 +279,6 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     }
 }
 
-
 EngineReturnStatus AudioEngine::send_rt_event(Event event)
 {
     if (event.processor_id() > _processors_by_unique_id.size())
@@ -298,7 +296,6 @@ EngineReturnStatus AudioEngine::send_rt_event(Event event)
     return EngineReturnStatus::OK;
 }
 
-
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
 {
     auto processor_node = _processors_by_unique_name.find(name);
@@ -308,7 +305,6 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(cons
     }
     return std::make_pair(EngineReturnStatus::OK, processor_node->second->id());
 }
-
 
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(const std::string& processor_name,
                                                                             const std::string& parameter_name)

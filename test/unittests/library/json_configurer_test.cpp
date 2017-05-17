@@ -65,13 +65,13 @@ TEST_F(TestJsonConfigurer, TestInstantiation)
 
 TEST_F(TestJsonConfigurer, TestInitConfigurer)
 {
-    /*=====  Test invalid engine and file name  ======*/
+    /* Test invalid engine and file name */
     status = _config->init_configurer(_engine,"");
     EXPECT_EQ(status, JsonConfigReturnStatus::INVALID_FILE);
     status = _config->init_configurer(_engine, "dummy");
     EXPECT_EQ(status, JsonConfigReturnStatus::INVALID_FILE);
 
-    /*=====  Test correct instantiation  ======*/
+    /* Test correct instantiation */
     std::string path = get_data_dir_path();
     path.append("config.json");
     status = _config->init_configurer(_engine, path);
@@ -81,7 +81,7 @@ TEST_F(TestJsonConfigurer, TestInitConfigurer)
 TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
 {
     Json::Value dummy;
-    /*=====  Test if mode is not specified or incorrect  ======*/
+    /* Test if mode is not specified or incorrect */
     dummy["dummymode"] = "stereo";
     status = _config->_check_chain_definition(dummy);
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_FILE);
@@ -94,7 +94,7 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     status = _config->_check_chain_definition(dummy);
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_CHAIN_MODE);
 
-    /*=====  Test if Chain id is not present or empty  ======*/
+    /* Test if Chain id is not present or empty */
     dummy["mode"] = "stereo";
     status = _config->_check_chain_definition(dummy);
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_CHAIN);
@@ -103,7 +103,7 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     status = _config->_check_chain_definition(dummy);
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_CHAIN);
 
-    /*=====  Test if stompbox is incorrectly defined  ======*/
+    /* Test if stompbox is incorrectly defined */
     dummy["id"] = "chainid";
     status = _config->_check_chain_definition(dummy);
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
@@ -116,7 +116,7 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     status = _config->_check_chain_definition(dummy);     
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Test if stompbox uid or id is not defined in each definition  ======*/
+    /* Test if stompbox uid or id is not defined in each definition */
     Json::Value stompboxes;   
     stompboxes[0]["dummy"];
     stompboxes[1]["dummy"];
@@ -124,21 +124,21 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     status = _config->_check_chain_definition(dummy);     
     ASSERT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Test for case: stompbox defined but empty, id undefined  ======*/
+    /* Test for case: stompbox defined but empty, id undefined */
     stompboxes[0]["stompbox_uid"];
     EXPECT_TRUE(!stompboxes[0].isMember("stompbox_uid") || stompboxes[0]["stompbox_uid"].empty());
     dummy["stompboxes"] = stompboxes;
     status = _config->_check_chain_definition(dummy);  
     EXPECT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Test for case: stompbox defined, id undefined  ======*/
+    /* Test for case: stompbox defined, id undefined */
     stompboxes[0]["stompbox_uid"] = "sushi.testing.passthrough";
     EXPECT_FALSE(!stompboxes[0].isMember("stompbox_uid") || stompboxes[0]["stompbox_uid"].empty());
     dummy["stompboxes"] = stompboxes;
     status = _config->_check_chain_definition(dummy);  
     EXPECT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Test for case: stompbox defined, id defined but empty  ======*/
+    /* Test for case: stompbox defined, id defined but empty */
     stompboxes[0]["id"];
     EXPECT_FALSE(!stompboxes[0].isMember("stompbox_uid") || stompboxes[0]["stompbox_uid"].empty());
     EXPECT_TRUE(!stompboxes[0].isMember("id") || stompboxes[0]["id"].empty());
@@ -146,7 +146,7 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
     status = _config->_check_chain_definition(dummy);  
     EXPECT_EQ(status, JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Test for correct instantiation  ======*/
+    /* Test for correct instantiation */
     stompboxes[0]["id"] = "passthrough_0_l";
     stompboxes[1]["stompbox_uid"] = "sushi.testing.gain";
     stompboxes[1]["id"] = "gain_0_r";
@@ -159,28 +159,28 @@ TEST_F(TestJsonConfigurer, TestCheckChainDefinition)
 
 TEST_F(TestJsonConfigurer, TestCheckStompboxChainsDefinition)
 {
-      /*=====  Case : stompbox chains is not defined  ======*/
+    /* Case : stompbox chains is not defined */
     Json::Value dummy;
     dummy["dummystomp"] = "dummy value";
     _config->_config = dummy;
     status = _config->_check_stompbox_chains_definition();
     ASSERT_EQ(status,JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
-    /*=====  Case : stompbox chains is not array  ======*/
+    /* Case : stompbox chains is not array */
     dummy["stompbox_chains"];
     EXPECT_TRUE(!dummy["stompbox_chains"].isArray() || dummy["stompbox_chains"].empty());
     _config->_config = dummy;
     status = _config->_check_stompbox_chains_definition();        
     ASSERT_EQ(status,JsonConfigReturnStatus::INVALID_CHAIN_SIZE); 
 
-    /*=====  Case : stompbox chains is empty array  ======*/
+    /* Case : stompbox chains is empty array */
     dummy["stompbox_chains"] = Json::Value(Json::arrayValue); 
     EXPECT_TRUE(!dummy["stompbox_chains"].isArray() || dummy["stompbox_chains"].empty());
     _config->_config = dummy;
     status = _config->_check_stompbox_chains_definition();        
     ASSERT_EQ(status,JsonConfigReturnStatus::INVALID_CHAIN_SIZE);     
 
-    /*=====  Case : stompbox chains is OK  ======*/
+    /* Case : stompbox chains is OK */
     Json::Value dummyarray;
     dummyarray[0]["dummy"] = "dummy";
     dummyarray[1]["dummy"] = "dummy";
@@ -193,7 +193,7 @@ TEST_F(TestJsonConfigurer, TestCheckStompboxChainsDefinition)
 
 TEST_F(TestJsonConfigurer, TestInitChains)
 {
-      /*=====  Test whether the init_chains_from_jsonconfig" method works  ======*/
+    /* Test whether the init_chains_from_jsonconfig" method works */
     std::string path = get_data_dir_path();
     path.append("config.json");
     status = _config->init_configurer(_engine, path);

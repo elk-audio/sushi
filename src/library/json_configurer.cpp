@@ -14,7 +14,7 @@ JsonConfigReturnStatus JsonConfigurer::init_configurer(engine::BaseEngine* engin
     if(path_to_file.empty())
     {
         MIND_LOG_ERROR("Empty file name passed to JsonConfigurer");
-        return JsonConfigReturnStatus::INVALID_FILE;   
+        return JsonConfigReturnStatus::INVALID_FILE;
     }
     _engine = engine;
     std::ifstream file(path_to_file);
@@ -26,7 +26,7 @@ JsonConfigReturnStatus JsonConfigurer::init_configurer(engine::BaseEngine* engin
         return JsonConfigReturnStatus::INVALID_FILE;
     }
 
-    /*===== Move to respective methods which handle parsing of events and midi  ======*/
+    /* Move to respective methods which handle parsing of events and midi */
     
     // if(!_config.isMember("events"))
     // {
@@ -83,7 +83,7 @@ JsonConfigReturnStatus JsonConfigurer::_fill_chain(const Json::Value& chain_def)
 
     auto chain_name = chain_def["id"].asString();
     engine::EngineReturnStatus status;
-    status = _engine->create_empty_plugin_chain(chain_name, num_channels);
+    status = _engine->create_plugin_chain(chain_name, num_channels);
     if(status != engine::EngineReturnStatus::OK)
     {
         return JsonConfigReturnStatus::INVALID_CHAIN;
@@ -108,14 +108,12 @@ JsonConfigReturnStatus JsonConfigurer::_fill_chain(const Json::Value& chain_def)
 
 JsonConfigReturnStatus JsonConfigurer::_check_stompbox_chains_definition()
 {
-    /*======  Check if stompbox definitions exist in the file  ======*/
     if(!_config.isMember("stompbox_chains"))
     {
         MIND_LOG_ERROR("No stompbox chain definition in JSON config file");
         return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
     }
 
-    /*====== Check if stompbox definitions is an array of chain def  ======*/
     if (!_config["stompbox_chains"].isArray() || _config["stompbox_chains"].empty())
     {
         MIND_LOG_ERROR("Incorrect number of stompbox chains in configuration file");
@@ -126,14 +124,12 @@ JsonConfigReturnStatus JsonConfigurer::_check_stompbox_chains_definition()
 
 JsonConfigReturnStatus JsonConfigurer::_check_chain_definition(const Json::Value& chain_def)
 {
-    /*====== Check if mode is a member  ======*/
     if(!chain_def.isMember("mode") || chain_def["mode"].empty())
     {
         MIND_LOG_ERROR("No chain mode definition in JSON config file");
         return JsonConfigReturnStatus::INVALID_FILE;
     }
 
-    /*======  Check if mode is mono or stereo  ======*/
     std::string mode = chain_def["mode"].asString();
     if(mode != "mono" && mode != "stereo")
     {
@@ -141,7 +137,6 @@ JsonConfigReturnStatus JsonConfigurer::_check_chain_definition(const Json::Value
         return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
     }
 
-    /*====== Check if chain id is present  ======*/
     if(!chain_def.isMember("id") || chain_def["id"].empty())
     {
         MIND_LOG_ERROR("Chain ID is not specified in configuration file");
@@ -151,10 +146,9 @@ JsonConfigReturnStatus JsonConfigurer::_check_chain_definition(const Json::Value
     if(!chain_def.isMember("stompboxes") || chain_def["stompboxes"].empty() || !chain_def["stompboxes"].isArray())
     {
         MIND_LOG_ERROR("Invalid stompboxes definition in chain \"{}\"", chain_def["id"].asString());
-        return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT; 
+        return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
     }
 
-    /*====== Check for each stompbox definition UID and ID is present  ======*/
     for(const Json::Value &def : chain_def["stompboxes"])
     {
         bool uid_check = !def.isMember("stompbox_uid") || def["stompbox_uid"].empty();
@@ -162,7 +156,7 @@ JsonConfigReturnStatus JsonConfigurer::_check_chain_definition(const Json::Value
         if(uid_check || id_check)
         {
             MIND_LOG_ERROR("Invalid stompboxes definition in chain \"{}\"", chain_def["id"].asString());
-            return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;        
+            return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
         }
     }
     return JsonConfigReturnStatus::OK;

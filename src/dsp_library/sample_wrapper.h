@@ -7,7 +7,6 @@
 #define SUSHI_AUDIO_SAMPLE_H
 
 #include <cmath>
-
 namespace dsp {
 
 /**

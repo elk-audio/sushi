@@ -78,8 +78,8 @@ private:
 };
 
 
-}/*----------  namespace jsonconfigurer ----------*/
-}/*----------  namespace SUSHI ----------*/
+}/* namespace JSONCONFIGURER */
+}/* namespace SUSHI */
 
 #endif //SUSHI_CONFIG_FROM_JSON_H
 

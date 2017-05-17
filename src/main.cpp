@@ -157,9 +157,7 @@ int main(int argc, char* argv[])
     engine.set_audio_output_channels(2);
     engine.set_midi_input_ports(1);
 
-    /*===========================================================
-    =            Using Jsonconfigurer to init chains            =
-    ===========================================================*/
+    /* Using Jsonconfigurer to init chains */
     sushi::jsonconfigurer::JsonConfigurer testconfig;
     sushi::jsonconfigurer::JsonConfigReturnStatus jsonstatus;
     jsonstatus = testconfig.init_configurer(&engine, config_filename);
@@ -172,7 +170,7 @@ int main(int argc, char* argv[])
     {
         std::exit(1);
     } 
-    /*=====  End of Using Jsonconfigurer to init chains  ======*/
+    /* End of Using Jsonconfigurer to init chains */
     
     engine.init_midi_from_json_array(config["midi"]);
 
