@@ -5,32 +5,19 @@ project(sushi)
 #  Build and link configuration  #
 ##################################
 
-#  Default behaviour is to build and link with everything
-if (DEFINED BUILD_WITH_XENOMAI)
-    set(BUILD_WITH_XENOMAI ${BUILD_WITH_XENOMAI} CACHE BOOL "" )
-    if (DEFINED XENOMAI_FLAVOUR)
-        set(XENOMAI_FLAVOUR  ${XENOMAI_FLAVOUR} CACHE BOOL "")
-    else()
-        set(XENOMAI_FLAVOUR mercury CACHE STRING "")
-    endif()
-else()
-    set(BUILD_WITH_XENOMAI true CACHE BOOL "")
-    set(XENOMAI_FLAVOUR mercury CACHE STRING "")
-endif()
+#  Default behaviour is to build and link with everything, using Mercury backend for Xenomai
+set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
+set(XENOMAI_FLAVOUR mercury CACHE STRING "Xenomai backend flavour. Options are: cobalt mercury")
+set(WITH_JACK true CACHE BOOL "Enable Jack support")
 
-if (DEFINED BUILD_WITH_JACK)
-    set(BUILD_WITH_JACK ${BUILD_WITH_JACK} CACHE BOOL "")
-else()
-    set(BUILD_WITH_JACK true CACHE BOOL "")
-endif()
-
-if(${BUILD_WITH_JACK})
-    add_definitions(-DSUSHI_BUILD_WITH_JACK)
-    message("Building with Jack support.")
-endif()
-if(${BUILD_WITH_XENOMAI})
+if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
     message("Building with Xenomai ${XENOMAI_FLAVOUR}")
+endif()
+
+if (DEFINED WITH_JACK)
+    add_definitions(-DSUSHI_BUILD_WITH_JACK)
+    message("Building with Jack support.")
 endif()
 
 ####################
@@ -55,9 +42,9 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-DDEBUG -O0 -g")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
 
-if (${BUILD_WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "cobalt")
+if (${WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "cobalt")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ ")
-elseif(${BUILD_WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "mercury")
+elseif(${WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "mercury")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__MERCURY__ ")
 endif()
 
@@ -166,7 +153,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
-if(${BUILD_WITH_XENOMAI})
+if(${WITH_XENOMAI})
     set(INCLUDE_DIRS ${INCLUDE_DIRS} /usr/xenomai/include
                                      /usr/xenomai/include/${XENOMAI_FLAVOUR}
                                      /usr/xenomai/include/xenomai
@@ -187,7 +174,7 @@ include_directories(${INCLUDE_DIRS})
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
                     EASTL sndfile jsoncpp pthread)
 
-if (BUILD_WITH_XENOMAI)
+if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
     set(LINK_DIRS /usr/xenomai/lib)
 else()
@@ -225,7 +212,7 @@ add_executable(sushi ${SOURCE_FILES})
 # add_dependencies(sushi static_library)
 add_dependencies(sushi liblo)
 
-if (${BUILD_WITH_JACK})
+if (${WITH_JACK})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} jack)
 endif()
 
