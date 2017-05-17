@@ -190,6 +190,25 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
     return EngineReturnStatus::OK;
 }
 
+bool AudioEngine::_processor_exists(const std::string& name)
+{
+    auto processor_node = _processors_by_unique_name.find(name);
+    if(processor_node == _processors_by_unique_name.end())
+    {
+        return false;
+    }
+    return true;
+}
+
+bool AudioEngine::_processor_exists(ObjectId uid)
+{
+    if(uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
+    {
+        return false;
+    }
+    return true;
+}
+
 // TODO: eventually when configuration complexity grows, move this stuff in a separate class
 EngineReturnStatus AudioEngine::init_chains_from_json_array(const Json::Value &chains)
 {
@@ -331,25 +350,6 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
         return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, std::string(""));
     }
     return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
-}
-
-bool AudioEngine::_processor_exists(const std::string& name)
-{
-    auto processor_node = _processors_by_unique_name.find(name);
-    if(processor_node == _processors_by_unique_name.end())
-    {
-        return false;
-    }
-    return true;
-}
-
-bool AudioEngine::_processor_exists(ObjectId uid)
-{
-    if(uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
-    {
-        return false;
-    }
-    return true;
 }
 
 EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_name, int chain_channel_count)
