@@ -1,8 +1,10 @@
 #ifndef SUSHI_VST2X_HOST_CALLBACK_H
 #define SUSHI_VST2X_HOST_CALLBACK_H
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
+#pragma GCC diagnostic pop
 
 /**
  * VsT low-level callbacks

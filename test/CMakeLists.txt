@@ -5,10 +5,8 @@
 # Build Again example plugin from VsT SDK, needed for dynamic library loading tests
 # Adapted from https://github.com/gmoe/vst-cmake
 
-# API fix for Linux builds
-if(UNIX AND NOT APPLE)
-    add_definitions( -D__cdecl= )
-endif()
+# API fix for POSIX builds
+add_definitions( -D__cdecl= )
 
 set(VST_SDK_PLUGIN_SOURCES
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
@@ -31,19 +29,6 @@ add_library(again MODULE ${AGAIN_SOURCES})
 set_target_properties(again PROPERTIES
         COMPILE_FLAGS "-Wno-unused -Wno-multichar -Wno-write-strings -Wno-narrowing"
     )
-if(APPLE)
-set_target_properties(again PROPERTIES
-        BUNDLE true
-        BUNDLE_EXTENSION "vst"
-        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
-        MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/test/resources/Info.plist.in"
-        MACOSX_BUNDLE_BUNDLE_NAME "AGain"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.Testing.AGain"
-        MACOSX_BUNDLE_ICON_FILE ""
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
-        MACOSX_BUNDLE_COPYRIGHT "Again Testing Plugin © 2016"
-    )
-endif()
 
 #####################################
 #  Unit Tests Targets               #
@@ -78,7 +63,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/plugin_events_test.cpp
-               # unittests/library/plugin_loader_test.cpp
+               unittests/library/plugin_loader_test.cpp
                unittests/library/id_generator_test.cpp)
 
 if (${BUILD_WITH_JACK})

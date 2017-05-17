@@ -36,27 +36,17 @@
 #include <string>
 #include <cstdlib>
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
+#pragma GCC diagnostic pop
 
-#ifdef __APPLE__
-    #include <AppKit/AppKit.h>
-    #include <Cocoa/Cocoa.h>
-    #include <Foundation/Foundation.h>
-    #include <CoreFoundation/CFBundle.h>
-    #include <CoreFoundation/CFBundle.h>
-#elif __linux__
-    #include <dlfcn.h>
-#endif
+#include <dlfcn.h>
 
 namespace sushi {
 namespace vst2 {
 
-#ifdef __APPLE__
-    typedef CFBundleRef LibraryHandle;
-#elif __linux__
-    typedef void* LibraryHandle;
-#endif
+typedef void* LibraryHandle;
 
 /**
  * VsT low-level callbacks

@@ -57,93 +57,8 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
 
 }
 
-/**
- * Platform-dependent dynamic library loading stuff
- */
-
-#ifdef __APPLE__
-
-LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
-{
-    // Create a path to the bundle
-    CFStringRef pluginPathStringRef = CFStringCreateWithCString(nullptr, plugin_absolute_path.c_str(), kCFStringEncodingASCII);
-    CFURLRef bundleUrl = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, pluginPathStringRef, kCFURLPOSIXPathStyle, true);
-
-    if (bundleUrl == nullptr)
-    {
-        MIND_LOG_ERROR("Couldn't make URL reference for VsT plugin {}", plugin_absolute_path);
-        return nullptr;
-    }
-
-    // Open the bundle
-    CFBundleRef bundleRef = CFBundleCreate(kCFAllocatorDefault, bundleUrl);
-
-    if (bundleRef == nullptr)
-    {
-        MIND_LOG_ERROR("Couldn't create bundle reference for VsT plugin {}", plugin_absolute_path);
-        CFRelease(pluginPathStringRef);
-        CFRelease(bundleUrl);
-        return nullptr;
-    }
-
-    // Clean up
-    CFRelease(pluginPathStringRef);
-    CFRelease(bundleUrl);
-
-    return bundleRef;
-}
-
-AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
-{
-    // Somewhat cheap hack to avoid a tricky compiler warning. Casting from void* to a proper function
-    // pointer will cause GCC to warn that "ISO C++ forbids casting between pointer-to-function and
-    // pointer-to-object". Here, we represent both types in a union and use the correct one in the given
-    // context, thus avoiding the need to cast anything.
-    // See also: http://stackoverflow.com/a/2742234/14302
-    union {
-        plugin_entry_proc entryPointFuncPtr;
-        void *entryPointVoidPtr;
-    } entryPoint;
-
-    entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName(library_handle, CFSTR("VSTPluginMain"));
-    plugin_entry_proc mainEntryPoint = entryPoint.entryPointFuncPtr;
-
-    // VST plugins previous to the 2.4 SDK used main_macho for the entry point name
-    if (mainEntryPoint == nullptr)
-    {
-        entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName(library_handle, CFSTR("main_macho"));
-        mainEntryPoint = entryPoint.entryPointFuncPtr;
-    }
-
-    if (mainEntryPoint == nullptr)
-    {
-        MIND_LOG_ERROR("Couldn't get a pointer to plugin's main()");
-        CFBundleUnloadExecutable(library_handle);
-        CFRelease(library_handle);
-        return nullptr;
-    }
-
-    AEffect *plugin = mainEntryPoint(host_callback);
-
-    if (plugin == nullptr)
-    {
-        MIND_LOG_ERROR("Plugin's main() returns null");
-        CFBundleUnloadExecutable(library_handle);
-        CFRelease(library_handle);
-        return nullptr;
-    }
-
-    return plugin;
-
-}
-
-void PluginLoader::close_library_handle(LibraryHandle library_handle)
-{
-    CFBundleUnloadExecutable(library_handle);
-    CFRelease(library_handle);
-}
-
-#elif __linux__
+// TODO: this is POSIX specific and the Linux-way to do it.
+// Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
 
 LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
 {
@@ -170,10 +85,10 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
     void *entryPointVoidPtr;
   } entryPoint;
 
-  entryPoint.entryPointVoidPtr = dlsym(libraryHandle, "VSTPluginMain");
+  entryPoint.entryPointVoidPtr = dlsym(library_handle, "VSTPluginMain");
 
   if (entryPoint.entryPointVoidPtr == NULL) {
-    entryPoint.entryPointVoidPtr = dlsym(libraryHandle, "main");
+    entryPoint.entryPointVoidPtr = dlsym(library_handle, "main");
 
     if (entryPoint.entryPointVoidPtr == NULL) {
       MIND_LOG_ERROR("Couldn't get a pointer to plugin's main()");
@@ -189,12 +104,10 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
 
 void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
-  if (dlclose(libraryHandle) != 0) {
+  if (dlclose(library_handle) != 0) {
     MIND_LOG_WARNING("Could not safely close plugin, possible resource leak");
   }
 }
-
-#endif
 
 } // namespace vst2
 } // namespace sushi

@@ -15,7 +15,7 @@ if (${WITH_XENOMAI})
     message("Building with Xenomai ${XENOMAI_FLAVOUR}")
 endif()
 
-if (DEFINED WITH_JACK)
+if (${WITH_JACK})
     add_definitions(-DSUSHI_BUILD_WITH_JACK)
     message("Building with Jack support.")
 endif()
@@ -112,27 +112,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/offline_frontend.h
                         #src/library/vst2x_plugin.h
                         src/library/vst2x_host_callback.h
+                        src/library/vst2x_plugin_loader.cpp
         )
-
-
-# Platform-specific sources
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(PLATFORM_SPECIFIC_SOURCES
-        src/library/vst2x_plugin_loader_linux.cpp
-    )
-
-elseif(APPLE)
-    set(PLATFORM_SPECIFIC_SOURCES
-        src/library/vst2x_plugin_loader_mac.mm
-    )
-endif()
-
-if(APPLE)
-    set_source_files_properties(${PLATFORM_SPECIFIC_SOURCES}
-        PROPERTIES COMPILE_FLAGS
-        "-x objective-c++"
-    )
-endif()
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
 
@@ -180,12 +161,9 @@ else()
 endif()
 
 if (APPLE)
-    # set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -framework IOKit -framework CoreFoundation")
     set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS}"
-                           "-framework AppKit"
-                           "-framework Carbon"
+                           "-framework IOKit"
                            "-framework CoreFoundation"
-                           "-framework Foundation"
         )
     set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
 endif()

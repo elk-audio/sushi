@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "library/vst2x_plugin_loader.h"
+#include "library/vst2x_plugin_loader.cpp"
 
 using namespace sushi;
 using namespace sushi::vst2;
@@ -26,11 +26,7 @@ protected:
 TEST_F(TestPluginLoader, TestLoadPLugin)
 {
 
-#ifdef __APPLE__
-    std::string again_binary_filename("again.vst");
-#elif __linux__
-    std::string again_binary_filename("again.so");
-#endif
+    std::string again_binary_filename("libagain.so");
 
     auto library_handle = PluginLoader::get_library_handle_for_plugin(again_binary_filename);
     EXPECT_NE(nullptr, library_handle);
@@ -46,7 +42,7 @@ TEST_F(TestPluginLoader, TestLoadPLugin)
 
     EXPECT_EQ("Gain", std::string(effect_name));
     EXPECT_EQ("Gain", std::string(product_string));
-    EXPECT_EQ("Steinberg Media Technologies", std::string(product_string));
+    EXPECT_EQ("Steinberg Media Technologies", std::string(vendor_string));
 
     PluginLoader::close_library_handle(library_handle);
 }
