@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "library/vst2x_plugin_loader.cpp"
+#include <cstdlib>
 
 using namespace sushi;
 using namespace sushi::vst2;
@@ -25,11 +26,11 @@ protected:
 
 TEST_F(TestPluginLoader, TestLoadPLugin)
 {
-
-    std::string again_binary_filename("libagain.so");
-
-    auto library_handle = PluginLoader::get_library_handle_for_plugin(again_binary_filename);
+    // dlopen on Linux requires absolute paths if library is not on system paths already
+    char* full_again_path = realpath("libagain.so", NULL);
+    auto library_handle = PluginLoader::get_library_handle_for_plugin(full_again_path);
     EXPECT_NE(nullptr, library_handle);
+    free(full_again_path);
     auto plugin = PluginLoader::load_plugin(library_handle);
 
     char effect_name[256] = {0};

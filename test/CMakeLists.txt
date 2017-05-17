@@ -5,8 +5,6 @@
 # Build Again example plugin from VsT SDK, needed for dynamic library loading tests
 # Adapted from https://github.com/gmoe/vst-cmake
 
-# API fix for POSIX builds
-add_definitions( -D__cdecl= )
 
 set(VST_SDK_PLUGIN_SOURCES
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"

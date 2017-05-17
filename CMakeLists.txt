@@ -20,6 +20,13 @@ if (${WITH_JACK})
     message("Building with Jack support.")
 endif()
 
+#############################
+#  Preprocessor definitions #
+#############################
+
+# API fix for POSIX builds
+add_definitions( -D__cdecl= )
+
 ####################
 #  Compiler Flags  #
 ####################
@@ -151,7 +158,7 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile jsoncpp pthread)
+                    EASTL sndfile jsoncpp pthread dl)
 
 if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
