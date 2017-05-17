@@ -17,7 +17,7 @@ namespace dev_util {
  * @brief Test function for pushing random midi note messages to the event queue.
  *        Produces eerie electro acoustic patterns that dont sound half bad.
  */
-int random_note_player(EventFifo* queue, bool* loop)
+static int random_note_player(EventFifo* queue, bool* loop)
 {
     std::deque<int> notes;
     while(*loop)

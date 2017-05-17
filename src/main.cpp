@@ -14,6 +14,7 @@
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "library/json_configurer.h"
+#include "audio_frontends/xenomai_frontend.h"
 
 
 int main(int argc, char* argv[])
@@ -30,10 +31,10 @@ int main(int argc, char* argv[])
         argv++;
     }
 
-    option::Stats cl_stats(usage, argc, argv);
-    std::vector<option::Option> cl_options(cl_stats.options_max);
-    std::vector<option::Option> cl_buffer(cl_stats.buffer_max);
-    option::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
+    optionparser::Stats cl_stats(usage, argc, argv);
+    std::vector<optionparser::Option> cl_options(cl_stats.options_max);
+    std::vector<optionparser::Option> cl_buffer(cl_stats.buffer_max);
+    optionparser::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
 
     if (cl_parser.error())
     {
@@ -41,7 +42,7 @@ int main(int argc, char* argv[])
     }
     if ( (cl_parser.nonOptionsCount() == 0 && cl_parser.optionsCount() == 0) || (cl_options[OPT_IDX_HELP]) )
     {
-        option::printUsage(fwrite, stdout, usage);
+        optionparser::printUsage(fwrite, stdout, usage);
         return 0;
     }
 
@@ -61,11 +62,12 @@ int main(int argc, char* argv[])
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
     bool use_jack = false;
+    bool use_xenomai = false;
     bool connect_ports = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
-        option::Option& opt = cl_buffer[i];
+        optionparser::Option& opt = cl_buffer[i];
         switch(opt.index())
         {
         case OPT_IDX_HELP:
@@ -104,6 +106,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_JACK_SERVER:
             jack_server_name.assign(opt.arg);
+            break;
+
+        case OPT_IDX_USE_XENOMAI:
+            use_xenomai = true;
             break;
 
         default:
@@ -174,13 +180,24 @@ int main(int argc, char* argv[])
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
     if (use_jack)
     {
+        MIND_LOG_INFO("Setting up Jack audio frontend");
         fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
                                                                          jack_server_name,
                                                                          connect_ports);
         frontend = new sushi::audio_frontend::JackFrontend(&engine);
     }
+    else if (use_xenomai)
+    {
+        MIND_LOG_INFO("Setting up Xenomai offline audio frontend");
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+        xenomai_init(&argc, const_cast<char* const**>(&argv));
+#endif
+        fe_config = new sushi::audio_frontend::XenomaiFrontendConfiguration(input_filename, output_filename);
+        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine);
+    }
     else
     {
+        MIND_LOG_INFO("Setting up offline audio frontend");
         fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
         frontend = new sushi::audio_frontend::OfflineFrontend(&engine);
     }
@@ -191,9 +208,18 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Error initializing frontend, check logs for details.\n");
         std::exit(1);
     }
-    if (!use_jack)
+    if (!use_jack && !use_xenomai)
     {
         fe_ret_code = static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config["events"]);
+        if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+        {
+            fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");
+            std::exit(1);
+        }
+    }
+    else if (use_xenomai)
+    {
+        fe_ret_code = static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config["events"]);
         if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
         {
             fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");

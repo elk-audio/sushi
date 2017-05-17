@@ -15,7 +15,9 @@ namespace sushi {
 /* Currently limiting the size of an event to 32 bytes and forcing it to align
  * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
  * but likely not further */
-constexpr int EVENT_CACHE_ALIGNMENT = 32;
+#ifndef MIND_EVENT_CACHE_ALIGNMENT
+#define MIND_EVENT_CACHE_ALIGNMENT 32
+#endif
 
 /**
  * TODO - Very incomplete list of message types we might need.
@@ -208,7 +210,7 @@ protected:
  *        baseclass for event from which you can access the derived event
  *        classes.
  */
-class alignas(EVENT_CACHE_ALIGNMENT) Event
+class alignas(MIND_EVENT_CACHE_ALIGNMENT) Event
 {
 public:
     Event() {}
@@ -314,7 +316,7 @@ private:
 };
 
 
-static_assert(sizeof(Event) == EVENT_CACHE_ALIGNMENT, "");
+static_assert(sizeof(Event) == MIND_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<Event>::value, "");
 
 
