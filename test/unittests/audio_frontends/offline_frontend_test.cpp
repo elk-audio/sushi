@@ -65,13 +65,13 @@ TEST_F(TestOfflineFrontend, test_wav_processing)
         EXPECT_TRUE(false) << "Error opening output file: " << output_file_name;
     }
 
-    float file_buffer[_engine.n_channels(0) * AUDIO_CHUNK_SIZE];
+    float file_buffer[_engine.n_channels_in_chain(0) * AUDIO_CHUNK_SIZE];
     unsigned int readcount;
     while ( (readcount = static_cast<unsigned int>(sf_readf_float(output_file,
                                                          &file_buffer[0],
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        for (unsigned int n=0; n<(readcount * _engine.n_channels(0)); n++)
+        for (unsigned int n=0; n<(readcount * _engine.n_channels_in_chain(0)); n++)
         {
             ASSERT_FLOAT_EQ(0.5f, file_buffer[n]);
         }

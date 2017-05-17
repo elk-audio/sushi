@@ -19,6 +19,9 @@ constexpr size_t TOTAL_POLYPHONY = 8;
 // (and have it relative to project structure, right now this fails when built in another location)
 static const std::string SAMPLE_FILE = "../../../test/data/Kawai-K11-GrPiano-C4_mono.wav";
 
+static const std::string DEFAULT_NAME = "sushi.testing.sampleplayer";
+static const std::string DEFAULT_LABEL = "Sample player";
+
 class SamplePlayerPlugin : public InternalPlugin
 {
 public:
@@ -28,12 +31,7 @@ public:
 
     virtual ProcessorReturnCode init(const int sample_rate) override;
 
-    const std::string unique_id() override
-    {
-        return std::string("sushi.testing.sampleplayer");
-    }
-
-    void process_event(BaseEvent* event) override ;
+    void process_event(Event event) override ;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
@@ -41,7 +39,7 @@ private:
     ProcessorReturnCode load_sample_file(const std::string &file_name);
 
     float*  _sample_buffer{nullptr};
-    sample_player_voice::Sample _sample;
+    dsp::Sample _sample;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
     FloatStompBoxParameter* _volume_parameter;

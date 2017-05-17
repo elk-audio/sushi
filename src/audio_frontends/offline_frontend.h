@@ -74,7 +74,7 @@ private:
     float*  _file_buffer;
 
     // TODO - Not really a queue in offline mode, just a list of events sorted by time
-    std::vector<std::tuple<int, BaseEvent*>> _event_queue;
+    std::vector<std::tuple<int, Event>> _event_queue;
 };
 
 }; // end namespace audio_frontend

@@ -9,45 +9,47 @@
 #define SUSHI_LOG_FILENAME_DEFAULT "log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
+#define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
 ////////////////////////////////////////////////////////////////////////////////
 
-struct SushiArg : public option::Arg
+struct SushiArg : public optionparser::Arg
 {
 
-    static void print_error(const char* msg1, const option::Option& opt, const char* msg2)
+    static void print_error(const char* msg1, const optionparser::Option& opt, const char* msg2)
     {
         fprintf(stderr, "%s", msg1);
         fwrite(opt.name, static_cast<size_t>(opt.namelen), 1, stderr);
         fprintf(stderr, "%s", msg2);
     }
 
-    static option::ArgStatus Unknown(const option::Option& option, bool msg)
+    static optionparser::ArgStatus Unknown(const optionparser::Option& option, bool msg)
     {
         if (msg)
         {
             print_error("Unknown option '", option, "'\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
-    static option::ArgStatus NonEmpty(const option::Option& option, bool msg)
+    static optionparser::ArgStatus NonEmpty(const optionparser::Option& option, bool msg)
     {
         if (option.arg != 0 && option.arg[0] != 0)
         {
-            return option::ARG_OK;
+            return optionparser::ARG_OK;
         }
 
         if (msg)
         {
             print_error("Option '", option, "' requires a non-empty argument\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
-    static option::ArgStatus Numeric(const option::Option& option, bool msg)
+    static optionparser::ArgStatus Numeric(const optionparser::Option& option, bool msg)
     {
         char* endptr = 0;
         if (option.arg != 0 && strtol(option.arg, &endptr, 10))
@@ -55,13 +57,13 @@ struct SushiArg : public option::Arg
 
         if (endptr != option.arg && *endptr == 0)
         {
-          return option::ARG_OK;
+          return optionparser::ARG_OK;
         }
         if (msg)
         {
             print_error("Option '", option, "' requires a numeric argument\n");
         }
-        return option::ARG_ILLEGAL;
+        return optionparser::ARG_ILLEGAL;
     }
 
 };
@@ -78,7 +80,12 @@ enum OptionIndex
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_CONFIG_FILE,
-    OPT_IDX_OUTPUT_FILE
+    OPT_IDX_OUTPUT_FILE,
+    OPT_IDX_USE_JACK,
+    OPT_IDX_CONNECT_PORTS,
+    OPT_IDX_JACK_CLIENT,
+    OPT_IDX_JACK_SERVER,
+    OPT_IDX_USE_XENOMAI
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -90,7 +97,7 @@ enum OptionType
 };
 
 // Option descriptors, one for each entry of the OptionIndex enum
-const option::Descriptor usage[] =
+const optionparser::Descriptor usage[] =
 {
     {
         OPT_IDX_UNKNOWN,    // index
@@ -139,6 +146,46 @@ const option::Descriptor usage[] =
         "output",
         SushiArg::NonEmpty,
         "\t\t-o <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+    },
+    {
+        OPT_IDX_USE_JACK,
+        OPT_TYPE_DISABLED,
+        "j",
+        "jack",
+        SushiArg::Optional,
+        "\t\t-j --jack \tUse Jack realtime audio frontend."
+    },
+    {
+        OPT_IDX_CONNECT_PORTS,
+        OPT_TYPE_DISABLED,
+        "",
+        "connect-ports",
+        SushiArg::Optional,
+        "\t\t--connect-ports \tTry to automatically connect ports at startup."
+    },
+    {
+        OPT_IDX_JACK_CLIENT,
+        OPT_TYPE_UNUSED,
+        "",
+        "client-name",
+        SushiArg::NonEmpty,
+        "\t\t --client-name=<jack client name> \tSpecify name of Jack client [default=sushi]."
+    },
+    {
+        OPT_IDX_JACK_SERVER,
+        OPT_TYPE_UNUSED,
+        "",
+        "server-name",
+        SushiArg::NonEmpty,
+        "\t\t --server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
+    },
+    {
+        OPT_IDX_USE_XENOMAI,
+        OPT_TYPE_DISABLED,
+        "x",
+        "xenomai",
+        SushiArg::Optional,
+        "\t\t-x --xenomai \tProcess in Xenomai realtime tastUse Jack realtime audio frontend."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

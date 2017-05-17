@@ -8,11 +8,12 @@
 #ifndef EQUALIZER_BIQUADFILTER_H
 #define EQUALIZER_BIQUADFILTER_H
 
+namespace dsp {
 namespace biquad {
 
 const int NUMBER_OF_BIQUAD_COEF = 5;
 
-struct BiquadCoefficients
+struct Coefficients
 {
     float b0;
     float b1;
@@ -21,7 +22,7 @@ struct BiquadCoefficients
     float a2;
 };
 
-struct BiquadDelayRegisters
+struct DelayRegisters
 {
     float z1;
     float z2;
@@ -37,8 +38,9 @@ struct OnePoleCoefficients
 /*
  * Stand-alone functions for calculating coefficients
  */
-void calc_biquad_peak(biquad::BiquadCoefficients& filter, float samplerate, float frequency, float q, float gain);
-void calc_biquad_lowpass(BiquadCoefficients* filter, float samplerate, float frequency);
+void calc_biquad_peak(Coefficients &filter, float samplerate, float frequency, float q, float gain);
+
+void calc_biquad_lowpass(Coefficients* filter, float samplerate, float frequency);
 
 /*
  * Filter class
@@ -48,32 +50,33 @@ class BiquadFilter
 public:
     BiquadFilter();
 
-    BiquadFilter(const BiquadCoefficients &coefficients);
+    BiquadFilter(const Coefficients &coefficients);
 
     ~BiquadFilter()
-    { };
+    {};
 
     /*
      * Resets the processing state
      */
     void reset();
+
     /*
      * Sets the parameters for smoothing filter changes
      */
     void set_smoothing(int buffer_size);
 
-    void set_coefficients(const BiquadCoefficients &coefficients);
+    void set_coefficients(const Coefficients &coefficients);
 
-    void process(const float *input, float *output, int samples);
+    void process(const float* input, float* output, int samples);
 
 private:
-    BiquadCoefficients _coefficients{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    BiquadCoefficients _coefficient_targets{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    BiquadDelayRegisters _delay_registers{0.0f, 0.0f};
+    Coefficients _coefficients{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    Coefficients _coefficient_targets{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    DelayRegisters _delay_registers{0.0f, 0.0f};
     OnePoleCoefficients _smoothing_coefficients{0.0f, 0.0f};
     float _smoothing_registers[NUMBER_OF_BIQUAD_COEF]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 };
-
 } // end namespace biquad
+} // end namespace dsp
 
 #endif //EQUALIZER_BIQUADFILTER_H

@@ -7,9 +7,14 @@ namespace equalizer_plugin {
 
 EqualizerPlugin::EqualizerPlugin()
 {
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
     _frequency = register_float_parameter("frequency", "Frequency", 1000.0f, new FloatParameterPreProcessor(20.0f, 20000.0f));
     _gain = register_float_parameter("gain", "Gain", 0, new dBToLinPreProcessor(-24.0f, 24.0f));
     _q = register_float_parameter("q", "Q", 1, new FloatParameterPreProcessor(0.0f, 10.0f));
+    assert(_frequency);
+    assert(_gain);
+    assert(_q);
 }
 
 ProcessorReturnCode EqualizerPlugin::init(const int sample_rate)
@@ -39,8 +44,8 @@ void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     /* Recalculates the coefficients once per audio chunk, this makes for
      * predictable cpu load for every chunk */
 
-    biquad::BiquadCoefficients coefficients;
-    biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
+    dsp::biquad::Coefficients coefficients;
+    dsp::biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
     _filter.set_coefficients(coefficients);
     _filter.process(in_buffer.channel(0), out_buffer.channel(0), AUDIO_CHUNK_SIZE);
 }

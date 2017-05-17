@@ -5,37 +5,37 @@
     "stompbox_chains" : [
         {
             "id" : "left",
-            "mode" : "mono",
+            "mode" : "stereo",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "local_instance_name_l"
+                    "id" : "passthrough_0_l"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
                     "id" : "gain_0_l"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
+                    "stompbox_uid" : "sushi.testing.equalizer",
                     "id" : "equalizer_0_l"
                 }
             ]
         },
         {
             "id" : "right",
-            "mode" : "stereo",
+            "mode" : "mono",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "equalizer_0_r"
+                    "id" : "gain_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "local_instance_name_r"
+                    "id" : "passthrough_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "gain_0_r"
+                    "id" : "gain_1_r"
                 }
             ]
         }
@@ -46,7 +46,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_r",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -23.0
             }
         },
@@ -55,7 +55,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_l",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -12.0
             }
         },
@@ -64,7 +64,7 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_r",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : -6.0
             }
         },
@@ -73,11 +73,31 @@
             "type" : "parameter_change",
             "data" : {
                 "stompbox_instance" : "gain_0_l",
-                "parameter_id" : "gain",
+                "parameter_name" : "gain",
                 "value" : 0.0
             }
         }
 
-    ]
+    ],
+    "midi" : {
+        "chain_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "chain": "left"
+            }
+        ],
+        "cc_mappings": [
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 27,
+                "processor": "equalizer_0_l",
+                "parameter": "gain",
+                "min_range": -24,
+                "max_range": 24
+            }
+        ]
+    }
 
 }

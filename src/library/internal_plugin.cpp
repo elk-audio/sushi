@@ -2,10 +2,83 @@
 
 namespace sushi {
 
-void InternalPlugin::process_event(BaseEvent* event)
+FloatStompBoxParameter* InternalPlugin::register_float_parameter(const std::string& id,
+                                                 const std::string& label,
+                                                 float default_value,
+                                                 FloatParameterPreProcessor* custom_pre_processor)
 {
-    assert(event);
-    switch (event->type())
+    if (!custom_pre_processor)
+    {
+        custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
+    }
+    FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, default_value, custom_pre_processor);
+    bool registered = this->register_parameter(param);
+    return registered? param : nullptr;
+}
+
+IntStompBoxParameter* InternalPlugin::register_int_parameter(const std::string& id,
+                                             const std::string& label,
+                                             int default_value,
+                                             IntParameterPreProcessor* custom_pre_processor)
+{
+    if (!custom_pre_processor)
+    {
+        custom_pre_processor = new IntParameterPreProcessor(0, 127);
+    }
+    IntStompBoxParameter* param = new IntStompBoxParameter(id, label, default_value, custom_pre_processor);
+    bool registered = this->register_parameter(param);
+    return registered? param : nullptr;
+}
+
+BoolStompBoxParameter* InternalPlugin::register_bool_parameter(const std::string& id,
+                                               const std::string& label,
+                                               bool default_value,
+                                               BoolParameterPreProcessor* custom_pre_processor)
+{
+    if (!custom_pre_processor)
+    {
+        custom_pre_processor = new BoolParameterPreProcessor(true, false);
+    }
+    BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, default_value, custom_pre_processor);
+    bool registered = this->register_parameter(param);
+    return registered? param : nullptr;
+}
+
+
+StringStompBoxParameter* InternalPlugin::register_string_parameter(const std::string& id,
+                                                   const std::string& label,
+                                                   const std::string& default_value)
+{
+    StringStompBoxParameter* param = new StringStompBoxParameter(id, label, new std::string(default_value));
+    bool registered = this->register_parameter(param);
+    return registered? param : nullptr;
+}
+
+
+DataStompBoxParameter* InternalPlugin::register_data_parameter(const std::string& id,
+                                                       const std::string& label,
+                                                       char* default_value)
+{
+    DataStompBoxParameter* param = new DataStompBoxParameter(id, label, default_value);
+    bool registered = this->register_parameter(param);
+    return registered? param : nullptr;
+}
+
+
+std::pair<ProcessorReturnCode, ObjectId> InternalPlugin::parameter_id_from_name(const std::string& parameter_name)
+{
+    auto parameter = get_parameter(parameter_name);
+    if (parameter)
+    {
+        return std::make_pair(ProcessorReturnCode::OK, parameter->id());
+    }
+    return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
+}
+
+
+void InternalPlugin::process_event(Event event)
+{
+    switch (event.type())
     {
         case EventType::FLOAT_PARAMETER_CHANGE:
         case EventType::INT_PARAMETER_CHANGE:
@@ -15,16 +88,13 @@ void InternalPlugin::process_event(BaseEvent* event)
              * other events are passed on unaltered. Maybe in the future we'll do
              * some kind of conversion to StompboxEvents here to avoid exposing
              * the internal event structure to 3rd party devs. */
-            auto typed_event = static_cast<ParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (!parameter)
+            auto typed_event = event.parameter_change_event();
+            if (typed_event->param_id() >= _parameters_by_index.size())
             {
-                // TODO - for now, just break until we find a way of signaling an error.
-                /* In fact, if we use uuids for looking up parameters then this situation
-                 * should not occur, instead the error will be caught when translating from
-                 * text parameter id to uuids, and that should be done in the non-rt context */
+                /* Out of bounds index, this should not happen, might replace with an assert. */
                 break;
             }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
             switch (parameter->type())
             {
                 case StompBoxParameterType::FLOAT:
@@ -39,7 +109,7 @@ void InternalPlugin::process_event(BaseEvent* event)
                 }
                 case StompBoxParameterType::BOOL:
                 {
-                    static_cast<IntStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f);
+                    static_cast<BoolStompBoxParameter*>(parameter)->set(typed_event->value() > 0.5f? true : false);
                     break;
                 }
                 default:
@@ -49,25 +119,47 @@ void InternalPlugin::process_event(BaseEvent* event)
         }
         case EventType::STRING_PARAMETER_CHANGE:
         {
-            auto typed_event = static_cast<StringParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (parameter && parameter->type() == StompBoxParameterType::STRING)
+            auto typed_event = event.string_parameter_change_event();
+            if (typed_event->param_id() >= _parameters_by_index.size())
+            {
+                break;
+            }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
+            if (parameter->type() == StompBoxParameterType::STRING)
             {
                 static_cast<StringStompBoxParameter*>(parameter)->set(typed_event->value());
             }
+            break;
         }
         case EventType::DATA_PARAMETER_CHANGE:
         {
-            auto typed_event = static_cast<DataParameterChangeEvent*>(event);
-            auto parameter = get_parameter(typed_event->param_id());
-            if (parameter && parameter->type() == StompBoxParameterType::DATA)
+            auto typed_event = event.data_parameter_change_event();
+            if (typed_event->param_id() >= _parameters_by_index.size())
+            {
+                break;
+            }
+            auto parameter = _parameters_by_index[typed_event->param_id()];
+            if (parameter->type() == StompBoxParameterType::DATA)
             {
                 static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
             }
+            break;
         }
 
         default:
             break;
     }
 }
+
+bool InternalPlugin::register_parameter(BaseStompBoxParameter* parameter)
+{
+    parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
+    _parameters_by_index.push_back(parameter);
+    bool inserted = true;
+    std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->name(),
+                                                                                std::unique_ptr<BaseStompBoxParameter>(parameter)));
+    return inserted;
+}
+
+
 } // end namespace sushi

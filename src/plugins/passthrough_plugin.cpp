@@ -7,7 +7,10 @@ namespace sushi {
 namespace passthrough_plugin {
 
 PassthroughPlugin::PassthroughPlugin()
-{}
+{
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
+}
 
 PassthroughPlugin::~PassthroughPlugin()
 {}
@@ -17,9 +20,17 @@ PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     /* For now, assume equal number of channels in/out */
     assert(in_buffer.channel_count() == out_buffer.channel_count());
-    for (int i = 0; i < in_buffer.channel_count(); ++i)
+    /* Pass audio through */
+    out_buffer = in_buffer;
+
+    /* Pass keyboard data/midi through */
+    while (!_event_queue.empty())
     {
-        std::copy(in_buffer.channel(i), in_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_buffer.channel(i));
+        Event event;
+        if (_event_queue.pop(event))
+        {
+            output_event(event);
+        }
     }
 }
 

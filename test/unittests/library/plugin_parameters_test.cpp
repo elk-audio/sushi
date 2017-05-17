@@ -68,11 +68,11 @@ TEST_F(TestStompBoxParameter, TestTypeNameAndLabel)
     EXPECT_EQ(StompBoxParameterType::STRING, _module_under_test_string.type());
     EXPECT_EQ(StompBoxParameterType::DATA, _module_under_test_data.type());
 
-    EXPECT_EQ("bool_parameter", _module_under_test_bool.id());
-    EXPECT_EQ("float_parameter", _module_under_test_float.id());
-    EXPECT_EQ("int_parameter", _module_under_test_int.id());
-    EXPECT_EQ("string_parameter", _module_under_test_string.id());
-    EXPECT_EQ("data_parameter", _module_under_test_data.id());
+    EXPECT_EQ("bool_parameter", _module_under_test_bool.name());
+    EXPECT_EQ("float_parameter", _module_under_test_float.name());
+    EXPECT_EQ("int_parameter", _module_under_test_int.name());
+    EXPECT_EQ("string_parameter", _module_under_test_string.name());
+    EXPECT_EQ("data_parameter", _module_under_test_data.name());
 
     EXPECT_EQ("BoolParameter", _module_under_test_bool.label());
     EXPECT_EQ("FloatParameter", _module_under_test_float.label());

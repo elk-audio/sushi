@@ -42,6 +42,7 @@ scratch/
 build/
 cmake-build-debug/
 cmake-build-release/
+third-party/install/
 
 # Windows folders
 *.ini

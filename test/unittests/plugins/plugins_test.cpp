@@ -8,7 +8,7 @@
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
-#include "plugins/biquad_filter.cpp"
+#include "dsp_library/biquad_filter.cpp"
 #include "library/internal_plugin.cpp"
 
 using namespace sushi;
@@ -43,6 +43,8 @@ TEST_F(TestPassthroughPlugin, TestInitialization)
 {
     _module_under_test->init(48000);
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Passthrough", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.passthrough", _module_under_test->name());
 }
 
 // Fill a buffer with ones and test that they are passed through unchanged
@@ -51,8 +53,15 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    EventFifo event_queue;
+    ASSERT_TRUE(event_queue.empty());
+    _module_under_test->set_event_output(&event_queue);
+    Event event = Event::make_note_on_event(0, 0, 0, 0);
+
+    _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0, out_buffer);
+    ASSERT_FALSE(event_queue.empty());
 }
 
 /*
@@ -74,6 +83,7 @@ protected:
 
     void TearDown()
     {
+        delete _module_under_test;
     }
     InternalPlugin* _module_under_test;
 };
@@ -81,6 +91,8 @@ protected:
 TEST_F(TestGainPlugin, TestInstantiation)
 {
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Gain", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.gain", _module_under_test->name());
 }
 
 // Fill a buffer with ones, set gain to 2 and process it
@@ -107,7 +119,6 @@ protected:
     }
     void SetUp()
     {
-
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
         ProcessorReturnCode status = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -115,6 +126,7 @@ protected:
 
     void TearDown()
     {
+        delete _module_under_test;
     }
     InternalPlugin* _module_under_test;
 };
@@ -122,6 +134,8 @@ protected:
 TEST_F(TestEqualizerPlugin, TestInstantiation)
 {
     ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Equalizer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.equalizer", _module_under_test->name());
 }
 
 // Test silence in -> silence out

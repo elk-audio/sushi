@@ -14,6 +14,7 @@
 #include <string>
 
 #include "library/constants.h"
+#include "library/id_generator.h"
 
 enum class StompBoxParameterType
 {
@@ -33,16 +34,16 @@ namespace sushi {
 class BaseStompBoxParameter
 {
 public:
-    BaseStompBoxParameter(const std::string& id,
+    BaseStompBoxParameter(const std::string& name,
                           const std::string& label,
-                          StompBoxParameterType type) : _label(label), _id(id), _type(type) {}
+                          StompBoxParameterType type) : _label(label), _name(name), _type(type) {}
 
     virtual ~BaseStompBoxParameter() {}
 
     /**
      * @brief Returns the enumerated type of the parameter
      */
-    StompBoxParameterType type() {return _type;};
+    StompBoxParameterType type() const {return _type;};
 
     /**
      * @brief Returns the parameters value as a formatted string
@@ -53,17 +54,27 @@ public:
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
      */
-    const std::string& label() {return _label;}
+    const std::string& label() const {return _label;}
 
     /**
     * @brief Returns a unique identifier to the parameter i.e. "oscillator_2_pitch"
     */
-    const std::string& id() {return _id;}
+    const std::string& name() const {return _name;}
 
+    /**
+     * @brief Returns a unique identifier for this parameter
+     */
+    ObjectId id() const {return _id;}
+
+    /**
+     * @brief Set a new id
+     */
+    void set_id(ObjectId id) {_id = id;}
 
 protected:
     std::string _label;
-    std::string _id;  // TODO: consider fixed length eastl string here to avoid memory allocations when changing
+    std::string _name;
+    ObjectId _id;
     StompBoxParameterType _type;
 };
 
@@ -129,11 +140,11 @@ public:
     /**
      * @brief Construct a parameter
      */
-    StompBoxParameter(const std::string& id,
+    StompBoxParameter(const std::string& name,
                       const std::string& label,
                       T default_value,
                       ParameterPreProcessor<T>* pre_processor) :
-                                   BaseStompBoxParameter(id, label, enumerated_type),
+                                   BaseStompBoxParameter(name, label, enumerated_type),
                                    _pre_processor(pre_processor),
                                    _raw_value(default_value),
                                    _value(pre_processor->process(default_value)) {}
@@ -195,9 +206,9 @@ template<typename T, StompBoxParameterType enumerated_type>
 class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter, private ParameterFormatPolicy<T *>
 {
 public:
-    StompBoxParameter(const std::string& id,
+    StompBoxParameter(const std::string& name,
                       const std::string& label,
-                      T * default_value) : BaseStompBoxParameter(id, label, enumerated_type),
+                      T * default_value) : BaseStompBoxParameter(name, label, enumerated_type),
                                            _value(default_value) {}
 
     ~StompBoxParameter() {};
@@ -271,7 +282,6 @@ public:
         return powf(10.0f, this->clip(raw_value) / 20.0f);
     }
 };
-
 
 }  // namespace sushi
 

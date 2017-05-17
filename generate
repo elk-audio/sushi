@@ -16,6 +16,9 @@ help() {
     echo "    -t : one of debug, release, all (default=all)"
     echo "    -b : build projects after launching CMake (default=false)"
     echo "    -o : base output directory (default=\$PROJECT_DIR/build)"
+    echo "    --no_jack : build without Jack support (default on)"
+    echo "    --no_xenomai : build without Xenomai support (default on)"
+    echo "    --xenomai_version : select which Xenomai version to link against (default=mercury)"
 }
 
 ######################
@@ -29,13 +32,15 @@ BUILD_PROJECTS=false
 PROJECT_DIR_REL="`dirname \"$0\"`"
 PROJECT_DIR=`python -c "import os; print(os.path.abspath(\"$PROJECT_DIR_REL\"))"`
 BUILD_DIR=$PROJECT_DIR/build
-
+BUILD_WITH_JACK=true
+BUILD_WITH_XENOMAI=true
+XENOMAI_FLAVOUR="mercury"
 
 ######################
 #  Argument parsing  #
 ######################
 
-while getopts ":t:o:bh" opt; do
+while getopts ":t:o:bh:-:" opt; do
     case $opt in
         t)
             TARGET_BUILD=$OPTARG
@@ -48,6 +53,37 @@ while getopts ":t:o:bh" opt; do
         o)
             BUILD_DIR="$OPTARG"
             ;;
+
+        -)
+            case "${OPTARG}" in
+                no_jack)
+                    BUILD_WITH_JACK=false
+                    ;;
+
+                no_xenomai)
+                    BUILD_WITH_XENOMAI=false
+                    ;;
+
+                xenomai_version=*)
+                    ver=${OPTARG#*=}
+                    XENOMAI_FLAVOUR=$ver
+                    case $ver in
+                        mercury)
+                            ;;
+                        cobalt)
+                            ;;
+                        *)
+                            echo "Invalid version $ver"
+                            exit 1
+                            ;;
+                    esac;;
+
+                *)
+                    echo "Invalid option: --$OPTARG" >&2
+                    help
+                    exit 1
+                    ;;
+            esac;;
 
         h)
             help
@@ -79,6 +115,12 @@ then
     exit 0
 fi
 
+BUILD_CFG_FLAGS="-DBUILD_WITH_JACK=$BUILD_WITH_JACK -DBUILD_WITH_XENOMAI=$BUILD_WITH_XENOMAI"
+if $BUILD_WITH_XENOMAI
+then
+    BUILD_CFG_FLAGS="$BUILD_CFG_FLAGS -DXENOMAI_FLAVOUR=$XENOMAI_FLAVOUR"
+fi
+
 ######################
 #  Script Processing #
 ######################
@@ -92,7 +134,7 @@ then
     echo "Generating Release build directory:"
     mkdir -p $BUILD_DIR/release
     cd $BUILD_DIR/release 
-    cmake -DCMAKE_BUILD_TYPE=Release $PROJECT_DIR
+    cmake -DCMAKE_BUILD_TYPE=Release $PROJECT_DIR $BUILD_CFG_FLAGS
     if $BUILD_PROJECTS; then
         make
     fi
@@ -103,7 +145,7 @@ then
     echo "Generating Debug build directory:"
     mkdir -p $BUILD_DIR/debug
     cd $BUILD_DIR/debug
-    cmake -DCMAKE_BUILD_TYPE=Debug $PROJECT_DIR
+    cmake -DCMAKE_BUILD_TYPE=Debug $PROJECT_DIR $BUILD_CFG_FLAGS
     if $BUILD_PROJECTS; then
         make
     fi

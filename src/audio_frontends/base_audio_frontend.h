@@ -19,11 +19,12 @@ enum class AudioFrontendStatus
     INVALID_N_CHANNELS,
     INVALID_INPUT_FILE,
     INVALID_OUTPUT_FILE,
-    INVALID_SEQUENCER_DATA
+    INVALID_SEQUENCER_DATA,
+    AUDIO_HW_ERROR
 };
 
 /**
- * @brief Dummy base class to hold frontends configurations
+ * @brief Dummy base class to hold frontend configurations
  */
 struct BaseAudioFrontendConfiguration
 {

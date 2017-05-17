@@ -4,6 +4,7 @@
 
 #include "test_utils.h"
 #include "engine/plugin_chain.cpp"
+#include "plugins/passthrough_plugin.h"
 
 using namespace sushi;
 using namespace engine;
@@ -22,7 +23,7 @@ public:
         return ProcessorReturnCode::OK;
     }
 
-    void process_event(BaseEvent* /*event*/) override{}
+    void process_event(Event /*event*/) override {}
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
     {
         out_buffer = in_buffer;
@@ -68,4 +69,22 @@ TEST_F(PluginChainTest, test_bypass_processing)
     _module_under_test.process_audio(in_buffer, out_buffer);
 
     test_utils::assert_buffer_value(1.0f, out_buffer);
+}
+
+TEST_F(PluginChainTest, test_event_bypass_processing)
+{
+    ChunkSampleBuffer buffer(2);
+    EventFifo event_queue;
+    ASSERT_TRUE(event_queue.empty());
+    passthrough_plugin::PassthroughPlugin plugin;
+    plugin.init(44100);
+    plugin.set_event_output(&event_queue);
+    _module_under_test.set_event_output(&event_queue);
+    _module_under_test.add(&plugin);
+
+    Event event = Event::make_note_on_event(0, 0, 0, 0);
+
+    _module_under_test.process_event(event);
+    _module_under_test.process_audio(buffer, buffer);
+    ASSERT_FALSE(event_queue.empty());
 }

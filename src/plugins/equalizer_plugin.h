@@ -6,10 +6,13 @@
 #define EQUALIZER_PLUGIN_H
 
 #include "library/internal_plugin.h"
-#include "biquad_filter.h"
+#include "dsp_library/biquad_filter.h"
 
 namespace sushi {
 namespace equalizer_plugin {
+
+static const std::string DEFAULT_NAME = "sushi.testing.equalizer";
+static const std::string DEFAULT_LABEL = "Equalizer";
 
 class EqualizerPlugin : public InternalPlugin
 {
@@ -20,18 +23,13 @@ public:
 
     virtual ProcessorReturnCode init(const int sample_rate) override;
 
-    const std::string unique_id() override
-    {
-        return std::string("sushi.testing.equalizer");
-    }
-
-    // void process_event(BaseEvent* /*event*/) {}
+    // void process_event(Event /*event*/) {}
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
     float _sample_rate;
-    biquad::BiquadFilter _filter;
+    dsp::biquad::BiquadFilter _filter;
 
     FloatStompBoxParameter* _frequency;
     FloatStompBoxParameter* _gain;

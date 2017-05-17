@@ -217,7 +217,7 @@
 #define OPTIONPARSER_H_
 
 /** @brief The namespace of The Lean Mean C++ Option Parser. */
-namespace option
+namespace optionparser
 {
 
 #ifdef _MSC_VER

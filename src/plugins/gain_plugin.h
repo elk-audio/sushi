@@ -10,17 +10,15 @@
 namespace sushi {
 namespace gain_plugin {
 
+static const std::string DEFAULT_NAME = "sushi.testing.gain";
+static const std::string DEFAULT_LABEL = "Gain";
+
 class GainPlugin : public InternalPlugin
 {
 public:
     GainPlugin();
 
     ~GainPlugin();
-
-    const std::string unique_id() override
-    {
-        return std::string("sushi.testing.gain");
-    }
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
