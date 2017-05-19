@@ -70,21 +70,21 @@ TEST_F(TestEngine, TestInstantiation)
 /*
  * Test that 1:s in gives 1:s out
  */
- TEST_F(TestEngine, TestProcess)
- {
-    /* Add a plugin chain since the engine by default doesn't have any */
-    PluginChain chain;
-    _module_under_test->_audio_graph.push_back(&chain);
+TEST_F(TestEngine, TestProcess)
+{
+/* Add a plugin chain since the engine by default doesn't have any */
+PluginChain chain;
+_module_under_test->_audio_graph.push_back(&chain);
 
-    /* Run tests */
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    test_utils::assert_buffer_value(1.0f, in_buffer);
+/* Run tests */
+SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+test_utils::fill_sample_buffer(in_buffer, 1.0f);
+test_utils::assert_buffer_value(1.0f, in_buffer);
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+_module_under_test->process_chunk(&in_buffer, &out_buffer);
 
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
 TEST_F(TestEngine, TestInitMidiFromJSON)
