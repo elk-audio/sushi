@@ -9,6 +9,7 @@
 
 #include "library/sample_buffer.h"
 
+using ::testing::internal::posix::GetEnv;
 using namespace sushi;
 namespace test_utils {
 
@@ -44,6 +45,18 @@ inline void assert_buffer_value(float value, SampleBuffer <AUDIO_CHUNK_SIZE> &bu
             ASSERT_NEAR(value, buffer.channel(ch)[i], error_margin);
         }
     }
+};
+
+inline std::string get_data_dir_path()
+{
+    char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
+    if (test_data_dir == nullptr)
+    {
+        EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
+    }
+    std::string test_config_file(test_data_dir);
+    test_config_file.append("/");
+    return test_config_file;
 };
 
 } // namespace test_utils

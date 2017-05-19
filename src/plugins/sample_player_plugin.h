@@ -17,7 +17,7 @@ namespace sample_player_plugin {
 constexpr size_t TOTAL_POLYPHONY = 8;
 // TODO - Fix string parameter support so we can inject the sample path instead
 // (and have it relative to project structure, right now this fails when built in another location)
-static const std::string SAMPLE_FILE = "../../../test/data/Kawai-K11-GrPiano-C4_mono.wav";
+static const std::string SAMPLE_FILE = "../../test/data/Kawai-K11-GrPiano-C4_mono.wav";
 
 static const std::string DEFAULT_NAME = "sushi.testing.sampleplayer";
 static const std::string DEFAULT_LABEL = "Sample player";

@@ -119,7 +119,6 @@ public:
         return EngineReturnStatus::OK;
     }
 
-
     virtual int n_channels_in_chain(int /*chain*/)
     {
         return 2;

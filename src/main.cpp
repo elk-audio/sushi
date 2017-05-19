@@ -13,7 +13,7 @@
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
-#include "library/json_configurer.h"
+#include "engine/json_configurator.h"
 #include "audio_frontends/xenomai_frontend.h"
 
 
@@ -157,21 +157,15 @@ int main(int argc, char* argv[])
     engine.set_audio_output_channels(2);
     engine.set_midi_input_ports(1);
 
-    /* Using Jsonconfigurer to init chains */
-    sushi::jsonconfigurer::JsonConfigurer testconfig;
-    sushi::jsonconfigurer::JsonConfigReturnStatus jsonstatus;
-    jsonstatus = testconfig.init_configurer(&engine, config_filename);
-    if(jsonstatus != sushi::jsonconfigurer::JsonConfigReturnStatus::OK)
+    sushi::jsonconfig::JsonConfigurator configurator(&engine);
+    sushi::jsonconfig::JsonConfigReturnStatus status_jsonconfig;
+    status_jsonconfig = configurator.load_chains(config_filename);
+    if(status_jsonconfig != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
+        MIND_LOG_ERROR("Failed to parse Json config file and configure plugin chains");
         std::exit(1);
     }
-    jsonstatus = testconfig.init_chains_from_jsonconfig();
-    if(jsonstatus != sushi::jsonconfigurer::JsonConfigReturnStatus::OK)
-    {
-        std::exit(1);
-    } 
-    /* End of Using Jsonconfigurer to init chains */
-    
+
     engine.init_midi_from_json_array(config["midi"]);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;

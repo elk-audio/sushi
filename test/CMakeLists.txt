@@ -18,6 +18,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/plugin_chain_test.cpp
                unittests/engine/engine_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
+               unittests/engine/json_configurator_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
@@ -27,8 +28,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/plugin_events_test.cpp
-               unittests/library/id_generator_test.cpp
-               unittests/library/json_configurer_test.cpp )
+               unittests/library/id_generator_test.cpp)
 
 if (${BUILD_WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)

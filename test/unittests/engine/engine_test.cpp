@@ -87,7 +87,6 @@ TEST_F(TestEngine, TestInstantiation)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-
 TEST_F(TestEngine, TestInitMidiFromJSON)
 {
     Json::Value config = read_json_config("config.json");
@@ -168,10 +167,9 @@ TEST_F(TestEngine, TestProcessorExist)
 
 TEST_F(TestEngine, TestCreateEmptyPluginChain)
 {
+    /* Test chain creation and existance in processor lists */
     EngineReturnStatus status;
     ObjectId id;
-
-    /* Test chain creation and existance in processor lists */
     status = _module_under_test->create_plugin_chain("left",2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
     std::tie(status,id) = _module_under_test->processor_id_from_name("left");
@@ -219,7 +217,6 @@ TEST_F(TestEngine, TestCorrectAddPlugin)
 TEST_F(TestEngine, TestIncorrectAddPlugin)
 {
     EngineReturnStatus status;
-    ObjectId id;
     status = _module_under_test->create_plugin_chain("left",2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
 

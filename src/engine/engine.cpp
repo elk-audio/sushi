@@ -403,20 +403,19 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);
         return EngineReturnStatus::INVALID_STOMPBOX_NAME;
     }
+
+    ObjectId chain_id;
+    std::tie(status, chain_id) = processor_id_from_name(chain_name);
+    if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
+    {
+        MIND_LOG_ERROR("Chain name {} does not exist in processor list", chain_name);
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+    }
     auto instance = _make_stompbox_from_unique_id(plugin_uid);
     if(instance == nullptr)
     {
         MIND_LOG_ERROR("Invalid plugin uid {} ", plugin_uid);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
-    }
-
-    /* Get chain ID and add plugin to chain */
-    ObjectId chain_id;
-    std::tie(status, chain_id) = processor_id_from_name(chain_name);
-    if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
-    {
-        MIND_LOG_ERROR("Chain name {} does not exist", chain_name);
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
 
     instance->init(_sample_rate);
