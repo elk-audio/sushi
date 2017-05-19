@@ -6,7 +6,7 @@ namespace vst2 {
 
 MIND_GET_LOGGER;
 
-VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
+VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
                                     VstInt32 opcode, VstInt32 index,
                                     VstIntPtr value, void* ptr, float opt)
 {

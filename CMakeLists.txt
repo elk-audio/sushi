@@ -73,16 +73,16 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/internal_plugin.cpp
+                      src/library/vst2x_wrapper.cpp
+                      src/library/vst2x_host_callback.cpp
+                      src/library/vst2x_plugin_loader.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
                       src/audio_frontends/offline_frontend.cpp
-                      #src/library/vst2x_plugin.cpp
-                      src/library/vst2x_host_callback.cpp
         )
-
 
 # Enumerate all the headers separately so that CLion can index them
 
@@ -104,9 +104,11 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/plugin_events.h
                         src/library/processor.h
                         src/library/internal_plugin.h
-                        src/library/vst2x_plugin_loader.h
                         src/library/event_fifo.h
                         src/library/event_pipe.h
+                        src/library/vst2x_wrapper.h
+                        src/library/vst2x_host_callback.h
+                        src/library/vst2x_plugin_loader.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
@@ -117,9 +119,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/sample_player_voice.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
-                        #src/library/vst2x_plugin.h
-                        src/library/vst2x_host_callback.h
-                        src/library/vst2x_plugin_loader.cpp
         )
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")

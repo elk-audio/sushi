@@ -48,15 +48,6 @@ namespace vst2 {
 
 typedef void* LibraryHandle;
 
-/**
- * VsT low-level callbacks
- */
-typedef AEffect *(*plugin_entry_proc)(audioMasterCallback host);
-
-static VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
-                                           VstInt32 opcode, VstInt32 index,
-                                           VstIntPtr value, void* ptr, float opt);
-
 // TODO:
 //      this class is stateless atm (basically a namespace),
 //      but it should probably grow into the access point to plugins stored in the
@@ -73,7 +64,6 @@ public:
     static void close_library_handle(LibraryHandle library_handle);
 
 };
-
 
 } // namespace vst2
 } // namespace sushi

@@ -22,6 +22,9 @@ enum class ProcessorReturnCode
     PARAMETER_ERROR,
     PARAMETER_NOT_FOUND,
     MEMORY_ERROR,
+    SHARED_LIBRARY_OPENING_ERROR,
+    PLUGIN_ENTRY_POINT_NOT_FOUND,
+    PLUGIN_LOAD_ERROR,
 };
 
 class Processor

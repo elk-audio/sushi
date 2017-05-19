@@ -28,6 +28,7 @@
 */
 
 #include "library/vst2x_plugin_loader.h"
+#include "library/vst2x_host_callback.h"
 
 #include "logging.h"
 
@@ -35,27 +36,6 @@ namespace sushi {
 namespace vst2 {
 
 MIND_GET_LOGGER;
-
-VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
-                                    VstInt32 opcode, VstInt32 index,
-                                    VstIntPtr value, void* ptr, float opt)
-{
-    VstIntPtr result = 0;
-
-    MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
-
-    switch (opcode)
-    {
-    case audioMasterVersion :
-        result = kVstVersion;
-        break;
-    default:
-        break;
-    }
-
-    return result;
-
-}
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
@@ -89,13 +69,13 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
 
     entryPoint.entryPointVoidPtr = dlsym(library_handle, "VSTPluginMain");
 
-    if (entryPoint.entryPointVoidPtr == NULL)
+    if (entryPoint.entryPointVoidPtr == nullptr)
     {
         entryPoint.entryPointVoidPtr = dlsym(library_handle, "main");
-        if (entryPoint.entryPointVoidPtr == NULL)
+        if (entryPoint.entryPointVoidPtr == nullptr)
         {
               MIND_LOG_ERROR("Couldn't get a pointer to plugin's main()");
-              return NULL;
+              return nullptr;
         }
     }
 
