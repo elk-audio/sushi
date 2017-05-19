@@ -21,7 +21,6 @@ namespace vst2 {
 //      For now, put a fixed number to avoid dynamic relocation of _process_[in|out]puts,
 //      and because we have to rework that part anyway (it's not flexible in InternalPlugin
 //      as well
-
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = 2;
 
 /**
@@ -56,7 +55,9 @@ public:
     /* Inherited from Processor */
     ProcessorReturnCode init(const int sample_rate) override;
 
-    void process_event(Event /* event */) override;
+    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
+
+    void process_event(Event event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
@@ -77,24 +78,25 @@ private:
         _plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt);
     }
 
-    // /**
-    // * @brief Return the parameter with the given unique id
-    // */
-    // BaseStompBoxParameter *get_parameter(const std::string &id)
-    // {
-    //     auto parameter = _parameters.find(id);
-    //     if (parameter == _parameters.end())
-    //     {
-    //         return nullptr;
-    //     }
-    //     return parameter->second.get();
-    // }
+    /**
+     * @brief Iterate over VsT parameters and register internal FloatStompboxParameter
+     *        for each one of them.
+     * @return True if all parameters were registered properly.
+     */
+    bool _register_parameters();
 
-    // void register_parameter(BaseStompBoxParameter *parameter)
-    // {
-    //     _parameters.insert(std::pair < std::string, std::unique_ptr < BaseStompBoxParameter >> (parameter->id(),
-    //             std::unique_ptr < BaseStompBoxParameter > (parameter)));
-    // }
+    /**
+    * @brief Return the parameter with the given unique id
+    */
+    BaseStompBoxParameter* get_parameter(const std::string& id)
+    {
+        auto parameter = _parameters.find(id);
+        if (parameter == _parameters.end())
+        {
+            return nullptr;
+        }
+        return parameter->second.get();
+    }
 
     int _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
@@ -106,6 +108,8 @@ private:
     AEffect *_plugin_handle;
 
     std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
+
+    std::vector<BaseStompBoxParameter*> _parameters_by_index;
 };
 
 } // end namespace vst2

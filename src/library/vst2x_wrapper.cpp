@@ -55,25 +55,17 @@ ProcessorReturnCode Vst2xWrapper::init(const int sample_rate)
     set_input_channels(_plugin_handle->numInputs);
     set_output_channels(_plugin_handle->numOutputs);
 
-    // TODO: derive parameter instantiation code from something like this in minihost.cpp
-    // for (VstInt32 paramIndex = 0; paramIndex < effect->numParams; paramIndex++)
-    // {
-    //     char paramName[256] = {0};
-    //     char paramLabel[256] = {0};
-    //     char paramDisplay[256] = {0};
-
-    //     effect->dispatcher (effect, effGetParamName, paramIndex, 0, paramName, 0);
-    //     effect->dispatcher (effect, effGetParamLabel, paramIndex, 0, paramLabel, 0);
-    //     effect->dispatcher (effect, effGetParamDisplay, paramIndex, 0, paramDisplay, 0);
-    //     float value = effect->getParameter (effect, paramIndex);
-
-    //     printf ("Param %03d: %s [%s %s] (normalized = %f)\n", paramIndex, paramName, paramDisplay, paramLabel, value);
-    //  }
-
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, 0, 0);
     _vst_dispatcher(effSetSampleRate, 0, 0, 0, static_cast<float>(_sample_rate));
     _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);
+
+    // Register internal parameters
+    if (!_register_parameters())
+    {
+        _cleanup();
+        return ProcessorReturnCode::PARAMETER_ERROR;
+    }
 
     return ProcessorReturnCode::OK;
 }
@@ -92,6 +84,41 @@ void Vst2xWrapper::_cleanup()
     }
 }
 
+bool Vst2xWrapper::_register_parameters()
+{
+    char param_name[VST_STRING_BUFFER_SIZE] = {0};
+    char param_label[VST_STRING_BUFFER_SIZE] = {0};
+
+    VstInt32 idx = 0;
+    bool param_inserted_ok = true;
+    while ( param_inserted_ok && (idx<_plugin_handle->numParams) )
+    {
+       _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
+       _vst_dispatcher(effGetParamLabel, idx, 0, param_label, 0);
+        // All VsT parameters are float 0..1
+        auto pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
+        float default_value = _plugin_handle->getParameter(_plugin_handle, idx);
+        FloatStompBoxParameter* param = new FloatStompBoxParameter(param_name, param_label, default_value, pre_processor);
+        _parameters_by_index.push_back(param);
+        param->set_id(static_cast<ObjectId>(idx));
+        std::tie(std::ignore, param_inserted_ok) =
+            _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>
+                                       (param->name(), std::unique_ptr<BaseStompBoxParameter>(param)));
+        if (param_inserted_ok)
+        {
+            MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
+        }
+        else
+        {
+            MIND_LOG_ERROR("VsT wrapper, plugin: {}, Error while registering param: {}", name(), param_name);
+        }
+
+        idx++;
+    }
+
+    return param_inserted_ok;
+}
+
 void Vst2xWrapper::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
@@ -105,6 +132,39 @@ void Vst2xWrapper::set_enabled(bool enabled)
         _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
         _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
     }
+}
+
+std::pair<ProcessorReturnCode, ObjectId> Vst2xWrapper::parameter_id_from_name(const std::string& parameter_name)
+{
+    auto parameter = get_parameter(parameter_name);
+    if (parameter)
+    {
+        return std::make_pair(ProcessorReturnCode::OK, parameter->id());
+    }
+    return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
+}
+
+void Vst2xWrapper::process_event(Event event)
+{
+    switch (event.type())
+    {
+    case EventType::FLOAT_PARAMETER_CHANGE:
+    {
+        auto typed_event = event.parameter_change_event();
+        auto id = typed_event->param_id();
+        assert(id < _parameters_by_index.size());
+        auto parameter = static_cast<FloatStompBoxParameter*>(_parameters_by_index[id]);
+        float value = static_cast<float>(typed_event->value());
+        parameter->set(value);
+        _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), value);
+    }
+    break;
+
+    default:
+        MIND_LOG_INFO("Vst wrapper, plugin: {}, received unhandled event", name());
+        break;
+    }
+
 }
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -121,12 +181,6 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
 }
 
-void Vst2xWrapper::process_event(Event /*event*/)
-{
-    // TODO: eventually get VSTparam id from internal map
-    // and  call dispatcher->(setEffect ...)
-
-}
 
 } // namespace vst2
 } // namespace sushi
