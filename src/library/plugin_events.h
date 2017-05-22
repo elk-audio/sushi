@@ -6,6 +6,7 @@
 #ifndef SUSHI_PLUGIN_EVENTS_H
 #define SUSHI_PLUGIN_EVENTS_H
 
+#include <string>
 #include <cassert>
 #include <vector>
 #include "id_generator.h"
