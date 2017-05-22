@@ -91,7 +91,7 @@ bool Vst2xWrapper::_register_parameters()
 
     VstInt32 idx = 0;
     bool param_inserted_ok = true;
-    while ( param_inserted_ok && (idx<_plugin_handle->numParams) )
+    while ( param_inserted_ok && (idx < _plugin_handle->numParams) )
     {
        _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
        _vst_dispatcher(effGetParamLabel, idx, 0, param_label, 0);
@@ -169,11 +169,11 @@ void Vst2xWrapper::process_event(Event event)
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    for (int i=0; i<_current_input_channels; i++)
+    for (int i = 0; i < _current_input_channels; i++)
     {
         _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
     }
-    for (int i=0; i<_current_output_channels; i++)
+    for (int i = 0; i < _current_output_channels; i++)
     {
         _process_outputs[i] = out_buffer.channel(i);
     }
