@@ -56,9 +56,12 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 
 TEST_F(TestVst2xWrapper, TestParameterInitialization)
 {
-    EXPECT_EQ(1u, _module_under_test->_parameters_by_index.size());
-    auto param = _module_under_test->get_parameter("Gain");
-    EXPECT_NE(nullptr, param);
+    EXPECT_EQ(1u, _module_under_test->_param_names_to_id.size());
+    ProcessorReturnCode status;
+    ObjectId id;
+    std::tie(status, id) = _module_under_test->parameter_id_from_name("Gain");
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ(0u, id);
 }
 
 

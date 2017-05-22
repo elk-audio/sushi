@@ -7,11 +7,9 @@
 #ifndef SUSHI_VST2X_PLUGIN_H
 #define SUSHI_VST2X_PLUGIN_H
 
-#include "library/plugin_parameters.h"
 #include "library/processor.h"
 #include "library/vst2x_plugin_loader.h"
 
-#include <algorithm>
 #include <map>
 
 namespace sushi {
@@ -85,19 +83,6 @@ private:
      */
     bool _register_parameters();
 
-    /**
-    * @brief Return the parameter with the given unique id
-    */
-    BaseStompBoxParameter* get_parameter(const std::string& id)
-    {
-        auto parameter = _parameters.find(id);
-        if (parameter == _parameters.end())
-        {
-            return nullptr;
-        }
-        return parameter->second.get();
-    }
-
     int _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
@@ -107,9 +92,7 @@ private:
     LibraryHandle _library_handle;
     AEffect *_plugin_handle;
 
-    std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
-
-    std::vector<BaseStompBoxParameter*> _parameters_by_index;
+    std::map<std::string, ObjectId> _param_names_to_id;
 };
 
 } // end namespace vst2

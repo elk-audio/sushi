@@ -2,6 +2,8 @@
 
 #include "logging.h"
 
+#include <algorithm>
+
 namespace {
 
 static constexpr int VST_STRING_BUFFER_SIZE = 256;
@@ -87,23 +89,14 @@ void Vst2xWrapper::_cleanup()
 bool Vst2xWrapper::_register_parameters()
 {
     char param_name[VST_STRING_BUFFER_SIZE] = {0};
-    char param_label[VST_STRING_BUFFER_SIZE] = {0};
 
     VstInt32 idx = 0;
     bool param_inserted_ok = true;
     while ( param_inserted_ok && (idx < _plugin_handle->numParams) )
     {
-       _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
-       _vst_dispatcher(effGetParamLabel, idx, 0, param_label, 0);
-        // All VsT parameters are float 0..1
-        auto pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
-        float default_value = _plugin_handle->getParameter(_plugin_handle, idx);
-        FloatStompBoxParameter* param = new FloatStompBoxParameter(param_name, param_label, default_value, pre_processor);
-        _parameters_by_index.push_back(param);
-        param->set_id(static_cast<ObjectId>(idx));
+        _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
         std::tie(std::ignore, param_inserted_ok) =
-            _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>
-                                       (param->name(), std::unique_ptr<BaseStompBoxParameter>(param)));
+            _param_names_to_id.insert(std::pair<std::string, ObjectId>(param_name, static_cast<ObjectId>(idx)));
         if (param_inserted_ok)
         {
             MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
@@ -136,12 +129,12 @@ void Vst2xWrapper::set_enabled(bool enabled)
 
 std::pair<ProcessorReturnCode, ObjectId> Vst2xWrapper::parameter_id_from_name(const std::string& parameter_name)
 {
-    auto parameter = get_parameter(parameter_name);
-    if (parameter)
+    auto param_id = _param_names_to_id.find(parameter_name);
+    if (param_id == _param_names_to_id.end())
     {
-        return std::make_pair(ProcessorReturnCode::OK, parameter->id());
+        return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
     }
-    return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
+    return std::make_pair(ProcessorReturnCode::OK, param_id->second);
 }
 
 void Vst2xWrapper::process_event(Event event)
@@ -152,11 +145,8 @@ void Vst2xWrapper::process_event(Event event)
     {
         auto typed_event = event.parameter_change_event();
         auto id = typed_event->param_id();
-        assert(id < _parameters_by_index.size());
-        auto parameter = static_cast<FloatStompBoxParameter*>(_parameters_by_index[id]);
-        float value = static_cast<float>(typed_event->value());
-        parameter->set(value);
-        _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), value);
+        assert(static_cast<VstInt32>(id) < _plugin_handle->numParams);
+        _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), typed_event->value());
     }
     break;
 
