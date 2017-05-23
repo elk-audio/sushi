@@ -20,6 +20,13 @@ set(AGAIN_SOURCES
         "${VST_SDK_PLUGIN_SOURCES}"
     )
 
+set(VSTXSYNTH_SOURCE_DIR "${VST_SDK_PATH}/public.sdk/samples/vst2.x/vstxsynth/source")
+set(VSTXSYNTH_SOURCES
+        "${VSTXSYNTH_SOURCE_DIR}/vstxsynth.cpp"
+        "${VSTXSYNTH_SOURCE_DIR}/vstxsynthproc.cpp"
+        "${VST_SDK_PLUGIN_SOURCES}"
+        )
+
 include_directories(${VST_SDK_PATH})
 
 add_library(again MODULE ${AGAIN_SOURCES})
@@ -27,6 +34,12 @@ add_library(again MODULE ${AGAIN_SOURCES})
 set_target_properties(again PROPERTIES
         COMPILE_FLAGS "-Wno-unused -Wno-multichar -Wno-write-strings -Wno-narrowing"
     )
+
+add_library(vstxsynth MODULE ${VSTXSYNTH_SOURCES})
+# Suppress VST SDK warnings
+set_target_properties(vstxsynth PROPERTIES
+        COMPILE_FLAGS "-Wno-unused -Wno-sequence-point -Wno-multichar -Wno-write-strings -Wno-narrowing"
+        )
 
 #####################################
 #  Unit Tests Targets               #
