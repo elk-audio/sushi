@@ -70,51 +70,51 @@ int main(int argc, char* argv[])
         optionparser::Option& opt = cl_buffer[i];
         switch(opt.index())
         {
-        case OPT_IDX_HELP:
-        case OPT_IDX_UNKNOWN:
-            // should be handled before arriving here
-            assert(false);
-            break;
+            case OPT_IDX_HELP:
+            case OPT_IDX_UNKNOWN:
+                // should be handled before arriving here
+                assert(false);
+                break;
 
-        case OPT_IDX_LOG_LEVEL:
-            log_level.assign(opt.arg);
-            break;
+            case OPT_IDX_LOG_LEVEL:
+                log_level.assign(opt.arg);
+                break;
 
-        case OPT_IDX_LOG_FILE:
-            log_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_LOG_FILE:
+                log_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_CONFIG_FILE:
-            config_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_CONFIG_FILE:
+                config_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_OUTPUT_FILE:
-            output_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_OUTPUT_FILE:
+                output_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_USE_JACK:
-            use_jack = true;
-            break;
+            case OPT_IDX_USE_JACK:
+                use_jack = true;
+                break;
 
-        case OPT_IDX_CONNECT_PORTS:
-            connect_ports = true;
-            break;
+            case OPT_IDX_CONNECT_PORTS:
+                connect_ports = true;
+                break;
 
-        case OPT_IDX_JACK_CLIENT:
-            jack_client_name.assign(opt.arg);
-            break;
+            case OPT_IDX_JACK_CLIENT:
+                jack_client_name.assign(opt.arg);
+                break;
 
-        case OPT_IDX_JACK_SERVER:
-            jack_server_name.assign(opt.arg);
-            break;
+            case OPT_IDX_JACK_SERVER:
+                jack_server_name.assign(opt.arg);
+                break;
 
-        case OPT_IDX_USE_XENOMAI:
-            use_xenomai = true;
-            break;
+            case OPT_IDX_USE_XENOMAI:
+                use_xenomai = true;
+                break;
 
-        default:
-            SushiArg::print_error("Unhandled option '", opt, "' \n");
-            break;
+            default:
+                SushiArg::print_error("Unhandled option '", opt, "' \n");
+                break;
         }
     }
 
@@ -158,15 +158,8 @@ int main(int argc, char* argv[])
     engine.set_midi_input_ports(1);
 
     sushi::jsonconfig::JsonConfigurator configurator(&engine);
-    sushi::jsonconfig::JsonConfigReturnStatus status_jsonconfig;
-    status_jsonconfig = configurator.load_chains(config_filename);
-    if(status_jsonconfig != sushi::jsonconfig::JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to parse Json config file and configure plugin chains");
-        std::exit(1);
-    }
-
-    engine.init_midi_from_json_array(config["midi"]);
+    configurator.load_chains(config_filename);
+    configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;

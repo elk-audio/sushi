@@ -162,15 +162,14 @@ TEST_F(TestEngine, TestProcessorExist)
 
     /* Test by passing invalid names */
     ASSERT_FALSE(_module_under_test->_processor_exists("not_found"));
-    ASSERT_FALSE(_module_under_test->_processor_exists(0u));
+    ASSERT_FALSE(_module_under_test->_processor_exists(0));
 }
 
 TEST_F(TestEngine, TestCreateEmptyPluginChain)
 {
     /* Test chain creation and existance in processor lists */
-    EngineReturnStatus status;
     ObjectId id;
-    status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_plugin_chain("left",2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
     std::tie(status,id) = _module_under_test->processor_id_from_name("left");
     ASSERT_EQ(status, EngineReturnStatus::OK);
@@ -178,23 +177,22 @@ TEST_F(TestEngine, TestCreateEmptyPluginChain)
     ASSERT_EQ(_module_under_test->_audio_graph[0]->name(),"left");
 
     /* Test if pluginchain can be created if the "name" already exists */
-    status = _module_under_test->create_plugin_chain("left",1u);
+    status = _module_under_test->create_plugin_chain("left",1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
-    
+
     /* Test if invalid number of channels or empty name is specified */
-    status = _module_under_test->create_plugin_chain("left",3u);
+    status = _module_under_test->create_plugin_chain("left",3);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
-    status = _module_under_test->create_plugin_chain("left",0u);
+    status = _module_under_test->create_plugin_chain("left",0);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
-    status = _module_under_test->create_plugin_chain("",1u);
+    status = _module_under_test->create_plugin_chain("",1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
 }
 
 TEST_F(TestEngine, TestCorrectAddPlugin)
 {
-    EngineReturnStatus status;
     ObjectId id;
-    status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_plugin_chain("left",2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
 
     status = _module_under_test->add_plugin_to_chain("left","sushi.testing.passthrough","passthrough_0_l");
@@ -202,7 +200,7 @@ TEST_F(TestEngine, TestCorrectAddPlugin)
     std::tie(status,id) = _module_under_test->processor_id_from_name("passthrough_0_l");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     /* Check if plugin exists in the chain */
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),1);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),1u);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"passthrough_0_l");
 
     /* Add another plugin to same chain */
@@ -210,25 +208,20 @@ TEST_F(TestEngine, TestCorrectAddPlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     std::tie(status,id) = _module_under_test->processor_id_from_name("gain_0_r");
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2u);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"gain_0_r");
 }
 
 TEST_F(TestEngine, TestIncorrectAddPlugin)
 {
-    EngineReturnStatus status;
-    status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_plugin_chain("left",2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
 
     /* Check if bad parameters are passed */
-    status = _module_under_test->add_plugin_to_chain("","","");
+    status = _module_under_test->add_plugin_to_chain("","sushi.testing.passthrough","plugin_name");
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
-    status = _module_under_test->add_plugin_to_chain("left","","");
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);
     status = _module_under_test->add_plugin_to_chain("left","sushi.testing.passthrough","");
     ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_NAME);
-
-    /* Test adding invalid plugin to chain */
     status = _module_under_test->add_plugin_to_chain("left","dummyuid","dummyname");
     ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);
 
