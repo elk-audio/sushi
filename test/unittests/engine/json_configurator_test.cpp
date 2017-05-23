@@ -37,13 +37,9 @@ protected:
         delete _configurator;
     }
 
-    /* Helper function to run "_validate_chains_definition". Makes code more readable */
+    /* Helper functions */
     JsonConfigReturnStatus _validate_chains();
-
-    /* Helper function to run "_validate_midi". Makes code more readable */
     JsonConfigReturnStatus _validate_midi();
-
-    /* Helper function to run "_make_chain". Makes code more readable */
     JsonConfigReturnStatus _make_chain(const Json::Value& plugin_chain);
 
     AudioEngine* _engine;
