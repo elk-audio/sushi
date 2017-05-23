@@ -61,14 +61,14 @@ public:
                                                    BoolParameterPreProcessor* custom_pre_processor = nullptr);
 
 
-    StringStompBoxParameter* register_string_parameter(const std::string& id,
-                                                       const std::string& label,
-                                                       const std::string& default_value);
+    StringStompBoxProperty* register_string_property(const std::string &id,
+                                                     const std::string &label,
+                                                     const std::string &default_value);
 
 
-    DataStompBoxParameter* register_data_parameter(const std::string& id,
-                                                   const std::string& label,
-                                                   char* default_value);
+    DataStompBoxProperty* register_data_property(const std::string &id,
+                                                 const std::string &label,
+                                                 BlobData default_value);
 
     /* Inherited from Processor */
     std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;

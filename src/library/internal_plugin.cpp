@@ -45,21 +45,21 @@ BoolStompBoxParameter* InternalPlugin::register_bool_parameter(const std::string
 }
 
 
-StringStompBoxParameter* InternalPlugin::register_string_parameter(const std::string& id,
-                                                   const std::string& label,
-                                                   const std::string& default_value)
+StringStompBoxProperty* InternalPlugin::register_string_property(const std::string &id,
+                                                                 const std::string &label,
+                                                                 const std::string &default_value)
 {
-    StringStompBoxParameter* param = new StringStompBoxParameter(id, label, new std::string(default_value));
+    StringStompBoxProperty* param = new StringStompBoxProperty(id, label, new std::string(default_value));
     bool registered = this->register_parameter(param);
     return registered? param : nullptr;
 }
 
 
-DataStompBoxParameter* InternalPlugin::register_data_parameter(const std::string& id,
-                                                       const std::string& label,
-                                                       char* default_value)
+DataStompBoxProperty* InternalPlugin::register_data_property(const std::string &id,
+                                                             const std::string &label,
+                                                             BlobData default_value)
 {
-    DataStompBoxParameter* param = new DataStompBoxParameter(id, label, default_value);
+    DataStompBoxProperty* param = new DataStompBoxProperty(id, label, default_value);
     bool registered = this->register_parameter(param);
     return registered? param : nullptr;
 }
@@ -127,7 +127,8 @@ void InternalPlugin::process_event(Event event)
             auto parameter = _parameters_by_index[typed_event->param_id()];
             if (parameter->type() == StompBoxParameterType::STRING)
             {
-                static_cast<StringStompBoxParameter*>(parameter)->set(typed_event->value());
+                static_cast<StringStompBoxProperty*>(parameter)->set(typed_event->value());
+
             }
             break;
         }
@@ -141,7 +142,7 @@ void InternalPlugin::process_event(Event event)
             auto parameter = _parameters_by_index[typed_event->param_id()];
             if (parameter->type() == StompBoxParameterType::DATA)
             {
-                static_cast<DataStompBoxParameter*>(parameter)->set(typed_event->value());
+                static_cast<DataStompBoxProperty*>(parameter)->set(typed_event->value());
             }
             break;
         }

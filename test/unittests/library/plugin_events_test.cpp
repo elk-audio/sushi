@@ -58,13 +58,15 @@ TEST (TestPluginEvents, TestFactoryFunction)
     EXPECT_EQ(ObjectId(65), spc_event->param_id());
     EXPECT_EQ("Hej", *spc_event->value());
 
-    event = Event::make_data_parameter_change_event(128, 7, 66, static_cast<void*>(&str));
+    uint8_t TEST_DATA[3] = {1,2,3};
+    BlobData data{sizeof(TEST_DATA), TEST_DATA};
+    event = Event::make_data_parameter_change_event(128, 7, 66, data);
     EXPECT_EQ(EventType::DATA_PARAMETER_CHANGE, event.type());
     auto dpc_event = event.data_parameter_change_event();
     EXPECT_EQ(ObjectId(128), dpc_event->processor_id());
     EXPECT_EQ(7, dpc_event->sample_offset());
     EXPECT_EQ(ObjectId(66), dpc_event->param_id());
-    EXPECT_EQ(static_cast<void*>(&str), dpc_event->value());
+    EXPECT_EQ(3, dpc_event->value().data[2]);
 }
 
 

@@ -51,13 +51,14 @@ class TestStompBoxParameter : public ::testing::Test
 protected:
     TestStompBoxParameter() {}
 
-    char* TEST_DATA{new char[5]};
+    uint8_t* TEST_DATA = new uint8_t[3];
+    BlobData blob{3, TEST_DATA};
 
     FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", 1.0f, new ParameterPreProcessor<float>(-10, 10)};
     IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", 0, new ParameterPreProcessor<int>(-10, 10)};
     BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", false, new ParameterPreProcessor<bool>(0, 1)};
-    StringStompBoxParameter _module_under_test_string{"string_parameter", "String Parameter", new std::string("This is a string!")};
-    DataStompBoxParameter _module_under_test_data{"data_parameter", "Data Parameter", TEST_DATA};
+    StringStompBoxProperty _module_under_test_string{"string_parameter", "String Parameter", new std::string("This is a string!")};
+    DataStompBoxProperty _module_under_test_data{"data_parameter", "Data Parameter", blob};
 };
 
 TEST_F(TestStompBoxParameter, TestTypeNameAndLabel)
