@@ -15,10 +15,17 @@ if (${WITH_XENOMAI})
     message("Building with Xenomai ${XENOMAI_FLAVOUR}")
 endif()
 
-if (DEFINED WITH_JACK)
+if (${WITH_JACK})
     add_definitions(-DSUSHI_BUILD_WITH_JACK)
     message("Building with Jack support.")
 endif()
+
+#############################
+#  Preprocessor definitions #
+#############################
+
+# API fix for POSIX builds
+add_definitions( -D__cdecl= )
 
 ####################
 #  Compiler Flags  #
@@ -34,10 +41,6 @@ endif()
 
 set(PROJECT_LINK_FLAGS )
 
-# Platform specific stuff
-if (APPLE)
-    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -framework IOKit -framework CoreFoundation")
-endif()
 
 # Build optimization flags
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
@@ -70,12 +73,16 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/internal_plugin.cpp
+                      src/library/vst2x_wrapper.cpp
+                      src/library/vst2x_host_callback.cpp
+                      src/library/vst2x_plugin_loader.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
-                      src/plugins/sample_player_voice.cpp)
-
+                      src/plugins/sample_player_voice.cpp
+                      src/audio_frontends/offline_frontend.cpp
+        )
 
 # Enumerate all the headers separately so that CLion can index them
 
@@ -99,7 +106,9 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
                         src/library/event_pipe.h
-                        src/library/types.h
+                        src/library/vst2x_wrapper.h
+                        src/library/vst2x_host_callback.h
+                        src/library/vst2x_plugin_loader.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
@@ -107,19 +116,25 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/sample_player_plugin.h
-                        src/plugins/sample_player_voice.h)
+                        src/plugins/sample_player_voice.h
+                        src/audio_frontends/base_audio_frontend.h
+                        src/audio_frontends/offline_frontend.h
+        )
 
-set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
+set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
 
 #########################
 #  Include Directories  #
 #########################
+
+set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
+                 "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
@@ -142,7 +157,7 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile jsoncpp pthread)
+                    EASTL sndfile jsoncpp pthread dl)
 
 if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
@@ -152,6 +167,10 @@ else()
 endif()
 
 if (APPLE)
+    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS}"
+                           "-framework IOKit"
+                           "-framework CoreFoundation"
+        )
     set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
 endif()
 
