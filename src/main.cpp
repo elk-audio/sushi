@@ -70,51 +70,51 @@ int main(int argc, char* argv[])
         optionparser::Option& opt = cl_buffer[i];
         switch(opt.index())
         {
-            case OPT_IDX_HELP:
-            case OPT_IDX_UNKNOWN:
-                // should be handled before arriving here
-                assert(false);
-                break;
+        case OPT_IDX_HELP:
+        case OPT_IDX_UNKNOWN:
+            // should be handled before arriving here
+            assert(false);
+            break;
 
-            case OPT_IDX_LOG_LEVEL:
-                log_level.assign(opt.arg);
-                break;
+        case OPT_IDX_LOG_LEVEL:
+            log_level.assign(opt.arg);
+            break;
 
-            case OPT_IDX_LOG_FILE:
-                log_filename.assign(opt.arg);
-                break;
+        case OPT_IDX_LOG_FILE:
+            log_filename.assign(opt.arg);
+            break;
 
-            case OPT_IDX_CONFIG_FILE:
-                config_filename.assign(opt.arg);
-                break;
+        case OPT_IDX_CONFIG_FILE:
+            config_filename.assign(opt.arg);
+            break;
 
-            case OPT_IDX_OUTPUT_FILE:
-                output_filename.assign(opt.arg);
-                break;
+        case OPT_IDX_OUTPUT_FILE:
+            output_filename.assign(opt.arg);
+            break;
 
-            case OPT_IDX_USE_JACK:
-                use_jack = true;
-                break;
+        case OPT_IDX_USE_JACK:
+            use_jack = true;
+            break;
 
-            case OPT_IDX_CONNECT_PORTS:
-                connect_ports = true;
-                break;
+        case OPT_IDX_CONNECT_PORTS:
+            connect_ports = true;
+            break;
 
-            case OPT_IDX_JACK_CLIENT:
-                jack_client_name.assign(opt.arg);
-                break;
+        case OPT_IDX_JACK_CLIENT:
+            jack_client_name.assign(opt.arg);
+            break;
 
-            case OPT_IDX_JACK_SERVER:
-                jack_server_name.assign(opt.arg);
-                break;
+        case OPT_IDX_JACK_SERVER:
+            jack_server_name.assign(opt.arg);
+            break;
 
-            case OPT_IDX_USE_XENOMAI:
-                use_xenomai = true;
-                break;
+        case OPT_IDX_USE_XENOMAI:
+            use_xenomai = true;
+            break;
 
-            default:
-                SushiArg::print_error("Unhandled option '", opt, "' \n");
-                break;
+        default:
+            SushiArg::print_error("Unhandled option '", opt, "' \n");
+            break;
         }
     }
 
