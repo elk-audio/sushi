@@ -162,7 +162,7 @@ TEST_F(TestEngine, TestProcessorExist)
 
     /* Test by passing invalid names */
     ASSERT_FALSE(_module_under_test->_processor_exists("not_found"));
-    ASSERT_FALSE(_module_under_test->_processor_exists(0));
+    ASSERT_FALSE(_module_under_test->_processor_exists(0u));
 }
 
 TEST_F(TestEngine, TestCreateEmptyPluginChain)
