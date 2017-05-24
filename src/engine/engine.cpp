@@ -90,11 +90,8 @@ std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std:
 
 EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> processor, const std::string& str_id)
 {
-    auto existing = _processors_by_unique_name.find(str_id);
-    if (existing != _processors_by_unique_name.end())
+    if(_processor_exists(str_id))
     {
-        /*---------- TODO: If processor name exists, this deletes the processor*.
-        A better way is needed here. ----------*/
         MIND_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
@@ -200,14 +197,14 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(cons
     std::tie(status, id) = processor_node->second->parameter_id_from_name(parameter_name);
     if (status != ProcessorReturnCode::OK)
     {
-        return std::make_pair(EngineReturnStatus::INVALID_PARAMETER_UID, 0);
+        return std::make_pair(EngineReturnStatus::INVALID_PARAMETER_ID, 0);
     }
     return std::make_pair(EngineReturnStatus::OK, id);
 };
 
 std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(ObjectId uid)
 {
-    if (uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
+    if (!_processor_exists(uid))
     {
         return std::make_pair(EngineReturnStatus::INVALID_STOMPBOX_UID, std::string(""));
     }
@@ -268,7 +265,6 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Invalid plugin uid {} ", plugin_uid);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-
     instance->init(_sample_rate);
 
     /* TODO: Static cast isnt safe. Need mechanisim to denote processor type.*/
