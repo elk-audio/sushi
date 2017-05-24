@@ -74,6 +74,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/plugin_events_test.cpp
+               unittests/library/contiguous_read_fifo_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
                unittests/library/id_generator_test.cpp)
