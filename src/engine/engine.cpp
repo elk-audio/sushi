@@ -68,13 +68,10 @@ EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_ARGUMENTS;
     }
-    auto processor_node = _processors_by_unique_name.find(processor_id);
-    if (processor_node == _processors_by_unique_name.end())
+    if(!_processor_exists(processor_id))
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
-    }
-    /* We have already checked that the processor and parameter exist, so we can assume this will succeed */
-    _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
+    }   _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
     return EngineReturnStatus::OK;
 }
 
@@ -86,16 +83,13 @@ EngineReturnStatus AudioEngine::connect_midi_kb_data(int midi_port,
     {
         return EngineReturnStatus::INVALID_ARGUMENTS;
     }
-    auto processor_node = _processors_by_unique_name.find(chain_id);
-    if (processor_node == _processors_by_unique_name.end())
+    if(!_processor_exists(chain_id))
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    /* We have already checked that the processor exist, so we can assume this will succeed */
     _midi_dispatcher.connect_kb_to_track(midi_port, chain_id, midi_channel);
     return EngineReturnStatus::OK;
 }
-
 
 int AudioEngine::n_channels_in_chain(int chain)
 {
@@ -382,17 +376,6 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
                                                     const std::string& plugin_uid,
                                                     const std::string& plugin_name)
 {
-    EngineReturnStatus status;
-    if(chain_name.empty())
-    {
-        MIND_LOG_ERROR("Chain name is not specified");
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
-    }
-    if(plugin_uid.empty())
-    {
-        MIND_LOG_ERROR("Plugin UID is not specified");
-        return EngineReturnStatus::INVALID_STOMPBOX_UID;
-    }
     if(plugin_name.empty())
     {
         MIND_LOG_ERROR("Plugin name is not specified");
@@ -403,7 +386,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);
         return EngineReturnStatus::INVALID_STOMPBOX_NAME;
     }
-
+    EngineReturnStatus status;
     ObjectId chain_id;
     std::tie(status, chain_id) = processor_id_from_name(chain_name);
     if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
@@ -419,13 +402,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     }
 
     instance->init(_sample_rate);
-    /**
-        The following static cast assumes that the existing processor
-        is a PluginChain*. This isnt safe.
-        TODO:
-        - Find a way to denote the processor type.
-        Maybe in the base Processor class?
-    */
+
+    /* TODO: Static cast isnt safe. Need mechanisim to denote processor type.*/
     auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);
     chain->add(instance.get());
     status = _register_processor(std::move(instance), plugin_name);

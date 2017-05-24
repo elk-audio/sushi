@@ -158,15 +158,8 @@ int main(int argc, char* argv[])
     engine.set_midi_input_ports(1);
 
     sushi::jsonconfig::JsonConfigurator configurator(&engine);
-    sushi::jsonconfig::JsonConfigReturnStatus status_jsonconfig;
-    status_jsonconfig = configurator.load_chains(config_filename);
-    if(status_jsonconfig != sushi::jsonconfig::JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to parse Json config file and configure plugin chains");
-        std::exit(1);
-    }
-
-    engine.init_midi_from_json_array(config["midi"]);
+    configurator.load_chains(config_filename);
+    configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
