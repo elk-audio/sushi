@@ -35,7 +35,8 @@ EngineReturnStatus AudioEngine::connect_midi_cc_data(int midi_port,
     if(!_processor_exists(processor_id))
     {
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
-    }   _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
+    }
+    _midi_dispatcher.connect_cc_to_parameter(midi_port, processor_id, parameter, cc_no, min_range, max_range, midi_channel);
     return EngineReturnStatus::OK;
 }
 
