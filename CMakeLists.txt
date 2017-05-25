@@ -106,8 +106,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
                         src/library/event_pipe.h
-                        src/library/contiguous_read_fifo.h
                         src/library/vst2x_wrapper.h
+                        src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h
                         src/library/vst2x_plugin_loader.h
                         src/engine/engine.h
