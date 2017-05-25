@@ -16,11 +16,11 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp(const std::string& plugin_path)
     {
-        char* full_again_path = realpath("libagain.so", NULL);
-        _module_under_test = new Vst2xWrapper(full_again_path);
-        free(full_again_path);
+        char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
+        _module_under_test = new Vst2xWrapper(full_plugin_path);
+        free(full_plugin_path);
 
         auto ret = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -42,6 +42,7 @@ protected:
 
 TEST_F(TestVst2xWrapper, TestSetName)
 {
+    SetUp("libagain.so");
     EXPECT_EQ("Gain", _module_under_test->name());
     EXPECT_EQ("Gain", _module_under_test->label());
 }
@@ -49,6 +50,7 @@ TEST_F(TestVst2xWrapper, TestSetName)
 
 TEST_F(TestVst2xWrapper, TestSetChannels)
 {
+    SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 }
@@ -56,6 +58,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 
 TEST_F(TestVst2xWrapper, TestParameterInitialization)
 {
+    SetUp("libagain.so");
     EXPECT_EQ(1u, _module_under_test->_param_names_to_id.size());
     ProcessorReturnCode status;
     ObjectId id;
@@ -67,6 +70,7 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 {
+    SetUp("libagain.so");
     auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
     auto handle = _module_under_test->_plugin_handle;
@@ -76,6 +80,7 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 
 TEST_F(TestVst2xWrapper, TestProcess)
 {
+    SetUp("libagain.so");
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
 
@@ -87,6 +92,7 @@ TEST_F(TestVst2xWrapper, TestProcess)
 
 TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 {
+    SetUp("libagain.so");
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
     auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
