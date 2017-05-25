@@ -71,7 +71,7 @@ protected:
 //      so we can't test all host controls. Add more tests after preparing an ad-hoc
 //      test plugin.
 
-TEST_F(TestVst2xWrapper, TestSetName)
+TEST_F(TestVst2xWrapper, test_set_name)
 {
     SetUp("libagain.so");
     EXPECT_EQ("Gain", _module_under_test->name());
@@ -79,7 +79,7 @@ TEST_F(TestVst2xWrapper, TestSetName)
 }
 
 
-TEST_F(TestVst2xWrapper, TestSetChannels)
+TEST_F(TestVst2xWrapper, test_set_channels)
 {
     SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
@@ -87,7 +87,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 }
 
 
-TEST_F(TestVst2xWrapper, TestParameterInitialization)
+TEST_F(TestVst2xWrapper, test_parameter_initialization)
 {
     SetUp("libagain.so");
     EXPECT_EQ(1u, _module_under_test->_param_names_to_id.size());
@@ -99,7 +99,7 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 }
 
 
-TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
+TEST_F(TestVst2xWrapper, test_parameter_set_via_event)
 {
     SetUp("libagain.so");
     auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
@@ -109,11 +109,11 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 }
 
 
-TEST_F(TestVst2xWrapper, TestProcess)
+TEST_F(TestVst2xWrapper, test_process)
 {
     SetUp("libagain.so");
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -121,11 +121,11 @@ TEST_F(TestVst2xWrapper, TestProcess)
 }
 
 
-TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
+TEST_F(TestVst2xWrapper, test_processing_with_parameter_changes)
 {
     SetUp("libagain.so");
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
     auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
@@ -137,11 +137,11 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
     test_utils::assert_buffer_value(0.123f, out_buffer);
 }
 
-TEST_F(TestVst2xWrapper, TestMIDIEvents)
+TEST_F(TestVst2xWrapper, test_midi_events)
 {
     SetUp("libvstxsynth.so");
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
 
     _module_under_test->process_event(Event::make_note_on_event(0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);

@@ -23,7 +23,7 @@ protected:
     }
 };
 
-TEST_F(TestVst2xPluginLoader, TestLoadPLugin)
+TEST_F(TestVst2xPluginLoader, test_load_plugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
     char* full_again_path = realpath("libagain.so", NULL);
