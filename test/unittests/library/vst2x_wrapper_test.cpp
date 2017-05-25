@@ -9,6 +9,37 @@
 using namespace sushi;
 using namespace sushi::vst2;
 
+// Reference output signal from VstXSynth
+// in response to NoteON C4 (60), vel=127, default parameters
+static constexpr float VSTXSYNTH_EXPECTED_OUT[2][AUDIO_CHUNK_SIZE] = {
+        {
+                -0.29699999f, -0.29380956f, -0.29061913f, -0.28742871f, -0.28409326f, -0.28090283f,
+                -0.27771240f, -0.27437696f, -0.27118653f, -0.26799610f, -0.26466063f, -0.26147023f,
+                -0.25827980f, -0.25494432f, -0.25175390f, -0.24856347f, -0.24522804f, -0.24203759f,
+                -0.23884717f, -0.23551174f, -0.23232129f, -0.22913086f, -0.22579540f, -0.22260499f,
+                -0.21941455f, -0.21607910f, -0.21288869f, -0.20969824f, -0.20636280f, -0.20317237f,
+                -0.19998193f, -0.19664648f, -0.19345607f, -0.19026563f, -0.18693018f, -0.18373975f,
+                -0.18054931f, -0.17721386f, -0.17402345f, -0.17083301f, -0.16749756f, -0.16430713f,
+                -0.16111670f, -0.15792628f, -0.15459082f, -0.15140040f, -0.14820996f, -0.14487451f,
+                -0.14168409f, -0.13849366f, -0.13515820f, -0.13196778f, -0.12877734f, -0.12544189f,
+                -0.12225147f, -0.11906105f, -0.11572558f, -0.11253516f, -0.10934473f, -0.10600928f,
+                -0.10281885f, -0.09962842f, -0.09629297f, -0.09310254f
+        },
+        {
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
+                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, 0.29699999f, 0.29699999f,
+                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f,
+                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f,
+                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f
+        }
+};
+
 class TestVst2xWrapper : public ::testing::Test
 {
 protected:
@@ -104,5 +135,28 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.123f, out_buffer);
+}
+
+TEST_F(TestVst2xWrapper, TestMIDIEvents)
+{
+    SetUp("libvstxsynth.so");
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+
+    _module_under_test->process_event(Event::make_note_on_event(0, 0, 60, 1.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    for (int i=0; i<2; i++)
+    {
+        for (int j=0; j<AUDIO_CHUNK_SIZE; j++)
+        {
+            ASSERT_FLOAT_EQ(VSTXSYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j]);
+        }
+    }
+
+    // Send NoteOFF, VstXsynth immediately silence everything
+    _module_under_test->process_event(Event::make_note_off_event(0, 0, 60, 1.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(0.0f, out_buffer);
+
 }
 

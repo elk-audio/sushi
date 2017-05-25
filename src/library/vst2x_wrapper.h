@@ -9,6 +9,7 @@
 
 #include "library/processor.h"
 #include "library/vst2x_plugin_loader.h"
+#include "library/vst2x_midi_event_fifo.h"
 
 #include <map>
 
@@ -20,6 +21,7 @@ namespace vst2 {
 //      and because we have to rework that part anyway (it's not flexible in InternalPlugin
 //      as well
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = 2;
+constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
@@ -87,6 +89,7 @@ private:
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
+    Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;

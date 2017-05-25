@@ -150,6 +150,13 @@ void Vst2xWrapper::process_event(Event event)
     }
     break;
 
+    case EventType::NOTE_ON:
+    case EventType::NOTE_OFF:
+    case EventType::NOTE_AFTERTOUCH:
+    case EventType::WRAPPED_MIDI_EVENT:
+        _vst_midi_events_fifo.push(event);
+        break;
+
     default:
         MIND_LOG_INFO("Vst wrapper, plugin: {}, received unhandled event", name());
         break;
@@ -159,6 +166,8 @@ void Vst2xWrapper::process_event(Event event)
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
+    _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
+
     for (int i = 0; i < _current_input_channels; i++)
     {
         _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
