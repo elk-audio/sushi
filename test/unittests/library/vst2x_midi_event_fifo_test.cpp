@@ -22,7 +22,7 @@ protected:
         // Pre-fill queue
         for (int i=0; i<TEST_DATA_SIZE; i++)
         {
-            auto ev = Event::make_note_on_event(0, i, i, 1.0f);
+            auto ev = Event::make_note_on_event(0, i, 0, 1.0f);
             ASSERT_EQ(true, _module_under_test.push(ev));
         }
     }
@@ -100,4 +100,58 @@ TEST_F(TestVst2xMidiEventFIFO, test_flush_after_overflow)
         EXPECT_EQ(i, midi_ev->deltaFrames);
     }
 }
+
+TEST_F(TestVst2xMidiEventFIFO, test_noteon_creation)
+{
+    _module_under_test.flush();
+    auto ev = Event::make_note_on_event(0, 0, 60, 1.0f);
+    _module_under_test.push(ev);
+    auto vst_events = _module_under_test.flush();
+    auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
+
+    EXPECT_EQ(static_cast<char>(144), midi_ev->midiData[0]);
+    EXPECT_EQ(static_cast<char>(60), midi_ev->midiData[1]);
+    EXPECT_EQ(static_cast<char>(127), midi_ev->midiData[2]);
+}
+
+TEST_F(TestVst2xMidiEventFIFO, test_noteoff_creation)
+{
+    _module_under_test.flush();
+    auto ev = Event::make_note_off_event(0, 0, 72, 0.5f);
+    _module_under_test.push(ev);
+    auto vst_events = _module_under_test.flush();
+    auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
+
+    EXPECT_EQ(static_cast<char>(128), midi_ev->midiData[0]);
+    EXPECT_EQ(static_cast<char>(72), midi_ev->midiData[1]);
+    EXPECT_EQ(static_cast<char>(64), midi_ev->midiData[2]);
+}
+
+TEST_F(TestVst2xMidiEventFIFO, test_note_aftertouch_creation)
+{
+    _module_under_test.flush();
+    auto ev = Event::make_note_aftertouch_event(0, 0, 127, 0.0f);
+    _module_under_test.push(ev);
+    auto vst_events = _module_under_test.flush();
+    auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
+
+    EXPECT_EQ(static_cast<char>(160), midi_ev->midiData[0]);
+    EXPECT_EQ(static_cast<char>(127), midi_ev->midiData[1]);
+    EXPECT_EQ(static_cast<char>(0), midi_ev->midiData[2]);
+}
+
+TEST_F(TestVst2xMidiEventFIFO, test_wrapped_midi_creation)
+{
+    _module_under_test.flush();
+    auto ev = Event::make_wrapped_midi_event(0, 0, 176u, 21u, 64u);
+    _module_under_test.push(ev);
+    auto vst_events = _module_under_test.flush();
+    auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
+
+    EXPECT_EQ(static_cast<char>(176), midi_ev->midiData[0]);
+    EXPECT_EQ(static_cast<char>(21), midi_ev->midiData[1]);
+    EXPECT_EQ(static_cast<char>(64), midi_ev->midiData[2]);
+}
+
+
 
