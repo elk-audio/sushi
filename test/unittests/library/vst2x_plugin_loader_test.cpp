@@ -7,10 +7,10 @@ using namespace sushi::vst2;
 
 // Empty fixture as PluginLoader has only static methods so far
 
-class TestPluginLoader : public ::testing::Test
+class TestVst2xPluginLoader : public ::testing::Test
 {
 protected:
-    TestPluginLoader()
+    TestVst2xPluginLoader()
     {
     }
 
@@ -23,7 +23,7 @@ protected:
     }
 };
 
-TEST_F(TestPluginLoader, TestLoadPLugin)
+TEST_F(TestVst2xPluginLoader, TestLoadPLugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
     char* full_again_path = realpath("libagain.so", NULL);
