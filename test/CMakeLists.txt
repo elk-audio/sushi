@@ -20,6 +20,13 @@ set(AGAIN_SOURCES
         "${VST_SDK_PLUGIN_SOURCES}"
     )
 
+set(VSTXSYNTH_SOURCE_DIR "${VST_SDK_PATH}/public.sdk/samples/vst2.x/vstxsynth/source")
+set(VSTXSYNTH_SOURCES
+        "${VSTXSYNTH_SOURCE_DIR}/vstxsynth.cpp"
+        "${VSTXSYNTH_SOURCE_DIR}/vstxsynthproc.cpp"
+        "${VST_SDK_PLUGIN_SOURCES}"
+        )
+
 include_directories(${VST_SDK_PATH})
 
 add_library(again MODULE ${AGAIN_SOURCES})
@@ -27,6 +34,12 @@ add_library(again MODULE ${AGAIN_SOURCES})
 set_target_properties(again PROPERTIES
         COMPILE_FLAGS "-Wno-unused -Wno-multichar -Wno-write-strings -Wno-narrowing"
     )
+
+add_library(vstxsynth MODULE ${VSTXSYNTH_SOURCES})
+# Suppress VST SDK warnings
+set_target_properties(vstxsynth PROPERTIES
+        COMPILE_FLAGS "-Wno-unused -Wno-sequence-point -Wno-multichar -Wno-write-strings -Wno-narrowing"
+        )
 
 #####################################
 #  Unit Tests Targets               #
@@ -64,6 +77,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/plugin_events_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
+               unittests/library/vst2x_midi_event_fifo_test.cpp
                unittests/library/id_generator_test.cpp)
 
 if (${BUILD_WITH_JACK})
@@ -98,6 +112,7 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
+add_dependencies(unit_tests again vstxsynth)
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that
