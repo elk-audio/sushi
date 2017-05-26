@@ -6,6 +6,8 @@
 #ifndef SUSHI_XENOMAI_FRONTEND_H
 #define SUSHI_XENOMAI_FRONTEND_H
 
+#include <json/json.h>
+
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
 #include <string>
@@ -19,7 +21,6 @@
 #include <xenomai/init.h>
 #pragma GCC diagnostic pop
 
-#include <json/json.h>
 #include <sndfile.h>
 
 #include "base_audio_frontend.h"
