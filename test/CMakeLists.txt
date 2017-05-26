@@ -80,7 +80,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/vst2x_midi_event_fifo_test.cpp
                unittests/library/id_generator_test.cpp)
 
-if (${BUILD_WITH_JACK})
+if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
 
