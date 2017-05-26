@@ -6,9 +6,12 @@
 #ifndef SUSHI_PLUGIN_EVENTS_H
 #define SUSHI_PLUGIN_EVENTS_H
 
+#include <string>
 #include <cassert>
 #include <vector>
+
 #include "id_generator.h"
+#include "library/types.h"
 
 namespace sushi {
 
@@ -129,48 +132,44 @@ protected:
     float _value;
 };
 
+
 /**
  * @brief Baseclass for events that need to carry a larger payload of data.
  */
 class DataPayloadEvent : public BaseEvent
 {
 public:
-    DataPayloadEvent(EventType type, ObjectId processor, int offset, void* data) : BaseEvent(type, processor, offset),
-                                                                                   _data(data) {}
+    DataPayloadEvent(EventType type, ObjectId processor, int offset, BlobData data) : BaseEvent(type, processor, offset),
+                                                                                                  _data_size(data.size),
+                                                                                                  _data(data.data) {}
 
-    void* data() const {return _data;}
-
-    /**
-     * @brief Call to mark the event as handled. Data can not be accessed after this.
-     * TODO - Maybe data can be a shared pointer instead, a refcounter that automatically
-     * counts down when it goes out of scope?
-     */
-    void set_handled() {_handled = true;}
-
-    /**
-     * Returns true if the event is handled and the data is ok to delete.
-     * @return
-     */
-    bool handled() const {return _handled;}
+    BlobData value() const
+    {
+        return BlobData{_data_size, _data};
+    }
 
 protected:
-    void* _data;
-    bool _handled{false};
+    /* The members of BlobData are pulled apart and stored separately
+     * here because this enables us to pack the members efficiently using only
+     * self-aligning without having to resort to non-portable #pragmas or
+     * __attributes__  to keep the size of the event small */
+    int _data_size;
+    uint8_t* _data;
 };
 
 /**
  * @brief Class for string parameter changes
  */
-class StringParameterChangeEvent : public DataPayloadEvent
+class StringParameterChangeEvent : public BaseEvent
 {
 public:
     StringParameterChangeEvent(ObjectId processor,
                                int offset,
                                ObjectId param_id,
-                               std::string* value) : DataPayloadEvent(EventType::STRING_PARAMETER_CHANGE,
-                                                                      processor,
-                                                                      offset,
-                                                                      static_cast<void*>(value)),
+                               std::string* value) : BaseEvent(EventType::STRING_PARAMETER_CHANGE,
+                                                               processor,
+                                                               offset),
+                                                     _data(value),
                                                      _param_id(param_id) {}
 
     ObjectId param_id() const {return _param_id;}
@@ -178,8 +177,10 @@ public:
     std::string* value() const {return static_cast<std::string*>(_data);}
 
 protected:
+    std::string* _data;
     ObjectId _param_id;
 };
+
 
 /**
  * @brief Class for binarydata parameter changes
@@ -190,15 +191,13 @@ public:
     DataParameterChangeEvent(ObjectId processor,
                              int offset,
                              ObjectId param_id,
-                             void* value) : DataPayloadEvent(EventType::DATA_PARAMETER_CHANGE,
+                             BlobData value) : DataPayloadEvent(EventType::DATA_PARAMETER_CHANGE,
                                                              processor,
                                                              offset,
-                                                             static_cast<void*>(value)),
+                                                             value),
                                             _param_id(param_id) {}
 
     ObjectId param_id() const {return _param_id;}
-
-    char* value() const {return static_cast<char*>(_data);}
 
 protected:
     ObjectId _param_id;
@@ -292,7 +291,7 @@ public:
         return Event(typed_event);
     }
 
-    static Event make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, void* data)
+    static Event make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
     {
         DataParameterChangeEvent typed_event(target, offset, param_id, data);
         return Event(typed_event);
@@ -314,7 +313,6 @@ private:
         DataParameterChangeEvent    _data_parameter_change_event;
     };
 };
-
 
 static_assert(sizeof(Event) == MIND_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<Event>::value, "");

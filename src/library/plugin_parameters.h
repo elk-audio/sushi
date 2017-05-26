@@ -15,6 +15,7 @@
 
 #include "library/constants.h"
 #include "library/id_generator.h"
+#include "library/types.h"
 
 enum class StompBoxParameterType
 {
@@ -121,7 +122,7 @@ template <> const inline std::string ParameterFormatPolicy<std::string*>::format
 {
     return *value;
 }
-template <> const inline std::string ParameterFormatPolicy<char*>::format(char* /*value*/)
+template <> const inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/)
 {
     /* This parameter type is intended to transfer opaque binary data, and
      * consequently there is no format policy that would work. */
@@ -250,7 +251,57 @@ private:
     std::unique_ptr<T> _value;
 };
 
+/* Partial specialization for pointer type parameters */
+//template<typename T, StompBoxParameterType enumerated_type>
+template<>
+class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStompBoxParameter, private ParameterFormatPolicy<BlobData>
+{
+public:
+    StompBoxParameter(const std::string& name,
+                      const std::string& label,
+                      BlobData default_value) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA),
+                                                _value(default_value) {}
 
+    ~StompBoxParameter()
+    {
+        if (_value.data)
+            delete _value.data;
+    };
+
+    /**
+     * @brief Returns the parameter's current value.
+     */
+    BlobData value()
+    {
+        return _value;
+    }
+
+    void set(BlobData value)
+    {
+        _value = value;
+    }
+
+    /**
+     * @brief Tell the host to change the value of the parameter. This should be used
+     * instead of set() if the plugin itself wants to change the value of a parameter.
+     */
+    void set_asychronously(BlobData /*value*/)
+    {
+        // TODO - implement!
+    }
+
+    /**
+     * @brief Returns the parameter's value as a string, i.e. "1.25".
+     * TODO - Think about which value we actually want here, raw or processed!
+     */
+    const std::string as_string() override
+    {
+        return ParameterFormatPolicy<BlobData>::format(_value);
+    }
+
+private:
+    BlobData _value;
+};
 
 /*
  * The templated forms are not intended to be accessed directly.
@@ -264,10 +315,8 @@ typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
 typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
 typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
-typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxParameter;
-/* Eventually we might want to wrap the pointer in a struct
- * with size and data pointer instead of a raw char pointer */
-typedef StompBoxParameter<char*, StompBoxParameterType::DATA> DataStompBoxParameter;
+typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxProperty;
+typedef StompBoxParameter<BlobData, StompBoxParameterType::DATA> DataStompBoxProperty;
 
 
 /**

@@ -47,7 +47,7 @@ private:
     FloatStompBoxParameter* _decay_parameter;
     FloatStompBoxParameter* _sustain_parameter;
     FloatStompBoxParameter* _release_parameter;
-    StringStompBoxParameter* _sample_file_parameter;
+    StringStompBoxProperty* _sample_file_parameter;
 
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };

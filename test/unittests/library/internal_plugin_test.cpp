@@ -71,12 +71,12 @@ TEST_F(InternalPluginTest, TestParameterHandlingViaEvents)
     test_param = _module_under_test->register_bool_parameter("param_3", "Param 3", true);
     EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
 
-    test_param = _module_under_test->register_string_parameter("param_4", "Param 4", "4");
+    test_param = _module_under_test->register_string_property("param_4", "Param 4", "4");
     ASSERT_EQ(StompBoxParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
     std::string* str_value = new std::string("5");
     Event event_4 = Event::make_string_parameter_change_event(0, 0, 3, str_value);
     _module_under_test->process_event(event_4);
-    EXPECT_EQ("5", *static_cast<StringStompBoxParameter*>(_module_under_test->get_parameter("param_4"))->value());
+    EXPECT_EQ("5", *static_cast<StringStompBoxProperty*>(_module_under_test->get_parameter("param_4"))->value());
 
     //test that an unknown parameter returns a null pointer
     EXPECT_EQ(nullptr, _module_under_test->get_parameter("not_registered"));

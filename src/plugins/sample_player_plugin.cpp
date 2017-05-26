@@ -19,7 +19,7 @@ SamplePlayerPlugin::SamplePlayerPlugin()
     _decay_parameter   = register_float_parameter("decay", "Decay", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
     _sustain_parameter = register_float_parameter("sustain", "Sustain", 1.0f, new FloatParameterPreProcessor(0.0f, 1.0f));
     _release_parameter = register_float_parameter("release", "Release", 0.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
-    _sample_file_parameter = register_string_parameter("sample_file", "Sample File", SAMPLE_FILE);
+    _sample_file_parameter = register_string_property("sample_file", "Sample File", SAMPLE_FILE);
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter &&_sample_file_parameter);
 }
 
