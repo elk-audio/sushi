@@ -12,33 +12,9 @@
 #include "engine/engine.cpp"
 #include "library/mind_allocator.cpp"
 
-using ::testing::internal::posix::GetEnv;
-
-
 constexpr unsigned int SAMPLE_RATE = 44000;
 using namespace sushi;
 using namespace sushi::engine;
-
-Json::Value read_json_config(const std::string& file_name)
-{
-    char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
-    if (test_data_dir == nullptr)
-    {
-        EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
-    }
-    std::string test_config_file(test_data_dir);
-    test_config_file.append("/" + file_name);
-
-    std::ifstream file(test_config_file);
-    Json::Value config;
-    Json::Reader reader;
-    bool parse_ok = reader.parse(file, config, false);
-    if (!parse_ok)
-    {
-        EXPECT_TRUE(false) << "Error parsing JSON config file\n";
-    }
-    return config;
-};
 
 /*
 * Engine tests
@@ -87,86 +63,74 @@ TEST_F(TestEngine, TestProcess)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(TestEngine, TestInitFromJSON)
-{
-    Json::Value config = read_json_config("config.json");
-    ASSERT_FALSE(config.empty());
-    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
-
-    EXPECT_EQ(2, _module_under_test->_audio_graph[0]->input_channels());
-    EXPECT_EQ(2, _module_under_test->_audio_graph[0]->output_channels());
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->input_channels());
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->output_channels());
-
-    auto chain_l = &_module_under_test->_audio_graph[0]->_chain;
-    auto chain_r = &_module_under_test->_audio_graph[1]->_chain;
-
-    ASSERT_EQ(chain_l->size(), 3u);
-
-    ASSERT_EQ(chain_r->size(), 3u);
-    EXPECT_EQ(1, _module_under_test->_audio_graph[1]->input_channels());
-
-    /* TODO - Is this casting a good idea */
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(0))->name(), "passthrough_0_l");
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(1))->name(), "gain_0_l");
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_l->at(2))->name(), "equalizer_0_l");
-
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(0))->name(), "gain_0_r");
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(1))->name(), "passthrough_0_r");
-    ASSERT_EQ(static_cast<InternalPlugin*>(chain_r->at(2))->name(), "gain_1_r");
-}
-
-TEST_F(TestEngine, TestInitMidiFromJSON)
-{
-    Json::Value config = read_json_config("config.json");
-    ASSERT_FALSE(config.empty());
-    _module_under_test->set_midi_input_ports(1);
-    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
-    status = _module_under_test->init_midi_from_json_array(config["midi"]);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
-
-    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._kb_routes.size());
-    ASSERT_EQ(1u, _module_under_test->_midi_dispatcher._cc_routes.size());
-}
-
 TEST_F(TestEngine, TestUidNameMapping)
 {
-    Json::Value config = read_json_config("config.json");
-    ASSERT_FALSE(config.empty());
-    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
+    _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->add_plugin_to_chain("left", "sushi.testing.equalizer", "equalizer_0_l");
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     ObjectId id;
-    std::tie(status, id) = _module_under_test->processor_id_from_name("gain_0_l");
+    std::tie(status, id) = _module_under_test->processor_id_from_name("equalizer_0_l");
     ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_TRUE(_module_under_test->_processor_exists(id));
     std::string name;
     std::tie(status, name) = _module_under_test->processor_name_from_id(id);
+    ASSERT_TRUE(_module_under_test->_processor_exists(name));
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ("gain_0_l", name);
+    ASSERT_EQ("equalizer_0_l", name);
 
     /* Test with name/id that doesn't match any processors */
     std::tie(status, id) = _module_under_test->processor_id_from_name("not_found");
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
     std::tie(status, name) = _module_under_test->processor_name_from_id(123456);
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
-}
 
-TEST_F(TestEngine, TestParameterLookup)
-{
-    Json::Value config = read_json_config("config.json");
-    ASSERT_FALSE(config.empty());
-    EngineReturnStatus status = _module_under_test->init_chains_from_json_array(config["stompbox_chains"]);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
-
-    ObjectId id;
+    /* Test Parameter Lookup */
     std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "q");
     ASSERT_EQ(EngineReturnStatus::OK, status);
-
     std::tie(status, id) = _module_under_test->parameter_id_from_name("not_found", "gain");
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
+    std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "not_found");
+    ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER_ID, status);
+}
 
-    std::tie(status, id) = _module_under_test->parameter_id_from_name("gain_0_l", "not_found");
-    ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER_UID, status);
+TEST_F(TestEngine, TestCreateEmptyPluginChain)
+{
+    auto status = _module_under_test->create_plugin_chain("left",2);
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_TRUE(_module_under_test->_processor_exists("left"));
+    ASSERT_EQ(_module_under_test->_audio_graph.size(),1u);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->name(),"left");
+
+    /* Invalid name */
+    status = _module_under_test->create_plugin_chain("left",1);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    status = _module_under_test->create_plugin_chain("",1);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+
+    /* Invalid number of channels */
+    status = _module_under_test->create_plugin_chain("left",3);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
+}
+
+TEST_F(TestEngine, TestAddPlugin)
+{
+    _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->add_plugin_to_chain("left","sushi.testing.passthrough","passthrough_0_l");
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    status = _module_under_test->add_plugin_to_chain("left","sushi.testing.gain","gain_0_r");
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+
+    ASSERT_TRUE(_module_under_test->_processor_exists("passthrough_0_l"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2u);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"passthrough_0_l");
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"gain_0_r");
+
+    status = _module_under_test->add_plugin_to_chain("not_found","sushi.testing.passthrough","dummyname");
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    status = _module_under_test->add_plugin_to_chain("left","sushi.testing.passthrough","");
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_NAME);
+    status = _module_under_test->add_plugin_to_chain("left","not_found","dummyname");
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);
 }

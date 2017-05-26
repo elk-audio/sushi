@@ -13,6 +13,7 @@
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
+#include "engine/json_configurator.h"
 #include "audio_frontends/xenomai_frontend.h"
 
 
@@ -155,9 +156,10 @@ int main(int argc, char* argv[])
     engine.set_audio_input_channels(2);
     engine.set_audio_output_channels(2);
     engine.set_midi_input_ports(1);
-    
-    engine.init_chains_from_json_array(config["stompbox_chains"]);
-    engine.init_midi_from_json_array(config["midi"]);
+
+    sushi::jsonconfig::JsonConfigurator configurator(&engine);
+    configurator.load_chains(config_filename);
+    configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;

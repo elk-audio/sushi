@@ -14,7 +14,6 @@
 #include <utility>
 
 #include "EASTL/vector.h"
-#include <json/json.h>
 
 #include "plugin_chain.h"
 #include "library/sample_buffer.h"
@@ -36,8 +35,9 @@ enum class EngineReturnStatus
     OK,
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
-    INVALID_PARAMETER_UID,
-    INVALID_STOMPBOX_CHAIN,
+    INVALID_PARAMETER_ID,
+    INVALID_STOMPBOX_NAME,
+    INVALID_PLUGIN_CHAIN,
     INVALID_ARGUMENTS
 };
 
@@ -117,7 +117,6 @@ public:
         return EngineReturnStatus::OK;
     }
 
-
     virtual int n_channels_in_chain(int /*chain*/)
     {
         return 2;
@@ -144,6 +143,18 @@ public:
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
+
+    virtual EngineReturnStatus create_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
+                                                   const std::string& /*uid*/,
+                                                   const std::string& /*name*/)
+    {
+        return EngineReturnStatus::OK;
+    }
 
 protected:
     int _sample_rate;
@@ -187,23 +198,6 @@ public:
      */
     int n_channels_in_chain(int chain) override;
 
-    /**
-     * @brief Statically initialize engine and stompbox processing chains from definition in a JSON file
-     * @param stompboxes_defs path to configuration file
-     * @return EngineInitStatus::OK in case of success,
-     *         different error code otherwise
-     */
-    EngineReturnStatus init_chains_from_json_array(const Json::Value &chains);
-
-    /**
-     * @brief Statically initialize midi connetions to chains and midi cc mappings to parameters.
-     * @param Path to configuration file
-     * @return EngineInitStatus::OK in case of success,
-     *         different error code otherwise
-     */
-    EngineReturnStatus init_midi_from_json_array(const Json::Value &connections_def);
-
-
     void process_midi(int input, int offset, const uint8_t* data, size_t size) override
     {
         _midi_dispatcher.process_midi(input, offset, data, size);
@@ -236,6 +230,24 @@ public:
      */
     std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
 
+    /**
+     * @brief Creates an empty plugin chain owned by the engine.
+     * @param chain_id The unique id of the chain to be created.
+     * @param chain_channel_count The number of channels in the plugin chain.
+     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
+
+    /**
+     * @brief Adds a plugin to a chain.
+     * @param chain_id The unique id of the chain to be created.
+     * @param uid The unique id of the plugin.
+     * @param uid The name of the plugin
+     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus add_plugin_to_chain(const std::string& chain_id, 
+                                           const std::string& uid,
+                                           const std::string& name) override;
 
 protected:
     std::vector<PluginChain*> _audio_graph;
@@ -249,19 +261,25 @@ private:
     std::unique_ptr<Processor> _make_stompbox_from_unique_id(const std::string &uid);
 
     /**
-     * @brief Instantiate plugins and chain from a JSON chain definition.
-     * @param chain_def JSON node with list of stompboxes for this chain
-     * @return EngineInitStatus::OK if all plugins in the definitions are instantiated correctly,
-     *         different error code otherwise
-     */
-    EngineReturnStatus _fill_chain_from_json_definition(const Json::Value& stompbox_def);
-
-    /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
     EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
+
+    /**
+     * @brief Checks whether a processor exists in the engine.
+     * @param processor_name The unique name of the processor.
+     * @return Returns true if exists, false if it does not.
+     */
+    bool _processor_exists(const std::string& processor_name);
+
+    /**
+     * @brief Checks whether a processor exists in the engine.
+     * @param uid The unique id of the processor.
+     * @return Returns true if exists, false if it does not.
+     */
+    bool _processor_exists(ObjectId uid);
 
     // Owns all processors, including plugin chains
     std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
@@ -271,15 +289,6 @@ private:
     midi_dispatcher::MidiDispatcher _midi_dispatcher{this};
 };
 
-/**
- * @brief Freestanding function to handle stereo/mono setup from json.
- */
-EngineReturnStatus set_up_channel_config(PluginChain& chain, const Json::Value& mode);
-
-/**
- * @brief Freestanding helper function.
- */
-int get_midi_channel_from_json(const Json::Value& value);
 } // namespace engine
 } // namespace sushi
 #endif //SUSHI_ENGINE_H
