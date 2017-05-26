@@ -84,10 +84,8 @@ TEST_F(TestEngine, TestUidNameMapping)
     /* Test with name/id that doesn't match any processors */
     std::tie(status, id) = _module_under_test->processor_id_from_name("not_found");
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
-    ASSERT_FALSE(_module_under_test->_processor_exists(id));
     std::tie(status, name) = _module_under_test->processor_name_from_id(123456);
     ASSERT_EQ(EngineReturnStatus::INVALID_STOMPBOX_UID, status);
-    ASSERT_FALSE(_module_under_test->_processor_exists(name));
 
     /* Test Parameter Lookup */
     std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "q");
