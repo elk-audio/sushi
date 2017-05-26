@@ -112,6 +112,7 @@ TEST_F(TestJsonConfigurator, TestParseFile)
     _status = _configurator->_parse_file(_path, _config);
     ASSERT_EQ(_status, JsonConfigReturnStatus::OK);
     ASSERT_TRUE(_config.isMember("stompbox_chains"));
+    ASSERT_TRUE(_config.isMember("midi"));
     ASSERT_TRUE(_config.isMember("events"));
 
     /* Test Unsuccessful parsing of file */
@@ -124,27 +125,27 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     /* Create plugin chain without stompboxes */
     Json::Value plugin_chain = Json::Value::null;
     plugin_chain["mode"] = "mono";
-    plugin_chain["id"] = "chain_without_stomp";
+    plugin_chain["name"] = "chain_without_stomp";
     plugin_chain["stompboxes"] = Json::arrayValue;
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
     /* Similar Plugin chain but with same chain id */
     plugin_chain["mode"] = "stereo";
-    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_CHAIN_ID);
+    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
 
     /* Create valid plugin chain with valid stompboxes */
-    plugin_chain["id"] = "chain_with_stomp";
+    plugin_chain["name"] = "chain_with_stomp";
     auto& test_stompbox = plugin_chain["stompboxes"];
-    test_stompbox[0]["id"] = "valid_stomp_name";
+    test_stompbox[0]["stompbox_name"] = "valid_stomp_name";
     test_stompbox[0]["stompbox_uid"] = "sushi.testing.gain";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
 
     /* test with stompbox having Invalid UID or existing name */
-    plugin_chain["id"] = "chain_invalid_stompuid";
-    test_stompbox[0]["id"] = "invalid_stomp";
+    plugin_chain["name"] = "chain_invalid_stompuid";
+    test_stompbox[0]["stompbox_name"] = "invalid_stomp";
     test_stompbox[0]["stompbox_uid"] = "wrong_uid";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_STOMPBOX_UID);
-    plugin_chain["id"] = "chain_invalid_stompname";
-    test_stompbox[0]["id"] = "valid_stomp_name";
+    plugin_chain["name"] = "chain_invalid_stompname";
+    test_stompbox[0]["stompbox_name"] = "valid_stomp_name";
     test_stompbox[0]["stompbox_uid"] = "sushi.testing.gain";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_STOMPBOX_NAME);
 }
@@ -165,28 +166,23 @@ TEST_F(TestJsonConfigurator, TestInvalidPluginChainDef)
     /* Define new key "stombox_chains" as null value so it is empty */
     _config["stompbox_chains"] = Json::Value::null;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
-    /* Assign key "stompbox_chains" as empty array */
     _config["stompbox_chains"] = Json::arrayValue;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
 
-    /* Create Plugin chain array with dummy value but no key "mode" */
+    /* Create Plugin chain array with dummy value */
     auto& plugin_chain = _config["stompbox_chains"];
     plugin_chain[0]["dummy"] = "dummy";
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_MODE);
+    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
+    plugin_chain[0]["name"] = Json::Value::null;
+    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
+    plugin_chain[0]["name"] = "chain_name";
 
     /* Create key "mode" in "stompbox_chains" array, but defined as empty value */
     plugin_chain[0]["mode"] = Json::Value::null;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_MODE);
-    /* Redefine mode as "monno", instead of "mono" */
     plugin_chain[0]["mode"] = "monno";
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_MODE);
-
-    /* Key "Id" is not defined */
     plugin_chain[0]["mode"] = "mono";
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_ID);
-    /* Define key "ID" but as empty */
-    plugin_chain[0]["id"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_ID);
 }
 
 TEST_F(TestJsonConfigurator, TestStompboxDef)
@@ -194,7 +190,7 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
     _config["stompbox_chains"] = Json::arrayValue;
     auto& plugin_chain = _config["stompbox_chains"];
     plugin_chain[0]["mode"] = "mono";
-    plugin_chain[0]["id"] = "chain_name";
+    plugin_chain[0]["name"] = "chain_name";
 
     /* Test for case Stompboxes are not defined in the plugin chain*/
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
@@ -208,7 +204,7 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
 
     /* Valid stompboxes in plugin chain */
     Json::Value test_stompbox = Json::arrayValue;
-    test_stompbox[0]["id"] = "test_id";
+    test_stompbox[0]["stompbox_name"] = "test_id";
     test_stompbox[0]["stompbox_uid"] = "test_uid";
     plugin_chain[0]["stompboxes"] = test_stompbox;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
@@ -226,7 +222,7 @@ TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_PORT);
     chain_connections[0]["port"] = 0;
 
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_CHAIN_ID);
+    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
     chain_connections[0]["chain"] = "left";
 
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_CHANNEL);

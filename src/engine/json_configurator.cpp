@@ -109,18 +109,18 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
     {
         num_channels = 2;
     }
-    auto chain_name = chain_def["id"].asString();
+    auto chain_name = chain_def["name"].asString();
     auto status = _engine->create_plugin_chain(chain_name, num_channels);
     if(status != EngineReturnStatus::OK)
     {
         MIND_LOG_ERROR("Plugin Chain Name {} in JSON config file already exists in engine", chain_name);
-        return JsonConfigReturnStatus::INVALID_CHAIN_ID;
+        return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
     }
 
     for(const Json::Value &def : chain_def["stompboxes"])
     {
         auto stompbox_uid = def["stompbox_uid"].asString();
-        auto stompbox_name = def["id"].asString();
+        auto stompbox_name = def["stompbox_name"].asString();
         status = _engine->add_plugin_to_chain(chain_name, stompbox_uid, stompbox_name);
         if(status != EngineReturnStatus::OK)
         {
@@ -134,7 +134,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         }
     }
 
-    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_def["id"].asString());
+    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_def["name"].asString());
     return JsonConfigReturnStatus::OK;
 }
 
@@ -164,9 +164,16 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
     /* Validate JSON scheme for each plugin chain defined */
     for (const auto& chain : config["stompbox_chains"])
     {
+        if(!chain["name"].isString())
+        {
+            MIND_LOG_ERROR("\"name\" (type:string) for plugin "
+                                   "chain is not defined in JSON config file");
+            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+        }
         if(!chain["mode"].isString())
         {
-            MIND_LOG_ERROR("\"Chain mode\" (type:string) for plugin chains is not defined in JSON config file");
+            MIND_LOG_ERROR("\"mode\" (type:string) for plugin chain {} "
+                                   "is not defined in JSON config file", chain["name"].asString());
             return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
         }
         auto mode = chain["mode"].asString();
@@ -176,15 +183,10 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
                                    "in Json config file.", mode);
             return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
         }
-        if(!chain["id"].isString())
-        {
-            MIND_LOG_ERROR("\"Chain ID\" (type:string) for plugin chains is not defined in JSON config file");
-            return JsonConfigReturnStatus::INVALID_CHAIN_ID;
-        }
         if(!chain.isMember("stompboxes") || !chain["stompboxes"].isArray())
         {
-            MIND_LOG_ERROR("Invalid stompbox definition for plugin chains "
-                                   "\"{}\" in JSON config file", chain["id"].asString());
+            MIND_LOG_ERROR("\"stompboxes\" is not defined for plugin chain "
+                                   "\"{}\" in JSON config file", chain["name"].asString());
             return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
         }
         if(!chain["stompboxes"].empty())
@@ -194,20 +196,20 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
                 if(!def["stompbox_uid"].isString())
                 {
                     MIND_LOG_ERROR("\"stompbox_uid\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["id"].asString());
+                                           "\"{}\" in JSON config file", chain["name"].asString());
                     return  JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
                 }
-                if(!def["id"].isString())
+                if(!def["stompbox_name"].isString())
                 {
-                    MIND_LOG_ERROR("\"stompbox_id\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["id"].asString());
+                    MIND_LOG_ERROR("\"stompbox_name\" (type:string) is not defined for plugin chain "
+                                           "\"{}\" in JSON config file", chain["name"].asString());
                     return  JsonConfigReturnStatus::INVALID_STOMPBOX_NAME;
                 }
             }
         }
         else
         {
-            MIND_LOG_DEBUG("Plugin chain {} has empty stompbox chain.", chain["id"].asString());
+            MIND_LOG_DEBUG("Plugin chain {} has empty stompbox chain.", chain["name"].asString());
         }
     }
     MIND_LOG_DEBUG("Plugin chains definition in Json Config file follow valid schema.");
@@ -263,7 +265,7 @@ JsonConfigReturnStatus JsonConfigurator::_validate_midi_chain_connection_def(con
         if(!con["chain"].isString())
         {
             MIND_LOG_ERROR("\"Chain Id\" (type:string) for midi chain connection is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_CHAIN_ID;
+            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
         if(!con["channel"].isInt() && !con["channel"].isString())
         {

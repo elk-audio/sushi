@@ -4,38 +4,38 @@
     },
     "stompbox_chains" : [
         {
-            "id" : "left",
+            "name" : "left",
             "mode" : "stereo",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "passthrough_0_l"
+                    "stompbox_name" : "passthrough_0_l"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "gain_0_l"
+                    "stompbox_name" : "gain_0_l"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.equalizer",
-                    "id" : "equalizer_0_l"
+                    "stompbox_name" : "equalizer_0_l"
                 }
             ]
         },
         {
-            "id" : "right",
+            "name" : "right",
             "mode" : "mono",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "gain_0_r"
+                    "stompbox_name" : "gain_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "id" : "passthrough_0_r"
+                    "stompbox_name" : "passthrough_0_r"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "id" : "gain_1_r"
+                    "stompbox_name" : "gain_1_r"
                 }
             ]
         }
