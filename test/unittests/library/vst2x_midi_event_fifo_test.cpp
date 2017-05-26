@@ -60,12 +60,12 @@ TEST_F(TestVst2xMidiEventFIFO, test_overflow)
     for (int i=TEST_DATA_SIZE; i<TEST_FIFO_CAPACITY; i++)
     {
         auto ev = Event::make_note_on_event(0, i, 0, 1.0f);
-        ASSERT_EQ(true, _module_under_test.push(ev));
+        ASSERT_TRUE(_module_under_test.push(ev));
     }
     for (int i=0; i<TEST_DATA_SIZE; i++)
     {
         auto ev = Event::make_note_on_event(0, overflow_offset+i, 0, 1.0f);
-        ASSERT_EQ(false, _module_under_test.push(ev));
+        ASSERT_FALSE(_module_under_test.push(ev));
     }
     auto vst_events = _module_under_test.flush();
     ASSERT_EQ(TEST_FIFO_CAPACITY, vst_events->numEvents);
