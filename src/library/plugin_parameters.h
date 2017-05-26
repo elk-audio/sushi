@@ -50,7 +50,7 @@ public:
      * @brief Returns the parameters value as a formatted string
      * TODO: Ponder over if we want units included here or as a separate string
      */
-    virtual const std::string as_string() { return "";} //Needs to be implemented, otherwise no vtable will be generated
+    virtual std::string as_string() const { return "";} //Needs to be implemented, otherwise no vtable will be generated
 
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
@@ -108,21 +108,21 @@ template<typename T>
 class ParameterFormatPolicy
 {
 protected:
-    const std::string format(T value) {return std::to_string(value);}
+    std::string format(const T value) const {return std::to_string(value);}
 };
 
 /*
  * The format() function can then be specialized for types that need special handling.
  */
-template <> const inline std::string ParameterFormatPolicy<bool>::format(bool value)
+template <> inline std::string ParameterFormatPolicy<bool>::format(bool value) const
 {
     return value? "True": "False";
 }
-template <> const inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value)
+template <> inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value) const
 {
     return *value;
 }
-template <> const inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/)
+template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/) const
 {
     /* This parameter type is intended to transfer opaque binary data, and
      * consequently there is no format policy that would work. */
@@ -155,7 +155,7 @@ public:
     /**
      * @brief Returns the parameter's current value.
      */
-    T value()
+    T value() const
     {
         return _value;
     }
@@ -163,7 +163,7 @@ public:
     /**
      * @brief Returns the parameter's unprocessed value.
      */
-    T raw_value()
+    T raw_value() const
     {
         return _raw_value;
     }
@@ -191,7 +191,7 @@ public:
      * @brief Returns the parameter's value as a string, i.e. "1.25".
      * TODO - Think about which value we actually want here, raw or processed!
      */
-    const std::string as_string() override
+    std::string as_string() const override
     {
         return ParameterFormatPolicy<T>::format(_raw_value);
     }
@@ -217,7 +217,7 @@ public:
     /**
      * @brief Returns the parameter's current value.
      */
-    T * value()
+    T * value() const
     {
         return _value.get();
     }
@@ -242,7 +242,7 @@ public:
      * @brief Returns the parameter's value as a string, i.e. "1.25".
      * TODO - Think about which value we actually want here, raw or processed!
      */
-    const std::string as_string() override
+    std::string as_string() const override
     {
         return ParameterFormatPolicy<T *>::format(_value.get());
     }
@@ -271,7 +271,7 @@ public:
     /**
      * @brief Returns the parameter's current value.
      */
-    BlobData value()
+    BlobData value() const
     {
         return _value;
     }
@@ -294,7 +294,7 @@ public:
      * @brief Returns the parameter's value as a string, i.e. "1.25".
      * TODO - Think about which value we actually want here, raw or processed!
      */
-    const std::string as_string() override
+    std::string as_string() const override
     {
         return ParameterFormatPolicy<BlobData>::format(_value);
     }
