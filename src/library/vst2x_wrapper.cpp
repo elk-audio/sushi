@@ -154,7 +154,10 @@ void Vst2xWrapper::process_event(Event event)
     case EventType::NOTE_OFF:
     case EventType::NOTE_AFTERTOUCH:
     case EventType::WRAPPED_MIDI_EVENT:
-        _vst_midi_events_fifo.push(event);
+        if (!_vst_midi_events_fifo.push(event))
+        {
+            MIND_LOG_WARNING("Vst wrapper, plugin: {}, MIDI queue Overflow!", name());
+        }
         break;
 
     default:
