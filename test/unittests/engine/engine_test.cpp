@@ -12,8 +12,6 @@
 #include "engine/engine.cpp"
 #include "library/mind_allocator.cpp"
 
-using ::testing::internal::posix::GetEnv;
-
 constexpr unsigned int SAMPLE_RATE = 44000;
 using namespace sushi;
 using namespace sushi::engine;
