@@ -24,7 +24,7 @@ namespace sushi {
             OK,
             INVALID_CHAIN_FORMAT,
             INVALID_CHAIN_MODE,
-            INVALID_CHAIN_ID,
+            INVALID_CHAIN_NAME,
             INVALID_STOMPBOX_FORMAT,
             INVALID_STOMPBOX_UID,
             INVALID_PARAMETER_UID,
