@@ -65,7 +65,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
             }
             MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
                                    "chain connection in Json config file.", con["chain"].asString());
-            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+          return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
     }
 

@@ -178,7 +178,7 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
 
     /**
      * @brief Creates an empty plugin chain owned by the engine.
