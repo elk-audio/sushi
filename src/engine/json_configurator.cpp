@@ -7,6 +7,7 @@ namespace sushi {
 namespace jsonconfig {
 
 using namespace engine;
+using namespace midi_dispatcher;
 
 MIND_GET_LOGGER;
 
@@ -51,29 +52,49 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
     const Json::Value& midi = config["midi"];
     for (const auto& con : midi["chain_connections"])
     {
-        auto res = _engine->connect_midi_kb_data(con["port"].asInt(),
-                                                 con["chain"].asString(),
-                                                 _get_midi_channel(con["channel"]));
-        if (res != EngineReturnStatus::OK)
+        auto res = _midi_dispatcher->connect_kb_to_track(con["port"].asInt(),
+                                                         con["chain"].asString(),
+                                                         _get_midi_channel(con["channel"]));
+        if (res != MidiDispatcherStatus::OK)
         {
-            MIND_LOG_ERROR("Error {} in setting up midi connections to chain {}.", (int)res, con["chain"].asString());
-            return JsonConfigReturnStatus::INVALID_MIDI_CHAIN_CON;
+            if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+            {
+                MIND_LOG_ERROR("Invalid \"port\" (type:int) specified for midi "
+                                       "channel connections in Json Config file.");
+                return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+            }
+            MIND_LOG_ERROR("Invalid \"chain\" (type:string) for midi "
+                                   "chain connection in Json config file.");
+            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
     }
 
     for (const auto& cc_map : midi["cc_mappings"])
     {
-        auto res = _engine->connect_midi_cc_data(cc_map["port"].asInt(),
-                                                 cc_map["cc_number"].asInt(),
-                                                 cc_map["processor"].asString(),
-                                                 cc_map["parameter"].asString(),
-                                                 cc_map["min_range"].asFloat(),
-                                                 cc_map["max_range"].asFloat(),
-                                                 _get_midi_channel(cc_map["channel"]));
-        if (res != EngineReturnStatus::OK)
+        auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].asInt(),
+                                                             cc_map["processor"].asString(),
+                                                             cc_map["parameter"].asString(),
+                                                             cc_map["cc_number"].asInt(),
+                                                             cc_map["min_range"].asFloat(),
+                                                             cc_map["max_range"].asFloat(),
+                                                             _get_midi_channel(cc_map["channel"]));
+        if (res != MidiDispatcherStatus::OK)
         {
-            MIND_LOG_ERROR("Error {} in setting upp midi cc mappings for {}.", (int)res, cc_map["processor"].asString());
-            return JsonConfigReturnStatus::INVALID_MIDI_CC_MAP;
+            if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+            {
+                MIND_LOG_ERROR("Invalid \"port\" (type:int) specified "
+                                       "for midi cc mappings in Json Config file.");
+                return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+            }
+            if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
+            {
+                MIND_LOG_ERROR("Invalid \"processor\" (type:string) specified "
+                                       "for midi cc mappings in Json Config file.");
+                return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+            }
+            MIND_LOG_ERROR("Invalid \"parameter\" (type:string) specified "
+                                   "for midi cc mappings in Json Config file.");
+            return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
     }
     return JsonConfigReturnStatus::OK;
@@ -259,30 +280,33 @@ JsonConfigReturnStatus JsonConfigurator::_validate_midi_chain_connection_def(con
     {
         if(!con["port"].isInt())
         {
-            MIND_LOG_ERROR("\"Port\" (type:int) for midi chain connection is not defined in Json config file.");
+            MIND_LOG_ERROR("\"port\" (type:int) for midi "
+                                   "chain connection is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_PORT;
         }
         if(!con["chain"].isString())
         {
-            MIND_LOG_ERROR("\"Chain Id\" (type:string) for midi chain connection is not defined in Json config file.");
+            MIND_LOG_ERROR("\"chain\" (type:string) for midi "
+                                   "chain connection is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
         if(!con["channel"].isInt() && !con["channel"].isString())
         {
-            MIND_LOG_ERROR("\"Midi Channel\" (type:string or int) for midi chain connection is not defined in Json config file.");
+            MIND_LOG_ERROR("\"channel\" (type:string or int) for midi "
+                                   "chain connection is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
         }
         if(con["channel"].isString())
         {
             if(con["channel"].asString() != "omni" && con["channel"].asString() != "all")
             {
-                MIND_LOG_ERROR(" Unrecognized \"Midi Channel\" {} for midi chain connection "
+                MIND_LOG_ERROR(" Unrecognized \"channel\" {} for midi chain connection "
                                        "in Json config file.", con["channel"].asString());
                 return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
             }
         }
     }
-    MIND_LOG_DEBUG("\"Midi connections\" definition in Json Config file follows a valid schema");
+    MIND_LOG_DEBUG("Midi connections definition in Json Config file follows a valid schema");
     return JsonConfigReturnStatus::OK;
 }
 
@@ -302,52 +326,59 @@ JsonConfigReturnStatus JsonConfigurator::_validate_midi_cc_map_def(const Json::V
     {
         if(!cc_map["port"].isInt())
         {
-            MIND_LOG_ERROR("\"Port\" (type:int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"port\" (type:int) for midi "
+                                   "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_PORT;
         }
         if(!cc_map["channel"].isInt() && !cc_map["channel"].isString())
         {
-            MIND_LOG_ERROR("\"Midi Channel\" (type:string or int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"channel\" (type:string or int) for midi "
+                                   "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
         }
         if(cc_map["channel"].isString())
         {
             if(cc_map["channel"].asString() != "omni" && cc_map["channel"].asString() != "all")
             {
-                MIND_LOG_ERROR(" Unrecognized \"Midi Channel\" {} for midi chain connection "
+                MIND_LOG_ERROR(" Unrecognized \"channel\" {} for midi chain connection "
                                        "in Json config file.", cc_map["channel"].asString());
                 return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
             }
         }
         if(!cc_map["cc_number"].isInt())
         {
-            MIND_LOG_ERROR("\"CC number\" (type:int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"cc_number\" (type:int) for midi "
+                                   "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_CC_NUMBER;
         }
         if(!cc_map["processor"].isString())
         {
-            MIND_LOG_ERROR("\"Processor UID\" (type:int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"processor\" (type:int) for midi "
+                                   "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
         }
         if(!cc_map["parameter"].isString())
         {
-            MIND_LOG_ERROR("\"Parameter\" (type:string) for midi cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_PARAMETER_UID;
+            MIND_LOG_ERROR("\"parameter\" (type:string) for midi "
+                                   "cc mapping is not defined in Json config file.");
+            return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
         if(!cc_map["min_range"].isInt())
         {
-            MIND_LOG_ERROR("\"Minimum range\" (type:int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"min_range\" (type:int) for "
+                                   "midi cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_RANGE;
         }
         if(!cc_map["max_range"].isInt())
         {
-            MIND_LOG_ERROR("\"Maximum range\" (type:int) for midi cc mapping is not defined in Json config file.");
+            MIND_LOG_ERROR("\"max_range\" (type:int) for "
+                                   "midi cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_MIDI_RANGE;
         }
     }
-    MIND_LOG_DEBUG("\"Midi CC mappings\" definition in Json Config file follows a valid schema");
+    MIND_LOG_DEBUG("Midi CC mappings definition in Json Config file follows a valid schema");
     return JsonConfigReturnStatus::OK;
 }
 
-} // namespace jsonconfigurer
+} // namespace jsonconfig
 } // namespace sushi

@@ -12,7 +12,7 @@
 #include <map>
 #include <array>
 #include <vector>
-
+#include "engine/engine.h"
 #include "library/constants.h"
 #include "library/midi_decoder.h"
 #include "library/plugin_events.h"
@@ -21,7 +21,6 @@
 namespace sushi {
 namespace engine {
 /* Forward declaration to avoid circular dependancy */
-class BaseEngine;
 namespace midi_dispatcher {
 
 struct Connection
@@ -32,6 +31,14 @@ struct Connection
     float max_range;
 };
 
+enum class MidiDispatcherStatus
+{
+    OK,
+    INVALID_MIDI_INPUT,
+    INVALID_CHAIN_NAME,
+    INVALID_PROCESSOR,
+    INVALID_PARAMETER
+};
 class MidiDispatcher
 {
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
@@ -40,6 +47,16 @@ public:
     MidiDispatcher(BaseEngine* engine) : _engine(engine) {}
 
     ~MidiDispatcher() {}
+
+    void set_midi_input_ports(int channels)
+    {
+        _midi_inputs = channels;
+    }
+
+    void set_midi_output_ports(int channels)
+    {
+        _midi_outputs = channels;
+    }
 
     /**
      * @brief Connects a midi control change message to a given parameter.
@@ -53,7 +70,7 @@ public:
      * @param channel If not OMNI, only the given channel will be connected.
      * @return true if successfully forwarded midi message
      */
-    bool connect_cc_to_parameter(int midi_input,
+    MidiDispatcherStatus connect_cc_to_parameter(int midi_input,
                                  const std::string &processor_name,
                                  const std::string &parameter_name,
                                  int cc_no,
@@ -69,7 +86,7 @@ public:
      * @param channel If not OMNI, only the given channel will be connected.
      * @return
      */
-    bool connect_kb_to_track(int midi_input,
+    MidiDispatcherStatus connect_kb_to_track(int midi_input,
                              const std::string &chain_name,
                              int channel = midi::MidiChannel::OMNI);
 
@@ -93,6 +110,8 @@ private:
 
     std::map<int, std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>> _kb_routes;
     std::map<int, std::array<std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
+    int _midi_inputs{0};
+    int _midi_outputs{0};
 
     BaseEngine* _engine;
 };

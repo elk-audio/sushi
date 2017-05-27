@@ -18,6 +18,7 @@
 
 #include <json/json.h>
 #include <jack/jack.h>
+#include <engine/midi_dispatcher.h>
 
 namespace sushi {
 
@@ -47,8 +48,8 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine) :
-            BaseAudioFrontend(engine)
+    JackFrontend(engine::BaseEngine* engine, engine::midi_dispatcher::MidiDispatcher* midi_dispatcher) :
+            BaseAudioFrontend(engine), _midi_dispatcher(midi_dispatcher)
     {}
 
     virtual ~JackFrontend()
@@ -112,6 +113,7 @@ private:
     EventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
+    engine::midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 }; // end namespace jack_frontend

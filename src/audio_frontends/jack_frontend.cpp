@@ -218,7 +218,7 @@ void inline JackFrontend::process_midi(jack_nframes_t no_frames)
         int ret = jack_midi_event_get(&midi_event, buffer, i);
         if (ret == 0)
         {
-            _engine->process_midi(0, 0, midi_event.buffer, midi_event.size);
+            _midi_dispatcher->process_midi(0, 0, midi_event.buffer, midi_event.size);
         }
     }
 }

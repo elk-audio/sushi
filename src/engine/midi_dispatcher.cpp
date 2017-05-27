@@ -1,12 +1,10 @@
 
 #include "midi_dispatcher.h"
-#include "engine/engine.h"
 #include <iostream>
 
 namespace sushi {
 namespace engine {
 namespace midi_dispatcher {
-
 
 inline Event make_note_on_event(const Connection &c,
                                 const midi::NoteOnMessage &msg,
@@ -16,7 +14,6 @@ inline Event make_note_on_event(const Connection &c,
     return Event::make_note_on_event(c.target, offset, msg.note, velocity);
 }
 
-
 inline Event make_note_off_event(const Connection &c,
                                  const midi::NoteOffMessage &msg,
                                  int offset)
@@ -24,7 +21,6 @@ inline Event make_note_off_event(const Connection &c,
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return Event::make_note_off_event(c.target, offset, msg.note, velocity);
 }
-
 
 inline Event make_param_change_event(const Connection &c,
                                      const midi::ControlChangeMessage &msg,
@@ -34,8 +30,7 @@ inline Event make_param_change_event(const Connection &c,
     return Event::make_parameter_change_event(c.target, offset, c.parameter, value);
 }
 
-
-bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
+MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                              const std::string &processor_name,
                                              const std::string &parameter_name,
                                              int cc_no,
@@ -43,18 +38,22 @@ bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                              float max_range,
                                              int channel)
 {
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
+    }
     ObjectId processor_id;
     ObjectId parameter_id;
     EngineReturnStatus status;
     std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
-    if (status != EngineReturnStatus::OK)
-    {
-        return false;
-    }
     std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
     if (status != EngineReturnStatus::OK)
     {
-        return false;
+        if(status == EngineReturnStatus::INVALID_PROCESSOR)
+        {
+            return MidiDispatcherStatus::INVALID_PROCESSOR;
+        }
+        return MidiDispatcherStatus::INVALID_PARAMETER;
     }
     Connection connection;
     connection.target = processor_id;
@@ -62,20 +61,23 @@ bool MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.min_range = min_range;
     connection.max_range = max_range;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    return true;
+    return MidiDispatcherStatus::OK;
 }
 
-
-bool MidiDispatcher::connect_kb_to_track(int midi_input,
+MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
                                          const std::string &chain_name,
                                          int channel)
 {
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
     ObjectId id;
     EngineReturnStatus status;
     std::tie(status, id) = _engine->processor_id_from_name(chain_name);
     if (status != EngineReturnStatus::OK)
     {
-        return false;
+        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
     Connection connection;
     connection.target = id;
@@ -83,16 +85,14 @@ bool MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes[midi_input][channel].push_back(connection);
-    return true;
+    return MidiDispatcherStatus::OK;
 }
-
 
 void MidiDispatcher::clear_connections()
 {
     _cc_routes.clear();
     _kb_routes.clear();
 }
-
 
 void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size)
 {
@@ -161,10 +161,8 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
         default:
             break;
     }
-
 }
-
 
 } // end namespace midi_dispatcher
-}
+} // end of namespace engine
 } // end namespace sushi

@@ -25,7 +25,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new JackFrontend(&_engine);
+        _module_under_test = new JackFrontend(&_engine, &_midi_dispatcher);
     }
 
     void TearDown()
@@ -36,6 +36,7 @@ protected:
 
     EngineMockup _engine{SAMPLE_RATE};
     JackFrontend* _module_under_test;
+    engine::midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
 };
 
 TEST_F(TestJackFrontend, test_operation)

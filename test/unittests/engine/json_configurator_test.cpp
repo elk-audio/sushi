@@ -7,6 +7,7 @@
 #define protected public
 
 #include "engine/engine.h"
+#include "engine/midi_dispatcher.h"
 #include "engine/json_configurator.cpp"
 
 
@@ -24,7 +25,8 @@ protected:
     void SetUp()
     {
         _engine = new AudioEngine(SAMPLE_RATE);
-        _configurator = new JsonConfigurator(_engine);
+        _midi_dispatcher = new MidiDispatcher(_engine);
+        _configurator = new JsonConfigurator(_engine, _midi_dispatcher);
         _status = JsonConfigReturnStatus::OK;
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
@@ -33,6 +35,7 @@ protected:
 
     void TearDown()
     {
+        delete _midi_dispatcher;
         delete _engine;
         delete _configurator;
     }
@@ -43,6 +46,7 @@ protected:
     JsonConfigReturnStatus _make_chain(const Json::Value& plugin_chain);
 
     AudioEngine* _engine;
+    MidiDispatcher* _midi_dispatcher;
     JsonConfigurator* _configurator;
     JsonConfigReturnStatus _status;
     std::string _path;
@@ -98,12 +102,12 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
     auto status = _configurator->load_chains(_path);
     ASSERT_EQ(status, JsonConfigReturnStatus::OK);
-    _engine->set_midi_input_ports(1);
+    _midi_dispatcher->set_midi_input_ports(1);
 
     status = _configurator->load_midi(_path);
     ASSERT_EQ(status, JsonConfigReturnStatus::OK);
-    ASSERT_EQ(1u, _engine->_midi_dispatcher._kb_routes.size());
-    ASSERT_EQ(1u, _engine->_midi_dispatcher._cc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
 }
 
 TEST_F(TestJsonConfigurator, TestParseFile)
@@ -247,7 +251,7 @@ TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
 
     /* parameter name is not defined */
     cc_mapping[0]["parameter"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PARAMETER_UID);
+    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PARAMETER);
     cc_mapping[0]["parameter"] = "gain";
 
     /* minimum range is not defined */

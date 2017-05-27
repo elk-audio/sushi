@@ -20,7 +20,6 @@
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
-#include "engine/midi_dispatcher.h"
 
 // TODO: this not needed anymore, remove it
 class StompBox;
@@ -35,10 +34,10 @@ enum class EngineReturnStatus
     OK,
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
-    INVALID_PARAMETER_ID,
     INVALID_STOMPBOX_NAME,
-    INVALID_PLUGIN_CHAIN,
-    INVALID_ARGUMENTS
+    INVALID_PROCESSOR,
+    INVALID_PARAMETER,
+    INVALID_PLUGIN_CHAIN
 };
 
 class BaseEngine
@@ -65,16 +64,6 @@ public:
         _audio_outputs = channels;
     }
 
-    virtual void set_midi_input_ports(int channels)
-    {
-        _midi_inputs = channels;
-    }
-
-    virtual void set_midi_output_ports(int channels)
-    {
-        _midi_outputs = channels;
-    }
-
     virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*chain_id*/)
     {
         return EngineReturnStatus::OK;
@@ -99,30 +88,10 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_midi_cc_data(int /*midi_port*/,
-                                                    int /*cc_no*/,
-                                                    const std::string& /*processor_name*/,
-                                                    const std::string& /*parameter_name*/,
-                                                    float /*min_range*/,
-                                                    float /*max_range*/,
-                                                    int /*midi_channel*/)
-    {
-        return EngineReturnStatus::OK;
-    }
-
-    virtual EngineReturnStatus connect_midi_kb_data(int /*midi_port*/,
-                                                    const std::string& /*chain_id*/,
-                                                    int /*midi_channel*/)
-    {
-        return EngineReturnStatus::OK;
-    }
-
     virtual int n_channels_in_chain(int /*chain*/)
     {
         return 2;
     }
-
-    virtual void process_midi(int /*input*/, int /*offset*/, const uint8_t* /*data*/, size_t /*size*/) {};
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
@@ -139,7 +108,7 @@ public:
         return std::make_pair(EngineReturnStatus::OK, 0);
     };
 
-    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId /*id*/)
+    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
@@ -160,8 +129,6 @@ protected:
     int _sample_rate;
     int _audio_inputs{0};
     int _audio_outputs{0};
-    int _midi_inputs{0};
-    int _midi_outputs{0};
 };
 
 
@@ -173,35 +140,12 @@ public:
      ~AudioEngine();
 
     /**
-     * @brief Connect midi cc data to a named parameter on a processor
-     */
-    EngineReturnStatus connect_midi_cc_data(int midi_port,
-                                            int cc_no,
-                                            const std::string& processor_id,
-                                            const std::string& parameter,
-                                            float min_range,
-                                            float max_range,
-                                            int midi_channel = midi::MidiChannel::OMNI) override;
-
-    /**
-     * @brief Connect midi keyboard data to a specific chain
-     */
-    EngineReturnStatus connect_midi_kb_data(int midi_port,
-                                            const std::string& chain_id,
-                                            int midi_channel = midi::MidiChannel::OMNI) override;
-
-    /**
      * @brief Return the number of configured channels for a specific processing chainn
      *
      * @param chain The index to the chain
      * @return Number of channels the chain is configured to use.
      */
     int n_channels_in_chain(int chain) override;
-
-    void process_midi(int input, int offset, const uint8_t* data, size_t size) override
-    {
-        _midi_dispatcher.process_midi(input, offset, data, size);
-    }
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
@@ -228,7 +172,7 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
 
     /**
      * @brief Creates an empty plugin chain owned by the engine.
@@ -286,7 +230,6 @@ private:
     // Processors indexed by their unique 32 bit id
     std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
 
-    midi_dispatcher::MidiDispatcher _midi_dispatcher{this};
 };
 
 } // namespace engine
