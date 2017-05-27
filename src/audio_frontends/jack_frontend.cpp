@@ -265,7 +265,7 @@ void inline JackFrontend::process_audio(jack_nframes_t no_frames)
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+JackFrontend::JackFrontend(engine::BaseEngine* engine, engine::midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Jack support!");

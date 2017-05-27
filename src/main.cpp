@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
         fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
                                                                          jack_server_name,
                                                                          connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
+        frontend = new sushi::audio_frontend::JackFrontend(&engine,&midi_dispatcher);
     }
     else if (use_xenomai)
     {
