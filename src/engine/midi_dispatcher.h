@@ -46,12 +46,19 @@ public:
     MidiDispatcher(engine::BaseEngine* engine) : _engine(engine) {}
 
     ~MidiDispatcher() {}
-
+/**
+ * @brief Sets the number of midi input channels.
+ * @param channels number of input channels.
+ */
     void set_midi_input_ports(int channels)
     {
         _midi_inputs = channels;
     }
 
+/**
+ * @brief Sets the number of midi output channels.
+ * @param channels number of output channels.
+ */
     void set_midi_output_ports(int channels)
     {
         _midi_outputs = channels;

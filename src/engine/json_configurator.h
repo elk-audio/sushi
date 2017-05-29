@@ -43,7 +43,7 @@ class JsonConfigurator
 public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
-                                                                                 _midi_dispatcher(midi_dispatcher) {}
+                                                                         _midi_dispatcher(midi_dispatcher) {}
 
 
     ~JsonConfigurator() {}
@@ -122,7 +122,7 @@ private:
      *         different error code otherwise.
      */
     JsonConfigReturnStatus _validate_midi_cc_map_def(const Json::Value &midi_def);
-    
+
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
