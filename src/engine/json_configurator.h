@@ -45,6 +45,7 @@ public:
                      midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
                                                                                  _midi_dispatcher(midi_dispatcher) {}
 
+
     ~JsonConfigurator() {}
 
     /**
@@ -106,7 +107,7 @@ private:
 
     /**
      * @brief Helper function used by _validate_midi_definition to validate the midi chain
-     *        connections schema in  the Json config file.
+     *        connections schema in the Json config file.
      * @param midi_def Json::Value object containing the MIDI Json data read from the file.
      * @return JsonConfigReturnStatus::OK if midi chain connections schema is valid,
      *         different error code otherwise.
@@ -121,7 +122,7 @@ private:
      *         different error code otherwise.
      */
     JsonConfigReturnStatus _validate_midi_cc_map_def(const Json::Value &midi_def);
-
+    
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
