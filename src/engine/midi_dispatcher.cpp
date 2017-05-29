@@ -30,12 +30,12 @@ inline Event make_param_change_event(const Connection &c,
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
-                                             const std::string &processor_name,
-                                             const std::string &parameter_name,
-                                             int cc_no,
-                                             float min_range,
-                                             float max_range,
-                                             int channel)
+                                                             const std::string &processor_name,
+                                                             const std::string &parameter_name,
+                                                             int cc_no,
+                                                             float min_range,
+                                                             float max_range,
+                                                             int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
     {
@@ -64,8 +64,8 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
-                                         const std::string &chain_name,
-                                         int channel)
+                                                         const std::string &chain_name,
+                                                         int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
     {

@@ -18,7 +18,6 @@
 
 #include <json/json.h>
 #include <jack/jack.h>
-#include <engine/midi_dispatcher.h>
 
 namespace sushi {
 

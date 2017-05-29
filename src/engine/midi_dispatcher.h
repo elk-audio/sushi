@@ -19,7 +19,6 @@
 #include "library/processor.h"
 
 namespace sushi {
-/* Forward declaration to avoid circular dependancy */
 namespace midi_dispatcher {
 
 struct Connection
@@ -77,12 +76,12 @@ public:
      * @return true if successfully forwarded midi message
      */
     MidiDispatcherStatus connect_cc_to_parameter(int midi_input,
-                                 const std::string &processor_name,
-                                 const std::string &parameter_name,
-                                 int cc_no,
-                                 float min_range,
-                                 float max_range,
-                                 int channel = midi::MidiChannel::OMNI);
+                                                 const std::string &processor_name,
+                                                 const std::string &parameter_name,
+                                                 int cc_no,
+                                                 float min_range,
+                                                 float max_range,
+                                                 int channel = midi::MidiChannel::OMNI);
 
     /**
      * @brief Connect a midi input to a track/processor chain
@@ -93,8 +92,8 @@ public:
      * @return
      */
     MidiDispatcherStatus connect_kb_to_track(int midi_input,
-                             const std::string &chain_name,
-                             int channel = midi::MidiChannel::OMNI);
+                                             const std::string &chain_name,
+                                             int channel = midi::MidiChannel::OMNI);
 
     /**
      * @brief Clears all connections made with connect_kb_to_track
