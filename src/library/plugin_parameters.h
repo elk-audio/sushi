@@ -72,6 +72,12 @@ public:
      */
     void set_id(ObjectId id) {_id = id;}
 
+    /**
+     * @brief Whether or not the parameter is automatable or not.
+     * @return true if the parameter can be automated, false otherwise
+     */
+    virtual bool automatable() const {return true;}
+
 protected:
     std::string _label;
     std::string _name;
@@ -178,6 +184,10 @@ public:
         _value = _pre_processor->process(value);
     }
 
+    T process(T value)
+    {
+        return _pre_processor->process(value);
+    }
     /**
      * @brief Tell the host to change the value of the parameter. This should be used
      * instead of set() if the plugin itself wants to change the value of a parameter.
@@ -208,9 +218,8 @@ class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter, pr
 {
 public:
     StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      T * default_value) : BaseStompBoxParameter(name, label, enumerated_type),
-                                           _value(default_value) {}
+                      const std::string& label) : BaseStompBoxParameter(name, label, enumerated_type),
+                                                  _value(nullptr) {}
 
     ~StompBoxParameter() {};
 
@@ -247,6 +256,8 @@ public:
         return ParameterFormatPolicy<T *>::format(_value.get());
     }
 
+    virtual bool automatable() const override {return false;}
+
 private:
     std::unique_ptr<T> _value;
 };
@@ -258,9 +269,8 @@ class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStom
 {
 public:
     StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      BlobData default_value) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA),
-                                                _value(default_value) {}
+                      const std::string& label) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA),
+                                                _value({0, nullptr}) {}
 
     ~StompBoxParameter()
     {
@@ -299,6 +309,8 @@ public:
         return ParameterFormatPolicy<BlobData>::format(_value);
     }
 
+    virtual bool automatable() const override {return false;}
+
 private:
     BlobData _value;
 };
@@ -331,6 +343,80 @@ public:
         return powf(10.0f, this->clip(raw_value) / 20.0f);
     }
 };
+
+template<typename T, StompBoxParameterType enumerated_type>
+class ParameterValue
+{
+public:
+    ParameterValue(T value) : _value(value), _raw_value(value) {}
+    StompBoxParameterType type() const {return enumerated_type;}
+    T value() const {return _value;}
+    T raw_value() const {return _raw_value;}
+    void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
+private:
+    T _value;
+    T _raw_value;
+};
+
+typedef ParameterValue<bool, StompBoxParameterType::BOOL> BoolParameterValue;
+typedef ParameterValue<int, StompBoxParameterType::INT> IntParameterValue;
+typedef ParameterValue<float,StompBoxParameterType::FLOAT> FloatParameterValue;
+
+
+class ParameterStorage
+{
+public:
+    BoolParameterValue* bool_parameter_value()
+    {
+        assert(_bool_value.type() == StompBoxParameterType::BOOL);
+        return &_bool_value;
+    }
+
+    IntParameterValue* int_parameter_value()
+    {
+        assert(_int_value.type() == StompBoxParameterType::INT);
+        return &_int_value;
+    }
+
+    FloatParameterValue* float_parameter_value()
+    {
+        assert(_float_value.type() == StompBoxParameterType::FLOAT);
+        return &_float_value;
+    }
+
+    ObjectId id() {return _parameter->id();}
+
+    /* Factory functions for construction */
+    static ParameterStorage make_bool_parameter_storage(BaseStompBoxParameter* parameter, bool default_value)
+    {
+        BoolParameterValue value(default_value);
+        return ParameterStorage(parameter, value);
+    }
+    static ParameterStorage make_int_parameter_storage(BaseStompBoxParameter* parameter, int default_value)
+    {
+        IntParameterValue value(default_value);
+        return ParameterStorage(parameter, value);
+    }
+    static ParameterStorage make_float_parameter_storage(BaseStompBoxParameter* parameter, float default_value)
+    {
+        BoolParameterValue value(default_value);
+        return ParameterStorage(parameter, value);
+    }
+private:
+    ParameterStorage(BaseStompBoxParameter* p, BoolParameterValue value) : _parameter(p), _bool_value(value) {}
+    ParameterStorage(BaseStompBoxParameter* p, IntParameterValue value) : _parameter(p), _int_value(value) {}
+    ParameterStorage(BaseStompBoxParameter* p, FloatParameterValue value) : _parameter(p), _float_value(value) {}
+
+    BaseStompBoxParameter* _parameter;
+    union
+    {
+        BoolParameterValue  _bool_value;
+        IntParameterValue   _int_value;
+        FloatParameterValue _float_value;
+    };
+};
+/* We need this to be able to copy the ParameterValues by value into a container */
+static_assert(std::is_trivially_copyable<ParameterStorage>::value, "");
 
 }  // namespace sushi
 

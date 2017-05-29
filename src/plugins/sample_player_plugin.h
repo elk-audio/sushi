@@ -42,12 +42,12 @@ private:
     dsp::Sample _sample;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
-    FloatStompBoxParameter* _volume_parameter;
-    FloatStompBoxParameter* _attack_parameter;
-    FloatStompBoxParameter* _decay_parameter;
-    FloatStompBoxParameter* _sustain_parameter;
-    FloatStompBoxParameter* _release_parameter;
-    StringStompBoxProperty* _sample_file_parameter;
+    FloatParameterValue* _volume_parameter;
+    FloatParameterValue* _attack_parameter;
+    FloatParameterValue* _decay_parameter;
+    FloatParameterValue* _sustain_parameter;
+    FloatParameterValue* _release_parameter;
+    std::string _sample_file_property;
 
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
