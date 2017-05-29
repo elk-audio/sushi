@@ -46,7 +46,6 @@ public:
                      midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
                                                                          _midi_dispatcher(midi_dispatcher) {}
 
-
     ~JsonConfigurator() {}
 
     /**
