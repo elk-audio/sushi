@@ -48,8 +48,8 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine, engine::midi_dispatcher::MidiDispatcher* midi_dispatcher) :
-            BaseAudioFrontend(engine), _midi_dispatcher(midi_dispatcher)
+    JackFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
+            BaseAudioFrontend(engine, midi_dispatcher)
     {}
 
     virtual ~JackFrontend()
@@ -113,7 +113,6 @@ private:
     EventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
-    engine::midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 }; // end namespace jack_frontend
@@ -139,7 +138,7 @@ class JackFrontend : public BaseAudioFrontend
 {
 public:
     JackFrontend(engine::BaseEngine* engine,
-            engine::midi_dispatcher::MidiDispatcher* midi_dispatcher);
+            midi_dispatcher::MidiDispatcher* midi_dispatcher);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override
     {return AudioFrontendStatus::OK;}
     void cleanup() override {}

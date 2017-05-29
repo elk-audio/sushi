@@ -5,6 +5,7 @@
 #define SUSHI_BASE_AUDIO_FRONTEND_H
 
 #include "engine/engine.h"
+#include "engine/midi_dispatcher.h"
 
 namespace sushi {
 
@@ -41,8 +42,8 @@ struct BaseAudioFrontendConfiguration
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend(engine::BaseEngine* engine) :
-            _engine(engine)
+    BaseAudioFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
+            _engine(engine), _midi_dispatcher(midi_dispatcher)
     {}
 
     virtual ~BaseAudioFrontend()
@@ -76,6 +77,7 @@ public:
 protected:
     BaseAudioFrontendConfiguration* _config;
     engine::BaseEngine* _engine;
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 

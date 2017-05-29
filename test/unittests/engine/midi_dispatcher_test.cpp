@@ -7,7 +7,7 @@
 using namespace midi;
 using namespace sushi;
 using namespace sushi::engine;
-using namespace sushi::engine::midi_dispatcher;
+using namespace sushi::midi_dispatcher;
 
 const uint8_t TEST_NOTE_ON_MSG[]   = {0x92, 62, 55}; /* Channel 2 */
 const uint8_t TEST_NOTE_OFF_MSG[]  = {0x83, 60, 45}; /* Channel 3 */

@@ -42,7 +42,7 @@ class JsonConfigurator
 {
 public:
     JsonConfigurator(engine::BaseEngine* engine,
-                     engine::midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
+                     midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
                                                                                  _midi_dispatcher(midi_dispatcher) {}
 
     ~JsonConfigurator() {}
@@ -123,7 +123,7 @@ private:
     JsonConfigReturnStatus _validate_midi_cc_map_def(const Json::Value &midi_def);
 
     engine::BaseEngine* _engine;
-    engine::midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 }/* namespace JSONCONFIG */

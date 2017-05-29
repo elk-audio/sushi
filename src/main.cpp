@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
-    sushi::engine::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
+    sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
     engine.set_audio_input_channels(2);
     engine.set_audio_output_channels(2);
     midi_dispatcher.set_midi_input_ports(1);
@@ -179,13 +179,13 @@ int main(int argc, char* argv[])
         xenomai_init(&argc, const_cast<char* const**>(&argv));
 #endif
         fe_config = new sushi::audio_frontend::XenomaiFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine);
+        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine, &midi_dispatcher);
     }
     else
     {
         MIND_LOG_INFO("Setting up offline audio frontend");
         fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::OfflineFrontend(&engine);
+        frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
     }
 
     auto fe_ret_code = frontend->init(fe_config);

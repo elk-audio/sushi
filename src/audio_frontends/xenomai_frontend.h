@@ -106,7 +106,8 @@ struct XenomaiFrontendConfiguration : public BaseAudioFrontendConfiguration
 class XenomaiFrontend : public BaseAudioFrontend
 {
 public:
-    XenomaiFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    XenomaiFrontend(engine::BaseEngine* engine,
+                    midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher) {}
 
     virtual ~XenomaiFrontend()
     {
@@ -193,7 +194,7 @@ struct XenomaiFrontendConfiguration : public BaseAudioFrontendConfiguration
 class XenomaiFrontend : public BaseAudioFrontend
 {
 public:
-    XenomaiFrontend(engine::BaseEngine* engine);
+    XenomaiFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override {return AudioFrontendStatus::OK;}
     AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value&) {return AudioFrontendStatus::OK;}
     void cleanup() override {}

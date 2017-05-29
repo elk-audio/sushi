@@ -40,8 +40,8 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend(engine::BaseEngine* engine) :
-            BaseAudioFrontend(engine),
+    OfflineFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
+            BaseAudioFrontend(engine, midi_dispatcher),
             _input_file(nullptr),
             _output_file(nullptr),
             _file_buffer(nullptr)

@@ -3,7 +3,6 @@
 #include <iostream>
 
 namespace sushi {
-namespace engine {
 namespace midi_dispatcher {
 
 inline Event make_note_on_event(const Connection &c,
@@ -44,12 +43,12 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     }
     ObjectId processor_id;
     ObjectId parameter_id;
-    EngineReturnStatus status;
+    engine::EngineReturnStatus status;
     std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
     std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (status != EngineReturnStatus::OK)
+    if (status != engine::EngineReturnStatus::OK)
     {
-        if(status == EngineReturnStatus::INVALID_PROCESSOR)
+        if(status == engine::EngineReturnStatus::INVALID_PROCESSOR)
         {
             return MidiDispatcherStatus::INVALID_PROCESSOR;
         }
@@ -73,9 +72,9 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
     ObjectId id;
-    EngineReturnStatus status;
+    engine::EngineReturnStatus status;
     std::tie(status, id) = _engine->processor_id_from_name(chain_name);
-    if (status != EngineReturnStatus::OK)
+    if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
@@ -164,5 +163,4 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
 }
 
 } // end namespace midi_dispatcher
-} // end of namespace engine
 } // end namespace sushi

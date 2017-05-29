@@ -19,7 +19,6 @@
 #include "library/processor.h"
 
 namespace sushi {
-namespace engine {
 /* Forward declaration to avoid circular dependancy */
 namespace midi_dispatcher {
 
@@ -44,7 +43,7 @@ class MidiDispatcher
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(BaseEngine* engine) : _engine(engine) {}
+    MidiDispatcher(engine::BaseEngine* engine) : _engine(engine) {}
 
     ~MidiDispatcher() {}
 
@@ -113,11 +112,10 @@ private:
     int _midi_inputs{0};
     int _midi_outputs{0};
 
-    BaseEngine* _engine;
+    engine::BaseEngine* _engine;
 };
 
 } // end namespace midi_dispatcher
-}
 } // end namespace sushi
 
 #endif //SUSHI_MIDI_DISPATCHER_H
