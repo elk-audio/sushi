@@ -23,7 +23,7 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    FloatStompBoxParameter* _gain_parameter;
+    FloatParameterValue* _gain_parameter;
 };
 
 }// namespace gain_plugin

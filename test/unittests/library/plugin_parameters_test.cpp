@@ -57,8 +57,8 @@ protected:
     FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", 1.0f, new ParameterPreProcessor<float>(-10, 10)};
     IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", 0, new ParameterPreProcessor<int>(-10, 10)};
     BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", false, new ParameterPreProcessor<bool>(0, 1)};
-    StringStompBoxProperty _module_under_test_string{"string_parameter", "String Parameter", new std::string("This is a string!")};
-    DataStompBoxProperty _module_under_test_data{"data_parameter", "Data Parameter", blob};
+    StringStompBoxProperty _module_under_test_string{"string_parameter", "String Parameter"};
+    DataStompBoxProperty _module_under_test_data{"data_parameter", "Data Parameter"};
 };
 
 TEST_F(TestStompBoxParameter, TestTypeNameAndLabel)
@@ -87,7 +87,7 @@ TEST_F(TestStompBoxParameter, TestDefaultValue)
     EXPECT_FLOAT_EQ(1.0f, _module_under_test_float.value());
     EXPECT_EQ(0, _module_under_test_int.value());
     EXPECT_FALSE(_module_under_test_bool.value());
-    EXPECT_EQ("This is a string!", *_module_under_test_string.value());
+    //EXPECT_EQ("This is a string!", *_module_under_test_string.value());
 
     EXPECT_FLOAT_EQ(1.0f, _module_under_test_float.raw_value());
     EXPECT_EQ(0, _module_under_test_int.raw_value());
@@ -118,8 +118,8 @@ TEST_F(TestStompBoxParameter, TestAsString)
     EXPECT_EQ("1.000000", _module_under_test_float.as_string());
     EXPECT_EQ("0", _module_under_test_int.as_string());
     EXPECT_EQ("False", _module_under_test_bool.as_string());
-    EXPECT_EQ("This is a string!", _module_under_test_string.as_string());
-    EXPECT_EQ("Binary data", _module_under_test_data.as_string());
+    //EXPECT_EQ("This is a string!", _module_under_test_string.as_string());
+    //EXPECT_EQ("Binary data", _module_under_test_data.as_string());
     // Test that we get the correct format even when we call as_string() when
     // The parameter is accessed as an instance of BaseStompBoxParameter
     EXPECT_EQ("1.000000", static_cast<BaseStompBoxParameter*>(&_module_under_test_float)->as_string());
