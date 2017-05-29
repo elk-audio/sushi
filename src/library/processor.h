@@ -8,10 +8,13 @@
 #ifndef SUSHI_PROCESSOR_H
 #define SUSHI_PROCESSOR_H
 
+#include <map>
+
 #include "library/sample_buffer.h"
 #include "library/plugin_events.h"
 #include "library/event_pipe.h"
 #include "library/id_generator.h"
+#include "library/plugin_parameters.h"
 
 namespace sushi {
 
@@ -105,6 +108,15 @@ public:
         _output_pipe = pipe;
     }
 
+    /**
+     * @brief Get all controllable parameters and properties of this processor
+     * @return A list of parameter objects
+     */
+    const std::vector<BaseStompBoxParameter*>& list_parameters() const
+    {
+        return _parameters_by_index;
+    }
+
     int max_input_channels() {return _max_input_channels;}
     int max_output_channels() {return _max_output_channels;}
     int input_channels() {return  _current_input_channels;}
@@ -127,6 +139,24 @@ public:
 
 protected:
 
+    /**
+     * @brief Register a newly created parameter
+     * @param parameter Pointer to a parameter object
+     * @return true if the parameter was successfully registered, false otherwise
+     */
+    bool register_parameter(BaseStompBoxParameter* parameter)
+    {
+        bool inserted = true;
+        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->name(), std::unique_ptr<BaseStompBoxParameter>(parameter)));
+        if (!inserted)
+        {
+            return false;
+        }
+        parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
+        _parameters_by_index.push_back(parameter);
+        return true;
+    }
+
     void output_event(Event event)
     {
         if (_output_pipe)
@@ -142,6 +172,9 @@ protected:
     int _current_output_channels{0};
 
     bool _enabled{true};
+
+    std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
+    std::vector<BaseStompBoxParameter*> _parameters_by_index;
 
 private:
     /* This could easily be turned into a list if it is neccesary to broadcast events */

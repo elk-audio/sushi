@@ -152,15 +152,5 @@ void InternalPlugin::process_event(Event event)
     }
 }
 
-bool InternalPlugin::register_parameter(BaseStompBoxParameter* parameter)
-{
-    parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
-    _parameters_by_index.push_back(parameter);
-    bool inserted = true;
-    std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->name(),
-                                                                                std::unique_ptr<BaseStompBoxParameter>(parameter)));
-    return inserted;
-}
-
 
 } // end namespace sushi
