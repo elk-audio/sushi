@@ -112,7 +112,7 @@ public:
      * @brief Get all controllable parameters and properties of this processor
      * @return A list of parameter objects
      */
-    const std::vector<BaseStompBoxParameter*>& list_parameters() const
+    const std::vector<ParameterDescriptor*>& list_parameters() const
     {
         return _parameters_by_index;
     }
@@ -144,10 +144,10 @@ protected:
      * @param parameter Pointer to a parameter object
      * @return true if the parameter was successfully registered, false otherwise
      */
-    bool register_parameter(BaseStompBoxParameter* parameter)
+    bool register_parameter(ParameterDescriptor* parameter)
     {
         bool inserted = true;
-        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<BaseStompBoxParameter>>(parameter->name(), std::unique_ptr<BaseStompBoxParameter>(parameter)));
+        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
         if (!inserted)
         {
             return false;
@@ -173,8 +173,8 @@ protected:
 
     bool _enabled{true};
 
-    std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
-    std::vector<BaseStompBoxParameter*> _parameters_by_index;
+    std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
+    std::vector<ParameterDescriptor*> _parameters_by_index;
 
 private:
     /* This could easily be turned into a list if it is neccesary to broadcast events */

@@ -11,7 +11,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
     {
         custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
     }
-    FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, custom_pre_processor);
+    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -32,7 +32,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
     {
         custom_pre_processor = new IntParameterPreProcessor(0, 127);
     }
-    IntStompBoxParameter* param = new IntStompBoxParameter(id, label, custom_pre_processor);
+    IntParameterDescriptor* param = new IntParameterDescriptor(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -53,7 +53,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
     {
         custom_pre_processor = new BoolParameterPreProcessor(true, false);
     }
-    BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, custom_pre_processor);
+    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -69,7 +69,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
 bool InternalPlugin::register_string_property(const std::string &id,
                                               const std::string &label)
 {
-    StringStompBoxProperty* param = new StringStompBoxProperty(id, label);
+    StringPropertyDescriptor* param = new StringPropertyDescriptor(id, label);
     if (!this->register_parameter(param))
     {
         return false;
@@ -81,7 +81,7 @@ bool InternalPlugin::register_string_property(const std::string &id,
 bool InternalPlugin::register_data_property(const std::string &id,
                                             const std::string &label)
 {
-    DataStompBoxProperty* param = new DataStompBoxProperty(id, label);
+    DataPropertyDescriptor* param = new DataPropertyDescriptor(id, label);
     if (!this->register_parameter(param))
     {
         return false;
@@ -123,17 +123,17 @@ void InternalPlugin::process_event(Event event)
             auto storage = &_parameter_values[typed_event->param_id()];
             switch (parameter->type())
             {
-                case StompBoxParameterType::FLOAT:
+                case ParameterType::FLOAT:
                 {
                     storage->float_parameter_value()->set(typed_event->value());
                     break;
                 }
-                case StompBoxParameterType::INT:
+                case ParameterType::INT:
                 {
                     storage->int_parameter_value()->set(typed_event->value());
                     break;
                 }
-                case StompBoxParameterType::BOOL:
+                case ParameterType::BOOL:
                 {
                     storage->bool_parameter_value()->set_values(typed_event->value(), typed_event->value());
                     break;
