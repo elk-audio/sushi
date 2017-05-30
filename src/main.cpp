@@ -153,11 +153,12 @@ int main(int argc, char* argv[])
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
     engine.set_audio_input_channels(2);
     engine.set_audio_output_channels(2);
-    engine.set_midi_input_ports(1);
+    midi_dispatcher.set_midi_input_ports(1);
 
-    sushi::jsonconfig::JsonConfigurator configurator(&engine);
+    sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
     configurator.load_chains(config_filename);
     configurator.load_midi(config_filename);
 
@@ -169,7 +170,7 @@ int main(int argc, char* argv[])
         fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
                                                                          jack_server_name,
                                                                          connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine);
+        frontend = new sushi::audio_frontend::JackFrontend(&engine,&midi_dispatcher);
     }
     else if (use_xenomai)
     {
@@ -178,13 +179,13 @@ int main(int argc, char* argv[])
         xenomai_init(&argc, const_cast<char* const**>(&argv));
 #endif
         fe_config = new sushi::audio_frontend::XenomaiFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine);
+        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine, &midi_dispatcher);
     }
     else
     {
         MIND_LOG_INFO("Setting up offline audio frontend");
         fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::OfflineFrontend(&engine);
+        frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
     }
 
     auto fe_ret_code = frontend->init(fe_config);

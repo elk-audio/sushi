@@ -11,6 +11,7 @@ using ::testing::internal::posix::GetEnv;
 
 using namespace sushi;
 using namespace sushi::audio_frontend;
+using namespace sushi::midi_dispatcher;
 
 static constexpr unsigned int SAMPLE_RATE = 44000;
 
@@ -23,7 +24,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new OfflineFrontend(&_engine);
+        _module_under_test = new OfflineFrontend(&_engine, &_midi_dispatcher);
     }
 
     void TearDown()
@@ -32,6 +33,7 @@ protected:
     }
 
     EngineMockup _engine{SAMPLE_RATE};
+    MidiDispatcher _midi_dispatcher{&_engine};
     OfflineFrontend* _module_under_test;
 };
 

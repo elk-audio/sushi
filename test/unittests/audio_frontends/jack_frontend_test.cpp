@@ -13,6 +13,7 @@ using ::testing::internal::posix::GetEnv;
 
 using namespace sushi;
 using namespace sushi::audio_frontend;
+using namespace sushi::midi_dispatcher;
 
 static constexpr unsigned int SAMPLE_RATE = 44000;
 
@@ -25,7 +26,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new JackFrontend(&_engine);
+        _module_under_test = new JackFrontend(&_engine, &_midi_dispatcher);
     }
 
     void TearDown()
@@ -36,6 +37,7 @@ protected:
 
     EngineMockup _engine{SAMPLE_RATE};
     JackFrontend* _module_under_test;
+    MidiDispatcher _midi_dispatcher{&_engine};
 };
 
 TEST_F(TestJackFrontend, test_operation)

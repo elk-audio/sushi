@@ -290,7 +290,8 @@ void xenomai_callback_generator(void* data)
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-XenomaiFrontend::XenomaiFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+XenomaiFrontend::XenomaiFrontend(engine::BaseEngine* engine,
+                                midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Xenomai support!");

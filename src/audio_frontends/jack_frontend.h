@@ -47,8 +47,8 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine) :
-            BaseAudioFrontend(engine)
+    JackFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
+            BaseAudioFrontend(engine, midi_dispatcher)
     {}
 
     virtual ~JackFrontend()
@@ -123,6 +123,7 @@ private:
    this dummy frontend whose only purpose is to assert if you try to use it */
 
 #include "base_audio_frontend.h"
+#include "engine/midi_dispatcher.h"
 namespace sushi {
 namespace audio_frontend {
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
@@ -135,7 +136,8 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine);
+    JackFrontend(engine::BaseEngine* engine,
+            midi_dispatcher::MidiDispatcher* midi_dispatcher);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override
     {return AudioFrontendStatus::OK;}
     void cleanup() override {}

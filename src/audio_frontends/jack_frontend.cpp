@@ -218,7 +218,7 @@ void inline JackFrontend::process_midi(jack_nframes_t no_frames)
         int ret = jack_midi_event_get(&midi_event, buffer, i);
         if (ret == 0)
         {
-            _engine->process_midi(0, 0, midi_event.buffer, midi_event.size);
+            _midi_dispatcher->process_midi(0, 0, midi_event.buffer, midi_event.size);
         }
     }
 }
@@ -265,7 +265,8 @@ void inline JackFrontend::process_audio(jack_nframes_t no_frames)
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+JackFrontend::JackFrontend(engine::BaseEngine* engine,
+                           midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Jack support!");

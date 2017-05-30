@@ -7,7 +7,7 @@
 using namespace midi;
 using namespace sushi;
 using namespace sushi::engine;
-using namespace sushi::engine::midi_dispatcher;
+using namespace sushi::midi_dispatcher;
 
 const uint8_t TEST_NOTE_ON_MSG[]   = {0x92, 62, 55}; /* Channel 2 */
 const uint8_t TEST_NOTE_OFF_MSG[]  = {0x83, 60, 45}; /* Channel 3 */
@@ -83,6 +83,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
     EXPECT_FALSE(_test_engine.got_event);
 
     /* Connect all midi channels (OMNI) */
+    _module_under_test.set_midi_input_ports(5);
     _module_under_test.connect_kb_to_track(1, "processor");
     _module_under_test.process_midi(1, 0, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG));
     EXPECT_TRUE(_test_engine.got_event);
@@ -110,6 +111,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     EXPECT_FALSE(_test_engine.got_event);
 
     /* Connect all midi channels (OMNI) */
+    _module_under_test.set_midi_input_ports(5);
     _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 67, 0, 100);
     _module_under_test.process_midi(1, 0, TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG));
     EXPECT_TRUE(_test_engine.got_event);
