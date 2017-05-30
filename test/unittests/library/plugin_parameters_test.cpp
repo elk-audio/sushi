@@ -54,9 +54,9 @@ protected:
     uint8_t* TEST_DATA = new uint8_t[3];
     BlobData blob{3, TEST_DATA};
 
-    FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", 1.0f, new ParameterPreProcessor<float>(-10, 10)};
-    IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", 0, new ParameterPreProcessor<int>(-10, 10)};
-    BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", false, new ParameterPreProcessor<bool>(0, 1)};
+    FloatStompBoxParameter _module_under_test_float{"float_parameter", "FloatParameter", new ParameterPreProcessor<float>(-10, 10)};
+    IntStompBoxParameter _module_under_test_int{"int_parameter", "IntParameter", new ParameterPreProcessor<int>(-10, 10)};
+    BoolStompBoxParameter _module_under_test_bool{"bool_parameter", "BoolParameter", new ParameterPreProcessor<bool>(0, 1)};
     StringStompBoxProperty _module_under_test_string{"string_parameter", "String Parameter"};
     DataStompBoxProperty _module_under_test_data{"data_parameter", "Data Parameter"};
 };
@@ -82,47 +82,17 @@ TEST_F(TestStompBoxParameter, TestTypeNameAndLabel)
     EXPECT_EQ("Data Parameter", _module_under_test_data.label());
 }
 
-TEST_F(TestStompBoxParameter, TestDefaultValue)
+TEST(TestParameterValue, TestSet)
 {
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test_float.value());
-    EXPECT_EQ(0, _module_under_test_int.value());
-    EXPECT_FALSE(_module_under_test_bool.value());
-    //EXPECT_EQ("This is a string!", *_module_under_test_string.value());
+    dBToLinPreProcessor pre_processor(-6.0f, 6.0f);
+    auto value = ParameterStorage::make_float_parameter_storage(nullptr, 0, &pre_processor);
+    /* Check correct defaults */
+    EXPECT_EQ(StompBoxParameterType::FLOAT, value.float_parameter_value()->type());
+    EXPECT_FLOAT_EQ(1.0f, value.float_parameter_value()->value());
+    EXPECT_FLOAT_EQ(0.0f, value.float_parameter_value()->raw_value());
 
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test_float.raw_value());
-    EXPECT_EQ(0, _module_under_test_int.raw_value());
-    EXPECT_FALSE(_module_under_test_bool.raw_value());
-}
-
-TEST_F(TestStompBoxParameter, TestSet)
-{
-    _module_under_test_float.set(13.25f);
-    EXPECT_FLOAT_EQ(10.0f, _module_under_test_float.value());
-    EXPECT_FLOAT_EQ(13.25f, _module_under_test_float.raw_value());
-
-    _module_under_test_int.set(5);
-    EXPECT_EQ(5, _module_under_test_int.value());
-    EXPECT_EQ(5, _module_under_test_int.raw_value());
-
-    _module_under_test_bool.set(true);
-    EXPECT_TRUE(_module_under_test_bool.value());
-    EXPECT_TRUE(_module_under_test_bool.raw_value());
-
-    std::string* new_value = new std::string("New String!");
-    _module_under_test_string.set(new_value);
-    EXPECT_EQ("New String!", *_module_under_test_string.value());
-}
-
-TEST_F(TestStompBoxParameter, TestAsString)
-{
-    EXPECT_EQ("1.000000", _module_under_test_float.as_string());
-    EXPECT_EQ("0", _module_under_test_int.as_string());
-    EXPECT_EQ("False", _module_under_test_bool.as_string());
-    //EXPECT_EQ("This is a string!", _module_under_test_string.as_string());
-    //EXPECT_EQ("Binary data", _module_under_test_data.as_string());
-    // Test that we get the correct format even when we call as_string() when
-    // The parameter is accessed as an instance of BaseStompBoxParameter
-    EXPECT_EQ("1.000000", static_cast<BaseStompBoxParameter*>(&_module_under_test_float)->as_string());
-    EXPECT_EQ("False", static_cast<BaseStompBoxParameter*>(&_module_under_test_bool)->as_string());
-
+    /* Test set */
+    value.float_parameter_value()->set(6.0f);
+    EXPECT_NEAR(2.0f, value.float_parameter_value()->value(), 0.01f);
+    EXPECT_FLOAT_EQ(6.0f, value.float_parameter_value()->raw_value());
 }

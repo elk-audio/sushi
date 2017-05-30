@@ -11,15 +11,15 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
     {
         custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
     }
-    FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, default_value, custom_pre_processor);
+    FloatStompBoxParameter* param = new FloatStompBoxParameter(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
     }
-    ParameterStorage value_storage = ParameterStorage::make_float_parameter_storage(param, default_value);
+    auto value = ParameterStorage::make_float_parameter_storage(param, default_value, custom_pre_processor);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
-    _parameter_values.push_back(value_storage);
+    _parameter_values.push_back(value);
     return _parameter_values.back().float_parameter_value();
 }
 
@@ -32,15 +32,15 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
     {
         custom_pre_processor = new IntParameterPreProcessor(0, 127);
     }
-    IntStompBoxParameter* param = new IntStompBoxParameter(id, label, default_value, custom_pre_processor);
+    IntStompBoxParameter* param = new IntStompBoxParameter(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
     }
-    ParameterStorage value_storage = ParameterStorage::make_int_parameter_storage(param, default_value);
+    auto value = ParameterStorage::make_int_parameter_storage(param, default_value, custom_pre_processor);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
-    _parameter_values.push_back(value_storage);
+    _parameter_values.push_back(value);
     return _parameter_values.back().int_parameter_value();
 }
 
@@ -53,7 +53,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
     {
         custom_pre_processor = new BoolParameterPreProcessor(true, false);
     }
-    BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, default_value, custom_pre_processor);
+    BoolStompBoxParameter* param = new BoolStompBoxParameter(id, label, custom_pre_processor);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -125,14 +125,12 @@ void InternalPlugin::process_event(Event event)
             {
                 case StompBoxParameterType::FLOAT:
                 {
-                    float processed_value = static_cast<FloatStompBoxParameter*>(parameter)->process(typed_event->value());
-                    storage->float_parameter_value()->set_values(typed_event->value(), processed_value);
+                    storage->float_parameter_value()->set(typed_event->value());
                     break;
                 }
                 case StompBoxParameterType::INT:
                 {
-                    int processed_value = static_cast<IntStompBoxParameter*>(parameter)->process(static_cast<int>(typed_event->value()));
-                    storage->int_parameter_value()->set_values(typed_event->value(), processed_value);
+                    storage->int_parameter_value()->set(typed_event->value());
                     break;
                 }
                 case StompBoxParameterType::BOOL:
