@@ -101,7 +101,7 @@ TEST_F(TestGainPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    _module_under_test->_gain_parameter->set_values(2.0f, 6.0f);
+    _module_under_test->_gain_parameter->set(6.0f);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }
@@ -126,7 +126,7 @@ protected:
     {
         delete _module_under_test;
     }
-    InternalPlugin* _module_under_test;
+    equalizer_plugin::EqualizerPlugin* _module_under_test;
 };
 
 TEST_F(TestEqualizerPlugin, TestInstantiation)
@@ -153,9 +153,9 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     FloatStompBoxParameter* q_param = static_cast<FloatStompBoxParameter*>(_module_under_test->get_parameter("q"));
     ASSERT_TRUE(q_param);
 
-    freq_param->set(4000.0f);
-    gain_param->set(6.0f);
-    q_param->set(1.0f);
+    _module_under_test->_frequency ->set(4000.0f);
+    _module_under_test->_gain->set(6.0f);
+    _module_under_test->_q->set(1.0f);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);

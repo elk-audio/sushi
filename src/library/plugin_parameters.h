@@ -47,12 +47,6 @@ public:
     StompBoxParameterType type() const {return _type;};
 
     /**
-     * @brief Returns the parameters value as a formatted string
-     * TODO: Ponder over if we want units included here or as a separate string
-     */
-    virtual std::string as_string() const { return "";} //Needs to be implemented, otherwise no vtable will be generated
-
-    /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
      */
     const std::string& label() const {return _label;}
@@ -141,7 +135,7 @@ template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData 
  * types, for which the template type should likely be a pointer.
  */
 template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter : public BaseStompBoxParameter, private ParameterFormatPolicy<T>
+class StompBoxParameter : public BaseStompBoxParameter
 {
 public:
     /**
@@ -149,112 +143,25 @@ public:
      */
     StompBoxParameter(const std::string& name,
                       const std::string& label,
-                      T default_value,
                       ParameterPreProcessor<T>* pre_processor) :
                                    BaseStompBoxParameter(name, label, enumerated_type),
-                                   _pre_processor(pre_processor),
-                                   _raw_value(default_value),
-                                   _value(pre_processor->process(default_value)) {}
+                                   _pre_processor(pre_processor) {}
 
     ~StompBoxParameter() {};
 
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    T value() const
-    {
-        return _value;
-    }
-
-    /**
-     * @brief Returns the parameter's unprocessed value.
-     */
-    T raw_value() const
-    {
-        return _raw_value;
-    }
-
-    /**
-     * @brief Set the value of the parameter. Called automatically from the host.
-     * For changin the value from inside the plugin, call set_asychronously() intead.
-     */
-    void set(T value)
-    {
-        _raw_value = value;
-        _value = _pre_processor->process(value);
-    }
-
-    T process(T value)
-    {
-        return _pre_processor->process(value);
-    }
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(T value)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    std::string as_string() const override
-    {
-        return ParameterFormatPolicy<T>::format(_raw_value);
-    }
-
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
-    T _raw_value;
-    T _value;
 };
 
 /* Partial specialization for pointer type parameters */
 template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter, private ParameterFormatPolicy<T *>
+class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter
 {
 public:
     StompBoxParameter(const std::string& name,
-                      const std::string& label) : BaseStompBoxParameter(name, label, enumerated_type),
-                                                  _value(nullptr) {}
+                      const std::string& label) : BaseStompBoxParameter(name, label, enumerated_type) {}
 
     ~StompBoxParameter() {};
-
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    T * value() const
-    {
-        return _value.get();
-    }
-
-    void set(T * value)
-    {
-        /* Note, not atomic and we still need to figure out a data ownership strategy
-         * and avoid deleting in the audio thread */
-        _value.reset(value);
-    }
-
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(T * value)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    std::string as_string() const override
-    {
-        return ParameterFormatPolicy<T *>::format(_value.get());
-    }
 
     virtual bool automatable() const override {return false;}
 
@@ -265,49 +172,13 @@ private:
 /* Partial specialization for pointer type parameters */
 //template<typename T, StompBoxParameterType enumerated_type>
 template<>
-class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStompBoxParameter, private ParameterFormatPolicy<BlobData>
+class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStompBoxParameter
 {
 public:
     StompBoxParameter(const std::string& name,
-                      const std::string& label) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA),
-                                                _value({0, nullptr}) {}
+                      const std::string& label) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA) {}
 
-    ~StompBoxParameter()
-    {
-        if (_value.data)
-            delete _value.data;
-    };
-
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    BlobData value() const
-    {
-        return _value;
-    }
-
-    void set(BlobData value)
-    {
-        _value = value;
-    }
-
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(BlobData /*value*/)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    std::string as_string() const override
-    {
-        return ParameterFormatPolicy<BlobData>::format(_value);
-    }
+    ~StompBoxParameter() {}
 
     virtual bool automatable() const override {return false;}
 
@@ -348,14 +219,42 @@ template<typename T, StompBoxParameterType enumerated_type>
 class ParameterValue
 {
 public:
-    ParameterValue(T value) : _value(value), _raw_value(value) {}
+    ParameterValue(ParameterPreProcessor<T>* pre_processor, T value) : _pre_processor(pre_processor),
+                                                                      _raw_value(value),
+                                                                      _value(pre_processor->process(value)){}
+
     StompBoxParameterType type() const {return enumerated_type;}
     T value() const {return _value;}
     T raw_value() const {return _raw_value;}
+
+
     void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
+
+    void set(T value)
+    {
+        _raw_value = value;
+        _value = _pre_processor->process(value);
+    }
 private:
-    T _value;
+    ParameterPreProcessor<T>* _pre_processor{nullptr};
     T _raw_value;
+    T _value;
+};
+/* Specialization for bool values, lack a pre_processor */
+template<>
+class ParameterValue<bool, StompBoxParameterType::BOOL>
+{
+public:
+    ParameterValue(bool value) : _value(value){}
+
+    StompBoxParameterType type() const {return StompBoxParameterType::BOOL;}
+    bool value() const {return _value;}
+    bool raw_value() const {return _value;}
+
+    void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
+    void set(bool value) {_value = value;}
+private:
+    bool _value;
 };
 
 typedef ParameterValue<bool, StompBoxParameterType::BOOL> BoolParameterValue;
@@ -387,19 +286,24 @@ public:
     ObjectId id() {return _parameter->id();}
 
     /* Factory functions for construction */
-    static ParameterStorage make_bool_parameter_storage(BaseStompBoxParameter* parameter, bool default_value)
+    static ParameterStorage make_bool_parameter_storage(BaseStompBoxParameter* parameter,
+                                                        bool default_value)
     {
         BoolParameterValue value(default_value);
         return ParameterStorage(parameter, value);
     }
-    static ParameterStorage make_int_parameter_storage(BaseStompBoxParameter* parameter, int default_value)
+    static ParameterStorage make_int_parameter_storage(BaseStompBoxParameter* parameter,
+                                                       int default_value,
+                                                       IntParameterPreProcessor* pre_processor)
     {
-        IntParameterValue value(default_value);
+        IntParameterValue value(pre_processor, default_value);
         return ParameterStorage(parameter, value);
     }
-    static ParameterStorage make_float_parameter_storage(BaseStompBoxParameter* parameter, float default_value)
+    static ParameterStorage make_float_parameter_storage(BaseStompBoxParameter* parameter,
+                                                         float default_value,
+                                                         FloatParameterPreProcessor* pre_processor)
     {
-        BoolParameterValue value(default_value);
+        FloatParameterValue value(pre_processor, default_value);
         return ParameterStorage(parameter, value);
     }
 private:
