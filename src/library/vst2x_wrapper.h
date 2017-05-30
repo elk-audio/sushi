@@ -79,7 +79,7 @@ private:
     }
 
     /**
-     * @brief Iterate over VsT parameters and register internal FloatStompboxParameter
+     * @brief Iterate over VsT parameters and register internal FloatParameterDescriptor
      *        for each one of them.
      * @return True if all parameters were registered properly.
      */

@@ -61,27 +61,27 @@ TEST_F(InternalPluginTest, TestParameterHandlingViaEvents)
     EXPECT_TRUE(value_float);
 
     // access the parameter through its id and verify type and that you can set its value.
-    EXPECT_EQ(StompBoxParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
+    EXPECT_EQ(ParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
     EXPECT_FLOAT_EQ(6.0f, value_float->value());
 
     auto value_int = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(value_int);
-    EXPECT_EQ(StompBoxParameterType::INT, _module_under_test->get_parameter("param_2")->type());
+    EXPECT_EQ(ParameterType::INT, _module_under_test->get_parameter("param_2")->type());
     // TODO - test cases for all parameter changes
 
     auto value_bool = _module_under_test->register_bool_parameter("param_3", "Param 3", true);
     EXPECT_TRUE(value_bool);
-    EXPECT_EQ(StompBoxParameterType::BOOL, _module_under_test->get_parameter("param_3")->type());
+    EXPECT_EQ(ParameterType::BOOL, _module_under_test->get_parameter("param_3")->type());
 
     bool ok = _module_under_test->register_string_property("param_4", "Param 4");
-    EXPECT_EQ(StompBoxParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
+    EXPECT_EQ(ParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
 
     /* std::string* str_value = new std::string("5");
     Event event_4 = Event::make_string_parameter_change_event(0, 0, 3, str_value);
     _module_under_test->process_event(event_4);*/
-    //EXPECT_EQ("5", *static_cast<StringStompBoxProperty*>(_module_under_test->get_parameter("param_4"))->value());
+    //EXPECT_EQ("5", *static_cast<StringPropertyDescriptor*>(_module_under_test->get_parameter("param_4"))->value());
 
     //test that an unknown parameter returns a null pointer
     EXPECT_EQ(nullptr, _module_under_test->get_parameter("not_registered"));

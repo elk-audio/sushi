@@ -75,7 +75,7 @@ private:
     /**
     * @brief Return the parameter with the given unique id
     */
-    BaseStompBoxParameter* get_parameter(const std::string& id)
+    ParameterDescriptor* get_parameter(const std::string& id)
     {
         auto parameter = _parameters.find(id);
         if (parameter == _parameters.end())

@@ -17,7 +17,7 @@
 #include "library/id_generator.h"
 #include "library/types.h"
 
-enum class StompBoxParameterType
+enum class ParameterType
 {
     FLOAT,
     INT,
@@ -29,22 +29,23 @@ enum class StompBoxParameterType
 
 namespace sushi {
 
+
 /**
- * @brief Base class for plugin parameters
+ * @brief Base class for describing plugin parameters
  */
-class BaseStompBoxParameter
+class ParameterDescriptor
 {
 public:
-    BaseStompBoxParameter(const std::string& name,
+    ParameterDescriptor(const std::string& name,
                           const std::string& label,
-                          StompBoxParameterType type) : _label(label), _name(name), _type(type) {}
+                          ParameterType type) : _label(label), _name(name), _type(type) {}
 
-    virtual ~BaseStompBoxParameter() {}
+    virtual ~ParameterDescriptor() {}
 
     /**
      * @brief Returns the enumerated type of the parameter
      */
-    StompBoxParameterType type() const {return _type;};
+    ParameterType type() const {return _type;};
 
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
@@ -76,7 +77,7 @@ protected:
     std::string _label;
     std::string _name;
     ObjectId _id;
-    StompBoxParameterType _type;
+    ParameterType _type;
 };
 
 
@@ -134,56 +135,52 @@ template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData 
  * types like float, int, etc. Needs specialization for more complex
  * types, for which the template type should likely be a pointer.
  */
-template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter : public BaseStompBoxParameter
+template<typename T, ParameterType enumerated_type>
+class TypedParameterDescriptor : public ParameterDescriptor
 {
 public:
     /**
      * @brief Construct a parameter
      */
-    StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      ParameterPreProcessor<T>* pre_processor) :
-                                   BaseStompBoxParameter(name, label, enumerated_type),
-                                   _pre_processor(pre_processor) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label,
+                             ParameterPreProcessor<T>* pre_processor) :
+                                        ParameterDescriptor(name, label, enumerated_type),
+                                        _pre_processor(pre_processor) {}
 
-    ~StompBoxParameter() {};
+    ~TypedParameterDescriptor() {};
 
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
 };
 
 /* Partial specialization for pointer type parameters */
-template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter
+template<typename T, ParameterType enumerated_type>
+class TypedParameterDescriptor<T *, enumerated_type> : public ParameterDescriptor
 {
 public:
-    StompBoxParameter(const std::string& name,
-                      const std::string& label) : BaseStompBoxParameter(name, label, enumerated_type) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label) : ParameterDescriptor(name, label, enumerated_type) {}
 
-    ~StompBoxParameter() {};
+    ~TypedParameterDescriptor() {};
 
     virtual bool automatable() const override {return false;}
 
-private:
-    std::unique_ptr<T> _value;
 };
 
 /* Partial specialization for pointer type parameters */
-//template<typename T, StompBoxParameterType enumerated_type>
+//template<typename T, ParameterType enumerated_type>
 template<>
-class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStompBoxParameter
+class TypedParameterDescriptor<BlobData, ParameterType::DATA> : public ParameterDescriptor
 {
 public:
-    StompBoxParameter(const std::string& name,
-                      const std::string& label) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label) : ParameterDescriptor(name, label, ParameterType::DATA) {}
 
-    ~StompBoxParameter() {}
+    ~TypedParameterDescriptor() {}
 
     virtual bool automatable() const override {return false;}
 
-private:
-    BlobData _value;
 };
 
 /*
@@ -195,11 +192,11 @@ typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
 typedef ParameterPreProcessor<int> IntParameterPreProcessor;
 typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
 
-typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
-typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
-typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
-typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxProperty;
-typedef StompBoxParameter<BlobData, StompBoxParameterType::DATA> DataStompBoxProperty;
+typedef TypedParameterDescriptor<float, ParameterType::FLOAT>         FloatParameterDescriptor;
+typedef TypedParameterDescriptor<int, ParameterType::INT>             IntParameterDescriptor;
+typedef TypedParameterDescriptor<bool, ParameterType::BOOL>           BoolParameterDescriptor;
+typedef TypedParameterDescriptor<std::string*, ParameterType::STRING> StringPropertyDescriptor;
+typedef TypedParameterDescriptor<BlobData, ParameterType::DATA>       DataPropertyDescriptor;
 
 
 /**
@@ -215,7 +212,7 @@ public:
     }
 };
 
-template<typename T, StompBoxParameterType enumerated_type>
+template<typename T, ParameterType enumerated_type>
 class ParameterValue
 {
 public:
@@ -223,7 +220,7 @@ public:
                                                                       _raw_value(value),
                                                                       _value(pre_processor->process(value)){}
 
-    StompBoxParameterType type() const {return enumerated_type;}
+    ParameterType type() const {return enumerated_type;}
     T value() const {return _value;}
     T raw_value() const {return _raw_value;}
 
@@ -242,12 +239,12 @@ private:
 };
 /* Specialization for bool values, lack a pre_processor */
 template<>
-class ParameterValue<bool, StompBoxParameterType::BOOL>
+class ParameterValue<bool, ParameterType::BOOL>
 {
 public:
     ParameterValue(bool value) : _value(value){}
 
-    StompBoxParameterType type() const {return StompBoxParameterType::BOOL;}
+    ParameterType type() const {return ParameterType::BOOL;}
     bool value() const {return _value;}
     bool raw_value() const {return _value;}
 
@@ -257,9 +254,9 @@ private:
     bool _value;
 };
 
-typedef ParameterValue<bool, StompBoxParameterType::BOOL> BoolParameterValue;
-typedef ParameterValue<int, StompBoxParameterType::INT> IntParameterValue;
-typedef ParameterValue<float,StompBoxParameterType::FLOAT> FloatParameterValue;
+typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
+typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
+typedef ParameterValue<float,ParameterType::FLOAT> FloatParameterValue;
 
 
 class ParameterStorage
@@ -267,39 +264,39 @@ class ParameterStorage
 public:
     BoolParameterValue* bool_parameter_value()
     {
-        assert(_bool_value.type() == StompBoxParameterType::BOOL);
+        assert(_bool_value.type() == ParameterType::BOOL);
         return &_bool_value;
     }
 
     IntParameterValue* int_parameter_value()
     {
-        assert(_int_value.type() == StompBoxParameterType::INT);
+        assert(_int_value.type() == ParameterType::INT);
         return &_int_value;
     }
 
     FloatParameterValue* float_parameter_value()
     {
-        assert(_float_value.type() == StompBoxParameterType::FLOAT);
+        assert(_float_value.type() == ParameterType::FLOAT);
         return &_float_value;
     }
 
     ObjectId id() {return _parameter->id();}
 
     /* Factory functions for construction */
-    static ParameterStorage make_bool_parameter_storage(BaseStompBoxParameter* parameter,
+    static ParameterStorage make_bool_parameter_storage(ParameterDescriptor* parameter,
                                                         bool default_value)
     {
         BoolParameterValue value(default_value);
         return ParameterStorage(parameter, value);
     }
-    static ParameterStorage make_int_parameter_storage(BaseStompBoxParameter* parameter,
+    static ParameterStorage make_int_parameter_storage(ParameterDescriptor* parameter,
                                                        int default_value,
                                                        IntParameterPreProcessor* pre_processor)
     {
         IntParameterValue value(pre_processor, default_value);
         return ParameterStorage(parameter, value);
     }
-    static ParameterStorage make_float_parameter_storage(BaseStompBoxParameter* parameter,
+    static ParameterStorage make_float_parameter_storage(ParameterDescriptor* parameter,
                                                          float default_value,
                                                          FloatParameterPreProcessor* pre_processor)
     {
@@ -307,11 +304,11 @@ public:
         return ParameterStorage(parameter, value);
     }
 private:
-    ParameterStorage(BaseStompBoxParameter* p, BoolParameterValue value) : _parameter(p), _bool_value(value) {}
-    ParameterStorage(BaseStompBoxParameter* p, IntParameterValue value) : _parameter(p), _int_value(value) {}
-    ParameterStorage(BaseStompBoxParameter* p, FloatParameterValue value) : _parameter(p), _float_value(value) {}
+    ParameterStorage(ParameterDescriptor* p, BoolParameterValue value) : _parameter(p), _bool_value(value) {}
+    ParameterStorage(ParameterDescriptor* p, IntParameterValue value) : _parameter(p), _int_value(value) {}
+    ParameterStorage(ParameterDescriptor* p, FloatParameterValue value) : _parameter(p), _float_value(value) {}
 
-    BaseStompBoxParameter* _parameter;
+    ParameterDescriptor* _parameter;
     union
     {
         BoolParameterValue  _bool_value;
