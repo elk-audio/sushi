@@ -7,6 +7,7 @@
 #include "plugins/gain_plugin.h"
 #include "plugins/equalizer_plugin.h"
 #include "plugins/sample_player_plugin.h"
+#include "library/vst2x_wrapper.h"
 
 
 namespace sushi {
@@ -31,7 +32,7 @@ int AudioEngine::n_channels_in_chain(int chain)
 
 std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std::string& uid)
 {
-    InternalPlugin* instance = nullptr;
+    Processor* instance = nullptr;
 
     if (uid == "sushi.testing.passthrough")
     {
@@ -49,7 +50,10 @@ std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std:
     {
         instance = new sample_player_plugin::SamplePlayerPlugin();
     }
-
+    else
+    {
+        instance = new vst2::Vst2xWrapper(uid);
+    }
     return std::unique_ptr<Processor>(instance);
 }
 
@@ -225,14 +229,14 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
     auto instance = _make_stompbox_from_unique_id(plugin_uid);
-    if(instance == nullptr)
+    auto processor_status = instance->init(_sample_rate);
+    if(processor_status != ProcessorReturnCode::OK)
     {
-        MIND_LOG_ERROR("Invalid plugin uid {} ", plugin_uid);
+        MIND_LOG_DEBUG("Failed to load plugin {}", plugin_uid);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    instance->init(_sample_rate);
-
-    /* TODO: Static cast isnt safe. Need mechanisim to denote processor type.*/
+    instance->set_enabled(true);
+    /* TODO: Static cast isnt safe. Need mechanism to denote processor type.*/
     auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);
     chain->add(instance.get());
     status = _register_processor(std::move(instance), plugin_name);

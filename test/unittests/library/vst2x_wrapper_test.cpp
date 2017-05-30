@@ -78,14 +78,12 @@ TEST_F(TestVst2xWrapper, test_set_name)
     EXPECT_EQ("Gain", _module_under_test->label());
 }
 
-
 TEST_F(TestVst2xWrapper, test_set_channels)
 {
     SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 }
-
 
 TEST_F(TestVst2xWrapper, test_parameter_initialization)
 {
@@ -98,7 +96,6 @@ TEST_F(TestVst2xWrapper, test_parameter_initialization)
     EXPECT_EQ(0u, id);
 }
 
-
 TEST_F(TestVst2xWrapper, test_parameter_set_via_event)
 {
     SetUp("libagain.so");
@@ -107,7 +104,6 @@ TEST_F(TestVst2xWrapper, test_parameter_set_via_event)
     auto handle = _module_under_test->_plugin_handle;
     EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
 }
-
 
 TEST_F(TestVst2xWrapper, test_process)
 {
@@ -119,7 +115,6 @@ TEST_F(TestVst2xWrapper, test_process)
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
-
 
 TEST_F(TestVst2xWrapper, test_processing_with_parameter_changes)
 {
@@ -159,4 +154,3 @@ TEST_F(TestVst2xWrapper, test_midi_events)
     test_utils::assert_buffer_value(0.0f, out_buffer);
 
 }
-
