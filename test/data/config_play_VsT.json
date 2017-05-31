@@ -1,0 +1,77 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "stompbox_chains" : [
+        {
+            "name" : "main",
+            "mode" : "stereo",
+            "stompboxes" : [
+                {
+                    "stompbox_uid" : "libvstxsynth.so",
+                    "stompbox_name" : "synth"
+                },
+                {
+                    "stompbox_uid" : "libagain.so",
+                    "stompbox_name" : "gain"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "chain_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "chain": "main"
+            }
+        ],
+        "cc_mappings": [
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 27,
+                "processor": "synth",
+                "parameter": "Wave 1",
+                "min_range": 0,
+                "max_range": 1
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 26,
+                "processor": "synth",
+                "parameter": "Wave 2",
+                "min_range": 0,
+                "max_range": 1
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 25,
+                "processor": "synth",
+                "parameter": "Freq 1",
+                "min_range": -20,
+                "max_range": 20
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 24,
+                "processor": "synth",
+                "parameter": "Freq 2",
+                "min_range": -20,
+                "max_range": 20
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 23,
+                "processor": "gain",
+                "parameter": "Gain",
+                "min_range": 0,
+                "max_range": 5
+            }
+        ]
+    }
+}

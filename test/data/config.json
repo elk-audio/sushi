@@ -4,7 +4,7 @@
     },
     "stompbox_chains" : [
         {
-            "name" : "left",
+            "name" : "chain_1",
             "mode" : "stereo",
             "stompboxes" : [
                 {
@@ -22,7 +22,7 @@
             ]
         },
         {
-            "name" : "right",
+            "name" : "chain_2",
             "mode" : "mono",
             "stompboxes" : [
                 {
@@ -84,7 +84,7 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "left"
+                "chain": "chain_1"
             }
         ],
         "cc_mappings": [

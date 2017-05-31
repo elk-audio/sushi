@@ -32,7 +32,7 @@ JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string &path_to_
             return status;
         }
     }
-    MIND_LOG_INFO("Successfully configured engine with plugins chains in JSON config file {}", path_to_file);
+    MIND_LOG_INFO("Successfully configured engine with plugins chains in JSON config file \"{}\"", path_to_file);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -59,12 +59,12 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
         {
             if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
             {
-                MIND_LOG_ERROR("Invalid \"port\" (type:int) specified for midi "
-                                       "channel connections in Json Config file.");
+                MIND_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
+                                       "channel connections in Json Config file.", con["port"].asInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
-            MIND_LOG_ERROR("Invalid \"chain\" (type:string) for midi "
-                                   "chain connection in Json config file.");
+            MIND_LOG_ERROR("Invalid chain \"{}\" for midi "
+                                   "chain connection in Json config file.", con["chain"].asString());
             return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
     }
@@ -82,14 +82,14 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
         {
             if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
             {
-                MIND_LOG_ERROR("Invalid \"port\" (type:int) specified "
-                                       "for midi cc mappings in Json Config file.");
+                MIND_LOG_ERROR("Invalid port \"{}\" specified "
+                                       "for midi cc mappings in Json Config file.", cc_map["port"].asInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
             if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
             {
-                MIND_LOG_ERROR("Invalid processor: \"{}\" specified for midi cc mappings.",
-                               cc_map["processor"].asString());
+                MIND_LOG_ERROR("Invalid processor \"{}\" specified "
+                                       "for midi cc mappings in Json Config file.", cc_map["processor"].asString());
                 return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
             }
             MIND_LOG_ERROR("Invalid parameter \"{}\" specified for processor: \"{}\" for midi cc mappings.",
@@ -137,6 +137,8 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         MIND_LOG_ERROR("Plugin Chain Name {} in JSON config file already exists in engine", chain_name);
         return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
     }
+    MIND_LOG_DEBUG("Jsonconfig : Successfully added Plugin "
+                           "Chain \"{}\" to the engine", chain_def["name"].asString());
 
     for(const Json::Value &def : chain_def["stompboxes"])
     {
@@ -147,15 +149,15 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         {
             if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
             {
-                MIND_LOG_ERROR("Incorrect stompbox UID {} in JSON config file", stompbox_uid);
+                MIND_LOG_ERROR("Incorrect stompbox UID \"{}\" in JSON config file", stompbox_uid);
                 return JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
             }
-            MIND_LOG_ERROR("Stompbox Name {} in JSON config file already exists in engine", stompbox_name);
+            MIND_LOG_ERROR("Stompbox Name \"{}\" in JSON config file already exists in engine", stompbox_name);
             return JsonConfigReturnStatus::INVALID_STOMPBOX_NAME;
         }
+        MIND_LOG_DEBUG("Jsonconfig : Successfully added stompbox \"{}\" to"
+                               " Chain \"{}\"", stompbox_name, chain_def["name"].asString());
     }
-
-    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_def["name"].asString());
     return JsonConfigReturnStatus::OK;
 }
 

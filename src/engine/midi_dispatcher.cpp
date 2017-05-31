@@ -1,9 +1,11 @@
 
 #include "midi_dispatcher.h"
-#include <iostream>
+#include "logging.h"
 
 namespace sushi {
 namespace midi_dispatcher {
+
+MIND_GET_LOGGER;
 
 inline Event make_note_on_event(const Connection &c,
                                 const midi::NoteOnMessage &msg,
@@ -60,6 +62,8 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.min_range = min_range;
     connection.max_range = max_range;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
+    MIND_LOG_DEBUG("Connected parameter \"{}\" "
+                           "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -84,6 +88,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes[midi_input][channel].push_back(connection);
+    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to chain \"{}\"", midi_input, chain_name);
     return MidiDispatcherStatus::OK;
 }
 
