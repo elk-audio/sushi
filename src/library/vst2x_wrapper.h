@@ -55,8 +55,6 @@ public:
     /* Inherited from Processor */
     ProcessorReturnCode init(const int sample_rate) override;
 
-    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
-
     void process_event(Event event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
@@ -94,8 +92,6 @@ private:
     std::string _plugin_path;
     LibraryHandle _library_handle;
     AEffect *_plugin_handle;
-
-    std::map<std::string, ObjectId> _param_names_to_id;
 };
 
 } // end namespace vst2

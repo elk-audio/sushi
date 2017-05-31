@@ -66,8 +66,6 @@ public:
     bool register_data_property(const std::string& name,
                                 const std::string& label);
 
-    /* Inherited from Processor */
-    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
 
     void process_event(Event event) override;
 

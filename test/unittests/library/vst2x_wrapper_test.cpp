@@ -90,12 +90,9 @@ TEST_F(TestVst2xWrapper, test_set_channels)
 TEST_F(TestVst2xWrapper, test_parameter_initialization)
 {
     SetUp("libagain.so");
-    EXPECT_EQ(1u, _module_under_test->_param_names_to_id.size());
-    ProcessorReturnCode status;
-    ObjectId id;
-    std::tie(status, id) = _module_under_test->parameter_id_from_name("Gain");
-    ASSERT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(0u, id);
+    auto gain_param = _module_under_test->parameter_from_name("Gain");
+    EXPECT_TRUE(gain_param);
+    EXPECT_EQ(0u, gain_param->id());
 }
 
 
