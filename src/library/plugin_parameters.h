@@ -189,8 +189,8 @@ public:
  * type combinations.
  */
 typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
-typedef ParameterPreProcessor<int> IntParameterPreProcessor;
-typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
+typedef ParameterPreProcessor<int>   IntParameterPreProcessor;
+typedef ParameterPreProcessor<bool>  BoolParameterPreProcessor;
 
 typedef TypedParameterDescriptor<float, ParameterType::FLOAT>         FloatParameterDescriptor;
 typedef TypedParameterDescriptor<int, ParameterType::INT>             IntParameterDescriptor;

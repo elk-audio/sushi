@@ -9,10 +9,10 @@
 using namespace sushi;
 using namespace engine;
 
-class TestProcessor : public Processor
+class DummyProcessor : public Processor
 {
 public:
-    TestProcessor()
+    DummyProcessor()
     {
         _max_input_channels = 2;
         _max_output_channels = 2;
@@ -41,7 +41,7 @@ protected:
 
 TEST_F(PluginChainTest, test_channel_management)
 {
-    TestProcessor test_processor;
+    DummyProcessor test_processor;
     test_processor.set_input_channels(2);
     /* Add the test processor to a mono chain and verify
      * it is configured in mono config */

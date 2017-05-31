@@ -90,17 +90,6 @@ bool InternalPlugin::register_data_property(const std::string &id,
 }
 
 
-std::pair<ProcessorReturnCode, ObjectId> InternalPlugin::parameter_id_from_name(const std::string& parameter_name)
-{
-    auto parameter = get_parameter(parameter_name);
-    if (parameter)
-    {
-        return std::make_pair(ProcessorReturnCode::OK, parameter->id());
-    }
-    return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
-}
-
-
 void InternalPlugin::process_event(Event event)
 {
     switch (event.type())

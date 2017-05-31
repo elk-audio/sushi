@@ -158,14 +158,12 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(cons
     {
         return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
     }
-    ProcessorReturnCode status;
-    ObjectId id;
-    std::tie(status, id) = processor_node->second->parameter_id_from_name(parameter_name);
-    if (status != ProcessorReturnCode::OK)
+    auto param = processor_node->second->parameter_from_name(parameter_name);
+    if (param)
     {
-        return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, 0);
+        return std::make_pair(EngineReturnStatus::OK, param->id());
     }
-    return std::make_pair(EngineReturnStatus::OK, id);
+    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, 0);
 };
 
 std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(const ObjectId uid)
