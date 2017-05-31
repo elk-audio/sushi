@@ -88,12 +88,12 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
             }
             if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
             {
-                MIND_LOG_ERROR("Invalid \"processor\" (type:string) specified "
-                                       "for midi cc mappings in Json Config file.");
+                MIND_LOG_ERROR("Invalid processor: \"{}\" specified for midi cc mappings.",
+                               cc_map["processor"].asString());
                 return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
             }
-            MIND_LOG_ERROR("Invalid \"parameter\" (type:string) specified "
-                                   "for midi cc mappings in Json Config file.");
+            MIND_LOG_ERROR("Invalid parameter \"{}\" specified for processor: \"{}\" for midi cc mappings.",
+                           cc_map["parameter"].asString(), cc_map["processor"].asString());
             return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
     }
