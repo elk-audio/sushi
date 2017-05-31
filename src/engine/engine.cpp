@@ -232,7 +232,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     auto processor_status = instance->init(_sample_rate);
     if(processor_status != ProcessorReturnCode::OK)
     {
-        MIND_LOG_DEBUG("Failed to load plugin {}", plugin_uid);
+        MIND_LOG_ERROR("Failed to load plugin {}", plugin_uid);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
     instance->set_enabled(true);
@@ -240,6 +240,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);
     chain->add(instance.get());
     status = _register_processor(std::move(instance), plugin_name);
+    MIND_LOG_INFO("Succesfully added plugin {} to chain.", plugin_name);
     return status;
 }
 

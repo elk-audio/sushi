@@ -132,6 +132,7 @@ TEST_F(TestEngine, TestAddPlugin)
     status = _module_under_test->add_plugin_to_chain("left",full_plugin_path,"vst_gain_plugin");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     full_plugin_path = realpath("libvstxsynth.so", NULL);
+    std::cout << full_plugin_path;
     status = _module_under_test->add_plugin_to_chain("left",full_plugin_path,"vst_synth");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),4u);
