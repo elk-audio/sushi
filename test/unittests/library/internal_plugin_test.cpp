@@ -45,6 +45,25 @@ TEST_F(InternalPluginTest, TestInstanciation)
     EXPECT_EQ("test_plugin", _module_under_test->name());
 }
 
+TEST_F(InternalPluginTest, TestParameterRegistration)
+{
+    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", false));
+    EXPECT_TRUE(_module_under_test->register_string_property("string", "String"));
+    EXPECT_TRUE(_module_under_test->register_data_property("data", "Data"));
+    EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", 3,
+                                                            new IntParameterPreProcessor(0, 10)));
+    EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", 5.0f,
+                                                             new FloatParameterPreProcessor(0.0, 10.0)));
+
+    /* Verify all parameter/properties were registered and their order match */
+    auto parameter_list = _module_under_test->all_parameters();
+    EXPECT_EQ(5u, parameter_list.size());
+
+    EXPECT_EQ(5u, _module_under_test->_parameter_values.size());
+    IntParameterValue* value;
+    ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[3].int_parameter_value());
+    EXPECT_EQ(3, value->value());
+}
 
 TEST_F(InternalPluginTest, TestDuplicateParameterNames)
 {

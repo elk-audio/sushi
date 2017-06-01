@@ -74,6 +74,9 @@ bool InternalPlugin::register_string_property(const std::string &id,
     {
         return false;
     }
+    /* We don't provide a string value class but must push a dummy container here for ids to match */
+    ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
+    _parameter_values.push_back(value_storage);
     return true;
 }
 
@@ -86,6 +89,9 @@ bool InternalPlugin::register_data_property(const std::string &id,
     {
         return false;
     }
+    /* We don't provide a data value class but must push a dummy container here for ids to match */
+    ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
+    _parameter_values.push_back(value_storage);
     return true;
 }
 
