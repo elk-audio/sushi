@@ -89,7 +89,6 @@ void Vst2xWrapper::_cleanup()
 bool Vst2xWrapper::_register_parameters()
 {
     char param_name[VST_STRING_BUFFER_SIZE] = {0};
-    char param_label[VST_STRING_BUFFER_SIZE] = {0};
 
     VstInt32 idx = 0;
     bool param_inserted_ok = true;
@@ -97,8 +96,7 @@ bool Vst2xWrapper::_register_parameters()
     {
         // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
-        _vst_dispatcher(effGetParamLabel, idx, 0, param_label, 0);
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_label, nullptr));
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, nullptr));
         if (param_inserted_ok)
         {
             MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
