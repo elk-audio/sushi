@@ -109,14 +109,13 @@ void InternalPlugin::process_event(Event event)
              * some kind of conversion to StompboxEvents here to avoid exposing
              * the internal event structure to 3rd party devs. */
             auto typed_event = event.parameter_change_event();
-            if (typed_event->param_id() >= _parameters_by_index.size())
+            if (typed_event->param_id() >= _parameter_values.size())
             {
                 /* Out of bounds index, this should not happen, might replace with an assert. */
                 break;
             }
-            auto parameter = _parameters_by_index[typed_event->param_id()];
             auto storage = &_parameter_values[typed_event->param_id()];
-            switch (parameter->type())
+            switch (storage->type())
             {
                 case ParameterType::FLOAT:
                 {

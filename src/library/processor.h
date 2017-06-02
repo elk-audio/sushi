@@ -99,6 +99,12 @@ public:
     }
 
     /**
+     * @brief Get the number of parameters of this processor.
+     * @return The number of registered parameters for this processor.
+     */
+    int parameter_count() const {return static_cast<int>(_parameters_by_index.size());};
+
+    /**
      * @brief Get the parameter descriptor associated with a certain name
      * @param name The unique name of the parameter
      * @return A pointer to the parameter descriptor or a null pointer
@@ -186,9 +192,6 @@ protected:
 
     bool _enabled{true};
 
-    std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
-    std::vector<ParameterDescriptor*> _parameters_by_index;
-
 private:
     /* This could easily be turned into a list if it is neccesary to broadcast events */
     EventPipe* _output_pipe{nullptr};
@@ -197,6 +200,9 @@ private:
 
     std::string _unique_name{""};
     std::string _label{""};
+
+    std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
+    std::vector<ParameterDescriptor*> _parameters_by_index;
 };
 
 /**

@@ -216,41 +216,49 @@ template<typename T, ParameterType enumerated_type>
 class ParameterValue
 {
 public:
-    ParameterValue(ParameterPreProcessor<T>* pre_processor, T value) : _pre_processor(pre_processor),
-                                                                      _raw_value(value),
-                                                                      _value(pre_processor->process(value)){}
+    ParameterValue(ParameterPreProcessor<T>* pre_processor,
+                   T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                               _pre_processor(pre_processor),
+                                                               _raw_value(value),
+                                                               _value(pre_processor->process(value)){}
 
-    ParameterType type() const {return enumerated_type;}
+    ParameterType type() const {return _type;}
     T value() const {return _value;}
     T raw_value() const {return _raw_value;}
-
+    ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
-
     void set(T value)
     {
         _raw_value = value;
         _value = _pre_processor->process(value);
     }
 private:
+    ParameterType _type{enumerated_type};
+    ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
     T _raw_value;
     T _value;
 };
+
 /* Specialization for bool values, lack a pre_processor */
 template<>
 class ParameterValue<bool, ParameterType::BOOL>
 {
 public:
-    ParameterValue(bool value) : _value(value){}
+    ParameterValue(bool value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                                  _value(value) {}
 
-    ParameterType type() const {return ParameterType::BOOL;}
+    ParameterType type() const {return _type;}
     bool value() const {return _value;}
     bool raw_value() const {return _value;}
+    ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
     void set(bool value) {_value = value;}
 private:
+    ParameterType _type{ParameterType::BOOL};
+    ParameterDescriptor* _descriptor{nullptr};
     bool _value;
 };
 
@@ -280,35 +288,36 @@ public:
         return &_float_value;
     }
 
-    ObjectId id() {return _parameter->id();}
+    ParameterType type() {return _float_value.type();}
+
+    ObjectId id() {return _bool_value.descriptor()->id();}
 
     /* Factory functions for construction */
-    static ParameterStorage make_bool_parameter_storage(ParameterDescriptor* parameter,
+    static ParameterStorage make_bool_parameter_storage(ParameterDescriptor* descriptor,
                                                         bool default_value)
     {
-        BoolParameterValue value(default_value);
-        return ParameterStorage(parameter, value);
+        BoolParameterValue value(default_value, descriptor);
+        return ParameterStorage(value);
     }
-    static ParameterStorage make_int_parameter_storage(ParameterDescriptor* parameter,
+    static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
                                                        int default_value,
                                                        IntParameterPreProcessor* pre_processor)
     {
-        IntParameterValue value(pre_processor, default_value);
-        return ParameterStorage(parameter, value);
+        IntParameterValue value(pre_processor, default_value, descriptor);
+        return ParameterStorage(value);
     }
-    static ParameterStorage make_float_parameter_storage(ParameterDescriptor* parameter,
+    static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
                                                          float default_value,
                                                          FloatParameterPreProcessor* pre_processor)
     {
-        FloatParameterValue value(pre_processor, default_value);
-        return ParameterStorage(parameter, value);
+        FloatParameterValue value(pre_processor, default_value, descriptor);
+        return ParameterStorage(value);
     }
 private:
-    ParameterStorage(ParameterDescriptor* p, BoolParameterValue value) : _parameter(p), _bool_value(value) {}
-    ParameterStorage(ParameterDescriptor* p, IntParameterValue value) : _parameter(p), _int_value(value) {}
-    ParameterStorage(ParameterDescriptor* p, FloatParameterValue value) : _parameter(p), _float_value(value) {}
+    ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
+    ParameterStorage(IntParameterValue value) : _int_value(value) {}
+    ParameterStorage(FloatParameterValue value) : _float_value(value) {}
 
-    ParameterDescriptor* _parameter;
     union
     {
         BoolParameterValue  _bool_value;

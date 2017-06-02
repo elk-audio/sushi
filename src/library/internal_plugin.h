@@ -8,7 +8,6 @@
 #ifndef SUSHI_INTERNAL_PLUGIN_H
 #define SUSHI_INTERNAL_PLUGIN_H
 
-#include <algorithm>
 #include <deque>
 
 #include "library/processor.h"
@@ -70,18 +69,6 @@ public:
     void process_event(Event event) override;
 
 private:
-    /**
-    * @brief Return the parameter with the given unique id
-    */
-    ParameterDescriptor* get_parameter(const std::string& id)
-    {
-        auto parameter = _parameters.find(id);
-        if (parameter == _parameters.end())
-        {
-            return nullptr;
-        }
-        return parameter->second.get();
-    }
     /* TODO - consider container type to use here. Deque has the very desirable property
      * that iterators are never invalidated by adding to the containers.
      * For arrays or std::vectors we need to know the maximum capacity for that to work. */

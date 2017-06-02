@@ -144,16 +144,16 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 0.0f);
 
     // Get the registered parameters, check they exist and call set on them.
-    FloatParameterDescriptor* freq_param = static_cast<FloatParameterDescriptor*>(_module_under_test->get_parameter("frequency"));
+    auto freq_param = static_cast<const FloatParameterDescriptor*>(_module_under_test->parameter_from_name("frequency"));
     ASSERT_TRUE(freq_param);
 
-    FloatParameterDescriptor* gain_param = static_cast<FloatParameterDescriptor*>(_module_under_test->get_parameter("gain"));
+    auto gain_param = static_cast<const FloatParameterDescriptor*>(_module_under_test->parameter_from_name("gain"));
     ASSERT_TRUE(gain_param);
 
-    FloatParameterDescriptor* q_param = static_cast<FloatParameterDescriptor*>(_module_under_test->get_parameter("q"));
+    auto q_param = static_cast<const FloatParameterDescriptor*>(_module_under_test->parameter_from_name("q"));
     ASSERT_TRUE(q_param);
 
-    _module_under_test->_frequency ->set(4000.0f);
+    _module_under_test->_frequency->set(4000.0f);
     _module_under_test->_gain->set(6.0f);
     _module_under_test->_q->set(1.0f);
 

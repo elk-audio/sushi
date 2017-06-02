@@ -81,7 +81,7 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     EXPECT_TRUE(value);
 
     // access the parameter through its id and verify type and that you can set its value.
-    EXPECT_EQ(ParameterType::BOOL, _module_under_test->get_parameter("param_1")->type());
+    EXPECT_EQ(ParameterType::BOOL, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
     EXPECT_TRUE(value->value());
@@ -93,7 +93,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     EXPECT_TRUE(value);
 
     // access the parameter through its id and verify type and that you can set its value.
-    EXPECT_EQ(ParameterType::INT, _module_under_test->get_parameter("param_1")->type());
+    EXPECT_EQ(ParameterType::INT, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
     EXPECT_FLOAT_EQ(6.0f, value->value());
@@ -105,7 +105,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     EXPECT_TRUE(value);
 
     // access the parameter through its id and verify type and that you can set its value.
-    EXPECT_EQ(ParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
+    EXPECT_EQ(ParameterType::FLOAT, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 5);
     _module_under_test->process_event(event);
     EXPECT_EQ(5, value->value());
