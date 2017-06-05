@@ -121,31 +121,21 @@ TEST_F(TestEngine, TestAddPlugin)
     /* Test adding Internal plugin */
     _module_under_test->create_plugin_chain("left",2);
     auto status = _module_under_test->add_plugin_to_chain("left",
-                                                          "sushi.testing.passthrough",
-                                                          "passthrough_0_l",
-                                                          PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
-    status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.gain",
                                                      "gain_0_r",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_TRUE(_module_under_test->_processor_exists("passthrough_0_l"));
-    ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2u);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"passthrough_0_l");
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"gain_0_r");
-
-    /* Test adding Vst2 plugin. */
     char* full_plugin_path = realpath("libvstxsynth.so", NULL);
     status = _module_under_test->add_plugin_to_chain("left",
                                                      full_plugin_path,
                                                      "vst_synth",
                                                      PluginType::VST2X);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),3u);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[2]->name(),"vst_synth");
     delete full_plugin_path;
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2u);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"gain_0_r");
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"vst_synth");
 
     /* Negative tests */
     status = _module_under_test->add_plugin_to_chain("not_found",
