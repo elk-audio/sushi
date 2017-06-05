@@ -46,14 +46,9 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
 
 BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& id,
                                                             const std::string& label,
-                                                            bool default_value,
-                                                            BoolParameterPreProcessor* custom_pre_processor)
+                                                            bool default_value)
 {
-    if (!custom_pre_processor)
-    {
-        custom_pre_processor = new BoolParameterPreProcessor(true, false);
-    }
-    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, custom_pre_processor);
+    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, nullptr);
     if (!this->register_parameter(param))
     {
         return nullptr;

@@ -38,30 +38,65 @@ public:
 
     virtual ~InternalPlugin() {};
 
-    // Parameter registration functions
+    /**
+     * @brief Register a float typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @param custom_pre_processor A preprocessor object used to clip/scale the set value
+     * @return Pointer to a FloatParameterValue object
+     */
     FloatParameterValue* register_float_parameter(const std::string& name,
                                                   const std::string& label,
                                                   float default_value,
                                                   FloatParameterPreProcessor* custom_pre_processor);
 
-
+    /**
+     * @brief Register an int typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @param custom_pre_processor A preprocessor object used to clip/scale the set value
+     * @return Pointer to an IntParameterValue object
+     */
     IntParameterValue* register_int_parameter(const std::string& name,
                                               const std::string& label,
                                               int default_value,
                                               IntParameterPreProcessor* custom_pre_processor);
 
-
+    /**
+     * @brief Register a bool typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @return Pointer to a BoolParameterValue object
+     */
     BoolParameterValue* register_bool_parameter(const std::string& name,
                                                 const std::string& label,
-                                                bool default_value,
-                                                BoolParameterPreProcessor* custom_pre_processor = nullptr);
+                                                bool default_value);
 
-    /* Currently properties dont provide a storage class and automatic updates */
+    /**
+     * @brief Register a string property that can be updated through events
+     * @param name Unique name of the property
+     * @param label Display name of the property
+     * @return true if the property was registered succesfully
+     */
     bool register_string_property(const std::string& name,
                                   const std::string& label);
 
 
-    /* Currently properties dont provide a storage class and automatic updates */
+    /**
+     * @brief Register a data property that can be updated through events 
+     * @param name Unique name of the property
+     * @param label Display name of the property
+     * @return true if the property was registered succesfully
+     */
     bool register_data_property(const std::string& name,
                                 const std::string& label);
 
