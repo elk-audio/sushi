@@ -79,6 +79,7 @@ void Vst2xWrapper::_cleanup()
         // Tell plugin to stop and shutdown
         set_enabled(false);
         _vst_dispatcher(effClose, 0, 0, 0, 0);
+        _plugin_handle = nullptr;
     }
     if (_library_handle != nullptr)
     {
