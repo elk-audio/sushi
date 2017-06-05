@@ -137,13 +137,7 @@ TEST_F(TestEngine, TestAddPlugin)
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"gain_0_r");
 
     /* Test adding Vst2 plugin. */
-    char* full_plugin_path = realpath("libagain.so", NULL);
-    status = _module_under_test->add_plugin_to_chain("left",
-                                                     full_plugin_path,
-                                                     "vst_gain",
-                                                     PluginType::VST2X);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
-    full_plugin_path = realpath("libvstxsynth.so", NULL);
+    char* full_plugin_path = realpath("libvstxsynth.so", NULL);
     status = _module_under_test->add_plugin_to_chain("left",
                                                      full_plugin_path,
                                                      "vst_synth",
