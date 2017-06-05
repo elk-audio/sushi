@@ -45,13 +45,17 @@ public:
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
      * @param default_value The default value the parameter should have
-     * @param custom_pre_processor A preprocessor object used to clip/scale the set value
+     * @param min_value The minimum value the parameter can have
+     * @param max_value The maximum value the parameter can have
+     * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to a FloatParameterValue object
      */
     FloatParameterValue* register_float_parameter(const std::string& name,
                                                   const std::string& label,
                                                   float default_value,
-                                                  FloatParameterPreProcessor* custom_pre_processor);
+                                                  float min_value,
+                                                  float max_value,
+                                                  FloatParameterPreProcessor* pre_proc = nullptr);
 
     /**
      * @brief Register an int typed parameter and return a pointer to a value
@@ -60,13 +64,17 @@ public:
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
      * @param default_value The default value the parameter should have
-     * @param custom_pre_processor A preprocessor object used to clip/scale the set value
+     * @param min_value The minimum value the parameter can have
+     * @param max_value The maximum value the parameter can have
+     * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to an IntParameterValue object
      */
     IntParameterValue* register_int_parameter(const std::string& name,
                                               const std::string& label,
                                               int default_value,
-                                              IntParameterPreProcessor* custom_pre_processor);
+                                              int min_value,
+                                              int max_value,
+                                              IntParameterPreProcessor* pre_proc = nullptr);
 
     /**
      * @brief Register a bool typed parameter and return a pointer to a value
@@ -92,7 +100,7 @@ public:
 
 
     /**
-     * @brief Register a data property that can be updated through events 
+     * @brief Register a data property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
      * @return true if the property was registered succesfully

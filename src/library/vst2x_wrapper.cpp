@@ -97,7 +97,7 @@ bool Vst2xWrapper::_register_parameters()
     {
         // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, nullptr));
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
             MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);

@@ -144,14 +144,23 @@ public:
      */
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
+                             T range_min,
+                             T range_max,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, enumerated_type),
-                                        _pre_processor(pre_processor) {}
+                                        _pre_processor(pre_processor),
+                                        _min(range_min),
+                                        _max(range_max) {}
 
     ~TypedParameterDescriptor() {};
 
+    T min_value() const {return _min;}
+    T max_value() const {return _max;}
+
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
+    T _min;
+    T _max;
 };
 
 /* Partial specialization for pointer type parameters */

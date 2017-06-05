@@ -50,7 +50,7 @@ TEST_F(TestProcessor, TestBasicProperties)
 TEST_F(TestProcessor, TestParameterHandling)
 {
     /* Register a single parameter and verify accessor functions */
-    auto p = new FloatParameterDescriptor("param", "Float", nullptr);
+    auto p = new FloatParameterDescriptor("param", "Float", 0, 1, nullptr);
     _module_under_test->register_parameter(p);
 
     auto param = _module_under_test->parameter_from_name("not_found");
