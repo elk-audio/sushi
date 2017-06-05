@@ -5,18 +5,20 @@ namespace sushi {
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
                                                               float default_value,
-                                                              FloatParameterPreProcessor* custom_pre_processor)
+                                                              float min_value,
+                                                              float max_value,
+                                                              FloatParameterPreProcessor* pre_proc)
 {
-    if (!custom_pre_processor)
+    if (!pre_proc)
     {
-        custom_pre_processor = new FloatParameterPreProcessor(0.0f, 1.0f);
+        pre_proc = new FloatParameterPreProcessor(min_value, max_value);
     }
-    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, custom_pre_processor);
+    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, min_value, max_value, pre_proc);
     if (!this->register_parameter(param))
     {
         return nullptr;
     }
-    auto value = ParameterStorage::make_float_parameter_storage(param, default_value, custom_pre_processor);
+    auto value = ParameterStorage::make_float_parameter_storage(param, default_value, pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
@@ -26,18 +28,20 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
 IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           const std::string& label,
                                                           int default_value,
-                                                          IntParameterPreProcessor* custom_pre_processor)
+                                                          int min_value,
+                                                          int max_value,
+                                                          IntParameterPreProcessor* pre_proc)
 {
-    if (!custom_pre_processor)
+    if (! pre_proc)
     {
-        custom_pre_processor = new IntParameterPreProcessor(0, 127);
+         pre_proc = new IntParameterPreProcessor(min_value, max_value);
     }
-    IntParameterDescriptor* param = new IntParameterDescriptor(id, label, custom_pre_processor);
+    IntParameterDescriptor* param = new IntParameterDescriptor(id, label, min_value, max_value, pre_proc);
     if (!this->register_parameter(param))
     {
         return nullptr;
     }
-    auto value = ParameterStorage::make_int_parameter_storage(param, default_value, custom_pre_processor);
+    auto value = ParameterStorage::make_int_parameter_storage(param, default_value,  pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
@@ -48,7 +52,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
                                                             const std::string& label,
                                                             bool default_value)
 {
-    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, nullptr);
+    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, true, false, nullptr);
     if (!this->register_parameter(param))
     {
         return nullptr;
