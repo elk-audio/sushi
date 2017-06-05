@@ -4,38 +4,44 @@
     },
     "stompbox_chains" : [
         {
-            "name" : "chain_1",
+            "name" : "left",
             "mode" : "stereo",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "passthrough_0_l"
+                    "stompbox_name" : "passthrough_0_l",
+                    "plugin_type" : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_l"
+                    "stompbox_name" : "gain_0_l",
+                    "plugin_type" : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.equalizer",
-                    "stompbox_name" : "equalizer_0_l"
+                    "stompbox_name" : "equalizer_0_l",
+                    "plugin_type" : "internal"
                 }
             ]
         },
         {
-            "name" : "chain_2",
+            "name" : "right",
             "mode" : "mono",
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_r"
+                    "stompbox_name" : "gain_0_r",
+                    "plugin_type" : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "passthrough_0_r"
+                    "stompbox_name" : "passthrough_0_r",
+                    "plugin_type" : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_1_r"
+                    "stompbox_name" : "gain_1_r",
+                    "plugin_type" : "internal"
                 }
             ]
         }
@@ -84,7 +90,7 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "chain_1"
+                "chain": "left"
             }
         ],
         "cc_mappings": [
@@ -99,5 +105,4 @@
             }
         ]
     }
-
 }

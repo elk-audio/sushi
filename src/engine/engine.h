@@ -35,9 +35,17 @@ enum class EngineReturnStatus
     INVALID_N_CHANNELS,
     INVALID_STOMPBOX_UID,
     INVALID_STOMPBOX_NAME,
+    INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
     INVALID_PLUGIN_CHAIN
+};
+
+enum class PluginType
+{
+    INTERNAL,
+    VST2X,
+    VST3X
 };
 
 class BaseEngine
@@ -120,7 +128,8 @@ public:
 
     virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
                                                    const std::string& /*uid*/,
-                                                   const std::string& /*name*/)
+                                                   const std::string& /*name*/,
+                                                   PluginType /*plugin_type*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -172,7 +181,7 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
 
     /**
      * @brief Creates an empty plugin chain owned by the engine.
@@ -189,9 +198,10 @@ public:
      * @param uid The name of the plugin
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_chain(const std::string& chain_id, 
+    EngineReturnStatus add_plugin_to_chain(const std::string& chain_id,
                                            const std::string& uid,
-                                           const std::string& name) override;
+                                           const std::string& name,
+                                           PluginType plugin_type) override;
 
 protected:
     std::vector<PluginChain*> _audio_graph;
@@ -202,7 +212,7 @@ private:
      * @param uid String unique id
      * @return Pointer to plugin instance if uid is valid, nullptr otherwise
      */
-    std::unique_ptr<Processor> _make_stompbox_from_unique_id(const std::string &uid);
+    std::unique_ptr<Processor> _make_internal_plugin(const std::string& uid);
 
     /**
      * @brief Register a newly created processor in all lookup containers

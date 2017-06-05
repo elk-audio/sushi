@@ -30,10 +30,9 @@ int AudioEngine::n_channels_in_chain(int chain)
     return 0;
 }
 
-std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std::string& uid)
+std::unique_ptr<Processor> AudioEngine::_make_internal_plugin(const std::string& uid)
 {
     Processor* instance = nullptr;
-
     if (uid == "sushi.testing.passthrough")
     {
         instance = new passthrough_plugin::PassthroughPlugin();
@@ -50,10 +49,7 @@ std::unique_ptr<Processor> AudioEngine::_make_stompbox_from_unique_id(const std:
     {
         instance = new sample_player_plugin::SamplePlayerPlugin();
     }
-    else
-    {
-        instance = new vst2::Vst2xWrapper(uid);
-    }
+
     return std::unique_ptr<Processor>(instance);
 }
 
@@ -72,6 +68,7 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
     processor->set_name(str_id);
     _processors_by_unique_id[processor->id()] = processor.get();
     _processors_by_unique_name[str_id] = std::move(processor);
+    MIND_LOG_DEBUG("Succesfully registered processor {}.", str_id);
     return EngineReturnStatus::OK;
 }
 
@@ -203,12 +200,14 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
     chain->set_output_channels(chain_channel_count);
     EngineReturnStatus status = _register_processor(std::move(std::unique_ptr<Processor>(chain)), chain_name);
     _audio_graph.push_back(chain);
+    MIND_LOG_INFO("Plugin Chain {} successfully added to engine", chain_name);
     return status;
 }
 
 EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
                                                     const std::string& plugin_uid,
-                                                    const std::string& plugin_name)
+                                                    const std::string& plugin_name,
+                                                    PluginType plugin_type)
 {
     if(plugin_name.empty())
     {
@@ -228,19 +227,38 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Chain name {} does not exist in processor list", chain_name);
         return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
-    auto instance = _make_stompbox_from_unique_id(plugin_uid);
-    auto processor_status = instance->init(_sample_rate);
+
+    std::unique_ptr<Processor> plugin;
+    switch (plugin_type)
+    {
+        case PluginType::INTERNAL:
+            plugin = std::move(_make_internal_plugin(plugin_uid));
+            if(plugin == nullptr)
+            {
+                MIND_LOG_ERROR("Incorrect stompbox UID \"{}\"", plugin_uid);
+                return EngineReturnStatus::INVALID_STOMPBOX_UID;
+            }
+            break;
+
+        case PluginType::VST2X:
+            plugin = std::make_unique<vst2::Vst2xWrapper>(plugin_uid);
+            break;
+
+        default:
+            MIND_LOG_ERROR("Plugin {} has invalid or unsupported plugin type", plugin_uid);
+            return EngineReturnStatus::INVALID_PLUGIN_TYPE;
+    }
+
+    auto processor_status = plugin->init(_sample_rate);
     if(processor_status != ProcessorReturnCode::OK)
     {
-        MIND_LOG_ERROR("Failed to load plugin {}", plugin_uid);
+        MIND_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
         return EngineReturnStatus::INVALID_STOMPBOX_UID;
     }
-    instance->set_enabled(true);
-    /* TODO: Static cast isnt safe. Need mechanism to denote processor type.*/
+    plugin->set_enabled(true);
     auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);
-    chain->add(instance.get());
-    status = _register_processor(std::move(instance), plugin_name);
-    MIND_LOG_INFO("Succesfully added plugin {} to chain.", plugin_name);
+    chain->add(plugin.get());
+    status = _register_processor(std::move(plugin), plugin_name);
     return status;
 }
 

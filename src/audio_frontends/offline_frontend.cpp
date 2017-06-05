@@ -88,7 +88,6 @@ AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Js
                                                                                           sample % AUDIO_CHUNK_SIZE,
                                                                                           parameterId,
                                                                                           data["value"].asFloat())));
-
             }
             else if (e["type"] == "note_on")
             {

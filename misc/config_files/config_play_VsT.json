@@ -8,12 +8,14 @@
             "mode" : "stereo",
             "stompboxes" : [
                 {
-                    "stompbox_uid" : "libvstxsynth.so",
-                    "stompbox_name" : "synth"
+                    "stompbox_uid" : "/home/sharan/sushi/build/debug/test/libvstxsynth.so",
+                    "stompbox_name" : "synth",
+                    "plugin_type"   : "vst2x"
                 },
                 {
-                    "stompbox_uid" : "libagain.so",
-                    "stompbox_name" : "gain"
+                    "stompbox_uid" : "/home/sharan/sushi/build/debug/test/libagain.so",
+                    "stompbox_name" : "gain",
+                    "plugin_type"   : "vst2x"
                 }
             ]
         }

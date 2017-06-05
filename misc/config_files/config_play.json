@@ -9,11 +9,13 @@
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.sampleplayer",
-                    "stompbox_name" : "sampler_0_r"
+                    "stompbox_name" : "sampler_0_r",
+                    "plugin_type"   : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_r"
+                    "stompbox_name" : "gain_0_r",
+                    "plugin_type"   : "internal"
                 }
             ]
         },
@@ -23,15 +25,18 @@
             "stompboxes" : [
                 {
                     "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "local_instance_name_l"
+                    "stompbox_name" : "local_instance_name_l",
+                    "plugin_type"   : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_l"
+                    "stompbox_name" : "gain_0_l",
+                    "plugin_type"   : "internal"
                 },
                 {
                     "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "equalizer_0_l"
+                    "stompbox_name" : "equalizer_0_l",
+                    "plugin_type"   : "internal"
                 }
             ]
         }
