@@ -8,14 +8,14 @@
             "mode" : "stereo",
             "stompboxes" : [
                 {
-                    "stompbox_uid" : "sushi.testing.sampleplayer",
-                    "stompbox_name" : "sampler_0_r",
-                    "plugin_type"   : "internal"
+                    "path" : "sushi.testing.sampleplayer",
+                    "name" : "sampler_0_r",
+                    "type"   : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_r",
-                    "plugin_type"   : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "gain_0_r",
+                    "type"   : "internal"
                 }
             ]
         },
@@ -24,19 +24,19 @@
             "mode" : "stereo",
             "stompboxes" : [
                 {
-                    "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "local_instance_name_l",
-                    "plugin_type"   : "internal"
+                    "path" : "sushi.testing.passthrough",
+                    "name" : "local_instance_name_l",
+                    "type"   : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_l",
-                    "plugin_type"   : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "gain_0_l",
+                    "type"   : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "equalizer_0_l",
-                    "plugin_type"   : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "equalizer_0_l",
+                    "type"   : "internal"
                 }
             ]
         }

@@ -139,14 +139,14 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
     }
     MIND_LOG_DEBUG("Successfully added Plugin Chain "
-                           "\"{}\" to the engine", chain_def["name"].asString());
+                           "\"{}\" to the engine", chain_name);
 
     for(const Json::Value &def : chain_def["stompboxes"])
     {
-        auto stompbox_uid = def["stompbox_uid"].asString();
-        auto stompbox_name = def["stompbox_name"].asString();
+        auto plugin_path = def["path"].asString();
+        auto plugin_name = def["name"].asString();
         PluginType plugin_type;
-        auto type = def["plugin_type"].asString();
+        auto type = def["type"].asString();
         if(type == "internal")
         {
             plugin_type = PluginType::INTERNAL;
@@ -156,22 +156,22 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
             plugin_type = PluginType::VST2X;
         }
 
-        status = _engine->add_plugin_to_chain(chain_name, stompbox_uid, stompbox_name, plugin_type);
+        status = _engine->add_plugin_to_chain(chain_name, plugin_path, plugin_name, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
             {
-                MIND_LOG_ERROR("Invalid stompbox UID {} in JSON config file", stompbox_uid);
-                return JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
+                MIND_LOG_ERROR("Invalid plugin path {} in JSON config file", plugin_path);
+                return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
             }
-            MIND_LOG_ERROR("Stompbox Name {} in JSON config file already exists in engine", stompbox_name);
-            return JsonConfigReturnStatus::INVALID_STOMPBOX_NAME;
+            MIND_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
+            return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
         MIND_LOG_DEBUG("Successfully added Plugin \"{}\" to"
-                               " Chain \"{}\"", stompbox_name, chain_def["name"].asString());
+                               " Chain \"{}\"", plugin_name, chain_name);
     }
 
-    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_def["name"].asString());
+    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_name);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -230,24 +230,24 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
         {
             for(auto& def : chain["stompboxes"])
             {
-                if(!def["stompbox_uid"].isString())
+                if(!def["path"].isString())
                 {
-                    MIND_LOG_ERROR("\"stompbox_uid\" (type:string) is not defined for plugin chain "
+                    MIND_LOG_ERROR("\"path\" (type:string) is not defined for plugin chain "
                                            "\"{}\" in JSON config file", chain["name"].asString());
-                    return  JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
+                    return  JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
                 }
-                if(!def["stompbox_name"].isString())
+                if(!def["name"].isString())
                 {
-                    MIND_LOG_ERROR("\"stompbox_name\" (type:string) is not defined for plugin chain "
+                    MIND_LOG_ERROR("\"name\" (type:string) is not defined for plugin chain "
                                            "\"{}\" in JSON config file", chain["name"].asString());
-                    return  JsonConfigReturnStatus::INVALID_STOMPBOX_NAME;
+                    return  JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
                 }
-                if(!def["plugin_type"].isString())
+                if(!def["type"].isString())
                 {
-                    MIND_LOG_ERROR("\"plugin_type\" (type:string) is not defined in plugin chain \"{}\"", chain["name"].asString());
+                    MIND_LOG_ERROR("\"type\" (type:string) is not defined in plugin chain \"{}\"", chain["name"].asString());
                     return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
                 }
-                auto type = def["plugin_type"].asString();
+                auto type = def["type"].asString();
                 if(type != "internal" && type != "vst2x")
                 {
                     MIND_LOG_ERROR("Invalid plugin type \"{}\" in "
@@ -383,7 +383,7 @@ JsonConfigReturnStatus JsonConfigurator::_validate_midi_cc_map_def(const Json::V
         {
             MIND_LOG_ERROR("\"processor\" (type:int) for midi "
                                    "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_STOMPBOX_UID;
+            return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
         }
         if(!cc_map["parameter"].isString())
         {

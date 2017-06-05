@@ -138,32 +138,32 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     /* Create valid plugin chain with valid stompboxes */
     plugin_chain["name"] = "chain_with_stomp";
     auto& test_stompbox = plugin_chain["stompboxes"];
-    test_stompbox[0]["stompbox_name"] = "internal_plugin";
-    test_stompbox[0]["stompbox_uid"] = "sushi.testing.gain";
-    test_stompbox[0]["plugin_type"] = "internal";
-    test_stompbox[1]["stompbox_name"] = "vst2_plugin";
+    test_stompbox[0]["name"] = "internal_plugin";
+    test_stompbox[0]["path"] = "sushi.testing.gain";
+    test_stompbox[0]["type"] = "internal";
+    test_stompbox[1]["name"] = "vst2_plugin";
     char* full_plugin_path = realpath("libagain.so", NULL);
-    test_stompbox[1]["stompbox_uid"] = full_plugin_path;
-    test_stompbox[1]["plugin_type"] = "vst2x";
+    test_stompbox[1]["path"] = full_plugin_path;
+    test_stompbox[1]["type"] = "vst2x";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
     delete full_plugin_path;
 
     /* test with stompbox having Invalid UID or existing name */
     plugin_chain["name"] = "chain_invalid_internal";
-    test_stompbox[0]["stompbox_name"] = "invalid_internal_plugin";
-    test_stompbox[0]["stompbox_uid"] = "wrong_uid";
-    test_stompbox[0]["plugin_type"] = "internal";
-    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_STOMPBOX_UID);
+    test_stompbox[0]["name"] = "invalid_internal_plugin";
+    test_stompbox[0]["path"] = "wrong_uid";
+    test_stompbox[0]["type"] = "internal";
+    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
     plugin_chain["name"] = "chain_invalid_vst";
-    test_stompbox[0]["stompbox_name"] = "invalid_vst_plugin";
-    test_stompbox[0]["plugin_type"] = "vst2x";
-    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_STOMPBOX_UID);
+    test_stompbox[0]["name"] = "invalid_vst_plugin";
+    test_stompbox[0]["type"] = "vst2x";
+    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
 
     plugin_chain["name"] = "chain_invalid_stompname";
-    test_stompbox[0]["stompbox_name"] = "internal_plugin";
-    test_stompbox[0]["stompbox_uid"] = "sushi.testing.gain";
-    test_stompbox[0]["plugin_type"] = "internal";
-    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_STOMPBOX_NAME);
+    test_stompbox[0]["name"] = "internal_plugin";
+    test_stompbox[0]["path"] = "sushi.testing.gain";
+    test_stompbox[0]["type"] = "internal";
+    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_NAME);
 }
 
 TEST_F(TestJsonConfigurator, TestValidJsonSchema)
@@ -220,9 +220,12 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
 
     /* Valid stompboxes in plugin chain */
     auto& test_stompbox = plugin_chain[0]["stompboxes"];
-    test_stompbox[0]["stompbox_name"] = "test_id";
-    test_stompbox[0]["stompbox_uid"] = "test_uid";
-    test_stompbox[0]["plugin_type"] = "internal";
+    test_stompbox[0]["name"] = "internal_plugin";
+    test_stompbox[0]["path"] = "path_internal";
+    test_stompbox[0]["type"] = "internal";
+    test_stompbox[1]["name"] = "vst_plugin";
+    test_stompbox[1]["path"] = "path_VST";
+    test_stompbox[1]["type"] = "vst2x";
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
 }
 
@@ -258,7 +261,7 @@ TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
 
     /* processor name is not defined. */
     cc_mapping[0]["processor"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_STOMPBOX_UID);
+    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
     cc_mapping[0]["processor"] = "equalizer_0_l";
 
     /* parameter name is not defined */

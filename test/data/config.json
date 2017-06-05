@@ -8,19 +8,19 @@
             "mode" : "stereo",
             "stompboxes" : [
                 {
-                    "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "passthrough_0_l",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.passthrough",
+                    "name" : "passthrough_0_l",
+                    "type" : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_l",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "gain_0_l",
+                    "type" : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.equalizer",
-                    "stompbox_name" : "equalizer_0_l",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.equalizer",
+                    "name" : "equalizer_0_l",
+                    "type" : "internal"
                 }
             ]
         },
@@ -29,19 +29,19 @@
             "mode" : "mono",
             "stompboxes" : [
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_0_r",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "gain_0_r",
+                    "type" : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.passthrough",
-                    "stompbox_name" : "passthrough_0_r",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.passthrough",
+                    "name" : "passthrough_0_r",
+                    "type" : "internal"
                 },
                 {
-                    "stompbox_uid" : "sushi.testing.gain",
-                    "stompbox_name" : "gain_1_r",
-                    "plugin_type" : "internal"
+                    "path" : "sushi.testing.gain",
+                    "name" : "gain_1_r",
+                    "type" : "internal"
                 }
             ]
         }
