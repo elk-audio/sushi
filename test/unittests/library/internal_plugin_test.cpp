@@ -70,7 +70,7 @@ TEST_F(InternalPluginTest, TestDuplicateParameterNames)
     auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(test_param);
     /*  Register another parameter with the same name and assert that we get a null pointer back */
-    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", 1, new BoolParameterPreProcessor(0, 1));
+    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", false);
     EXPECT_FALSE(test_param_2);
 }
 

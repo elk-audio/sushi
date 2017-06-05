@@ -37,8 +37,8 @@ class ParameterDescriptor
 {
 public:
     ParameterDescriptor(const std::string& name,
-                          const std::string& label,
-                          ParameterType type) : _label(label), _name(name), _type(type) {}
+                        const std::string& label,
+                        ParameterType type) : _label(label), _name(name), _type(type) {}
 
     virtual ~ParameterDescriptor() {}
 
