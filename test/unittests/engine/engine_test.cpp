@@ -143,9 +143,8 @@ TEST_F(TestEngine, TestAddPlugin)
                                                      "vst_synth",
                                                      PluginType::VST2X);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),4u);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[2]->name(),"vst_gain");
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[3]->name(),"vst_synth");
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),3u);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[2]->name(),"vst_synth");
     delete full_plugin_path;
 
     /* Negative tests */
