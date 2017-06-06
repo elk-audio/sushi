@@ -114,7 +114,7 @@ TEST_F(TestJsonConfigurator, TestParseFile)
     /* Test Successful parsing of file */
     _status = _configurator->_parse_file(_path, _config);
     ASSERT_EQ(_status, JsonConfigReturnStatus::OK);
-    ASSERT_TRUE(_config.isMember("stompbox_chains"));
+    ASSERT_TRUE(_config.isMember("plugin_chains"));
     ASSERT_TRUE(_config.isMember("midi"));
     ASSERT_TRUE(_config.isMember("events"));
 
@@ -129,7 +129,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     Json::Value plugin_chain = Json::Value::null;
     plugin_chain["mode"] = "mono";
     plugin_chain["name"] = "chain_without_stomp";
-    plugin_chain["stompboxes"] = Json::arrayValue;
+    plugin_chain["plugins"] = Json::arrayValue;
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
     /* Similar Plugin chain but with same chain id */
     plugin_chain["mode"] = "stereo";
@@ -137,7 +137,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
 
     /* Create valid plugin chain with valid stompboxes */
     plugin_chain["name"] = "chain_with_stomp";
-    auto& test_stompbox = plugin_chain["stompboxes"];
+    auto& test_stompbox = plugin_chain["plugins"];
     test_stompbox[0]["name"] = "internal_plugin";
     test_stompbox[0]["path"] = "sushi.testing.gain";
     test_stompbox[0]["type"] = "internal";
@@ -180,13 +180,13 @@ TEST_F(TestJsonConfigurator, TestInvalidPluginChainDef)
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
 
     /* Define new key "stombox_chains" as null value so it is empty */
-    _config["stompbox_chains"] = Json::Value::null;
+    _config["plugin_chains"] = Json::Value::null;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
-    _config["stompbox_chains"] = Json::arrayValue;
+    _config["plugin_chains"] = Json::arrayValue;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
 
     /* Create Plugin chain array with dummy value */
-    auto& plugin_chain = _config["stompbox_chains"];
+    auto& plugin_chain = _config["plugin_chains"];
     plugin_chain[0]["dummy"] = "dummy";
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
     plugin_chain[0]["name"] = Json::Value::null;
@@ -203,8 +203,8 @@ TEST_F(TestJsonConfigurator, TestInvalidPluginChainDef)
 
 TEST_F(TestJsonConfigurator, TestStompboxDef)
 {
-    _config["stompbox_chains"] = Json::arrayValue;
-    auto& plugin_chain = _config["stompbox_chains"];
+    _config["plugin_chains"] = Json::arrayValue;
+    auto& plugin_chain = _config["plugin_chains"];
     plugin_chain[0]["mode"] = "mono";
     plugin_chain[0]["name"] = "chain_name";
 
@@ -212,14 +212,14 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
 
     /* Define key "stompboxes" as null value */
-    plugin_chain[0]["stompboxes"] = Json::Value::null;
+    plugin_chain[0]["plugins"] = Json::Value::null;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
     /* Defining "stompboxes" as an empty array is valid and should return OK */
-    plugin_chain[0]["stompboxes"] = Json::arrayValue;
+    plugin_chain[0]["plugins"] = Json::arrayValue;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
 
     /* Valid stompboxes in plugin chain */
-    auto& test_stompbox = plugin_chain[0]["stompboxes"];
+    auto& test_stompbox = plugin_chain[0]["plugins"];
     test_stompbox[0]["name"] = "internal_plugin";
     test_stompbox[0]["path"] = "path_internal";
     test_stompbox[0]["type"] = "internal";
@@ -260,14 +260,14 @@ TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
     cc_mapping[0]["cc_number"] = 27;
 
     /* processor name is not defined. */
-    cc_mapping[0]["processor"] = Json::Value::null;
+    cc_mapping[0]["plugin_name"] = Json::Value::null;
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
-    cc_mapping[0]["processor"] = "equalizer_0_l";
+    cc_mapping[0]["plugin_name"] = "equalizer_0_l";
 
     /* parameter name is not defined */
-    cc_mapping[0]["parameter"] = Json::Value::null;
+    cc_mapping[0]["parameter_name"] = Json::Value::null;
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PARAMETER);
-    cc_mapping[0]["parameter"] = "gain";
+    cc_mapping[0]["parameter_name"] = "gain";
 
     /* minimum range is not defined */
     cc_mapping[0]["min_range"] = Json::Value::null;

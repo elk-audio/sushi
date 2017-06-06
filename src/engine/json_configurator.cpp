@@ -24,7 +24,7 @@ JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string &path_to_
     {
         return status;
     }
-    for (auto& chain : config["stompbox_chains"])
+    for (auto& chain : config["plugin_chains"])
     {
         status = _make_chain(chain);
         if (status != JsonConfigReturnStatus::OK)
@@ -63,7 +63,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
                                        "channel connections in Json Config file.", con["port"].asInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
-            MIND_LOG_ERROR("Invalid chain \"{}\" for midi "
+            MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
                                    "chain connection in Json config file.", con["chain"].asString());
             return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
@@ -72,8 +72,8 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
     for (const auto& cc_map : midi["cc_mappings"])
     {
         auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].asInt(),
-                                                             cc_map["processor"].asString(),
-                                                             cc_map["parameter"].asString(),
+                                                             cc_map["plugin_name"].asString(),
+                                                             cc_map["parameter_name"].asString(),
                                                              cc_map["cc_number"].asInt(),
                                                              cc_map["min_range"].asFloat(),
                                                              cc_map["max_range"].asFloat(),
@@ -88,12 +88,13 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_fi
             }
             if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
             {
-                MIND_LOG_ERROR("Invalid processor \"{}\" specified "
-                                       "for midi cc mappings in Json Config file.", cc_map["processor"].asString());
+                MIND_LOG_ERROR("Invalid plugin name \"{}\" specified "
+                                       "for midi cc mappings in Json Config file.", cc_map["plugin_name"].asString());
                 return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
             }
-            MIND_LOG_ERROR("Invalid parameter \"{}\" specified for processor: \"{}\" for midi cc mappings.",
-                           cc_map["parameter"].asString(), cc_map["processor"].asString());
+            MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
+                                                                         cc_map["parameter_name"].asString(),
+                                                                         cc_map["processor_name"].asString());
             return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
     }
@@ -141,7 +142,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
     MIND_LOG_DEBUG("Successfully added Plugin Chain "
                            "\"{}\" to the engine", chain_name);
 
-    for(const Json::Value &def : chain_def["stompboxes"])
+    for(const Json::Value &def : chain_def["plugins"])
     {
         auto plugin_path = def["path"].asString();
         auto plugin_name = def["name"].asString();
@@ -187,19 +188,19 @@ int JsonConfigurator::_get_midi_channel(const Json::Value &channels)
 /* TODO: This is a basic validation, compare this to a schema using VALIJSON or similar library */
 JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json::Value& config)
 {
-    if(!config.isMember("stompbox_chains"))
+    if(!config.isMember("plugin_chains"))
     {
         MIND_LOG_ERROR("No plugin chains definitions in JSON config file");
         return JsonConfigReturnStatus::INVALID_CHAIN_FORMAT;
     }
-    if (!config["stompbox_chains"].isArray() || config["stompbox_chains"].empty())
+    if (!config["plugin_chains"].isArray() || config["plugin_chains"].empty())
     {
         MIND_LOG_ERROR("Incorrect definition of plugin chains in JSON config file");
         return JsonConfigReturnStatus::INVALID_CHAIN_FORMAT;
     }
 
     /* Validate JSON scheme for each plugin chain defined */
-    for (const auto& chain : config["stompbox_chains"])
+    for (const auto& chain : config["plugin_chains"])
     {
         if(!chain["name"].isString())
         {
@@ -220,15 +221,15 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
                                    "in Json config file.", mode);
             return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
         }
-        if(!chain.isMember("stompboxes") || !chain["stompboxes"].isArray())
+        if(!chain.isMember("plugins") || !chain["plugins"].isArray())
         {
-            MIND_LOG_ERROR("\"stompboxes\" is not defined for plugin chain "
+            MIND_LOG_ERROR("\"plugins\" is not defined for plugin chain "
                                    "\"{}\" in JSON config file", chain["name"].asString());
             return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
         }
-        if(!chain["stompboxes"].empty())
+        if(!chain["plugins"].empty())
         {
-            for(auto& def : chain["stompboxes"])
+            for(auto& def : chain["plugins"])
             {
                 if(!def["path"].isString())
                 {
@@ -258,7 +259,7 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
         }
         else
         {
-            MIND_LOG_DEBUG("Plugin chain {} has empty stompbox chain.", chain["name"].asString());
+            MIND_LOG_INFO("Plugin chain \"{}\" is empty and has no plugins.", chain["name"].asString());
         }
     }
     MIND_LOG_DEBUG("Plugin chains definition in Json Config file follow valid schema.");
@@ -379,15 +380,15 @@ JsonConfigReturnStatus JsonConfigurator::_validate_midi_cc_map_def(const Json::V
                                    "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_CC_NUMBER;
         }
-        if(!cc_map["processor"].isString())
+        if(!cc_map["plugin_name"].isString())
         {
-            MIND_LOG_ERROR("\"processor\" (type:int) for midi "
+            MIND_LOG_ERROR("\"plugin_name\" (type:string) for midi "
                                    "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
         }
-        if(!cc_map["parameter"].isString())
+        if(!cc_map["parameter_name"].isString())
         {
-            MIND_LOG_ERROR("\"parameter\" (type:string) for midi "
+            MIND_LOG_ERROR("\"parameter_name\" (type:string) for midi "
                                    "cc mapping is not defined in Json config file.");
             return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
