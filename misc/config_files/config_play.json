@@ -2,11 +2,11 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "stompbox_chains" : [
+    "plugin_chains" : [
         {
             "name" : "main",
             "mode" : "stereo",
-            "stompboxes" : [
+            "plugins" : [
                 {
                     "path" : "sushi.testing.sampleplayer",
                     "name" : "sampler_0_r",
@@ -22,7 +22,7 @@
         {
             "name" : "sub",
             "mode" : "stereo",
-            "stompboxes" : [
+            "plugins" : [
                 {
                     "path" : "sushi.testing.passthrough",
                     "name" : "local_instance_name_l",
@@ -46,7 +46,7 @@
             "time" : 0.1,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "gain_0_r",
+                "plugin_name" : "gain_0_r",
                 "parameter_name" : "gain",
                 "value" : -8.0
             }
@@ -55,7 +55,7 @@
             "time" : 0.0,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "parameter_name" : "sustain",
                 "value" : 0.8
             }
@@ -64,7 +64,7 @@
             "time" : 0.0,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "parameter_name" : "decay",
                 "value" : 0.5
             }
@@ -73,7 +73,7 @@
             "time" : 0.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 48,
                 "velocity" : 1.0
             }
@@ -82,7 +82,7 @@
             "time" :4.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 48,
                 "velocity" : 1.0
             }
@@ -91,7 +91,7 @@
             "time" : 0.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 52,
                 "velocity" : 1.0
             }
@@ -100,7 +100,7 @@
             "time" :4.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 52,
                 "velocity" : 1.0
             }
@@ -109,7 +109,7 @@
             "time" : 0.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 36,
                 "velocity" : 1.0
             }
@@ -118,7 +118,7 @@
             "time" :4.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 36,
                 "velocity" : 1.0
             }
@@ -127,7 +127,7 @@
             "time" : 3.1,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "parameter_name" : "attack",
                 "value" : 1.0
             }
@@ -136,7 +136,7 @@
             "time" : 3.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 46,
                 "velocity" : 1.0
             }
@@ -145,7 +145,7 @@
             "time" : 6.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 46,
                 "velocity" : 1.0
             }
@@ -155,7 +155,7 @@
             "time" : 3.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 50,
                 "velocity" : 1.0
             }
@@ -164,7 +164,7 @@
             "time" : 6.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 50,
                 "velocity" : 1.0
             }
@@ -174,7 +174,7 @@
             "time" : 3.1,
             "type" : "note_on",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 53,
                 "velocity" : 1.0
             }
@@ -183,7 +183,7 @@
             "time" : 6.0,
             "type" : "note_off",
             "data" : {
-                "stompbox_instance" : "sampler_0_r",
+                "plugin_name" : "sampler_0_r",
                 "note" : 53,
                 "velocity" : 1.0
             }

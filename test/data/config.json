@@ -2,11 +2,11 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "stompbox_chains" : [
+    "plugin_chains" : [
         {
             "name" : "left",
             "mode" : "stereo",
-            "stompboxes" : [
+            "plugins" : [
                 {
                     "path" : "sushi.testing.passthrough",
                     "name" : "passthrough_0_l",
@@ -27,7 +27,7 @@
         {
             "name" : "right",
             "mode" : "mono",
-            "stompboxes" : [
+            "plugins" : [
                 {
                     "path" : "sushi.testing.gain",
                     "name" : "gain_0_r",
@@ -51,7 +51,7 @@
             "time" : 0.9,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "gain_0_r",
+                "plugin_name" : "gain_0_r",
                 "parameter_name" : "gain",
                 "value" : -23.0
             }
@@ -60,7 +60,7 @@
             "time" : 0.1,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "gain_0_l",
+                "plugin_name" : "gain_0_l",
                 "parameter_name" : "gain",
                 "value" : -12.0
             }
@@ -69,7 +69,7 @@
             "time" : 0.5,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "gain_0_r",
+                "plugin_name" : "gain_0_r",
                 "parameter_name" : "gain",
                 "value" : -6.0
             }
@@ -78,7 +78,7 @@
             "time" : 0.85,
             "type" : "parameter_change",
             "data" : {
-                "stompbox_instance" : "gain_0_l",
+                "plugin_name" : "gain_0_l",
                 "parameter_name" : "gain",
                 "value" : 0.0
             }
@@ -98,8 +98,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 27,
-                "processor": "equalizer_0_l",
-                "parameter": "gain",
+                "plugin_name": "equalizer_0_l",
+                "parameter_name": "gain",
                 "min_range": -24,
                 "max_range": 24
             }

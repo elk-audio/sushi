@@ -2,11 +2,11 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "stompbox_chains" : [
+    "plugin_chains" : [
         {
             "name" : "main",
             "mode" : "stereo",
-            "stompboxes" : [
+            "plugins" : [
                 {
                     "path" : "/home/sharan/sushi/build/debug/test/libvstxsynth.so",
                     "name" : "synth",
@@ -33,8 +33,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 27,
-                "processor": "synth",
-                "parameter": "Wave 1",
+                "plugin_name": "synth",
+                "parameter_name": "Wave 1",
                 "min_range": 0,
                 "max_range": 1
             },
@@ -42,8 +42,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 26,
-                "processor": "synth",
-                "parameter": "Wave 2",
+                "plugin_name": "synth",
+                "parameter_name": "Wave 2",
                 "min_range": 0,
                 "max_range": 1
             },
@@ -51,8 +51,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 25,
-                "processor": "synth",
-                "parameter": "Freq 1",
+                "plugin_name": "synth",
+                "parameter_name": "Freq 1",
                 "min_range": -20,
                 "max_range": 20
             },
@@ -60,8 +60,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 24,
-                "processor": "synth",
-                "parameter": "Freq 2",
+                "plugin_name": "synth",
+                "parameter_name": "Freq 2",
                 "min_range": -20,
                 "max_range": 20
             },
@@ -69,8 +69,8 @@
                 "port": 0,
                 "channel": 0,
                 "cc_number": 23,
-                "processor": "gain",
-                "parameter": "Gain",
+                "plugin_name": "gain",
+                "parameter_name": "Gain",
                 "min_range": 0,
                 "max_range": 5
             }
