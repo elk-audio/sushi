@@ -212,12 +212,12 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     if(plugin_name.empty())
     {
         MIND_LOG_ERROR("Plugin name is not specified");
-        return EngineReturnStatus::INVALID_STOMPBOX_NAME;
+        return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
     if(_processor_exists(plugin_name))
     {
         MIND_LOG_ERROR("Plugin name {} already exists", plugin_name);
-        return EngineReturnStatus::INVALID_STOMPBOX_NAME;
+        return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
     EngineReturnStatus status;
     ObjectId chain_id;
@@ -236,7 +236,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
             if(plugin == nullptr)
             {
                 MIND_LOG_ERROR("Incorrect stompbox UID \"{}\"", plugin_uid);
-                return EngineReturnStatus::INVALID_STOMPBOX_UID;
+                return EngineReturnStatus::INVALID_PLUGIN_UID;
             }
             break;
 
@@ -253,7 +253,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     if(processor_status != ProcessorReturnCode::OK)
     {
         MIND_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
-        return EngineReturnStatus::INVALID_STOMPBOX_UID;
+        return EngineReturnStatus::INVALID_PLUGIN_UID;
     }
     plugin->set_enabled(true);
     auto chain = static_cast<PluginChain*>(_processors_by_unique_id[chain_id]);

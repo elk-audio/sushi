@@ -209,11 +209,11 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
     plugin_chain[0]["name"] = "chain_name";
 
     /* Test for case Stompboxes are not defined in the plugin chain*/
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
+    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT);
 
     /* Define key "stompboxes" as null value */
     plugin_chain[0]["plugins"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT);
+    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT);
     /* Defining "stompboxes" as an empty array is valid and should return OK */
     plugin_chain[0]["plugins"] = Json::arrayValue;
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);

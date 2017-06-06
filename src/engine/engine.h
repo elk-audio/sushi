@@ -21,9 +21,6 @@
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 
-// TODO: this not needed anymore, remove it
-class StompBox;
-
 namespace sushi {
 namespace engine {
 
@@ -33,8 +30,8 @@ enum class EngineReturnStatus
 {
     OK,
     INVALID_N_CHANNELS,
-    INVALID_STOMPBOX_UID,
-    INVALID_STOMPBOX_NAME,
+    INVALID_PLUGIN_UID,
+    INVALID_PLUGIN_NAME,
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,

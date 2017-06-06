@@ -148,17 +148,17 @@ TEST_F(TestEngine, TestAddPlugin)
                                                      "sushi.testing.passthrough",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_NAME);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "not_found",
                                                      "dummyname",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "not_found",
                                                      "dummyname",
                                                      PluginType::VST2X);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_STOMPBOX_UID);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
 }

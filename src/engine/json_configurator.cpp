@@ -160,7 +160,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         status = _engine->add_plugin_to_chain(chain_name, plugin_path, plugin_name, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
-            if(status == EngineReturnStatus::INVALID_STOMPBOX_UID)
+            if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
             {
                 MIND_LOG_ERROR("Invalid plugin path {} in JSON config file", plugin_path);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
@@ -225,7 +225,7 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
         {
             MIND_LOG_ERROR("\"plugins\" is not defined for plugin chain "
                                    "\"{}\" in JSON config file", chain["name"].asString());
-            return JsonConfigReturnStatus::INVALID_STOMPBOX_FORMAT;
+            return JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT;
         }
         if(!chain["plugins"].empty())
         {
