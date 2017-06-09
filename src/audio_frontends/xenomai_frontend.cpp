@@ -144,16 +144,16 @@ AudioFrontendStatus XenomaiFrontend::add_sequencer_events_from_json_def(const Js
             auto data = e["data"];
             ObjectId processor_id;
             sushi::engine::EngineReturnStatus status;
-            std::tie(status, processor_id) = _engine->processor_id_from_name(data["stompbox_instance"].asString());
+            std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].asString());
             if (status != sushi::engine::EngineReturnStatus::OK)
             {
-                MIND_LOG_WARNING("Unknown processor name: {}", data["stompbox_instance"].asString());
+                MIND_LOG_WARNING("Unknown plugin name: {}", data["plugin_name"].asString());
                 continue;
             }
             if (e["type"] == "parameter_change")
             {
                 ObjectId parameterId;
-                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["stompbox_instance"].asString(),
+                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].asString(),
                                                                                 data["parameter_name"].asString());
                 if (status != sushi::engine::EngineReturnStatus::OK)
                 {
