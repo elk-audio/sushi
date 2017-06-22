@@ -28,6 +28,7 @@ enum class ProcessorReturnCode
     SHARED_LIBRARY_OPENING_ERROR,
     PLUGIN_ENTRY_POINT_NOT_FOUND,
     PLUGIN_LOAD_ERROR,
+    PLUGIN_INIT_ERROR,
 };
 
 class Processor

@@ -79,6 +79,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
                unittests/library/vst2x_midi_event_fifo_test.cpp
+               unittests/library/vst3x_wrapper_test.cpp
                unittests/library/id_generator_test.cpp)
 
 if (${WITH_JACK})
@@ -113,7 +114,7 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
-add_dependencies(unit_tests again vstxsynth)
+add_dependencies(unit_tests again vstxsynth adelay vst3_host)
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that

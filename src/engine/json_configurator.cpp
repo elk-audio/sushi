@@ -152,9 +152,13 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         {
             plugin_type = PluginType::INTERNAL;
         }
-        else
+        else if(type == "vst2x")
         {
             plugin_type = PluginType::VST2X;
+        }
+        else
+        {
+            plugin_type = PluginType::VST3X;
         }
 
         status = _engine->add_plugin_to_chain(chain_name, plugin_path, plugin_name, plugin_type);
@@ -249,7 +253,7 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
                     return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
                 }
                 auto type = def["type"].asString();
-                if(type != "internal" && type != "vst2x")
+                if(type != "internal" && type != "vst2x" && type != "vst3x")
                 {
                     MIND_LOG_ERROR("Invalid plugin type \"{}\" in "
                                            "plugin chain \"{}\"", type, chain["name"].asString());
