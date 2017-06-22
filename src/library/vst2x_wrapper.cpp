@@ -93,11 +93,11 @@ bool Vst2xWrapper::_register_parameters()
 
     VstInt32 idx = 0;
     bool param_inserted_ok = true;
-    while ( param_inserted_ok && (idx < _plugin_handle->numParams) )
+    while (param_inserted_ok && (idx < _plugin_handle->numParams) )
     {
+        // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
-        std::tie(std::ignore, param_inserted_ok) =
-            _param_names_to_id.insert(std::pair<std::string, ObjectId>(param_name, static_cast<ObjectId>(idx)));
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
             MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
@@ -106,7 +106,6 @@ bool Vst2xWrapper::_register_parameters()
         {
             MIND_LOG_ERROR("VsT wrapper, plugin: {}, Error while registering param: {}", name(), param_name);
         }
-
         idx++;
     }
 
@@ -126,16 +125,6 @@ void Vst2xWrapper::set_enabled(bool enabled)
         _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
         _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
     }
-}
-
-std::pair<ProcessorReturnCode, ObjectId> Vst2xWrapper::parameter_id_from_name(const std::string& parameter_name)
-{
-    auto param_id = _param_names_to_id.find(parameter_name);
-    if (param_id == _param_names_to_id.end())
-    {
-        return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
-    }
-    return std::make_pair(ProcessorReturnCode::OK, param_id->second);
 }
 
 void Vst2xWrapper::process_event(Event event)

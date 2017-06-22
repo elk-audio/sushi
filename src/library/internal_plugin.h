@@ -8,11 +8,11 @@
 #ifndef SUSHI_INTERNAL_PLUGIN_H
 #define SUSHI_INTERNAL_PLUGIN_H
 
-#include "library/plugin_parameters.h"
-#include "library/processor.h"
+#include <deque>
 
-#include <algorithm>
-#include <map>
+#include "library/processor.h"
+#include "library/plugin_parameters.h"
+
 namespace sushi {
 
 /* Assume that all Stompboxes handle stereo */
@@ -27,10 +27,7 @@ class InternalPlugin : public Processor
 {
 public:
     MIND_DECLARE_NON_COPYABLE(InternalPlugin)
-    /**
-     * @brief Create a new StompboxManager that takes ownership of instance
-     * and will delete it when the manager is deleted.
-     */
+
     InternalPlugin()
     {
         _max_input_channels = STOMPBOX_MAX_CHANNELS;
@@ -41,64 +38,84 @@ public:
 
     virtual ~InternalPlugin() {};
 
-    // Parameter registration functions
+    /**
+     * @brief Register a float typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @param min_value The minimum value the parameter can have
+     * @param max_value The maximum value the parameter can have
+     * @param pre_proc An optional preprocessor object used to clip/scale the set value
+     * @return Pointer to a FloatParameterValue object
+     */
+    FloatParameterValue* register_float_parameter(const std::string& name,
+                                                  const std::string& label,
+                                                  float default_value,
+                                                  float min_value,
+                                                  float max_value,
+                                                  FloatParameterPreProcessor* pre_proc = nullptr);
 
-    FloatStompBoxParameter* register_float_parameter(const std::string& id,
-                                                     const std::string& label,
-                                                     float default_value,
-                                                     FloatParameterPreProcessor* custom_pre_processor);
+    /**
+     * @brief Register an int typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @param min_value The minimum value the parameter can have
+     * @param max_value The maximum value the parameter can have
+     * @param pre_proc An optional preprocessor object used to clip/scale the set value
+     * @return Pointer to an IntParameterValue object
+     */
+    IntParameterValue* register_int_parameter(const std::string& name,
+                                              const std::string& label,
+                                              int default_value,
+                                              int min_value,
+                                              int max_value,
+                                              IntParameterPreProcessor* pre_proc = nullptr);
+
+    /**
+     * @brief Register a bool typed parameter and return a pointer to a value
+     *        storage object that will hold the value and set automaticaly when
+     *        the processor receives parameter change events
+     * @param name The unique name of the parameter
+     * @param label The display name of the parameter
+     * @param default_value The default value the parameter should have
+     * @return Pointer to a BoolParameterValue object
+     */
+    BoolParameterValue* register_bool_parameter(const std::string& name,
+                                                const std::string& label,
+                                                bool default_value);
+
+    /**
+     * @brief Register a string property that can be updated through events
+     * @param name Unique name of the property
+     * @param label Display name of the property
+     * @return true if the property was registered succesfully
+     */
+    bool register_string_property(const std::string& name,
+                                  const std::string& label);
 
 
-    IntStompBoxParameter* register_int_parameter(const std::string& id,
-                                                 const std::string& label,
-                                                 int default_value,
-                                                 IntParameterPreProcessor* custom_pre_processor);
+    /**
+     * @brief Register a data property that can be updated through events
+     * @param name Unique name of the property
+     * @param label Display name of the property
+     * @return true if the property was registered succesfully
+     */
+    bool register_data_property(const std::string& name,
+                                const std::string& label);
 
-
-    BoolStompBoxParameter* register_bool_parameter(const std::string& id,
-                                                   const std::string& label,
-                                                   bool default_value,
-                                                   BoolParameterPreProcessor* custom_pre_processor = nullptr);
-
-
-    StringStompBoxProperty* register_string_property(const std::string &id,
-                                                     const std::string &label,
-                                                     const std::string &default_value);
-
-
-    DataStompBoxProperty* register_data_property(const std::string &id,
-                                                 const std::string &label,
-                                                 BlobData default_value);
-
-    /* Inherited from Processor */
-    std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& parameter_name) override;
 
     void process_event(Event event) override;
 
 private:
-    /**
-    * @brief Return the parameter with the given unique id
-    */
-    BaseStompBoxParameter* get_parameter(const std::string& id)
-    {
-        auto parameter = _parameters.find(id);
-        if (parameter == _parameters.end())
-        {
-            return nullptr;
-        }
-        return parameter->second.get();
-    }
-
-    /**
-     * @brief Register a newly created parameter
-     * @param parameter Pointer to a parameter object
-     * @return true if the parameter was successfully registered, false otherwise
-     */
-    bool register_parameter(BaseStompBoxParameter* parameter);
-
-    std::map<std::string, std::unique_ptr<BaseStompBoxParameter>> _parameters;
-
-    std::vector<BaseStompBoxParameter*> _parameters_by_index;
+    /* TODO - consider container type to use here. Deque has the very desirable property
+     * that iterators are never invalidated by adding to the containers.
+     * For arrays or std::vectors we need to know the maximum capacity for that to work. */
+    std::deque<ParameterStorage> _parameter_values;
 };
 
 } // end namespace sushi

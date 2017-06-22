@@ -45,63 +45,71 @@ TEST_F(InternalPluginTest, TestInstanciation)
     EXPECT_EQ("test_plugin", _module_under_test->name());
 }
 
+TEST_F(InternalPluginTest, TestParameterRegistration)
+{
+    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", false));
+    EXPECT_TRUE(_module_under_test->register_string_property("string", "String"));
+    EXPECT_TRUE(_module_under_test->register_data_property("data", "Data"));
+    EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", 3, 0, 10,
+                                                            new IntParameterPreProcessor(0, 10)));
+    EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", 5.0f, 0.0f, 10.0f,
+                                                             new FloatParameterPreProcessor(0.0, 10.0)));
+
+    /* Verify all parameter/properties were registered and their order match */
+    auto parameter_list = _module_under_test->all_parameters();
+    EXPECT_EQ(5u, parameter_list.size());
+
+    EXPECT_EQ(5u, _module_under_test->_parameter_values.size());
+    IntParameterValue* value;
+    ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[3].int_parameter_value());
+    EXPECT_EQ(3, value->value());
+}
 
 TEST_F(InternalPluginTest, TestDuplicateParameterNames)
 {
-    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
+    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, 0, 10,
+                                                                 new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(test_param);
     /*  Register another parameter with the same name and assert that we get a null pointer back */
-    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", 1, new BoolParameterPreProcessor(0, 1));
+    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", false);
     EXPECT_FALSE(test_param_2);
 }
 
-TEST_F(InternalPluginTest, TestParameterHandlingViaEvents)
+
+TEST_F(InternalPluginTest, TestBoolParameterHandling)
 {
-    BaseStompBoxParameter* test_param = _module_under_test->register_float_parameter("param_1", "Param 1", 1, new FloatParameterPreProcessor(0.0, 10.0));
+    BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", false);
+    EXPECT_TRUE(value);
 
     // access the parameter through its id and verify type and that you can set its value.
-    ASSERT_EQ(StompBoxParameterType::FLOAT, _module_under_test->get_parameter("param_1")->type());
+    EXPECT_EQ(ParameterType::BOOL, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
-    EXPECT_FLOAT_EQ(6.0f, static_cast<FloatStompBoxParameter*>(test_param)->value());
-
-    test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, new IntParameterPreProcessor(0, 10));
-    EXPECT_EQ(StompBoxParameterType::INT, test_param->type());
-
-    test_param = _module_under_test->register_bool_parameter("param_3", "Param 3", true);
-    EXPECT_EQ(StompBoxParameterType::BOOL, test_param->type());
-
-    test_param = _module_under_test->register_string_property("param_4", "Param 4", "4");
-    ASSERT_EQ(StompBoxParameterType::STRING, _module_under_test->get_parameter("param_4")->type());
-    std::string* str_value = new std::string("5");
-    Event event_4 = Event::make_string_parameter_change_event(0, 0, 3, str_value);
-    _module_under_test->process_event(event_4);
-    EXPECT_EQ("5", *static_cast<StringStompBoxProperty*>(_module_under_test->get_parameter("param_4"))->value());
-
-    //test that an unknown parameter returns a null pointer
-    EXPECT_EQ(nullptr, _module_under_test->get_parameter("not_registered"));
+    EXPECT_TRUE(value->value());
 }
 
-
-TEST_F(InternalPluginTest, TestParameterId)
+TEST_F(InternalPluginTest, TestIntParameterHandling)
 {
-    auto test_param = _module_under_test->register_int_parameter("param_1", "Param 1", 1, new IntParameterPreProcessor(0, 10));
-    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", 1, new BoolParameterPreProcessor(0, 1));
+    IntParameterValue* value = _module_under_test->register_int_parameter("param_1", "Param 1", 0, 0, 10,
+                                                                          new IntParameterPreProcessor(0, 10));
+    EXPECT_TRUE(value);
 
-    ObjectId id_1;
-    ObjectId id_2;
-    ProcessorReturnCode status;
-    /* Register 2 parameters and check that the ids match */
-    std::tie(status, id_1) = _module_under_test->parameter_id_from_name("param_1");
-    EXPECT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(id_1, test_param->id());
+    // access the parameter through its id and verify type and that you can set its value.
+    EXPECT_EQ(ParameterType::INT, _module_under_test->parameter_from_name("param_1")->type());
+    Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
+    _module_under_test->process_event(event);
+    EXPECT_FLOAT_EQ(6.0f, value->value());
+}
 
-    std::tie(status, id_2) = _module_under_test->parameter_id_from_name("param_2");
-    EXPECT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(id_2, test_param_2->id());
-    EXPECT_NE(id_1, id_2);
+TEST_F(InternalPluginTest, TestFloatParameterHandling)
+{
+    FloatParameterValue* value = _module_under_test->register_float_parameter("param_1", "Param 1", 1.0f, 0.0f, 10.f,
+                                                                              new FloatParameterPreProcessor(0.0, 10.0));
+    EXPECT_TRUE(value);
 
-    /* Assert that we get an error status for a non-existent parameter */
-    std::tie(status, id_2) = _module_under_test->parameter_id_from_name("param_3");
-    EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, status);
+    // access the parameter through its id and verify type and that you can set its value.
+    EXPECT_EQ(ParameterType::FLOAT, _module_under_test->parameter_from_name("param_1")->type());
+    Event event = Event::make_parameter_change_event(0, 0, 0, 5);
+    _module_under_test->process_event(event);
+    EXPECT_EQ(5, value->value());
 }

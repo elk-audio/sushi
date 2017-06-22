@@ -17,7 +17,7 @@
 #include "library/id_generator.h"
 #include "library/types.h"
 
-enum class StompBoxParameterType
+enum class ParameterType
 {
     FLOAT,
     INT,
@@ -29,28 +29,23 @@ enum class StompBoxParameterType
 
 namespace sushi {
 
+
 /**
- * @brief Base class for plugin parameters
+ * @brief Base class for describing plugin parameters
  */
-class BaseStompBoxParameter
+class ParameterDescriptor
 {
 public:
-    BaseStompBoxParameter(const std::string& name,
-                          const std::string& label,
-                          StompBoxParameterType type) : _label(label), _name(name), _type(type) {}
+    ParameterDescriptor(const std::string& name,
+                        const std::string& label,
+                        ParameterType type) : _label(label), _name(name), _type(type) {}
 
-    virtual ~BaseStompBoxParameter() {}
+    virtual ~ParameterDescriptor() {}
 
     /**
      * @brief Returns the enumerated type of the parameter
      */
-    StompBoxParameterType type() const {return _type;};
-
-    /**
-     * @brief Returns the parameters value as a formatted string
-     * TODO: Ponder over if we want units included here or as a separate string
-     */
-    virtual const std::string as_string() { return "";} //Needs to be implemented, otherwise no vtable will be generated
+    ParameterType type() const {return _type;};
 
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
@@ -72,11 +67,17 @@ public:
      */
     void set_id(ObjectId id) {_id = id;}
 
+    /**
+     * @brief Whether or not the parameter is automatable or not.
+     * @return true if the parameter can be automated, false otherwise
+     */
+    virtual bool automatable() const {return true;}
+
 protected:
     std::string _label;
     std::string _name;
     ObjectId _id;
-    StompBoxParameterType _type;
+    ParameterType _type;
 };
 
 
@@ -108,21 +109,21 @@ template<typename T>
 class ParameterFormatPolicy
 {
 protected:
-    const std::string format(T value) {return std::to_string(value);}
+    std::string format(const T value) const {return std::to_string(value);}
 };
 
 /*
  * The format() function can then be specialized for types that need special handling.
  */
-template <> const inline std::string ParameterFormatPolicy<bool>::format(bool value)
+template <> inline std::string ParameterFormatPolicy<bool>::format(bool value) const
 {
     return value? "True": "False";
 }
-template <> const inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value)
+template <> inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value) const
 {
     return *value;
 }
-template <> const inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/)
+template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/) const
 {
     /* This parameter type is intended to transfer opaque binary data, and
      * consequently there is no format policy that would work. */
@@ -134,173 +135,61 @@ template <> const inline std::string ParameterFormatPolicy<BlobData>::format(Blo
  * types like float, int, etc. Needs specialization for more complex
  * types, for which the template type should likely be a pointer.
  */
-template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter : public BaseStompBoxParameter, private ParameterFormatPolicy<T>
+template<typename T, ParameterType enumerated_type>
+class TypedParameterDescriptor : public ParameterDescriptor
 {
 public:
     /**
      * @brief Construct a parameter
      */
-    StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      T default_value,
-                      ParameterPreProcessor<T>* pre_processor) :
-                                   BaseStompBoxParameter(name, label, enumerated_type),
-                                   _pre_processor(pre_processor),
-                                   _raw_value(default_value),
-                                   _value(pre_processor->process(default_value)) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label,
+                             T range_min,
+                             T range_max,
+                             ParameterPreProcessor<T>* pre_processor) :
+                                        ParameterDescriptor(name, label, enumerated_type),
+                                        _pre_processor(pre_processor),
+                                        _min(range_min),
+                                        _max(range_max) {}
 
-    ~StompBoxParameter() {};
+    ~TypedParameterDescriptor() {};
 
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    T value()
-    {
-        return _value;
-    }
-
-    /**
-     * @brief Returns the parameter's unprocessed value.
-     */
-    T raw_value()
-    {
-        return _raw_value;
-    }
-
-    /**
-     * @brief Set the value of the parameter. Called automatically from the host.
-     * For changin the value from inside the plugin, call set_asychronously() intead.
-     */
-    void set(T value)
-    {
-        _raw_value = value;
-        _value = _pre_processor->process(value);
-    }
-
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(T value)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    const std::string as_string() override
-    {
-        return ParameterFormatPolicy<T>::format(_raw_value);
-    }
+    T min_value() const {return _min;}
+    T max_value() const {return _max;}
 
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
-    T _raw_value;
-    T _value;
+    T _min;
+    T _max;
 };
 
 /* Partial specialization for pointer type parameters */
-template<typename T, StompBoxParameterType enumerated_type>
-class StompBoxParameter<T *, enumerated_type> : public BaseStompBoxParameter, private ParameterFormatPolicy<T *>
+template<typename T, ParameterType enumerated_type>
+class TypedParameterDescriptor<T *, enumerated_type> : public ParameterDescriptor
 {
 public:
-    StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      T * default_value) : BaseStompBoxParameter(name, label, enumerated_type),
-                                           _value(default_value) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label) : ParameterDescriptor(name, label, enumerated_type) {}
 
-    ~StompBoxParameter() {};
+    ~TypedParameterDescriptor() {};
 
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    T * value()
-    {
-        return _value.get();
-    }
+    virtual bool automatable() const override {return false;}
 
-    void set(T * value)
-    {
-        /* Note, not atomic and we still need to figure out a data ownership strategy
-         * and avoid deleting in the audio thread */
-        _value.reset(value);
-    }
-
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(T * value)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    const std::string as_string() override
-    {
-        return ParameterFormatPolicy<T *>::format(_value.get());
-    }
-
-private:
-    std::unique_ptr<T> _value;
 };
 
 /* Partial specialization for pointer type parameters */
-//template<typename T, StompBoxParameterType enumerated_type>
+//template<typename T, ParameterType enumerated_type>
 template<>
-class StompBoxParameter<BlobData, StompBoxParameterType::DATA> : public BaseStompBoxParameter, private ParameterFormatPolicy<BlobData>
+class TypedParameterDescriptor<BlobData, ParameterType::DATA> : public ParameterDescriptor
 {
 public:
-    StompBoxParameter(const std::string& name,
-                      const std::string& label,
-                      BlobData default_value) : BaseStompBoxParameter(name, label, StompBoxParameterType::DATA),
-                                                _value(default_value) {}
+    TypedParameterDescriptor(const std::string& name,
+                             const std::string& label) : ParameterDescriptor(name, label, ParameterType::DATA) {}
 
-    ~StompBoxParameter()
-    {
-        if (_value.data)
-            delete _value.data;
-    };
+    ~TypedParameterDescriptor() {}
 
-    /**
-     * @brief Returns the parameter's current value.
-     */
-    BlobData value()
-    {
-        return _value;
-    }
+    virtual bool automatable() const override {return false;}
 
-    void set(BlobData value)
-    {
-        _value = value;
-    }
-
-    /**
-     * @brief Tell the host to change the value of the parameter. This should be used
-     * instead of set() if the plugin itself wants to change the value of a parameter.
-     */
-    void set_asychronously(BlobData /*value*/)
-    {
-        // TODO - implement!
-    }
-
-    /**
-     * @brief Returns the parameter's value as a string, i.e. "1.25".
-     * TODO - Think about which value we actually want here, raw or processed!
-     */
-    const std::string as_string() override
-    {
-        return ParameterFormatPolicy<BlobData>::format(_value);
-    }
-
-private:
-    BlobData _value;
 };
 
 /*
@@ -309,14 +198,14 @@ private:
  * type combinations.
  */
 typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
-typedef ParameterPreProcessor<int> IntParameterPreProcessor;
-typedef ParameterPreProcessor<bool> BoolParameterPreProcessor;
+typedef ParameterPreProcessor<int>   IntParameterPreProcessor;
+typedef ParameterPreProcessor<bool>  BoolParameterPreProcessor;
 
-typedef StompBoxParameter<float, StompBoxParameterType::FLOAT>  FloatStompBoxParameter;
-typedef StompBoxParameter<int, StompBoxParameterType::INT>      IntStompBoxParameter;
-typedef StompBoxParameter<bool, StompBoxParameterType::BOOL>    BoolStompBoxParameter;
-typedef StompBoxParameter<std::string*, StompBoxParameterType::STRING> StringStompBoxProperty;
-typedef StompBoxParameter<BlobData, StompBoxParameterType::DATA> DataStompBoxProperty;
+typedef TypedParameterDescriptor<float, ParameterType::FLOAT>         FloatParameterDescriptor;
+typedef TypedParameterDescriptor<int, ParameterType::INT>             IntParameterDescriptor;
+typedef TypedParameterDescriptor<bool, ParameterType::BOOL>           BoolParameterDescriptor;
+typedef TypedParameterDescriptor<std::string*, ParameterType::STRING> StringPropertyDescriptor;
+typedef TypedParameterDescriptor<BlobData, ParameterType::DATA>       DataPropertyDescriptor;
 
 
 /**
@@ -331,6 +220,122 @@ public:
         return powf(10.0f, this->clip(raw_value) / 20.0f);
     }
 };
+
+template<typename T, ParameterType enumerated_type>
+class ParameterValue
+{
+public:
+    ParameterValue(ParameterPreProcessor<T>* pre_processor,
+                   T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                               _pre_processor(pre_processor),
+                                                               _raw_value(value),
+                                                               _value(pre_processor->process(value)){}
+
+    ParameterType type() const {return _type;}
+    T value() const {return _value;}
+    T raw_value() const {return _raw_value;}
+    ParameterDescriptor* descriptor() const {return _descriptor;}
+
+    void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
+    void set(T value)
+    {
+        _raw_value = value;
+        _value = _pre_processor->process(value);
+    }
+private:
+    ParameterType _type{enumerated_type};
+    ParameterDescriptor* _descriptor{nullptr};
+    ParameterPreProcessor<T>* _pre_processor{nullptr};
+    T _raw_value;
+    T _value;
+};
+
+/* Specialization for bool values, lack a pre_processor */
+template<>
+class ParameterValue<bool, ParameterType::BOOL>
+{
+public:
+    ParameterValue(bool value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                                  _value(value) {}
+
+    ParameterType type() const {return _type;}
+    bool value() const {return _value;}
+    bool raw_value() const {return _value;}
+    ParameterDescriptor* descriptor() const {return _descriptor;}
+
+    void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
+    void set(bool value) {_value = value;}
+private:
+    ParameterType _type{ParameterType::BOOL};
+    ParameterDescriptor* _descriptor{nullptr};
+    bool _value;
+};
+
+typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
+typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
+typedef ParameterValue<float,ParameterType::FLOAT> FloatParameterValue;
+
+
+class ParameterStorage
+{
+public:
+    BoolParameterValue* bool_parameter_value()
+    {
+        assert(_bool_value.type() == ParameterType::BOOL);
+        return &_bool_value;
+    }
+
+    IntParameterValue* int_parameter_value()
+    {
+        assert(_int_value.type() == ParameterType::INT);
+        return &_int_value;
+    }
+
+    FloatParameterValue* float_parameter_value()
+    {
+        assert(_float_value.type() == ParameterType::FLOAT);
+        return &_float_value;
+    }
+
+    ParameterType type() {return _float_value.type();}
+
+    ObjectId id() {return _bool_value.descriptor()->id();}
+
+    /* Factory functions for construction */
+    static ParameterStorage make_bool_parameter_storage(ParameterDescriptor* descriptor,
+                                                        bool default_value)
+    {
+        BoolParameterValue value(default_value, descriptor);
+        return ParameterStorage(value);
+    }
+    static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
+                                                       int default_value,
+                                                       IntParameterPreProcessor* pre_processor)
+    {
+        IntParameterValue value(pre_processor, default_value, descriptor);
+        return ParameterStorage(value);
+    }
+    static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
+                                                         float default_value,
+                                                         FloatParameterPreProcessor* pre_processor)
+    {
+        FloatParameterValue value(pre_processor, default_value, descriptor);
+        return ParameterStorage(value);
+    }
+private:
+    ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
+    ParameterStorage(IntParameterValue value) : _int_value(value) {}
+    ParameterStorage(FloatParameterValue value) : _float_value(value) {}
+
+    union
+    {
+        BoolParameterValue  _bool_value;
+        IntParameterValue   _int_value;
+        FloatParameterValue _float_value;
+    };
+};
+/* We need this to be able to copy the ParameterValues by value into a container */
+static_assert(std::is_trivially_copyable<ParameterStorage>::value, "");
 
 }  // namespace sushi
 

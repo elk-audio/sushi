@@ -31,9 +31,9 @@ private:
     float _sample_rate;
     dsp::biquad::BiquadFilter _filter;
 
-    FloatStompBoxParameter* _frequency;
-    FloatStompBoxParameter* _gain;
-    FloatStompBoxParameter* _q;
+    FloatParameterValue* _frequency;
+    FloatParameterValue* _gain;
+    FloatParameterValue* _q;
 };
 
 }// namespace equalizer_plugin

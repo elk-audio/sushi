@@ -8,10 +8,13 @@
 #ifndef SUSHI_PROCESSOR_H
 #define SUSHI_PROCESSOR_H
 
+#include <map>
+
 #include "library/sample_buffer.h"
 #include "library/plugin_events.h"
 #include "library/event_pipe.h"
 #include "library/id_generator.h"
+#include "library/plugin_parameters.h"
 
 namespace sushi {
 
@@ -87,22 +90,50 @@ public:
     ObjectId id() {return _id;}
 
     /**
-     * @brief Returns the id of a parameter with a given name
-     * @param parameter_name Name of the parameter
-     * @return 32 bit identifier of the parameter
-     */
-    virtual std::pair<ProcessorReturnCode, ObjectId> parameter_id_from_name(const std::string& /*parameter_name*/)
-    {
-        return std::make_pair(ProcessorReturnCode::PARAMETER_NOT_FOUND, 0u);
-    }
-
-    /**
      * @brief Set an output pipe for events.
      * @param output_pipe the output EventPipe that should receive events
      */
     virtual void set_event_output(EventPipe* pipe)
     {
         _output_pipe = pipe;
+    }
+
+    /**
+     * @brief Get the number of parameters of this processor.
+     * @return The number of registered parameters for this processor.
+     */
+    int parameter_count() const {return static_cast<int>(_parameters_by_index.size());};
+
+    /**
+     * @brief Get the parameter descriptor associated with a certain name
+     * @param name The unique name of the parameter
+     * @return A pointer to the parameter descriptor or a null pointer
+     *         if there is no processor with that name
+     */
+    const ParameterDescriptor* parameter_from_name(const std::string& name)
+    {
+        auto p = _parameters.find(name);
+        return (p != _parameters.end()) ? p->second.get() : nullptr;
+    }
+
+    /**
+     * @brief Get the parameter descriptor associated with a certain id
+     * @param id The id of the parameter
+     * @return A pointer to the parameter descriptor or a null pointer
+     *         if there is no processor with that id
+     */
+    const ParameterDescriptor* parameter_from_id(ObjectId id)
+    {
+        return (id < _parameters_by_index.size()) ? _parameters_by_index[id] : nullptr;
+    }
+
+    /**
+     * @brief Get all controllable parameters and properties of this processor
+     * @return A list of parameter objects
+     */
+    const std::vector<ParameterDescriptor*>& all_parameters() const
+    {
+        return _parameters_by_index;
     }
 
     int max_input_channels() {return _max_input_channels;}
@@ -126,6 +157,24 @@ public:
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
 
 protected:
+
+    /**
+     * @brief Register a newly created parameter
+     * @param parameter Pointer to a parameter object
+     * @return true if the parameter was successfully registered, false otherwise
+     */
+    bool register_parameter(ParameterDescriptor* parameter)
+    {
+        bool inserted = true;
+        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
+        if (!inserted)
+        {
+            return false;
+        }
+        parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
+        _parameters_by_index.push_back(parameter);
+        return true;
+    }
 
     void output_event(Event event)
     {
@@ -151,6 +200,9 @@ private:
 
     std::string _unique_name{""};
     std::string _label{""};
+
+    std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
+    std::vector<ParameterDescriptor*> _parameters_by_index;
 };
 
 /**
