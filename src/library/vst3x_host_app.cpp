@@ -116,7 +116,6 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, s
     MIND_LOG_INFO("Creating plugin {}", info.name);
     Steinberg::Vst::IComponent* component;
     auto res = factory->createInstance(info.cid, Steinberg::Vst::IComponent::iid,
-    auto res = factory->createInstance(info.cid, Steinberg::Vst::IComponent::iid,
                                         reinterpret_cast<void**>(&component));
     if (res != Steinberg::kResultOk)
     {
