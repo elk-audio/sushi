@@ -69,6 +69,7 @@ TEST_F(TestEngine, TestUidNameMapping)
     auto status = _module_under_test->add_plugin_to_chain("left",
                                                           "sushi.testing.equalizer",
                                                           "equalizer_0_l",
+                                                          "",
                                                           PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
@@ -119,15 +120,19 @@ TEST_F(TestEngine, TestCreateEmptyPluginChain)
 TEST_F(TestEngine, TestAddPlugin)
 {
     /* Test adding Internal plugin */
-    _module_under_test->create_plugin_chain("left",2);
-    auto status = _module_under_test->add_plugin_to_chain("left",
+    auto status = _module_under_test->create_plugin_chain("left",2);
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.gain",
                                                      "gain_0_r",
+                                                     "   ",
                                                      PluginType::INTERNAL);
+    ASSERT_EQ(status, EngineReturnStatus::OK);
     char* full_plugin_path = realpath("libvstxsynth.so", NULL);
     status = _module_under_test->add_plugin_to_chain("left",
-                                                     full_plugin_path,
+                                                     "",
                                                      "vst_synth",
+                                                     full_plugin_path,
                                                      PluginType::VST2X);
     delete full_plugin_path;
     ASSERT_EQ(status, EngineReturnStatus::OK);
@@ -141,11 +146,13 @@ TEST_F(TestEngine, TestAddPlugin)
     status = _module_under_test->add_plugin_to_chain("not_found",
                                                      "sushi.testing.passthrough",
                                                      "dummyname",
+                                                     "",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.passthrough",
+                                                     "",
                                                      "",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
@@ -153,12 +160,14 @@ TEST_F(TestEngine, TestAddPlugin)
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "not_found",
                                                      "dummyname",
+                                                     "",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
 
     status = _module_under_test->add_plugin_to_chain("left",
-                                                     "not_found",
+                                                     "",
                                                      "dummyname",
+                                                     "not_found",
                                                      PluginType::VST2X);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
 }

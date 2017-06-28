@@ -8,17 +8,17 @@
             "mode" : "stereo",
             "plugins" : [
                 {
-                    "path" : "sushi.testing.passthrough",
+                    "uid" : "sushi.testing.passthrough",
                     "name" : "passthrough_0_l",
                     "type" : "internal"
                 },
                 {
-                    "path" : "sushi.testing.gain",
+                    "uid" : "sushi.testing.gain",
                     "name" : "gain_0_l",
                     "type" : "internal"
                 },
                 {
-                    "path" : "sushi.testing.equalizer",
+                    "uid" : "sushi.testing.equalizer",
                     "name" : "equalizer_0_l",
                     "type" : "internal"
                 }
@@ -29,17 +29,17 @@
             "mode" : "mono",
             "plugins" : [
                 {
-                    "path" : "sushi.testing.gain",
+                    "uid" : "sushi.testing.gain",
                     "name" : "gain_0_r",
                     "type" : "internal"
                 },
                 {
-                    "path" : "sushi.testing.passthrough",
+                    "uid" : "sushi.testing.passthrough",
                     "name" : "passthrough_0_r",
                     "type" : "internal"
                 },
                 {
-                    "path" : "sushi.testing.gain",
+                    "uid" : "sushi.testing.gain",
                     "name" : "gain_1_r",
                     "type" : "internal"
                 }

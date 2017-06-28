@@ -209,7 +209,7 @@ bool Vst3xWrapper::_setup_processing()
     Steinberg::Vst::ProcessSetup setup;
     setup.maxSamplesPerBlock = AUDIO_CHUNK_SIZE;
     setup.processMode = Steinberg::Vst::ProcessModes::kRealtime;
-    setup.sampleRate = 44100;
+    setup.sampleRate = _sample_rate;
     setup.symbolicSampleSize = Steinberg::Vst::SymbolicSampleSizes::kSample32;
     auto res = _instance.processor()->setupProcessing(setup);
     if (res != Steinberg::kResultOk)

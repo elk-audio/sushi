@@ -42,6 +42,12 @@ MIND_GET_LOGGER;
 
 LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
 {
+    if (plugin_absolute_path.empty())
+    {
+        MIND_LOG_ERROR("Empty library path");
+        return NULL; // Calling dlopen with an empty string returns a handle to the calling
+                     // program, which can cause an infinite loop.
+    }
     void *libraryHandle = dlopen(plugin_absolute_path.c_str(), RTLD_NOW | RTLD_LOCAL);
 
     if (libraryHandle == NULL)

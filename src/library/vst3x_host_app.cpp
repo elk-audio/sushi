@@ -38,7 +38,9 @@ Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
 
 }*/
 
-PluginLoader::PluginLoader(const std::string& plugin_absolute_path) : _path(plugin_absolute_path)
+PluginLoader::PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name) :
+                                                                               _path(plugin_absolute_path),
+                                                                               _name(plugin_name)
 {
 }
 
@@ -63,7 +65,7 @@ std::pair<bool, PluginInstance> PluginLoader::load_plugin()
         return std::make_pair(false, instance);
     }
 
-    auto component = load_component(factory, &instance._name);
+    auto component = load_component(factory, _name);
     if (!component)
     {
         return std::make_pair(false, instance);
@@ -98,32 +100,35 @@ std::pair<bool, PluginInstance> PluginLoader::load_plugin()
     instance._component = component;
     instance._processor = processor;
     instance._controller = controller;
+    instance._name = _name;
     return std::make_pair(true, instance);
 }
 
 
-Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, std::string* name)
+Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
+                                           const std::string& plugin_name)
 {
-    /* A factory can support several plugins, but for now just instantiate
-     * the first of them */
-    if (factory->countClasses() < 1)
+    for (int i = 0; i < factory->countClasses(); ++i)
     {
-        MIND_LOG_ERROR("No plugins in factory, plugin is probably broken");
-        return nullptr;
+        Steinberg::PClassInfo info;
+        factory->getClassInfo(0, &info);
+        MIND_LOG_DEBUG("Querying plugin {} of type {}", info.name, info.category);
+        if (info.name == plugin_name)
+        {
+            Steinberg::Vst::IComponent* component;
+            auto res = factory->createInstance(info.cid, Steinberg::Vst::IComponent::iid,
+                                               reinterpret_cast<void**>(&component));
+            if (res == Steinberg::kResultOk)
+            {
+                MIND_LOG_INFO("Creating plugin {}", info.name);
+                return component;
+            }
+            MIND_LOG_ERROR("Failed to create component with error code: {}", res);
+            return nullptr;
+        }
     }
-    Steinberg::PClassInfo info;
-    factory->getClassInfo(0, &info);
-    MIND_LOG_INFO("Creating plugin {}", info.name);
-    Steinberg::Vst::IComponent* component;
-    auto res = factory->createInstance(info.cid, Steinberg::Vst::IComponent::iid,
-                                        reinterpret_cast<void**>(&component));
-    if (res != Steinberg::kResultOk)
-    {
-        MIND_LOG_ERROR("Failed to create component with error code: {}", res);
-        return nullptr;
-    }
-    *name = info.name;
-    return component;
+    MIND_LOG_ERROR("No match for plugin {} in factory", plugin_name);
+    return nullptr;
 }
 
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component)

@@ -35,9 +35,8 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-
-    Vst3xWrapper(const std::string &vst_plugin_path) : _plugin_path{vst_plugin_path},
-                                                       _loader{vst_plugin_path}
+    Vst3xWrapper(const std::string& vst_plugin_path, const std::string& plugin_name) : _loader{vst_plugin_path,
+                                                                                               plugin_name}
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -82,9 +81,6 @@ private:
     int _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
 
-    //Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
-
-    std::string _plugin_path;
     PluginLoader _loader;
 
     PluginInstance _instance;

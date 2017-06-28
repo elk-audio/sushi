@@ -139,7 +139,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     plugin_chain["name"] = "chain_with_stomp";
     auto& test_stompbox = plugin_chain["plugins"];
     test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["path"] = "sushi.testing.gain";
+    test_stompbox[0]["uid"] = "sushi.testing.gain";
     test_stompbox[0]["type"] = "internal";
     test_stompbox[1]["name"] = "vst2_plugin";
     char* full_plugin_path = realpath("libagain.so", NULL);
@@ -151,17 +151,18 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     /* test with stompbox having Invalid UID or existing name */
     plugin_chain["name"] = "chain_invalid_internal";
     test_stompbox[0]["name"] = "invalid_internal_plugin";
-    test_stompbox[0]["path"] = "wrong_uid";
+    test_stompbox[0]["uid"] = "wrong_uid";
     test_stompbox[0]["type"] = "internal";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
     plugin_chain["name"] = "chain_invalid_vst";
     test_stompbox[0]["name"] = "invalid_vst_plugin";
     test_stompbox[0]["type"] = "vst2x";
+    test_stompbox[0]["path"] = "";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
 
     plugin_chain["name"] = "chain_invalid_stompname";
     test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["path"] = "sushi.testing.gain";
+    test_stompbox[0]["uid"] = "sushi.testing.gain";
     test_stompbox[0]["type"] = "internal";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_NAME);
 }
@@ -221,11 +222,17 @@ TEST_F(TestJsonConfigurator, TestStompboxDef)
     /* Valid stompboxes in plugin chain */
     auto& test_stompbox = plugin_chain[0]["plugins"];
     test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["path"] = "path_internal";
+    test_stompbox[0]["uid"] = "path_internal";
     test_stompbox[0]["type"] = "internal";
+
     test_stompbox[1]["name"] = "vst_plugin";
     test_stompbox[1]["path"] = "path_VST";
     test_stompbox[1]["type"] = "vst2x";
+
+    test_stompbox[2]["name"] = "vst3_plugin";
+    test_stompbox[2]["uid"] = "vst3_id";
+    test_stompbox[2]["path"] = "vst3 path";
+    test_stompbox[2]["type"] = "vst3x";
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
 }
 

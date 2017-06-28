@@ -48,19 +48,20 @@ private:
 class PluginLoader
 {
 public:
-    PluginLoader(const std::string& plugin_absolute_path);
+    PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name);
     ~PluginLoader ();
 
     std::pair<bool, PluginInstance> load_plugin();
 
 private:
     std::string _path;
+    std::string _name;
 
     std::shared_ptr<VST3::Hosting::Module> _module{nullptr};
     SushiHostApplication _host_app;
 };
 
-Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, std::string* name);
+Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
 

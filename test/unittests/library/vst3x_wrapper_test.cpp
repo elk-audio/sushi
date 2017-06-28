@@ -10,13 +10,13 @@ using namespace sushi;
 using namespace sushi::vst3;
 
 char PLUGIN_FILE[] = "../VST3/adelay.vst3";
-
+char PLUGIN_NAME[] = "ADelay";
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginLoader, test_load_plugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    PluginLoader module_under_test(full_test_plugin_path);
+    PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
     bool success;
     PluginInstance instance;
     std::tie(success, instance) = module_under_test.load_plugin();
@@ -31,11 +31,19 @@ TEST(TestVst3xPluginLoader, test_load_plugin)
 /* Test that nothing breaks if the plugin is not found */
 TEST(TestVst3xPluginLoader, test_load_plugin_from_erroneous_filename)
 {
-    PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3");
+    /* Non existing library */
+    PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     bool success;
     PluginInstance instance;
     std::tie(success, instance) = module_under_test.load_plugin();
     ASSERT_FALSE(success);
+
+    /* Existing library but non-existing plugin */
+    char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
+    module_under_test = PluginLoader(full_test_plugin_path, "NoPluginWithThisName");
+    std::tie(success, instance) = module_under_test.load_plugin();
+    ASSERT_FALSE(success);
+    free(full_test_plugin_path);
 }
 
 class TestVst3xWrapper : public ::testing::Test
@@ -48,7 +56,7 @@ protected:
     void SetUp()
     {
         char* full_plugin_path = realpath(PLUGIN_FILE, NULL);
-        _module_under_test = new Vst3xWrapper(full_plugin_path);
+        _module_under_test = new Vst3xWrapper(full_plugin_path, PLUGIN_NAME);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(48000);
