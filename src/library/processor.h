@@ -166,13 +166,28 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter)
     {
+        return register_parameter(parameter, static_cast<ObjectId>(_parameters_by_index.size()));
+    }
+
+    /**
+     * @brief Register a newly created parameter and manually set the id of the parameter
+     * @param parameter Pointer to a parameter object
+     * @param id The unique id to give to the parameter
+     * @return true if the parameter was successfully registered, false otherwise
+     */
+    bool register_parameter(ParameterDescriptor* parameter, ObjectId id)
+    {
         bool inserted = true;
+        for (auto& p : _parameters_by_index)
+        {
+            if (p->id() == id) return false; // Don't allow duplicate parameter id:s
+        }
         std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
         if (!inserted)
         {
             return false;
         }
-        parameter->set_id(static_cast<ObjectId>(_parameters_by_index.size()));
+        parameter->set_id(id);
         _parameters_by_index.push_back(parameter);
         return true;
     }

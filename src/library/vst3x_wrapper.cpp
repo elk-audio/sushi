@@ -11,7 +11,7 @@ MIND_GET_LOGGER;
 
 void Vst3xWrapper::_cleanup()
 {
-
+    set_enabled(false);
 }
 
 ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
@@ -27,7 +27,7 @@ ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
     set_name(_instance.name());
     set_label(_instance.name());
 
-    if (!_setup_busses())
+    if (!_setup_audio_busses() || !_setup_event_busses())
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
@@ -60,16 +60,15 @@ void Vst3xWrapper::process_event(Event event)
     {
         case EventType::FLOAT_PARAMETER_CHANGE:
         {
-            MIND_LOG_INFO("Plugin has {} parameters", _in_parameter_changes.getParameterCount());
+            int index;
             auto typed_event = event.parameter_change_event();
-            auto param_queue = _in_parameter_changes.getParameterData(typed_event->param_id());
+            auto param_queue = _in_parameter_changes.addParameterData(typed_event->param_id(), index);
             if (!param_queue)
             {
-                MIND_LOG_INFO("No parameter queue for parameter {}", typed_event->param_id());
+                MIND_LOG_WARNING("No parameter queue for parameter {}", typed_event->param_id());
                 break;
             }
-            int return_index;
-            param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), return_index);
+            param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), index);
             break;
             // TODO - find a good use for return_index here
         }
@@ -117,25 +116,29 @@ bool Vst3xWrapper::_register_parameters()
         auto res = _instance.controller()->getParameterInfo(i, info);
         if (res == Steinberg::kResultOk)
         {
+            /* Vst3 uses a confusing model where parameters are indexed by an integer from 0
+             * to getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
+             * also has a 32 bit integer id which is arbitrarily assigned. For ADelay these are
+             * 100 and 101.
+             * When doing real time parameter updates, the parameters must be accessed using this
+             * arbitrary id and not the index. Hence the id in the registered ParameterDescriptors
+             * store this id and not the index in the processor array. Hopefully that doesn't
+             * cause any issues. */
             Steinberg::UString128 str(info.title, VST_NAME_BUFFER_SIZE);
             str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
-            if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr)))
+            if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
             {
                 MIND_LOG_INFO("Registered parameter {}.", name_c_str);
             } else
             {
                 MIND_LOG_INFO("Error registering parameter {}.", name_c_str);
             }
-            int return_index;
-            _in_parameter_changes.addParameterData(Steinberg::Vst::ParamID(i), return_index);
-            //MIND_LOG_INFO("Registered parameter index: {}", return_index);
         }
     }
-    //MIND_LOG_INFO("Registered {} parameters", _in_parameter_changes.getParameterCount());
     return true;
 }
 
-bool Vst3xWrapper::_setup_busses()
+bool Vst3xWrapper::_setup_audio_busses()
 {
     int input_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kInput);
     int output_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kOutput);
@@ -177,6 +180,38 @@ bool Vst3xWrapper::_setup_busses()
                 MIND_LOG_ERROR("Failed to activate plugin output bus {}", i);
                 return false;
             }
+        }
+    }
+    return true;
+}
+
+bool Vst3xWrapper::_setup_event_busses()
+{
+    int input_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kInput);
+    int output_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kOutput);
+    if (input_busses == 0 || output_busses == 0)
+    {
+        MIND_LOG_WARNING("Plugin has {} input and {} output event busses", input_busses, output_busses);
+    }
+    /* Try to activate all busses here */
+    for (int i = 0; i < input_busses; ++i)
+    {
+        auto res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kEvent,
+                                                     Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
+        if (res != Steinberg::kResultOk)
+        {
+            MIND_LOG_ERROR("Failed to activate plugin input event bus {}", i);
+            return false;
+        }
+    }
+    for (int i = 0; i < output_busses; ++i)
+    {
+        auto res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kEvent,
+                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
+        if (res != Steinberg::kResultOk)
+        {
+            MIND_LOG_ERROR("Failed to activate plugin output event bus {}", i);
+            return false;
         }
     }
     return true;

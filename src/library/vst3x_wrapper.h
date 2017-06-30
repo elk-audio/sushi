@@ -72,11 +72,14 @@ private:
      */
     bool _register_parameters();
 
-    bool _setup_busses();
+    bool _setup_audio_busses();
+
+    bool _setup_event_busses();
 
     bool _setup_channels();
 
     bool _setup_processing();
+
 
     int _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */

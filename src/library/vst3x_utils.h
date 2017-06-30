@@ -83,10 +83,7 @@ public:
     {
         _in_events->clear();
         _out_events->clear();
-        for (int i = 0; i < _in_parameters->getParameterCount(); ++i)
-        {
-            static_cast<Steinberg::Vst::ParameterValueQueue*>(_in_parameters->getParameterData(i))->clear();
-        }
+        _in_parameters->clearQueue();
         _out_parameters->clearQueue();
     }
 

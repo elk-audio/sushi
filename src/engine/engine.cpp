@@ -245,7 +245,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
             break;
 
         case PluginType::VST3X:
-            plugin = std::make_unique<vst3::Vst3xWrapper>(plugin_uid, plugin_path);
+            plugin = std::make_unique<vst3::Vst3xWrapper>(plugin_path, plugin_uid);
             break;
 
         default:
