@@ -23,7 +23,7 @@
 namespace sushi {
 namespace vst3 {
 
-constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
+constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
@@ -88,8 +88,8 @@ private:
 
     PluginInstance _instance;
 
-    Steinberg::Vst::EventList _in_event_list;
-    Steinberg::Vst::EventList _out_event_list;
+    Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
+    Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::ParameterChanges _in_parameter_changes;
     Steinberg::Vst::ParameterChanges _out_parameter_changes;
 

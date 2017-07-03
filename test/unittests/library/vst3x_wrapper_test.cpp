@@ -2,8 +2,7 @@
 
 #include "library/vst3x_host_app.cpp"
 #include "library/vst3x_wrapper.cpp"
-#include "library/plugin_events.h"
-#include "library/sample_buffer.h"
+#include "library/vst3x_utils.cpp"
 #include "test_utils.h"
 
 using namespace sushi;
@@ -11,6 +10,11 @@ using namespace sushi::vst3;
 
 char PLUGIN_FILE[] = "../VST3/adelay.vst3";
 char PLUGIN_NAME[] = "ADelay";
+
+char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
+char SYNTH_PLUGIN_NAME[] = "mda JX10";
+
+constexpr int DELAY_PARAM_ID = 100;
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginLoader, test_load_plugin)
@@ -53,10 +57,10 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp(char* plugin_file, char* plugin_name)
     {
-        char* full_plugin_path = realpath(PLUGIN_FILE, NULL);
-        _module_under_test = new Vst3xWrapper(full_plugin_path, PLUGIN_NAME);
+        char* full_plugin_path = realpath(plugin_file, NULL);
+        _module_under_test = new Vst3xWrapper(full_plugin_path, plugin_name);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(48000);
@@ -74,6 +78,7 @@ protected:
 
 TEST_F(TestVst3xWrapper, test_load_and_init_plugin)
 {
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
     ASSERT_TRUE(_module_under_test);
     EXPECT_EQ("ADelay", _module_under_test->name());
 
@@ -85,14 +90,20 @@ TEST_F(TestVst3xWrapper, test_load_and_init_plugin)
 
 TEST_F(TestVst3xWrapper, test_processing)
 {
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
-    test_utils::fill_sample_buffer(in_buffer, 0);
-    auto event = Event::make_parameter_change_event(0u, 0, 1, 0.0f);
+    test_utils::fill_sample_buffer(in_buffer, 1);
+    /* Set delay to 0 */
+    auto event = Event::make_parameter_change_event(0u, 0, DELAY_PARAM_ID, 0.0f);
 
     _module_under_test->set_enabled(true);
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::assert_buffer_value(0, out_buffer);
+    /* Minimum delay will still be 1 sample */
+    EXPECT_FLOAT_EQ(0.0f, out_buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ(0.0f, out_buffer.channel(1)[0]);
+    EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(0)[1]);
+    EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(1)[1]);
 }

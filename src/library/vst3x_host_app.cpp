@@ -42,6 +42,7 @@ PluginLoader::PluginLoader(const std::string& plugin_absolute_path, const std::s
                                                                                _path(plugin_absolute_path),
                                                                                _name(plugin_name)
 {
+    _host_app.release();
 }
 
 

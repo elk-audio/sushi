@@ -77,6 +77,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
+                      src/library/vst3x_utils.cpp
                       src/library/vst3x_wrapper.cpp
                       src/library/vst3x_host_app.cpp
                       src/plugins/gain_plugin.cpp

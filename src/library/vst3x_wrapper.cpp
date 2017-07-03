@@ -11,7 +11,8 @@ MIND_GET_LOGGER;
 
 void Vst3xWrapper::_cleanup()
 {
-    set_enabled(false);
+    if (_instance.component())
+        set_enabled(false);
 }
 
 ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
@@ -70,20 +71,33 @@ void Vst3xWrapper::process_event(Event event)
             }
             param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), index);
             break;
-            // TODO - find a good use for return_index here
         }
         case EventType::NOTE_ON:
+        {
+            auto vst_event = convert_note_on_event(event.keyboard_event());
+            _in_event_list.addEvent(vst_event);
+            break;
+        }
         case EventType::NOTE_OFF:
+        {
+            auto vst_event = convert_note_off_event(event.keyboard_event());
+            _in_event_list.addEvent(vst_event);
+            break;
+        }
         case EventType::NOTE_AFTERTOUCH:
+        {
+            auto vst_event = convert_aftertouch_event(event.keyboard_event());
+            _in_event_list.addEvent(vst_event);
+            break;
+        }
         case EventType::WRAPPED_MIDI_EVENT:
         {
-            //_in_event_list.addEvent()
+            // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
         }
-
         default:
             break;
     }
-
+    return;
 }
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -142,6 +156,7 @@ bool Vst3xWrapper::_setup_audio_busses()
 {
     int input_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kInput);
     int output_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kOutput);
+    MIND_LOG_INFO("Plugin has {} audio input buffers and {} audio output buffers", input_audio_busses, output_audio_busses);
     if (output_audio_busses == 0)
     {
         return false;
@@ -189,10 +204,7 @@ bool Vst3xWrapper::_setup_event_busses()
 {
     int input_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kInput);
     int output_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kOutput);
-    if (input_busses == 0 || output_busses == 0)
-    {
-        MIND_LOG_WARNING("Plugin has {} input and {} output event busses", input_busses, output_busses);
-    }
+    MIND_LOG_INFO("Plugin has {} event input buffers and {} event output buffers", input_busses, output_busses);
     /* Try to activate all busses here */
     for (int i = 0; i < input_busses; ++i)
     {
@@ -220,7 +232,7 @@ bool Vst3xWrapper::_setup_event_busses()
 bool Vst3xWrapper::_setup_channels()
 {
     /* Try set up a stereo output pair and, if there is an input bus, a stereo input pair */
-    if (_max_input_channels == 0 || _max_output_channels < 2)
+    if (_max_output_channels < 2)
     {
         MIND_LOG_ERROR("Not enough channels supported {}:{}", _max_input_channels, _max_input_channels);
         return false;

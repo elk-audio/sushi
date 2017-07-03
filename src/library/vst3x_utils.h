@@ -13,8 +13,13 @@
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstevents.h"
+#define DEVELOPMENT
+#include "public.sdk/source/vst/hosting/eventlist.h"
+#include "public.sdk/source/vst/hosting/parameterchanges.h"
+#undef DEVELOPMENT
 
 #include "library/sample_buffer.h"
+#include "library/plugin_events.h"
 
 namespace sushi {
 namespace vst3 {
@@ -42,6 +47,8 @@ public:
         _output_buffers.channelBuffers32 = _process_outputs;
         inputs = &_input_buffers;
         outputs = &_output_buffers;
+        numInputs = 1;  /* Note: number of busses, not channels */
+        numOutputs = 1; /* Note: number of busses, not channels */
         numSamples = AUDIO_CHUNK_SIZE;
         symbolicSampleSize = Steinberg::Vst::SymbolicSampleSizes::kSample32;
         processMode = Steinberg::Vst::ProcessModes::kRealtime;
@@ -57,23 +64,7 @@ public:
      * @param input Input buffers
      * @param output Output buffers
      */
-    void assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output)
-    {
-        assert(input.channel_count() <= VST_WRAPPER_MAX_N_CHANNELS &&
-               output.channel_count() <= VST_WRAPPER_MAX_N_CHANNELS);
-        for (int i = 0; i < input.channel_count(); ++i)
-        {
-            _process_inputs[i] = const_cast<float*>(input.channel(i));
-        }
-        for (int i = 0; i < output.channel_count(); ++i)
-        {
-            _process_outputs[i] = output.channel(i);
-        }
-        numInputs = input.channel_count();
-        inputs->numChannels = input.channel_count();
-        numOutputs = output.channel_count();
-        outputs->numChannels = output.channel_count();
-    }
+    void assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output);
 
     /**
      * @brief Clear all event and parameter changes to prepare for a new round
@@ -98,6 +89,28 @@ private:
     Steinberg::Vst::ParameterChanges* _in_parameters;
     Steinberg::Vst::ParameterChanges* _out_parameters;
 };
+
+/**
+ * @brief Convert a Sushi NoteOn event to a Vst3 Note on event
+ * @param event A Sushi note on event
+ * @return a Vst3 note on event
+ */
+Steinberg::Vst::Event convert_note_on_event(const KeyboardEvent* event);
+
+/**
+ * @brief Convert a Sushi NoteOff event to a Vst3 Note off event
+ * @param event A Sushi note off event
+ * @return a Vst3 note off event
+ */
+Steinberg::Vst::Event convert_note_off_event(const KeyboardEvent* event);
+
+/**
+ * @brief Convert a Sushi Aftertouch event to a Vst3 event
+ * @param event A Sushi Aftertouch event
+ * @return a Vst3 poly pressure event
+ */
+Steinberg::Vst::Event convert_aftertouch_event(const KeyboardEvent* event);
+
 
 } // end namespace vst3
 } // end namespace sushi
