@@ -1,9 +1,12 @@
 #include "gtest/gtest.h"
 
-#include "library/vst3x_host_app.cpp"
-#include "library/vst3x_wrapper.cpp"
-#include "library/vst3x_utils.cpp"
 #include "test_utils.h"
+#include "library/event_fifo.h"
+#include "library/vst3x_host_app.cpp"
+#include "library/vst3x_utils.cpp"
+
+#define private public
+#include "library/vst3x_wrapper.cpp"
 
 using namespace sushi;
 using namespace sushi::vst3;
@@ -106,4 +109,45 @@ TEST_F(TestVst3xWrapper, test_processing)
     EXPECT_FLOAT_EQ(0.0f, out_buffer.channel(1)[0]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(0)[1]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(1)[1]);
+}
+
+TEST_F(TestVst3xWrapper, test_event_forwarding)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    EventFifo queue;
+    _module_under_test->set_event_output(&queue);
+
+    Steinberg::Vst::Event note_on_event;
+    note_on_event.type = Steinberg::Vst::Event::EventTypes::kNoteOnEvent;
+    note_on_event.sampleOffset = 5;
+    note_on_event.noteOn.velocity = 1.0f;
+    note_on_event.noteOn.channel = 1;
+    note_on_event.noteOn.pitch = 46;
+
+    Steinberg::Vst::Event note_off_event;
+    note_off_event.type = Steinberg::Vst::Event::EventTypes::kNoteOffEvent;
+    note_off_event.sampleOffset = 6;
+    note_off_event.noteOff.velocity = 1.0f;
+    note_off_event.noteOff.channel = 2;
+    note_off_event.noteOff.pitch = 48;
+
+    _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
+    _module_under_test->_process_data.outputEvents->addEvent(note_off_event);
+    _module_under_test->_forward_events(_module_under_test->_process_data);
+
+    ASSERT_FALSE(queue.empty());
+    Event event;
+    ASSERT_TRUE(queue.pop(event));
+    ASSERT_EQ(EventType::NOTE_ON, event.type());
+    ASSERT_EQ(5, event.sample_offset());
+    ASSERT_EQ(46, event.keyboard_event()->note());
+    ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
+
+    ASSERT_TRUE(queue.pop(event));
+    ASSERT_EQ(EventType::NOTE_OFF, event.type());
+    ASSERT_EQ(6, event.sample_offset());
+    ASSERT_EQ(48, event.keyboard_event()->note());
+    ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
+
+    ASSERT_FALSE(queue.pop(event));
 }

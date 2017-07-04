@@ -80,12 +80,15 @@ private:
 
     bool _setup_processing();
 
+    /**
+     * @brief Read output events from the plugin, convert to internal events
+     *        and forward to next plugin.
+     * @param data A ProcessData container
+     */
+    void _forward_events(Steinberg::Vst::ProcessData& data);
 
     int _sample_rate;
-    /** Wrappers for preparing data to pass to processReplacing */
-
     PluginLoader _loader;
-
     PluginInstance _instance;
 
     Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};

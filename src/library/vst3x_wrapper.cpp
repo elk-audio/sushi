@@ -51,7 +51,6 @@ ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
     {
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
-
     return ProcessorReturnCode::OK;
 }
 
@@ -104,6 +103,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     _process_data.assign_buffers(in_buffer, out_buffer);
     _instance.processor()->process(_process_data);
+    _forward_events(_process_data);
     _process_data.clear();
 }
 
@@ -265,6 +265,42 @@ bool Vst3xWrapper::_setup_processing()
         return false;
     }
     return true;
+}
+
+void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
+{
+    int event_count = data.outputEvents->getEventCount();
+    for (int i = 0; i < event_count; ++i)
+    {
+        Steinberg::Vst::Event vst_event;
+        if (data.outputEvents->getEvent(i, vst_event) == Steinberg::kResultOk)
+        {
+            switch (vst_event.type)
+            {
+                case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
+                {
+                    output_event(Event::make_note_on_event(0, vst_event.sampleOffset,
+                                                           vst_event.noteOn.pitch,
+                                                           vst_event.noteOn.velocity));
+                    break;
+                }
+                case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
+                    output_event(Event::make_note_off_event(0, vst_event.sampleOffset,
+                                                            vst_event.noteOff.pitch,
+                                                            vst_event.noteOff.velocity));
+                    break;
+
+                case Steinberg::Vst::Event::EventTypes::kPolyPressureEvent:
+                    output_event(Event::make_note_aftertouch_event(0, vst_event.sampleOffset,
+                                                            vst_event.polyPressure.pitch,
+                                                            vst_event.polyPressure.pressure));
+
+                default:
+                    break;
+            }
+        }
+    }
+
 }
 
 } // end namespace vst3
