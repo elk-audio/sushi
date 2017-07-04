@@ -18,6 +18,7 @@ char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
 char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr int DELAY_PARAM_ID = 100;
+constexpr int BYPASS_PARAM_ID = 101;
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginLoader, test_load_plugin)
@@ -88,7 +89,10 @@ TEST_F(TestVst3xWrapper, test_load_and_init_plugin)
     auto parameters = _module_under_test->all_parameters();
     EXPECT_EQ(2u, parameters.size());
     EXPECT_EQ("Bypass", parameters[0]->name());
+    EXPECT_EQ(BYPASS_PARAM_ID, parameters[0]->id());
     EXPECT_EQ("Delay", parameters[1]->name());
+    EXPECT_EQ(DELAY_PARAM_ID, parameters[1]->id());
+
 }
 
 TEST_F(TestVst3xWrapper, test_processing)
