@@ -108,7 +108,7 @@ private:
 
     /**
      * @brief Helper function used by _validate_midi_definition to validate the midi chain
-     *        connections schema in  the Json config file.
+     *        connections schema in the Json config file.
      * @param midi_def Json::Value object containing the MIDI Json data read from the file.
      * @return JsonConfigReturnStatus::OK if midi chain connections schema is valid,
      *         different error code otherwise.

@@ -17,8 +17,8 @@ char PLUGIN_NAME[] = "ADelay";
 char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
 char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
-constexpr int DELAY_PARAM_ID = 100;
-constexpr int BYPASS_PARAM_ID = 101;
+constexpr unsigned int DELAY_PARAM_ID = 100;
+constexpr unsigned int BYPASS_PARAM_ID = 101;
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginLoader, test_load_plugin)

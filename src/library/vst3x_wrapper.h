@@ -64,7 +64,6 @@ private:
      */
     void _cleanup();
 
-
     /**
      * @brief Iterate over VsT parameters and register internal FloatParameterDescriptor
      *        for each one of them.

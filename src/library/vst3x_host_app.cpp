@@ -3,11 +3,6 @@
 #define DEVELOPMENT true
 
 #include "pluginterfaces/base/ustring.h"
-
-// TODO - this is ugly, find a better way to include or rewrite these classes.
-
-#include "public.sdk/source/vst/hosting/hostclasses.h"
-#include "public.sdk/source/vst/hosting/module.h"
 #include "public.sdk/source/vst/hosting/stringconvert.h"
 #undef DEVELOPMENT
 

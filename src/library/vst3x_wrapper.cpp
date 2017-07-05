@@ -63,12 +63,10 @@ void Vst3xWrapper::process_event(Event event)
             int index;
             auto typed_event = event.parameter_change_event();
             auto param_queue = _in_parameter_changes.addParameterData(typed_event->param_id(), index);
-            if (!param_queue)
+            if (param_queue)
             {
-                MIND_LOG_WARNING("No parameter queue for parameter {}", typed_event->param_id());
-                break;
+                param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), index);
             }
-            param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), index);
             break;
         }
         case EventType::NOTE_ON:
@@ -136,8 +134,8 @@ bool Vst3xWrapper::_register_parameters()
              * 100 and 101.
              * When doing real time parameter updates, the parameters must be accessed using this
              * arbitrary id and not the index. Hence the id in the registered ParameterDescriptors
-             * store this id and not the index in the processor array. Hopefully that doesn't
-             * cause any issues. */
+             * store this id and not the index in the processor array like it does for the Vst2
+             * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             Steinberg::UString128 str(info.title, VST_NAME_BUFFER_SIZE);
             str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
             if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
@@ -278,12 +276,11 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             switch (vst_event.type)
             {
                 case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
-                {
                     output_event(Event::make_note_on_event(0, vst_event.sampleOffset,
                                                            vst_event.noteOn.pitch,
                                                            vst_event.noteOn.velocity));
                     break;
-                }
+
                 case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
                     output_event(Event::make_note_off_event(0, vst_event.sampleOffset,
                                                             vst_event.noteOff.pitch,
@@ -294,6 +291,7 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
                     output_event(Event::make_note_aftertouch_event(0, vst_event.sampleOffset,
                                                             vst_event.polyPressure.pitch,
                                                             vst_event.polyPressure.pressure));
+                    break;
 
                 default:
                     break;

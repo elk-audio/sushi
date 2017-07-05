@@ -7,9 +7,10 @@
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "public.sdk/source/vst/hosting/module.h"
+#pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #undef DEVELOPMENT
-
+#pragma GCC diagnostic pop
 
 namespace sushi {
 namespace vst3 {
@@ -17,11 +18,8 @@ namespace vst3 {
 class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
 public:
+    SushiHostApplication() {Steinberg::Vst::HostApplication();}
     virtual Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
-
-    /*virtual Steinberg::tresult createInstance (Steinberg::TUID cid,
-                                               Steinberg::TUID _iid,
-                                               void **obj) override;*/
 };
 
 //class PluginLoader;

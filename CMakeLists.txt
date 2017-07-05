@@ -204,7 +204,7 @@ set(VST3_HOST_SOURCES
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
 set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS -DDEVELOPMENT)
-add_dependencies(vst3_host sdk base)
+add_dependencies(vst3_host sdk)
 
 #############################################
 #  Subdirectory projects                    #
