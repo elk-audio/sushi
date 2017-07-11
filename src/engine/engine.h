@@ -48,7 +48,7 @@ enum class PluginType
 class BaseEngine
 {
 public:
-    BaseEngine(int sample_rate) : _sample_rate(sample_rate)
+    BaseEngine(float sample_rate) : _sample_rate(sample_rate)
     {}
 
     virtual ~BaseEngine()
@@ -133,7 +133,7 @@ public:
     }
 
 protected:
-    int _sample_rate;
+    float _sample_rate;
     int _audio_inputs{0};
     int _audio_outputs{0};
 };
@@ -142,7 +142,7 @@ protected:
 class AudioEngine : public BaseEngine
 {
 public:
-    AudioEngine(int sample_rate);
+    AudioEngine(float sample_rate);
 
      ~AudioEngine();
 

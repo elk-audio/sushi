@@ -16,7 +16,7 @@ namespace engine {
 
 MIND_GET_LOGGER;
 
-AudioEngine::AudioEngine(int sample_rate) : BaseEngine::BaseEngine(sample_rate)
+AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate)
 {}
 
 AudioEngine::~AudioEngine()

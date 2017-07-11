@@ -15,7 +15,7 @@ namespace vst2 {
 
 MIND_GET_LOGGER;
 
-ProcessorReturnCode Vst2xWrapper::init(const int sample_rate)
+ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
     // TODO: sanity checks on sample_rate,
     //       but these can probably better be handled on Processor::init()

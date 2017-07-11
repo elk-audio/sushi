@@ -10,7 +10,7 @@ using namespace sushi::engine;
 class EngineMockup : public BaseEngine
 {
 public:
-    EngineMockup(unsigned int sample_rate) :
+    EngineMockup(float sample_rate) :
         BaseEngine(sample_rate)
     {}
 

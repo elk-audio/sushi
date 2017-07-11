@@ -49,7 +49,7 @@ public:
     }
 
     /* Inherited from Processor */
-    ProcessorReturnCode init(const int sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void process_event(Event event) override;
 
@@ -86,7 +86,7 @@ private:
      */
     void _forward_events(Steinberg::Vst::ProcessData& data);
 
-    int _sample_rate;
+    float _sample_rate;
     PluginLoader _loader;
     PluginInstance _instance;
 

@@ -18,7 +18,7 @@ public:
         _max_output_channels = 2;
     }
 
-    ProcessorReturnCode init(const int /* sample_rate */) override
+    ProcessorReturnCode init(float /* sample_rate */) override
     {
         return ProcessorReturnCode::OK;
     }

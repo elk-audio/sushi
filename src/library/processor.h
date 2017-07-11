@@ -42,7 +42,7 @@ public:
      * any resources reserved here.
      * @param sample_rate Host sample rate
      */
-    virtual ProcessorReturnCode init(const int /* sample_rate */)
+    virtual ProcessorReturnCode init(float /* sample_rate */)
     {
         return ProcessorReturnCode::OK;
     }

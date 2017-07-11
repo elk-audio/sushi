@@ -28,13 +28,13 @@ class Voice
 public:
     Voice() {};
 
-    Voice(int samplerate, dsp::Sample* sample) : _samplerate(samplerate), _sample(sample) {}
+    Voice(float samplerate, dsp::Sample* sample) : _samplerate(samplerate), _sample(sample) {}
 
     /**
      * @brief Runtime samplerate configuration.
      * @param samplerate The playback samplerate.
      */
-    void set_samplerate(int samplerate)
+    void set_samplerate(float samplerate)
     {
         _samplerate = samplerate;
         _envelope.set_samplerate(samplerate);
@@ -100,7 +100,7 @@ public:
 
 private:
 
-    int _samplerate{44100};
+    float _samplerate{44100};
     dsp::Sample* _sample;
     SamplePlayMode _state{SamplePlayMode::STOPPED};
     dsp::AdsrEnvelope _envelope;

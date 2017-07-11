@@ -60,7 +60,7 @@ public:
      * @brief Set the current samplerate
      * @param samplerate The samplerate in samples/second.
      */
-    void set_samplerate(int samplerate)
+    void set_samplerate(float samplerate)
     { _samplerate = samplerate; }
 
     /**

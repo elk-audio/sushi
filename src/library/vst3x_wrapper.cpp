@@ -15,7 +15,7 @@ void Vst3xWrapper::_cleanup()
         set_enabled(false);
 }
 
-ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
+ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
     bool loaded;
