@@ -59,7 +59,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, 0, 0);
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, static_cast<float>(_sample_rate));
+    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
     _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);
 
     // Register internal parameters
@@ -70,6 +70,22 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     }
 
     return ProcessorReturnCode::OK;
+}
+
+void Vst2xWrapper::configure(float sample_rate)
+{
+    _sample_rate = sample_rate;
+    bool reset_enabled = enabled();
+    if (reset_enabled)
+    {
+        set_enabled(false);
+    }
+    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
+    if (reset_enabled)
+    {
+        set_enabled(true);
+    }
+    return;
 }
 
 void Vst2xWrapper::_cleanup()

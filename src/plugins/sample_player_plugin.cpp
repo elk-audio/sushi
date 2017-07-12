@@ -38,6 +38,15 @@ ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
     return status;
 }
 
+void SamplePlayerPlugin::configure(float sample_rate)
+{
+    for (auto& voice : _voices)
+    {
+        voice.set_samplerate(sample_rate);
+    }
+    return;
+}
+
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
     delete[] _sample_buffer;

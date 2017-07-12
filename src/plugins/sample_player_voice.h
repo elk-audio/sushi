@@ -12,6 +12,9 @@
 
 namespace sample_player_voice {
 
+// TODO eventually make this configurable
+constexpr float SAMPLE_FILE_RATE = 44100.0f;
+
 enum class SamplePlayMode
 {
     STOPPED,
@@ -36,8 +39,9 @@ public:
      */
     void set_samplerate(float samplerate)
     {
-        _samplerate = samplerate;
+        _playback_speed = _playback_speed * samplerate / _samplerate;
         _envelope.set_samplerate(samplerate);
+        _samplerate = samplerate;
     }
 
     /**

@@ -149,5 +149,11 @@ TEST_F(TestVst2xWrapper, test_midi_events)
     _module_under_test->process_event(Event::make_note_off_event(0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
+}
 
+TEST_F(TestVst2xWrapper, test_configuration_change)
+{
+    SetUp("libagain.so");
+    _module_under_test->configure(44100.0f);
+    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
 }

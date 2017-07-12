@@ -22,6 +22,15 @@ AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate
 AudioEngine::~AudioEngine()
 {}
 
+void AudioEngine::set_sample_rate(float sample_rate)
+{
+    BaseEngine::set_sample_rate(sample_rate);
+    for (auto& node : _processors_by_unique_name)
+    {
+        node.second->configure(sample_rate);
+    }
+}
+
 int AudioEngine::n_channels_in_chain(int chain)
 {
     if (chain <= static_cast<int>(_audio_graph.size()))

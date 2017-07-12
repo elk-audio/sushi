@@ -59,6 +59,11 @@ public:
         return _sample_rate;
     }
 
+    virtual void set_sample_rate(float sample_rate)
+    {
+        _sample_rate = sample_rate;
+    }
+
     virtual void set_audio_input_channels(int channels)
     {
         _audio_inputs = channels;
@@ -145,6 +150,12 @@ public:
     AudioEngine(float sample_rate);
 
      ~AudioEngine();
+
+    /**
+     * @brief Configure the Engine with a new samplerate.
+     * @param sample_rate The new sample rate in Hz
+     */
+    virtual void set_sample_rate(float sample_rate);
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn

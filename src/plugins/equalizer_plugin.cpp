@@ -30,6 +30,12 @@ ProcessorReturnCode EqualizerPlugin::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
+void EqualizerPlugin::configure(float sample_rate)
+{
+    _sample_rate = sample_rate;
+    return;
+}
+
 EqualizerPlugin::~EqualizerPlugin()
 {}
 

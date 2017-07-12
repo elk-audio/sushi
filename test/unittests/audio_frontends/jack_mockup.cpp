@@ -36,6 +36,11 @@ int jack_client_close (jack_client_t *client)
     return 0;
 }
 
+jack_nframes_t jack_get_sample_rate(jack_client_t* /*client*/)
+{
+    return 48000;
+}
+
 jack_port_t * jack_port_register (jack_client_t* client,
                                   const char* /*port_name*/,
                                   const char* /*port_type*/,
@@ -52,6 +57,13 @@ int jack_set_process_callback (jack_client_t* client,
 {
     client->instance = arg;
     client->callback_function = process_callback;
+    return 0;
+}
+
+int jack_set_sample_rate_callback (jack_client_t* /*client*/,
+                                   JackSampleRateCallback /*callback*/,
+                                   void* /*arg*/)
+{
     return 0;
 }
 

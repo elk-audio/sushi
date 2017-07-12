@@ -48,6 +48,14 @@ public:
     }
 
     /**
+     * @brief Configure an already initialised plugin
+     * @param sample_rate the new sample rate to use
+     */
+    virtual void configure(float /* sample_rate*/)
+    {
+        return;
+    }
+    /**
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */

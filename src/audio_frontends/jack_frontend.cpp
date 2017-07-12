@@ -2,8 +2,10 @@
 #include <thread>
 #include <deque>
 #include <unistd.h>
+#include <cmath>
 
 #include <jack/midiport.h>
+
 #include "logging.h"
 #include "jack_frontend.h"
 
@@ -48,8 +50,6 @@ void JackFrontend::run()
     {
         connect_ports();
     }
-    // TODO - get the sample rate in here somehow.
-
     _osc_control->run();
     sleep(1000);
 }
@@ -65,24 +65,44 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Using option JackServerName");
         options = JackServerName;
     }
-    /* Start Jack client */
     _client = jack_client_open(client_name.c_str(), options, &jack_status, server_name.c_str());
     if (!_client)
     {
         MIND_LOG_ERROR("Failed to open Jack server, error: {}.", jack_status);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-
-    /* Set the process callback and send the 'this' pointer as data */
+    /* Set process callback function */
     int ret = jack_set_process_callback(_client, rt_process_callback, this);
     if (ret != 0)
     {
         MIND_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    auto status = setup_sample_rate();
+    if (status != AudioFrontendStatus::OK)
+    {
+        MIND_LOG_ERROR("Failed to setup sample rate handling");
+        return status;
+    }
     return setup_ports();
 }
 
+AudioFrontendStatus JackFrontend::setup_sample_rate()
+{
+    _sample_rate = jack_get_sample_rate(_client);
+    if (std::lround(_sample_rate) != _engine->sample_rate())
+    {
+        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({})", _engine->sample_rate(), _sample_rate);
+        _engine->set_sample_rate(_sample_rate);
+    }
+    auto status = jack_set_sample_rate_callback(_client, samplerate_callback, this);
+    if (status != 0)
+    {
+        MIND_LOG_WARNING("Setting sample rate callback failed with error {}", status);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    return AudioFrontendStatus::OK;
+}
 
 AudioFrontendStatus JackFrontend::setup_ports()
 {
@@ -191,6 +211,21 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     process_events();
     process_midi(no_frames);
     process_audio(no_frames);
+    return 0;
+}
+
+int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
+{
+    /* It's not fully clear if this is needed since the sample rate can't
+     * change without restarting the Jack server. Thought is's hinted that
+     * this could be called with a different sample rated than the one
+     * requested if the interface doesn't support it. */
+    if (_sample_rate != sample_rate)
+    {
+        MIND_LOG_DEBUG("Received a sample rate change from Jack ({})", sample_rate);
+        _engine->set_sample_rate(sample_rate);
+        _sample_rate = sample_rate;
+    }
     return 0;
 }
 

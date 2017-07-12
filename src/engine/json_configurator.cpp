@@ -11,6 +11,25 @@ using namespace midi_dispatcher;
 
 MIND_GET_LOGGER;
 
+JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string &path_to_file)
+{
+    Json::Value config;
+    auto status = _parse_file(path_to_file, config);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    status = _validate_host_configuration(config);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    float sample_rate = config["host_config"]["samplerate"].asFloat();
+    MIND_LOG_INFO("Setting engine sample rate to {}", sample_rate);
+    _engine->set_sample_rate(sample_rate);
+    return JsonConfigReturnStatus::OK;
+}
+
 JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string &path_to_file)
 {
     Json::Value config;
@@ -192,6 +211,21 @@ int JsonConfigurator::_get_midi_channel(const Json::Value &channels)
         return midi::MidiChannel::OMNI;
     }
     return channels.asInt();
+}
+
+JsonConfigReturnStatus JsonConfigurator::_validate_host_configuration(const Json::Value& config)
+{
+    if(!config.isMember("host_config"))
+    {
+        MIND_LOG_ERROR("No host_config member in JSON config file");
+        return JsonConfigReturnStatus::INVALID_HOST_CONFIG;
+    }
+    if (!config["host_config"]["samplerate"].isNumeric() && !config["host_config"]["samplerate"].isNull())
+    {
+        MIND_LOG_ERROR("Incorrect sample rate in JSON config file");
+        return JsonConfigReturnStatus::INVALID_HOST_CONFIG;
+    }
+    return JsonConfigReturnStatus::OK;
 }
 
 /* TODO: This is a basic validation, compare this to a schema using VALIJSON or similar library */
