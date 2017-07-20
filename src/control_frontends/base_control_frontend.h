@@ -12,6 +12,7 @@
 
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
+#include "engine/engine.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -19,8 +20,8 @@ namespace control_frontend {
 class BaseControlFrontend
 {
 public:
-    BaseControlFrontend(EventFifo* queue) :
-            _queue(queue) {}
+    BaseControlFrontend(EventFifo* queue, engine::BaseEngine* engine) :_engine(engine),
+                                                                       _queue(queue) {}
 
     virtual ~BaseControlFrontend() {};
 
@@ -29,6 +30,9 @@ public:
     void send_parameter_change_event(ObjectId processor, ObjectId parameter, float value);
 
     void send_keyboard_event(ObjectId processor, EventType type, int note, float value);
+
+protected:
+    engine::BaseEngine* _engine;
 
 private:
     EventFifo* _queue;

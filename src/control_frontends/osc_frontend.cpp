@@ -71,10 +71,9 @@ static int osc_send_keyboard_event(const char* /*path*/,
 
 }; // anonymous namespace
 
-OSCFrontend::OSCFrontend(EventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue),
+OSCFrontend::OSCFrontend(EventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue, engine),
                                                                          _osc_server(nullptr),
-                                                                         _server_port(DEFAULT_SERVER_PORT),
-                                                                         _engine(engine)
+                                                                         _server_port(DEFAULT_SERVER_PORT)
 {
     std::stringstream port_stream;
     port_stream << _server_port;
