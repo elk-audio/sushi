@@ -370,6 +370,44 @@ public:
         }
     }
 
+    /**
+     * @brief Ramp the volume of all channels linearly from start to end
+     * @param start The value to start the ramp from
+     * @param end The value to end the ramp
+     */
+    void ramp(float start, float end)
+    {
+        float inc = (end - start) / (size - 1);
+        for (int channel = 0; channel < _channel_count; ++channel)
+        {
+            float vol = start;
+            float* data = _buffer + size * channel;
+            for (int i = 0; i < size - 1; ++i)
+            {
+                data[i] *= vol;
+                vol += inc;
+            }
+            data[size - 1] *= end; /* Neutralize rounding errors */
+        }
+    }
+
+    /**
+     * @brief Convenience wrapper for ramping up from 0 to unity
+     */
+    void ramp_up()
+    {
+        this->ramp(0.0f, 1.0f);
+    }
+
+    /**
+     * @brief Convenience wrapper for ramping from unity down to 0
+     */
+    void ramp_down()
+    {
+        this->ramp(1.0f, 0.0f);
+    }
+
+
 private:
     int _channel_count;
     bool _own_buffer;
