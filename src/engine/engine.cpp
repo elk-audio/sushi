@@ -82,6 +82,19 @@ EngineReturnStatus AudioEngine::_register_processor(std::unique_ptr<Processor> p
     return EngineReturnStatus::OK;
 }
 
+EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
+{
+    auto processor_node = _processors_by_unique_name.find(name);
+    if (processor_node == _processors_by_unique_name.end())
+    {
+        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+    }
+    auto processor = processor_node->second.get();
+    _processors_by_unique_id[processor->id()] = nullptr;
+    _processors_by_unique_name.erase(processor_node);
+    return EngineReturnStatus::OK;
+}
+
 bool AudioEngine::_processor_exists(const std::string& name)
 {
     auto processor_node = _processors_by_unique_name.find(name);
@@ -212,6 +225,22 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
     return status;
 }
 
+EngineReturnStatus AudioEngine::delete_plugin_chain(const std::string &chain_name)
+{
+    // TODO - Until it's decided how chain report what processors they have,
+    // we assume that the chain is manually emptied before deleting
+    for (auto chain = _audio_graph.begin(); chain != _audio_graph.end(); ++chain)
+    {
+        if ((*chain)->name() == chain_name)
+        {
+            _audio_graph.erase(chain);
+            _deregister_processor(chain_name);
+            return EngineReturnStatus::OK;
+        }
+    }
+    return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+}
+
 EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
                                                     const std::string& plugin_uid,
                                                     const std::string& plugin_name,
@@ -256,11 +285,6 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
         case PluginType::VST3X:
             plugin = std::make_unique<vst3::Vst3xWrapper>(plugin_path, plugin_uid);
             break;
-
-        default:
-            MIND_LOG_ERROR("Plugin {} has invalid or unsupported plugin type", plugin_uid);
-            return EngineReturnStatus::INVALID_PLUGIN_TYPE;
-
     }
 
     auto processor_status = plugin->init(_sample_rate);
@@ -274,6 +298,30 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     chain->add(plugin.get());
     status = _register_processor(std::move(plugin), plugin_name);
     return status;
+}
+
+/* TODO - In the future it should be possible to remove plugins without deleting them
+ * and consequentally to add them to a different track or have plugins not associated
+ * to a particular track. */
+EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chain_id, const std::string &plugin_id)
+{
+    auto chain_node = _processors_by_unique_name.find(chain_id);
+    if (chain_node == _processors_by_unique_name.end())
+    {
+        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+    }
+    auto processor_node = _processors_by_unique_name.find(plugin_id);
+    if (processor_node == _processors_by_unique_name.end())
+    {
+        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+    }
+    auto processor = processor_node->second.get();
+    PluginChain* chain = static_cast<PluginChain*>(chain_node->second.get());
+    if (!chain->remove(processor->id()))
+    {
+        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+    }
+    return _deregister_processor(processor->name());
 }
 
 } // namespace engine

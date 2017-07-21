@@ -13,6 +13,21 @@ void PluginChain::add(Processor* processor)
     update_channel_config();
 }
 
+bool PluginChain::remove(ObjectId processor)
+{
+    for (auto plugin = _chain.begin(); plugin != _chain.end(); ++plugin)
+    {
+        if ((*plugin)->id() == processor)
+        {
+            (*plugin)->set_event_output(nullptr);
+            _chain.erase(plugin);
+            update_channel_config();
+            return true;
+        }
+    }
+    return false;
+}
+
 void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
 {
     /* Alias the internal buffers to get the right channel count */

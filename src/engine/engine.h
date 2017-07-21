@@ -128,11 +128,22 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus delete_plugin_chain(const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
     virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
                                                    const std::string& /*uid*/,
                                                    const std::string& /*name*/,
                                                    const std::string& /*file*/,
                                                    PluginType /*plugin_type*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus remove_plugin_from_chain(const std::string& /*chain_id*/,
+                                                        const std::string& /*plugin_id*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -201,19 +212,35 @@ public:
     EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
 
     /**
+     * @brief Delete a chain, currently assumes that the chain is empty before calling
+     * @param chain_id The unique name of the chain to delete
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
+     */
+    virtual EngineReturnStatus delete_plugin_chain(const std::string& chain_id) override;
+
+    /**
      * @brief Creates and adds a plugin to a chain.
      * @param chain_id The unique id of the chain to which the processor will be appended
      * @param uid The unique id of the plugin
      * @param name The name to give the plugin after loading
      * @param plugin_path The file to load the plugin from, only valid for external plugins
      * @param plugin_type The type of plugin, i.e. internal or external
-     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
     EngineReturnStatus add_plugin_to_chain(const std::string& chain_id,
                                            const std::string& uid,
                                            const std::string& name,
                                            const std::string& plugin_path,
                                            PluginType plugin_type) override;
+
+    /**
+     * @brief Remove a given plugin from a chain and delete it
+     * @param chain_id The unique name of the chain the contains the plugin
+     * @param plugin_id The unique name of the plugin
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise
+     */
+    virtual EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
+                                                        const std::string& plugin_id) override;
 
 protected:
     std::vector<PluginChain*> _audio_graph;
@@ -233,6 +260,12 @@ private:
      */
     EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
 
+    /**
+     * @breif Remove a processor from the engine and delete it.
+     * @param name The unique name of the processor to delete
+     * @return True if the processor existed and it was correctly deleted
+     */
+    EngineReturnStatus _deregister_processor(const std::string& name);
     /**
      * @brief Checks whether a processor exists in the engine.
      * @param processor_name The unique name of the processor.

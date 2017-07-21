@@ -106,21 +106,27 @@ TEST_F(TestEngine, TestCreateEmptyPluginChain)
     ASSERT_EQ(_module_under_test->_audio_graph.size(),1u);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->name(),"left");
 
-    /* Invalid name */
+    /* Test invalid name */
     status = _module_under_test->create_plugin_chain("left",1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
     status = _module_under_test->create_plugin_chain("",1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
 
-    /* Invalid number of channels */
+    /* Test removal */
+    status = _module_under_test->delete_plugin_chain("left");
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_FALSE(_module_under_test->_processor_exists("left"));
+    ASSERT_EQ(_module_under_test->_audio_graph.size(),0u);
+
+    /* Test invalid number of channels */
     status = _module_under_test->create_plugin_chain("left",3);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 
-TEST_F(TestEngine, TestAddPlugin)
+TEST_F(TestEngine, TestAddAndRemovePlugin)
 {
     /* Test adding Internal plugin */
-    auto status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_plugin_chain("left", 2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.gain",
@@ -138,9 +144,15 @@ TEST_F(TestEngine, TestAddPlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
     ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(),2u);
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(), 2u);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"gain_0_r");
     ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"vst_synth");
+
+    /* Test removal of plugin */
+    status = _module_under_test->remove_plugin_from_chain("left", "gain_0_r");
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
+    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"vst_synth");
 
     /* Negative tests */
     status = _module_under_test->add_plugin_to_chain("not_found",
@@ -170,6 +182,12 @@ TEST_F(TestEngine, TestAddPlugin)
                                                      "not_found",
                                                      PluginType::VST2X);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
+
+    status = _module_under_test->remove_plugin_from_chain("left", "unknown_plugin");
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
+
+    status = _module_under_test->remove_plugin_from_chain("unknown chain", "unknown_plugin");
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
 }
 
 TEST_F(TestEngine, TestSetSamplerate)
