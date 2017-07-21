@@ -38,6 +38,8 @@ enum class EventType
      * since a change should always be handled and could be expensive to handle */
     DATA_PARAMETER_CHANGE,
     STRING_PARAMETER_CHANGE,
+    /* Engine commands */
+    STOP_ENGINE,
 };
 
 class BaseEvent
@@ -203,6 +205,31 @@ protected:
     ObjectId _param_id;
 };
 
+/**
+ * @brief Baseclass for events that can be returned with a status code.
+ */
+class ReturnableEvent : public BaseEvent
+{
+public:
+    enum class EventStatus : uint8_t
+    {
+        UNHANDLED,
+        HANDLED_OK,
+        HANDLED_ERROR
+    };
+    ReturnableEvent(EventType type, uint16_t id) : BaseEvent(type, 0, 0),
+                                                   _status{EventStatus::UNHANDLED},
+                                                   _event_id{id} {}
+
+    EventStatus status() const {return _status;}
+    uint16_t event_id() const {return _event_id;}
+    void set_handled(bool ok) {_status = ok? EventStatus::HANDLED_OK : EventStatus::HANDLED_ERROR;}
+
+protected:
+    EventStatus _status{EventStatus::UNHANDLED};
+    uint16_t _event_id;
+};
+
 
 /**
  * @brief Container class for events. Functionally this take the role of a
@@ -251,6 +278,12 @@ public:
         return &_data_parameter_change_event;
     }
 
+    const ReturnableEvent* returnable_event() const
+    {
+        assert(_returnable_event.type() == EventType::STOP_ENGINE);
+        return &_returnable_event;
+    }
+
     /* Factory functions for constructing events */
     static Event make_note_on_event(ObjectId target, int offset, int note, float velocity)
     {
@@ -297,12 +330,19 @@ public:
         return Event(typed_event);
     }
 
+    static Event make_stop_engine_event()
+    {
+        ReturnableEvent typed_event(EventType::STOP_ENGINE, 0);
+        return Event(typed_event);
+    }
+
 private:
     Event(const KeyboardEvent& e) : _keyboard_event(e) {}
     Event(const ParameterChangeEvent& e) : _parameter_change_event(e) {}
     Event(const WrappedMidiEvent& e) : _wrapped_midi_event(e) {}
     Event(const StringParameterChangeEvent& e) : _string_parameter_change_event(e) {}
     Event(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
+    Event(const ReturnableEvent& e) : _returnable_event(e) {}
     union
     {
         BaseEvent                   _base_event;
@@ -311,6 +351,7 @@ private:
         ParameterChangeEvent        _parameter_change_event;
         StringParameterChangeEvent  _string_parameter_change_event;
         DataParameterChangeEvent    _data_parameter_change_event;
+        ReturnableEvent             _returnable_event;
     };
 };
 

@@ -69,6 +69,74 @@ static int osc_send_keyboard_event(const char* /*path*/,
     return 0;
 }
 
+static int osc_add_chain(const char* /*path*/,
+                         const char* /*types*/,
+                         lo_arg** argv,
+                         int /*argc*/,
+                         void* /*data*/,
+                         void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string name(&argv[0]->s);
+    int channels = argv[1]->i;
+    MIND_LOG_DEBUG("Got an add_processor request {} {}", name, channels);
+
+    instance->add_chain(name, channels);
+    return 0;
+}
+
+static int osc_delete_chain(const char* /*path*/,
+                            const char* /*types*/,
+                            lo_arg** argv,
+                            int /*argc*/,
+                            void* /*data*/,
+                            void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string name(&argv[0]->s);
+    MIND_LOG_DEBUG("Got a delete_chain request {}", name);
+    instance->delete_chain(name);
+    return 0;
+}
+
+static int osc_add_processor(const char* /*path*/,
+                             const char* /*types*/,
+                             lo_arg** argv,
+                             int /*argc*/,
+                             void* /*data*/,
+                             void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string chain(&argv[0]->s);
+    std::string uid(&argv[1]->s);
+    std::string name(&argv[2]->s);
+    std::string file(&argv[3]->s);
+    std::string type(&argv[4]->s);
+    engine::PluginType enum_type = engine::PluginType::INTERNAL;
+    if (type == "vst2")
+        enum_type = engine::PluginType::VST2X;
+    else if (type == "vst3")
+        enum_type = engine::PluginType::VST3X;
+    MIND_LOG_DEBUG("Got an add_processor request {}", name);
+    instance->add_processor(chain, uid, name, file, enum_type);
+    return 0;
+}
+
+static int osc_delete_processor(const char* /*path*/,
+                                const char* /*types*/,
+                                lo_arg** argv,
+                                int /*argc*/,
+                                void* /*data*/,
+                                void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string chain(&argv[0]->s);
+    std::string name(&argv[1]->s);
+    MIND_LOG_DEBUG("Got a delete_processor request {} from {}", name, chain);
+    instance->delete_processor(chain, name);
+    return 0;
+}
+
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(EventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue, engine),
@@ -79,6 +147,7 @@ OSCFrontend::OSCFrontend(EventFifo* queue, engine::BaseEngine* engine) : BaseCon
     port_stream << _server_port;
 
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
+    setup_engine_control();
 }
 
 OSCFrontend::~OSCFrontend()
@@ -156,6 +225,14 @@ void OSCFrontend::_stop_server()
     {
         MIND_LOG_ERROR("Error {} while stopping OSC server thread", ret);
     }
+}
+
+void OSCFrontend::setup_engine_control()
+{
+    lo_server_thread_add_method(_osc_server, "/engine/add_chain", "si", osc_add_chain, this);
+    lo_server_thread_add_method(_osc_server, "/engine/delete_chain", "s", osc_delete_chain, this);
+    lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
+    lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
 }
 
 }

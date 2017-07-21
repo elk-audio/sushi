@@ -45,6 +45,14 @@ enum class PluginType
     VST3X
 };
 
+enum class StreamingState
+{
+    STARTING,
+    RUNNING,
+    STOPPING,
+    STOPPED
+};
+
 class BaseEngine
 {
 public:
@@ -102,6 +110,15 @@ public:
     {
         return 2;
     }
+
+    virtual bool running()
+    {
+        return true;
+    }
+
+    virtual void run() {}
+
+    virtual void stop() {}
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
@@ -175,6 +192,12 @@ public:
      * @return Number of channels the chain is configured to use.
      */
     int n_channels_in_chain(int chain) override;
+
+    virtual bool running() override;
+
+    virtual void run() override;
+
+    virtual void stop() override;
 
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
@@ -280,12 +303,28 @@ private:
      */
     bool _processor_exists(ObjectId uid);
 
+    /**
+     * @brief Process events that are to be handles by the engine directly and
+     *        not by a particular processor.
+     * @param event The event to handle
+     * @return true if handled, false if not an engine event
+     */
+    bool _handle_internal_events(Event &event);
+
     // Owns all processors, including plugin chains
     std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
     // Processors indexed by their unique 32 bit id
     std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
 
+    std::atomic<StreamingState> _state{StreamingState::RUNNING};
 };
+
+/**
+ * @brief Helper function to encapsulate state changes from transient states
+ * @param current_state The current state of the engine
+ * @return A new, non-transient state
+ */
+StreamingState update_state(StreamingState current_state);
 
 } // namespace engine
 } // namespace sushi

@@ -31,6 +31,22 @@ void AudioEngine::set_sample_rate(float sample_rate)
     }
 }
 
+bool AudioEngine::running()
+{
+    return _state.load() != StreamingState::STOPPED;
+}
+
+void AudioEngine::run()
+{
+    MIND_LOG_INFO("Starting engine again");
+    _state.store(StreamingState::STARTING);
+};
+
+void AudioEngine::stop()
+{
+    // send event internally here
+}
+
 int AudioEngine::n_channels_in_chain(int chain)
 {
     if (chain <= static_cast<int>(_audio_graph.size()))
@@ -118,36 +134,53 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 {
     /* Put the channels from in_buffer into the audio graph based on the graphs channel count
      * Note that its assumed that number of input and output channels are equal. */
-
-    int start_channel = 0;
-    for (auto& graph : _audio_graph)
+    auto state = _state.load();
+    if (state != StreamingState::STOPPED)
     {
-        int no_of_channels = graph->input_channels();
-        if (start_channel + no_of_channels <= in_buffer->channel_count())
+        int start_channel = 0;
+        for (auto &graph : _audio_graph)
         {
-            ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
-                                                                                  start_channel,
-                                                                                  no_of_channels);
-            ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
-                                                                                   start_channel,
-                                                                                   no_of_channels);
-            graph->process_audio(ch_in, ch_out);
-            start_channel += no_of_channels;
-        } else
-        {
-            break;
+            int no_of_channels = graph->input_channels();
+            if (start_channel + no_of_channels <= in_buffer->channel_count())
+            {
+                ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
+                                                                                      start_channel,
+                                                                                      no_of_channels);
+                ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
+                                                                                       start_channel,
+                                                                                       no_of_channels);
+                graph->process_audio(ch_in, ch_out);
+                start_channel += no_of_channels;
+            } else
+            {
+                break;
+            }
         }
+        if (start_channel < in_buffer->channel_count())
+        {
+            MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed",
+                             start_channel,
+                             in_buffer->channel_count());
+        }
+        if (state == StreamingState::STARTING)
+            out_buffer->ramp_up();
+        else if (state == StreamingState::STOPPING)
+            out_buffer->ramp_down();
+        
+        _state.store(update_state(state));
     }
-    if (start_channel < in_buffer->channel_count())
+    else /* If stopped the engine outputs silence and doesn't touch the processor containers */
     {
-        MIND_LOG_WARNING("Warning, not all input channels processed, {} out of {} processed",
-                         start_channel,
-                         in_buffer->channel_count());
+        in_buffer->apply_gain(0.0f);
     }
 }
 
 EngineReturnStatus AudioEngine::send_rt_event(Event event)
 {
+    if (_handle_internal_events(event))
+    {
+        return EngineReturnStatus::OK;
+    }
     if (event.processor_id() > _processors_by_unique_id.size())
     {
         MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
@@ -322,6 +355,34 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
         return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
     return _deregister_processor(processor->name());
+}
+
+bool AudioEngine::_handle_internal_events(Event &event)
+{
+    switch (event.type())
+    {
+        case EventType::STOP_ENGINE:
+            MIND_LOG_INFO("Got a STOP_ENGINE event");
+            _state.store(StreamingState::STOPPING);
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+
+StreamingState update_state(StreamingState current_state)
+{
+    if (current_state == StreamingState::STARTING)
+    {
+        return StreamingState::RUNNING;
+    }
+    if (current_state == StreamingState::STOPPING)
+    {
+        return StreamingState::STOPPED;
+    }
+    return current_state;
 }
 
 } // namespace engine

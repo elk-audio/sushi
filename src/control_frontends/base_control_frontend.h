@@ -31,10 +31,20 @@ public:
 
     void send_keyboard_event(ObjectId processor, EventType type, int note, float value);
 
+    void add_chain(const std::string& name, int channels);
+
+    void delete_chain(const std::string& name);
+
+    void add_processor(const std::string& chain, const std::string& uid, const std::string& name,
+                       const std::string& file, engine::PluginType type);
+
+    void delete_processor(const std::string& chain, const std::string& name);
 protected:
     engine::BaseEngine* _engine;
 
 private:
+    bool _stop_engine();
+
     EventFifo* _queue;
 };
 
