@@ -126,6 +126,7 @@ public:
     virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
                                                    const std::string& /*uid*/,
                                                    const std::string& /*name*/,
+                                                   const std::string& /*file*/,
                                                    PluginType /*plugin_type*/)
     {
         return EngineReturnStatus::OK;
@@ -178,10 +179,10 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
 
     /**
-     * @brief Creates an empty plugin chain owned by the engine.
+     * @brief Creates an empty plugin chain
      * @param chain_id The unique id of the chain to be created.
      * @param chain_channel_count The number of channels in the plugin chain.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
@@ -189,15 +190,18 @@ public:
     EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
 
     /**
-     * @brief Adds a plugin to a chain.
-     * @param chain_id The unique id of the chain to be created.
-     * @param uid The unique id of the plugin.
-     * @param uid The name of the plugin
+     * @brief Creates and adds a plugin to a chain.
+     * @param chain_id The unique id of the chain to which the processor will be appended
+     * @param uid The unique id of the plugin
+     * @param name The name to give the plugin after loading
+     * @param plugin_path The file to load the plugin from, only valid for external plugins
+     * @param plugin_type The type of plugin, i.e. internal or external
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
     EngineReturnStatus add_plugin_to_chain(const std::string& chain_id,
                                            const std::string& uid,
                                            const std::string& name,
+                                           const std::string& plugin_path,
                                            PluginType plugin_type) override;
 
 protected:

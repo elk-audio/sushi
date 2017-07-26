@@ -29,6 +29,7 @@ enum class JsonConfigReturnStatus
     INVALID_PARAMETER,
     INVALID_PLUGIN_NAME,
     INVALID_PLUGIN_TYPE,
+    INVALID_PLUGIN_UID,
     NO_MIDI_CONNECTIONS,
     INVALID_MIDI_CHAIN_CON,
     INVALID_MIDI_PORT,
@@ -45,7 +46,6 @@ public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
                                                                          _midi_dispatcher(midi_dispatcher) {}
-
 
     ~JsonConfigurator() {}
 

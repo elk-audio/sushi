@@ -144,25 +144,34 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
 
     for(const Json::Value &def : chain_def["plugins"])
     {
-        auto plugin_path = def["path"].asString();
+        auto plugin_uid = def["uid"].asString();
         auto plugin_name = def["name"].asString();
+        std::string plugin_path = "";
+        if (def["path"].isString())
+        {
+            plugin_path = def["path"].asString();
+        }
         PluginType plugin_type;
         auto type = def["type"].asString();
         if(type == "internal")
         {
             plugin_type = PluginType::INTERNAL;
         }
-        else
+        else if(type == "vst2x")
         {
             plugin_type = PluginType::VST2X;
         }
+        else
+        {
+            plugin_type = PluginType::VST3X;
+        }
 
-        status = _engine->add_plugin_to_chain(chain_name, plugin_path, plugin_name, plugin_type);
+        status = _engine->add_plugin_to_chain(chain_name, plugin_uid, plugin_name, plugin_path, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
             {
-                MIND_LOG_ERROR("Invalid plugin path {} in JSON config file", plugin_path);
+                MIND_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
             }
             MIND_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
@@ -231,10 +240,23 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
         {
             for(auto& def : chain["plugins"])
             {
-                if(!def["path"].isString())
+                auto type = def["type"].asString();
+                if(type != "internal" && type != "vst2x" && type != "vst3x")
+                {
+                    MIND_LOG_ERROR("Invalid plugin type \"{}\" in "
+                                           "plugin chain \"{}\"", type, chain["name"].asString());
+                    return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
+                }
+                if((type == "internal" || type == "vst3x") && !def["uid"].isString())
+                {
+                    MIND_LOG_ERROR("\"uid\" (type:string) is not defined for plugin chain "
+                                           "\"{}\" in JSON config file", chain["uid"].asString());
+                    return JsonConfigReturnStatus::INVALID_PLUGIN_UID;
+                }
+                if ((type == "vst2x" || type =="vst3x") && !def["path"].isString())
                 {
                     MIND_LOG_ERROR("\"path\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["name"].asString());
+                                           "\"{}\" in JSON config file", chain["path"].asString());
                     return  JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
                 }
                 if(!def["name"].isString())
@@ -246,13 +268,6 @@ JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json:
                 if(!def["type"].isString())
                 {
                     MIND_LOG_ERROR("\"type\" (type:string) is not defined in plugin chain \"{}\"", chain["name"].asString());
-                    return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
-                }
-                auto type = def["type"].asString();
-                if(type != "internal" && type != "vst2x")
-                {
-                    MIND_LOG_ERROR("Invalid plugin type \"{}\" in "
-                                           "plugin chain \"{}\"", type, chain["name"].asString());
                     return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
                 }
             }

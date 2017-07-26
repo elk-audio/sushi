@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
         MIND_LOG_ERROR("Main: Failed to load chains from Json config file");
         std::exit(1);
     }
-    configurator.load_midi(config_filename);
+   configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
         fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
                                                                          jack_server_name,
                                                                          connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine,&midi_dispatcher);
+        frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
     }
     else if (use_xenomai)
     {

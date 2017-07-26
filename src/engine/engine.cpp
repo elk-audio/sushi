@@ -8,6 +8,7 @@
 #include "plugins/equalizer_plugin.h"
 #include "plugins/sample_player_plugin.h"
 #include "library/vst2x_wrapper.h"
+#include "library/vst3x_wrapper.h"
 
 
 namespace sushi {
@@ -205,6 +206,7 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
 EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
                                                     const std::string& plugin_uid,
                                                     const std::string& plugin_name,
+                                                    const std::string& plugin_path,
                                                     PluginType plugin_type)
 {
     if(plugin_name.empty())
@@ -239,12 +241,17 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
             break;
 
         case PluginType::VST2X:
-            plugin = std::make_unique<vst2::Vst2xWrapper>(plugin_uid);
+            plugin = std::make_unique<vst2::Vst2xWrapper>(plugin_path);
+            break;
+
+        case PluginType::VST3X:
+            plugin = std::make_unique<vst3::Vst3xWrapper>(plugin_path, plugin_uid);
             break;
 
         default:
             MIND_LOG_ERROR("Plugin {} has invalid or unsupported plugin type", plugin_uid);
             return EngineReturnStatus::INVALID_PLUGIN_TYPE;
+
     }
 
     auto processor_status = plugin->init(_sample_rate);

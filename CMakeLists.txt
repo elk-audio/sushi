@@ -77,6 +77,9 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
+                      src/library/vst3x_utils.cpp
+                      src/library/vst3x_wrapper.cpp
+                      src/library/vst3x_host_app.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -111,6 +114,9 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h
                         src/library/vst2x_plugin_loader.h
+                        src/library/vst3x_wrapper.h
+                        src/library/vst3x_host_app.h
+                        src/library/vst3x_utils.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
@@ -139,6 +145,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 if(${WITH_XENOMAI})
@@ -160,7 +167,7 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile jsoncpp pthread dl)
+                    EASTL sndfile jsoncpp pthread dl vst3_host sdk )
 
 if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
@@ -179,6 +186,25 @@ endif()
 
 link_directories(${LINK_DIRS})
 
+#############
+# Vst3 Host #
+#############
+
+# Build the given Vst3 host implementation into a separate library to
+# Avoid littering out own code with ugly defines
+
+set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+set(VST3_HOST_SOURCES
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp")
+
+add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS -DDEVELOPMENT)
+add_dependencies(vst3_host sdk)
 
 #############################################
 #  Subdirectory projects                    #
@@ -195,7 +221,7 @@ add_executable(sushi ${SOURCE_FILES})
 
 # example:
 # add_dependencies(sushi static_library)
-add_dependencies(sushi liblo)
+add_dependencies(sushi liblo vst3_host sdk base)
 
 if (${WITH_JACK})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} jack)
