@@ -37,6 +37,7 @@ enum class JsonConfigReturnStatus
     INVALID_MIDI_CC_MAP,
     INVALID_CC_NUMBER,
     INVALID_MIDI_RANGE,
+    INVALID_HOST_CONFIG,
     INVALID_FILE
 };
 
@@ -48,6 +49,13 @@ public:
                                                                          _midi_dispatcher(midi_dispatcher) {}
 
     ~JsonConfigurator() {}
+
+    /**
+     * @brief reads a json config file and set the given host configuration options
+     * @param path_to_file String which denotes the path of the file.
+     * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
+     */
+    JsonConfigReturnStatus load_host_config(const std::string &path_to_file);
 
     /**
      * @brief reads a json config file, searches for valid plugin chain
@@ -89,6 +97,13 @@ private:
      * @return The number of MIDI channels.
      */
     int _get_midi_channel(const Json::Value &channels);
+
+    /**
+     * @brief Checks if the json data contains all the necessary host config options
+     * @param config Json::Value object containing Json data
+     * @return sonConfigReturnStatus::OK if definition is adept, different error code otherwise.
+     */
+    JsonConfigReturnStatus _validate_host_configuration(const Json::Value& config);
 
     /**
      * @brief checks if the Json data read from the file contains all the necessary definitions

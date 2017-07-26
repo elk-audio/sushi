@@ -159,7 +159,13 @@ int main(int argc, char* argv[])
     midi_dispatcher.set_midi_input_ports(1);
 
     sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
-    auto status = configurator.load_chains(config_filename);
+    auto status = configurator.load_host_config(config_filename);
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
+        std::exit(1);
+    }
+    status = configurator.load_chains(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         MIND_LOG_ERROR("Main: Failed to load chains from Json config file");

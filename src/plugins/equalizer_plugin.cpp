@@ -20,14 +20,20 @@ EqualizerPlugin::EqualizerPlugin()
     assert(_q);
 }
 
-ProcessorReturnCode EqualizerPlugin::init(const int sample_rate)
+ProcessorReturnCode EqualizerPlugin::init(float sample_rate)
 {
-    _sample_rate = static_cast<float>(sample_rate);
+    _sample_rate = sample_rate;
 
     _filter.set_smoothing(AUDIO_CHUNK_SIZE);
     _filter.reset();
 
     return ProcessorReturnCode::OK;
+}
+
+void EqualizerPlugin::configure(float sample_rate)
+{
+    _sample_rate = sample_rate;
+    return;
 }
 
 EqualizerPlugin::~EqualizerPlugin()

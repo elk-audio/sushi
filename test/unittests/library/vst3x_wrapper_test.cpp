@@ -155,3 +155,10 @@ TEST_F(TestVst3xWrapper, test_event_forwarding)
 
     ASSERT_FALSE(queue.pop(event));
 }
+
+TEST_F(TestVst3xWrapper, test_configuration_change)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    _module_under_test->configure(44100.0f);
+    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+}

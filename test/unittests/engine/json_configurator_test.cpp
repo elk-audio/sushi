@@ -40,6 +40,7 @@ protected:
     }
 
     /* Helper functions */
+    JsonConfigReturnStatus _validate_host_config();
     JsonConfigReturnStatus _validate_chains();
     JsonConfigReturnStatus _validate_midi();
     JsonConfigReturnStatus _make_chain(const Json::Value& plugin_chain);
@@ -51,6 +52,10 @@ protected:
     std::string _path;
     Json::Value _config;
 };
+JsonConfigReturnStatus TestJsonConfigurator::_validate_host_config()
+{
+    return _configurator->_validate_host_configuration(_config);
+}
 
 JsonConfigReturnStatus TestJsonConfigurator::_validate_chains()
 {
@@ -71,6 +76,13 @@ TEST_F(TestJsonConfigurator, TestInstantiation)
 {
     EXPECT_TRUE(_engine);
     EXPECT_TRUE(_configurator);
+}
+
+TEST_F(TestJsonConfigurator, TestLoadHostConfig)
+{
+    auto status = _configurator->load_host_config(_path);
+    ASSERT_EQ(status, JsonConfigReturnStatus::OK);
+    ASSERT_FLOAT_EQ(48000.0f, _engine->sample_rate());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadChains)
@@ -173,6 +185,7 @@ TEST_F(TestJsonConfigurator, TestValidJsonSchema)
     ASSERT_EQ(_status, JsonConfigReturnStatus::OK);
     ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::OK);
+    ASSERT_EQ(_validate_host_config(), JsonConfigReturnStatus::OK);
 }
 
 TEST_F(TestJsonConfigurator, TestInvalidPluginChainDef)
@@ -288,4 +301,17 @@ TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
 
     /* everything is defined, schema should be ok here */
     ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::OK);
+}
+
+TEST_F(TestJsonConfigurator, TestInValidHostConfig)
+{
+    /* Test that sample rate must be numeric if it is set */
+    Json::Value config;
+    config["host_config"] = Json::ValueType::objectValue;
+    ASSERT_EQ(JsonConfigReturnStatus::OK,
+                _configurator->_validate_host_configuration(config));
+
+    config["host_config"]["samplerate"] = "44100";
+    ASSERT_EQ(JsonConfigReturnStatus::INVALID_HOST_CONFIG,
+              _configurator->_validate_host_configuration(config));
 }

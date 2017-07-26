@@ -53,7 +53,9 @@ public:
     }
 
     /* Inherited from Processor */
-    ProcessorReturnCode init(const int sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
+
+    void configure(float sample_rate) override;
 
     void process_event(Event event) override;
 
@@ -83,7 +85,7 @@ private:
      */
     bool _register_parameters();
 
-    int _sample_rate;
+    float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];

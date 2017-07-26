@@ -171,3 +171,20 @@ TEST_F(TestEngine, TestAddPlugin)
                                                      PluginType::VST2X);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
 }
+
+TEST_F(TestEngine, TestSetSamplerate)
+{
+    auto status = _module_under_test->create_plugin_chain("left",2);
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    status = _module_under_test->add_plugin_to_chain("left",
+                                                     "sushi.testing.equalizer",
+                                                     "eq",
+                                                     "",
+                                                     PluginType::INTERNAL);
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+    _module_under_test->set_sample_rate(48000.0f);
+    ASSERT_FLOAT_EQ(48000.0f, _module_under_test->sample_rate());
+    /* Pretty ugly way of checking that it was actually set, but wth */
+    auto eq_plugin = static_cast<equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors_by_unique_name["eq"].get());
+    ASSERT_FLOAT_EQ(48000.0f, eq_plugin->_sample_rate);
+}

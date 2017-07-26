@@ -27,8 +27,8 @@ void Voice::note_on(int note, float velocity, int offset)
     _stop_offset = AUDIO_CHUNK_SIZE;
     _playback_pos = 0.0;
     _current_note = note;
-    /* The root note of the sample is assumed to be C4 */
-    _playback_speed = powf(2, (note - 60)/12.0f);
+    /* The root note of the sample is assumed to be C4 in 44100 Hz*/
+    _playback_speed = powf(2, (note - 60)/12.0f) * _samplerate / SAMPLE_FILE_RATE;
     _envelope.gate(true);
 }
 

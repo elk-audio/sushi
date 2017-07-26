@@ -15,7 +15,7 @@ void Vst3xWrapper::_cleanup()
         set_enabled(false);
 }
 
-ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
+ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
     bool loaded;
@@ -53,6 +53,27 @@ ProcessorReturnCode Vst3xWrapper::init(const int sample_rate)
     }
     return ProcessorReturnCode::OK;
 }
+
+void Vst3xWrapper::configure(float sample_rate)
+{
+    _sample_rate = sample_rate;
+    bool reset_enabled = enabled();
+    if (reset_enabled)
+    {
+        set_enabled(false);
+    }
+    if (!_setup_processing())
+    {
+        // TODO how to handle this?
+        MIND_LOG_ERROR("Error setting sample rate to {}", sample_rate);
+    }
+    if (reset_enabled)
+    {
+        set_enabled(true);
+    }
+    return;
+}
+
 
 void Vst3xWrapper::process_event(Event event)
 {

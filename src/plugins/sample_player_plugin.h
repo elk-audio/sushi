@@ -29,7 +29,9 @@ public:
 
     ~SamplePlayerPlugin();
 
-    virtual ProcessorReturnCode init(const int sample_rate) override;
+    virtual ProcessorReturnCode init(float sample_rate) override;
+
+    void configure(float sample_rate) override;
 
     void process_event(Event event) override ;
 

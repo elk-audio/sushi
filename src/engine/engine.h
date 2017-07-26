@@ -48,7 +48,7 @@ enum class PluginType
 class BaseEngine
 {
 public:
-    BaseEngine(int sample_rate) : _sample_rate(sample_rate)
+    BaseEngine(float sample_rate) : _sample_rate(sample_rate)
     {}
 
     virtual ~BaseEngine()
@@ -57,6 +57,11 @@ public:
     int sample_rate()
     {
         return _sample_rate;
+    }
+
+    virtual void set_sample_rate(float sample_rate)
+    {
+        _sample_rate = sample_rate;
     }
 
     virtual void set_audio_input_channels(int channels)
@@ -133,7 +138,7 @@ public:
     }
 
 protected:
-    int _sample_rate;
+    float _sample_rate;
     int _audio_inputs{0};
     int _audio_outputs{0};
 };
@@ -142,9 +147,15 @@ protected:
 class AudioEngine : public BaseEngine
 {
 public:
-    AudioEngine(int sample_rate);
+    AudioEngine(float sample_rate);
 
      ~AudioEngine();
+
+    /**
+     * @brief Configure the Engine with a new samplerate.
+     * @param sample_rate The new sample rate in Hz
+     */
+    virtual void set_sample_rate(float sample_rate);
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn

@@ -23,7 +23,7 @@ SamplePlayerPlugin::SamplePlayerPlugin()
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
 }
 
-ProcessorReturnCode SamplePlayerPlugin::init(const int sample_rate)
+ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
 {
     for (auto& voice : _voices)
     {
@@ -36,6 +36,15 @@ ProcessorReturnCode SamplePlayerPlugin::init(const int sample_rate)
     }
 
     return status;
+}
+
+void SamplePlayerPlugin::configure(float sample_rate)
+{
+    for (auto& voice : _voices)
+    {
+        voice.set_samplerate(sample_rate);
+    }
+    return;
 }
 
 SamplePlayerPlugin::~SamplePlayerPlugin()

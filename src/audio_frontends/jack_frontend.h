@@ -69,6 +69,17 @@ public:
     }
 
     /**
+     * @brief Callback for sample rate changes
+     * @param nframes New samplerate in Samples per second
+     * @param arg Pointer to the JackFrontend instance.
+     * @return
+     */
+    static int samplerate_callback(jack_nframes_t nframes, void *arg)
+    {
+        return static_cast<JackFrontend*>(arg)->internal_samplerate_callback(nframes);
+    }
+
+    /**
      * @brief Initialize the frontend and setup Jack client.
      * @param config Configuration struct
      * @return OK on successful initialization, error otherwise.
@@ -88,13 +99,14 @@ public:
 private:
     /* Set up the jack client and associated ports */
     AudioFrontendStatus setup_client(const std::string client_name, const std::string server_name);
-
+    AudioFrontendStatus setup_sample_rate();
     AudioFrontendStatus setup_ports();
     /* Call after activation to connect the frontend ports to system ports */
     AudioFrontendStatus connect_ports();
 
     /* Internal process callback function */
     int internal_process_callback(jack_nframes_t nframes);
+    int internal_samplerate_callback(jack_nframes_t nframes);
 
     void process_events();
     void process_midi(jack_nframes_t no_frames);
@@ -104,6 +116,7 @@ private:
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
     jack_port_t* _midi_port;
     jack_client_t* _client{nullptr};
+    jack_nframes_t _sample_rate;
     bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
