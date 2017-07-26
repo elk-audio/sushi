@@ -29,6 +29,13 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    EngineReturnStatus send_async_event(const Event& /*event*/)
+    {
+        got_event = true;
+        return EngineReturnStatus::OK;
+    }
+
+
     bool process_called{false};
     bool got_event{false};
 };

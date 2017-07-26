@@ -8,6 +8,8 @@ namespace engine {
 
 void PluginChain::add(Processor* processor)
 {
+    // If a chain adds itself to it's process chain, endless loops can arrise
+    assert(processor != this);
     _chain.push_back(processor);
     processor->set_event_output(this);
     update_channel_config();

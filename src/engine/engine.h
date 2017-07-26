@@ -16,10 +16,13 @@
 #include "EASTL/vector.h"
 
 #include "plugin_chain.h"
+#include "engine/receiver.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
+#include "library/event_fifo.h"
+
 
 namespace sushi {
 namespace engine {
@@ -35,7 +38,8 @@ enum class EngineReturnStatus
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
-    INVALID_PLUGIN_CHAIN
+    INVALID_PLUGIN_CHAIN,
+    QUEUE_FULL
 };
 
 enum class PluginType
@@ -111,18 +115,19 @@ public:
         return 2;
     }
 
-    virtual bool running()
+    virtual bool realtime()
     {
         return true;
     }
 
-    virtual void run() {}
-
-    virtual void stop() {}
+    virtual void enable_realtime(bool /*enabled*/) {}
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
     virtual EngineReturnStatus send_rt_event(Event event) = 0;
+
+    virtual EngineReturnStatus send_async_event(const Event &event) = 0;
+
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
     {
@@ -193,16 +198,38 @@ public:
      */
     int n_channels_in_chain(int chain) override;
 
-    virtual bool running() override;
+    virtual bool realtime() override;
 
-    virtual void run() override;
+    /**
+     * @brief Set the engine to operate in realtime mode. In this mode process_chunk and
+     *        send_rt_event is assumed to be called from a realtime thread.
+     *        All other function calls are assumed to be made from non-realtime threads
+     *
+     * @param enabled true to enable realtime mode, false to disable
+     */
+    virtual void enable_realtime(bool enabled) override;
 
-    virtual void stop() override;
-
+    /**
+     * @brief Process one chunk of audio from in_buffer and write the result to out_buffer
+     * @param in_buffer input audio buffer
+     * @param out_buffer output audio buffer
+     */
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
+    /**
+     * @brief Process an event directly. In a realtime processing setup this must be
+     *        called from the realtime thread before calling process_chunk()
+     * @param event The event to process
+     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+     */
     EngineReturnStatus send_rt_event(Event event) override;
 
+    /**
+     * @brief Called from a non-realtime thread to process an event in the realtime
+     * @param event The event to process
+     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+     */
+    EngineReturnStatus send_async_event(const Event &event) override;
     /**
      * @brief Get the unique id of a processor given its name
      * @param unique_name The unique name of a processor
@@ -274,14 +301,14 @@ private:
      * @param uid String unique id
      * @return Pointer to plugin instance if uid is valid, nullptr otherwise
      */
-    std::unique_ptr<Processor> _make_internal_plugin(const std::string& uid);
+    Processor* _make_internal_plugin(const std::string& uid);
 
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
-    EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
+    EngineReturnStatus _register_processor(Processor* processor, const std::string& name);
 
     /**
      * @breif Remove a processor from the engine and delete it.
@@ -289,6 +316,22 @@ private:
      * @return True if the processor existed and it was correctly deleted
      */
     EngineReturnStatus _deregister_processor(const std::string& name);
+
+    /**
+     * @brief Add a registered processor to the realtime processing part.
+     *        Must be called before a processor can be used to process audio.
+     * @param processor Processor to insert
+     */
+    bool _insert_processor_in_processing_part(Processor* processor);
+
+    /**
+     * @brief Remove a processor from the realtime processing part
+     *        Must be called before de-registering a processor.
+     * @param name The unique name of the processor to delete
+     * @return True if the processor existed and it was correctly deleted
+     */
+    bool _remove_processor_from_processing_part(ObjectId processor);
+
     /**
      * @brief Checks whether a processor exists in the engine.
      * @param processor_name The unique name of the processor.
@@ -316,7 +359,11 @@ private:
     // Processors indexed by their unique 32 bit id
     std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
 
-    std::atomic<StreamingState> _state{StreamingState::RUNNING};
+    std::atomic<StreamingState> _state{StreamingState::STOPPED};
+
+    EventFifo _control_queue_in;
+    EventFifo _control_queue_out;
+    receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
 };
 
 /**

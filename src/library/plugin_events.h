@@ -40,6 +40,13 @@ enum class EventType
     STRING_PARAMETER_CHANGE,
     /* Engine commands */
     STOP_ENGINE,
+    /* Processor add/delete/reorder events */
+    INSERT_PROCESSOR,
+    REMOVE_PROCESSOR,
+    ADD_PROCESSOR_TO_CHAIN,
+    REMOVE_PROCESSOR_FROM_CHAIN,
+    ADD_PLUGIN_CHAIN,
+    REMOVE_PLUGIN_CHAIN,
 };
 
 class BaseEvent
@@ -217,19 +224,44 @@ public:
         HANDLED_OK,
         HANDLED_ERROR
     };
-    ReturnableEvent(EventType type, uint16_t id) : BaseEvent(type, 0, 0),
-                                                   _status{EventStatus::UNHANDLED},
-                                                   _event_id{id} {}
+    ReturnableEvent(EventType type) : BaseEvent(type, 0, 0),
+                                      _status{EventStatus::UNHANDLED},
+                                      _event_id{EventIdGenerator::new_id()} {}
 
     EventStatus status() const {return _status;}
     uint16_t event_id() const {return _event_id;}
     void set_handled(bool ok) {_status = ok? EventStatus::HANDLED_OK : EventStatus::HANDLED_ERROR;}
 
 protected:
-    EventStatus _status{EventStatus::UNHANDLED};
+    EventStatus _status;
     uint16_t _event_id;
 };
 
+class Processor;
+
+class ProcessorOperationEvent : public ReturnableEvent
+{
+public:
+    ProcessorOperationEvent(EventType type,
+                            Processor* instance) : ReturnableEvent(type),
+                                                   _instance{instance} {}
+    Processor* instance() {return _instance;}
+private:
+    Processor* _instance;
+};
+
+class ProcessorReorderEvent : public ReturnableEvent
+{
+public:
+    ProcessorReorderEvent(EventType type, ObjectId processor, ObjectId chain) : ReturnableEvent(type),
+                                                                                _processor{processor},
+                                                                                _chain{chain} {}
+    ObjectId processor() {return _processor;}
+    ObjectId chain() {return _chain;}
+private:
+    ObjectId _processor;
+    ObjectId _chain;
+};
 
 /**
  * @brief Container class for events. Functionally this take the role of a
@@ -278,10 +310,27 @@ public:
         return &_data_parameter_change_event;
     }
 
-    const ReturnableEvent* returnable_event() const
+    ReturnableEvent* returnable_event()
     {
-        assert(_returnable_event.type() == EventType::STOP_ENGINE);
+        assert(_returnable_event.type() >= EventType::STOP_ENGINE);
         return &_returnable_event;
+    }
+
+    ProcessorOperationEvent* processor_operation_event()
+    {
+        assert(_processor_operation_event.type() == EventType::INSERT_PROCESSOR);
+        return &_processor_operation_event;
+    }
+
+    ProcessorReorderEvent* processor_reorder_event()
+    {
+        assert(_processor_reorder_event.type() == EventType::REMOVE_PROCESSOR ||
+               _processor_reorder_event.type() == EventType::ADD_PROCESSOR_TO_CHAIN ||
+               _processor_reorder_event.type() == EventType::REMOVE_PROCESSOR_FROM_CHAIN ||
+               _processor_reorder_event.type() == EventType::ADD_PLUGIN_CHAIN ||
+               _processor_reorder_event.type() == EventType::REMOVE_PLUGIN_CHAIN);
+        ;
+        return &_processor_reorder_event;
     }
 
     /* Factory functions for constructing events */
@@ -332,9 +381,46 @@ public:
 
     static Event make_stop_engine_event()
     {
-        ReturnableEvent typed_event(EventType::STOP_ENGINE, 0);
+        ReturnableEvent typed_event(EventType::STOP_ENGINE);
         return Event(typed_event);
     }
+
+    static Event make_insert_processor_event(Processor* instance)
+    {
+        ProcessorOperationEvent typed_event(EventType::INSERT_PROCESSOR, instance);
+        return Event(typed_event);
+    }
+
+    static Event make_remove_processor_event(ObjectId processor)
+    {
+        ProcessorReorderEvent typed_event(EventType::REMOVE_PROCESSOR, processor, 0);
+        return Event(typed_event);
+    }
+
+    static Event make_add_processor_to_chain_event(ObjectId processor, ObjectId chain)
+    {
+        ProcessorReorderEvent typed_event(EventType::ADD_PROCESSOR_TO_CHAIN, processor, chain);
+        return Event(typed_event);
+    }
+
+    static Event make_remove_processor_from_chain_event(ObjectId processor, ObjectId chain)
+    {
+        ProcessorReorderEvent typed_event(EventType::REMOVE_PROCESSOR_FROM_CHAIN, processor, chain);
+        return Event(typed_event);
+    }
+
+    static Event make_add_plugin_chain_event(ObjectId chain)
+    {
+        ProcessorReorderEvent typed_event(EventType::ADD_PLUGIN_CHAIN, 0, chain);
+        return Event(typed_event);
+    }
+
+    static Event make_remove_plugin_chain_event(ObjectId chain)
+    {
+        ProcessorReorderEvent typed_event(EventType::REMOVE_PLUGIN_CHAIN, 0, chain);
+        return Event(typed_event);
+    }
+
 
 private:
     Event(const KeyboardEvent& e) : _keyboard_event(e) {}
@@ -343,6 +429,8 @@ private:
     Event(const StringParameterChangeEvent& e) : _string_parameter_change_event(e) {}
     Event(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
     Event(const ReturnableEvent& e) : _returnable_event(e) {}
+    Event(const ProcessorOperationEvent& e) : _processor_operation_event(e) {}
+    Event(const ProcessorReorderEvent& e) : _processor_reorder_event(e) {}
     union
     {
         BaseEvent                   _base_event;
@@ -352,6 +440,8 @@ private:
         StringParameterChangeEvent  _string_parameter_change_event;
         DataParameterChangeEvent    _data_parameter_change_event;
         ReturnableEvent             _returnable_event;
+        ProcessorOperationEvent     _processor_operation_event;
+        ProcessorReorderEvent       _processor_reorder_event;
     };
 };
 

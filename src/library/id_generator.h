@@ -24,4 +24,9 @@ typedef uint32_t ObjectId;
 
 class ProcessorIdGenerator : public BaseIdGenerator<ObjectId>
 { };
+
+typedef uint16_t EventId;
+
+class EventIdGenerator : public BaseIdGenerator<EventId>
+{ };
 #endif //SUSHI_ID_GENERATOR_H

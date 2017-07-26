@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #include "gtest/gtest.h"
 #include "test_utils.h"
@@ -108,9 +109,9 @@ TEST_F(TestEngine, TestCreateEmptyPluginChain)
 
     /* Test invalid name */
     status = _module_under_test->create_plugin_chain("left",1);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PROCESSOR);
     status = _module_under_test->create_plugin_chain("",1);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
 
     /* Test removal */
     status = _module_under_test->delete_plugin_chain("left");
@@ -205,4 +206,48 @@ TEST_F(TestEngine, TestSetSamplerate)
     /* Pretty ugly way of checking that it was actually set, but wth */
     auto eq_plugin = static_cast<equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors_by_unique_name["eq"].get());
     ASSERT_FLOAT_EQ(48000.0f, eq_plugin->_sample_rate);
+}
+
+TEST_F(TestEngine, TestRealtimeConfiguration)
+{
+    auto faux_rt_thread = [](AudioEngine* e)
+    {
+        SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+        SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        e->process_chunk(&in_buffer, &out_buffer);
+    };
+    // Add a chain, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
+    _module_under_test->enable_realtime(true);
+    auto rt = std::thread(faux_rt_thread, _module_under_test);
+    auto status = _module_under_test->create_plugin_chain("main", 2);
+    rt.join();
+    ASSERT_EQ(status, EngineReturnStatus::OK);
+
+    rt = std::thread(faux_rt_thread, _module_under_test);
+    status = _module_under_test->add_plugin_to_chain("main",
+                                                     "sushi.testing.gain",
+                                                     "gain_0_r",
+                                                     "   ",
+                                                     PluginType::INTERNAL);
+    rt.join();
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_EQ(1u, _module_under_test->_audio_graph[0]->_chain.size());
+
+    // Remove the plugin and chain as well
+    rt = std::thread(faux_rt_thread, _module_under_test);
+    status = _module_under_test->remove_plugin_from_chain("main", "gain_0_r");
+    rt.join();
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_chain.size());
+
+    rt = std::thread(faux_rt_thread, _module_under_test);
+    status = _module_under_test->delete_plugin_chain("main");
+    rt.join();
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_EQ(0u, _module_under_test->_audio_graph.size());
+
+    // Assert that they were also deleted from the map of processors
+    ASSERT_FALSE(_module_under_test->_processor_exists("main"));
+    ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
 }
