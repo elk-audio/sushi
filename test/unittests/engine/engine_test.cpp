@@ -233,6 +233,9 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_EQ(1u, _module_under_test->_audio_graph[0]->_chain.size());
+    auto chain = _module_under_test->_audio_graph[0];
+    ObjectId chain_id = chain->id();
+    ObjectId processor_id = chain->_chain[0]->id();
 
     // Remove the plugin and chain as well
     rt = std::thread(faux_rt_thread, _module_under_test);
@@ -250,4 +253,6 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     // Assert that they were also deleted from the map of processors
     ASSERT_FALSE(_module_under_test->_processor_exists("main"));
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
+    ASSERT_FALSE(_module_under_test->_processors_by_unique_id[chain_id]);
+    ASSERT_FALSE(_module_under_test->_processors_by_unique_id[processor_id]);
 }

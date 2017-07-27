@@ -152,9 +152,9 @@ bool AudioEngine::_insert_processor_in_processing_part(Processor* processor)
 
 bool AudioEngine::_remove_processor_from_processing_part(ObjectId processor)
 {
-    if(_processors_by_unique_id[processor])
+    if(!_processors_by_unique_id[processor])
     {
-        return true;
+        return false;
     }
     _processors_by_unique_id[processor] = nullptr;
     return true;
