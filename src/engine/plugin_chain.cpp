@@ -81,7 +81,6 @@ void PluginChain::update_channel_config()
         processor->set_input_channels(_current_input_channels);
         processor->set_output_channels(_current_input_channels);
     }
-    return;
 }
 
 void PluginChain::process_event(Event event)

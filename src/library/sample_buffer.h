@@ -382,12 +382,11 @@ public:
         {
             float vol = start;
             float* data = _buffer + size * channel;
-            for (int i = 0; i < size - 1; ++i)
+            for (int i = 0; i < size; ++i)
             {
                 data[i] *= vol;
                 vol += inc;
             }
-            data[size - 1] *= end; /* Neutralize rounding errors */
         }
     }
 

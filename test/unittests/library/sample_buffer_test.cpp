@@ -314,8 +314,8 @@ TEST (TestSampleBuffer, test_ramping)
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[0]);
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(1)[0]);
 
-    ASSERT_FLOAT_EQ(2.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
-    ASSERT_FLOAT_EQ(2.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    ASSERT_NEAR(2.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+    ASSERT_NEAR(2.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
 
     ASSERT_NEAR(1.5f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.01f);
     ASSERT_NEAR(1.5f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2], 0.01f);
@@ -323,6 +323,6 @@ TEST (TestSampleBuffer, test_ramping)
     buffer.ramp_down();
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[0]);
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(1)[0]);
-    ASSERT_FLOAT_EQ(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
-    ASSERT_FLOAT_EQ(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    ASSERT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+    ASSERT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
 }
