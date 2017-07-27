@@ -35,14 +35,24 @@ void AudioEngine::set_sample_rate(float sample_rate)
 
 bool AudioEngine::realtime()
 {
-    return _state.load() != StreamingState::STOPPED;
+    return _state.load() != RealtimeState::STOPPED;
 }
 
 void AudioEngine::enable_realtime(bool enabled)
 {
     if (enabled)
     {
-        _state.store(StreamingState::STARTING);
+        _state.store(RealtimeState::STARTING);
+    }
+    else
+    {
+        if (realtime())
+        {
+            send_async_event(Event::make_stop_engine_event());
+        } else
+        {
+            _state.store(RealtimeState::STOPPED);
+        }
     }
 };
 
@@ -455,7 +465,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
         case EventType::STOP_ENGINE:
         {
             auto typed_event = event.returnable_event();
-            _state.store(StreamingState::STOPPING);
+            _state.store(RealtimeState::STOPPING);
             typed_event->set_handled(true);
             break;
         }
@@ -542,15 +552,15 @@ bool AudioEngine::_handle_internal_events(Event &event)
     return true;
 }
 
-StreamingState update_state(StreamingState current_state)
+RealtimeState update_state(RealtimeState current_state)
 {
-    if (current_state == StreamingState::STARTING)
+    if (current_state == RealtimeState::STARTING)
     {
-        return StreamingState::RUNNING;
+        return RealtimeState::RUNNING;
     }
-    if (current_state == StreamingState::STOPPING)
+    if (current_state == RealtimeState::STOPPING)
     {
-        return StreamingState::STOPPED;
+        return RealtimeState::STOPPED;
     }
     return current_state;
 }

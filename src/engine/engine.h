@@ -49,7 +49,7 @@ enum class PluginType
     VST3X
 };
 
-enum class StreamingState
+enum class RealtimeState
 {
     STARTING,
     RUNNING,
@@ -359,7 +359,7 @@ private:
     // Processors indexed by their unique 32 bit id
     std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
 
-    std::atomic<StreamingState> _state{StreamingState::STOPPED};
+    std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
     EventFifo _control_queue_in;
     EventFifo _control_queue_out;
@@ -371,7 +371,7 @@ private:
  * @param current_state The current state of the engine
  * @return A new, non-transient state
  */
-StreamingState update_state(StreamingState current_state);
+RealtimeState update_state(RealtimeState current_state);
 
 } // namespace engine
 } // namespace sushi
