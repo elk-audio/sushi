@@ -56,54 +56,54 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const Json::Value &events)
+AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Document& config)
 {
-    if (events.isArray())
+    if (config["events"].IsArray())
     {
-        _event_queue.reserve(events.size());
-        for(const Json::Value& e : events)
+        _event_queue.reserve(config["events"].GetArray().Size());
+        for(const auto& e : config["events"].GetArray())
         {
-            int sample = static_cast<int>( std::round(e["time"].asDouble() * static_cast<double>(_engine->sample_rate()) ) );
-            auto data = e["data"];
+            int sample = static_cast<int>( std::round(e["time"].GetDouble() * static_cast<double>(_engine->sample_rate()) ) );
+            const rapidjson::Value& data = e["data"];
             ObjectId processor_id;
             sushi::engine::EngineReturnStatus status;
-            std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].asString());
+            std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].GetString());
             if (status != sushi::engine::EngineReturnStatus::OK)
             {
-                MIND_LOG_WARNING("Unknown plugin name: \"{}\"", data["plugin_name"].asString());
+                MIND_LOG_WARNING("Unknown plugin name: \"{}\"", data["plugin_name"].GetString());
                 continue;
             }
             if (e["type"] == "parameter_change")
             {
                 ObjectId parameterId;
-                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].asString(),
-                                                                                data["parameter_name"].asString());
+                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
+                                                                                data["parameter_name"].GetString());
                 if (status != sushi::engine::EngineReturnStatus::OK)
                 {
-                    MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].asString());
+                    MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].GetString());
                     continue;
                 }
                 _event_queue.push_back(std::make_tuple(sample,
                                                        Event::make_parameter_change_event(processor_id,
                                                                                           sample % AUDIO_CHUNK_SIZE,
                                                                                           parameterId,
-                                                                                          data["value"].asFloat())));
+                                                                                          data["value"].GetFloat())));
             }
             else if (e["type"] == "note_on")
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        Event::make_note_on_event(processor_id,
                                                                                  sample % AUDIO_CHUNK_SIZE,
-                                                                                 data["note"].asInt(),
-                                                                                 data["velocity"].asFloat())));
+                                                                                 data["note"].GetInt(),
+                                                                                 data["velocity"].GetFloat())));
             }
             else if (e["type"] == "note_off")
             {
                 _event_queue.push_back(std::make_tuple(sample,
                                                        Event::make_note_off_event(processor_id,
                                                                                   sample % AUDIO_CHUNK_SIZE,
-                                                                                  data["note"].asInt(),
-                                                                                  data["velocity"].asFloat())));
+                                                                                  data["note"].GetInt(),
+                                                                                  data["velocity"].GetFloat())));
             }
         }
 

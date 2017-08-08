@@ -10,7 +10,7 @@
 #ifndef SUSHI_CONFIG_FROM_JSON_H
 #define SUSHI_CONFIG_FROM_JSON_H
 
-#include <json/json.h>
+#include "rapidjson/document.h"
 
 #include "engine/engine.h"
 #include "engine/midi_dispatcher.h"
@@ -21,24 +21,21 @@ namespace jsonconfig {
 enum class JsonConfigReturnStatus
 {
     OK,
-    INVALID_CHAIN_FORMAT,
-    INVALID_CHAIN_MODE,
+    INVALID_SCHEMA,
     INVALID_CHAIN_NAME,
-    INVALID_PLUGIN_FORMAT,
     INVALID_PLUGIN_PATH,
     INVALID_PARAMETER,
     INVALID_PLUGIN_NAME,
-    INVALID_PLUGIN_TYPE,
-    INVALID_PLUGIN_UID,
-    NO_MIDI_CONNECTIONS,
-    INVALID_MIDI_CHAIN_CON,
     INVALID_MIDI_PORT,
-    INVALID_MIDI_CHANNEL,
-    INVALID_MIDI_CC_MAP,
-    INVALID_CC_NUMBER,
-    INVALID_MIDI_RANGE,
-    INVALID_HOST_CONFIG,
     INVALID_FILE
+};
+
+enum class JsonSection
+{
+    HOST_CONFIG,
+    CHAINS,
+    MIDI,
+    EVENTS
 };
 
 class JsonConfigurator
@@ -55,7 +52,7 @@ public:
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_host_config(const std::string &path_to_file);
+    JsonConfigReturnStatus load_host_config(const std::string& path_to_file);
 
     /**
      * @brief reads a json config file, searches for valid plugin chain
@@ -63,7 +60,7 @@ public:
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_chains(const std::string &path_to_file);
+    JsonConfigReturnStatus load_chains(const std::string& path_to_file);
 
     /**
      * @brief reads a json config file, searches for valid MIDI connections and
@@ -71,73 +68,50 @@ public:
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_midi(const std::string &path_to_file);
+    JsonConfigReturnStatus load_midi(const std::string& path_to_file);
+
+    /**
+     * @brief reads a json config file, searches for a valid "events" definition and parses it
+     *        into the rapidjson document.
+     * @param path_to_file String which denotes the path of the file.
+     * @param config rapidjson document which contains the events definitions
+     * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
+     */
+    JsonConfigReturnStatus parse_events_from_file(const std::string& path_to_file, rapidjson::Document& config);
 
 private:
     /**
      * @brief Helper function to parse the json file using the JSONCPP library.
      *        Used by load_chains and load_midi.
      * @param path_to_file String which denotes the path of the file.
-     * @param config Json::Value object where the json data is stored after reading from the file.
+     * @param config rapidjson document object where the json data is stored after reading from the file.
+     * @param section Jsonsection to denote which section is to be validated.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus _parse_file(const std::string& path_to_file, Json::Value& config);
+    JsonConfigReturnStatus _parse_file(const std::string& path_to_file, rapidjson::Document& config, JsonSection section);
 
     /**
      * @brief Uses Engine's API to create a single plugin chain with the specified number of channels and adds
      *        the respective plugins to the chain if they are defined in the file. Used by load_chains.
-     * @param chain_def Json::Value object representing a single plugin chain and its details.
+     * @param chain_def rapidjson document object representing a single plugin chain and its details.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus _make_chain(const Json::Value & chain_def);
+    JsonConfigReturnStatus _make_chain(const rapidjson::Value& chain_def);
 
     /**
      * @brief Helper function to extract the number of midi channels in the midi definition.
-     * @param channels Json::Value object containing the channel information parsed from the file.
+     * @param channels rapidjson document object containing the channel information parsed from the file.
      * @return The number of MIDI channels.
      */
-    int _get_midi_channel(const Json::Value &channels);
+    int _get_midi_channel(const rapidjson::Value& channels);
 
     /**
-     * @brief Checks if the json data contains all the necessary host config options
-     * @param config Json::Value object containing Json data
-     * @return sonConfigReturnStatus::OK if definition is adept, different error code otherwise.
+     * @brief function which validates the json data against the respective schema.
+     * @param config rapidjson document object containing the json data parsed from the file
+     * @param section JsonSection to denote which json section is to be validated.
+     * @return true if json follows schema, false otherwise
      */
-    JsonConfigReturnStatus _validate_host_configuration(const Json::Value& config);
-
-    /**
-     * @brief checks if the Json data read from the file contains all the necessary definitions
-     *        to create a valid Plugin chain. Used by the function load_chains.
-     * @param config Json::Value object containing the Json data read from the file.
-     * @return JsonConfigReturnStatus::OK if definition is adept, different error code otherwise.
-     */
-    JsonConfigReturnStatus _validate_chains_definition(const Json::Value& config);
-
-    /**
-     * @brief Validates if the Json data read from the file has a valid Json schema
-     *        for midi connections and midi mappings. Used by the function load_midi.
-     * @param config Json::Value object containing the Json data read from the file.
-     * @return JsonConfigReturnStatus::OK if definition is adept, different error code otherwise.
-     */
-    JsonConfigReturnStatus _validate_midi_definition(const Json::Value& config);
-
-    /**
-     * @brief Helper function used by _validate_midi_definition to validate the midi chain
-     *        connections schema in the Json config file.
-     * @param midi_def Json::Value object containing the MIDI Json data read from the file.
-     * @return JsonConfigReturnStatus::OK if midi chain connections schema is valid,
-     *         different error code otherwise.
-     */
-    JsonConfigReturnStatus _validate_midi_chain_connection_def(const Json::Value &midi_def);
-
-    /**
-     * @brief Helper function used by _validate_midi_definition to validate midi cc mapping schema
-     *        in the Json config file.
-     * @param midi_def Json::Value object containing the MIDI Json data read from the file.
-     * @return JsonConfigReturnStatus::OK if midi chain connections schema is valid,
-     *         different error code otherwise.
-     */
-    JsonConfigReturnStatus _validate_midi_cc_map_def(const Json::Value &midi_def);
+    bool _validate_against_schema(rapidjson::Document& config, JsonSection section);
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
@@ -147,6 +121,3 @@ private:
 }/* namespace SUSHI */
 
 #endif //SUSHI_CONFIG_FROM_JSON_H
-
-
-

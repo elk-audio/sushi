@@ -6,7 +6,7 @@
 #ifndef SUSHI_XENOMAI_FRONTEND_H
 #define SUSHI_XENOMAI_FRONTEND_H
 
-#include <json/json.h>
+#include "rapidjson/document.h"
 
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
@@ -134,11 +134,11 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     /**
-     * @brief Parse timestamped events from JSON structure and put them into an internal queueu.
-     * @param events
+     * @brief Parse timestamped events from JSON structure and put them into an internal queue.
+     * @param config rapidjson document containing the events definition.
      * @return AudioFrontendStatus::OK if successful, other error code otherwise
      */
-    AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value& events);
+    AudioFrontendStatus add_sequencer_events_from_json_def(const rapidjson::Document& config);
 
     /**
      * @brief Call to clean up resources and release ports

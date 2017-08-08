@@ -1,0 +1,115 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi Plugin Chain JSON Schema",
+  "description": "JSON Schema to validate plugin chain definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "plugin_chains":
+    {
+      "type": "array",
+      "items":
+      {
+        "type": "object",
+        "properties":
+        {
+          "name":
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode":
+          {
+            "type": "string",
+            "enum": ["mono", "stereo"]
+          },
+          "plugins":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "oneOf":
+              [
+                {
+                  "properties":
+                  {
+                    "uid":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type":
+                    {
+                      "type": "string",
+                      "enum": ["internal"]
+                    }
+                  },
+                  "required": ["uid", "name", "type"]
+                },
+                {
+                  "properties":
+                  {
+                    "path":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type":
+                    {
+                      "type": "string",
+                      "enum": ["vst2x"]
+                    }
+                  },
+                  "required": ["path", "name", "type"]
+                },
+                {
+                  "properties":
+                  {
+                    "uid":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "path":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type":
+                    {
+                      "type": "string",
+                      "enum": ["vst3x"]
+                    }
+                  },
+                  "required": ["uid","path", "name", "type"]
+                }
+              ]
+            }
+          }
+        },
+        "required": ["name", "mode", "plugins"]
+      },
+      "minItems": 1
+    }
+  },
+  "required": ["plugin_chains"]
+}
+)"

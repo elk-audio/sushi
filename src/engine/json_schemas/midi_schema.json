@@ -1,0 +1,112 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi MIDI JSON Schema",
+  "description": "JSON Schema to validate MIDI definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "midi":
+    {
+      "type": "object",
+      "properties":
+      {
+        "chain_connections":
+        {
+          "type":"array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "port":
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              "channel":
+              {
+                "anyOf":
+                [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["all"]
+                  }
+                ]
+              },
+              "chain":
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["port", "channel", "chain"]
+          }
+        },
+        "cc_mappings":
+        {
+          "type":"array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "port":
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              "channel":
+              {
+                "anyOf":
+                [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["all"]
+                  }
+                ]
+              },
+              "cc_number":
+              {
+                "type": "integer"
+              },
+              "plugin_name":
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameter_name":
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              "min_range":
+              {
+                "type": "number"
+              },
+              "max_range":
+              {
+                "type": "number"
+              }
+            },
+            "required": ["port", "channel", "cc_number", "plugin_name", "parameter_name", "min_range", "max_range"]
+          }
+        }
+      },
+      "required": ["chain_connections", "cc_mappings"]
+    }
+  },
+  "required": ["midi"]
+}
+)"
