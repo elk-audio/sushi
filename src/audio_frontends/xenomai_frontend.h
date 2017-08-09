@@ -196,7 +196,7 @@ class XenomaiFrontend : public BaseAudioFrontend
 public:
     XenomaiFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override {return AudioFrontendStatus::OK;}
-    AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value&) {return AudioFrontendStatus::OK;}
+    AudioFrontendStatus add_sequencer_events_from_json_def(const rapidjson::Document&) {return AudioFrontendStatus::OK;}
     void cleanup() override {}
     void run() override {}
 };

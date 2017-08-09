@@ -7,8 +7,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <json/json.h>
-
 #include "logging.h"
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
