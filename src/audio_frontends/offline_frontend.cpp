@@ -56,73 +56,63 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-AudioFrontendStatus OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Document& config)
+void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Document& config)
 {
-    if (config["events"].IsArray())
+    _event_queue.reserve(config["events"].GetArray().Size());
+    for(const auto& e : config["events"].GetArray())
     {
-        _event_queue.reserve(config["events"].GetArray().Size());
-        for(const auto& e : config["events"].GetArray())
+        int sample = static_cast<int>( std::round(e["time"].GetDouble() * static_cast<double>(_engine->sample_rate()) ) );
+        const rapidjson::Value& data = e["data"];
+        ObjectId processor_id;
+        sushi::engine::EngineReturnStatus status;
+        std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].GetString());
+        if (status != sushi::engine::EngineReturnStatus::OK)
         {
-            int sample = static_cast<int>( std::round(e["time"].GetDouble() * static_cast<double>(_engine->sample_rate()) ) );
-            const rapidjson::Value& data = e["data"];
-            ObjectId processor_id;
-            sushi::engine::EngineReturnStatus status;
-            std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].GetString());
+            MIND_LOG_WARNING("Unknown plugin name: \"{}\"", data["plugin_name"].GetString());
+            continue;
+        }
+        if (e["type"] == "parameter_change")
+        {
+            ObjectId parameterId;
+            std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
+                                                                            data["parameter_name"].GetString());
             if (status != sushi::engine::EngineReturnStatus::OK)
             {
-                MIND_LOG_WARNING("Unknown plugin name: \"{}\"", data["plugin_name"].GetString());
+                MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].GetString());
                 continue;
             }
-            if (e["type"] == "parameter_change")
-            {
-                ObjectId parameterId;
-                std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                                data["parameter_name"].GetString());
-                if (status != sushi::engine::EngineReturnStatus::OK)
-                {
-                    MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].GetString());
-                    continue;
-                }
-                _event_queue.push_back(std::make_tuple(sample,
-                                                       Event::make_parameter_change_event(processor_id,
-                                                                                          sample % AUDIO_CHUNK_SIZE,
-                                                                                          parameterId,
-                                                                                          data["value"].GetFloat())));
-            }
-            else if (e["type"] == "note_on")
-            {
-                _event_queue.push_back(std::make_tuple(sample,
-                                                       Event::make_note_on_event(processor_id,
-                                                                                 sample % AUDIO_CHUNK_SIZE,
-                                                                                 data["note"].GetInt(),
-                                                                                 data["velocity"].GetFloat())));
-            }
-            else if (e["type"] == "note_off")
-            {
-                _event_queue.push_back(std::make_tuple(sample,
-                                                       Event::make_note_off_event(processor_id,
-                                                                                  sample % AUDIO_CHUNK_SIZE,
-                                                                                  data["note"].GetInt(),
-                                                                                  data["velocity"].GetFloat())));
-            }
+            _event_queue.push_back(std::make_tuple(sample,
+                                                   Event::make_parameter_change_event(processor_id,
+                                                                                      sample % AUDIO_CHUNK_SIZE,
+                                                                                      parameterId,
+                                                                                      data["value"].GetFloat())));
         }
-
-        // Sort events by reverse time (lambda function compares first tuple element)
-        std::sort(std::begin(_event_queue), std::end(_event_queue),
-                  [](std::tuple<int, Event> const &t1,
-                     std::tuple<int, Event> const &t2)
-                  {
-                      return std::get<0>(t1) >= std::get<0>(t2);
-                  }
-        );
+        else if (e["type"] == "note_on")
+        {
+            _event_queue.push_back(std::make_tuple(sample,
+                                                   Event::make_note_on_event(processor_id,
+                                                                             sample % AUDIO_CHUNK_SIZE,
+                                                                             data["note"].GetInt(),
+                                                                             data["velocity"].GetFloat())));
+        }
+        else if (e["type"] == "note_off")
+        {
+            _event_queue.push_back(std::make_tuple(sample,
+                                                   Event::make_note_off_event(processor_id,
+                                                                              sample % AUDIO_CHUNK_SIZE,
+                                                                              data["note"].GetInt(),
+                                                                              data["velocity"].GetFloat())));
+        }
     }
-    else
-    {
-        MIND_LOG_ERROR("Invalid format for events in configuration file");
-        return AudioFrontendStatus ::INVALID_SEQUENCER_DATA;
-    }
 
-    return AudioFrontendStatus ::OK;
+    // Sort events by reverse time (lambda function compares first tuple element)
+    std::sort(std::begin(_event_queue), std::end(_event_queue),
+              [](std::tuple<int, Event> const &t1,
+                 std::tuple<int, Event> const &t2)
+              {
+                  return std::get<0>(t1) >= std::get<0>(t2);
+              }
+    );
 }
 
 void OfflineFrontend::cleanup()

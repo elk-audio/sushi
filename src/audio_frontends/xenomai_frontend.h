@@ -136,9 +136,8 @@ public:
     /**
      * @brief Parse timestamped events from JSON structure and put them into an internal queue.
      * @param config rapidjson document containing the events definition.
-     * @return AudioFrontendStatus::OK if successful, other error code otherwise
      */
-    AudioFrontendStatus add_sequencer_events_from_json_def(const rapidjson::Document& config);
+    void add_sequencer_events_from_json_def(const rapidjson::Document& config);
 
     /**
      * @brief Call to clean up resources and release ports
