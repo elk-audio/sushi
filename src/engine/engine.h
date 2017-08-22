@@ -188,7 +188,7 @@ public:
      * @brief Configure the Engine with a new samplerate.
      * @param sample_rate The new sample rate in Hz
      */
-    virtual void set_sample_rate(float sample_rate);
+    void set_sample_rate(float sample_rate);
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn
@@ -198,7 +198,11 @@ public:
      */
     int n_channels_in_chain(int chain) override;
 
-    virtual bool realtime() override;
+    /**
+     * @brief Returns whether the engine is running in a realtime mode or not
+     * @return true if the engine is currently processing in realtime mode, false otherwise
+     */
+    bool realtime() override;
 
     /**
      * @brief Set the engine to operate in realtime mode. In this mode process_chunk and
@@ -207,7 +211,7 @@ public:
      *
      * @param enabled true to enable realtime mode, false to disable
      */
-    virtual void enable_realtime(bool enabled) override;
+    void enable_realtime(bool enabled) override;
 
     /**
      * @brief Process one chunk of audio from in_buffer and write the result to out_buffer
@@ -266,7 +270,7 @@ public:
      * @param chain_id The unique name of the chain to delete
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    virtual EngineReturnStatus delete_plugin_chain(const std::string& chain_id) override;
+    EngineReturnStatus delete_plugin_chain(const std::string& chain_id) override;
 
     /**
      * @brief Creates and adds a plugin to a chain.
@@ -289,11 +293,8 @@ public:
      * @param plugin_id The unique name of the plugin
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
-    virtual EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
+    EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
                                                         const std::string& plugin_id) override;
-
-protected:
-    std::vector<PluginChain*> _audio_graph;
 
 private:
     /**
@@ -322,7 +323,7 @@ private:
      *        Must be called before a processor can be used to process audio.
      * @param processor Processor to insert
      */
-    bool _insert_processor_in_processing_part(Processor* processor);
+    bool _insert_processor_in_realtime_part(Processor* processor);
 
     /**
      * @brief Remove a processor from the realtime processing part
@@ -330,7 +331,7 @@ private:
      * @param name The unique name of the processor to delete
      * @return True if the processor existed and it was correctly deleted
      */
-    bool _remove_processor_from_processing_part(ObjectId processor);
+    bool _remove_processor_from_realtime_part(ObjectId processor);
 
     /**
      * @brief Checks whether a processor exists in the engine.
@@ -354,10 +355,14 @@ private:
      */
     bool _handle_internal_events(Event &event);
 
-    // Owns all processors, including plugin chains
-    std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
-    // Processors indexed by their unique 32 bit id
-    std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
+    std::vector<PluginChain*> _audio_graph;
+
+    // All registered processors indexed by their unique name
+    std::map<std::string, std::unique_ptr<Processor>> _processors;
+
+    // Processors in the realtime part indexed by their unique 32 bit id
+    // Only to be accessed from the process callback in rt mode.
+    std::vector<Processor*> _realtime_processors{PROC_ID_ARRAY_INCREMENT, nullptr};
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 

@@ -27,7 +27,7 @@ AudioEngine::~AudioEngine()
 void AudioEngine::set_sample_rate(float sample_rate)
 {
     BaseEngine::set_sample_rate(sample_rate);
-    for (auto& node : _processors_by_unique_name)
+    for (auto& node : _processors)
     {
         node.second->configure(sample_rate);
     }
@@ -100,26 +100,26 @@ EngineReturnStatus AudioEngine::_register_processor(Processor* processor, const 
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     processor->set_name(name);
-    _processors_by_unique_name[name] = std::move(std::unique_ptr<Processor>(processor));
+    _processors[name] = std::move(std::unique_ptr<Processor>(processor));
     MIND_LOG_DEBUG("Succesfully registered processor {}.", name);
     return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
 {
-    auto processor_node = _processors_by_unique_name.find(name);
-    if (processor_node == _processors_by_unique_name.end())
+    auto processor_node = _processors.find(name);
+    if (processor_node == _processors.end())
     {
         return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
-    _processors_by_unique_name.erase(processor_node);
+    _processors.erase(processor_node);
     return EngineReturnStatus::OK;
 }
 
 bool AudioEngine::_processor_exists(const std::string& name)
 {
-    auto processor_node = _processors_by_unique_name.find(name);
-    if(processor_node == _processors_by_unique_name.end())
+    auto processor_node = _processors.find(name);
+    if(processor_node == _processors.end())
     {
         return false;
     }
@@ -128,35 +128,35 @@ bool AudioEngine::_processor_exists(const std::string& name)
 
 bool AudioEngine::_processor_exists(const ObjectId uid)
 {
-    if(uid >= _processors_by_unique_id.size() || !_processors_by_unique_id[uid])
+    if(uid >= _realtime_processors.size() || !_realtime_processors[uid])
     {
         return false;
     }
     return true;
 }
 
-bool AudioEngine::_insert_processor_in_processing_part(Processor* processor)
+bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
 {
-    if (processor->id() > _processors_by_unique_id.size())
+    if (processor->id() > _realtime_processors.size())
     {
         // Resize the vector manually to be able to insert processors at specific indexes
-        _processors_by_unique_id.resize(processor->id() + PROC_ID_ARRAY_INCREMENT, nullptr);
+        _realtime_processors.resize(processor->id() + PROC_ID_ARRAY_INCREMENT, nullptr);
     }
-    if(_processors_by_unique_id[processor->id()])
+    if(_realtime_processors[processor->id()])
     {
         return false;
     }
-    _processors_by_unique_id[processor->id()] = processor;
+    _realtime_processors[processor->id()] = processor;
     return true;
 }
 
-bool AudioEngine::_remove_processor_from_processing_part(ObjectId processor)
+bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 {
-    if(!_processors_by_unique_id[processor])
+    if(!_realtime_processors[processor])
     {
         return false;
     }
-    _processors_by_unique_id[processor] = nullptr;
+    _realtime_processors[processor] = nullptr;
     return true;
 }
 
@@ -205,12 +205,12 @@ EngineReturnStatus AudioEngine::send_rt_event(Event event)
     {
         return EngineReturnStatus::OK;
     }
-    if (event.processor_id() > _processors_by_unique_id.size())
+    if (event.processor_id() > _realtime_processors.size())
     {
         MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    auto processor_node = _processors_by_unique_id[event.processor_id()];
+    auto processor_node = _realtime_processors[event.processor_id()];
     if (!processor_node)
     {
         MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
@@ -232,8 +232,8 @@ EngineReturnStatus AudioEngine::send_async_event(const Event &event)
 
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
 {
-    auto processor_node = _processors_by_unique_name.find(name);
-    if (processor_node == _processors_by_unique_name.end())
+    auto processor_node = _processors.find(name);
+    if (processor_node == _processors.end())
     {
         return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
     }
@@ -243,8 +243,8 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(cons
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(const std::string& processor_name,
                                                                             const std::string& parameter_name)
 {
-    auto processor_node = _processors_by_unique_name.find(processor_name);
-    if (processor_node == _processors_by_unique_name.end())
+    auto processor_node = _processors.find(processor_name);
+    if (processor_node == _processors.end())
     {
         return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
     }
@@ -262,7 +262,7 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
     {
         return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, std::string(""));
     }
-    return std::make_pair(EngineReturnStatus::OK, _processors_by_unique_id[uid]->name());
+    return std::make_pair(EngineReturnStatus::OK, _realtime_processors[uid]->name());
 }
 
 EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_name, int chain_channel_count)
@@ -296,7 +296,7 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
         }
     } else
     {
-        _insert_processor_in_processing_part(chain);
+        _insert_processor_in_realtime_part(chain);
         _audio_graph.push_back(chain);
     }
     MIND_LOG_INFO("Plugin Chain {} successfully added to engine", chain_name);
@@ -307,8 +307,8 @@ EngineReturnStatus AudioEngine::delete_plugin_chain(const std::string &chain_nam
 {
     // TODO - Until it's decided how chain report what processors they have,
     // we assume that the chain is manually emptied before deleting
-    auto chain_node = _processors_by_unique_name.find(chain_name);
-    if (chain_node == _processors_by_unique_name.end())
+    auto chain_node = _processors.find(chain_name);
+    if (chain_node == _processors.end())
     {
         MIND_LOG_ERROR("Couldn't delete chain {}, not found", chain_name);
         return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
@@ -335,7 +335,7 @@ EngineReturnStatus AudioEngine::delete_plugin_chain(const std::string &chain_nam
             if (*chain_in_graph == chain)
             {
                 _audio_graph.erase(chain_in_graph);
-                _remove_processor_from_processing_part(chain->id());
+                _remove_processor_from_realtime_part(chain->id());
                 return _deregister_processor(chain_name);
             }
             MIND_LOG_WARNING("Plugin chain {} was not in the audio graph", chain_name);
@@ -350,8 +350,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
                                                     const std::string& plugin_path,
                                                     PluginType plugin_type)
 {
-    auto chain_node = _processors_by_unique_name.find(chain_name);
-    if (chain_node == _processors_by_unique_name.end())
+    auto chain_node = _processors.find(chain_name);
+    if (chain_node == _processors.end())
     {
         MIND_LOG_ERROR("Chain name {} does not exist in processor list", chain_name);
         return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
@@ -410,7 +410,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     else
     {
         // If the engine is not running in realtime mode we can add the processor directly
-        _insert_processor_in_processing_part(plugin);
+        _insert_processor_in_realtime_part(plugin);
         chain->add(plugin);
     }
     return EngineReturnStatus::OK;
@@ -421,13 +421,13 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
  * to a particular track. */
 EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chain_name, const std::string &plugin_name)
 {
-    auto chain_node = _processors_by_unique_name.find(chain_name);
-    if (chain_node == _processors_by_unique_name.end())
+    auto chain_node = _processors.find(chain_name);
+    if (chain_node == _processors.end())
     {
         return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
     }
-    auto processor_node = _processors_by_unique_name.find(plugin_name);
-    if (processor_node == _processors_by_unique_name.end())
+    auto processor_node = _processors.find(plugin_name);
+    if (processor_node == _processors.end())
     {
         return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
@@ -453,7 +453,7 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
         {
             MIND_LOG_ERROR("Failed to remove processor {} from chain", plugin_name);
         }
-        _remove_processor_from_processing_part(processor->id());
+        _remove_processor_from_realtime_part(processor->id());
     }
     return _deregister_processor(processor->name());
 }
@@ -472,22 +472,22 @@ bool AudioEngine::_handle_internal_events(Event &event)
         case EventType::INSERT_PROCESSOR:
         {
             auto typed_event = event.processor_operation_event();
-            bool ok = _insert_processor_in_processing_part(typed_event->instance());
+            bool ok = _insert_processor_in_realtime_part(typed_event->instance());
             typed_event->set_handled(ok);
             break;
         }
         case EventType::REMOVE_PROCESSOR:
         {
             auto typed_event = event.processor_reorder_event();
-            bool ok = _remove_processor_from_processing_part(typed_event->processor());
+            bool ok = _remove_processor_from_realtime_part(typed_event->processor());
             typed_event->set_handled(ok);
             break;
         }
         case EventType::ADD_PROCESSOR_TO_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_processors_by_unique_id[typed_event->chain()]);
-            Processor* processor = static_cast<Processor*>(_processors_by_unique_id[typed_event->processor()]);
+            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
+            Processor* processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
             if (chain && processor)
             {
                 chain->add(processor);
@@ -502,7 +502,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
         case EventType::REMOVE_PROCESSOR_FROM_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_processors_by_unique_id[typed_event->chain()]);
+            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
             if (chain)
             {
                 bool ok = chain->remove(typed_event->processor());
@@ -515,7 +515,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
         case EventType::ADD_PLUGIN_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_processors_by_unique_id[typed_event->chain()]);
+            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
             if (chain)
             {
                 _audio_graph.push_back(chain);
@@ -528,7 +528,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
         case EventType::REMOVE_PLUGIN_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_processors_by_unique_id[typed_event->chain()]);
+            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
             if (chain)
             {
                 for (auto i = _audio_graph.begin(); i != _audio_graph.end(); ++i)

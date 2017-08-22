@@ -204,7 +204,7 @@ TEST_F(TestEngine, TestSetSamplerate)
     _module_under_test->set_sample_rate(48000.0f);
     ASSERT_FLOAT_EQ(48000.0f, _module_under_test->sample_rate());
     /* Pretty ugly way of checking that it was actually set, but wth */
-    auto eq_plugin = static_cast<equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors_by_unique_name["eq"].get());
+    auto eq_plugin = static_cast<equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors["eq"].get());
     ASSERT_FLOAT_EQ(48000.0f, eq_plugin->_sample_rate);
 }
 
@@ -253,6 +253,6 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     // Assert that they were also deleted from the map of processors
     ASSERT_FALSE(_module_under_test->_processor_exists("main"));
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_FALSE(_module_under_test->_processors_by_unique_id[chain_id]);
-    ASSERT_FALSE(_module_under_test->_processors_by_unique_id[processor_id]);
+    ASSERT_FALSE(_module_under_test->_realtime_processors[chain_id]);
+    ASSERT_FALSE(_module_under_test->_realtime_processors[processor_id]);
 }
