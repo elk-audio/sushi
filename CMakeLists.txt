@@ -143,6 +143,7 @@ set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
+                 "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"

@@ -251,11 +251,6 @@ bool Vst3xWrapper::_setup_event_busses()
 bool Vst3xWrapper::_setup_channels()
 {
     /* Try set up a stereo output pair and, if there is an input bus, a stereo input pair */
-    if (_max_output_channels < 2)
-    {
-        MIND_LOG_ERROR("Not enough channels supported {}:{}", _max_input_channels, _max_input_channels);
-        return false;
-    }
     Steinberg::Vst::SpeakerArrangement input_arr = (_max_input_channels == 0)? Steinberg::Vst::SpeakerArr::kEmpty :
                                                                               Steinberg::Vst::SpeakerArr::kStereo;
     Steinberg::Vst::SpeakerArrangement output_arr = Steinberg::Vst::SpeakerArr::kStereo;

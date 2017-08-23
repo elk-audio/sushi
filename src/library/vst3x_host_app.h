@@ -18,11 +18,10 @@ namespace vst3 {
 class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
 public:
-    SushiHostApplication() {Steinberg::Vst::HostApplication();}
+    SushiHostApplication() : Steinberg::Vst::HostApplication() {}
     virtual Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
 };
 
-//class PluginLoader;
 /**
  * @brief Container to hold plugin modules and manage their lifetimes
  */

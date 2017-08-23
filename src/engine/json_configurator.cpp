@@ -1,7 +1,11 @@
-#include "json_configurator.h"
-
 #include <fstream>
+
+#include "rapidjson/error/en.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/schema.h"
+
 #include "logging.h"
+#include "json_configurator.h"
 
 namespace sushi {
 namespace jsonconfig {
@@ -11,39 +15,31 @@ using namespace midi_dispatcher;
 
 MIND_GET_LOGGER;
 
-JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string &path_to_file)
+JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& path_to_file)
 {
-    Json::Value config;
-    auto status = _parse_file(path_to_file, config);
+    rapidjson::Document config;
+    auto status = _parse_file(path_to_file, config, JsonSection::HOST_CONFIG);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
-    status = _validate_host_configuration(config);
-    if(status != JsonConfigReturnStatus::OK)
-    {
-        return status;
-    }
-    float sample_rate = config["host_config"]["samplerate"].asFloat();
+
+    float sample_rate = config["host_config"]["samplerate"].GetFloat();
     MIND_LOG_INFO("Setting engine sample rate to {}", sample_rate);
     _engine->set_sample_rate(sample_rate);
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string &path_to_file)
+JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string& path_to_file)
 {
-    Json::Value config;
-    auto status = _parse_file(path_to_file, config);
+    rapidjson::Document config;
+    auto status = _parse_file(path_to_file, config, JsonSection::CHAINS);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
-    status = _validate_chains_definition(config);
-    if(status != JsonConfigReturnStatus::OK)
-    {
-        return status;
-    }
-    for (auto& chain : config["plugin_chains"])
+
+    for (auto& chain : config["plugin_chains"].GetArray())
     {
         status = _make_chain(chain);
         if (status != JsonConfigReturnStatus::OK)
@@ -55,91 +51,107 @@ JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string &path_to_
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string &path_to_file)
+JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_file)
 {
-    Json::Value config;
-    auto status = _parse_file(path_to_file, config);
+    rapidjson::Document config;
+    auto status = _parse_file(path_to_file, config, JsonSection::MIDI);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
-    status = _validate_midi_definition(config);
-    if(status != JsonConfigReturnStatus::OK)
+
+    const rapidjson::Value& midi = config["midi"];
+    for (const auto& con : midi["chain_connections"].GetArray())
     {
-        return status;
-    }
-    const Json::Value& midi = config["midi"];
-    for (const auto& con : midi["chain_connections"])
-    {
-        auto res = _midi_dispatcher->connect_kb_to_track(con["port"].asInt(),
-                                                         con["chain"].asString(),
+        auto res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
+                                                         con["chain"].GetString(),
                                                          _get_midi_channel(con["channel"]));
         if (res != MidiDispatcherStatus::OK)
         {
             if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
             {
                 MIND_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
-                                       "channel connections in Json Config file.", con["port"].asInt());
+                                       "channel connections in Json Config file.", con["port"].GetInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
             MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
-                                   "chain connection in Json config file.", con["chain"].asString());
+                                   "chain connection in Json config file.", con["chain"].GetString());
             return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
     }
 
-    for (const auto& cc_map : midi["cc_mappings"])
+    for (const auto& cc_map : midi["cc_mappings"].GetArray())
     {
-        auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].asInt(),
-                                                             cc_map["plugin_name"].asString(),
-                                                             cc_map["parameter_name"].asString(),
-                                                             cc_map["cc_number"].asInt(),
-                                                             cc_map["min_range"].asFloat(),
-                                                             cc_map["max_range"].asFloat(),
+        auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
+                                                             cc_map["plugin_name"].GetString(),
+                                                             cc_map["parameter_name"].GetString(),
+                                                             cc_map["cc_number"].GetInt(),
+                                                             cc_map["min_range"].GetFloat(),
+                                                             cc_map["max_range"].GetFloat(),
                                                              _get_midi_channel(cc_map["channel"]));
         if (res != MidiDispatcherStatus::OK)
         {
             if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
             {
                 MIND_LOG_ERROR("Invalid port \"{}\" specified "
-                                       "for midi cc mappings in Json Config file.", cc_map["port"].asInt());
+                                       "for midi cc mappings in Json Config file.", cc_map["port"].GetInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
             if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
             {
                 MIND_LOG_ERROR("Invalid plugin name \"{}\" specified "
-                                       "for midi cc mappings in Json Config file.", cc_map["plugin_name"].asString());
+                                       "for midi cc mappings in Json Config file.", cc_map["plugin_name"].GetString());
                 return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
             }
             MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
-                                                                         cc_map["parameter_name"].asString(),
-                                                                         cc_map["processor_name"].asString());
+                                                                         cc_map["parameter_name"].GetString(),
+                                                                         cc_map["processor_name"].GetString());
             return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
     }
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_file, Json::Value& config)
+JsonConfigReturnStatus JsonConfigurator::parse_events_from_file(const std::string& path_to_file,
+                                                                rapidjson::Document& config)
 {
-    std::ifstream file(path_to_file);
-    if(!file.good())
+    auto status = _parse_file(path_to_file, config, JsonSection::EVENTS);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    return JsonConfigReturnStatus::OK;
+}
+JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_file,
+                                                     rapidjson::Document& config,
+                                                     JsonSection section)
+{
+    std::ifstream config_file(path_to_file);
+    if(!config_file.good())
     {
         MIND_LOG_ERROR("Invalid file passed to JsonConfigurator {}", path_to_file);
         return JsonConfigReturnStatus::INVALID_FILE;
     }
-    Json::Reader reader;
-    bool parse_ok = reader.parse(file, config, false);
-    if (!parse_ok)
+    //iterate through every char in file and store in the string
+    std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
+    config.Parse(config_file_contents.c_str());
+    if(config.HasParseError())
     {
-        MIND_LOG_ERROR("Error parsing JSON config file {}",  reader.getFormattedErrorMessages());
+        MIND_LOG_ERROR("Error parsing JSON config file: {}",  rapidjson::GetParseError_En(config.GetParseError()));
         return JsonConfigReturnStatus::INVALID_FILE;
     }
-    MIND_LOG_INFO("Succesfully parsed JSON config file {}", path_to_file);
+
+    if(!_validate_against_schema(config, section))
+    {
+        MIND_LOG_ERROR("Config file {} does not follow schema", path_to_file);
+        return JsonConfigReturnStatus::INVALID_SCHEMA;
+    }
+
+    MIND_LOG_INFO("Successfully parsed JSON config file {}", path_to_file);
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_def)
+JsonConfigReturnStatus JsonConfigurator::_make_chain(const rapidjson::Value& chain_def)
 {
     int num_channels = 0;
     if (chain_def["mode"] == "mono")
@@ -151,7 +163,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
         num_channels = 2;
     }
 
-    auto chain_name = chain_def["name"].asString();
+    auto chain_name = chain_def["name"].GetString();
     auto status = _engine->create_plugin_chain(chain_name, num_channels);
     if(status != EngineReturnStatus::OK)
     {
@@ -161,27 +173,27 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
     MIND_LOG_DEBUG("Successfully added Plugin Chain "
                            "\"{}\" to the engine", chain_name);
 
-    for(const Json::Value &def : chain_def["plugins"])
+    for(const auto& def : chain_def["plugins"].GetArray())
     {
-        auto plugin_uid = def["uid"].asString();
-        auto plugin_name = def["name"].asString();
-        std::string plugin_path = "";
-        if (def["path"].isString())
-        {
-            plugin_path = def["path"].asString();
-        }
+        std::string plugin_uid;
+        std::string plugin_path;
+        std::string plugin_name = def["name"].GetString();
         PluginType plugin_type;
-        auto type = def["type"].asString();
+        std::string type = def["type"].GetString();
         if(type == "internal")
         {
             plugin_type = PluginType::INTERNAL;
+            plugin_uid = def["uid"].GetString();
         }
         else if(type == "vst2x")
         {
             plugin_type = PluginType::VST2X;
+            plugin_path = def["path"].GetString();
         }
         else
         {
+            plugin_uid = def["uid"].GetString();
+            plugin_path = def["path"].GetString();
             plugin_type = PluginType::VST3X;
         }
 
@@ -204,258 +216,67 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const Json::Value &chain_de
     return JsonConfigReturnStatus::OK;
 }
 
-int JsonConfigurator::_get_midi_channel(const Json::Value &channels)
+int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
 {
-    if (channels.isString())
+    if (channels.IsString())
     {
         return midi::MidiChannel::OMNI;
     }
-    return channels.asInt();
+    return channels.GetInt();
 }
 
-JsonConfigReturnStatus JsonConfigurator::_validate_host_configuration(const Json::Value& config)
+bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, JsonSection section)
 {
-    if(!config.isMember("host_config"))
+    const char* schema_char_array;
+    switch(section)
     {
-        MIND_LOG_ERROR("No host_config member in JSON config file");
-        return JsonConfigReturnStatus::INVALID_HOST_CONFIG;
-    }
-    if (!config["host_config"]["samplerate"].isNumeric() && !config["host_config"]["samplerate"].isNull())
-    {
-        MIND_LOG_ERROR("Incorrect sample rate in JSON config file");
-        return JsonConfigReturnStatus::INVALID_HOST_CONFIG;
-    }
-    return JsonConfigReturnStatus::OK;
-}
+        case JsonSection::HOST_CONFIG:
+            schema_char_array =
+                #include "json_schemas/host_config_schema.json"
+                                                              ;
+            break;
 
-/* TODO: This is a basic validation, compare this to a schema using VALIJSON or similar library */
-JsonConfigReturnStatus JsonConfigurator::_validate_chains_definition(const Json::Value& config)
-{
-    if(!config.isMember("plugin_chains"))
-    {
-        MIND_LOG_ERROR("No plugin chains definitions in JSON config file");
-        return JsonConfigReturnStatus::INVALID_CHAIN_FORMAT;
-    }
-    if (!config["plugin_chains"].isArray() || config["plugin_chains"].empty())
-    {
-        MIND_LOG_ERROR("Incorrect definition of plugin chains in JSON config file");
-        return JsonConfigReturnStatus::INVALID_CHAIN_FORMAT;
+        case JsonSection::CHAINS:
+            schema_char_array =
+                #include "json_schemas/plugin_chains_schema.json"
+                                                                ;
+            break;
+
+        case JsonSection::MIDI:
+            schema_char_array =
+                #include "json_schemas/midi_schema.json"
+                                                       ;
+            break;
+
+        case JsonSection::EVENTS:
+            schema_char_array =
+                #include "json_schemas/events_schema.json"
+                                                        ;
     }
 
-    /* Validate JSON scheme for each plugin chain defined */
-    for (const auto& chain : config["plugin_chains"])
+    rapidjson::Document schema;
+    schema.Parse(schema_char_array);
+    rapidjson::SchemaDocument schema_document(schema);
+    rapidjson::SchemaValidator schema_validator(schema_document);
+
+    // Validate Schema
+    if (!config.Accept(schema_validator))
     {
-        if(!chain["name"].isString())
+        rapidjson::Pointer invalid_config_pointer = schema_validator.GetInvalidDocumentPointer();
+        rapidjson::StringBuffer string_buffer;
+        invalid_config_pointer.Stringify(string_buffer);
+        std::string error_node = string_buffer.GetString();
+        if(error_node == "")
         {
-            MIND_LOG_ERROR("\"name\" (type:string) for plugin "
-                                   "chain is not defined in JSON config file");
-            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
-        }
-        if(!chain["mode"].isString())
-        {
-            MIND_LOG_ERROR("\"mode\" (type:string) for plugin chain {} "
-                                   "is not defined in JSON config file", chain["name"].asString());
-            return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
-        }
-        auto mode = chain["mode"].asString();
-        if(mode != "mono" && mode != "stereo")
-        {
-            MIND_LOG_ERROR(" Unrecognized \"mode\" {} for plugin chain "
-                                   "in Json config file.", mode);
-            return JsonConfigReturnStatus::INVALID_CHAIN_MODE;
-        }
-        if(!chain.isMember("plugins") || !chain["plugins"].isArray())
-        {
-            MIND_LOG_ERROR("\"plugins\" is not defined for plugin chain "
-                                   "\"{}\" in JSON config file", chain["name"].asString());
-            return JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT;
-        }
-        if(!chain["plugins"].empty())
-        {
-            for(auto& def : chain["plugins"])
-            {
-                auto type = def["type"].asString();
-                if(type != "internal" && type != "vst2x" && type != "vst3x")
-                {
-                    MIND_LOG_ERROR("Invalid plugin type \"{}\" in "
-                                           "plugin chain \"{}\"", type, chain["name"].asString());
-                    return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
-                }
-                if((type == "internal" || type == "vst3x") && !def["uid"].isString())
-                {
-                    MIND_LOG_ERROR("\"uid\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["uid"].asString());
-                    return JsonConfigReturnStatus::INVALID_PLUGIN_UID;
-                }
-                if ((type == "vst2x" || type =="vst3x") && !def["path"].isString())
-                {
-                    MIND_LOG_ERROR("\"path\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["path"].asString());
-                    return  JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
-                }
-                if(!def["name"].isString())
-                {
-                    MIND_LOG_ERROR("\"name\" (type:string) is not defined for plugin chain "
-                                           "\"{}\" in JSON config file", chain["name"].asString());
-                    return  JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
-                }
-                if(!def["type"].isString())
-                {
-                    MIND_LOG_ERROR("\"type\" (type:string) is not defined in plugin chain \"{}\"", chain["name"].asString());
-                    return JsonConfigReturnStatus::INVALID_PLUGIN_TYPE;
-                }
-            }
+            MIND_LOG_ERROR("Invalid Json Config File: missing definitions in the root of the document");
         }
         else
         {
-            MIND_LOG_INFO("Plugin chain \"{}\" is empty and has no plugins.", chain["name"].asString());
+            MIND_LOG_ERROR("Invalid Json Config File: Incorrect definition at {}", error_node);
         }
+        return false;
     }
-    MIND_LOG_DEBUG("Plugin chains definition in Json Config file follow valid schema.");
-    return JsonConfigReturnStatus::OK;
-}
-
-JsonConfigReturnStatus JsonConfigurator::_validate_midi_definition(const Json::Value &config)
-{
-    if(config.empty() || !config.isMember("midi") || config["midi"].empty())
-    {
-        MIND_LOG_WARNING("No midi connection information in Json config file.");
-        return JsonConfigReturnStatus::NO_MIDI_CONNECTIONS;
-    }
-    const Json::Value& midi_def = config["midi"];
-
-    auto status = _validate_midi_chain_connection_def(midi_def);
-    if(status != JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Error in definition of Midi chain connections in Json config file.");
-        return status;
-    }
-
-    status = _validate_midi_cc_map_def(midi_def);
-    if(status != JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Error in definition of Midi CC mappings in Json config file.");
-        return status;
-    }
-
-    MIND_LOG_DEBUG("Midi follows definition in Json Config file follows a valid schema");
-    return JsonConfigReturnStatus::OK;
-}
-
-JsonConfigReturnStatus JsonConfigurator::_validate_midi_chain_connection_def(const Json::Value &midi_def)
-{
-    if(!midi_def.isMember("chain_connections"))
-    {
-        MIND_LOG_ERROR("Midi chain connections are not defined in Json config file");
-        return JsonConfigReturnStatus::INVALID_MIDI_CHAIN_CON;
-    }
-    if(!midi_def["chain_connections"].isArray() || midi_def["chain_connections"].empty())
-    {
-        MIND_LOG_ERROR("Midi chain connections are improperly defined in Json config file");
-        return JsonConfigReturnStatus::INVALID_MIDI_CHAIN_CON;
-    }
-    for(const auto& con : midi_def["chain_connections"])
-    {
-        if(!con["port"].isInt())
-        {
-            MIND_LOG_ERROR("\"port\" (type:int) for midi "
-                                   "chain connection is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_PORT;
-        }
-        if(!con["chain"].isString())
-        {
-            MIND_LOG_ERROR("\"chain\" (type:string) for midi "
-                                   "chain connection is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
-        }
-        if(!con["channel"].isInt() && !con["channel"].isString())
-        {
-            MIND_LOG_ERROR("\"channel\" (type:string or int) for midi "
-                                   "chain connection is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
-        }
-        if(con["channel"].isString())
-        {
-            if(con["channel"].asString() != "omni" && con["channel"].asString() != "all")
-            {
-                MIND_LOG_ERROR(" Unrecognized \"channel\" {} for midi chain connection "
-                                       "in Json config file.", con["channel"].asString());
-                return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
-            }
-        }
-    }
-    MIND_LOG_DEBUG("Midi connections definition in Json Config file follows a valid schema");
-    return JsonConfigReturnStatus::OK;
-}
-
-JsonConfigReturnStatus JsonConfigurator::_validate_midi_cc_map_def(const Json::Value &midi_def)
-{
-    if(!midi_def.isMember("cc_mappings"))
-    {
-        MIND_LOG_ERROR("CC mappings are not defined in Json config file");
-        return JsonConfigReturnStatus::INVALID_MIDI_CC_MAP;
-    }
-    if(!midi_def["cc_mappings"].isArray() || midi_def["cc_mappings"].empty())
-    {
-        MIND_LOG_ERROR("CC mappings are incorrectly defined in Json config file.");
-        return JsonConfigReturnStatus::INVALID_MIDI_CC_MAP;
-    }
-    for(const auto& cc_map : midi_def["cc_mappings"])
-    {
-        if(!cc_map["port"].isInt())
-        {
-            MIND_LOG_ERROR("\"port\" (type:int) for midi "
-                                   "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_PORT;
-        }
-        if(!cc_map["channel"].isInt() && !cc_map["channel"].isString())
-        {
-            MIND_LOG_ERROR("\"channel\" (type:string or int) for midi "
-                                   "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
-        }
-        if(cc_map["channel"].isString())
-        {
-            if(cc_map["channel"].asString() != "omni" && cc_map["channel"].asString() != "all")
-            {
-                MIND_LOG_ERROR(" Unrecognized \"channel\" {} for midi chain connection "
-                                       "in Json config file.", cc_map["channel"].asString());
-                return JsonConfigReturnStatus::INVALID_MIDI_CHANNEL;
-            }
-        }
-        if(!cc_map["cc_number"].isInt())
-        {
-            MIND_LOG_ERROR("\"cc_number\" (type:int) for midi "
-                                   "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_CC_NUMBER;
-        }
-        if(!cc_map["plugin_name"].isString())
-        {
-            MIND_LOG_ERROR("\"plugin_name\" (type:string) for midi "
-                                   "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
-        }
-        if(!cc_map["parameter_name"].isString())
-        {
-            MIND_LOG_ERROR("\"parameter_name\" (type:string) for midi "
-                                   "cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_PARAMETER;
-        }
-        if(!cc_map["min_range"].isInt())
-        {
-            MIND_LOG_ERROR("\"min_range\" (type:int) for "
-                                   "midi cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_RANGE;
-        }
-        if(!cc_map["max_range"].isInt())
-        {
-            MIND_LOG_ERROR("\"max_range\" (type:int) for "
-                                   "midi cc mapping is not defined in Json config file.");
-            return JsonConfigReturnStatus::INVALID_MIDI_RANGE;
-        }
-    }
-    MIND_LOG_DEBUG("Midi CC mappings definition in Json Config file follows a valid schema");
-    return JsonConfigReturnStatus::OK;
+    return true;
 }
 
 } // namespace jsonconfig

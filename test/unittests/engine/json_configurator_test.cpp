@@ -29,7 +29,6 @@ protected:
         _status = JsonConfigReturnStatus::OK;
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
-        _config = Json::Value::null;
     }
 
     void TearDown()
@@ -40,34 +39,17 @@ protected:
     }
 
     /* Helper functions */
-    JsonConfigReturnStatus _validate_host_config();
-    JsonConfigReturnStatus _validate_chains();
-    JsonConfigReturnStatus _validate_midi();
-    JsonConfigReturnStatus _make_chain(const Json::Value& plugin_chain);
+    JsonConfigReturnStatus _make_chain(const rapidjson::Value& plugin_chain);
 
     AudioEngine* _engine;
     MidiDispatcher* _midi_dispatcher;
     JsonConfigurator* _configurator;
     JsonConfigReturnStatus _status;
     std::string _path;
-    Json::Value _config;
+    rapidjson::Document _config;
 };
-JsonConfigReturnStatus TestJsonConfigurator::_validate_host_config()
-{
-    return _configurator->_validate_host_configuration(_config);
-}
 
-JsonConfigReturnStatus TestJsonConfigurator::_validate_chains()
-{
-    return _configurator->_validate_chains_definition(_config);
-}
-
-JsonConfigReturnStatus TestJsonConfigurator::_validate_midi()
-{
-    return _configurator->_validate_midi_definition(_config);
-}
-
-JsonConfigReturnStatus TestJsonConfigurator::_make_chain(const Json::Value& plugin_chain)
+JsonConfigReturnStatus TestJsonConfigurator::_make_chain(const rapidjson::Value& plugin_chain)
 {
     return _configurator->_make_chain(plugin_chain);
 }
@@ -124,194 +106,180 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 TEST_F(TestJsonConfigurator, TestParseFile)
 {
     /* Test Successful parsing of file */
-    _status = _configurator->_parse_file(_path, _config);
+    _status = _configurator->_parse_file(_path, _config, JsonSection::HOST_CONFIG);
     ASSERT_EQ(_status, JsonConfigReturnStatus::OK);
-    ASSERT_TRUE(_config.isMember("plugin_chains"));
-    ASSERT_TRUE(_config.isMember("midi"));
-    ASSERT_TRUE(_config.isMember("events"));
+    ASSERT_TRUE(_config.HasMember("plugin_chains"));
+    ASSERT_TRUE(_config.HasMember("midi"));
+    ASSERT_TRUE(_config.HasMember("events"));
 
     /* Test Unsuccessful parsing of file */
-    _status = _configurator->_parse_file("wrong_path", _config);
+    _status = _configurator->_parse_file("wrong_path", _config, JsonSection::HOST_CONFIG);
     ASSERT_EQ(_status, JsonConfigReturnStatus::INVALID_FILE);
 }
 
 TEST_F(TestJsonConfigurator, TestMakeChain)
 {
     /* Create plugin chain without stompboxes */
-    Json::Value plugin_chain = Json::Value::null;
-    plugin_chain["mode"] = "mono";
-    plugin_chain["name"] = "chain_without_stomp";
-    plugin_chain["plugins"] = Json::arrayValue;
+    rapidjson::Value plugin_chain(rapidjson::kObjectType);
+    rapidjson::Value mode("mono");
+    rapidjson::Value name("chain_without_plugins");
+    rapidjson::Value plugins(rapidjson::kArrayType);
+    plugin_chain.AddMember("mode", mode, _config.GetAllocator());
+    plugin_chain.AddMember("name", name, _config.GetAllocator());
+    plugin_chain.AddMember("plugins", plugins, _config.GetAllocator());
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
+
     /* Similar Plugin chain but with same chain id */
     plugin_chain["mode"] = "stereo";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
 
-    /* Create valid plugin chain with valid stompboxes */
-    plugin_chain["name"] = "chain_with_stomp";
-    auto& test_stompbox = plugin_chain["plugins"];
-    test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["uid"] = "sushi.testing.gain";
-    test_stompbox[0]["type"] = "internal";
-    test_stompbox[1]["name"] = "vst2_plugin";
-    char* full_plugin_path = realpath("libagain.so", NULL);
-    test_stompbox[1]["path"] = full_plugin_path;
-    test_stompbox[1]["type"] = "vst2x";
+    /* Create valid plugin chain with valid plugin */
+    plugin_chain["name"] = "chain_with_internal_plugin";
+    rapidjson::Value test_plugin(rapidjson::kObjectType);
+    rapidjson::Value uid("sushi.testing.gain");
+    rapidjson::Value path("empty_path");
+    rapidjson::Value type("internal");
+    rapidjson::Value plugin_name("internal_plugin");
+    test_plugin.AddMember("uid", uid, _config.GetAllocator());
+    test_plugin.AddMember("path", path, _config.GetAllocator());
+    test_plugin.AddMember("type", type, _config.GetAllocator());
+    test_plugin.AddMember("name", plugin_name, _config.GetAllocator());
+    plugin_chain["plugins"].PushBack(test_plugin, _config.GetAllocator());
+    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
+
+    /* Add vst plugin  */
+    rapidjson::Value& plugin = plugin_chain["plugins"][0];
+    const char* full_plugin_path = realpath("libagain.so", NULL);
+    plugin_chain["name"] = "chain_with_vst2_plugin";
+    plugin["name"] = "vst2_plugin";
+    plugin["path"].SetString(full_plugin_path, _config.GetAllocator());
+    plugin["type"] = "vst2x";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::OK);
     delete full_plugin_path;
 
-    /* test with stompbox having Invalid UID or existing name */
     plugin_chain["name"] = "chain_invalid_internal";
-    test_stompbox[0]["name"] = "invalid_internal_plugin";
-    test_stompbox[0]["uid"] = "wrong_uid";
-    test_stompbox[0]["type"] = "internal";
-    ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
-    plugin_chain["name"] = "chain_invalid_vst";
-    test_stompbox[0]["name"] = "invalid_vst_plugin";
-    test_stompbox[0]["type"] = "vst2x";
-    test_stompbox[0]["path"] = "";
+    plugin["name"] = "invalid_internal_plugin";
+    plugin["uid"] = "wrong_uid";
+    plugin["type"] = "internal";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
 
     plugin_chain["name"] = "chain_invalid_stompname";
-    test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["uid"] = "sushi.testing.gain";
-    test_stompbox[0]["type"] = "internal";
+    plugin["name"] = "internal_plugin";
+    plugin["uid"] = "sushi.testing.gain";
+    plugin["type"] = "internal";
     ASSERT_EQ(_make_chain(plugin_chain), JsonConfigReturnStatus::INVALID_PLUGIN_NAME);
 }
 
 TEST_F(TestJsonConfigurator, TestValidJsonSchema)
 {
-    _status = _configurator->_parse_file(_path, _config);
-    ASSERT_EQ(_status, JsonConfigReturnStatus::OK);
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::OK);
-    ASSERT_EQ(_validate_host_config(), JsonConfigReturnStatus::OK);
+    std::ifstream config_file(_path);
+    std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
+    _config.Parse(config_file_contents.c_str());
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config,JsonSection::HOST_CONFIG));
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config,JsonSection::CHAINS));
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config,JsonSection::MIDI));
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config,JsonSection::EVENTS));
 }
 
-TEST_F(TestJsonConfigurator, TestInvalidPluginChainDef)
+TEST_F(TestJsonConfigurator, TestHostConfigSchema)
 {
-    /* Tests for case: Plugin chains are not defined in the JSON file */
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
+    _config.SetObject();
+    /* No definition of host_config */
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::HOST_CONFIG));
 
-    /* Define new key "stombox_chains" as null value so it is empty */
-    _config["plugin_chains"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
-    _config["plugin_chains"] = Json::arrayValue;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_FORMAT);
+    /* no definition of samplerate */
+    rapidjson::Value host_config(rapidjson::kObjectType);
+    _config.AddMember("host_config", host_config, _config.GetAllocator());
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::HOST_CONFIG));
 
-    /* Create Plugin chain array with dummy value */
-    auto& plugin_chain = _config["plugin_chains"];
-    plugin_chain[0]["dummy"] = "dummy";
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
-    plugin_chain[0]["name"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
-    plugin_chain[0]["name"] = "chain_name";
-
-    /* Create key "mode" in "stompbox_chains" array, but defined as empty value */
-    plugin_chain[0]["mode"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_MODE);
-    plugin_chain[0]["mode"] = "monno";
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_CHAIN_MODE);
-    plugin_chain[0]["mode"] = "mono";
+    /* invalid type */
+    rapidjson::Value samplerate(rapidjson::kObjectType);
+    _config["host_config"].AddMember("samplerate", samplerate, _config.GetAllocator());
+    _config["host_config"]["samplerate"] = "44100";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::HOST_CONFIG));
 }
 
-TEST_F(TestJsonConfigurator, TestStompboxDef)
+TEST_F(TestJsonConfigurator, TestPluginChainSchema)
 {
-    _config["plugin_chains"] = Json::arrayValue;
-    auto& plugin_chain = _config["plugin_chains"];
-    plugin_chain[0]["mode"] = "mono";
-    plugin_chain[0]["name"] = "chain_name";
+    _config.SetObject();
 
-    /* Test for case Stompboxes are not defined in the plugin chain*/
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT);
+    rapidjson::Value plugin_chains(rapidjson::kArrayType);
+    _config.AddMember("plugin_chains", plugin_chains, _config.GetAllocator());
 
-    /* Define key "stompboxes" as null value */
-    plugin_chain[0]["plugins"] = Json::Value::null;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::INVALID_PLUGIN_FORMAT);
-    /* Defining "stompboxes" as an empty array is valid and should return OK */
-    plugin_chain[0]["plugins"] = Json::arrayValue;
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
+    /* Plugin chain without plugin list defined is not ok, empty list defined is ok */
+    rapidjson::Value example_plugin_chain(rapidjson::kObjectType);
+    rapidjson::Value mode("mono");
+    rapidjson::Value name("plugin_chain_name");
+    rapidjson::Value plugins(rapidjson::kArrayType);
+    example_plugin_chain.AddMember("mode", mode, _config.GetAllocator());
+    example_plugin_chain.AddMember("name", name, _config.GetAllocator());
+    _config["plugin_chains"].PushBack(example_plugin_chain, _config.GetAllocator());
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    _config["plugin_chains"][0].AddMember("plugins", plugins, _config.GetAllocator());
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
 
-    /* Valid stompboxes in plugin chain */
-    auto& test_stompbox = plugin_chain[0]["plugins"];
-    test_stompbox[0]["name"] = "internal_plugin";
-    test_stompbox[0]["uid"] = "path_internal";
-    test_stompbox[0]["type"] = "internal";
-
-    test_stompbox[1]["name"] = "vst_plugin";
-    test_stompbox[1]["path"] = "path_VST";
-    test_stompbox[1]["type"] = "vst2x";
-
-    test_stompbox[2]["name"] = "vst3_plugin";
-    test_stompbox[2]["uid"] = "vst3_id";
-    test_stompbox[2]["path"] = "vst3 path";
-    test_stompbox[2]["type"] = "vst3x";
-    ASSERT_EQ(_validate_chains(), JsonConfigReturnStatus::OK);
+    /* incorrect mode */
+    _config["plugin_chains"][0]["mode"] = "invalid_mode";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    _config["plugin_chains"][0]["mode"] = "stereo";
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
 }
 
-TEST_F(TestJsonConfigurator, TestInValidMidiChainConDef)
+TEST_F(TestJsonConfigurator, TestPluginSchema)
 {
-    Json::Value& midi_def = _config["midi"];
-    midi_def["chain_connections"] = Json::arrayValue;
-    auto& chain_connections = midi_def["chain_connections"];
+    _config.SetObject();
+    rapidjson::Value plugin_chains(rapidjson::kArrayType);
+    _config.AddMember("plugin_chains", plugin_chains, _config.GetAllocator());
 
-    chain_connections[0]["port"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_PORT);
-    chain_connections[0]["port"] = "wrong_data_type";
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_PORT);
-    chain_connections[0]["port"] = 0;
+    rapidjson::Value example_plugin_chain(rapidjson::kObjectType);
+    rapidjson::Value chain_name("chain_name");
+    rapidjson::Value mode("mono");
+    rapidjson::Value plugins(rapidjson::kArrayType);
+    example_plugin_chain.AddMember("name", chain_name, _config.GetAllocator());
+    example_plugin_chain.AddMember("mode", mode, _config.GetAllocator());
+    example_plugin_chain.AddMember("plugins", plugins, _config.GetAllocator());
+    _config["plugin_chains"].PushBack(example_plugin_chain, _config.GetAllocator());
 
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_CHAIN_NAME);
-    chain_connections[0]["chain"] = "left";
+    rapidjson::Value example_plugin(rapidjson::kObjectType);
+    rapidjson::Value plugin_name("plugin_name");
+    rapidjson::Value path("plugin_path");
+    rapidjson::Value uid("plugin_name");
+    rapidjson::Value type("internal");
+    example_plugin.AddMember("name", plugin_name, _config.GetAllocator());
+    example_plugin.AddMember("type", type, _config.GetAllocator());
+    _config["plugin_chains"][0]["plugins"].PushBack(example_plugin, _config.GetAllocator());
+    rapidjson::Value& plugin = _config["plugin_chains"][0]["plugins"][0];
 
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_CHANNEL);
-    chain_connections[0]["channel"] = "wrong_channel";
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_CHANNEL);
-    chain_connections[0]["channel"] = 0;
+    /* type = internal; requires uid */
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    plugin.AddMember("uid", uid, _config.GetAllocator());
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    plugin["type"] = "vst3x";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
 
-    /* Validate cc_mappings definition. */
-    midi_def["cc_mappings"] = Json::arrayValue;
-    auto& cc_mapping = midi_def["cc_mappings"];
-    cc_mapping[0]["port"] = 0;
-    cc_mapping[0]["channel"] = 0;
+    /* type = vst2x; requires path */
+    plugin["type"] = "vst2x";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    plugin.AddMember("path", path, _config.GetAllocator());
+    plugin.RemoveMember("uid");
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
+    plugin["type"] = "vst3x";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
 
-    /* cc number is not defined. */
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_CC_NUMBER);
-    cc_mapping[0]["cc_number"] = 27;
-
-    /* processor name is not defined. */
-    cc_mapping[0]["plugin_name"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
-    cc_mapping[0]["plugin_name"] = "equalizer_0_l";
-
-    /* parameter name is not defined */
-    cc_mapping[0]["parameter_name"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_PARAMETER);
-    cc_mapping[0]["parameter_name"] = "gain";
-
-    /* minimum range is not defined */
-    cc_mapping[0]["min_range"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_RANGE);
-    cc_mapping[0]["min_range"] = -24;
-
-    /* maximum range is not defined */
-    cc_mapping[0]["max_range"] = Json::Value::null;
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::INVALID_MIDI_RANGE);
-    cc_mapping[0]["max_range"] = 24;
-
-    /* everything is defined, schema should be ok here */
-    ASSERT_EQ(_validate_midi(), JsonConfigReturnStatus::OK);
+    /* type = vst3x; requires uid & path */
+    rapidjson::Value vst3_uid("vst3_uid");
+    plugin.AddMember("uid", vst3_uid, _config.GetAllocator());
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config, JsonSection::CHAINS));
 }
 
-TEST_F(TestJsonConfigurator, TestInValidHostConfig)
+TEST_F(TestJsonConfigurator, TestMidiSchema)
 {
-    /* Test that sample rate must be numeric if it is set */
-    Json::Value config;
-    config["host_config"] = Json::ValueType::objectValue;
-    ASSERT_EQ(JsonConfigReturnStatus::OK,
-                _configurator->_validate_host_configuration(config));
+    _configurator->_parse_file(_path, _config, JsonSection::MIDI);
+    rapidjson::Value& chain_connections = _config["midi"]["chain_connections"][0];
+    ASSERT_TRUE(_configurator->_validate_against_schema(_config,JsonSection::MIDI));
 
-    config["host_config"]["samplerate"] = "44100";
-    ASSERT_EQ(JsonConfigReturnStatus::INVALID_HOST_CONFIG,
-              _configurator->_validate_host_configuration(config));
+    chain_connections["channel"] = "invalid";
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config,JsonSection::MIDI));
+    chain_connections["channel"] = 16;
+    ASSERT_FALSE(_configurator->_validate_against_schema(_config,JsonSection::MIDI));
 }

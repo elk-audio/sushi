@@ -1,0 +1,27 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi Host Config JSON Schema",
+  "description": "JSON Schema to validate host configuration definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "host_config":
+    {
+      "type": "object",
+      "properties":
+      {
+        "samplerate":
+        {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 192000
+        }
+      },
+      "required": ["samplerate"]
+    }
+  },
+  "required": ["host_config"]
+}
+)"
