@@ -44,6 +44,13 @@ public:
     void add(Processor* processor);
 
     /**
+     * @brief Remove a plugin from the chain.
+     * @param processor The ObjectId of the processor to remove
+     * @return true if the processor was found and succesfully removed, false otherwise
+     */
+    bool remove(ObjectId processor);
+
+    /**
      * @brief handles events sent to this processor only and not sub-processors
      */
     void process_event(Event event) override;
@@ -69,7 +76,6 @@ public:
         Processor::set_output_channels(channels);
         update_channel_config();
     }
-
 
 
 private:

@@ -66,9 +66,10 @@ private:
 
     void _stop_server();
 
+    void setup_engine_control();
+
     lo_server_thread _osc_server;
     int _server_port;
-    engine::BaseEngine* _engine;
     std::atomic_bool _running;
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;

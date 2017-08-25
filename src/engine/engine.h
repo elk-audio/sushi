@@ -16,10 +16,13 @@
 #include "EASTL/vector.h"
 
 #include "plugin_chain.h"
+#include "engine/receiver.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
+#include "library/event_fifo.h"
+
 
 namespace sushi {
 namespace engine {
@@ -35,7 +38,8 @@ enum class EngineReturnStatus
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
-    INVALID_PLUGIN_CHAIN
+    INVALID_PLUGIN_CHAIN,
+    QUEUE_FULL
 };
 
 enum class PluginType
@@ -43,6 +47,14 @@ enum class PluginType
     INTERNAL,
     VST2X,
     VST3X
+};
+
+enum class RealtimeState
+{
+    STARTING,
+    RUNNING,
+    STOPPING,
+    STOPPED
 };
 
 class BaseEngine
@@ -103,9 +115,19 @@ public:
         return 2;
     }
 
+    virtual bool realtime()
+    {
+        return true;
+    }
+
+    virtual void enable_realtime(bool /*enabled*/) {}
+
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
     virtual EngineReturnStatus send_rt_event(Event event) = 0;
+
+    virtual EngineReturnStatus send_async_event(const Event &event) = 0;
+
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
     {
@@ -128,11 +150,22 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus delete_plugin_chain(const std::string& /*chain_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
     virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
                                                    const std::string& /*uid*/,
                                                    const std::string& /*name*/,
                                                    const std::string& /*file*/,
                                                    PluginType /*plugin_type*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus remove_plugin_from_chain(const std::string& /*chain_id*/,
+                                                        const std::string& /*plugin_id*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -155,7 +188,7 @@ public:
      * @brief Configure the Engine with a new samplerate.
      * @param sample_rate The new sample rate in Hz
      */
-    virtual void set_sample_rate(float sample_rate);
+    void set_sample_rate(float sample_rate);
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn
@@ -165,10 +198,42 @@ public:
      */
     int n_channels_in_chain(int chain) override;
 
+    /**
+     * @brief Returns whether the engine is running in a realtime mode or not
+     * @return true if the engine is currently processing in realtime mode, false otherwise
+     */
+    bool realtime() override;
+
+    /**
+     * @brief Set the engine to operate in realtime mode. In this mode process_chunk and
+     *        send_rt_event is assumed to be called from a realtime thread.
+     *        All other function calls are assumed to be made from non-realtime threads
+     *
+     * @param enabled true to enable realtime mode, false to disable
+     */
+    void enable_realtime(bool enabled) override;
+
+    /**
+     * @brief Process one chunk of audio from in_buffer and write the result to out_buffer
+     * @param in_buffer input audio buffer
+     * @param out_buffer output audio buffer
+     */
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
+    /**
+     * @brief Process an event directly. In a realtime processing setup this must be
+     *        called from the realtime thread before calling process_chunk()
+     * @param event The event to process
+     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+     */
     EngineReturnStatus send_rt_event(Event event) override;
 
+    /**
+     * @brief Called from a non-realtime thread to process an event in the realtime
+     * @param event The event to process
+     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+     */
+    EngineReturnStatus send_async_event(const Event &event) override;
     /**
      * @brief Get the unique id of a processor given its name
      * @param unique_name The unique name of a processor
@@ -201,13 +266,20 @@ public:
     EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
 
     /**
+     * @brief Delete a chain, currently assumes that the chain is empty before calling
+     * @param chain_id The unique name of the chain to delete
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus delete_plugin_chain(const std::string& chain_id) override;
+
+    /**
      * @brief Creates and adds a plugin to a chain.
      * @param chain_id The unique id of the chain to which the processor will be appended
      * @param uid The unique id of the plugin
      * @param name The name to give the plugin after loading
      * @param plugin_path The file to load the plugin from, only valid for external plugins
      * @param plugin_type The type of plugin, i.e. internal or external
-     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
     EngineReturnStatus add_plugin_to_chain(const std::string& chain_id,
                                            const std::string& uid,
@@ -215,8 +287,14 @@ public:
                                            const std::string& plugin_path,
                                            PluginType plugin_type) override;
 
-protected:
-    std::vector<PluginChain*> _audio_graph;
+    /**
+     * @brief Remove a given plugin from a chain and delete it
+     * @param chain_id The unique name of the chain the contains the plugin
+     * @param plugin_id The unique name of the plugin
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise
+     */
+    EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
+                                                        const std::string& plugin_id) override;
 
 private:
     /**
@@ -224,14 +302,36 @@ private:
      * @param uid String unique id
      * @return Pointer to plugin instance if uid is valid, nullptr otherwise
      */
-    std::unique_ptr<Processor> _make_internal_plugin(const std::string& uid);
+    Processor* _make_internal_plugin(const std::string& uid);
 
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
-    EngineReturnStatus _register_processor(std::unique_ptr<Processor> processor, const std::string& str_id);
+    EngineReturnStatus _register_processor(Processor* processor, const std::string& name);
+
+    /**
+     * @breif Remove a processor from the engine and delete it.
+     * @param name The unique name of the processor to delete
+     * @return True if the processor existed and it was correctly deleted
+     */
+    EngineReturnStatus _deregister_processor(const std::string& name);
+
+    /**
+     * @brief Add a registered processor to the realtime processing part.
+     *        Must be called before a processor can be used to process audio.
+     * @param processor Processor to insert
+     */
+    bool _insert_processor_in_realtime_part(Processor* processor);
+
+    /**
+     * @brief Remove a processor from the realtime processing part
+     *        Must be called before de-registering a processor.
+     * @param name The unique name of the processor to delete
+     * @return True if the processor existed and it was correctly deleted
+     */
+    bool _remove_processor_from_realtime_part(ObjectId processor);
 
     /**
      * @brief Checks whether a processor exists in the engine.
@@ -247,12 +347,36 @@ private:
      */
     bool _processor_exists(ObjectId uid);
 
-    // Owns all processors, including plugin chains
-    std::map<std::string, std::unique_ptr<Processor>> _processors_by_unique_name;
-    // Processors indexed by their unique 32 bit id
-    std::vector<Processor*> _processors_by_unique_id{PROC_ID_ARRAY_INCREMENT, nullptr};
+    /**
+     * @brief Process events that are to be handles by the engine directly and
+     *        not by a particular processor.
+     * @param event The event to handle
+     * @return true if handled, false if not an engine event
+     */
+    bool _handle_internal_events(Event &event);
 
+    std::vector<PluginChain*> _audio_graph;
+
+    // All registered processors indexed by their unique name
+    std::map<std::string, std::unique_ptr<Processor>> _processors;
+
+    // Processors in the realtime part indexed by their unique 32 bit id
+    // Only to be accessed from the process callback in rt mode.
+    std::vector<Processor*> _realtime_processors{PROC_ID_ARRAY_INCREMENT, nullptr};
+
+    std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
+
+    EventFifo _control_queue_in;
+    EventFifo _control_queue_out;
+    receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
 };
+
+/**
+ * @brief Helper function to encapsulate state changes from transient states
+ * @param current_state The current state of the engine
+ * @return A new, non-transient state
+ */
+RealtimeState update_state(RealtimeState current_state);
 
 } // namespace engine
 } // namespace sushi

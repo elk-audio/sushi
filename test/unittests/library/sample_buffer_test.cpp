@@ -301,3 +301,28 @@ TEST (TestSampleBuffer, test_add_with_gain)
         ASSERT_FLOAT_EQ(buffer.channel(1)[n], 8.0f);
     }
 }
+
+TEST (TestSampleBuffer, test_ramping)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    for (unsigned int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        buffer.channel(0)[i] = 1.0f;
+        buffer.channel(1)[i] = 1.0f;
+    }
+    buffer.ramp(1, 2);
+    ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(1.0f, buffer.channel(1)[0]);
+
+    ASSERT_NEAR(2.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+    ASSERT_NEAR(2.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+
+    ASSERT_NEAR(1.5f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.01f);
+    ASSERT_NEAR(1.5f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2], 0.01f);
+
+    buffer.ramp_down();
+    ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(1.0f, buffer.channel(1)[0]);
+    ASSERT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+    ASSERT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+}

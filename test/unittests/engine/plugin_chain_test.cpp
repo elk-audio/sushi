@@ -57,6 +57,17 @@ TEST_F(PluginChainTest, test_channel_management)
     ASSERT_EQ(2, _module_under_test.input_channels());
 }
 
+TEST_F(PluginChainTest, test_add_remove)
+{
+    DummyProcessor test_processor;
+    _module_under_test.add(&test_processor);
+    ASSERT_EQ(1u, _module_under_test._chain.size());
+    ASSERT_FALSE(_module_under_test.remove(1234567u));
+    ASSERT_EQ(1u, _module_under_test._chain.size());
+    ASSERT_TRUE(_module_under_test.remove(test_processor.id()));
+    ASSERT_TRUE(_module_under_test._chain.empty());
+}
+
 
 TEST_F(PluginChainTest, test_bypass_processing)
 {

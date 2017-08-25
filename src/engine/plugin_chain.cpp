@@ -8,9 +8,26 @@ namespace engine {
 
 void PluginChain::add(Processor* processor)
 {
+    // If a chain adds itself to it's process chain, endless loops can arrise
+    assert(processor != this);
     _chain.push_back(processor);
     processor->set_event_output(this);
     update_channel_config();
+}
+
+bool PluginChain::remove(ObjectId processor)
+{
+    for (auto plugin = _chain.begin(); plugin != _chain.end(); ++plugin)
+    {
+        if ((*plugin)->id() == processor)
+        {
+            (*plugin)->set_event_output(nullptr);
+            _chain.erase(plugin);
+            update_channel_config();
+            return true;
+        }
+    }
+    return false;
 }
 
 void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
@@ -64,7 +81,6 @@ void PluginChain::update_channel_config()
         processor->set_input_channels(_current_input_channels);
         processor->set_output_channels(_current_input_channels);
     }
-    return;
 }
 
 void PluginChain::process_event(Event event)
