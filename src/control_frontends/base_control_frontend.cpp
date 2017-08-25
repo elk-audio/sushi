@@ -66,27 +66,5 @@ void BaseControlFrontend::delete_processor(const std::string& chain, const std::
     }
 }
 
-bool BaseControlFrontend::_stop_engine()
-{
-    if (!_engine->realtime())
-    {
-        return true;
-    }
-    _queue->push(Event::make_stop_engine_event());
-    int retries = 0;
-    while (retries < STOP_RETRIES)
-    {
-        if (!_engine->realtime())
-        {
-            return true;
-        }
-        std::this_thread::sleep_for(RETRY_INTERVAL);
-        retries++;
-    }
-    MIND_LOG_WARNING("Stopping engine timed out");
-    return false;
-}
-
-
 } // end namespace control_frontend
 } // end namespace sushi

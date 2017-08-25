@@ -43,8 +43,6 @@ protected:
     engine::BaseEngine* _engine;
 
 private:
-    bool _stop_engine();
-
     EventFifo* _queue;
 };
 
