@@ -128,7 +128,7 @@ bool AudioEngine::_processor_exists(const std::string& name)
 
 bool AudioEngine::_processor_exists(const ObjectId uid)
 {
-    if(uid >= _realtime_processors.size() || !_realtime_processors[uid])
+    if(uid >= _realtime_processors.size() || _realtime_processors[uid] == nullptr)
     {
         return false;
     }
@@ -142,7 +142,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
         // Resize the vector manually to be able to insert processors at specific indexes
         _realtime_processors.resize(processor->id() + PROC_ID_ARRAY_INCREMENT, nullptr);
     }
-    if(_realtime_processors[processor->id()])
+    if(_realtime_processors[processor->id()] != nullptr)
     {
         return false;
     }
@@ -152,7 +152,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
 
 bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 {
-    if(!_realtime_processors[processor])
+    if(_realtime_processors[processor] == nullptr)
     {
         return false;
     }
@@ -211,7 +211,7 @@ EngineReturnStatus AudioEngine::send_rt_event(Event event)
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     auto processor_node = _realtime_processors[event.processor_id()];
-    if (!processor_node)
+    if (processor_node == nullptr)
     {
         MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_PROCESSOR;
@@ -362,7 +362,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     {
         case PluginType::INTERNAL:
             plugin = _make_internal_plugin(plugin_uid);
-            if(!plugin)
+            if(plugin == nullptr)
             {
                 MIND_LOG_ERROR("Incorrect stompbox UID \"{}\"", plugin_uid);
                 return EngineReturnStatus::INVALID_PLUGIN_UID;
