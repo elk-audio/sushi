@@ -163,7 +163,24 @@ public:
     bool enabled() {return _enabled;}
 
     /* Override this for nested processors and set all sub processors to disabled */
+    /**
+     * @brief Set the processor to enabled or disabled. If disabled process_audio()
+     *        will not be called and the processor should clear any audio tails and
+     *        filter registers or anything else that could have an influence on future
+     *        calls to set_enabled(true).
+     * @param enabled New state of enabled.
+     */
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
+
+    bool bypassed() {return _enabled;}
+
+    /**
+     * @brief Set the bypass state of the processor. If process_audio() is called
+     *        in bypass mode, the processor should pass the audio unchanged while
+     *        preserving any channel configuration set.
+     * @param bypassed New bypass state
+     */
+    virtual void set_bypassed(bool bypassed) {_bypassed = bypassed;}
 
 protected:
 
@@ -215,9 +232,9 @@ protected:
     int _current_output_channels{0};
 
     bool _enabled{true};
+    bool _bypassed{false};
 
 private:
-    /* This could easily be turned into a list if it is neccesary to broadcast events */
     EventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
     ObjectId _id{ProcessorIdGenerator::new_id()};
@@ -229,13 +246,6 @@ private:
     std::vector<ParameterDescriptor*> _parameters_by_index;
 };
 
-/**
- * @brief Interface class for distributing events to processors.
- */
-class EventCaller
-{
-
-};
 
 } // end namespace sushi
 #endif //SUSHI_PROCESSOR_H

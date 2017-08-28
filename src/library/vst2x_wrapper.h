@@ -39,6 +39,7 @@ public:
             _sample_rate{0},
             _process_inputs{},
             _process_outputs{},
+            _can_do_soft_bypass{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
@@ -63,6 +64,8 @@ public:
 
     void set_enabled(bool enabled) override;
 
+    void set_bypassed(bool bypassed) override;
+
 private:
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -73,9 +76,9 @@ private:
     /**
      * @brief Commodity function to access VsT internals
      */
-    void _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
+    int _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
     {
-        _plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt);
+        return static_cast<int>(_plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt));
     }
 
     /**
@@ -85,11 +88,14 @@ private:
      */
     bool _register_parameters();
 
+    void _bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
+    bool _can_do_soft_bypass;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;

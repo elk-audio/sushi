@@ -120,9 +120,16 @@ void Vst3xWrapper::process_event(Event event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    _process_data.assign_buffers(in_buffer, out_buffer);
-    _instance.processor()->process(_process_data);
-    _forward_events(_process_data);
+    if(_bypassed && !_can_do_soft_bypass)
+    {
+        _bypass_process(in_buffer, out_buffer);
+    }
+    else
+    {
+        _process_data.assign_buffers(in_buffer, out_buffer);
+        _instance.processor()->process(_process_data);
+        _forward_events(_process_data);
+    }
     _process_data.clear();
 }
 
@@ -133,6 +140,16 @@ void Vst3xWrapper::set_enabled(bool enabled)
     if (res == Steinberg::kResultOk)
     {
         _enabled = enabled;
+    }
+}
+
+void Vst3xWrapper::set_bypassed(bool bypassed)
+{
+    Processor::set_bypassed(bypassed);
+    if(_can_do_soft_bypass)
+    {
+        Event e = Event::make_parameter_change_event(0, 0, _bypass_parameter_id, bypassed? 1.0f : 0.0f);
+        this->process_event(e);
     }
 }
 
@@ -159,7 +176,12 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             Steinberg::UString128 str(info.title, VST_NAME_BUFFER_SIZE);
             str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
-            if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
+            if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
+            {
+                _can_do_soft_bypass = true;
+                _bypass_parameter_id = info.id;
+            }
+            else if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
             {
                 MIND_LOG_INFO("Registered parameter {}.", name_c_str);
             } else
@@ -279,6 +301,23 @@ bool Vst3xWrapper::_setup_processing()
         return false;
     }
     return true;
+}
+
+void Vst3xWrapper::_bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+{
+    if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
+    {
+        out_buffer = in_buffer;
+    }
+    else
+    {
+        out_buffer.clear();
+        auto max_channels = std::max(_current_input_channels, _current_output_channels);
+        for (int i = 0; i < max_channels; ++i)
+        {
+            out_buffer.add(i % _current_output_channels, i % _current_input_channels, in_buffer);
+        }
+    }
 }
 
 void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)

@@ -68,8 +68,15 @@ TEST_F(PluginChainTest, test_add_remove)
     ASSERT_TRUE(_module_under_test._chain.empty());
 }
 
+TEST_F(PluginChainTest, test_nested_bypass)
+{
+    DummyProcessor test_processor;
+    _module_under_test.add(&test_processor);
+    _module_under_test.set_bypassed(true);
+    ASSERT_TRUE(test_processor.bypassed());
+}
 
-TEST_F(PluginChainTest, test_bypass_processing)
+TEST_F(PluginChainTest, test_empty_chain_processing)
 {
     /* Test that audio goes right through an empty chain unaffected */
     ChunkSampleBuffer in_buffer(2);
@@ -82,7 +89,7 @@ TEST_F(PluginChainTest, test_bypass_processing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(PluginChainTest, test_event_bypass_processing)
+TEST_F(PluginChainTest, test_event_processing)
 {
     ChunkSampleBuffer buffer(2);
     EventFifo event_queue;

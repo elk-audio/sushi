@@ -545,6 +545,16 @@ bool AudioEngine::_handle_internal_events(Event &event)
                 typed_event->set_handled(false);
             break;
         }
+        case EventType::SET_BYPASS:
+        {
+            auto typed_event = event.processor_command_event();
+            auto processor = static_cast<PluginChain*>(_realtime_processors[typed_event->processor_id()]);
+            if (processor)
+            {
+                processor->set_bypassed(typed_event->value());
+            }
+            return true;
+        }
         default:
             return false;
     }

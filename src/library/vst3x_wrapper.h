@@ -59,6 +59,8 @@ public:
 
     void set_enabled(bool enabled) override;
 
+    void set_bypassed(bool bypassed) override;
+
 private:
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -81,6 +83,8 @@ private:
 
     bool _setup_processing();
 
+    void _bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+
     /**
      * @brief Read output events from the plugin, convert to internal events
      *        and forward to next plugin.
@@ -101,6 +105,9 @@ private:
                                    &_out_event_list,
                                    &_in_parameter_changes,
                                    &_out_parameter_changes};
+
+    bool _can_do_soft_bypass{false};
+    int _bypass_parameter_id;
 
 };
 

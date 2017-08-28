@@ -21,11 +21,16 @@ void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 {
     /* For now, assume equal number of channels in/out */
     assert(in_buffer.channel_count() == out_buffer.channel_count());
-
     float gain = _gain_parameter->value();
-    /* With SampleBuffer operations */
-    out_buffer.clear();
-    out_buffer.add_with_gain(in_buffer, gain);
+    if (!_bypassed)
+    {
+        /* With SampleBuffer operations */
+        out_buffer.clear();
+        out_buffer.add_with_gain(in_buffer, gain);
+    } else
+    {
+        out_buffer = in_buffer;
+    }
 }
 
 

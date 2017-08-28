@@ -50,17 +50,11 @@ public:
      */
     bool remove(ObjectId processor);
 
-    /**
-     * @brief handles events sent to this processor only and not sub-processors
-     */
     void process_event(Event event) override;
 
-    /**
-     * @brief Process the entire chain and store the result in out.
-     * @param in input buffer.
-     * @param out output buffer.
-     */
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out);
+
+    void set_bypassed(bool bypassed) override;
 
     /* Inherited from EventPipe */
     void send_event(Event event) override;

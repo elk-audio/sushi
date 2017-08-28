@@ -7,6 +7,7 @@
 namespace {
 
 static constexpr int VST_STRING_BUFFER_SIZE = 256;
+static char canDoBypass[] = "bypass";
 
 } // anonymous namespace
 
@@ -53,6 +54,10 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     set_name(std::string(&effect_name[0]));
     set_label(std::string(&product_string[0]));
 
+    // Get plugin can do:s
+    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
+    _can_do_soft_bypass = bypass == 1;
+
     // Channel setup
     set_input_channels(_plugin_handle->numInputs);
     set_output_channels(_plugin_handle->numOutputs);
@@ -86,6 +91,30 @@ void Vst2xWrapper::configure(float sample_rate)
         set_enabled(true);
     }
     return;
+}
+
+void Vst2xWrapper::set_enabled(bool enabled)
+{
+    Processor::set_enabled(enabled);
+    if (enabled)
+    {
+        _vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
+        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);
+    }
+    else
+    {
+        _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
+    }
+}
+
+void Vst2xWrapper::set_bypassed(bool bypassed)
+{
+    Processor::set_bypassed(bypassed);
+    if (_can_do_soft_bypass)
+    {
+        _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, NULL, 0.0f);
+    }
 }
 
 void Vst2xWrapper::_cleanup()
@@ -128,20 +157,23 @@ bool Vst2xWrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Vst2xWrapper::set_enabled(bool enabled)
+void Vst2xWrapper::_bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    Processor::set_enabled(enabled);
-    if (enabled)
+    if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
     {
-        _vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
-        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);
+        out_buffer = in_buffer;
     }
     else
     {
-        _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
-        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
+        out_buffer.clear();
+        auto max_channels = std::max(_current_input_channels, _current_output_channels);
+        for (int i = 0; i < max_channels; ++i)
+        {
+            out_buffer.add(i % _current_output_channels, i % _current_input_channels, in_buffer);
+        }
     }
 }
+
 
 void Vst2xWrapper::process_event(Event event)
 {
@@ -175,20 +207,27 @@ void Vst2xWrapper::process_event(Event event)
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
-
-    for (int i = 0; i < _current_input_channels; i++)
+    if (_bypassed && !_can_do_soft_bypass)
     {
-        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
+        _bypass_process(in_buffer, out_buffer);
+        _vst_midi_events_fifo.flush();
     }
-    for (int i = 0; i < _current_output_channels; i++)
+    else
     {
-        _process_outputs[i] = out_buffer.channel(i);
-    }
+        _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
 
-    _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
+        for (int i = 0; i < _current_input_channels; i++)
+        {
+            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
+        }
+        for (int i = 0; i < _current_output_channels; i++)
+        {
+            _process_outputs[i] = out_buffer.channel(i);
+        }
+
+        _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
+    }
 }
-
 
 } // namespace vst2
 } // namespace sushi

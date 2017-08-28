@@ -8,7 +8,7 @@ namespace engine {
 
 void PluginChain::add(Processor* processor)
 {
-    // If a chain adds itself to it's process chain, endless loops can arrise
+    // If a chain adds itself to its process chain, endless loops can arrise
     assert(processor != this);
     _chain.push_back(processor);
     processor->set_event_output(this);
@@ -96,10 +96,18 @@ void PluginChain::process_event(Event event)
             _event_buffer.push(event);
             break;
 
-            /* Handle events sent to this processor here */
         default:
            break;
     }
+}
+
+void PluginChain::set_bypassed(bool bypassed)
+{
+    for (auto& processor : _chain)
+    {
+        processor->set_bypassed(bypassed);
+    }
+    Processor::set_bypassed(bypassed);
 }
 
 void PluginChain::send_event(Event event)

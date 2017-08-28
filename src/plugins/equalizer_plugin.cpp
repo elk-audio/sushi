@@ -50,13 +50,19 @@ void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     float gain = _gain->value();
     float q = _q->value();
 
-    /* Recalculates the coefficients once per audio chunk, this makes for
-     * predictable cpu load for every chunk */
-
-    dsp::biquad::Coefficients coefficients;
-    dsp::biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
-    _filter.set_coefficients(coefficients);
-    _filter.process(in_buffer.channel(0), out_buffer.channel(0), AUDIO_CHUNK_SIZE);
+    if (!_bypassed)
+    {
+        /* Recalculates the coefficients once per audio chunk, this makes for
+         * predictable cpu load for every chunk */
+        dsp::biquad::Coefficients coefficients;
+        dsp::biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
+        _filter.set_coefficients(coefficients);
+        _filter.process(in_buffer.channel(0), out_buffer.channel(0), AUDIO_CHUNK_SIZE);
+    }
+    else
+    {
+        out_buffer = in_buffer;
+    }
 }
 
 }// namespace equalizer_plugin

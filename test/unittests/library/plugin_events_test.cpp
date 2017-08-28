@@ -68,6 +68,11 @@ TEST (TestPluginEvents, TestFactoryFunction)
     EXPECT_EQ(ObjectId(66), dpc_event->param_id());
     EXPECT_EQ(3, dpc_event->value().data[2]);
 
+    event = Event::make_bypass_processor_event(130, true);
+    EXPECT_EQ(EventType::SET_BYPASS, event.type());
+    EXPECT_EQ(130u, event.processor_id());
+    EXPECT_TRUE(event.processor_command_event()->value());
+
     event = Event::make_stop_engine_event();
     EXPECT_EQ(EventType::STOP_ENGINE, event.type());
 
