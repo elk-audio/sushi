@@ -20,18 +20,28 @@
 namespace sushi {
 namespace engine {
 
-/* for now, chains have at most stereo capability */
-constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 2;
+/* No real technical limit, just something arbitrarily high enough */
+constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 8;
 
 class PluginChain : public Processor, public EventPipe
 {
 public:
-    PluginChain()
+    PluginChain() : _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS},
+                    _bfr_2{PLUGIN_CHAIN_MAX_CHANNELS}
     {
         _max_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
         _max_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
         _current_input_channels = PLUGIN_CHAIN_MAX_CHANNELS;
         _current_output_channels = PLUGIN_CHAIN_MAX_CHANNELS;
+    }
+
+    PluginChain(int channels) : _bfr_1{channels},
+                                _bfr_2{channels}
+    {
+        _max_input_channels = channels;
+        _max_output_channels = channels;
+        _current_input_channels = channels;
+        _current_output_channels = channels;
     }
 
     ~PluginChain() = default;
@@ -59,16 +69,24 @@ public:
     /* Inherited from EventPipe */
     void send_event(Event event) override;
 
-    void set_input_channels(int channels) override
+    bool set_input_channels(int channels) override
     {
-        Processor::set_input_channels(channels);
-        update_channel_config();
+        if (Processor::set_input_channels(channels))
+        {
+            update_channel_config();
+            return true;
+        }
+        return false;
     }
 
-    void set_output_channels(int channels) override
+    bool set_output_channels(int channels) override
     {
-        Processor::set_output_channels(channels);
-        update_channel_config();
+        if (Processor::set_output_channels(channels))
+        {
+            update_channel_config();
+            return true;
+        }
+        return false;
     }
 
 
@@ -79,8 +97,8 @@ private:
     void update_channel_config();
 
     eastl::vector<Processor*> _chain;
-    ChunkSampleBuffer _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS};
-    ChunkSampleBuffer _bfr_2{PLUGIN_CHAIN_MAX_CHANNELS};
+    ChunkSampleBuffer _bfr_1;
+    ChunkSampleBuffer _bfr_2;
 
     // TODO - Maybe use a simpler queue here eventually
     EventFifo _event_buffer;

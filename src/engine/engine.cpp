@@ -272,9 +272,7 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Invalid number of channels");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    PluginChain* chain = new PluginChain;
-    chain->set_input_channels(chain_channel_count);
-    chain->set_output_channels(chain_channel_count);
+    PluginChain* chain = new PluginChain(chain_channel_count);
     EngineReturnStatus status = _register_processor(chain, chain_name);
     if (status != EngineReturnStatus::OK)
     {
