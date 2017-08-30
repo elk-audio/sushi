@@ -58,7 +58,7 @@ TEST_F(TestSamplerVoice, TestNoteOn)
     EXPECT_FLOAT_EQ(0.0f, buf[9]);
     EXPECT_FLOAT_EQ(1.0f, buf[10]);
     EXPECT_FLOAT_EQ(2.0f, buf[12]);
-    EXPECT_FLOAT_EQ(0.0f, buf[20]);
+    EXPECT_FLOAT_EQ(0.0f, buf[15]);
 }
 
 /* Test note on and note of during same audio chunk */

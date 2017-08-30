@@ -17,7 +17,10 @@ namespace sample_player_voice {
  */
 void Voice::note_on(int note, float velocity, int offset)
 {
-    assert(offset < AUDIO_CHUNK_SIZE);
+    if (offset > AUDIO_CHUNK_SIZE)
+    {
+        offset = AUDIO_CHUNK_SIZE;
+    }
 
     /* Completely ignore any currently playing note, it will be cut off abruptly */
     _state = SamplePlayMode::STARTING;
