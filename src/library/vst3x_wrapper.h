@@ -57,6 +57,10 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
+    bool set_input_channels(int channels) override;
+
+    bool set_output_channels(int channels) override;
+
     void set_enabled(bool enabled) override;
 
     void set_bypassed(bool bypassed) override;
@@ -82,8 +86,6 @@ private:
     bool _setup_channels();
 
     bool _setup_processing();
-
-    void _bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     /**
      * @brief Read output events from the plugin, convert to internal events

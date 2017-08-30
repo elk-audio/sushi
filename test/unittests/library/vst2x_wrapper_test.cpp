@@ -83,6 +83,12 @@ TEST_F(TestVst2xWrapper, test_set_channels)
     SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
+
+    EXPECT_TRUE(_module_under_test->set_input_channels(1));
+    EXPECT_TRUE(_module_under_test->set_output_channels(1));
+
+    EXPECT_EQ(1, _module_under_test->input_channels());
+    EXPECT_EQ(1, _module_under_test->output_channels());
 }
 
 TEST_F(TestVst2xWrapper, test_parameter_initialization)

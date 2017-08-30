@@ -56,11 +56,13 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 
     // Get plugin can do:s
     int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
-    _can_do_soft_bypass = bypass == 1;
+    _can_do_soft_bypass = (bypass == 1);
 
     // Channel setup
-    set_input_channels(_plugin_handle->numInputs);
-    set_output_channels(_plugin_handle->numOutputs);
+    _max_input_channels = _plugin_handle->numInputs;
+    _current_input_channels = _max_input_channels;
+    _max_output_channels = _plugin_handle->numOutputs;
+    _current_output_channels = _max_output_channels;
 
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, 0, 0);
@@ -92,6 +94,33 @@ void Vst2xWrapper::configure(float sample_rate)
     }
     return;
 }
+
+bool Vst2xWrapper::set_input_channels(int channels)
+{
+    if(Processor::set_input_channels(channels))
+    {
+        /* Ignoring the return value here because not all Vsts support Speaker
+         * arrangements. At least we have given the plugin a hint at what config
+         * it is connected in */
+        _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        return true;
+    }
+    return false;
+}
+
+bool Vst2xWrapper::set_output_channels(int channels)
+{
+    if(Processor::set_output_channels(channels))
+    {
+        /* Ignoring the return value here because not all Vsts support Speaker
+         * arrangements. At least we have given the plugin a hint at what config
+         * it is connected in */
+        _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        return true;
+    }
+    return false;
+}
+
 
 void Vst2xWrapper::set_enabled(bool enabled)
 {
@@ -157,24 +186,6 @@ bool Vst2xWrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Vst2xWrapper::_bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
-{
-    if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
-    {
-        out_buffer = in_buffer;
-    }
-    else
-    {
-        out_buffer.clear();
-        auto max_channels = std::max(_current_input_channels, _current_output_channels);
-        for (int i = 0; i < max_channels; ++i)
-        {
-            out_buffer.add(i % _current_output_channels, i % _current_input_channels, in_buffer);
-        }
-    }
-}
-
-
 void Vst2xWrapper::process_event(Event event)
 {
     switch (event.type())
@@ -209,25 +220,64 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     if (_bypassed && !_can_do_soft_bypass)
     {
-        _bypass_process(in_buffer, out_buffer);
+        bypass_process(in_buffer, out_buffer);
         _vst_midi_events_fifo.flush();
     }
     else
     {
         _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
-
-        for (int i = 0; i < _current_input_channels; i++)
-        {
-            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
-        }
-        for (int i = 0; i < _current_output_channels; i++)
-        {
-            _process_outputs[i] = out_buffer.channel(i);
-        }
-
+        _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
     }
 }
 
+bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
+{
+    VstSpeakerArrangement in_arr;
+    VstSpeakerArrangement out_arr;
+    in_arr.numChannels = inputs;
+    in_arr.type = arrangement_from_channels(inputs);
+    out_arr.numChannels = outputs;
+    out_arr.type = arrangement_from_channels(outputs);
+    int res = _vst_dispatcher(effSetSpeakerArrangement, 0, (VstIntPtr)&in_arr, &out_arr, 0);
+    return res == 1;
+}
+
+void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+{
+    int i;
+    for (i = 0; i < _current_input_channels; ++i)
+    {
+        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
+    }
+    for (; i <= _max_input_channels; ++i)
+    {
+        _process_inputs[i] = const_cast<float*> (_dummy_input);
+    }
+    for (i = 0; i < _current_output_channels; i++)
+    {
+        _process_outputs[i] = out_buffer.channel(i);
+    }
+    for (; i <= _max_output_channels; ++i)
+    {
+        _process_outputs[i] = _dummy_output;
+    }
+}
+
+VstSpeakerArrangementType arrangement_from_channels(int channels)
+{
+    switch (channels)
+    {
+        case 0:
+            return kSpeakerArrEmpty;
+        case 1:
+            return kSpeakerArrMono;
+        case 2:
+            return kSpeakerArrStereo;
+        default:
+            return kSpeakerArr51; //TODO - decide how to handle multichannel setups
+    }
+    return kNumSpeakerArr;
+}
 } // namespace vst2
 } // namespace sushi

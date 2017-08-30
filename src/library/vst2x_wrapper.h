@@ -16,11 +16,8 @@
 namespace sushi {
 namespace vst2 {
 
-// TODO:
-//      For now, put a fixed number to avoid dynamic relocation of _process_[in|out]puts,
-//      and because we have to rework that part anyway (it's not flexible in InternalPlugin
-//      as well
-constexpr int VST_WRAPPER_MAX_N_CHANNELS = 2;
+/* Should match the maximum reasonable number of channels of a vst */
+constexpr int VST_WRAPPER_MAX_N_CHANNELS = 8;
 constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
@@ -46,6 +43,7 @@ public:
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
+        std::fill(_dummy_input, &_dummy_input[AUDIO_CHUNK_SIZE], 0.0f);
     }
 
     virtual ~Vst2xWrapper()
@@ -61,6 +59,10 @@ public:
     void process_event(Event event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    bool set_input_channels(int channels) override;
+
+    bool set_output_channels(int channels) override;
 
     void set_enabled(bool enabled) override;
 
@@ -88,12 +90,16 @@ private:
      */
     bool _register_parameters();
 
-    void _bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+    bool _update_speaker_arrangements(int inputs, int outputs);
+
+    void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
+    float _dummy_input[AUDIO_CHUNK_SIZE];
+    float _dummy_output[AUDIO_CHUNK_SIZE];
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
 
@@ -101,6 +107,9 @@ private:
     LibraryHandle _library_handle;
     AEffect *_plugin_handle;
 };
+
+VstSpeakerArrangementType arrangement_from_channels(int channels);
+
 
 } // end namespace vst2
 } // end namespace sushi

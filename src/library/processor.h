@@ -151,7 +151,10 @@ public:
     int output_channels() {return _current_output_channels;}
 
     /**
-     * @brief Set the number of input channels for the Processor
+     * @brief Set the number of input channels for the Processor.
+     *        Processors should only return false if the requested nuumber
+     *        of channels is larger than the maximum number of inputs
+     *        the processors can handle.
      * @param channels The new number of input channels
      * @return true if the channel configuration is permitted, false otherwise
      */
@@ -166,7 +169,10 @@ public:
     }
 
     /**
-     * @brief Set the number of output channels for the
+     * @brief Set the number of output channels for the Processor.
+     *        Processors should only return false if the requested nuumber
+     *        of channels is larger than the maximum number of inputs
+     *        the processors can handle.
      * @param channels The new number of output channels
      * @return true if the channel configuration is permitted, false otherwise
      */
@@ -192,7 +198,7 @@ public:
      */
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
 
-    bool bypassed() {return _enabled;}
+    bool bypassed() {return _bypassed;}
 
     /**
      * @brief Set the bypass state of the processor. If process_audio() is called
@@ -242,6 +248,34 @@ protected:
         if (_output_pipe)
             _output_pipe->send_event(event);
     }
+
+    /**
+     * @brief Utility function do to general bypass/passthrough audio processing.
+     *        Useful for processors that don't implement this on their own.
+     * @param in_buffer Input SampleBuffer
+     * @param out_buffer Output SampleBuffer
+     */
+    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+    {
+        if (_current_input_channels == 0)
+        {
+            out_buffer.clear();
+        }
+        else if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
+        {
+            out_buffer = in_buffer;
+        }
+        else
+        {
+            out_buffer.clear();
+            auto max_channels = std::max(_current_input_channels, _current_output_channels);
+            for (int i = 0; i < max_channels; ++i)
+            {
+                out_buffer.add(i % _current_output_channels, i % _current_input_channels, in_buffer);
+            }
+        }
+    }
+
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */

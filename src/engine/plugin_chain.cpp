@@ -71,7 +71,7 @@ void PluginChain::update_channel_config()
     int input_channels = _current_input_channels;
     int output_channels;
 
-    for (int i = 0; i < _chain.size(); ++i)
+    for (unsigned int i = 0; i < _chain.size(); ++i)
     {
         input_channels = std::min(input_channels, _chain[i]->max_input_channels());
         if (input_channels != _chain[i]->input_channels())
@@ -87,7 +87,7 @@ void PluginChain::update_channel_config()
         else
         {
             output_channels = std::min(_max_output_channels, std::min(_chain[i]->max_output_channels(),
-                                                                      _max_output_channels));
+                                                                      _current_output_channels));
         }
         if (output_channels != _chain[i]->output_channels())
         {

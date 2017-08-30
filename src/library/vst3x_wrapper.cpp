@@ -122,7 +122,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     if(_bypassed && !_can_do_soft_bypass)
     {
-        _bypass_process(in_buffer, out_buffer);
+        bypass_process(in_buffer, out_buffer);
     }
     else
     {
@@ -133,6 +133,15 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     _process_data.clear();
 }
 
+bool Vst3xWrapper::set_input_channels(int channels)
+{
+    return Processor::set_input_channels(channels);
+}
+
+bool Vst3xWrapper::set_output_channels(int channels)
+{
+    return Processor::set_output_channels(channels);
+}
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
@@ -301,23 +310,6 @@ bool Vst3xWrapper::_setup_processing()
         return false;
     }
     return true;
-}
-
-void Vst3xWrapper::_bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
-{
-    if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
-    {
-        out_buffer = in_buffer;
-    }
-    else
-    {
-        out_buffer.clear();
-        auto max_channels = std::max(_current_input_channels, _current_output_channels);
-        for (int i = 0; i < max_channels; ++i)
-        {
-            out_buffer.add(i % _current_output_channels, i % _current_input_channels, in_buffer);
-        }
-    }
 }
 
 void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
