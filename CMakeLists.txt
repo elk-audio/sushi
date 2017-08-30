@@ -20,6 +20,12 @@ if (${WITH_JACK})
     message("Building with Jack support.")
 endif()
 
+if(${AUDIO_BUFFER_SIZE})
+    add_definitions(-DCUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+    message("Building with audio buffer size: ${AUDIO_BUFFER_SIZE} samples")
+    unset(AUDIO_BUFFER_SIZE CACHE)
+endif()
+
 #############################
 #  Preprocessor definitions #
 #############################
