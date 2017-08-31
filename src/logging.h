@@ -26,7 +26,7 @@
 #include "spdlog/spdlog.h"
 
 /* Add file and line numbers to debug prints */
-#define ENABLE_DEBUG_FILE_AND_LINE_NUM
+//#define ENABLE_DEBUG_FILE_AND_LINE_NUM
 
 /* Use this macro  at the top of every file to declare a local logger */
 #define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger()

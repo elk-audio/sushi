@@ -90,8 +90,7 @@ std::shared_ptr<spdlog::logger> setup_logging()
     auto async_file_logger = spdlog::rotating_logger_mt(Logger::logger_name(),
                                                         Logger::logger_file_name(),
                                                         MAX_LOG_FILE_SIZE,
-                                                        1,
-                                                        LOGGER_FORCE_FLUSH);
+                                                        1);
 
     async_file_logger->warn("#############################");
     async_file_logger->warn("   Started Mind Logger!");

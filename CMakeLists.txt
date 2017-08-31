@@ -164,6 +164,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
