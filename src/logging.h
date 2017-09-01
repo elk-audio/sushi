@@ -34,7 +34,7 @@
 #include "spdlog/spdlog.h"
 
 /* Add file and line numbers to debug prints */
-#define ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 
 /* Use this macro  at the top of a source file to declare a local logger */
 #define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger()
@@ -46,8 +46,8 @@
  * spdlog supports ostream style, but that doesn't work with
  * -DDISABLE_MACROS unfortunately
  */
-#ifdef ENABLE_DEBUG_FILE_AND_LINE_NUM
-#define MIND_LOG_DEBUG(msg, ...) spdlog_instance->debug(msg " (@{} #{})", ##__VA_ARGS__, __FILE__ , __LINE__)
+#ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define MIND_LOG_DEBUG(msg, ...) spdlog_instance->debug(msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
 #else
 #define MIND_LOG_DEBUG(...)    spdlog_instance->debug(__VA_ARGS__)
 #endif
@@ -55,6 +55,16 @@
 #define MIND_LOG_WARNING(...)  spdlog_instance->warn(__VA_ARGS__)
 #define MIND_LOG_ERROR(...)    spdlog_instance->error(__VA_ARGS__)
 #define MIND_LOG_CRITICAL(...) spdlog_instance->crit(__VA_ARGS__)
+
+#ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define MIND_LOG_DEBUG_IF(condition, msg, ...) spdlog_instance->debug_if(condition, msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#else
+#define MIND_LOG_DEBUG_IF(condition, ...)    spdlog_instance->debug_if(condition, __VA_ARGS__)
+#endif
+#define MIND_LOG_INFO_IF(condition, ...)     spdlog_instance->info_if(condition, __VA_ARGS__)
+#define MIND_LOG_WARNING_IF(condition, ...)  spdlog_instance->warn_if(condition, __VA_ARGS__)
+#define MIND_LOG_ERROR_IF(condition, ...)    spdlog_instance->error_if(condition, __VA_ARGS__)
+#define MIND_LOG_CRITICAL_IF(condition, ...) spdlog_instance->crit_if(condition, __VA_ARGS__)
 
 /** Error codes returned by set_logger_params
  */
