@@ -1,0 +1,76 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi Events JSON Schema",
+  "description": "JSON Schema to validate events definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "events":
+    {
+      "type": "array",
+      "items":
+      {
+        "type": "object",
+        "properties":
+        {
+          "time":
+          {
+            "type": "number"
+          },
+          "type":
+          {
+            "enum": ["parameter_change", "note_on", "note_off"]
+          },
+          "data":
+          {
+            "type": "object",
+            "oneOf":
+            [
+              {
+                "properties":
+                {
+                  "plugin_name":
+                  {
+                    "type": "string"
+                  },
+                  "parameter_name":
+                  {
+                    "type": "string"
+                  },
+                  "value":
+                  {
+                    "type": "number"
+                  }
+                },
+                "required": ["plugin_name", "parameter_name", "value"]
+              },
+              {
+                "properties":
+                {
+                  "plugin_name":
+                  {
+                    "type": "string"
+                  },
+                  "note":
+                  {
+                    "type": "integer"
+                  },
+                  "velocity":
+                  {
+                    "type": "number"
+                  }
+                },
+                "required": ["plugin_name", "note", "velocity"]
+              }
+            ]
+          }
+        },
+        "required": ["time", "type", "data"]
+      }
+    }
+  },
+  "required": ["events"]
+}
+)"

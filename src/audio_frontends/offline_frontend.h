@@ -6,15 +6,15 @@
 #ifndef SUSHI_OFFLINE_FRONTEND_H
 #define SUSHI_OFFLINE_FRONTEND_H
 
-#include "base_audio_frontend.h"
-#include "library/plugin_events.h"
-
 #include <string>
 #include <tuple>
 #include <vector>
 
-#include <json/json.h>
+#include "rapidjson/document.h"
 #include <sndfile.h>
+
+#include "base_audio_frontend.h"
+#include "library/plugin_events.h"
 
 namespace sushi {
 
@@ -55,11 +55,10 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     /**
-     * @brief Parse timestamped events from JSON structure and put them into an internal queueu.
-     * @param events
-     * @return AudioFrontendStatus::OK if successful, other error code otherwise
+     * @brief Parse timestamped events from JSON structure and put them into an internal queue.
+     * @param config rapidjson document containing the events definition.
      */
-    AudioFrontendStatus add_sequencer_events_from_json_def(const Json::Value& events);
+    void add_sequencer_events_from_json_def(const rapidjson::Document& config);
 
     void cleanup() override;
 

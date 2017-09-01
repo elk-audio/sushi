@@ -1,10 +1,12 @@
 
 #include "gtest/gtest.h"
+#include "test_utils.h"
 #include <fstream>
 
 #define private public
 #include "audio_frontends/offline_frontend.cpp"
 #include "engine_mockup.h"
+#include "engine/json_configurator.h"
 
 
 using ::testing::internal::posix::GetEnv;
@@ -114,19 +116,12 @@ TEST_F(TestOfflineFrontend, test_add_sequencer_events)
     }
 
     // Initialize with a file cointaining 0.5 on both channels
-    std::string test_config_file(test_data_dir);
-    test_config_file.append("/config.json");
-
-    std::ifstream file(test_config_file);
-    Json::Value config;
-    Json::Reader reader;
-    bool parse_ok = reader.parse(file, config, false);
-    if (!parse_ok)
-    {
-        EXPECT_TRUE(false) << "Error parsing JSON config file\n";
-    }
-
-    _module_under_test->add_sequencer_events_from_json_def(config["events"]);
+    std::string test_config_file = test_utils::get_data_dir_path();
+    test_config_file.append("config.json");
+    sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher);
+    rapidjson::Document config;
+    configurator.parse_events_from_file(test_config_file, config);
+    _module_under_test->add_sequencer_events_from_json_def(config);
 
     auto event_q = _module_under_test->_event_queue;
     ASSERT_EQ(event_q.size(), 4u);
@@ -139,4 +134,3 @@ TEST_F(TestOfflineFrontend, test_add_sequencer_events)
     }
 
 }
-

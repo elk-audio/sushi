@@ -16,7 +16,6 @@
 #include <tuple>
 #include <vector>
 
-#include <json/json.h>
 #include <jack/jack.h>
 
 namespace sushi {

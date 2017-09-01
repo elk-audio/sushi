@@ -7,8 +7,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <json/json.h>
-
 #include "logging.h"
 #include "options.h"
 #include "audio_frontends/offline_frontend.h"
@@ -129,26 +127,6 @@ int main(int argc, char* argv[])
 
     MIND_GET_LOGGER;
 
-    // JSON configuration parsing
-
-    MIND_LOG_INFO("Reading configuration file {}", config_filename);
-    std::ifstream file(config_filename);
-    if (!file.good())
-    {
-        MIND_LOG_ERROR("Couldn't open JSON configuration file: {}", config_filename);
-        std::exit(1);
-    }
-
-    Json::Value config;
-    Json::Reader reader;
-    bool parse_ok = reader.parse(file, config, false);
-    if (!parse_ok)
-    {
-        MIND_LOG_ERROR("Error parsing JSON configuration file, {}", reader.getFormattedErrorMessages());
-        //std::exit(1);
-    }
-
-
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
@@ -207,20 +185,20 @@ int main(int argc, char* argv[])
     }
     if (!use_jack && !use_xenomai)
     {
-        fe_ret_code = static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config["events"]);
-        if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+        rapidjson::Document config;
+        status = configurator.parse_events_from_file(config_filename, config);
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");
-            std::exit(1);
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
     }
     else if (use_xenomai)
     {
-        fe_ret_code = static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config["events"]);
-        if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+        rapidjson::Document config;
+        status = configurator.parse_events_from_file(config_filename, config);
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            fprintf(stderr, "Error initializing sequencer events from JSON, check logs for details.\n");
-            std::exit(1);
+            static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
     }
     frontend->run();
@@ -228,4 +206,3 @@ int main(int argc, char* argv[])
     frontend->cleanup();
     return 0;
 }
-

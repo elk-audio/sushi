@@ -3,7 +3,7 @@
 	url = https://github.com/electronicarts/EASTL.git
 [submodule "third-party/liblo"]
 	path = third-party/liblo
-	url = git://liblo.git.sourceforge.net/gitroot/liblo/liblo
+	url = git://github.com/radarsat1/liblo.git
 [submodule "vst3_pluginterfaces"]
 	path = third-party/vstsdk3/pluginterfaces
 	url = git://github.com/steinbergmedia/vst3_pluginterfaces.git
@@ -16,3 +16,7 @@
 [submodule "vst3_public_sdk"]
 	path = third-party/vstsdk3/public.sdk
 	url = git://github.com/steinbergmedia/vst3_public_sdk.git
+[submodule "third-party/rapidjson"]
+	path = third-party/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
+	branch = master
