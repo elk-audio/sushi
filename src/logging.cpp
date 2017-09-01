@@ -1,5 +1,5 @@
 #include "logging.h"
-#ifndef DISABLE_LOGGING
+#ifndef MIND_DISABLE_LOGGING
 
 #include <map>
 #include <algorithm>
@@ -13,14 +13,14 @@ namespace mind {
 // http://stackoverflow.com/questions/14808864/can-i-initialize-static-float-variable-during-runtime
 // answer from Edward A.
 
-std::string Logger::_logger_file_name = "log";
-std::string Logger::_logger_name = "Logger";
+std::string Logger::_logger_file_name = "log.txt";
+std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
 
 
 MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
-                                               const std::string logger_name,
-                                               const std::string min_log_level)
+                                              const std::string logger_name,
+                                              const std::string min_log_level)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 
@@ -81,9 +81,9 @@ std::shared_ptr<spdlog::logger> setup_logging()
      * Note, configuration parameters are defined here to guarantee
      * that they are defined before calling get_logger()
      */
-    const size_t LOGGER_QUEUE_SIZE  = 4096;                  // Should be power of 2
-    const int  MAX_LOG_FILE_SIZE    = 10000000;              // In bytes
-    const bool LOGGER_FORCE_FLUSH   = true;
+    const size_t LOGGER_QUEUE_SIZE  = 4096;                 // Should be power of 2
+    const int  MAX_LOG_FILE_SIZE    = 10000000;             // In bytes
+    const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
 
     spdlog::set_level(Logger::min_log_level());
     spdlog::set_async_mode(LOGGER_QUEUE_SIZE);
@@ -92,6 +92,7 @@ std::shared_ptr<spdlog::logger> setup_logging()
                                                         MAX_LOG_FILE_SIZE,
                                                         1);
 
+    async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");
     async_file_logger->warn("   Started Mind Logger!");
     async_file_logger->warn("#############################");
@@ -100,4 +101,4 @@ std::shared_ptr<spdlog::logger> setup_logging()
 
 } // end namespace mind
 
-#endif // DISABLE_LOGGING
+#endif // MIND_DISABLE_LOGGING

@@ -53,7 +53,7 @@ enable_testing()
 #  Disable logging at compile time  #
 #####################################
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_LOGGING")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMIND_DISABLE_LOGGING")
 
 #####################
 #  Unit Test Files  #
