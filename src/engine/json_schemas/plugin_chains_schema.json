@@ -22,7 +22,6 @@ R"(
           },
           "mode":
           {
-            "type": "string",
             "enum": ["mono", "stereo"]
           },
           "plugins":
@@ -48,7 +47,6 @@ R"(
                     },
                     "type":
                     {
-                      "type": "string",
                       "enum": ["internal"]
                     }
                   },
@@ -69,7 +67,6 @@ R"(
                     },
                     "type":
                     {
-                      "type": "string",
                       "enum": ["vst2x"]
                     }
                   },
@@ -95,7 +92,6 @@ R"(
                     },
                     "type":
                     {
-                      "type": "string",
                       "enum": ["vst3x"]
                     }
                   },

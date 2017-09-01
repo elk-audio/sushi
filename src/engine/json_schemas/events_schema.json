@@ -15,27 +15,62 @@ R"(
         "type": "object",
         "properties":
         {
-          "time": {"type": "number"},
+          "time":
+          {
+            "type": "number"
+          },
           "type":
           {
-            "type": "string",
             "enum": ["parameter_change", "note_on", "note_off"]
           },
           "data":
           {
             "type": "object",
-            "properties":
-            {
-              "plugin_name": {"type": "string"},
-              "parameter_name": {"type": "string"},
-              "value": {"type": "number"},
-            },
-            "required": ["plugin_name", "parameter_name", "value"]
+            "oneOf":
+            [
+              {
+                "properties":
+                {
+                  "plugin_name":
+                  {
+                    "type": "string"
+                  },
+                  "parameter_name":
+                  {
+                    "type": "string"
+                  },
+                  "value":
+                  {
+                    "type": "number"
+                  }
+                },
+                "required": ["plugin_name", "parameter_name", "value"]
+              },
+              {
+                "properties":
+                {
+                  "plugin_name":
+                  {
+                    "type": "string"
+                  },
+                  "note":
+                  {
+                    "type": "integer"
+                  },
+                  "velocity":
+                  {
+                    "type": "number"
+                  }
+                },
+                "required": ["plugin_name", "note", "velocity"]
+              }
+            ]
           }
         },
         "required": ["time", "type", "data"]
       }
     }
-  }
+  },
+  "required": ["events"]
 }
 )"

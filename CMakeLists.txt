@@ -168,7 +168,7 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile jsoncpp pthread dl vst3_host sdk )
+                    EASTL sndfile pthread dl vst3_host sdk )
 
 if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
