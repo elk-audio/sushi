@@ -256,7 +256,7 @@ int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
 
 bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, JsonSection section)
 {
-    const char* schema_char_array;
+    const char* schema_char_array = nullptr;
     switch(section)
     {
         case JsonSection::HOST_CONFIG:
