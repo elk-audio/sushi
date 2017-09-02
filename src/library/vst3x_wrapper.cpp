@@ -1,3 +1,5 @@
+#ifdef SUSHI_BUILD_WITH_VST3
+
 #include <pluginterfaces/base/ustring.h>
 #include "vst3x_wrapper.h"
 #include "logging.h"
@@ -319,3 +321,18 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
 
 } // end namespace vst3
 } // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_VST3
+#ifndef SUSHI_BUILD_WITH_VST3
+#include "library/vst3x_wrapper.h"
+#include "logging.h"
+namespace sushi {
+namespace vst3 {
+MIND_GET_LOGGER;
+ProcessorReturnCode Vst3xWrapper::init(float /*sample_rate*/)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Vst 3 support!");
+    return ProcessorReturnCode::ERROR;
+}}}
+#endif

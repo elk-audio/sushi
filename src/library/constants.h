@@ -10,7 +10,11 @@
 
 /* The number of samples to process in one chunk. It is defined as a
 compile time constant to give more room for optimizations */
+#ifdef SUSHI_CUSTOM_AUDIO_CHUNK_SIZE
+static constexpr int AUDIO_CHUNK_SIZE = SUSHI_CUSTOM_AUDIO_CHUNK_SIZE;
+#else
 static constexpr int AUDIO_CHUNK_SIZE = 64;
+#endif
 
 /* Use in class declaration to disallow copying of this class.
  * Note that this marks copy constructor and assignment operator

@@ -11,7 +11,7 @@ using namespace sushi::vst2;
 
 // Reference output signal from VstXSynth
 // in response to NoteON C4 (60), vel=127, default parameters
-static constexpr float VSTXSYNTH_EXPECTED_OUT[2][AUDIO_CHUNK_SIZE] = {
+static constexpr float VSTXSYNTH_EXPECTED_OUT[2][64] = {
         {
                 -0.29699999f, -0.29380956f, -0.29061913f, -0.28742871f, -0.28409326f, -0.28090283f,
                 -0.27771240f, -0.27437696f, -0.27118653f, -0.26799610f, -0.26466063f, -0.26147023f,
@@ -139,7 +139,7 @@ TEST_F(TestVst2xWrapper, test_midi_events)
     _module_under_test->process_audio(in_buffer, out_buffer);
     for (int i=0; i<2; i++)
     {
-        for (int j=0; j<AUDIO_CHUNK_SIZE; j++)
+        for (int j=0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
         {
             ASSERT_FLOAT_EQ(VSTXSYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j]);
         }

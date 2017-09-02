@@ -20,3 +20,6 @@
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = master
+[submodule "third-party/spdlog"]
+	path = third-party/spdlog
+	url = git://github.com/gabime/spdlog.git

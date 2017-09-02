@@ -9,6 +9,7 @@ project(sushi)
 set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
 set(XENOMAI_FLAVOUR mercury CACHE STRING "Xenomai backend flavour. Options are: cobalt mercury")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
+set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -18,6 +19,17 @@ endif()
 if (${WITH_JACK})
     add_definitions(-DSUSHI_BUILD_WITH_JACK)
     message("Building with Jack support.")
+endif()
+
+if (${WITH_VST3})
+    add_definitions(-DSUSHI_BUILD_WITH_VST3)
+    message("Building with Vst 3 support.")
+endif()
+
+if (${AUDIO_BUFFER_SIZE})
+    add_definitions(-DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+    message("Building with audio buffer size: ${AUDIO_BUFFER_SIZE} samples")
+    unset(AUDIO_BUFFER_SIZE CACHE)
 endif()
 
 #############################
@@ -78,9 +90,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
-                      src/library/vst3x_utils.cpp
                       src/library/vst3x_wrapper.cpp
-                      src/library/vst3x_host_app.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -117,8 +127,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_host_callback.h
                         src/library/vst2x_plugin_loader.h
                         src/library/vst3x_wrapper.h
-                        src/library/vst3x_host_app.h
-                        src/library/vst3x_utils.h
                         src/engine/engine.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
@@ -132,7 +140,16 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/offline_frontend.h
         )
 
+set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
+                            src/library/vst3x_utils.cpp
+                            src/library/vst3x_host_app.h
+                            src/library/vst3x_utils.h)
+
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
+
+if (${WITH_VST3})
+    set(SOURCE_FILES "${SOURCE_FILES}" "${ADDITIONAL_VST3_SOURCES}")
+endif()
 
 #########################
 #  Include Directories  #
@@ -148,10 +165,11 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
-if(${WITH_XENOMAI})
+if (${WITH_XENOMAI})
     set(INCLUDE_DIRS ${INCLUDE_DIRS} /usr/xenomai/include
                                      /usr/xenomai/include/${XENOMAI_FLAVOUR}
                                      /usr/xenomai/include/xenomai
@@ -170,13 +188,17 @@ include_directories(${INCLUDE_DIRS})
 #################################
 
 set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile pthread dl vst3_host sdk )
+                    EASTL sndfile pthread dl)
 
 if (${WITH_XENOMAI})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
     set(LINK_DIRS /usr/xenomai/lib)
 else()
     set(LINK_DIRS "")
+endif()
+
+if (${WITH_VST3})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} vst3_host sdk)
 endif()
 
 if (APPLE)
@@ -194,7 +216,7 @@ link_directories(${LINK_DIRS})
 #############
 
 # Build the given Vst3 host implementation into a separate library to
-# Avoid littering out own code with ugly defines
+# Avoid littering our own code with ugly defines
 
 set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 set(VST3_HOST_SOURCES
@@ -206,6 +228,7 @@ set(VST3_HOST_SOURCES
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp")
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
 set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS -DDEVELOPMENT)
 add_dependencies(vst3_host sdk)
 
@@ -221,13 +244,14 @@ add_subdirectory(test)
 ####################
 
 add_executable(sushi ${SOURCE_FILES})
-
-# example:
-# add_dependencies(sushi static_library)
-add_dependencies(sushi liblo vst3_host sdk base)
+add_dependencies(sushi liblo)
 
 if (${WITH_JACK})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} jack)
+endif()
+
+if (${WITH_VST3})
+    add_dependencies(sushi vst3_host sdk base)
 endif()
 
 target_link_libraries(sushi ${LINK_LIBRARIES})
