@@ -5,18 +5,49 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <cstdlib>
 
 #include "logging.h"
 #include "options.h"
+#include "version.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "engine/json_configurator.h"
 #include "audio_frontends/xenomai_frontend.h"
 
+void print_sushi_headline()
+{
+    std::cout << "SUSHI - Sensus Unique Sound Host Interface" << std::endl;
+    std::cout << "Copyright 2016-2017 MIND Music Labs, Stockholm" << std::endl;
+}
+
+void print_version_and_build_info()
+{
+    std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
+                                << SUSHI__VERSION_MIN << "."
+                                << SUSHI__VERSION_REV << std::endl;
+    std::cout << "Build options enabled: "
+#ifdef SUSHI_BUILD_WITH_VST3
+                                           << "VsT 3.x "
+#endif
+#ifdef SUSHI_BUILD_WITH_JACK
+                                           << "Jack  "
+#endif
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+                                           << "Xenomai "
+    #ifdef __COBALT__
+                                           << "(cobalt) "
+    #elif defined __MERCURY__
+                                           << "(mercury) "
+    #endif
+#endif
+                                           << std::endl;
+    std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
+    std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
+}
 
 int main(int argc, char* argv[])
 {
+    print_sushi_headline();
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
     ////////////////////////////////////////////////////////////////////////////////
@@ -74,6 +105,13 @@ int main(int argc, char* argv[])
             assert(false);
             break;
 
+        case OPT_IDX_VERSION:
+            {
+                print_version_and_build_info();
+                std::exit(1);
+            }
+            break;
+
         case OPT_IDX_LOG_LEVEL:
             log_level.assign(opt.arg);
             break;
@@ -122,7 +160,7 @@ int main(int argc, char* argv[])
     auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
     if (ret_code != MIND_LOG_ERROR_CODE_OK)
     {
-        fprintf(stderr, "%s, using default.\n", MIND_LOG_GET_ERROR_MESSAGE(ret_code).c_str());
+        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 
     MIND_GET_LOGGER;
@@ -180,7 +218,7 @@ int main(int argc, char* argv[])
     auto fe_ret_code = frontend->init(fe_config);
     if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
-        fprintf(stderr, "Error initializing frontend, check logs for details.\n");
+        std::cerr << "Error initializing frontend, check logs for details." << std::endl;
         std::exit(1);
     }
     if (!use_jack && !use_xenomai)
