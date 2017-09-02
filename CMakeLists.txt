@@ -13,10 +13,7 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# add_definitions("-DSUSHI_GIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
-
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M")
-# add_definitions("-DSUSHI_BUILD_TIMESTAMP=\"${BUILD_TIMESTAMP}\"")
 
 configure_file(
     ${CMAKE_SOURCE_DIR}/include/version.h.in
