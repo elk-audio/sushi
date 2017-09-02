@@ -16,3 +16,6 @@
 [submodule "vst3_public_sdk"]
 	path = third-party/vstsdk3/public.sdk
 	url = git://github.com/steinbergmedia/vst3_public_sdk.git
+[submodule "third-party/spdlog"]
+	path = third-party/spdlog
+	url = git://github.com/gabime/spdlog.git

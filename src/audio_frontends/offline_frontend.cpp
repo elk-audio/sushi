@@ -1,11 +1,10 @@
-#include <logging.h>
-#include "offline_frontend.h"
-
 #include <cmath>
 #include <iostream>
 
-namespace sushi {
+#include "logging.h"
+#include "offline_frontend.h"
 
+namespace sushi {
 namespace audio_frontend {
 
 MIND_GET_LOGGER;
