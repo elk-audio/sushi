@@ -16,7 +16,7 @@
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Sensus Unique Sound Host Interface" << std::endl;
+    std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
     std::cout << "Copyright 2016-2017 MIND Music Labs, Stockholm" << std::endl;
 }
 
@@ -41,6 +41,7 @@ void print_version_and_build_info()
     #endif
 #endif
                                            << std::endl;
+    std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
 }
