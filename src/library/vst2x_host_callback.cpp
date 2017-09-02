@@ -6,6 +6,9 @@ namespace vst2 {
 
 MIND_GET_LOGGER;
 
+// Disable unused variable warnings as the host callback just print debug info atm
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
                                     VstInt32 opcode, VstInt32 index,
                                     VstIntPtr value, void* ptr, float opt)
@@ -26,6 +29,7 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
     return result;
 
 }
+#pragma GCC diagnostic pop
 
 } // namespace vst2
 } // namespace sushi
