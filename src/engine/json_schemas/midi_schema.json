@@ -35,7 +35,6 @@ R"(
                     "maximum": 15
                   },
                   {
-                    "type": "string",
                     "enum": ["all"]
                   }
                 ]
@@ -72,7 +71,6 @@ R"(
                     "maximum": 15
                   },
                   {
-                    "type": "string",
                     "enum": ["all"]
                   }
                 ]
@@ -103,10 +101,8 @@ R"(
             "required": ["port", "channel", "cc_number", "plugin_name", "parameter_name", "min_range", "max_range"]
           }
         }
-      },
-      "required": ["chain_connections", "cc_mappings"]
+      }
     }
-  },
-  "required": ["midi"]
+  }
 }
 )"

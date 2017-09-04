@@ -21,21 +21,23 @@
 
 #include <iostream>
 
+/* Prevent name collisions with Xenomai that for some inexplicable reason
+ * defines 'debug' as a macro */
+#ifdef debug
+#undef debug
+#endif
+
+#define SPDLOG_DEBUG_ON
+
 /* log macros */
-#ifndef DISABLE_LOGGING
+#ifndef MIND_DISABLE_LOGGING
 #include "spdlog/spdlog.h"
 
 /* Add file and line numbers to debug prints */
-#define ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 
-/* Use this macro  at the top of every file to declare a local logger */
+/* Use this macro  at the top of a source file to declare a local logger */
 #define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger()
-
-#ifdef ENABLE_DEBUG_FILE_AND_LINE_NUM
-    #define MIND_EXTENDED_LOG << " (" << __FILE__ << " @" << __LINE__ <<")"
-#else
-    #define MIND_EXTENDED_LOG
-#endif
 
 /*
  * Use these macros to log messages. Use cppformat style, ie:
@@ -44,13 +46,25 @@
  * spdlog supports ostream style, but that doesn't work with
  * -DDISABLE_MACROS unfortunately
  */
-
-#define MIND_LOG_DEBUG(...)    spdlog_instance->debug(__VA_ARGS__)  MIND_EXTENDED_LOG
+#ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define MIND_LOG_DEBUG(msg, ...) spdlog_instance->debug(msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#else
+#define MIND_LOG_DEBUG(...)    spdlog_instance->debug(__VA_ARGS__)
+#endif
 #define MIND_LOG_INFO(...)     spdlog_instance->info(__VA_ARGS__)
 #define MIND_LOG_WARNING(...)  spdlog_instance->warn(__VA_ARGS__)
 #define MIND_LOG_ERROR(...)    spdlog_instance->error(__VA_ARGS__)
 #define MIND_LOG_CRITICAL(...) spdlog_instance->crit(__VA_ARGS__)
 
+#ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
+#define MIND_LOG_DEBUG_IF(condition, msg, ...) spdlog_instance->debug_if(condition, msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#else
+#define MIND_LOG_DEBUG_IF(condition, ...)    spdlog_instance->debug_if(condition, __VA_ARGS__)
+#endif
+#define MIND_LOG_INFO_IF(condition, ...)     spdlog_instance->info_if(condition, __VA_ARGS__)
+#define MIND_LOG_WARNING_IF(condition, ...)  spdlog_instance->warn_if(condition, __VA_ARGS__)
+#define MIND_LOG_ERROR_IF(condition, ...)    spdlog_instance->error_if(condition, __VA_ARGS__)
+#define MIND_LOG_CRITICAL_IF(condition, ...) spdlog_instance->crit_if(condition, __VA_ARGS__)
 
 /** Error codes returned by set_logger_params
  */
@@ -96,8 +110,8 @@ public:
      * @todo Check arguments and e.g. return errors
      */
     static MIND_LOG_ERROR_CODE set_logger_params(const std::string file_name,
-                                                  const std::string logger_name,
-                                                  const std::string min_log_level);
+                                                 const std::string logger_name,
+                                                 const std::string min_log_level);
 
 
     /**
@@ -140,6 +154,11 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #define MIND_LOG_WARNING(...)
 #define MIND_LOG_ERROR(...)
 #define MIND_LOG_CRITICAL(...)
+#define MIND_LOG_DEBUG_IF(...)
+#define MIND_LOG_INFO_IF(...)
+#define MIND_LOG_WARNING_IF(...)
+#define MIND_LOG_ERROR_IF(...)
+#define MIND_LOG_CRITICAL_IF(...)
 
 #define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL)
 

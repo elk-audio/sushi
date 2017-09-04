@@ -317,8 +317,8 @@ TEST (TestSampleBuffer, test_ramping)
     ASSERT_NEAR(2.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
     ASSERT_NEAR(2.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
 
-    ASSERT_NEAR(1.5f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.01f);
-    ASSERT_NEAR(1.5f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2], 0.01f);
+    ASSERT_NEAR(1.5f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.05f);
+    ASSERT_NEAR(1.5f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2], 0.05f);
 
     buffer.ramp_down();
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(0)[0]);

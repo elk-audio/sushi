@@ -7,6 +7,8 @@
 #ifndef SUSHI_VST3X_WRAPPER_H
 #define SUSHI_VST3X_WRAPPER_H
 
+#ifdef SUSHI_BUILD_WITH_VST3
+
 #include <map>
 #include <utility>
 
@@ -116,4 +118,26 @@ private:
 } // end namespace vst3
 } // end namespace sushi
 
+#endif //SUSHI_BUILD_WITH_VST3
+#ifndef SUSHI_BUILD_WITH_VST3
+
+#include "library/processor.h"
+
+namespace sushi {
+namespace vst3 {
+/* If Vst 3 support is disabled in the build, the wrapper is replaced with this
+   minimal dummy processor whose purpose is to log an error message if a user
+   tries to load a Vst 3 plugin */
+class Vst3xWrapper : public Processor
+{
+public:
+    Vst3xWrapper(const std::string & /*path*/, const std::string & /*name*/) {}
+    ProcessorReturnCode init(float sample_rate) override;
+    void process_event(Event /*event*/) override {}
+    void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
+};
+
+}// end namespace vst3
+}// end namespace sushi
+#endif
 #endif //SUSHI_VST3X_WRAPPER_H

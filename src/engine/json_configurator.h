@@ -21,13 +21,15 @@ namespace jsonconfig {
 enum class JsonConfigReturnStatus
 {
     OK,
-    INVALID_SCHEMA,
+    INVALID_CONFIGURATION,
     INVALID_CHAIN_NAME,
     INVALID_PLUGIN_PATH,
     INVALID_PARAMETER,
     INVALID_PLUGIN_NAME,
     INVALID_MIDI_PORT,
-    INVALID_FILE
+    INVALID_FILE,
+    NO_MIDI_DEFINITIONS,
+    NO_EVENTS_DEFINITIONS
 };
 
 enum class JsonSection

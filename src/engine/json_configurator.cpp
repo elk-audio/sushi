@@ -61,54 +61,61 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
     }
 
     const rapidjson::Value& midi = config["midi"];
-    for (const auto& con : midi["chain_connections"].GetArray())
+    if(midi.HasMember("chain_connections"))
     {
-        auto res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
-                                                         con["chain"].GetString(),
-                                                         _get_midi_channel(con["channel"]));
-        if (res != MidiDispatcherStatus::OK)
+        for (const auto& con : midi["chain_connections"].GetArray())
         {
-            if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+            auto res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
+                                                             con["chain"].GetString(),
+                                                             _get_midi_channel(con["channel"]));
+            if (res != MidiDispatcherStatus::OK)
             {
-                MIND_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
-                                       "channel connections in Json Config file.", con["port"].GetInt());
-                return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+                {
+                    MIND_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
+                                           "channel connections in Json Config file.", con["port"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
+                MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
+                                       "chain connection in Json config file.", con["chain"].GetString());
+                return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
             }
-            MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
-                                   "chain connection in Json config file.", con["chain"].GetString());
-            return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
         }
     }
 
-    for (const auto& cc_map : midi["cc_mappings"].GetArray())
+    if(config["midi"].HasMember("cc_mappings"))
     {
-        auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
-                                                             cc_map["plugin_name"].GetString(),
-                                                             cc_map["parameter_name"].GetString(),
-                                                             cc_map["cc_number"].GetInt(),
-                                                             cc_map["min_range"].GetFloat(),
-                                                             cc_map["max_range"].GetFloat(),
-                                                             _get_midi_channel(cc_map["channel"]));
-        if (res != MidiDispatcherStatus::OK)
+        for (const auto& cc_map : midi["cc_mappings"].GetArray())
         {
-            if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+            auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
+                                                                 cc_map["plugin_name"].GetString(),
+                                                                 cc_map["parameter_name"].GetString(),
+                                                                 cc_map["cc_number"].GetInt(),
+                                                                 cc_map["min_range"].GetFloat(),
+                                                                 cc_map["max_range"].GetFloat(),
+                                                                 _get_midi_channel(cc_map["channel"]));
+            if (res != MidiDispatcherStatus::OK)
             {
-                MIND_LOG_ERROR("Invalid port \"{}\" specified "
-                                       "for midi cc mappings in Json Config file.", cc_map["port"].GetInt());
-                return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+                {
+                    MIND_LOG_ERROR("Invalid port \"{}\" specified "
+                                           "for midi cc mappings in Json Config file.", cc_map["port"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
+                if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
+                {
+                    MIND_LOG_ERROR("Invalid plugin name \"{}\" specified "
+                                           "for midi cc mappings in Json Config file.", cc_map["plugin_name"].GetString());
+                    return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+                }
+                MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
+                                                                            cc_map["parameter_name"].GetString(),
+                                                                            cc_map["processor_name"].GetString());
+                return JsonConfigReturnStatus::INVALID_PARAMETER;
             }
-            if(res == MidiDispatcherStatus::INVALID_PROCESSOR)
-            {
-                MIND_LOG_ERROR("Invalid plugin name \"{}\" specified "
-                                       "for midi cc mappings in Json Config file.", cc_map["plugin_name"].GetString());
-                return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
-            }
-            MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
-                                                                         cc_map["parameter_name"].GetString(),
-                                                                         cc_map["processor_name"].GetString());
-            return JsonConfigReturnStatus::INVALID_PARAMETER;
         }
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -141,10 +148,32 @@ JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_
         return JsonConfigReturnStatus::INVALID_FILE;
     }
 
+    switch(section)
+    {
+        case JsonSection::MIDI:
+            if(!config.HasMember("midi"))
+            {
+                MIND_LOG_DEBUG("Config file does not have MIDI definitions");
+                return JsonConfigReturnStatus::NO_MIDI_DEFINITIONS;
+            }
+            break;
+
+        case JsonSection::EVENTS:
+            if(!config.HasMember("events"))
+            {
+                MIND_LOG_DEBUG("Config file does not have events definitions");
+                return JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS;
+            }
+            break;
+
+        default:
+            break;
+    }
+
     if(!_validate_against_schema(config, section))
     {
         MIND_LOG_ERROR("Config file {} does not follow schema", path_to_file);
-        return JsonConfigReturnStatus::INVALID_SCHEMA;
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
     MIND_LOG_INFO("Successfully parsed JSON config file {}", path_to_file);
@@ -227,7 +256,7 @@ int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
 
 bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, JsonSection section)
 {
-    const char* schema_char_array;
+    const char* schema_char_array = nullptr;
     switch(section)
     {
         case JsonSection::HOST_CONFIG:

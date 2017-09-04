@@ -187,23 +187,19 @@ int main(int argc, char* argv[])
     {
         rapidjson::Document config;
         status = configurator.parse_events_from_file(config_filename, config);
-        if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            fprintf(stderr, "Error parsing sequencer events from JSON, check logs for details.\n");
-            std::exit(1);
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
-        static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
     }
     else if (use_xenomai)
     {
         rapidjson::Document config;
         status = configurator.parse_events_from_file(config_filename, config);
-        if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            fprintf(stderr, "Error parsing sequencer events from JSON, check logs for details.\n");
-            std::exit(1);
+            static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
-        static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
     }
     frontend->run();
 

@@ -6,7 +6,7 @@
 # Adapted from https://github.com/gmoe/vst-cmake
 
 
-set(VST_SDK_PLUGIN_SOURCES
+set(VST2_SDK_PLUGIN_SOURCES
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/vstplugmain.cpp"
@@ -17,14 +17,14 @@ set(AGAIN_SOURCE_DIR "${VST_SDK_PATH}/public.sdk/samples/vst2.x/again/source")
 set(AGAIN_SOURCES
         "${AGAIN_SOURCE_DIR}/again.h"
         "${AGAIN_SOURCE_DIR}/again.cpp"
-        "${VST_SDK_PLUGIN_SOURCES}"
+        "${VST2_SDK_PLUGIN_SOURCES}"
     )
 
 set(VSTXSYNTH_SOURCE_DIR "${VST_SDK_PATH}/public.sdk/samples/vst2.x/vstxsynth/source")
 set(VSTXSYNTH_SOURCES
         "${VSTXSYNTH_SOURCE_DIR}/vstxsynth.cpp"
         "${VSTXSYNTH_SOURCE_DIR}/vstxsynthproc.cpp"
-        "${VST_SDK_PLUGIN_SOURCES}"
+        "${VST2_SDK_PLUGIN_SOURCES}"
         )
 
 include_directories(${VST_SDK_PATH})
@@ -53,7 +53,7 @@ enable_testing()
 #  Disable logging at compile time  #
 #####################################
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_LOGGING")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMIND_DISABLE_LOGGING")
 
 #####################
 #  Unit Test Files  #
@@ -80,18 +80,23 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
                unittests/library/vst2x_midi_event_fifo_test.cpp
-               unittests/library/vst3x_wrapper_test.cpp
                unittests/library/id_generator_test.cpp)
 
 if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
+endif()
+if (${WITH_VST3})
+    set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
 #################################################
 #  Additional compilation units needed by tests #
 #################################################
 
-SET(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+if (NOT ${WITH_VST3})
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
+endif()
 
 ##########################################
 #  Include directories relative to test  #
@@ -115,7 +120,11 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
-add_dependencies(unit_tests again vstxsynth adelay vst3_host)
+add_dependencies(unit_tests again vstxsynth)
+
+if (${WITH_VST3})
+    add_dependencies(unit_tests adelay vst3_host)
+endif()
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that
