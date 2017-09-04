@@ -208,12 +208,10 @@ void XenomaiFrontend::run()
 
     RT_TASK processing_task;
     rt_task_create(&processing_task, "ProcessingTask", 0, 80, 0);
-    if (_disk_io.samplerate() != _engine->sample_rate())
-    {
-        MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                         _disk_io.samplerate(),
-                         _engine->sample_rate());
-    }
+    MIND_LOG_WARNING_IF(_disk_io.samplerate() != _engine->sample_rate(),
+                        "Sample rate mismatch between file ({}) and engine ({})",
+                         _disk_io.samplerate(), _engine->sample_rate());
+
     int64_t period_ns = AUDIO_CHUNK_SIZE * NANOSECOND_TICKS / _engine->sample_rate();
     MIND_LOG_INFO("Setting periodic task every {} ms", period_ns / 1000000.0f);
     rt_task_set_periodic(&processing_task, TM_NOW, period_ns);
