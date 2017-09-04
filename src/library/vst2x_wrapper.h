@@ -37,13 +37,14 @@ public:
             _process_inputs{},
             _process_outputs{},
             _can_do_soft_bypass{false},
+            _double_mono_input{false},
+            _sum_stereo_to_mono_output{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
-        std::fill(_dummy_input, &_dummy_input[AUDIO_CHUNK_SIZE], 0.0f);
     }
 
     virtual ~Vst2xWrapper()
@@ -92,16 +93,26 @@ private:
 
     bool _update_speaker_arrangements(int inputs, int outputs);
 
+    /**
+     * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
+     *        we can provide the plugin with a dual mono input/output instead.
+     *        Calling this sets up possible dual mono mode.
+     * @param speaker_arr_status True if the plugin supports the given speaker arrangement.
+     */
+    void _update_mono_mode(bool speaker_arr_status);
+
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
-    float _dummy_input[AUDIO_CHUNK_SIZE];
-    float _dummy_output[AUDIO_CHUNK_SIZE];
+    ChunkSampleBuffer _dummy_input{1};
+    ChunkSampleBuffer _dummy_output{1};
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
+    bool _double_mono_input;
+    bool _sum_stereo_to_mono_output;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
@@ -109,7 +120,7 @@ private:
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
-
+void sum_stereo_to_mono(ChunkSampleBuffer& left, ChunkSampleBuffer& right);
 
 } // end namespace vst2
 } // end namespace sushi

@@ -99,10 +99,8 @@ bool Vst2xWrapper::set_input_channels(int channels)
 {
     if(Processor::set_input_channels(channels))
     {
-        /* Ignoring the return value here because not all Vsts support Speaker
-         * arrangements. At least we have given the plugin a hint at what config
-         * it is connected in */
-        _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        _update_mono_mode(valid_arr);
         return true;
     }
     return false;
@@ -112,10 +110,8 @@ bool Vst2xWrapper::set_output_channels(int channels)
 {
     if(Processor::set_output_channels(channels))
     {
-        /* Ignoring the return value here because not all Vsts support Speaker
-         * arrangements. At least we have given the plugin a hint at what config
-         * it is connected in */
-        _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+        _update_mono_mode(valid_arr);
         return true;
     }
     return false;
@@ -229,6 +225,11 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
     }
+    if (_sum_stereo_to_mono_output)
+    {
+        out_buffer.apply_gain(0.5f);
+        out_buffer.add_with_gain(_dummy_output, 0.5f);
+    }
 }
 
 bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
@@ -246,13 +247,21 @@ bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
-    for (i = 0; i < _current_input_channels; ++i)
+    if (_double_mono_input)
     {
-        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
+        _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
+        _process_inputs[1] = const_cast<float*>(in_buffer.channel(0));
     }
-    for (; i <= _max_input_channels; ++i)
+    else
     {
-        _process_inputs[i] = const_cast<float*> (_dummy_input);
+        for (i = 0; i < _current_input_channels; ++i)
+        {
+            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
+        }
+        for (; i <= _max_input_channels; ++i)
+        {
+            _process_inputs[i] = (_dummy_input.channel(0));
+        }
     }
     for (i = 0; i < _current_output_channels; i++)
     {
@@ -260,7 +269,25 @@ void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkS
     }
     for (; i <= _max_output_channels; ++i)
     {
-        _process_outputs[i] = _dummy_output;
+        _process_outputs[i] = _dummy_output.channel(0);
+    }
+}
+
+void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
+{
+    _double_mono_input = false;
+    _sum_stereo_to_mono_output = false;
+    if (speaker_arr_status)
+    {
+        return;
+    }
+    if (_current_input_channels == 1 && _max_input_channels == 2)
+    {
+        _double_mono_input = true;
+    }
+    if (_current_output_channels == 1 && _max_output_channels == 2)
+    {
+        _sum_stereo_to_mono_output = true;
     }
 }
 
@@ -279,5 +306,12 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
     }
     return kNumSpeakerArr;
 }
+
+void sum_stereo_to_mono(ChunkSampleBuffer &left, ChunkSampleBuffer &right)
+{
+    left.apply_gain(0.5f);
+    left.add_with_gain(right, 0.5f);
+}
+
 } // namespace vst2
 } // namespace sushi
