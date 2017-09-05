@@ -81,10 +81,6 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-DDEBUG -O0 -g")
 
 # Linker flags
 if (APPLE)
-    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS}"
-            "-framework IOKit"
-            "-framework CoreFoundation"
-    )
     set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
     link_directories(${LINK_DIRS})
 endif()
