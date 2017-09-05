@@ -30,6 +30,7 @@ include_directories(${CMAKE_BINARY_DIR}/generated)
 set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
+set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -44,12 +45,6 @@ endif()
 if (${WITH_VST3})
     add_definitions(-DSUSHI_BUILD_WITH_VST3)
     message("Building with Vst 3 support.")
-endif()
-
-if (${AUDIO_BUFFER_SIZE})
-    add_definitions(-DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
-    message("Building with audio buffer size: ${AUDIO_BUFFER_SIZE} samples")
-    unset(AUDIO_BUFFER_SIZE CACHE)
 endif()
 
 #############################
@@ -270,6 +265,7 @@ add_subdirectory(test)
 #  Target Objects  #
 ####################
 add_executable(sushi ${SOURCE_FILES})
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
