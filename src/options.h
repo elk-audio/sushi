@@ -86,7 +86,7 @@ enum OptionIndex
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER,
-    OPT_IDX_USE_XENOMAI
+    OPT_IDX_USE_XENOMAI_RASPA
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -189,12 +189,12 @@ const optionparser::Descriptor usage[] =
         "\t\t --server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
     },
     {
-        OPT_IDX_USE_XENOMAI,
+        OPT_IDX_USE_XENOMAI_RASPA,
         OPT_TYPE_DISABLED,
-        "x",
-        "xenomai",
+        "r",
+        "raspa",
         SushiArg::Optional,
-        "\t\t-x --xenomai \tUse Xenomai realtime frontend (with RASPA library if built with Cobalt)."
+        "\t\t-r --raspa \tUse Xenomai real-time frontend with RASPA driver."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

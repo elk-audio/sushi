@@ -11,8 +11,8 @@
 #include "version.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
+#include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
-#include "audio_frontends/xenomai_frontend.h"
 
 void print_sushi_headline()
 {
@@ -34,11 +34,6 @@ void print_version_and_build_info()
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
                                            << "Xenomai "
-    #ifdef __COBALT__
-                                           << "(cobalt) "
-    #elif defined __MERCURY__
-                                           << "(mercury) "
-    #endif
 #endif
                                            << std::endl;
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
@@ -81,7 +76,7 @@ int main(int argc, char* argv[])
     if (cl_parser.nonOptionsCount() > 0)
     {
         input_filename = std::string(cl_parser.nonOption(0));
-        // By default, prepend sushiproc_ to filename
+        // By default, append .proc to filename
         output_filename = std::string(input_filename);
         output_filename.append(".proc.wav");
     }
@@ -92,7 +87,7 @@ int main(int argc, char* argv[])
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
     bool use_jack = false;
-    bool use_xenomai = false;
+    bool use_xenomai_raspa = false;
     bool connect_ports = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
@@ -145,8 +140,8 @@ int main(int argc, char* argv[])
             jack_server_name.assign(opt.arg);
             break;
 
-        case OPT_IDX_USE_XENOMAI:
-            use_xenomai = true;
+        case OPT_IDX_USE_XENOMAI_RASPA:
+            use_xenomai_raspa = true;
             break;
 
         default:
@@ -158,17 +153,18 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
-    if (ret_code != MIND_LOG_ERROR_CODE_OK)
-    {
-        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
-    }
+    // auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
+    // if (ret_code != MIND_LOG_ERROR_CODE_OK)
+    // {
+    //     std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+    // }
 
     MIND_GET_LOGGER;
 
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
+
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
     engine.set_audio_input_channels(2);
@@ -188,7 +184,7 @@ int main(int argc, char* argv[])
         MIND_LOG_ERROR("Main: Failed to load chains from Json config file");
         std::exit(1);
     }
-   configurator.load_midi(config_filename);
+    configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
@@ -200,14 +196,11 @@ int main(int argc, char* argv[])
                                                                          connect_ports);
         frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
     }
-    else if (use_xenomai)
+    else if (use_xenomai_raspa)
     {
-        MIND_LOG_INFO("Setting up Xenomai offline audio frontend");
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-        xenomai_init(&argc, const_cast<char* const**>(&argv));
-#endif
-        fe_config = new sushi::audio_frontend::XenomaiFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::XenomaiFrontend(&engine, &midi_dispatcher);
+        MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+        fe_config = new sushi::audio_frontend::BaseAudioFrontendConfiguration();
+        frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
     }
     else
     {
@@ -222,22 +215,13 @@ int main(int argc, char* argv[])
         std::cerr << "Error initializing frontend, check logs for details." << std::endl;
         std::exit(1);
     }
-    if (!use_jack && !use_xenomai)
+    if (!use_jack)
     {
         rapidjson::Document config;
         status = configurator.parse_events_from_file(config_filename, config);
         if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
-        }
-    }
-    else if (use_xenomai)
-    {
-        rapidjson::Document config;
-        status = configurator.parse_events_from_file(config_filename, config);
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
-        {
-            static_cast<sushi::audio_frontend::XenomaiFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
     }
     frontend->run();

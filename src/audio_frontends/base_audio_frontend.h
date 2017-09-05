@@ -21,6 +21,7 @@ enum class AudioFrontendStatus
     INVALID_INPUT_FILE,
     INVALID_OUTPUT_FILE,
     INVALID_SEQUENCER_DATA,
+    INVALID_CHUNK_SIZE,
     AUDIO_HW_ERROR
 };
 

@@ -50,10 +50,13 @@ add_subdirectory(gtest_1_7_0)
 enable_testing()
 
 #####################################
-#  Disable logging at compile time  #
+#  Build Flags                      #
 #####################################
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMIND_DISABLE_LOGGING")
+
+# Overwrite parent definition to avoid issues with Xenomai wrappers
+set(CMAKE_EXE_LINKER_FLAGS "")
 
 #####################
 #  Unit Test Files  #
@@ -112,13 +115,15 @@ include_directories(${INCLUDE_DIRS})
 #  Statically linked libraries  #
 #################################
 
-set(LINK_LIBRARIES "${LINK_LIBRARIES}"
-                   gtest
-                   gtest_main)
+set(TEST_LINK_LIBRARIES
+    ${COMMON_LIBRARIES}
+    gtest
+    gtest_main
+)
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
-target_link_libraries(unit_tests "${LINK_LIBRARIES}")
+target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
 add_dependencies(unit_tests again vstxsynth)
 
