@@ -153,11 +153,11 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    // auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
-    // if (ret_code != MIND_LOG_ERROR_CODE_OK)
-    // {
-    //     std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
-    // }
+    auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
+    if (ret_code != MIND_LOG_ERROR_CODE_OK)
+    {
+        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+    }
 
     MIND_GET_LOGGER;
 
