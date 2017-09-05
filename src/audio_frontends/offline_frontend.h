@@ -69,7 +69,7 @@ private:
     SNDFILE*    _output_file;
     SF_INFO     _soundfile_info;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{2};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer;
     float*  _file_buffer;
 
     // TODO - Not really a queue in offline mode, just a list of events sorted by time

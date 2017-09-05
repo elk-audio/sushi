@@ -94,6 +94,7 @@ void PluginChain::update_channel_config()
             bool res = _chain[i]->set_output_channels(output_channels);
             assert(res);
         }
+        input_channels = output_channels;
     }
 
     if (!_chain.empty())
