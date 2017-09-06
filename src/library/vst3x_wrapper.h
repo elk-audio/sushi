@@ -111,9 +111,11 @@ private:
                                    &_out_parameter_changes};
 
     bool _can_do_soft_bypass{false};
-    int _bypass_parameter_id;
+    ObjectId _bypass_parameter_id;
 
 };
+
+Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);
 
 } // end namespace vst3
 } // end namespace sushi

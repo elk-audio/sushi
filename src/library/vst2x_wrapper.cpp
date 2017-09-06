@@ -301,8 +301,18 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
             return kSpeakerArrMono;
         case 2:
             return kSpeakerArrStereo;
+        case 3:
+            return kSpeakerArr30Music;
+        case 4:
+            return kSpeakerArr40Music;
+        case 5:
+            return kSpeakerArr50;
+        case 6:
+            return kSpeakerArr60Music;
+        case 7:
+            return kSpeakerArr70Music;
         default:
-            return kSpeakerArr51; //TODO - decide how to handle multichannel setups
+            return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
     return kNumSpeakerArr;
 }
