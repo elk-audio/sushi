@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "logging.h"
 #include "options.h"
@@ -25,17 +26,27 @@ void print_version_and_build_info()
     std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
                                 << SUSHI__VERSION_MIN << "."
                                 << SUSHI__VERSION_REV << std::endl;
-    std::cout << "Build options enabled: "
+    std::vector<std::string> build_opts;
 #ifdef SUSHI_BUILD_WITH_VST3
-                                           << "VsT 3.x "
+    build_opts.push_back("vst3");
 #endif
 #ifdef SUSHI_BUILD_WITH_JACK
-                                           << "Jack  "
+    build_opts.push_back("jack");
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-                                           << "Xenomai "
+    build_opts.push_back("xenomai");
 #endif
-                                           << std::endl;
+    std::ostringstream opts_joined;
+    for (const auto& o : build_opts)
+    {
+        if (&o != &build_opts[0])
+        {
+            opts_joined << ", ";
+        }
+        opts_joined << o;
+    }
+    std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
+
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
