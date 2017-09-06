@@ -1,0 +1,117 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "plugin_chains" : [
+        {
+            "name" : "main(Piano)",
+            "mode" : "stereo",
+            "plugins" : [
+                {
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaPiano.so",
+                    "name" : "piano",
+                    "type"   : "vst2x"
+                }
+            ]
+        },
+        {
+            "name" : "second(Synth)",
+            "mode" : "stereo",
+            "plugins" : [
+                {
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
+                    "name" : "synth",
+                    "type"   : "vst2x"
+                }
+            ]
+        },
+        {
+            "name" : "third(Guitar)",
+            "mode" : "stereo",
+            "plugins" : [
+                {
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaCombo.so",
+                    "name" : "amp",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
+                    "name" : "delay",
+                    "type"   : "vst2x"
+                }
+            ]
+        },
+        {
+            "name" : "fourth(Passthrough)",
+            "mode" : "stereo",
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.gain",
+                    "name" : "gain",
+                    "type"   : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "chain_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "chain": "main"
+            },
+            {
+                "port": 0,
+                "channel": "all",
+                "chain": "synth"
+            }
+        ],
+        "cc_mappings": [
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 27,
+                "plugin_name": "synth",
+                "parameter_name": "Wave 1",
+                "min_range": 0,
+                "max_range": 1
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 26,
+                "plugin_name": "synth",
+                "parameter_name": "Wave 2",
+                "min_range": 0,
+                "max_range": 1
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 25,
+                "plugin_name": "synth",
+                "parameter_name": "Freq 1",
+                "min_range": -20,
+                "max_range": 20
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 24,
+                "plugin_name": "synth",
+                "parameter_name": "Freq 2",
+                "min_range": -20,
+                "max_range": 20
+            },
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 23,
+                "plugin_name": "gain",
+                "parameter_name": "Gain",
+                "min_range": 0,
+                "max_range": 5
+            }
+        ]
+    }
+}
