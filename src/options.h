@@ -77,6 +77,7 @@ enum OptionIndex
 { 
     OPT_IDX_UNKNOWN,
     OPT_IDX_HELP,
+    OPT_IDX_VERSION,
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_CONFIG_FILE,
@@ -105,7 +106,7 @@ const optionparser::Descriptor usage[] =
         "",         // shortopt
         "",         // longopt
         SushiArg::Unknown, // check_arg
-        "Sensus Universal Sound Host Interface offline engine.\nCopyright 2016 MIND Music Labs\n\nUSAGE: sushi [options] input_filename\n\nOptions:" // help
+        "\nUSAGE: sushi [options] [input_filename]\n\nOptions:" // help
     },
     {
         OPT_IDX_HELP,
@@ -114,6 +115,14 @@ const optionparser::Descriptor usage[] =
         "help",
         SushiArg::None,
         "\t\t-h --help \tPrint usage and exit."
+    },
+    {
+        OPT_IDX_VERSION,
+        OPT_TYPE_UNUSED,
+        "v",
+        "version",
+        SushiArg::None,
+        "\t\t-v --version \tPrint version information and exit."
     },
     {
         OPT_IDX_LOG_LEVEL,
@@ -161,7 +170,7 @@ const optionparser::Descriptor usage[] =
         "",
         "connect-ports",
         SushiArg::Optional,
-        "\t\t--connect-ports \tTry to automatically connect ports at startup."
+        "\t\t--connect-ports \tTry to automatically connect Jack ports at startup."
     },
     {
         OPT_IDX_JACK_CLIENT,
@@ -185,7 +194,7 @@ const optionparser::Descriptor usage[] =
         "x",
         "xenomai",
         SushiArg::Optional,
-        "\t\t-x --xenomai \tProcess in Xenomai realtime tastUse Jack realtime audio frontend."
+        "\t\t-x --xenomai \tUse Xenomai realtime frontend (with RASPA library if built with Cobalt)."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
