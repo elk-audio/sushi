@@ -1,0 +1,13 @@
+#ifndef __version_h__
+#define __version_h__
+
+#define SUSHI__VERSION_MAJ  0
+#define SUSHI__VERSION_MIN  5
+#define SUSHI__VERSION_REV  1
+
+#define SUSHI_VERSION_STRING #SUSHI__VERSION_MAJ "." #SUSHI__VERSION_MIN "." #SUSHI__VERSION_REV
+
+#define SUSHI_GIT_COMMIT_HASH "@GIT_COMMIT_HASH@"
+#define SUSHI_BUILD_TIMESTAMP "@BUILD_TIMESTAMP@"
+
+#endif // #ifndef __version_h__

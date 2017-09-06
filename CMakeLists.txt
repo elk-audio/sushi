@@ -2,6 +2,27 @@ cmake_minimum_required(VERSION 3.2)
 project(sushi)
 
 ##################################
+#  Build  information            #
+##################################
+
+# Get the latest commit hash of the working branch
+execute_process(
+    COMMAND git log -1 --format=%H
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M")
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/include/version.h.in
+    ${CMAKE_BINARY_DIR}/generated/version.h
+)
+
+include_directories(${CMAKE_BINARY_DIR}/generated)
+
+##################################
 #  Build and link configuration  #
 ##################################
 
