@@ -3,6 +3,8 @@
  * @copyright MIND Music Labs AB, Stockholm
  */
 
+#include <algorithm>
+
 #include "osc_frontend.h"
 #include "logging.h"
 
@@ -176,13 +178,14 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     {
         return false;
     }
-    osc_path = osc_path + processor_name + "/" + parameter_name;
+    osc_path = osc_path + spaces_to_underscore(processor_name) + "/" + spaces_to_underscore(parameter_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
+    MIND_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -196,14 +199,36 @@ bool OSCFrontend::connect_kb_to_track(const std::string &chain_name)
     {
         return false;
     }
-    osc_path = osc_path + chain_name;
+    osc_path = osc_path + spaces_to_underscore(chain_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_event, connection);
+    MIND_LOG_INFO("Added osc callback {}", osc_path);
     return true;
+}
+
+void OSCFrontend::connect_all()
+{
+    auto& processors = _engine->all_processors();
+    for (auto& processor : processors)
+    {
+        auto parameters = processor.second->all_parameters();
+        for (auto& param : parameters)
+        {
+            if (param->type() == ParameterType::FLOAT)
+            {
+                connect_to_parameter(processor.second->name(), param->name());
+            }
+        }
+    }
+    auto& chains = _engine->all_chains();
+    for (auto& chain : chains)
+    {
+        connect_kb_to_track(chain->name());
+    }
 }
 
 void OSCFrontend::_start_server()
@@ -234,6 +259,14 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
 }
+
+std::string spaces_to_underscore(const std::string &s)
+{
+    std::string us_s = s;
+    std::replace(us_s.begin(), us_s.end(), ' ', '_');
+    return us_s;
+}
+
 
 }
 }
