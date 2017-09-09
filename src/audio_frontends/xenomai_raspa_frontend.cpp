@@ -57,18 +57,17 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
 void XenomaiRaspaFrontend::cleanup()
 {
+    // TODO: atm no one calls this in case of external shutdown
+    // (e.g. SIGINT), so it is now duplicated in main
+    MIND_LOG_INFO("Closing Raspa driver.");
     raspa_close();
 }
 
 
 void XenomaiRaspaFrontend::run()
 {
-// TODO:
-// After UART protocol for starting/stopping XMOS is implemented, we can trigger
-// audio stream start from here
     _osc_control->run();
-// TODO: change this (both here and in Jack frontend) with something that can be interrupted,
-//       e.g. checking a flag that can be set with signals or OSC
+	_osc_control->connect_kb_to_track("main");
     sleep(10000);
 }
 
@@ -84,10 +83,10 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
         }
     }
 
-    _in_buffer.from_interleaved(input);
-    _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer);
-    _out_buffer.to_interleaved(output);
+    ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, 2);
+    ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, 2);
+    out_buffer.clear();
+    _engine->process_chunk(&in_buffer, &out_buffer);
 }
 
 

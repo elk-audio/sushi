@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <signal.h>
 
 #include "logging.h"
 #include "options.h"
@@ -14,6 +15,17 @@
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
+
+#include "raspa.h"
+
+void sigint_handler(int __attribute__((unused)) sig)
+{
+    raspa_close();
+    printf("Device closed.\n");
+    exit(0);
+}
+
+
 
 void print_sushi_headline()
 {
@@ -55,6 +67,9 @@ void print_version_and_build_info()
 int main(int argc, char* argv[])
 {
     print_sushi_headline();
+
+    signal(SIGINT, sigint_handler);
+
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
     ////////////////////////////////////////////////////////////////////////////////

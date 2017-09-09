@@ -11,6 +11,8 @@ namespace sushi {
 
 namespace audio_frontend {
 
+constexpr int MAX_FRONTEND_CHANNELS = 8;
+
 /**
  * @brief Error codes returned from init()
  */

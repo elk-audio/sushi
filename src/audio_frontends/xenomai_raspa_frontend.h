@@ -20,9 +20,6 @@
 namespace sushi {
 namespace audio_frontend {
 
-constexpr int MAX_FRONTEND_CHANNELS = 2;
-
-
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
@@ -65,9 +62,6 @@ public:
 private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
-
-    ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
 
     EventFifo _event_queue;
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;

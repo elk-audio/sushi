@@ -170,6 +170,18 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
+    {
+        static std::map<std::string, std::unique_ptr<Processor>> tmp;
+        return tmp;
+    }
+
+    virtual const std::vector<PluginChain*>& all_chains()
+    {
+        static std::vector<PluginChain*> tmp;
+        return tmp;
+    }
+
 protected:
     float _sample_rate;
     int _audio_inputs{0};
@@ -295,6 +307,27 @@ public:
      */
     EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
                                                         const std::string& plugin_id) override;
+    /**
+     * @brief Return all processors. Potentially dangerous so use with care and eventually
+     *        there should be better and safer ways of accessing processors.
+     * @return An std::map containing all registered processors.
+     */
+    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
+    {
+        return _processors;
+    };
+
+    /**
+     * @brief Return all processor chains. Potentially unsafe so use with care. Should
+     *        eventually be replaces with a better way of accessing chains/processors
+     *        from outside the engine.
+     * @return An std::vector of containing all PluginChains
+     */
+    virtual const std::vector<PluginChain*>& all_chains()
+    {
+        return _audio_graph;
+    }
+
 
 private:
     /**

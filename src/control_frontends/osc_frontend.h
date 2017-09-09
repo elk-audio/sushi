@@ -59,6 +59,14 @@ public:
      */
     bool connect_kb_to_track(const std::string &chain_name);
 
+    /**
+     * @brief Register OSC callbacks far all parameters of all plugins and
+     *        connect midi kb data to all chain.
+     *        This should eventually be replaced by a more elaborate way of
+     *        registering parameters.
+     */
+    void connect_all();
+
     virtual void run() override {_start_server();}
 
 private:
@@ -74,6 +82,8 @@ private:
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
 };
+
+std::string spaces_to_underscore(const std::string &s);
 
 }; // namespace user_frontend
 }; // namespace sensei
