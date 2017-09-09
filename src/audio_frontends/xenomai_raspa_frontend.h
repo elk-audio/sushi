@@ -12,6 +12,8 @@
 #include <tuple>
 #include <vector>
 
+#include <alsa/asoundlib.h>
+
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
@@ -65,6 +67,12 @@ private:
 
     EventFifo _event_queue;
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
+
+    // ALSA MIDI stuff
+    snd_seq_t*                  _seq_handle;
+    int                         _input_midi_port;
+    snd_midi_event_t*           _seq_parser;
+    std::unique_ptr<uint8_t>    _midi_buffer;
 };
 
 }; // end namespace audio_frontend

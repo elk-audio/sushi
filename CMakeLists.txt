@@ -252,6 +252,8 @@ if (${WITH_XENOMAI})
     set(WITH_RASPA_APPS false)
     set(WITH_RASPA_TESTS false)
     add_subdirectory(raspalib)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
 endif()
 
 add_subdirectory(third-party)
