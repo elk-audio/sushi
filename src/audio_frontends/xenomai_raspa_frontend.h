@@ -20,9 +20,6 @@
 namespace sushi {
 namespace audio_frontend {
 
-constexpr int MAX_FRONTEND_CHANNELS = 2;
-
-
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:

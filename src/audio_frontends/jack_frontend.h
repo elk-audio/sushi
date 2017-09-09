@@ -22,7 +22,6 @@ namespace sushi {
 
 namespace audio_frontend {
 
-constexpr int MAX_FRONTEND_CHANNELS = 2;
 constexpr int MAX_EVENTS_PER_CHUNK = 100;
 
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
