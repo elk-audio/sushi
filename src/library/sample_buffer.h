@@ -176,8 +176,6 @@ public:
                                                 int start_channel,
                                                 int number_of_channels)
     {
-        assert(number_of_channels + start_channel <= source._channel_count);
-
         SampleBuffer buffer;
         buffer._own_buffer = false;
         buffer._channel_count = number_of_channels;
