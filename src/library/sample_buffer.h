@@ -163,6 +163,30 @@ public:
     }
 
     /**
+     * @brief Create a Samplebuffer by wrapping a raw data pointer.
+     *
+     * @param data raw pointer to data stored in the same format of SampleBuffer storage
+     * @param start_channel Index of first channel to wrap.
+     * @param start_channel The first channel to wrap. Defaults to 0.
+     * @param number_of_channels Must not exceed the channelcount of the source buffer
+     *                           minus start_channel.
+     * @return The created, non-owning SampleBuffer.
+     */
+    static SampleBuffer create_from_raw_pointer(float* data,
+                                                int start_channel,
+                                                int number_of_channels)
+    {
+        assert(number_of_channels + start_channel <= source._channel_count);
+
+        SampleBuffer buffer;
+        buffer._own_buffer = false;
+        buffer._channel_count = number_of_channels;
+        buffer._buffer = data + size * start_channel;
+        buffer._buffer = data;
+        return buffer;
+    }
+
+    /**
      * @brief Zero the entire buffer
      */
     void clear()
