@@ -243,6 +243,7 @@ set(VST3_HOST_SOURCES
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
 set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS -DDEVELOPMENT)
+target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 add_dependencies(vst3_host sdk)
 
 #############################################

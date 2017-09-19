@@ -121,15 +121,20 @@ set(TEST_LINK_LIBRARIES
     gtest_main
 )
 
+set(TEST_DEPENDENCIES
+    again
+    vstxsynth)
+
+if (${WITH_VST3})
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} vst3_host sdk base)
+    set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} adelay vst3_host)
+endif()
+
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
-add_dependencies(unit_tests again vstxsynth)
-
-if (${WITH_VST3})
-    add_dependencies(unit_tests adelay vst3_host)
-endif()
+add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that
