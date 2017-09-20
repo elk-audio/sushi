@@ -15,7 +15,7 @@
 	url = git://github.com/steinbergmedia/vst3_base.git
 [submodule "vst3_public_sdk"]
 	path = third-party/vstsdk3/public.sdk
-	url = git://github.com/steinbergmedia/vst3_public_sdk.git
+	url = git@bitbucket.org:mindswteam/vst3_public_sdk_fork.git
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
