@@ -58,7 +58,7 @@ if(UNIX)
 	else()
 		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
-		link_libraries(stdc++fs pthread dl)
+		link_libraries(pthread dl)
 	endif()
 
 elseif(WIN)
