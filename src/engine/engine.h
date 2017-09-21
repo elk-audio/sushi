@@ -12,6 +12,7 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <mutex>
 
 #include "EASTL/vector.h"
 
@@ -124,9 +125,9 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
-    virtual EngineReturnStatus send_rt_event(Event event) = 0;
+    virtual EngineReturnStatus send_rt_event(Event& event) = 0;
 
-    virtual EngineReturnStatus send_async_event(const Event &event) = 0;
+    virtual EngineReturnStatus send_async_event(Event& event) = 0;
 
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
@@ -238,14 +239,14 @@ public:
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(Event event) override;
+    EngineReturnStatus send_rt_event(Event& event) override;
 
     /**
      * @brief Called from a non-realtime thread to process an event in the realtime
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_async_event(const Event &event) override;
+    EngineReturnStatus send_async_event(Event& event) override;
     /**
      * @brief Get the unique id of a processor given its name
      * @param unique_name The unique name of a processor
@@ -401,6 +402,7 @@ private:
 
     EventFifo _control_queue_in;
     EventFifo _control_queue_out;
+    std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
 };
 

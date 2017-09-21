@@ -123,7 +123,7 @@ void XenomaiRaspaFrontend::run()
                         ALSA_MAX_EVENT_SIZE_BYTES, ev);
 
             snd_midi_event_reset_decode(_seq_parser);
-            _midi_dispatcher->process_midi(0, 0, _midi_buffer.get(), num_bytes);
+            _midi_dispatcher->process_midi(0, 0, _midi_buffer.get(), num_bytes, false);
             snd_seq_free_event (ev);
         }
     }
