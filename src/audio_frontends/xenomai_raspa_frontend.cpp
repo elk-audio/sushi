@@ -107,7 +107,7 @@ void XenomaiRaspaFrontend::cleanup()
 void XenomaiRaspaFrontend::run()
 {
     _osc_control->run();
-    _osc_control->connect_kb_to_track("main");
+    _osc_control->connect_all();
 
     // TODO temp solution until we can work out the poll-based version
     while (true)
