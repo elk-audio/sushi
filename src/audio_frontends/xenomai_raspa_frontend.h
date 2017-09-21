@@ -14,6 +14,8 @@
 
 #include <alsa/asoundlib.h>
 
+#include "raspa.h"
+
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"

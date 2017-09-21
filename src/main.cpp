@@ -16,11 +16,11 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
 
-#include "raspa.h"
-
 void sigint_handler(int __attribute__((unused)) sig)
 {
+#ifdef SUSHI_BUILD_WITH_XENOMAI
     raspa_close();
+#endif
     printf("Device closed.\n");
     exit(0);
 }
