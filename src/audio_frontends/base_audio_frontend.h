@@ -69,7 +69,7 @@ public:
     }
 
     /**
-     * @brief Free resources allocated during init.
+     * @brief Free resources allocated during init. stops the frontend if currently running.
      */
     virtual void cleanup() = 0;
 

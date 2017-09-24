@@ -69,6 +69,8 @@ public:
 
     virtual void run() override {_start_server();}
 
+    virtual void stop() override {_stop_server();}
+
 private:
     void _start_server();
 

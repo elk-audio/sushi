@@ -37,6 +37,7 @@ void JackFrontend::cleanup()
         jack_client_close(_client);
         _client = nullptr;
     }
+    _osc_control->stop();
 }
 
 

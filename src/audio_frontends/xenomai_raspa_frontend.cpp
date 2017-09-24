@@ -93,9 +93,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
 void XenomaiRaspaFrontend::cleanup()
 {
-    // TODO: atm no one calls this in case of external shutdown
-    // (e.g. SIGINT), so it is now duplicated in main
-    //
+    _osc_control->stop();
     snd_midi_event_free(_seq_parser);
     snd_seq_close(_seq_handle);
 
