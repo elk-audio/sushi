@@ -94,9 +94,11 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 void XenomaiRaspaFrontend::cleanup()
 {
     _osc_control->stop();
+    _midi_running.store(false);
+    /* Eventually when we switch to a polling version, we should join the midi thread here
+     * Currently we can't since there is a blocking call to snd_seq_event_input */
     snd_midi_event_free(_seq_parser);
     snd_seq_close(_seq_handle);
-
     MIND_LOG_INFO("Closing Raspa driver.");
     raspa_close();
 }
@@ -107,25 +109,8 @@ void XenomaiRaspaFrontend::run()
     _osc_control->run();
     _osc_control->connect_all();
 
-    // TODO temp solution until we can work out the poll-based version
-    while (true)
-    {
-        snd_seq_event_t *ev = nullptr;
-        snd_seq_event_input(_seq_handle, &ev);
-
-        if ( 	(ev->type == SND_SEQ_EVENT_NOTEON)
-             || (ev->type == SND_SEQ_EVENT_NOTEOFF)
-             || (ev->type == SND_SEQ_EVENT_CONTROLLER) )
-        {
-            const long num_bytes = snd_midi_event_decode (_seq_parser, _midi_buffer.get(),
-                        ALSA_MAX_EVENT_SIZE_BYTES, ev);
-
-            snd_midi_event_reset_decode(_seq_parser);
-            _midi_dispatcher->process_midi(0, 0, _midi_buffer.get(), num_bytes, false);
-            snd_seq_free_event (ev);
-        }
-    }
-
+    _midi_running = true;
+    _midi_thread = std::thread(&XenomaiRaspaFrontend::_midi_handler, this);
 }
 
 
@@ -144,6 +129,27 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, 2);
     out_buffer.clear();
     _engine->process_chunk(&in_buffer, &out_buffer);
+}
+
+void XenomaiRaspaFrontend::_midi_handler()
+{
+    while (_midi_running.load())
+    {
+        snd_seq_event_t *ev = nullptr;
+        snd_seq_event_input(_seq_handle, &ev);
+
+        if ( 	(ev->type == SND_SEQ_EVENT_NOTEON)
+                || (ev->type == SND_SEQ_EVENT_NOTEOFF)
+                || (ev->type == SND_SEQ_EVENT_CONTROLLER) )
+        {
+            const long num_bytes = snd_midi_event_decode (_seq_parser, _midi_buffer.get(),
+                                                          ALSA_MAX_EVENT_SIZE_BYTES, ev);
+
+            snd_midi_event_reset_decode(_seq_parser);
+            _midi_dispatcher->process_midi(0, 0, _midi_buffer.get(), num_bytes, false);
+            snd_seq_free_event (ev);
+        }
+    }
 }
 
 

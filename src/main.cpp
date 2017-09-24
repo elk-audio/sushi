@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <signal.h>
+#include <condition_variable>
 
 #include "logging.h"
 #include "options.h"
@@ -16,16 +17,17 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
 
+#include "raspa.h"
+
+bool                    exit_flag = false;
+bool                    exit_condition() {return exit_flag;}
+std::condition_variable exit_notifier;
+
 void sigint_handler(int __attribute__((unused)) sig)
 {
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    raspa_close();
-#endif
-    printf("Device closed.\n");
-    exit(0);
+    exit_flag = true;
+    exit_notifier.notify_one();
 }
-
-
 
 void print_sushi_headline()
 {
@@ -252,6 +254,14 @@ int main(int argc, char* argv[])
     }
     frontend->run();
 
+    if (use_jack || use_xenomai_raspa)
+    {
+        std::mutex m;
+        std::unique_lock<std::mutex> lock(m);
+        exit_notifier.wait(lock, exit_condition);
+    }
+
     frontend->cleanup();
+    MIND_LOG_INFO("Sushi exited normally.");
     return 0;
 }

@@ -54,7 +54,6 @@ void JackFrontend::run()
         connect_ports();
     }
     _osc_control->run();
-    sleep(1000);
 }
 
 
