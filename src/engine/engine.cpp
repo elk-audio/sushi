@@ -141,7 +141,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
     if (processor->id() > _realtime_processors.size())
     {
         // Resize the vector manually to be able to insert processors at specific indexes
-        _realtime_processors.resize(processor->id() + PROC_ID_ARRAY_INCREMENT, nullptr);
+        _realtime_processors.resize(processor->id() + MAX_RT_PROCESSOR_ID, nullptr);
     }
     if(_realtime_processors[processor->id()] != nullptr)
     {
