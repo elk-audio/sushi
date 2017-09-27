@@ -23,6 +23,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
         return ret_code;
     }
     _osc_control = std::make_unique<control_frontend::OSCFrontend>(&_event_queue, _engine);
+    _osc_control->connect_all();
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     return setup_client(jack_config->client_name, jack_config->server_name);
@@ -36,6 +37,7 @@ void JackFrontend::cleanup()
         jack_client_close(_client);
         _client = nullptr;
     }
+    _osc_control->stop();
 }
 
 
@@ -52,7 +54,6 @@ void JackFrontend::run()
         connect_ports();
     }
     _osc_control->run();
-    sleep(1000);
 }
 
 
@@ -254,7 +255,7 @@ void inline JackFrontend::process_midi(jack_nframes_t no_frames)
         int ret = jack_midi_event_get(&midi_event, buffer, i);
         if (ret == 0)
         {
-            _midi_dispatcher->process_midi(0, 0, midi_event.buffer, midi_event.size);
+            _midi_dispatcher->process_midi(0, 0, midi_event.buffer, midi_event.size, true);
         }
     }
 }

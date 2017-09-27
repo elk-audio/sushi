@@ -28,9 +28,9 @@ include_directories(${CMAKE_BINARY_DIR}/generated)
 
 #  Default behaviour is to build and link with everything, using Mercury backend for Xenomai
 set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
-set(XENOMAI_FLAVOUR mercury CACHE STRING "Xenomai backend flavour. Options are: cobalt mercury")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
+set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -47,12 +47,6 @@ if (${WITH_VST3})
     message("Building with Vst 3 support.")
 endif()
 
-if (${AUDIO_BUFFER_SIZE})
-    add_definitions(-DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
-    message("Building with audio buffer size: ${AUDIO_BUFFER_SIZE} samples")
-    unset(AUDIO_BUFFER_SIZE CACHE)
-endif()
-
 #############################
 #  Preprocessor definitions #
 #############################
@@ -64,7 +58,11 @@ add_definitions( -D__cdecl= )
 #  Compiler Flags  #
 ####################
 
-# Global flags
+## Global project flags.
+# Change these instead than the CMAKE_*_FLAGS directly, and avoid
+# putting target-specific definitions here.
+
+# Preprocessor
 set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -std=c++17 -fno-rtti")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
@@ -72,21 +70,25 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif()
 endif()
 
-set(PROJECT_LINK_FLAGS )
-
-
 # Build optimization flags
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
+if (${WITH_XENOMAI})
+    # Additional optimizations for the Joule
+    set(CMAKE_C_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}}
+            "-ftree-vectorize -ffast-math -m64 -march=corei7 -mtune=corei7 -mfpmath=sse -msse4.2")
+endif()
 set(CMAKE_CXX_FLAGS_DEBUG   "-DDEBUG -O0 -g")
 
+# Linker flags
+if (APPLE)
+    set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
+    link_directories(${LINK_DIRS})
+endif()
+
+# Combine the results into CMake's flags.
+# You shouldn't need to touch this.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
-
-if (${WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "cobalt")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ ")
-elseif(${WITH_XENOMAI} AND ${XENOMAI_FLAVOUR} EQUAL "mercury")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_REENTRANT -D__MERCURY__ ")
-endif()
 
 ##################
 #  Source Files  #
@@ -96,7 +98,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
-                      src/audio_frontends/xenomai_frontend.cpp
+                      src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
@@ -128,7 +130,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
                         src/audio_frontends/jack_frontend.h
-                        src/audio_frontends/xenomai_frontend.h
+                        src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
                         src/dsp_library/envelopes.h
@@ -180,6 +182,7 @@ set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
+                 "${PROJECT_SOURCE_DIR}/raspalib/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
@@ -190,47 +193,36 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
-if (${WITH_XENOMAI})
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} /usr/xenomai/include
-                                     /usr/xenomai/include/${XENOMAI_FLAVOUR}
-                                     /usr/xenomai/include/xenomai
-                                     /usr/xenomai/include/alchemy)
-endif()
-
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
-include_directories(${INCLUDE_DIRS})
 
 #################################
-#  Linked libraries  #
+#  Linked libraries             #
 #################################
 
-set(LINK_LIBRARIES "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
-                    EASTL sndfile pthread dl)
-
-if (${WITH_XENOMAI})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} alchemy copperplate ${XENOMAI_FLAVOUR} pthread rt)
-    set(LINK_DIRS /usr/xenomai/lib)
-else()
-    set(LINK_DIRS "")
-endif()
+# Common libraries between all builds, and safe to be included in test targets
+set(COMMON_LIBRARIES
+    "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
+    EASTL
+    sndfile
+    pthread
+    dl
+)
 
 if (${WITH_VST3})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} vst3_host sdk)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
 endif()
 
-if (APPLE)
-    set(PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS}"
-                           "-framework IOKit"
-                           "-framework CoreFoundation"
-        )
-    set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
+if (${WITH_JACK})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack)
 endif()
 
-link_directories(${LINK_DIRS})
+if (${WITH_XENOMAI})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} raspa)
+endif()
 
 #############
 # Vst3 Host #
@@ -250,12 +242,20 @@ set(VST3_HOST_SOURCES
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
-set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS -DDEVELOPMENT)
+set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
+target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 add_dependencies(vst3_host sdk)
 
 #############################################
 #  Subdirectory projects                    #
 #############################################
+if (${WITH_XENOMAI})
+    set(WITH_RASPA_APPS false)
+    set(WITH_RASPA_TESTS false)
+    add_subdirectory(raspalib)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
+endif()
 
 add_subdirectory(third-party)
 add_subdirectory(test)
@@ -263,17 +263,12 @@ add_subdirectory(test)
 ####################
 #  Target Objects  #
 ####################
-
 add_executable(sushi ${SOURCE_FILES})
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+
 add_dependencies(sushi liblo)
-
-if (${WITH_JACK})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} jack)
-endif()
-
 if (${WITH_VST3})
     add_dependencies(sushi vst3_host sdk base)
 endif()
-
-target_link_libraries(sushi ${LINK_LIBRARIES})
-

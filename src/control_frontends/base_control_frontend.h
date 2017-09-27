@@ -27,6 +27,8 @@ public:
 
     virtual void run() = 0;
 
+    virtual void stop() = 0;
+
     void send_parameter_change_event(ObjectId processor, ObjectId parameter, float value);
 
     void send_keyboard_event(ObjectId processor, EventType type, int note, float value);

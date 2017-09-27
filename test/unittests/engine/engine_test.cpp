@@ -53,14 +53,20 @@ TEST_F(TestEngine, TestProcess)
     _module_under_test->create_plugin_chain("test_chain", 2);
 
     /* Run tests */
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(4);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(4);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    test_utils::assert_buffer_value(1.0f, in_buffer);
+    test_utils::fill_sample_buffer(out_buffer, 0.5f);
 
     _module_under_test->process_chunk(&in_buffer, &out_buffer);
 
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+    /* Separate the first 2 channels, which should pass through unprocessed
+     * and the 2 last, which should be set to 0 */
+    auto pair_1 = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
+    auto pair_2 = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 2, 2);
+
+    test_utils::assert_buffer_value(1.0f, pair_1);
+    test_utils::assert_buffer_value(0.0f, pair_2);
 }
 
 TEST_F(TestEngine, TestUidNameMapping)
