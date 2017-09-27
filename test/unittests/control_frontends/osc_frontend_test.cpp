@@ -85,3 +85,9 @@ TEST_F(TestOSCFrontend, test_send_keyboard_event)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_TRUE(_event_queue.empty());
 }
+
+TEST(TestOSCFrontendInternal, test_spaces_to_underscore)
+{
+    std::string test_str("str with spaces ");
+    ASSERT_EQ("str_with_spaces_", spaces_to_underscore(test_str));
+}

@@ -11,6 +11,8 @@ namespace sushi {
 
 namespace audio_frontend {
 
+constexpr int MAX_FRONTEND_CHANNELS = 8;
+
 /**
  * @brief Error codes returned from init()
  */
@@ -21,7 +23,9 @@ enum class AudioFrontendStatus
     INVALID_INPUT_FILE,
     INVALID_OUTPUT_FILE,
     INVALID_SEQUENCER_DATA,
-    AUDIO_HW_ERROR
+    INVALID_CHUNK_SIZE,
+    AUDIO_HW_ERROR,
+    MIDI_PORT_ERROR
 };
 
 /**
@@ -65,7 +69,7 @@ public:
     }
 
     /**
-     * @brief Free resources allocated during init.
+     * @brief Free resources allocated during init. stops the frontend if currently running.
      */
     virtual void cleanup() = 0;
 
