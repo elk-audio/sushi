@@ -125,8 +125,8 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
         }
     }
 
-    ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, 2);
-    ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, 2);
+    ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, RASPA_N_CHANNELS);
+    ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, RASPA_N_CHANNELS);
     out_buffer.clear();
     _engine->process_chunk(&in_buffer, &out_buffer);
 }

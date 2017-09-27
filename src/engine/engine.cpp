@@ -191,9 +191,13 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             break;
         }
     }
-    MIND_LOG_WARNING_IF(start_channel < in_buffer->channel_count(),
-                        "Warning, not all input channels processed, {} out of {} processed",
-                        start_channel, in_buffer->channel_count());
+    if (start_channel < out_buffer->channel_count())
+    {
+        ChunkSampleBuffer remaining_channels = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
+                                                                                           start_channel,
+                                                                                           out_buffer->channel_count() - start_channel);
+        remaining_channels.clear();
+    }
     _state.store(update_state(state));
 }
 
