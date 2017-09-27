@@ -110,7 +110,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
                 }
                 MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
                                                                             cc_map["parameter_name"].GetString(),
-                                                                            cc_map["processor_name"].GetString());
+                                                                            cc_map["plugin_name"].GetString());
                 return JsonConfigReturnStatus::INVALID_PARAMETER;
             }
         }
