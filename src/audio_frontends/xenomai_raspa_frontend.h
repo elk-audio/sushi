@@ -11,11 +11,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-#include <alsa/asoundlib.h>
 #include <thread>
 
-#include "raspa.h"
+#include <alsa/asoundlib.h>
 
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"

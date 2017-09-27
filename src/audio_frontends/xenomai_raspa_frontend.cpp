@@ -7,10 +7,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "raspa.h"
+
 #include "xenomai_raspa_frontend.h"
 #include "logging.h"
-
-#include "raspa.h"
 
 namespace sushi {
 namespace audio_frontend {
