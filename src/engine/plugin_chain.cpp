@@ -54,7 +54,7 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
 
     /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
      * processing chain was empty */
-    out.add(in_bfr);
+    out = in_bfr;
     /* If there are keyboard events not consumed, pass them on upwards */
     while (!_event_buffer.empty())
     {

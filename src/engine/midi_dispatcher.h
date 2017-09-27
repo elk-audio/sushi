@@ -108,8 +108,9 @@ public:
      * @param offset Offset from the start of the current chunk in samples.
      * @param data Pointer to the raw midi message.
      * @param size Length of data in bytes.
+     * @param set to true if called from the rt audio part, false otherwise
      */
-    void process_midi(int input, int offset, const uint8_t* data, size_t size);
+    void process_midi(int input, int offset, const uint8_t* data, size_t size, bool realtime);
 
 private:
 

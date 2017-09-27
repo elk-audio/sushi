@@ -23,13 +23,13 @@ public:
         process_called = true;
     }
 
-    EngineReturnStatus send_rt_event(Event /*event*/)
+    EngineReturnStatus send_rt_event(Event& /*event*/)
     {
-        got_event = true;
+        got_rt_event = true;
         return EngineReturnStatus::OK;
     }
 
-    EngineReturnStatus send_async_event(const Event& /*event*/)
+    EngineReturnStatus send_async_event(Event& /*event*/)
     {
         got_event = true;
         return EngineReturnStatus::OK;
@@ -38,6 +38,7 @@ public:
 
     bool process_called{false};
     bool got_event{false};
+    bool got_rt_event{false};
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

@@ -154,6 +154,11 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #define MIND_LOG_WARNING(...)
 #define MIND_LOG_ERROR(...)
 #define MIND_LOG_CRITICAL(...)
+#define MIND_LOG_DEBUG_IF(...)
+#define MIND_LOG_INFO_IF(...)
+#define MIND_LOG_WARNING_IF(...)
+#define MIND_LOG_ERROR_IF(...)
+#define MIND_LOG_CRITICAL_IF(...)
 
 #define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL)
 

@@ -25,6 +25,7 @@ option(SMTG_CREATE_VST2_VERSION "Use VST2" OFF)
 
 add_definitions(-DDEVELOPMENT)
 
+set(WARNINGS_DISABLED "-w")
 #-------------------------------------------------------------------------------
 # SDK Project
 #-------------------------------------------------------------------------------
@@ -57,7 +58,7 @@ if(UNIX)
 	else()
 		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
-		link_libraries(stdc++fs pthread dl)
+		link_libraries(pthread dl)
 	endif()
 
 elseif(WIN)
@@ -65,7 +66,7 @@ elseif(WIN)
 	add_compile_options(/fp:fast)
 	add_compile_options($<$<CONFIG:Release>:/Oi>)	# Enable Intrinsic Functions (Yes)
 	add_compile_options($<$<CONFIG:Release>:/Ot>)	# Favor Size Or Speed (Favor fast code)
-	#add_compile_options($<$<CONFIG:Release>:/Ox>)	# Optimization (/O2: Maximise Speed /0x: Full Optimization)
+	add_compile_options($<$<CONFIG:Release>:/Ox>)	# Optimization (/O2: Maximise Speed /0x: Full Optimization)
 	add_compile_options($<$<CONFIG:Release>:/GF>)	# Enable String Pooling
 	add_compile_options($<$<CONFIG:Release>:/EHa>)	# Enable C++ Exceptions
 	add_compile_options($<$<CONFIG:Release>:/Oy>)	# Omit Frame Pointers
@@ -173,6 +174,12 @@ set_target_properties(sdk PROPERTIES ${SDK_IDE_LIBS_FOLDER})
 #set_target_properties(base PROPERTIES ${SDK_IDE_LIBS_FOLDER})
 #set_target_properties(vstgui PROPERTIES ${SDK_IDE_LIBS_FOLDER})
 #set_target_properties(vstgui_uidescription PROPERTIES ${SDK_IDE_LIBS_FOLDER})
+
+set_target_properties(adelay PROPERTIES COMPILE_FLAGS ${WARNINGS_DISABLED})
+set_target_properties(sdk PROPERTIES COMPILE_FLAGS ${WARNINGS_DISABLED})
+set_target_properties(base PROPERTIES COMPILE_FLAGS ${WARNINGS_DISABLED})
+set_target_properties(validator PROPERTIES COMPILE_FLAGS ${WARNINGS_DISABLED})
+
 
 if (TARGET again)
     set_target_properties(again PROPERTIES ${SDK_IDE_PLUGIN_EXAMPLES_FOLDER})

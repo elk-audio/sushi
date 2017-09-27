@@ -98,8 +98,10 @@ void MidiDispatcher::clear_connections()
     _kb_routes.clear();
 }
 
-void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size)
+void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size, bool realtime)
 {
+    std::function<engine::EngineReturnStatus(engine::BaseEngine*, Event&)> dispatch_fun = realtime? &engine::BaseEngine::send_rt_event :
+                                                                                                    &engine::BaseEngine::send_async_event;
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)
     {
@@ -111,11 +113,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
-                    _engine->send_rt_event(make_param_change_event(c, decoded_msg, offset));
+                    auto event = make_param_change_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
                 for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
-                    _engine->send_rt_event(make_param_change_event(c, decoded_msg, offset));
+                    auto event = make_param_change_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
             }
             break;
@@ -129,11 +133,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    _engine->send_rt_event(make_note_on_event(c, decoded_msg, offset));
+                    auto event = make_note_on_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    _engine->send_rt_event(make_note_on_event(c, decoded_msg, offset));
+                    auto event = make_note_on_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
             }
             break;
@@ -147,11 +153,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    _engine->send_rt_event(make_note_off_event(c, decoded_msg, offset));
+                    auto event = make_note_off_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    _engine->send_rt_event(make_note_off_event(c, decoded_msg, offset));
+                    auto event = make_note_off_event(c, decoded_msg, offset);
+                    dispatch_fun(_engine, event);
                 }
             }
             break;
