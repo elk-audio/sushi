@@ -25,7 +25,7 @@ const uint8_t TEST_RESET_MSG[]     = {0xFF};
 
 
 
-TEST (MidiDecoderTest, decode_message_type_test) {
+TEST (MidiDecoderTest, TestDecodeMessageType) {
     EXPECT_EQ(MessageType::NOTE_OFF, decode_message_type(TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG)));
     EXPECT_EQ(MessageType::NOTE_ON, decode_message_type(TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG)));
     EXPECT_EQ(MessageType::POLY_KEY_PRESSURE, decode_message_type(TEST_POLY_PRES_MSG, sizeof(TEST_POLY_PRES_MSG)));
@@ -36,6 +36,7 @@ TEST (MidiDecoderTest, decode_message_type_test) {
     EXPECT_EQ(MessageType::TIME_CODE, decode_message_type(TEST_TIME_CODE_MSG, sizeof(TEST_TIME_CODE_MSG)));
     EXPECT_EQ(MessageType::SONG_POSITION, decode_message_type(TEST_SONG_POS_MSG, sizeof(TEST_SONG_POS_MSG)));
     EXPECT_EQ(MessageType::SONG_SELECT, decode_message_type(TEST_SONG_SEL_MSG, sizeof(TEST_SONG_SEL_MSG)));
+
     // Realtime messages that only consist of 1 byte:
     EXPECT_EQ(MessageType::TIMING_CLOCK, decode_message_type(TEST_CLOCK_MSG, sizeof(TEST_CLOCK_MSG)));
     EXPECT_EQ(MessageType::START, decode_message_type(TEST_START_MSG, sizeof(TEST_START_MSG)));
@@ -48,12 +49,12 @@ TEST (MidiDecoderTest, decode_message_type_test) {
     EXPECT_EQ(MessageType::UNKNOWN, decode_message_type(TEST_NOTE_OFF_MSG, 2));
 }
 
-TEST (MidiDecoderTest, decode_channel_test)
+TEST (MidiDecoderTest, TestDecodeChannel)
 {
     EXPECT_EQ(5, decode_channel(0x35));
 }
 
-TEST (MidiDecoderTest, decode_note_off_test)
+TEST (MidiDecoderTest, TestDecodeNoteOff)
 {
     NoteOffMessage msg = decode_note_off(TEST_NOTE_OFF_MSG);
     EXPECT_EQ(1, msg.channel);
@@ -61,7 +62,7 @@ TEST (MidiDecoderTest, decode_note_off_test)
     EXPECT_EQ(45, msg.velocity);
 }
 
-TEST (MidiDecoderTest, decode_note_on_test)
+TEST (MidiDecoderTest, TestDecodeNoteOn)
 {
     NoteOnMessage msg = decode_note_on(TEST_NOTE_ON_MSG);
     EXPECT_EQ(2, msg.channel);
@@ -69,7 +70,7 @@ TEST (MidiDecoderTest, decode_note_on_test)
     EXPECT_EQ(55, msg.velocity);
 }
 
-TEST (MidiDecoderTest, decode_poly_key_pressure_test)
+TEST (MidiDecoderTest, TestDecodePolyKeyPressure)
 {
     PolyKeyPressureMessage msg = decode_poly_key_pressure(TEST_POLY_PRES_MSG);
     EXPECT_EQ(3, msg.channel);
@@ -77,7 +78,7 @@ TEST (MidiDecoderTest, decode_poly_key_pressure_test)
     EXPECT_EQ(65, msg.pressure);
 }
 
-TEST (ControlChangeMessage, decode_control_change_test)
+TEST (ControlChangeMessage, TestDecodeControlChange)
 {
     ControlChangeMessage msg = decode_control_change(TEST_CTRL_CH_MSG);
     EXPECT_EQ(4, msg.channel);
@@ -85,41 +86,41 @@ TEST (ControlChangeMessage, decode_control_change_test)
     EXPECT_EQ(75, msg.value);
 }
 
-TEST (ProgramChangeMessage, decode_program_change_test)
+TEST (ProgramChangeMessage, TestDecodeProgramChange)
 {
     ProgramChangeMessage msg = decode_program_change(TEST_PROG_CH_MSG);
     EXPECT_EQ(5, msg.channel);
     EXPECT_EQ(18, msg.program);
 }
 
-TEST (MidiDecoderTest, decode_channel_pressure_test)
+TEST (MidiDecoderTest, TestDecodeChannelPressure)
 {
     ChannelPressureMessage msg = decode_channel_pressure(TEST_CHAN_PRES_MSG);
     EXPECT_EQ(6, msg.channel);
     EXPECT_EQ(16, msg.pressure);
 }
 
-TEST (MidiDecoderTest, decode_pitch_bend_test)
+TEST (MidiDecoderTest, TestDecodePitchBend)
 {
     PitchBendMessage msg = decode_pitch_bend(TEST_PITCH_B_MSG);
     EXPECT_EQ(7, msg.channel);
     EXPECT_EQ(136, msg.value);
 }
 
-TEST (MidiDecoderTest, decode_time_code_test)
+TEST (MidiDecoderTest, TestDecodeTimeCode)
 {
     TimeCodeMessage msg = decode_time_code(TEST_TIME_CODE_MSG);
     EXPECT_EQ(3, msg.message_type);
     EXPECT_EQ(5, msg.value);
 }
 
-TEST (MidiDecoderTest, decode_song_position_test)
+TEST (MidiDecoderTest, TestDecodeSongPosition)
 {
     SongPositionMessage msg = decode_song_position(TEST_SONG_POS_MSG);
     EXPECT_EQ(261, msg.beats);
 }
 
-TEST (MidiDecoderTest, decode_song_select_test)
+TEST (MidiDecoderTest, TestDecodeSongSelect)
 {
     SongSelectMessage msg = decode_song_select(TEST_SONG_SEL_MSG);
     EXPECT_EQ(35, msg.index);

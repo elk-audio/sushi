@@ -21,7 +21,7 @@ constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 
 /* Quick test to test plugin loading */
-TEST(TestVst3xPluginLoader, test_load_plugin)
+TEST(TestVst3xPluginLoader, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
     PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
@@ -37,7 +37,7 @@ TEST(TestVst3xPluginLoader, test_load_plugin)
 }
 
 /* Test that nothing breaks if the plugin is not found */
-TEST(TestVst3xPluginLoader, test_load_plugin_from_erroneous_filename)
+TEST(TestVst3xPluginLoader, TestLoadPluginFromErroneousFilename)
 {
     /* Non existing library */
     PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
@@ -80,7 +80,7 @@ protected:
     Vst3xWrapper* _module_under_test;
 };
 
-TEST_F(TestVst3xWrapper, test_load_and_init_plugin)
+TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     ASSERT_TRUE(_module_under_test);
@@ -92,10 +92,9 @@ TEST_F(TestVst3xWrapper, test_load_and_init_plugin)
     EXPECT_EQ(BYPASS_PARAM_ID, parameters[0]->id());
     EXPECT_EQ("Delay", parameters[1]->name());
     EXPECT_EQ(DELAY_PARAM_ID, parameters[1]->id());
-
 }
 
-TEST_F(TestVst3xWrapper, test_processing)
+TEST_F(TestVst3xWrapper, TestProcessing)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     ChunkSampleBuffer in_buffer(2);
@@ -115,7 +114,7 @@ TEST_F(TestVst3xWrapper, test_processing)
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(1)[1]);
 }
 
-TEST_F(TestVst3xWrapper, test_event_forwarding)
+TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     EventFifo queue;
@@ -156,7 +155,7 @@ TEST_F(TestVst3xWrapper, test_event_forwarding)
     ASSERT_FALSE(queue.pop(event));
 }
 
-TEST_F(TestVst3xWrapper, test_configuration_change)
+TEST_F(TestVst3xWrapper, TestConfigurationChange)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     _module_under_test->configure(44100.0f);

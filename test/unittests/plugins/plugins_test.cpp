@@ -13,9 +13,7 @@
 
 using namespace sushi;
 
-/*
- * Tests for passthrough unit gain plugin
- */
+
 class TestPassthroughPlugin : public ::testing::Test
 {
 protected:
@@ -64,9 +62,7 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     ASSERT_FALSE(event_queue.empty());
 }
 
-/*
- * Tests for Gain Plugin
- */
+
 class TestGainPlugin : public ::testing::Test
 {
 protected:
@@ -106,9 +102,7 @@ TEST_F(TestGainPlugin, TestProcess)
     test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }
 
-/*
-* Tests for Equalizer Plugin
-*/
+
 class TestEqualizerPlugin : public ::testing::Test
 {
 protected:

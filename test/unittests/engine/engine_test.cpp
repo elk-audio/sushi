@@ -151,15 +151,15 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
     ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain.size(), 2u);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"gain_0_r");
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[1]->name(),"vst_synth");
+    ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_chain.size());
+    ASSERT_EQ("gain_0_r", _module_under_test->_audio_graph[0]->_chain[0]->name());
+    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_chain[1]->name());
 
     /* Test removal of plugin */
     status = _module_under_test->remove_plugin_from_chain("left", "gain_0_r");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->_chain[0]->name(),"vst_synth");
+    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_chain[0]->name());
 
     /* Negative tests */
     status = _module_under_test->add_plugin_to_chain("not_found",
@@ -167,46 +167,46 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
                                                      "dummyname",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_CHAIN, status);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.passthrough",
                                                      "",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_NAME, status);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "not_found",
                                                      "dummyname",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "",
                                                      "dummyname",
                                                      "not_found",
                                                      PluginType::VST2X);
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_UID);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
     status = _module_under_test->remove_plugin_from_chain("left", "unknown_plugin");
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_NAME, status);
 
     status = _module_under_test->remove_plugin_from_chain("unknown chain", "unknown_plugin");
-    ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_CHAIN);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_CHAIN, status);
 }
 
 TEST_F(TestEngine, TestSetSamplerate)
 {
     auto status = _module_under_test->create_plugin_chain("left",2);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
     status = _module_under_test->add_plugin_to_chain("left",
                                                      "sushi.testing.equalizer",
                                                      "eq",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
     _module_under_test->set_sample_rate(48000.0f);
     ASSERT_FLOAT_EQ(48000.0f, _module_under_test->sample_rate());
     /* Pretty ugly way of checking that it was actually set, but wth */
@@ -228,7 +228,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     auto rt = std::thread(faux_rt_thread, _module_under_test);
     auto status = _module_under_test->create_plugin_chain("main", 2);
     rt.join();
-    ASSERT_EQ(status, EngineReturnStatus::OK);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
 
     rt = std::thread(faux_rt_thread, _module_under_test);
     status = _module_under_test->add_plugin_to_chain("main",

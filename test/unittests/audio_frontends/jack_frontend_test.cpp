@@ -1,6 +1,4 @@
-
 #include "gtest/gtest.h"
-#include <fstream>
 
 #define private public
 #include "jack_mockup.cpp"
@@ -40,7 +38,7 @@ protected:
     MidiDispatcher _midi_dispatcher{&_engine};
 };
 
-TEST_F(TestJackFrontend, test_operation)
+TEST_F(TestJackFrontend, TestOperation)
 {
     JackFrontendConfiguration config("Jack Client", "Jack Server", false);
     auto ret_code = _module_under_test->init(&config);

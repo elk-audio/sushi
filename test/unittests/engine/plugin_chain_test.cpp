@@ -39,7 +39,7 @@ protected:
 };
 
 
-TEST_F(PluginChainTest, test_channel_management)
+TEST_F(PluginChainTest, TestChannelManagement)
 {
     DummyProcessor test_processor;
     test_processor.set_input_channels(2);
@@ -57,7 +57,7 @@ TEST_F(PluginChainTest, test_channel_management)
     ASSERT_EQ(2, _module_under_test.input_channels());
 }
 
-TEST_F(PluginChainTest, test_add_remove)
+TEST_F(PluginChainTest, TestAddAndRemove)
 {
     DummyProcessor test_processor;
     _module_under_test.add(&test_processor);
@@ -69,7 +69,7 @@ TEST_F(PluginChainTest, test_add_remove)
 }
 
 
-TEST_F(PluginChainTest, test_bypass_processing)
+TEST_F(PluginChainTest, TestBypassProcessing)
 {
     /* Test that audio goes right through an empty chain unaffected */
     ChunkSampleBuffer in_buffer(2);
@@ -82,7 +82,7 @@ TEST_F(PluginChainTest, test_bypass_processing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(PluginChainTest, test_event_bypass_processing)
+TEST_F(PluginChainTest, TestEventBypassProcessing)
 {
     ChunkSampleBuffer buffer(2);
     EventFifo event_queue;

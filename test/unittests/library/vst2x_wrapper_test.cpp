@@ -71,21 +71,21 @@ protected:
 //      so we can't test all host controls. Add more tests after preparing an ad-hoc
 //      test plugin.
 
-TEST_F(TestVst2xWrapper, test_set_name)
+TEST_F(TestVst2xWrapper, TestSetName)
 {
     SetUp("libagain.so");
     EXPECT_EQ("Gain", _module_under_test->name());
     EXPECT_EQ("Gain", _module_under_test->label());
 }
 
-TEST_F(TestVst2xWrapper, test_set_channels)
+TEST_F(TestVst2xWrapper, TestSetChannels)
 {
     SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 }
 
-TEST_F(TestVst2xWrapper, test_parameter_initialization)
+TEST_F(TestVst2xWrapper, TestParameterInitialization)
 {
     SetUp("libagain.so");
     auto gain_param = _module_under_test->parameter_from_name("Gain");
@@ -93,7 +93,7 @@ TEST_F(TestVst2xWrapper, test_parameter_initialization)
     EXPECT_EQ(0u, gain_param->id());
 }
 
-TEST_F(TestVst2xWrapper, test_parameter_set_via_event)
+TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 {
     SetUp("libagain.so");
     auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
@@ -102,7 +102,7 @@ TEST_F(TestVst2xWrapper, test_parameter_set_via_event)
     EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
 }
 
-TEST_F(TestVst2xWrapper, test_process)
+TEST_F(TestVst2xWrapper, TestProcess)
 {
     SetUp("libagain.so");
     ChunkSampleBuffer in_buffer(2);
@@ -113,7 +113,7 @@ TEST_F(TestVst2xWrapper, test_process)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(TestVst2xWrapper, test_processing_with_parameter_changes)
+TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 {
     SetUp("libagain.so");
     ChunkSampleBuffer in_buffer(2);
@@ -129,7 +129,7 @@ TEST_F(TestVst2xWrapper, test_processing_with_parameter_changes)
     test_utils::assert_buffer_value(0.123f, out_buffer);
 }
 
-TEST_F(TestVst2xWrapper, test_midi_events)
+TEST_F(TestVst2xWrapper, TestMidiEvents)
 {
     SetUp("libvstxsynth.so");
     ChunkSampleBuffer in_buffer(2);
@@ -151,7 +151,7 @@ TEST_F(TestVst2xWrapper, test_midi_events)
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
 
-TEST_F(TestVst2xWrapper, test_configuration_change)
+TEST_F(TestVst2xWrapper, TestConfigurationChange)
 {
     SetUp("libagain.so");
     _module_under_test->configure(44100.0f);

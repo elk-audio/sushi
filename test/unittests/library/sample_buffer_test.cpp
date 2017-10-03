@@ -1,10 +1,8 @@
 #include <algorithm>
-
 #include "gtest/gtest.h"
-#include "test_utils.h"
-#include "library/sample_buffer.h"
 
-#define private public
+#include "library/sample_buffer.h"
+#include "test_utils.h"
 
 using namespace sushi;
 
@@ -20,7 +18,7 @@ TEST(TestSampleBuffer, TestCopying)
     EXPECT_FLOAT_EQ(test_buffer.channel(0)[10], copy_buffer.channel(0)[10]);
     EXPECT_NE(test_buffer.channel(0), copy_buffer.channel(0));
 
-    //When copy constructing from r-value, the original data should be preserved in a new container
+    // When copy constructing from r-value, the original data should be preserved in a new container
     SampleBuffer<AUDIO_CHUNK_SIZE> r_value_copy(std::move(test_buffer));
     EXPECT_EQ(copy_buffer.channel_count(), r_value_copy.channel_count());
     EXPECT_FLOAT_EQ(copy_buffer.channel(0)[10], r_value_copy.channel(0)[10]);
@@ -70,7 +68,7 @@ TEST(TestSampleBuffer, TestAssignement)
 
 }
 
-TEST(TestSampleBuffer, test_non_owning_buffer)
+TEST(TestSampleBuffer, TestNonOwningBuffer)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer(4);
     float* data = test_buffer.channel(0);
@@ -94,7 +92,7 @@ TEST(TestSampleBuffer, test_non_owning_buffer)
 }
 
 
-TEST(TestSampleBuffer, test_assigning_non_owning_buffer)
+TEST(TestSampleBuffer, TestAssigningNonOwningBuffer)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer_1(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer_2(2);
@@ -127,7 +125,7 @@ TEST(TestSampleBuffer, test_assigning_non_owning_buffer)
     EXPECT_FLOAT_EQ(2.0f, *test_buffer_2.channel(1));
 }
 
-TEST(TestSampleBuffer, test_initialization)
+TEST(TestSampleBuffer, TestInitialization)
 {
     SampleBuffer<2> buffer(42);
     EXPECT_EQ(42, buffer.channel_count());
@@ -136,7 +134,7 @@ TEST(TestSampleBuffer, test_initialization)
     EXPECT_EQ(nullptr, buffer2.channel(0));
 }
 
-TEST(TestSampleBuffer, test_deinterleave_buffer)
+TEST(TestSampleBuffer, TestDeinterleaving)
 {
     float interleaved_buffer[6] = {1, 2, 1, 2, 1, 2};
     SampleBuffer<3> buffer(2);
@@ -158,7 +156,7 @@ TEST(TestSampleBuffer, test_deinterleave_buffer)
     }
 }
 
-TEST(TestSampleBuffer, test_interleave_buffer)
+TEST(TestSampleBuffer, TestInterleaving)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
@@ -170,8 +168,8 @@ TEST(TestSampleBuffer, test_interleave_buffer)
     buffer.to_interleaved(interleaved_buffer);
     for (unsigned int n = 0; n < (AUDIO_CHUNK_SIZE * 2) ; n+=2)
     {
-        ASSERT_FLOAT_EQ(interleaved_buffer[n], 0.0f);
-        ASSERT_FLOAT_EQ(interleaved_buffer[n+1], 1.0f);
+        ASSERT_FLOAT_EQ(0.0f, interleaved_buffer[n]);
+        ASSERT_FLOAT_EQ(1.0f, interleaved_buffer[n+1]);
     }
 
     float interleaved_3ch[AUDIO_CHUNK_SIZE * 3];
@@ -192,7 +190,7 @@ TEST(TestSampleBuffer, test_interleave_buffer)
 }
 
 
-TEST (TestSampleBuffer, test_gain)
+TEST (TestSampleBuffer, TestGain)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
@@ -205,20 +203,20 @@ TEST (TestSampleBuffer, test_gain)
     buffer.apply_gain(2.0f);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 4.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 6.0f);
+        ASSERT_FLOAT_EQ(4.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
     }
 
     // Test per-channel gain
     buffer.apply_gain(1.5f, 0);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 6.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 6.0f);
+        ASSERT_FLOAT_EQ(6.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
     }
 }
 
-TEST(TestSampleBuffer, test_replace)
+TEST(TestSampleBuffer,TestReplace)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer_1(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(2);
@@ -229,12 +227,12 @@ TEST(TestSampleBuffer, test_replace)
     buffer_1.replace(0, 1, buffer_2);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer_1.channel(0)[n], 2.0f);
-        ASSERT_FLOAT_EQ(buffer_1.channel(1)[n], 1.0f);
+        ASSERT_FLOAT_EQ(2.0f, buffer_1.channel(0)[n]);
+        ASSERT_FLOAT_EQ(1.0f, buffer_1.channel(1)[n]);
     }
 }
 
-TEST (TestSampleBuffer, test_add)
+TEST (TestSampleBuffer, TestAdd)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(2);
@@ -249,8 +247,8 @@ TEST (TestSampleBuffer, test_add)
     buffer.add(buffer_2);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 3.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 4.0f);
+        ASSERT_FLOAT_EQ(3.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(4.0f, buffer.channel(1)[n]);
     }
 
     // Test adding mono buffer to stereo buffer
@@ -263,12 +261,12 @@ TEST (TestSampleBuffer, test_add)
     buffer.add(mono_buffer);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 5.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 6.0f);
+        ASSERT_FLOAT_EQ(5.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
     }
 }
 
-TEST (TestSampleBuffer, test_add_with_gain)
+TEST (TestSampleBuffer, TestAddWithGain)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(2);
@@ -283,8 +281,8 @@ TEST (TestSampleBuffer, test_add_with_gain)
     buffer.add_with_gain(buffer_2, 2.0f);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 4.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 5.0f);
+        ASSERT_FLOAT_EQ(4.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(5.0f, buffer.channel(1)[n]);
     }
 
     // Test adding mono buffer to stereo buffer
@@ -297,12 +295,12 @@ TEST (TestSampleBuffer, test_add_with_gain)
     buffer.add_with_gain(mono_buffer, 1.5f);
     for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
     {
-        ASSERT_FLOAT_EQ(buffer.channel(0)[n], 7.0f);
-        ASSERT_FLOAT_EQ(buffer.channel(1)[n], 8.0f);
+        ASSERT_FLOAT_EQ(7.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(8.0f, buffer.channel(1)[n]);
     }
 }
 
-TEST (TestSampleBuffer, test_ramping)
+TEST (TestSampleBuffer, TestRamping)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
     for (unsigned int i = 0; i < AUDIO_CHUNK_SIZE; ++i)

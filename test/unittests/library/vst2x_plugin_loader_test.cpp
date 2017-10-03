@@ -23,17 +23,17 @@ protected:
     }
 };
 
-TEST_F(TestVst2xPluginLoader, test_load_plugin)
+TEST_F(TestVst2xPluginLoader, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
     char* full_again_path = realpath("libagain.so", NULL);
     auto library_handle = PluginLoader::get_library_handle_for_plugin(full_again_path);
-    EXPECT_NE(nullptr, library_handle);
+    ASSERT_NE(nullptr, library_handle);
     free(full_again_path);
     auto plugin = PluginLoader::load_plugin(library_handle);
 
     // Check magic number
-    EXPECT_EQ(plugin->magic, kEffectMagic);
+    EXPECT_EQ(kEffectMagic, plugin->magic);
 
     PluginLoader::close_library_handle(library_handle);
 }

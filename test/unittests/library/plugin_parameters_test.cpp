@@ -3,8 +3,6 @@
 #include "library/plugin_parameters.h"
 #include "test_utils.h"
 
-#define private public
-
 using namespace sushi;
 
 class TestParameterPreProcessor : public ::testing::Test

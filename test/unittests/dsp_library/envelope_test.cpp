@@ -21,7 +21,7 @@ protected:
     AdsrEnvelope _module_under_test;
 };
 
-TEST_F(TestADSREnvelope, test_normal_operation)
+TEST_F(TestADSREnvelope, TestNormalOperation)
 {
     EXPECT_TRUE(_module_under_test.finished());
     _module_under_test.gate(true);
@@ -49,7 +49,7 @@ TEST_F(TestADSREnvelope, test_normal_operation)
     EXPECT_TRUE(_module_under_test.finished());
 }
 
-TEST_F(TestADSREnvelope, test_parameter_limits)
+TEST_F(TestADSREnvelope, TestParameterLimits)
 {
     _module_under_test.set_parameters(0, 0, 0.5f, 0);
     EXPECT_TRUE(_module_under_test.finished());
