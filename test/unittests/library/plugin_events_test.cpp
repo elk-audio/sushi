@@ -5,7 +5,6 @@
 
 using namespace sushi;
 
-
 TEST (TestPluginEvents, TestFactoryFunction)
 {
     auto event = Event::make_note_on_event(123, 1, 46, 0.5);
@@ -109,7 +108,6 @@ TEST(TestPluginEvents, TestReturnableEvents)
     EXPECT_EQ(ReturnableEvent::EventStatus::HANDLED_OK, typed_event->status());
     typed_event->set_handled(false);
     EXPECT_EQ(ReturnableEvent::EventStatus::HANDLED_ERROR, typed_event->status());
-
 }
 
 

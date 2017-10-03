@@ -1,4 +1,3 @@
-
 #include <thread>
 #include "gtest/gtest.h"
 
@@ -44,10 +43,11 @@ protected:
 };
 
 
-TEST_F(TestOSCFrontend, test_send_parameter_change_event)
+TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
 {
     ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
+
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
@@ -65,10 +65,11 @@ TEST_F(TestOSCFrontend, test_send_parameter_change_event)
     ASSERT_TRUE(_event_queue.empty());
 }
 
-TEST_F(TestOSCFrontend, test_send_keyboard_event)
+TEST_F(TestOSCFrontend, TestSendKeyboardEvent)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_on", 46, 0.8f);
+
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
@@ -80,13 +81,13 @@ TEST_F(TestOSCFrontend, test_send_keyboard_event)
     EXPECT_EQ(46, typed_event->note());
     EXPECT_FLOAT_EQ(0.8f, typed_event->velocity());
 
-    /* Test with a not registered path */
+    // Test with a path not registered
     lo_send(_address, "/keyboard_event/drums", "sif", "note_off", 46, 0.8f);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_TRUE(_event_queue.empty());
 }
 
-TEST(TestOSCFrontendInternal, test_spaces_to_underscore)
+TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
 {
     std::string test_str("str with spaces ");
     ASSERT_EQ("str_with_spaces_", spaces_to_underscore(test_str));

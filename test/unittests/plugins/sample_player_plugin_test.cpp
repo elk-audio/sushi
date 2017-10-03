@@ -94,11 +94,11 @@ protected:
         ProcessorReturnCode status = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
-
     void TearDown()
     {
         delete _module_under_test;
     }
+    
     InternalPlugin* _module_under_test;
 };
 
@@ -109,7 +109,6 @@ TEST_F(TestSamplePlayerPlugin, TestProcessing)
     out_buffer.clear();
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
-
 }
 
 TEST_F(TestSamplePlayerPlugin, TestEventProcessing)

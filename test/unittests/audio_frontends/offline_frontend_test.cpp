@@ -1,13 +1,12 @@
-
-#include "gtest/gtest.h"
-#include "test_utils.h"
 #include <fstream>
+#include "gtest/gtest.h"
 
 #define private public
+
 #include "audio_frontends/offline_frontend.cpp"
 #include "engine_mockup.h"
 #include "engine/json_configurator.h"
-
+#include "test_utils.h"
 
 using ::testing::internal::posix::GetEnv;
 
@@ -39,7 +38,7 @@ protected:
     OfflineFrontend* _module_under_test;
 };
 
-TEST_F(TestOfflineFrontend, test_wav_processing)
+TEST_F(TestOfflineFrontend, TestWavProcessing)
 {
     char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
     if (test_data_dir == nullptr)
@@ -84,14 +83,14 @@ TEST_F(TestOfflineFrontend, test_wav_processing)
     sf_close(output_file);
 }
 
-TEST_F(TestOfflineFrontend, test_invalid_input_file)
+TEST_F(TestOfflineFrontend, TestInvalidInputFile)
 {
     OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav");
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::INVALID_INPUT_FILE, ret_code);
 }
 
-TEST_F(TestOfflineFrontend, test_channel_match)
+TEST_F(TestOfflineFrontend, TestChannelMatch)
 {
     char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
     if (test_data_dir == nullptr)
@@ -107,7 +106,7 @@ TEST_F(TestOfflineFrontend, test_channel_match)
     ASSERT_EQ(AudioFrontendStatus::INVALID_N_CHANNELS, ret_code);
 }
 
-TEST_F(TestOfflineFrontend, test_add_sequencer_events)
+TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
 {
     char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
     if (test_data_dir == nullptr)
@@ -115,7 +114,7 @@ TEST_F(TestOfflineFrontend, test_add_sequencer_events)
         EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
     }
 
-    // Initialize with a file cointaining 0.5 on both channels
+    // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
     sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher);
@@ -124,7 +123,7 @@ TEST_F(TestOfflineFrontend, test_add_sequencer_events)
     _module_under_test->add_sequencer_events_from_json_def(config);
 
     auto event_q = _module_under_test->_event_queue;
-    ASSERT_EQ(event_q.size(), 4u);
+    ASSERT_EQ(4u, event_q.size());
 
     // Check that queue is sorted by time
     auto jt = --event_q.end();

@@ -3,12 +3,13 @@
 
 #include "library/id_generator.h"
 
-TEST(BaseIdGeneratorTest, generate_new_uid_test)
+TEST(BaseIdGeneratorTest, GenerateNewUid)
 {
     ObjectId id_1 = BaseIdGenerator<ObjectId>::new_id();
     ObjectId id_2 = BaseIdGenerator<ObjectId>::new_id();
     ObjectId id_3 = BaseIdGenerator<ObjectId>::new_id();
 
+    /* Verify that generated ids are unique and consecutive */
     EXPECT_NE(id_1, id_2);
     EXPECT_EQ(id_2 + 1, id_3);
 

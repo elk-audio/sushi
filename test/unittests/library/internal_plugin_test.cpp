@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-
 #define private public
 
 #include "library/internal_plugin.h"
@@ -55,7 +54,7 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
     EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", 5.0f, 0.0f, 10.0f,
                                                              new FloatParameterPreProcessor(0.0, 10.0)));
 
-    /* Verify all parameter/properties were registered and their order match */
+    // Verify all parameter/properties were registered and their order match
     auto parameter_list = _module_under_test->all_parameters();
     EXPECT_EQ(5u, parameter_list.size());
 
@@ -70,7 +69,7 @@ TEST_F(InternalPluginTest, TestDuplicateParameterNames)
     auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", 1, 0, 10,
                                                                  new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(test_param);
-    /*  Register another parameter with the same name and assert that we get a null pointer back */
+    //  Register another parameter with the same name and assert that we get a null pointer back
     auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", false);
     EXPECT_FALSE(test_param_2);
 }
@@ -81,7 +80,7 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", false);
     EXPECT_TRUE(value);
 
-    // access the parameter through its id and verify type and that you can set its value.
+    // Access the parameter through its id, verify type and that you can set its value.
     EXPECT_EQ(ParameterType::BOOL, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
@@ -94,7 +93,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
                                                                           new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(value);
 
-    // access the parameter through its id and verify type and that you can set its value.
+    // Access the parameter through its id, verify type and that you can set its value.
     EXPECT_EQ(ParameterType::INT, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
@@ -107,7 +106,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
                                                                               new FloatParameterPreProcessor(0.0, 10.0));
     EXPECT_TRUE(value);
 
-    // access the parameter through its id and verify type and that you can set its value.
+    // Access the parameter through its id, verify type and that you can set its value.
     EXPECT_EQ(ParameterType::FLOAT, _module_under_test->parameter_from_name("param_1")->type());
     Event event = Event::make_parameter_change_event(0, 0, 0, 5);
     _module_under_test->process_event(event);
