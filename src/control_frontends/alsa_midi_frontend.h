@@ -17,6 +17,8 @@
 namespace sushi {
 namespace midi_frontend {
 
+constexpr int ALSA_MAX_EVENT_SIZE_BYTES = 12;
+
 class AlsaMidiFrontend : public BaseMidiFrontend
 {
 public:
@@ -32,13 +34,12 @@ public:
 
 private:
 
-    void                        _worker_function();
+    void                        _poll_function();
     std::thread                 _worker;
-    std::atomic<bool>           _running;
-    snd_seq_t*                  _seq_handle;
+    std::atomic<bool>           _running{false};
+    snd_seq_t*                  _seq_handle{nullptr};
     int                         _input_midi_port;
-    snd_midi_event_t*           _seq_parser;
-    std::unique_ptr<uint8_t>    _midi_buffer;
+    snd_midi_event_t*           _seq_parser{nullptr};
 };
 
 } // end namespace midi_frontend

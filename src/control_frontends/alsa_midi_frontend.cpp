@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "alsa_midi_frontend.h"
 #include "logging.h"
 
@@ -6,19 +8,15 @@ MIND_GET_LOGGER;
 namespace sushi {
 namespace midi_frontend {
 
-static const int ALSA_MAX_EVENT_SIZE_BYTES = 8192;
-static const int ALSA_MIDI_POLL_TIMEOUT = 100;
+constexpr int ALSA_POLL_TIMEOUT_MS = 200;
 
 AlsaMidiFrontend::AlsaMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher)
         : BaseMidiFrontend(dispatcher)
-{
-
-}
+{}
 
 AlsaMidiFrontend::~AlsaMidiFrontend()
 {
-    /* Eventually when we switch to a polling version, we should join the midi thread here
-     * Currently we can't since there is a blocking call to snd_seq_event_input */
+    stop();
     snd_midi_event_free(_seq_parser);
     snd_seq_close(_seq_handle);
 }
@@ -53,43 +51,65 @@ bool AlsaMidiFrontend::init()
         MIND_LOG_ERROR("Error creating ALSA MIDI Event Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
-    _midi_buffer = std::unique_ptr<uint8_t>(new uint8_t[ALSA_MAX_EVENT_SIZE_BYTES]);
+    alsamidi_ret = snd_seq_nonblock(_seq_handle, 1);
+    if (alsamidi_ret < 0)
+    {
+        MIND_LOG_ERROR("Setting non-blocking mode failed: {}", strerror(-alsamidi_ret));
+        return false;
+    }
+    snd_midi_event_no_status(_seq_parser, 1); /* Disable running status in the decoder */
     return true;
 }
 
 void AlsaMidiFrontend::run()
 {
+    assert(_seq_handle);
     _running = true;
-    _worker = std::thread(&AlsaMidiFrontend::_worker_function, this);
-
+    _worker = std::thread(&AlsaMidiFrontend::_poll_function, this);
+    MIND_LOG_DEBUG("Started Alsa thread");
 }
 
 void AlsaMidiFrontend::stop()
 {
     _running.store(false);
-    /* Eventually when we switch to a polling version, we should join the midi thread here
-     * Currently we can't since there is a blocking call to snd_seq_event_input */
+    if (_worker.joinable())
+    {
+        _worker.join();
+    }
+    MIND_LOG_DEBUG("Stopped Alsa thread");
 }
 
-void AlsaMidiFrontend::_worker_function()
+void AlsaMidiFrontend::_poll_function()
 {
-    while (_running.load())
+    nfds_t descr_count = static_cast<nfds_t>(snd_seq_poll_descriptors_count(_seq_handle, POLLIN));
+    pollfd* descriptors = new pollfd[descr_count];
+    snd_seq_poll_descriptors(_seq_handle, descriptors, static_cast<unsigned int>(descr_count), POLLIN);
+    while (_running)
     {
-        snd_seq_event_t *ev = nullptr;
-        snd_seq_event_input(_seq_handle, &ev);
-
-        if ( 	(ev->type == SND_SEQ_EVENT_NOTEON)
-                || (ev->type == SND_SEQ_EVENT_NOTEOFF)
-                || (ev->type == SND_SEQ_EVENT_CONTROLLER) )
+        if (poll(descriptors, descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
         {
-            const long num_bytes = snd_midi_event_decode (_seq_parser, _midi_buffer.get(),
-                                                          ALSA_MAX_EVENT_SIZE_BYTES, ev);
-
-            snd_midi_event_reset_decode(_seq_parser);
-            _dispatcher->process_midi(0, 0, _midi_buffer.get(), num_bytes, false);
-            snd_seq_free_event (ev);
+            snd_seq_event_t* ev{nullptr};
+            uint8_t data_buffer[ALSA_MAX_EVENT_SIZE_BYTES]{0};
+            while (snd_seq_event_input(_seq_handle, &ev) > 0)
+            {
+                if ((ev->type == SND_SEQ_EVENT_NOTEON)
+                    || (ev->type == SND_SEQ_EVENT_NOTEOFF)
+                    || (ev->type == SND_SEQ_EVENT_CONTROLLER))
+                {
+                    const long byte_count = snd_midi_event_decode(_seq_parser, data_buffer,
+                                                                  sizeof(data_buffer), ev);
+                    if (byte_count > 0)
+                    {
+                        MIND_LOG_DEBUG("Alsa frontend: received midi message: [{:x} {:x} {:x} {:x}]", data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3]);
+                        _dispatcher->process_midi(0, 0, data_buffer, byte_count, false);
+                    }
+                    MIND_LOG_WARNING_IF(byte_count < 0, "Alsa frontend: decoder returned {}", byte_count);
+                }
+                snd_seq_free_event(ev);
+            }
         }
     }
+    delete[] descriptors;
 }
 
 } // end namespace midi_frontend
