@@ -28,7 +28,7 @@
 namespace sushi {
 namespace engine {
 
-constexpr int PROC_ID_ARRAY_INCREMENT = 100;
+constexpr int MAX_RT_PROCESSOR_ID = 1000;
 
 enum class EngineReturnStatus
 {
@@ -396,7 +396,7 @@ private:
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*> _realtime_processors{PROC_ID_ARRAY_INCREMENT, nullptr};
+    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
