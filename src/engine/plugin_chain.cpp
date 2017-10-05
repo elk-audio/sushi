@@ -8,7 +8,7 @@ namespace engine {
 
 void PluginChain::add(Processor* processor)
 {
-    // If a chain adds itself to it's process chain, endless loops can arrise
+    // If a chain adds itself to its process chain, endless loops can arrise
     assert(processor != this);
     _chain.push_back(processor);
     processor->set_event_output(this);
@@ -68,18 +68,44 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
 
 void PluginChain::update_channel_config()
 {
-    /* No real channel config negotiation here, simply  assume that the channel
-     * config for the chain also applies to all processors that are part of it.
-     * ie. if the chain is stereo in/stereo out, all processors should also be
-     * configured as stereo in/stereo out. */
-    if (_chain.empty())
+    int input_channels = _current_input_channels;
+    int output_channels;
+
+    for (unsigned int i = 0; i < _chain.size(); ++i)
     {
-        return;
+        input_channels = std::min(input_channels, _chain[i]->max_input_channels());
+        if (input_channels != _chain[i]->input_channels())
+        {
+            bool res = _chain[i]->set_input_channels(input_channels);
+            assert(res);
+        }
+        if (i < _chain.size() - 1)
+        {
+            output_channels = std::min(_max_output_channels, std::min(_chain[i]->max_output_channels(),
+                                                                      _chain[i+1]->max_input_channels()));
+        }
+        else
+        {
+            output_channels = std::min(_max_output_channels, std::min(_chain[i]->max_output_channels(),
+                                                                      _current_output_channels));
+        }
+        if (output_channels != _chain[i]->output_channels())
+        {
+            bool res = _chain[i]->set_output_channels(output_channels);
+            assert(res);
+        }
+        input_channels = output_channels;
     }
-    for (auto& processor : _chain)
+
+    if (!_chain.empty())
     {
-        processor->set_input_channels(_current_input_channels);
-        processor->set_output_channels(_current_input_channels);
+        auto last = _chain.back();
+        int chain_outputs = std::min(_current_output_channels, last->output_channels());
+        if (chain_outputs != last->output_channels())
+        {
+            bool res = last->set_output_channels(chain_outputs);
+            assert(res);
+        }
     }
 }
 
@@ -96,10 +122,18 @@ void PluginChain::process_event(Event event)
             _event_buffer.push(event);
             break;
 
-            /* Handle events sent to this processor here */
         default:
            break;
     }
+}
+
+void PluginChain::set_bypassed(bool bypassed)
+{
+    for (auto& processor : _chain)
+    {
+        processor->set_bypassed(bypassed);
+    }
+    Processor::set_bypassed(bypassed);
 }
 
 void PluginChain::send_event(Event event)

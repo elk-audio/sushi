@@ -47,6 +47,19 @@ void SamplePlayerPlugin::configure(float sample_rate)
     return;
 }
 
+void SamplePlayerPlugin::set_bypassed(bool bypassed)
+{
+    // Kill all voices in bypass so we dont have any hanging notes when turning back on
+    if (bypassed)
+    {
+        for (auto &voice : _voices)
+        {
+            voice.note_off(10.f, 0);
+        }
+    }
+    Processor::set_bypassed(bypassed);
+}
+
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
     delete[] _sample_buffer;
@@ -58,6 +71,10 @@ void SamplePlayerPlugin::process_event(Event event)
     {
         case EventType::NOTE_ON:
         {
+            if (_bypassed)
+            {
+                break;
+            }
             bool voice_allocated = false;
             auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
@@ -87,6 +104,10 @@ void SamplePlayerPlugin::process_event(Event event)
         }
         case EventType::NOTE_OFF:
         {
+            if (_bypassed)
+            {
+                break;
+            }
             auto key_event = event.keyboard_event();
             MIND_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
                            key_event->note(), key_event->velocity());
@@ -122,7 +143,10 @@ void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */,
         voice.set_envelope(attack, decay, sustain, release);
         voice.render(_buffer);
     }
-    out_buffer.add_with_gain(_buffer, gain);
+    if (!_bypassed)
+    {
+        out_buffer.add_with_gain(_buffer, gain);
+    }
 }
 
 

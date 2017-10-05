@@ -353,7 +353,7 @@ public:
     /**
      * @brief Sums one channel of source buffer into one channel of the buffer.
      */
-    void add(int dest_channel, int source_channel, SampleBuffer &source)
+    void add(int dest_channel, int source_channel, const SampleBuffer& source)
     {
         float* source_data = source._buffer + size * source_channel;
         float* dest_data = _buffer + size * dest_channel;

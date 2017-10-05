@@ -33,6 +33,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         cleanup();
         return AudioFrontendStatus::INVALID_N_CHANNELS;
     }
+    _buffer = ChunkSampleBuffer(_soundfile_info.channels);
     auto sample_rate_file = _soundfile_info.samplerate;
     if (sample_rate_file != _engine->sample_rate())
     {

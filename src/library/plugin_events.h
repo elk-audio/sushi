@@ -38,6 +38,7 @@ enum class EventType
      * since a change should always be handled and could be expensive to handle */
     DATA_PARAMETER_CHANGE,
     STRING_PARAMETER_CHANGE,
+    SET_BYPASS,
     /* Engine commands */
     STOP_ENGINE,
     /* Processor add/delete/reorder events */
@@ -213,6 +214,23 @@ protected:
 };
 
 /**
+ * @brief Class for sending commands to processors.
+ */
+class ProcessorCommandEvent : public BaseEvent
+{
+public:
+    ProcessorCommandEvent(EventType type,
+                          ObjectId processor,
+                          bool value) : BaseEvent(type, processor, 0),
+                                        _value(value)
+    {
+        assert(type == EventType::SET_BYPASS);
+    }
+    bool value() const {return _value;}
+private:
+    bool _value;
+};
+/**
  * @brief Baseclass for events that can be returned with a status code.
  */
 class ReturnableEvent : public BaseEvent
@@ -310,6 +328,12 @@ public:
         return &_data_parameter_change_event;
     }
 
+    const ProcessorCommandEvent* processor_command_event() const
+    {
+        assert(_processor_command_event.type() == EventType::SET_BYPASS);
+        return &_processor_command_event;
+    }
+
     ReturnableEvent* returnable_event()
     {
         assert(_returnable_event.type() >= EventType::STOP_ENGINE);
@@ -379,6 +403,12 @@ public:
         return Event(typed_event);
     }
 
+    static Event make_bypass_processor_event(ObjectId target, bool value)
+    {
+        ProcessorCommandEvent typed_event(EventType::SET_BYPASS, target, value);
+        return Event(typed_event);
+    }
+
     static Event make_stop_engine_event()
     {
         ReturnableEvent typed_event(EventType::STOP_ENGINE);
@@ -428,6 +458,7 @@ private:
     Event(const WrappedMidiEvent& e) : _wrapped_midi_event(e) {}
     Event(const StringParameterChangeEvent& e) : _string_parameter_change_event(e) {}
     Event(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
+    Event(const ProcessorCommandEvent& e) : _processor_command_event(e) {}
     Event(const ReturnableEvent& e) : _returnable_event(e) {}
     Event(const ProcessorOperationEvent& e) : _processor_operation_event(e) {}
     Event(const ProcessorReorderEvent& e) : _processor_reorder_event(e) {}
@@ -439,6 +470,7 @@ private:
         ParameterChangeEvent        _parameter_change_event;
         StringParameterChangeEvent  _string_parameter_change_event;
         DataParameterChangeEvent    _data_parameter_change_event;
+        ProcessorCommandEvent       _processor_command_event;
         ReturnableEvent             _returnable_event;
         ProcessorOperationEvent     _processor_operation_event;
         ProcessorReorderEvent       _processor_reorder_event;

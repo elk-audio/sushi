@@ -24,7 +24,7 @@
 namespace sushi {
 namespace vst3 {
 
-constexpr int VST_WRAPPER_MAX_N_CHANNELS = 2;
+constexpr int VST_WRAPPER_MAX_N_CHANNELS = 8;
 
 /**
  * @brief Wrapping the processdata in our own class for convenience
@@ -64,7 +64,7 @@ public:
      * @param input Input buffers
      * @param output Output buffers
      */
-    void assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output);
+    void assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output, int in_channels, int out_channels);
 
     /**
      * @brief Clear all event and parameter changes to prepare for a new round

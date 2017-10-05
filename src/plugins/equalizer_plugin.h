@@ -11,6 +11,7 @@
 namespace sushi {
 namespace equalizer_plugin {
 
+constexpr int MAX_CHANNELS_SUPPORTED = 2;
 static const std::string DEFAULT_NAME = "sushi.testing.equalizer";
 static const std::string DEFAULT_LABEL = "Equalizer";
 
@@ -25,13 +26,17 @@ public:
 
     void configure(float sample_rate) override;
 
+    bool set_input_channels(int channels) override;
+
+    // virtual bool set_output_channels(int channels) override;
+
     // void process_event(Event /*event*/) {}
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
     float _sample_rate;
-    dsp::biquad::BiquadFilter _filter;
+    dsp::biquad::BiquadFilter _filters[MAX_CHANNELS_SUPPORTED];
 
     FloatParameterValue* _frequency;
     FloatParameterValue* _gain;

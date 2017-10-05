@@ -10,6 +10,7 @@
 namespace sushi {
 namespace gain_plugin {
 
+constexpr int MAX_CHANNELS = 16;
 static const std::string DEFAULT_NAME = "sushi.testing.gain";
 static const std::string DEFAULT_LABEL = "Gain";
 
@@ -19,6 +20,8 @@ public:
     GainPlugin();
 
     ~GainPlugin();
+
+    bool set_input_channels(int channels) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
