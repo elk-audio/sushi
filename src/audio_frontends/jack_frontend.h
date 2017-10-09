@@ -107,8 +107,8 @@ private:
     int internal_samplerate_callback(jack_nframes_t nframes);
 
     void process_events();
-    void process_midi(jack_nframes_t no_frames);
-    void process_audio(jack_nframes_t no_frames);
+    void process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count);
+    void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;

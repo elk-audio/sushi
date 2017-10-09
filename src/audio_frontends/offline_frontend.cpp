@@ -138,11 +138,16 @@ void OfflineFrontend::run()
 {
     int readcount;
     int samplecount = 0;
+    float usec_time = 0.0f;
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          _file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
+        // Update time and sample counter
+        _engine->update_time(static_cast<int64_t>(usec_time), samplecount);
         samplecount += readcount;
+        usec_time += readcount * 1000000.f / _engine->sample_rate();
+
         // Process all events until the end of the frame
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
         {

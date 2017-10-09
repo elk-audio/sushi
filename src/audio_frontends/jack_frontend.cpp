@@ -210,9 +210,23 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
         MIND_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
     }
-    process_events();
-    process_midi(no_frames);
-    process_audio(no_frames);
+    jack_nframes_t 	current_frames{0};
+    jack_time_t 	current_usecs{0};
+    jack_time_t 	next_usecs{0};
+    float           period_usec{0.0};
+    if (jack_get_cycle_times(_client, &current_frames, &current_usecs, &next_usecs, &period_usec) > 0)
+    {
+        MIND_LOG_ERROR("Error getting time from jack frontend");
+    }
+    /* Process in chunks of AUDIO_CHUNK_SIZE */
+    for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
+    {
+        uint64_t frametime = current_usecs + (frame * 1000000) / _sample_rate;
+        _engine->update_time(frametime + frame, current_frames + frame);
+        process_events();
+        process_midi(frame, AUDIO_CHUNK_SIZE);
+        process_audio(frame, AUDIO_CHUNK_SIZE);
+    }
     return 0;
 }
 
@@ -245,23 +259,23 @@ void inline JackFrontend::process_events()
 }
 
 
-void inline JackFrontend::process_midi(jack_nframes_t no_frames)
+void inline JackFrontend::process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count)
 {
-    auto* buffer = jack_port_get_buffer(_midi_port, no_frames);
+    auto* buffer = jack_port_get_buffer(_midi_port, frame_count);
     auto no_events = jack_midi_get_event_count(buffer);
     for (auto i = 0u; i < no_events; ++i)
     {
         jack_midi_event_t midi_event;
         int ret = jack_midi_event_get(&midi_event, buffer, i);
-        if (ret == 0)
+        if (ret == 0 && midi_event.time>= start_frame && midi_event.time < start_frame + frame_count)
         {
-            _midi_dispatcher->process_midi(0, 0, midi_event.buffer, midi_event.size, true);
+            _midi_dispatcher->process_midi(0, midi_event.time - start_frame, midi_event.buffer, midi_event.size, true);
         }
     }
 }
 
 
-void inline JackFrontend::process_audio(jack_nframes_t no_frames)
+void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count)
 {
     /* Get pointers to audio buffers from ports */
     std::array<const float*, MAX_FRONTEND_CHANNELS> in_data;
@@ -269,26 +283,22 @@ void inline JackFrontend::process_audio(jack_nframes_t no_frames)
 
     for (size_t i = 0; i < in_data.size(); ++i)
     {
-        in_data[i] = static_cast<float*>(jack_port_get_buffer(_input_ports[i], no_frames));
+        in_data[i] = static_cast<float*>(jack_port_get_buffer(_input_ports[i], frame_count)) + start_frame;
     }
     for (size_t i = 0; i < in_data.size(); ++i)
     {
-        out_data[i] = static_cast<float*>(jack_port_get_buffer(_output_ports[i], no_frames));
+        out_data[i] = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) +start_frame;
     }
 
-    /* And process audio in chunks of size AUDIO_CHUNK_SIZE */
-    for (jack_nframes_t frames = 0; frames < no_frames; frames += AUDIO_CHUNK_SIZE)
+    for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        for (size_t i = 0; i < _input_ports.size(); ++i)
-        {
-            std::copy(in_data[i] + frames, in_data[i] + frames + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
-        }
-        _out_buffer.clear();
-        _engine->process_chunk(&_in_buffer, &_out_buffer);
-        for (size_t i = 0; i < _input_ports.size(); ++i)
-        {
-            std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data[i] + frames);
-        }
+        std::copy(in_data[i], in_data[i] + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
+    }
+    _out_buffer.clear();
+    _engine->process_chunk(&_in_buffer, &_out_buffer);
+    for (size_t i = 0; i < _input_ports.size(); ++i)
+    {
+        std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data[i]);
     }
 }
 

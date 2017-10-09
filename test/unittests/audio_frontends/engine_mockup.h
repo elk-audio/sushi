@@ -23,6 +23,9 @@ public:
         process_called = true;
     }
 
+    void update_time(int64_t /*usec*/, int64_t /*samples*/)
+    { }
+
     EngineReturnStatus send_rt_event(Event& /*event*/)
     {
         got_rt_event = true;
