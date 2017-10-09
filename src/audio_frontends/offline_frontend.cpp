@@ -82,7 +82,7 @@ void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Docume
                 continue;
             }
             _event_queue.push_back(std::make_tuple(sample,
-                                                   Event::make_parameter_change_event(processor_id,
+                                                   RtEvent::make_parameter_change_event(processor_id,
                                                                                       sample % AUDIO_CHUNK_SIZE,
                                                                                       parameterId,
                                                                                       data["value"].GetFloat())));
@@ -90,7 +90,7 @@ void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Docume
         else if (e["type"] == "note_on")
         {
             _event_queue.push_back(std::make_tuple(sample,
-                                                   Event::make_note_on_event(processor_id,
+                                                   RtEvent::make_note_on_event(processor_id,
                                                                              sample % AUDIO_CHUNK_SIZE,
                                                                              data["note"].GetInt(),
                                                                              data["velocity"].GetFloat())));
@@ -98,7 +98,7 @@ void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Docume
         else if (e["type"] == "note_off")
         {
             _event_queue.push_back(std::make_tuple(sample,
-                                                   Event::make_note_off_event(processor_id,
+                                                   RtEvent::make_note_off_event(processor_id,
                                                                               sample % AUDIO_CHUNK_SIZE,
                                                                               data["note"].GetInt(),
                                                                               data["velocity"].GetFloat())));
@@ -107,8 +107,8 @@ void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Docume
 
     // Sort events by reverse time (lambda function compares first tuple element)
     std::sort(std::begin(_event_queue), std::end(_event_queue),
-              [](std::tuple<int, Event> const &t1,
-                 std::tuple<int, Event> const &t2)
+              [](std::tuple<int, RtEvent> const &t1,
+                 std::tuple<int, RtEvent> const &t2)
               {
                   return std::get<0>(t1) >= std::get<0>(t2);
               }

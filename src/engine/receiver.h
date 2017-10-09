@@ -14,7 +14,7 @@
 
 #include "library/id_generator.h"
 #include "library/event_fifo.h"
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 
 namespace sushi {
 namespace receiver {

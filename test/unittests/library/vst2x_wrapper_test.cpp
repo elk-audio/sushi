@@ -108,7 +108,7 @@ TEST_F(TestVst2xWrapper, TestPluginCanDos)
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 {
     SetUp("libagain.so");
-    auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
     auto handle = _module_under_test->_plugin_handle;
     EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
@@ -150,7 +150,7 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
     SetUp("libagain.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
-    auto event = Event::make_parameter_change_event(0, 0, 0, 0.123f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -166,7 +166,7 @@ TEST_F(TestVst2xWrapper, TestBypassProcessing)
     SetUp("libagain.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
-    auto event = Event::make_parameter_change_event(0, 0, 0, 5.0f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 5.0f);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
     _module_under_test->set_bypassed(true);
@@ -181,7 +181,7 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
-    _module_under_test->process_event(Event::make_note_on_event(0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     for (int i=0; i<2; i++)
     {
@@ -192,7 +192,7 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
     }
 
     // Send NoteOFF, VstXsynth immediately silence everything
-    _module_under_test->process_event(Event::make_note_off_event(0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }

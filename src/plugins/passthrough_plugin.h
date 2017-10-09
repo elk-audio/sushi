@@ -25,7 +25,7 @@ public:
 
     ~PassthroughPlugin();
 
-    void process_event(Event event) override
+    void process_event(RtEvent event) override
     {
         _event_queue.push(event);
     };

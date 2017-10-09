@@ -22,8 +22,8 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
     Connection connection = {25, 26, 0, 1};
     NoteOnMessage message = {1, 46, 64};
-    Event event = make_note_on_event(connection, message, 10);
-    EXPECT_EQ(EventType::NOTE_ON, event.type());
+    RtEvent event = make_note_on_event(connection, message, 10);
+    EXPECT_EQ(RtEventType::NOTE_ON, event.type());
     auto typed_event = event.keyboard_event();
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(10, typed_event->sample_offset());
@@ -35,8 +35,8 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
     Connection connection = {25, 26, 0, 1};
     NoteOffMessage message = {1, 46, 64};
-    Event event = make_note_off_event(connection, message, 10);
-    EXPECT_EQ(EventType::NOTE_OFF, event.type());
+    RtEvent event = make_note_off_event(connection, message, 10);
+    EXPECT_EQ(RtEventType::NOTE_OFF, event.type());
     auto typed_event = event.keyboard_event();
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(10, typed_event->sample_offset());
@@ -48,8 +48,8 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
     Connection connection = {25, 26, 0, 1};
     ControlChangeMessage message = {1, 50, 32};
-    Event event = make_param_change_event(connection, message, 10);
-    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event.type());
+    RtEvent event = make_param_change_event(connection, message, 10);
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     auto typed_event = event.parameter_change_event();
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(26u, typed_event->param_id());

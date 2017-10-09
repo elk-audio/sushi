@@ -77,11 +77,11 @@ void Vst3xWrapper::configure(float sample_rate)
 }
 
 
-void Vst3xWrapper::process_event(Event event)
+void Vst3xWrapper::process_event(RtEvent event)
 {
     switch (event.type())
     {
-        case EventType::FLOAT_PARAMETER_CHANGE:
+        case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
             int index;
             auto typed_event = event.parameter_change_event();
@@ -92,25 +92,25 @@ void Vst3xWrapper::process_event(Event event)
             }
             break;
         }
-        case EventType::NOTE_ON:
+        case RtEventType::NOTE_ON:
         {
             auto vst_event = convert_note_on_event(event.keyboard_event());
             _in_event_list.addEvent(vst_event);
             break;
         }
-        case EventType::NOTE_OFF:
+        case RtEventType::NOTE_OFF:
         {
             auto vst_event = convert_note_off_event(event.keyboard_event());
             _in_event_list.addEvent(vst_event);
             break;
         }
-        case EventType::NOTE_AFTERTOUCH:
+        case RtEventType::NOTE_AFTERTOUCH:
         {
             auto vst_event = convert_aftertouch_event(event.keyboard_event());
             _in_event_list.addEvent(vst_event);
             break;
         }
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::WRAPPED_MIDI_EVENT:
         {
             // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
         }
@@ -169,7 +169,7 @@ void Vst3xWrapper::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
     if(_can_do_soft_bypass)
     {
-        Event e = Event::make_parameter_change_event(0, 0, _bypass_parameter_id, bypassed? 1.0f : 0.0f);
+        RtEvent e = RtEvent::make_parameter_change_event(0, 0, _bypass_parameter_id, bypassed? 1.0f : 0.0f);
         this->process_event(e);
     }
 }
@@ -339,19 +339,19 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             switch (vst_event.type)
             {
                 case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
-                    output_event(Event::make_note_on_event(0, vst_event.sampleOffset,
+                    output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
                                                            vst_event.noteOn.pitch,
                                                            vst_event.noteOn.velocity));
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
-                    output_event(Event::make_note_off_event(0, vst_event.sampleOffset,
+                    output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
                                                             vst_event.noteOff.pitch,
                                                             vst_event.noteOff.velocity));
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kPolyPressureEvent:
-                    output_event(Event::make_note_aftertouch_event(0, vst_event.sampleOffset,
+                    output_event(RtEvent::make_note_aftertouch_event(0, vst_event.sampleOffset,
                                                             vst_event.polyPressure.pitch,
                                                             vst_event.polyPressure.pressure));
                     break;

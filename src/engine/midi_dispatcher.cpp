@@ -7,28 +7,28 @@ namespace midi_dispatcher {
 
 MIND_GET_LOGGER;
 
-inline Event make_note_on_event(const Connection &c,
+inline RtEvent make_note_on_event(const Connection &c,
                                 const midi::NoteOnMessage &msg,
                                 int offset)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return Event::make_note_on_event(c.target, offset, msg.note, velocity);
+    return RtEvent::make_note_on_event(c.target, offset, msg.note, velocity);
 }
 
-inline Event make_note_off_event(const Connection &c,
+inline RtEvent make_note_off_event(const Connection &c,
                                  const midi::NoteOffMessage &msg,
                                  int offset)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return Event::make_note_off_event(c.target, offset, msg.note, velocity);
+    return RtEvent::make_note_off_event(c.target, offset, msg.note, velocity);
 }
 
-inline Event make_param_change_event(const Connection &c,
+inline RtEvent make_param_change_event(const Connection &c,
                                      const midi::ControlChangeMessage &msg,
                                      int offset)
 {
     float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return Event::make_parameter_change_event(c.target, offset, c.parameter, value);
+    return RtEvent::make_parameter_change_event(c.target, offset, c.parameter, value);
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
@@ -100,7 +100,7 @@ void MidiDispatcher::clear_connections()
 
 void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size, bool realtime)
 {
-    std::function<engine::EngineReturnStatus(engine::BaseEngine*, Event&)> dispatch_fun = realtime? &engine::BaseEngine::send_rt_event :
+    std::function<engine::EngineReturnStatus(engine::BaseEngine*, RtEvent&)> dispatch_fun = realtime? &engine::BaseEngine::send_rt_event :
                                                                                                     &engine::BaseEngine::send_async_event;
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)

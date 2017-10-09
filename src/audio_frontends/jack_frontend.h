@@ -8,7 +8,7 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 
 #include "base_audio_frontend.h"
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 

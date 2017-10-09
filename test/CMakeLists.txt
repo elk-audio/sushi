@@ -79,7 +79,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
-               unittests/library/plugin_events_test.cpp
+               unittests/library/rt_event_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
                unittests/library/vst2x_midi_event_fifo_test.cpp

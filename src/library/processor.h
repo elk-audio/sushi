@@ -11,7 +11,7 @@
 #include <map>
 
 #include "library/sample_buffer.h"
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 #include "library/event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
@@ -59,7 +59,7 @@ public:
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(Event event) = 0;
+    virtual void process_event(RtEvent event) = 0;
 
     /**
      * @brief Process a chunk of audio.
@@ -243,7 +243,7 @@ protected:
         return true;
     }
 
-    void output_event(Event event)
+    void output_event(RtEvent event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);

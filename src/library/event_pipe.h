@@ -10,14 +10,14 @@
 #ifndef SUSHI_EVENT_PIPE_H
 #define SUSHI_EVENT_PIPE_H
 
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 
 namespace sushi {
 
 class EventPipe
 {
 public:
-    virtual void send_event(Event event) = 0;
+    virtual void send_event(RtEvent event) = 0;
 
 };
 

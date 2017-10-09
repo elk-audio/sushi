@@ -55,7 +55,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    void process_event(Event event) override;
+    void process_event(RtEvent event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
@@ -135,7 +135,7 @@ class Vst3xWrapper : public Processor
 public:
     Vst3xWrapper(const std::string & /*path*/, const std::string & /*name*/) {}
     ProcessorReturnCode init(float sample_rate) override;
-    void process_event(Event /*event*/) override {}
+    void process_event(RtEvent /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
 };
 

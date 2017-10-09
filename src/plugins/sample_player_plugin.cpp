@@ -65,11 +65,11 @@ SamplePlayerPlugin::~SamplePlayerPlugin()
     delete[] _sample_buffer;
 }
 
-void SamplePlayerPlugin::process_event(Event event)
+void SamplePlayerPlugin::process_event(RtEvent event)
 {
     switch (event.type())
     {
-        case EventType::NOTE_ON:
+        case RtEventType::NOTE_ON:
         {
             if (_bypassed)
             {
@@ -102,7 +102,7 @@ void SamplePlayerPlugin::process_event(Event event)
             }
             break;
         }
-        case EventType::NOTE_OFF:
+        case RtEventType::NOTE_OFF:
         {
             if (_bypassed)
             {

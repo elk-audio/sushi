@@ -15,7 +15,7 @@
 #include "engine/engine.h"
 #include "library/constants.h"
 #include "library/midi_decoder.h"
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 #include "library/processor.h"
 
 namespace sushi {

@@ -25,7 +25,7 @@ namespace sushi {
 /**
  * TODO - Very incomplete list of message types we might need.
  */
-enum class EventType
+enum class RtEventType
 {
     NOTE_ON,
     NOTE_OFF,
@@ -50,14 +50,14 @@ enum class EventType
     REMOVE_PLUGIN_CHAIN,
 };
 
-class BaseEvent
+class BaseRtEvent
 {
 public:
     /**
      * @brief Type of event.
      * @return
      */
-    EventType type() const {return _type;};
+    RtEventType type() const {return _type;};
 
     /**
      * @brief The processor id of the target for this message.
@@ -73,10 +73,10 @@ public:
     int sample_offset() const {return _sample_offset;}
 
 protected:
-    BaseEvent(EventType type, ObjectId target, int offset) : _type(type),
+    BaseRtEvent(RtEventType type, ObjectId target, int offset) : _type(type),
                                                              _processor_id(target),
                                                              _sample_offset(offset) {}
-    EventType _type;
+    RtEventType _type;
     ObjectId _processor_id;
     int _sample_offset;
 };
@@ -84,16 +84,16 @@ protected:
 /**
  * @brief Event class for all keyboard events.
  */
-class KeyboardEvent : public BaseEvent
+class KeyboardEvent : public BaseRtEvent
 {
 public:
-    KeyboardEvent(EventType type, ObjectId target, int offset, int note, float velocity) : BaseEvent(type, target, offset),
+    KeyboardEvent(RtEventType type, ObjectId target, int offset, int note, float velocity) : BaseRtEvent(type, target, offset),
                                                                                            _note(note),
                                                                                            _velocity(velocity)
     {
-        assert(type == EventType::NOTE_ON ||
-               type == EventType::NOTE_OFF ||
-               type == EventType::NOTE_AFTERTOUCH);
+        assert(type == RtEventType::NOTE_ON ||
+               type == RtEventType::NOTE_OFF ||
+               type == RtEventType::NOTE_AFTERTOUCH);
     }
     int note() const {return _note;}
     float velocity() const {return _velocity;}
@@ -108,10 +108,10 @@ protected:
  * handle midi natively. Could come in handy, or me might duplicate the entire
  * midi functionality in our own events.
  */
-class WrappedMidiEvent : public BaseEvent
+class WrappedMidiEvent : public BaseRtEvent
 {
 public:
-    WrappedMidiEvent(int offset, ObjectId target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : BaseEvent(EventType::WRAPPED_MIDI_EVENT, target, offset),
+    WrappedMidiEvent(int offset, ObjectId target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
                                                                                                     _midi_data{byte_0, byte_1, byte_2} {}
 
     const uint8_t* midi_data() const {return _midi_data;}
@@ -122,16 +122,16 @@ protected:
 /**
  * @brief Baseclass for simple parameter changes
  */
-class ParameterChangeEvent : public BaseEvent
+class ParameterChangeEvent : public BaseRtEvent
 {
 public:
-    ParameterChangeEvent(EventType type, ObjectId target, int offset, ObjectId param_id, float value) : BaseEvent(type, target, offset),
+    ParameterChangeEvent(RtEventType type, ObjectId target, int offset, ObjectId param_id, float value) : BaseRtEvent(type, target, offset),
                                                                                                         _param_id(param_id),
                                                                                                         _value(value)
     {
-        assert(type == EventType::FLOAT_PARAMETER_CHANGE ||
-               type == EventType::INT_PARAMETER_CHANGE ||
-               type == EventType::BOOL_PARAMETER_CHANGE);
+        assert(type == RtEventType::FLOAT_PARAMETER_CHANGE ||
+               type == RtEventType::INT_PARAMETER_CHANGE ||
+               type == RtEventType::BOOL_PARAMETER_CHANGE);
     }
     ObjectId param_id() const {return _param_id;}
 
@@ -146,10 +146,10 @@ protected:
 /**
  * @brief Baseclass for events that need to carry a larger payload of data.
  */
-class DataPayloadEvent : public BaseEvent
+class DataPayloadEvent : public BaseRtEvent
 {
 public:
-    DataPayloadEvent(EventType type, ObjectId processor, int offset, BlobData data) : BaseEvent(type, processor, offset),
+    DataPayloadEvent(RtEventType type, ObjectId processor, int offset, BlobData data) : BaseRtEvent(type, processor, offset),
                                                                                                   _data_size(data.size),
                                                                                                   _data(data.data) {}
 
@@ -170,13 +170,13 @@ protected:
 /**
  * @brief Class for string parameter changes
  */
-class StringParameterChangeEvent : public BaseEvent
+class StringParameterChangeEvent : public BaseRtEvent
 {
 public:
     StringParameterChangeEvent(ObjectId processor,
                                int offset,
                                ObjectId param_id,
-                               std::string* value) : BaseEvent(EventType::STRING_PARAMETER_CHANGE,
+                               std::string* value) : BaseRtEvent(RtEventType::STRING_PARAMETER_CHANGE,
                                                                processor,
                                                                offset),
                                                      _data(value),
@@ -201,7 +201,7 @@ public:
     DataParameterChangeEvent(ObjectId processor,
                              int offset,
                              ObjectId param_id,
-                             BlobData value) : DataPayloadEvent(EventType::DATA_PARAMETER_CHANGE,
+                             BlobData value) : DataPayloadEvent(RtEventType::DATA_PARAMETER_CHANGE,
                                                              processor,
                                                              offset,
                                                              value),
@@ -216,15 +216,15 @@ protected:
 /**
  * @brief Class for sending commands to processors.
  */
-class ProcessorCommandEvent : public BaseEvent
+class ProcessorCommandEvent : public BaseRtEvent
 {
 public:
-    ProcessorCommandEvent(EventType type,
+    ProcessorCommandEvent(RtEventType type,
                           ObjectId processor,
-                          bool value) : BaseEvent(type, processor, 0),
+                          bool value) : BaseRtEvent(type, processor, 0),
                                         _value(value)
     {
-        assert(type == EventType::SET_BYPASS);
+        assert(type == RtEventType::SET_BYPASS);
     }
     bool value() const {return _value;}
 private:
@@ -233,7 +233,7 @@ private:
 /**
  * @brief Baseclass for events that can be returned with a status code.
  */
-class ReturnableEvent : public BaseEvent
+class ReturnableEvent : public BaseRtEvent
 {
 public:
     enum class EventStatus : uint8_t
@@ -242,7 +242,7 @@ public:
         HANDLED_OK,
         HANDLED_ERROR
     };
-    ReturnableEvent(EventType type) : BaseEvent(type, 0, 0),
+    ReturnableEvent(RtEventType type) : BaseRtEvent(type, 0, 0),
                                       _status{EventStatus::UNHANDLED},
                                       _event_id{EventIdGenerator::new_id()} {}
 
@@ -260,7 +260,7 @@ class Processor;
 class ProcessorOperationEvent : public ReturnableEvent
 {
 public:
-    ProcessorOperationEvent(EventType type,
+    ProcessorOperationEvent(RtEventType type,
                             Processor* instance) : ReturnableEvent(type),
                                                    _instance{instance} {}
     Processor* instance() {return _instance;}
@@ -271,7 +271,7 @@ private:
 class ProcessorReorderEvent : public ReturnableEvent
 {
 public:
-    ProcessorReorderEvent(EventType type, ObjectId processor, ObjectId chain) : ReturnableEvent(type),
+    ProcessorReorderEvent(RtEventType type, ObjectId processor, ObjectId chain) : ReturnableEvent(type),
                                                                                 _processor{processor},
                                                                                 _chain{chain} {}
     ObjectId processor() {return _processor;}
@@ -286,12 +286,12 @@ private:
  *        baseclass for event from which you can access the derived event
  *        classes.
  */
-class alignas(MIND_EVENT_CACHE_ALIGNMENT) Event
+class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
 {
 public:
-    Event() {}
+    RtEvent() {}
 
-    EventType type() const {return _base_event.type();}
+    RtEventType type() const {return _base_event.type();}
 
     ObjectId processor_id() const {return _base_event.processor_id();}
 
@@ -300,171 +300,171 @@ public:
     /* Access functions protected by asserts */
     const KeyboardEvent* keyboard_event()
     {
-        assert(_keyboard_event.type() == EventType::NOTE_ON ||
-               _keyboard_event.type() == EventType::NOTE_OFF ||
-               _keyboard_event.type() == EventType::NOTE_AFTERTOUCH);
+        assert(_keyboard_event.type() == RtEventType::NOTE_ON ||
+               _keyboard_event.type() == RtEventType::NOTE_OFF ||
+               _keyboard_event.type() == RtEventType::NOTE_AFTERTOUCH);
         return &_keyboard_event;
     }
 
     const WrappedMidiEvent* wrapper_midi_event() const
     {
-        assert(_wrapped_midi_event.type() == EventType::WRAPPED_MIDI_EVENT);
+        assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
         return &_wrapped_midi_event;
     }
 
     const ParameterChangeEvent* parameter_change_event() const
     {
-        assert(_keyboard_event.type() == EventType::FLOAT_PARAMETER_CHANGE);
+        assert(_keyboard_event.type() == RtEventType::FLOAT_PARAMETER_CHANGE);
         return &_parameter_change_event;
     }
     const StringParameterChangeEvent* string_parameter_change_event() const
     {
-        assert(_string_parameter_change_event.type() == EventType::STRING_PARAMETER_CHANGE);
+        assert(_string_parameter_change_event.type() == RtEventType::STRING_PARAMETER_CHANGE);
         return &_string_parameter_change_event;
     }
     const DataParameterChangeEvent* data_parameter_change_event() const
     {
-        assert(_data_parameter_change_event.type() == EventType::DATA_PARAMETER_CHANGE);
+        assert(_data_parameter_change_event.type() == RtEventType::DATA_PARAMETER_CHANGE);
         return &_data_parameter_change_event;
     }
 
     const ProcessorCommandEvent* processor_command_event() const
     {
-        assert(_processor_command_event.type() == EventType::SET_BYPASS);
+        assert(_processor_command_event.type() == RtEventType::SET_BYPASS);
         return &_processor_command_event;
     }
 
     ReturnableEvent* returnable_event()
     {
-        assert(_returnable_event.type() >= EventType::STOP_ENGINE);
+        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
         return &_returnable_event;
     }
 
     ProcessorOperationEvent* processor_operation_event()
     {
-        assert(_processor_operation_event.type() == EventType::INSERT_PROCESSOR);
+        assert(_processor_operation_event.type() == RtEventType::INSERT_PROCESSOR);
         return &_processor_operation_event;
     }
 
     ProcessorReorderEvent* processor_reorder_event()
     {
-        assert(_processor_reorder_event.type() == EventType::REMOVE_PROCESSOR ||
-               _processor_reorder_event.type() == EventType::ADD_PROCESSOR_TO_CHAIN ||
-               _processor_reorder_event.type() == EventType::REMOVE_PROCESSOR_FROM_CHAIN ||
-               _processor_reorder_event.type() == EventType::ADD_PLUGIN_CHAIN ||
-               _processor_reorder_event.type() == EventType::REMOVE_PLUGIN_CHAIN);
+        assert(_processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR ||
+               _processor_reorder_event.type() == RtEventType::ADD_PROCESSOR_TO_CHAIN ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR_FROM_CHAIN ||
+               _processor_reorder_event.type() == RtEventType::ADD_PLUGIN_CHAIN ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_PLUGIN_CHAIN);
         ;
         return &_processor_reorder_event;
     }
 
     /* Factory functions for constructing events */
-    static Event make_note_on_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_on_event(ObjectId target, int offset, int note, float velocity)
     {
-        return make_keyboard_event(EventType::NOTE_ON, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, note, velocity);
     }
 
-    static Event make_note_off_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_off_event(ObjectId target, int offset, int note, float velocity)
     {
-        return make_keyboard_event(EventType::NOTE_OFF, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, note, velocity);
     }
 
-    static Event make_note_aftertouch_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int note, float velocity)
     {
-        return make_keyboard_event(EventType::NOTE_AFTERTOUCH, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, note, velocity);
     }
 
-    static Event make_keyboard_event(EventType type, ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int note, float velocity)
     {
         KeyboardEvent typed_event(type, target, offset, note, velocity);
-        return Event(typed_event);
+        return RtEvent(typed_event);
     }
 
-    static Event make_parameter_change_event(ObjectId target, int offset, ObjectId param_id, float value)
+    static RtEvent make_parameter_change_event(ObjectId target, int offset, ObjectId param_id, float value)
     {
-        ParameterChangeEvent typed_event(EventType::FLOAT_PARAMETER_CHANGE, target, offset, param_id, value);
-        return Event(typed_event);
+        ParameterChangeEvent typed_event(RtEventType::FLOAT_PARAMETER_CHANGE, target, offset, param_id, value);
+        return RtEvent(typed_event);
     }
 
-    static Event make_wrapped_midi_event(ObjectId target, int offset,  uint8_t byte_0, uint8_t byte_1, uint8_t byte_2)
+    static RtEvent make_wrapped_midi_event(ObjectId target, int offset,  uint8_t byte_0, uint8_t byte_1, uint8_t byte_2)
     {
         WrappedMidiEvent typed_event(offset, target, byte_0, byte_1, byte_2);
-        return Event(typed_event);
+        return RtEvent(typed_event);
     }
 
-    static Event make_string_parameter_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
+    static RtEvent make_string_parameter_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
     {
         StringParameterChangeEvent typed_event(target, offset, param_id, value);
-        return Event(typed_event);
+        return RtEvent(typed_event);
     }
 
-    static Event make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
+    static RtEvent make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
     {
         DataParameterChangeEvent typed_event(target, offset, param_id, data);
-        return Event(typed_event);
+        return RtEvent(typed_event);
     }
 
-    static Event make_bypass_processor_event(ObjectId target, bool value)
+    static RtEvent make_bypass_processor_event(ObjectId target, bool value)
     {
-        ProcessorCommandEvent typed_event(EventType::SET_BYPASS, target, value);
-        return Event(typed_event);
+        ProcessorCommandEvent typed_event(RtEventType::SET_BYPASS, target, value);
+        return RtEvent(typed_event);
     }
 
-    static Event make_stop_engine_event()
+    static RtEvent make_stop_engine_event()
     {
-        ReturnableEvent typed_event(EventType::STOP_ENGINE);
-        return Event(typed_event);
+        ReturnableEvent typed_event(RtEventType::STOP_ENGINE);
+        return RtEvent(typed_event);
     }
 
-    static Event make_insert_processor_event(Processor* instance)
+    static RtEvent make_insert_processor_event(Processor* instance)
     {
-        ProcessorOperationEvent typed_event(EventType::INSERT_PROCESSOR, instance);
-        return Event(typed_event);
+        ProcessorOperationEvent typed_event(RtEventType::INSERT_PROCESSOR, instance);
+        return RtEvent(typed_event);
     }
 
-    static Event make_remove_processor_event(ObjectId processor)
+    static RtEvent make_remove_processor_event(ObjectId processor)
     {
-        ProcessorReorderEvent typed_event(EventType::REMOVE_PROCESSOR, processor, 0);
-        return Event(typed_event);
+        ProcessorReorderEvent typed_event(RtEventType::REMOVE_PROCESSOR, processor, 0);
+        return RtEvent(typed_event);
     }
 
-    static Event make_add_processor_to_chain_event(ObjectId processor, ObjectId chain)
+    static RtEvent make_add_processor_to_chain_event(ObjectId processor, ObjectId chain)
     {
-        ProcessorReorderEvent typed_event(EventType::ADD_PROCESSOR_TO_CHAIN, processor, chain);
-        return Event(typed_event);
+        ProcessorReorderEvent typed_event(RtEventType::ADD_PROCESSOR_TO_CHAIN, processor, chain);
+        return RtEvent(typed_event);
     }
 
-    static Event make_remove_processor_from_chain_event(ObjectId processor, ObjectId chain)
+    static RtEvent make_remove_processor_from_chain_event(ObjectId processor, ObjectId chain)
     {
-        ProcessorReorderEvent typed_event(EventType::REMOVE_PROCESSOR_FROM_CHAIN, processor, chain);
-        return Event(typed_event);
+        ProcessorReorderEvent typed_event(RtEventType::REMOVE_PROCESSOR_FROM_CHAIN, processor, chain);
+        return RtEvent(typed_event);
     }
 
-    static Event make_add_plugin_chain_event(ObjectId chain)
+    static RtEvent make_add_plugin_chain_event(ObjectId chain)
     {
-        ProcessorReorderEvent typed_event(EventType::ADD_PLUGIN_CHAIN, 0, chain);
-        return Event(typed_event);
+        ProcessorReorderEvent typed_event(RtEventType::ADD_PLUGIN_CHAIN, 0, chain);
+        return RtEvent(typed_event);
     }
 
-    static Event make_remove_plugin_chain_event(ObjectId chain)
+    static RtEvent make_remove_plugin_chain_event(ObjectId chain)
     {
-        ProcessorReorderEvent typed_event(EventType::REMOVE_PLUGIN_CHAIN, 0, chain);
-        return Event(typed_event);
+        ProcessorReorderEvent typed_event(RtEventType::REMOVE_PLUGIN_CHAIN, 0, chain);
+        return RtEvent(typed_event);
     }
 
 
 private:
-    Event(const KeyboardEvent& e) : _keyboard_event(e) {}
-    Event(const ParameterChangeEvent& e) : _parameter_change_event(e) {}
-    Event(const WrappedMidiEvent& e) : _wrapped_midi_event(e) {}
-    Event(const StringParameterChangeEvent& e) : _string_parameter_change_event(e) {}
-    Event(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
-    Event(const ProcessorCommandEvent& e) : _processor_command_event(e) {}
-    Event(const ReturnableEvent& e) : _returnable_event(e) {}
-    Event(const ProcessorOperationEvent& e) : _processor_operation_event(e) {}
-    Event(const ProcessorReorderEvent& e) : _processor_reorder_event(e) {}
+    RtEvent(const KeyboardEvent& e) : _keyboard_event(e) {}
+    RtEvent(const ParameterChangeEvent& e) : _parameter_change_event(e) {}
+    RtEvent(const WrappedMidiEvent& e) : _wrapped_midi_event(e) {}
+    RtEvent(const StringParameterChangeEvent& e) : _string_parameter_change_event(e) {}
+    RtEvent(const DataParameterChangeEvent& e) : _data_parameter_change_event(e) {}
+    RtEvent(const ProcessorCommandEvent& e) : _processor_command_event(e) {}
+    RtEvent(const ReturnableEvent& e) : _returnable_event(e) {}
+    RtEvent(const ProcessorOperationEvent& e) : _processor_operation_event(e) {}
+    RtEvent(const ProcessorReorderEvent& e) : _processor_reorder_event(e) {}
     union
     {
-        BaseEvent                   _base_event;
+        BaseRtEvent                   _base_event;
         KeyboardEvent               _keyboard_event;
         WrappedMidiEvent            _wrapped_midi_event;
         ParameterChangeEvent        _parameter_change_event;
@@ -477,8 +477,8 @@ private:
     };
 };
 
-static_assert(sizeof(Event) == MIND_EVENT_CACHE_ALIGNMENT, "");
-static_assert(std::is_trivially_copyable<Event>::value, "");
+static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
+static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
 
 

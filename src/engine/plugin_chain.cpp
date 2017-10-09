@@ -42,7 +42,7 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     {
         while (!_event_buffer.empty()) // This should only contain keyboard/note events
         {
-            Event event;
+            RtEvent event;
             if (_event_buffer.pop(event))
             {
                 plugin->process_event(event);
@@ -58,7 +58,7 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     /* If there are keyboard events not consumed, pass them on upwards */
     while (!_event_buffer.empty())
     {
-        Event event;
+        RtEvent event;
         if (_event_buffer.pop(event))
         {
             output_event(event);
@@ -109,16 +109,16 @@ void PluginChain::update_channel_config()
     }
 }
 
-void PluginChain::process_event(Event event)
+void PluginChain::process_event(RtEvent event)
 {
     switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the first processor in the chain */
-        case EventType::NOTE_ON:
-        case EventType::NOTE_OFF:
-        case EventType::NOTE_AFTERTOUCH:
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::WRAPPED_MIDI_EVENT:
             _event_buffer.push(event);
             break;
 
@@ -136,16 +136,16 @@ void PluginChain::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void PluginChain::send_event(Event event)
+void PluginChain::send_event(RtEvent event)
 {
     switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the next processor in the chain */
-        case EventType::NOTE_ON:
-        case EventType::NOTE_OFF:
-        case EventType::NOTE_AFTERTOUCH:
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::WRAPPED_MIDI_EVENT:
             _event_buffer.push(event);
             break;
 

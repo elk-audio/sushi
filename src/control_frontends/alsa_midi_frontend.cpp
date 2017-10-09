@@ -48,7 +48,7 @@ bool AlsaMidiFrontend::init()
     alsamidi_ret = snd_midi_event_new(ALSA_MAX_EVENT_SIZE_BYTES, &_seq_parser);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error creating ALSA MIDI Event Parser: {}", strerror(-alsamidi_ret));
+        MIND_LOG_ERROR("Error creating ALSA MIDI RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
     alsamidi_ret = snd_seq_nonblock(_seq_handle, 1);

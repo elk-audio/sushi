@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 #include "library/event_fifo.h"
 #include "engine/engine.h"
 
@@ -31,7 +31,7 @@ public:
 
     void send_parameter_change_event(ObjectId processor, ObjectId parameter, float value);
 
-    void send_keyboard_event(ObjectId processor, EventType type, int note, float value);
+    void send_keyboard_event(ObjectId processor, RtEventType type, int note, float value);
 
     void add_chain(const std::string& name, int channels);
 

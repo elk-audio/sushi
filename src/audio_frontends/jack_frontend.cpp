@@ -250,7 +250,7 @@ void inline JackFrontend::process_events()
 {
     while (!_event_queue.empty())
     {
-        Event event;
+        RtEvent event;
         if (_event_queue.pop(event))
         {
             _engine->send_rt_event(event);

@@ -60,14 +60,14 @@ public:
      */
     bool remove(ObjectId processor);
 
-    void process_event(Event event) override;
+    void process_event(RtEvent event) override;
 
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out);
 
     void set_bypassed(bool bypassed) override;
 
     /* Inherited from EventPipe */
-    void send_event(Event event) override;
+    void send_event(RtEvent event) override;
 
     bool set_input_channels(int channels) override
     {

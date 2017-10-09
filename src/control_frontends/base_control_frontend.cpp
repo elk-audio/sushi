@@ -16,16 +16,16 @@ void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
                                                       float value)
 {
-    _queue->push(Event::make_parameter_change_event(processor, 0, parameter, value));
+    _queue->push(RtEvent::make_parameter_change_event(processor, 0, parameter, value));
 }
 
 
 void BaseControlFrontend::send_keyboard_event(ObjectId processor,
-                                              EventType type,
+                                              RtEventType type,
                                               int note,
                                               float value)
 {
-    _queue->push(Event::make_keyboard_event(type, processor, 0, note, value));
+    _queue->push(RtEvent::make_keyboard_event(type, processor, 0, note, value));
 }
 
 void BaseControlFrontend::add_chain(const std::string &name, int channels)

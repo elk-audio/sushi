@@ -30,7 +30,7 @@ public:
 
     // virtual bool set_output_channels(int channels) override;
 
-    // void process_event(Event /*event*/) {}
+    // void process_event(RtEvent /*event*/) {}
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

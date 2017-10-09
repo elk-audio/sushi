@@ -51,9 +51,9 @@ TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
-    Event event;
+    RtEvent event;
     ASSERT_TRUE(_event_queue.pop(event));
-    EXPECT_EQ(EventType::FLOAT_PARAMETER_CHANGE, event.type());
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     auto typed_event = event.parameter_change_event();
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(0u, typed_event->param_id());
@@ -73,9 +73,9 @@ TEST_F(TestOSCFrontend, TestSendKeyboardEvent)
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     ASSERT_FALSE(_event_queue.empty());
-    Event event;
+    RtEvent event;
     ASSERT_TRUE(_event_queue.pop(event));
-    EXPECT_EQ(EventType::NOTE_ON, event.type());
+    EXPECT_EQ(RtEventType::NOTE_ON, event.type());
     auto typed_event = event.keyboard_event();
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(46, typed_event->note());

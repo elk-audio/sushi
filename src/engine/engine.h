@@ -128,9 +128,9 @@ public:
 
     virtual void update_time(int64_t /*usec*/, int64_t /*samples*/) = 0;
 
-    virtual EngineReturnStatus send_rt_event(Event& event) = 0;
+    virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
 
-    virtual EngineReturnStatus send_async_event(Event& event) = 0;
+    virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
 
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
@@ -252,14 +252,14 @@ public:
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(Event& event) override;
+    EngineReturnStatus send_rt_event(RtEvent& event) override;
 
     /**
      * @brief Called from a non-realtime thread to process an event in the realtime
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_async_event(Event& event) override;
+    EngineReturnStatus send_async_event(RtEvent& event) override;
     /**
      * @brief Get the unique id of a processor given its name
      * @param unique_name The unique name of a processor
@@ -400,7 +400,7 @@ private:
      * @param event The event to handle
      * @return true if handled, false if not an engine event
      */
-    bool _handle_internal_events(Event &event);
+    bool _handle_internal_events(RtEvent &event);
 
     std::vector<PluginChain*> _audio_graph;
 

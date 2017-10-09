@@ -109,7 +109,7 @@ public:
                                 const std::string& label);
 
 
-    void process_event(Event event) override;
+    void process_event(RtEvent event) override;
 
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property

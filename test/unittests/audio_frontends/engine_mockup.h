@@ -26,13 +26,13 @@ public:
     void update_time(int64_t /*usec*/, int64_t /*samples*/)
     { }
 
-    EngineReturnStatus send_rt_event(Event& /*event*/)
+    EngineReturnStatus send_rt_event(RtEvent& /*event*/)
     {
         got_rt_event = true;
         return EngineReturnStatus::OK;
     }
 
-    EngineReturnStatus send_async_event(Event& /*event*/)
+    EngineReturnStatus send_async_event(RtEvent& /*event*/)
     {
         got_event = true;
         return EngineReturnStatus::OK;

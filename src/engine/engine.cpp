@@ -48,7 +48,7 @@ void AudioEngine::enable_realtime(bool enabled)
     {
         if (realtime())
         {
-            auto event = Event::make_stop_engine_event();
+            auto event = RtEvent::make_stop_engine_event();
             send_async_event(event);
         } else
         {
@@ -166,7 +166,7 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
-    Event in_event;
+    RtEvent in_event;
     while (_control_queue_in.pop(in_event))
     {
         send_rt_event(in_event);
@@ -204,7 +204,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _state.store(update_state(state));
 }
 
-EngineReturnStatus AudioEngine::send_rt_event(Event& event)
+EngineReturnStatus AudioEngine::send_rt_event(RtEvent& event)
 {
     if (_handle_internal_events(event))
     {
@@ -225,7 +225,7 @@ EngineReturnStatus AudioEngine::send_rt_event(Event& event)
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::send_async_event(Event& event)
+EngineReturnStatus AudioEngine::send_async_event(RtEvent& event)
 {
     std::lock_guard<std::mutex> lock(_in_queue_lock);
     if (_control_queue_in.push(event))
@@ -287,8 +287,8 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
     }
     if (realtime())
     {
-        auto insert_event = Event::make_insert_processor_event(chain);
-        auto add_event = Event::make_add_plugin_chain_event(chain->id());
+        auto insert_event = RtEvent::make_insert_processor_event(chain);
+        auto add_event = RtEvent::make_add_plugin_chain_event(chain->id());
         send_async_event(insert_event);
         send_async_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
@@ -320,8 +320,8 @@ EngineReturnStatus AudioEngine::delete_plugin_chain(const std::string &chain_nam
     auto chain = chain_node->second.get();
     if (realtime())
     {
-        auto remove_chain_event = Event::make_remove_plugin_chain_event(chain->id());
-        auto delete_event = Event::make_remove_processor_event(chain->id());
+        auto remove_chain_event = RtEvent::make_remove_plugin_chain_event(chain->id());
+        auto delete_event = RtEvent::make_remove_processor_event(chain->id());
         send_async_event(remove_chain_event);
         send_async_event(delete_event);
         bool removed = _event_receiver.wait_for_response(remove_chain_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
@@ -399,8 +399,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     if (realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto insert_event = Event::make_insert_processor_event(plugin);
-        auto add_event = Event::make_add_processor_to_chain_event(plugin->id(), chain->id());
+        auto insert_event = RtEvent::make_insert_processor_event(plugin);
+        auto add_event = RtEvent::make_add_processor_to_chain_event(plugin->id(), chain->id());
         send_async_event(insert_event);
         send_async_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
@@ -440,8 +440,8 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
     if (realtime())
     {
         // Send events to handle this in the rt domain
-        auto remove_event = Event::make_remove_processor_from_chain_event(processor->id(), chain->id());
-        auto delete_event = Event::make_remove_processor_event(processor->id());
+        auto remove_event = RtEvent::make_remove_processor_from_chain_event(processor->id(), chain->id());
+        auto delete_event = RtEvent::make_remove_processor_event(processor->id());
         send_async_event(remove_event);
         send_async_event(delete_event);
         bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
@@ -462,32 +462,32 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
     return _deregister_processor(processor->name());
 }
 
-bool AudioEngine::_handle_internal_events(Event &event)
+bool AudioEngine::_handle_internal_events(RtEvent &event)
 {
     switch (event.type())
     {
-        case EventType::STOP_ENGINE:
+        case RtEventType::STOP_ENGINE:
         {
             auto typed_event = event.returnable_event();
             _state.store(RealtimeState::STOPPING);
             typed_event->set_handled(true);
             break;
         }
-        case EventType::INSERT_PROCESSOR:
+        case RtEventType::INSERT_PROCESSOR:
         {
             auto typed_event = event.processor_operation_event();
             bool ok = _insert_processor_in_realtime_part(typed_event->instance());
             typed_event->set_handled(ok);
             break;
         }
-        case EventType::REMOVE_PROCESSOR:
+        case RtEventType::REMOVE_PROCESSOR:
         {
             auto typed_event = event.processor_reorder_event();
             bool ok = _remove_processor_from_realtime_part(typed_event->processor());
             typed_event->set_handled(ok);
             break;
         }
-        case EventType::ADD_PROCESSOR_TO_CHAIN:
+        case RtEventType::ADD_PROCESSOR_TO_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
             PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
@@ -503,7 +503,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
             }
             break;
         }
-        case EventType::REMOVE_PROCESSOR_FROM_CHAIN:
+        case RtEventType::REMOVE_PROCESSOR_FROM_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
             PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
@@ -516,7 +516,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
                 typed_event->set_handled(true);
             break;
         }
-        case EventType::ADD_PLUGIN_CHAIN:
+        case RtEventType::ADD_PLUGIN_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
             PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
@@ -529,7 +529,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
                 typed_event->set_handled(false);
             break;
         }
-        case EventType::REMOVE_PLUGIN_CHAIN:
+        case RtEventType::REMOVE_PLUGIN_CHAIN:
         {
             auto typed_event = event.processor_reorder_event();
             PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
@@ -549,7 +549,7 @@ bool AudioEngine::_handle_internal_events(Event &event)
                 typed_event->set_handled(false);
             break;
         }
-        case EventType::SET_BYPASS:
+        case RtEventType::SET_BYPASS:
         {
             auto typed_event = event.processor_command_event();
             auto processor = static_cast<PluginChain*>(_realtime_processors[typed_event->processor_id()]);

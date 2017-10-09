@@ -7,7 +7,7 @@
 #ifndef SUSHI_RANDOM_NOTE_PLAYER_H
 #define SUSHI_RANDOM_NOTE_PLAYER_H
 
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 #include "library/event_fifo.h"
 
 namespace sushi {

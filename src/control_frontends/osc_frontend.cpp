@@ -51,14 +51,14 @@ static int osc_send_keyboard_event(const char* /*path*/,
     int note = argv[1]->i;
     float value = argv[2]->f;
 
-    EventType type;
+    RtEventType type;
     if (event == "note_on")
     {
-        type = EventType::NOTE_ON;
+        type = RtEventType::NOTE_ON;
     }
     else if (event == "note_off")
     {
-        type = EventType::NOTE_OFF;
+        type = RtEventType::NOTE_OFF;
     }
     else
     {

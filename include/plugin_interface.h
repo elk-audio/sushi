@@ -11,7 +11,7 @@
 
 #include "library/sample_buffer.h"
 #include "library/plugin_parameters.h"
-#include "library/plugin_events.h"
+#include "library/rt_events.h"
 
 namespace sushi {
 
@@ -99,7 +99,7 @@ public:
      * @brief Called by the host when there are events to process.
      * @param event The event to process.
      */
-    virtual void process_event(BaseEvent* event) = 0;
+    virtual void process_event(BaseRtEvent* event) = 0;
     /**
      * @brief Called by the host from the real time processing environment once for
      * every chunk. in_buffer and out_buffer are  AUDIO_CHUNK_SIZE long arrays
