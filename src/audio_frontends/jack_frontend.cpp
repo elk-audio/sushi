@@ -277,28 +277,18 @@ void inline JackFrontend::process_midi(jack_nframes_t start_frame, jack_nframes_
 
 void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count)
 {
-    /* Get pointers to audio buffers from ports */
-    std::array<const float*, MAX_FRONTEND_CHANNELS> in_data;
-    std::array<float*, MAX_FRONTEND_CHANNELS> out_data;
-
-    for (size_t i = 0; i < in_data.size(); ++i)
-    {
-        in_data[i] = static_cast<float*>(jack_port_get_buffer(_input_ports[i], frame_count)) + start_frame;
-    }
-    for (size_t i = 0; i < in_data.size(); ++i)
-    {
-        out_data[i] = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) +start_frame;
-    }
-
+    /* Copy jack buffer data to internal buffers */
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        std::copy(in_data[i], in_data[i] + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
+        float* in_data = static_cast<float*>(jack_port_get_buffer(_input_ports[i], frame_count)) + start_frame;
+        std::copy(in_data, in_data + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
     }
     _out_buffer.clear();
     _engine->process_chunk(&_in_buffer, &_out_buffer);
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data[i]);
+        float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) +start_frame;
+        std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data);
     }
 }
 
