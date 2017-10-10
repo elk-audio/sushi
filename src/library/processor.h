@@ -11,8 +11,8 @@
 #include <map>
 
 #include "library/sample_buffer.h"
-#include "library/rt_events.h"
-#include "library/event_pipe.h"
+#include "library/rt_event.h"
+#include "library/rt_event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
 
@@ -102,7 +102,7 @@ public:
      * @brief Set an output pipe for events.
      * @param output_pipe the output EventPipe that should receive events
      */
-    virtual void set_event_output(EventPipe* pipe)
+    virtual void set_event_output(RtEventPipe* pipe)
     {
         _output_pipe = pipe;
     }
@@ -289,7 +289,7 @@ protected:
     bool _bypassed{false};
 
 private:
-    EventPipe* _output_pipe{nullptr};
+    RtEventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
     ObjectId _id{ProcessorIdGenerator::new_id()};
 

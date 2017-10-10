@@ -125,7 +125,7 @@ TEST_F(PluginChainTest, TestEmptyChainProcessing)
 TEST_F(PluginChainTest, TestEventProcessing)
 {
     ChunkSampleBuffer buffer(2);
-    EventFifo event_queue;
+    RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin;
     plugin.init(44100);

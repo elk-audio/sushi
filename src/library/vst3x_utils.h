@@ -19,7 +19,7 @@
 #undef DEVELOPMENT
 
 #include "library/sample_buffer.h"
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 namespace vst3 {

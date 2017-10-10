@@ -23,7 +23,7 @@ namespace engine {
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 8;
 
-class PluginChain : public Processor, public EventPipe
+class PluginChain : public Processor, public RtEventPipe
 {
 public:
     PluginChain() : _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS},
@@ -66,7 +66,7 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    /* Inherited from EventPipe */
+    /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;
 
     bool set_input_channels(int channels) override
@@ -101,7 +101,7 @@ private:
     ChunkSampleBuffer _bfr_2;
 
     // TODO - Maybe use a simpler queue here eventually
-    EventFifo _event_buffer;
+    RtEventFifo _event_buffer;
 };
 
 

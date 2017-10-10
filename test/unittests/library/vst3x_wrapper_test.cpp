@@ -117,7 +117,7 @@ TEST_F(TestVst3xWrapper, TestProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    EventFifo queue;
+    RtEventFifo queue;
     _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;

@@ -36,7 +36,7 @@ protected:
         lo_address_free(_address);
     }
     EngineMockup _test_engine{44100};
-    EventFifo _event_queue;
+    RtEventFifo _event_queue;
     int _server_port{24024};
     lo_address _address;
     OSCFrontend _module_under_test{&_event_queue, &_test_engine};

@@ -413,8 +413,8 @@ private:
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    EventFifo _control_queue_in;
-    EventFifo _control_queue_out;
+    RtEventFifo _control_queue_in;
+    RtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;

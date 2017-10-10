@@ -14,7 +14,7 @@
 #include <sndfile.h>
 
 #include "base_audio_frontend.h"
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 

@@ -35,7 +35,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(EventFifo* queue, engine::BaseEngine* engine);
+    OSCFrontend(RtEventFifo* queue, engine::BaseEngine* engine);
 
     ~OSCFrontend();
 

@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 #include "library/event_fifo.h"
 #include "engine/engine.h"
 
@@ -20,7 +20,7 @@ namespace control_frontend {
 class BaseControlFrontend
 {
 public:
-    BaseControlFrontend(EventFifo* queue, engine::BaseEngine* engine) :_engine(engine),
+    BaseControlFrontend(RtEventFifo* queue, engine::BaseEngine* engine) :_engine(engine),
                                                                        _queue(queue) {}
 
     virtual ~BaseControlFrontend() {};
@@ -45,7 +45,7 @@ protected:
     engine::BaseEngine* _engine;
 
 private:
-    EventFifo* _queue;
+    RtEventFifo* _queue;
 };
 
 }; // namespace control_frontend

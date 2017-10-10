@@ -23,7 +23,7 @@
 #pragma GCC diagnostic pop
 
 #include "constants.h"
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 #include "midi_decoder.h"
 
 namespace sushi {

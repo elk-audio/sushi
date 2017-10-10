@@ -3,8 +3,8 @@
  * @copyright MIND Music Labs AB, Stockholm
  */
 
-#ifndef SUSHI_PLUGIN_EVENTS_H
-#define SUSHI_PLUGIN_EVENTS_H
+#ifndef SUSHI_RT_EVENTS_H
+#define SUSHI_RT_EVENTS_H
 
 #include <string>
 #include <cassert>
@@ -282,9 +282,10 @@ private:
 };
 
 /**
- * @brief Container class for events. Functionally this take the role of a
- *        baseclass for event from which you can access the derived event
- *        classes.
+ * @brief Container class for rt events. Functionally this take the role of a
+ *        baseclass for events, from which you can access the derived event
+ *        classes via function calls that essentially casts the event to the
+ *        given rt event type.
  */
 class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
 {
@@ -484,4 +485,4 @@ static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
 } // namespace sushi
 
-#endif //SUSHI_PLUGIN_EVENTS_H
+#endif //SUSHI_RT_EVENTS_H

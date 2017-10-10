@@ -141,11 +141,11 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
-                        src/library/rt_events.h
+                        src/library/rt_event.h
                         src/library/processor.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
-                        src/library/event_pipe.h
+                        src/library/rt_event_pipe.h
                         src/library/vst2x_wrapper.h
                         src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h

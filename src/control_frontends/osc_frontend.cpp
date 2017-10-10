@@ -141,7 +141,7 @@ static int osc_delete_processor(const char* /*path*/,
 
 }; // anonymous namespace
 
-OSCFrontend::OSCFrontend(EventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue, engine),
+OSCFrontend::OSCFrontend(RtEventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue, engine),
                                                                          _osc_server(nullptr),
                                                                          _server_port(DEFAULT_SERVER_PORT)
 {

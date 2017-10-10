@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #define private public
 
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 
 using namespace sushi;
 

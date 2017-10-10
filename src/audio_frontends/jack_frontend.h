@@ -8,7 +8,7 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 
 #include "base_audio_frontend.h"
-#include "library/rt_events.h"
+#include "library/rt_event.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 
@@ -120,7 +120,7 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
 
-    EventFifo _event_queue;
+    RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
 };
