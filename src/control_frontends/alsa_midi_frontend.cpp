@@ -82,11 +82,11 @@ void AlsaMidiFrontend::stop()
 void AlsaMidiFrontend::_poll_function()
 {
     nfds_t descr_count = static_cast<nfds_t>(snd_seq_poll_descriptors_count(_seq_handle, POLLIN));
-    pollfd* descriptors = new pollfd[descr_count];
-    snd_seq_poll_descriptors(_seq_handle, descriptors, static_cast<unsigned int>(descr_count), POLLIN);
+    auto descriptors = std::make_unique<pollfd[]>(descr_count);
+    snd_seq_poll_descriptors(_seq_handle, descriptors.get(), static_cast<unsigned int>(descr_count), POLLIN);
     while (_running)
     {
-        if (poll(descriptors, descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
+        if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
         {
             snd_seq_event_t* ev{nullptr};
             uint8_t data_buffer[ALSA_MAX_EVENT_SIZE_BYTES]{0};
@@ -109,7 +109,6 @@ void AlsaMidiFrontend::_poll_function()
             }
         }
     }
-    delete[] descriptors;
 }
 
 } // end namespace midi_frontend
