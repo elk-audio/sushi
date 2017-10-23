@@ -1,6 +1,9 @@
 
 #include "plugin_chain.h"
+#include "logging.h"
 #include <iostream>
+
+MIND_GET_LOGGER;
 
 namespace sushi {
 namespace engine {

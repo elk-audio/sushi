@@ -19,6 +19,14 @@ void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
     _queue->push(RtEvent::make_parameter_change_event(processor, 0, parameter, value));
 }
 
+void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
+                                                             ObjectId parameter,
+                                                             const std::string& value)
+{
+    auto str = new std::string(value);
+    _queue->push(RtEvent::make_string_parameter_change_event(processor, 0, parameter, str));
+}
+
 
 void BaseControlFrontend::send_keyboard_event(ObjectId processor,
                                               RtEventType type,

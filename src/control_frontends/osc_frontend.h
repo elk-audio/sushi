@@ -50,6 +50,8 @@ public:
     bool connect_to_parameter(const std::string &processor_name,
                               const std::string &parameter_name);
 
+    bool connect_to_string_parameter(const std::string &processor_name,
+                                     const std::string &parameter_name);
     /**
      * @brief Connect keyboard messages to a given plugin chain.
      *        The target osc path will be:

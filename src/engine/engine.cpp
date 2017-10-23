@@ -19,10 +19,14 @@ constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 MIND_GET_LOGGER;
 
 AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate)
-{}
+{
+    _event_dispatcher.run();
+}
 
 AudioEngine::~AudioEngine()
-{}
+{
+    _event_dispatcher.stop();
+}
 
 void AudioEngine::set_sample_rate(float sample_rate)
 {
@@ -167,7 +171,11 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
     RtEvent in_event;
-    while (_control_queue_in.pop(in_event))
+    while (_internal_control_queue.pop(in_event))
+    {
+        send_rt_event(in_event);
+    }
+    while (_main_in_queue.pop(in_event))
     {
         send_rt_event(in_event);
     }
@@ -228,7 +236,7 @@ EngineReturnStatus AudioEngine::send_rt_event(RtEvent& event)
 EngineReturnStatus AudioEngine::send_async_event(RtEvent& event)
 {
     std::lock_guard<std::mutex> lock(_in_queue_lock);
-    if (_control_queue_in.push(event))
+    if (_internal_control_queue.push(event))
     {
         return EngineReturnStatus::OK;
     }
@@ -285,6 +293,7 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
         delete chain;
         return status;
     }
+    chain->set_event_output(&_main_out_queue);
     if (realtime())
     {
         auto insert_event = RtEvent::make_insert_processor_event(chain);

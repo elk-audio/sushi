@@ -15,12 +15,16 @@ namespace sushi {
 namespace sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
-// TODO - Fix string parameter support so we can inject the sample path instead
-// (and have it relative to project structure, right now this fails when built in another location)
-static const std::string SAMPLE_FILE = "../../../test/data/Kawai-K11-GrPiano-C4_mono.wav";
 
 static const std::string DEFAULT_NAME = "sushi.testing.sampleplayer";
 static const std::string DEFAULT_LABEL = "Sample player";
+
+namespace SampleChangeStatus {
+enum SampleChange : int
+{
+    SUCCESS = 0,
+    FAILURE
+};}
 
 class SamplePlayerPlugin : public InternalPlugin
 {
@@ -39,10 +43,17 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
+    static int non_rt_callback(void* data, EventId id)
+    {
+        return reinterpret_cast<SamplePlayerPlugin*>(data)->_non_rt_callback(id);
+    }
+
 private:
-    ProcessorReturnCode load_sample_file(const std::string &file_name);
+    BlobData load_sample_file(const std::string &file_name);
+    int _non_rt_callback(EventId id);
 
     float*  _sample_buffer{nullptr};
+    float   _dummy_sample{0.0f};
     dsp::Sample _sample;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
@@ -51,7 +62,10 @@ private:
     FloatParameterValue* _decay_parameter;
     FloatParameterValue* _sustain_parameter;
     FloatParameterValue* _release_parameter;
-    std::string _sample_file_property;
+
+    std::string*         _sample_file_property{nullptr};
+    EventId              _pending_event_id{0};
+    BlobData             _pending_sample{0, 0};
 
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };

@@ -39,6 +39,20 @@ static int osc_send_parameter_change_event(const char* /*path*/,
     return 0;
 }
 
+static int osc_send_string_parameter_change_event(const char* /*path*/,
+                                                  const char* /*types*/,
+                                                  lo_arg** argv,
+                                                  int /*argc*/,
+                                                  void* /*data*/,
+                                                  void* user_data)
+{
+    auto connection = static_cast<OscConnection*>(user_data);
+    std::string value(&argv[0]->s);
+    connection->instance->send_string_parameter_change_event(connection->processor, connection->parameter, value);
+    MIND_LOG_DEBUG("Sending string parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    return 0;
+}
+
 static int osc_send_keyboard_event(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
@@ -189,6 +203,34 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     return true;
 }
 
+bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
+                                              const std::string &parameter_name)
+{
+    std::string osc_path = "/parameter/";
+    engine::EngineReturnStatus status;
+    ObjectId processor_id;
+    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    ObjectId parameter_id;
+    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    osc_path = osc_path + spaces_to_underscore(processor_name) + "/" + spaces_to_underscore(parameter_name);
+    OscConnection* connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = parameter_id;
+    connection->instance = this;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
+    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    return true;
+}
+
 bool OSCFrontend::connect_kb_to_track(const std::string &chain_name)
 {
     std::string osc_path = "/keyboard_event/";
@@ -221,6 +263,10 @@ void OSCFrontend::connect_all()
             if (param->type() == ParameterType::FLOAT)
             {
                 connect_to_parameter(processor.second->name(), param->name());
+            }
+            if (param->type() == ParameterType::STRING)
+            {
+                connect_to_string_parameter(processor.second->name(), param->name());
             }
         }
     }

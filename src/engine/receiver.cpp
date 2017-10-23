@@ -20,10 +20,10 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
                 auto typed_event = event.returnable_event();
                 if (typed_event->event_id() == id)
                 {
-                    return typed_event->status() == ReturnableEvent::EventStatus::HANDLED_OK;
+                    return typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK;
                 } else
                 {
-                    bool status = typed_event->status() == ReturnableEvent::EventStatus::HANDLED_OK;
+                    bool status = typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK;
                     _receive_list.push_back(Node{typed_event->event_id(), status});
                 }
             }

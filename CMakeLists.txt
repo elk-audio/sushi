@@ -103,6 +103,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/engine.cpp
+                      src/engine/event_dispatcher.cpp
                       src/engine/plugin_chain.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
@@ -138,6 +139,8 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
                         src/engine/receiver.h
+                        src/library/event.h
+                        src/library/event_interface.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h

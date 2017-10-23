@@ -36,9 +36,11 @@ void Voice::note_on(int note, float velocity, int offset)
 void Voice::note_off(float /*velocity*/, int offset)
 {
     assert(offset < AUDIO_CHUNK_SIZE);
-
-    _state = SamplePlayMode::STOPPING;
-    _stop_offset = offset;
+    if (_state == SamplePlayMode::PLAYING || _state == SamplePlayMode::STARTING)
+    {
+        _state = SamplePlayMode::STOPPING;
+        _stop_offset = offset;
+    }
 }
 
 void Voice::reset()

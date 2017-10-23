@@ -16,6 +16,7 @@
 
 #include "EASTL/vector.h"
 
+#include "engine/event_dispatcher.h"
 #include "plugin_chain.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
@@ -24,12 +25,14 @@
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/event_fifo.h"
+#include "library/types.h"
 
 
 namespace sushi {
 namespace engine {
 
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
+
 
 enum class EngineReturnStatus
 {
@@ -68,7 +71,7 @@ public:
     virtual ~BaseEngine()
     {}
 
-    int sample_rate()
+    float sample_rate()
     {
         return _sample_rate;
     }
@@ -186,6 +189,11 @@ public:
         return tmp;
     }
 
+    virtual sushi::dispatcher::EventDispatcher* event_dispatcher()
+    {
+        return nullptr;
+    }
+
 protected:
     float _sample_rate;
     int _audio_inputs{0};
@@ -204,7 +212,7 @@ public:
      * @brief Configure the Engine with a new samplerate.
      * @param sample_rate The new sample rate in Hz
      */
-    void set_sample_rate(float sample_rate);
+    void set_sample_rate(float sample_rate) override;
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn
@@ -238,12 +246,12 @@ public:
 
     /**
      * @brief Set the current time for the start of the current audio chunk
-     * @param usec Current time in microseconds
+     * @param timestamp Current time in microseconds
      * @param samples Current number of samples processed
      */
-    void update_time(int64_t usec, int64_t samples)
+    void update_time(MicroTime timestamp, int64_t samples)
     {
-        _transport.set_time(usec, samples);
+        _transport.set_time(timestamp, samples);
     }
 
     /**
@@ -320,13 +328,13 @@ public:
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
     EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
-                                                        const std::string& plugin_id) override;
+                                                const std::string& plugin_id) override;
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually
      *        there should be better and safer ways of accessing processors.
      * @return An std::map containing all registered processors.
      */
-    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
+    const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
     {
         return _processors;
     };
@@ -337,11 +345,15 @@ public:
      *        from outside the engine.
      * @return An std::vector of containing all PluginChains
      */
-    virtual const std::vector<PluginChain*>& all_chains()
+    const std::vector<PluginChain*>& all_chains()
     {
         return _audio_graph;
     }
 
+    sushi::dispatcher::EventDispatcher* event_dispatcher() override
+    {
+        return &_event_dispatcher;
+    }
 
 private:
     /**
@@ -413,11 +425,15 @@ private:
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    RtEventFifo _control_queue_in;
+    RtEventFifo _internal_control_queue;
+    RtEventFifo _main_in_queue;
+    RtEventFifo _main_out_queue;
     RtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
+
+    dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 };
 
 /**

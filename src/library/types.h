@@ -19,6 +19,11 @@ struct BlobData
     uint8_t* data{nullptr};
 };
 
+/**
+ * @brief Type used for timestamps with micro second granularity
+ */
+typedef int64_t MicroTime;
+
 } // end namespace sushi
 
 #endif //SUSHI_TYPES_H

@@ -103,11 +103,11 @@ TEST(TestPluginEvents, TestReturnableEvents)
     /* Assert that 2 events don't share the same id */
     EXPECT_NE(event2.returnable_event()->event_id(), typed_event->event_id());
     /* Verify handling logic */
-    EXPECT_EQ(ReturnableEvent::EventStatus::UNHANDLED, typed_event->status());
+    EXPECT_EQ(ReturnableRtEvent::EventStatus::UNHANDLED, typed_event->status());
     typed_event->set_handled(true);
-    EXPECT_EQ(ReturnableEvent::EventStatus::HANDLED_OK, typed_event->status());
+    EXPECT_EQ(ReturnableRtEvent::EventStatus::HANDLED_OK, typed_event->status());
     typed_event->set_handled(false);
-    EXPECT_EQ(ReturnableEvent::EventStatus::HANDLED_ERROR, typed_event->status());
+    EXPECT_EQ(ReturnableRtEvent::EventStatus::HANDLED_ERROR, typed_event->status());
 }
 
 

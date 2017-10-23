@@ -21,7 +21,7 @@ void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampl
     outputs->numChannels = out_channels;
 }
 
-Steinberg::Vst::Event convert_note_on_event(const KeyboardEvent* event)
+Steinberg::Vst::Event convert_note_on_event(const KeyboardRtEvent* event)
 {
     Steinberg::Vst::Event vst_event;
     vst_event.sampleOffset = event->sample_offset();
@@ -35,7 +35,7 @@ Steinberg::Vst::Event convert_note_on_event(const KeyboardEvent* event)
     return vst_event;
 }
 
-Steinberg::Vst::Event convert_note_off_event(const KeyboardEvent* event)
+Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event)
 {
     Steinberg::Vst::Event vst_event;
     vst_event.sampleOffset = event->sample_offset();
@@ -49,7 +49,7 @@ Steinberg::Vst::Event convert_note_off_event(const KeyboardEvent* event)
     return vst_event;
 }
 
-Steinberg::Vst::Event convert_aftertouch_event(const KeyboardEvent* event)
+Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event)
 {
     Steinberg::Vst::Event vst_event;
     vst_event.sampleOffset = event->sample_offset();

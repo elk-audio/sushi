@@ -70,6 +70,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/engine/json_configurator_test.cpp
                unittests/engine/receiver_test.cpp
+               unittests/engine/event_dispatcher_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
