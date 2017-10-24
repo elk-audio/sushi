@@ -115,6 +115,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
                       src/library/vst3x_wrapper.cpp
+                      src/plugins/arpeggiator_plugin.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -158,6 +159,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
                         src/engine/json_configurator.h
+                        src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h

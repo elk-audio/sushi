@@ -63,6 +63,7 @@ set(CMAKE_EXE_LINKER_FLAGS "")
 #####################
 
 SET(TEST_FILES unittests/sample_test.cpp
+               unittests/plugins/arpeggiator_plugin_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
                unittests/engine/plugin_chain_test.cpp

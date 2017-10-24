@@ -6,6 +6,7 @@
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 #include "plugins/equalizer_plugin.h"
+#include "plugins/arpeggiator_plugin.h"
 #include "plugins/sample_player_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
@@ -88,6 +89,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     else if (uid == "sushi.testing.sampleplayer")
     {
         instance = new sample_player_plugin::SamplePlayerPlugin();
+    }
+    else if (uid == "sushi.testing.arpeggiator")
+    {
+        instance = new arpeggiator_plugin::ArpeggiatorPlugin();
     }
     return instance;
 }

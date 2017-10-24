@@ -179,5 +179,3 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
-
-
