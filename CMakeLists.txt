@@ -133,6 +133,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
+                        src/control_frontends/base_midi_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
@@ -169,6 +170,11 @@ set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
                             src/library/vst3x_utils.h)
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
+
+if (${WITH_XENOMAI})
+    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.cpp
+                                       src/control_frontends/alsa_midi_frontend.cpp)
+endif()
 
 if (${WITH_VST3})
     set(SOURCE_FILES "${SOURCE_FILES}" "${ADDITIONAL_VST3_SOURCES}")
@@ -221,7 +227,7 @@ if (${WITH_JACK})
 endif()
 
 if (${WITH_XENOMAI})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} raspa)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} raspa asound)
 endif()
 
 #############
