@@ -44,7 +44,7 @@ public:
         _posters.push_back(this);
     }
 
-    ~EventDispatcher()
+    virtual ~EventDispatcher()
     {}
 
     void run();
@@ -67,10 +67,16 @@ private:
 
     int _process_kb_event(KeyboardEvent* event);
     int _process_parameter_change_event(ParameterChangeEvent* event);
-    int _process_string_parameter_change_event(StringParameterChangeEvent* event);
+    int _process_string_parameter_change_event(StringPropertyChangeEvent* event);
     int _process_async_work_event(AsynchronousWorkEvent* event);
 
     int _process_rt_event(RtEvent& event);
+    int _process_rt_keyboard_events(const KeyboardRtEvent* event);
+    int _process_rt_parameter_change_events(const ParameterChangeRtEvent* event);
+
+    void _publish_keyboard_events(Event* event);
+    void _publish_parameter_events(Event* event);
+
 
     std::thread _event_thread;
 

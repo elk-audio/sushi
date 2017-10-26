@@ -8,8 +8,6 @@
 
 #include <vector>
 
-#include <EASTL/fixed_list.h>
-
 #include "library/internal_plugin.h"
 
 namespace sushi {
@@ -24,6 +22,7 @@ constexpr int START_NOTE = 48;
 
 /**
  * @brief Simple arpeggiator module with only 1 mode (up)
+ *        The last helt note will be remembered and played indefinitely
  */
 class Arpeggiator
 {
@@ -36,7 +35,7 @@ public:
      */
     void add_note(int note);
     /**
-     * @brief Remove this note from the lost of notes playing
+     * @brief Remove this note from the list of notes playing
      * @param note The note number to remove
      */
     void remove_note(int note);
@@ -89,7 +88,7 @@ private:
 };
 
 
-float samples_per_note(float denominator, float tempo, float samplerate);
+float samples_per_note(float note_fraction, float tempo, float samplerate);
 
 }// namespace sample_player_plugin
 }// namespace sushi

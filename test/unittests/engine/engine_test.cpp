@@ -102,6 +102,13 @@ TEST_F(TestEngine, TestUidNameMapping)
     ASSERT_EQ(EngineReturnStatus::INVALID_PROCESSOR, status);
     std::tie(status, id) = _module_under_test->parameter_id_from_name("equalizer_0_l", "not_found");
     ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER, status);
+    std::tie(status, name) = _module_under_test->parameter_name_from_id("equalizer_0_l", 1);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_EQ("gain", name);
+    std::tie(status, name) = _module_under_test->parameter_name_from_id("not_found", 10);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PROCESSOR, status);
+    std::tie(status, name) = _module_under_test->parameter_name_from_id("equalizer_0_l", 10);
+    ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER, status);
 }
 
 TEST_F(TestEngine, TestCreateEmptyPluginChain)

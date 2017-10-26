@@ -284,6 +284,22 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_fro
     return std::make_pair(EngineReturnStatus::OK, _realtime_processors[uid]->name());
 }
 
+std::pair<EngineReturnStatus, const std::string> AudioEngine::parameter_name_from_id(const std::string &processor_name,
+                                                                                     const ObjectId id)
+{
+    auto processor_node = _processors.find(processor_name);
+    if (processor_node == _processors.end())
+    {
+        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, "");
+    }
+    auto param = processor_node->second->parameter_from_id(id);
+    if (param)
+    {
+        return std::make_pair(EngineReturnStatus::OK, param->name());
+    }
+    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, "");
+}
+
 EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_name, int chain_channel_count)
 {
     if((chain_channel_count != 1 && chain_channel_count != 2))
@@ -579,6 +595,7 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     _control_queue_out.push(event); // Send event back to non-rt domain
     return true;
 }
+
 
 RealtimeState update_state(RealtimeState current_state)
 {

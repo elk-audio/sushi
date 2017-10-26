@@ -59,14 +59,14 @@ int EventDispatcher::process(Event* event)
 {
     switch (event->type())
     {
-        case EventType::KEYBOARD_EV:
+        case EventType::KEYBOARD_EVENT:
             return _process_kb_event(static_cast<KeyboardEvent*>(event));
 
         case EventType::PARAMETER_CHANGE:
             return _process_parameter_change_event(static_cast<ParameterChangeEvent*>(event));
 
-        case EventType::ASYNCHRONOUS_WORK:
-            return _process_async_work_event(static_cast<AsynchronousWorkEvent*>(event));
+        //case EventType::ASYNCHRONOUS_WORK:
+        //    return _process_async_work_event(static_cast<AsynchronousWorkEvent*>(event));
 
         default:
             return EventStatus::UNRECOGNIZED_TYPE;
@@ -86,7 +86,7 @@ void EventDispatcher::_event_loop()
             _in_queue.pop_back();
             lock.release();
             int status;
-            if (_posters.size() > event->receiver())
+            if (static_cast<int>(_posters.size()) > event->receiver())
             {
                 status = _posters[event->receiver()]->process(event);
             }
@@ -119,7 +119,7 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
     {
         return EventStatus::NOT_HANDLED;
     }
-    // TOTO - handle translation from real time to sample offset.
+    // TODO - handle translation from real time to sample offset.
     int offset = 0;
     RtEvent rt_event;
     switch (event->subtype())
@@ -158,21 +158,30 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
 
 int EventDispatcher::_process_parameter_change_event(ParameterChangeEvent* event)
 {
-    auto processor = _engine->processor_id_from_name(event->processor());
-    if (processor.first != engine::EngineReturnStatus::OK)
+    ObjectId processor_id;
+    ObjectId parameter_id;
+    if (event->access_by_id())
     {
-        return EventStatus::NOT_HANDLED;
+        processor_id = event->processor_id();
+        parameter_id = event->parameter_id();
     }
-    auto parameter = _engine->parameter_id_from_name(event->processor(), event->parameter());
-    if (parameter.first != engine::EngineReturnStatus::OK)
+    else
     {
-        return EventStatus::NOT_HANDLED;
+        auto processor_node = _engine->processor_id_from_name(event->processor());
+        if (processor_node.first != engine::EngineReturnStatus::OK)
+        {
+            return EventStatus::NOT_HANDLED;
+        }
+        auto parameter_node = _engine->parameter_id_from_name(event->processor(), event->parameter());
+        if (parameter_node.first != engine::EngineReturnStatus::OK)
+        {
+            return EventStatus::NOT_HANDLED;
+        }
+        processor_id = processor_node.second;
+        parameter_id = parameter_node.second;
     }
-    // TOTO - handle translation from real time to sample offset.
+    // TODO - handle translation from real time to sample offset.
     int offset = 0;
-    ObjectId processor_id = processor.second;
-    ObjectId parameter_id = parameter.second;
-
     RtEvent rt_event;
     switch (event->subtype())
     {
@@ -188,34 +197,19 @@ int EventDispatcher::_process_parameter_change_event(ParameterChangeEvent* event
             rt_event = RtEvent::make_parameter_change_event(processor_id, offset, parameter_id, event->bool_value());
             break;
 
-        case ParameterChangeEvent::Subtype::BLOB_PARAMETER_CHANGE:
+        case ParameterChangeEvent::Subtype::BLOB_PROPERTY_CHANGE:
             // TODO - implement blob parameter change event
             return EventStatus::NOT_HANDLED;
+
+        case ParameterChangeEvent::Subtype::STRING_PROPERTY_CHANGE:
+            auto typed_event = static_cast<StringPropertyChangeEvent*>(event);
+            auto string_value = new std::string(typed_event->string_value());
+            rt_event = RtEvent::make_string_parameter_change_event(processor_id, offset, parameter_id, string_value);
+            break;
     }
     _out_rt_queue->push(rt_event);
     return EventStatus::HANDLED_OK;
 }
-
-int EventDispatcher::_process_string_parameter_change_event(StringParameterChangeEvent* event)
-{
-    auto processor = _engine->processor_id_from_name(event->processor());
-    if (processor.first != engine::EngineReturnStatus::OK)
-    {
-        return EventStatus::NOT_HANDLED;
-    }
-    auto parameter = _engine->parameter_id_from_name(event->processor(), event->parameter());
-    if (parameter.first != engine::EngineReturnStatus::OK)
-    {
-        return EventStatus::NOT_HANDLED;
-    }
-    // TOTO - handle translation from real time to sample offset.
-    int offset = 0;
-    auto str_value = new std::string(event->string_value());
-    auto rt_event = RtEvent::make_string_parameter_change_event(processor.second, offset, parameter.second, str_value);
-    _out_rt_queue->push(rt_event);
-    return EventStatus::HANDLED_OK;
-}
-
 
 int EventDispatcher::_process_async_work_event(AsynchronousWorkEvent* event)
 {
@@ -240,14 +234,102 @@ int EventDispatcher::_process_rt_event(RtEvent &event)
         case RtEventType::NOTE_ON:
         case RtEventType::NOTE_OFF:
         case RtEventType::NOTE_AFTERTOUCH:
-        {
-            MIND_LOG_INFO("Got a note event from the engine");
-        }
+            _process_rt_keyboard_events(event.keyboard_event());
+            break;
 
-
+        case RtEventType::BOOL_PARAMETER_CHANGE:
+        case RtEventType::INT_PARAMETER_CHANGE:
+        case RtEventType::FLOAT_PARAMETER_CHANGE:
+            _process_rt_parameter_change_events(event.parameter_change_event());
+            break;
 
         default:
-            return 0;
+            return EventStatus::UNRECOGNIZED_TYPE;
+    }
+    return EventStatus::HANDLED_OK;
+}
+
+int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
+{
+    // TODO - map offset to real world timestamp
+    int64_t timestamp = 0;
+    auto processor = _engine->processor_name_from_id(event->processor_id());
+    if (processor.first != engine::EngineReturnStatus::OK)
+    {
+        return 0;
+    }
+    KeyboardEvent::Subtype subtype;
+    switch (event->type())
+    {
+        case RtEventType::NOTE_ON:
+            subtype = KeyboardEvent::Subtype::NOTE_ON;
+            break;
+        case RtEventType::NOTE_OFF:
+            subtype = KeyboardEvent::Subtype::NOTE_OFF;
+            break;
+        case RtEventType::NOTE_AFTERTOUCH:
+            subtype = KeyboardEvent::Subtype::NOTE_AFTERTOUCH;
+            break;
+        default:
+            subtype = KeyboardEvent::Subtype::RAW_MIDI;
+            // TODO - fill list
+    }
+
+    KeyboardEvent e(subtype, processor.second, event->note(),
+                    event->velocity(), timestamp);
+    _publish_keyboard_events(&e);
+    return 0;
+}
+
+int EventDispatcher::_process_rt_parameter_change_events(const ParameterChangeRtEvent* event)
+{
+    int64_t timestamp = 0;
+    engine::EngineReturnStatus status;
+    std::string processor_name;
+    std::tie(status, processor_name) = _engine->processor_name_from_id(event->processor_id());
+    if (status == engine::EngineReturnStatus::OK)
+    {
+        std::string parameter_name;
+        std::tie(status, parameter_name) = _engine->parameter_name_from_id(processor_name,
+                                                                           event->param_id());
+        if (status == engine::EngineReturnStatus::OK)
+        {
+            ParameterChangeNotificationEvent::Subtype subtype;
+            switch (event->type())
+            {
+                case RtEventType::BOOL_PARAMETER_CHANGE:
+                    subtype = ParameterChangeNotificationEvent::Subtype::BOOL_PARAMETER_CHANGE_NOT;
+                    break;
+                case RtEventType::INT_PARAMETER_CHANGE:
+                    subtype = ParameterChangeNotificationEvent::Subtype::INT_PARAMETER_CHANGE_NOT;
+                    break;
+                case RtEventType::FLOAT_PARAMETER_CHANGE:
+                    subtype = ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT;
+                    break;
+                default:
+                    return 0;
+            }
+            ParameterChangeNotificationEvent e(subtype, processor_name, parameter_name, event->value(), timestamp);
+            _publish_parameter_events(&e);
+        }
+    }
+    return 0;
+}
+
+void EventDispatcher::_publish_keyboard_events(Event* event)
+{
+    for (auto& listener : _keyboard_event_listeners)
+    {
+        listener->process(event);
+    }
+
+}
+
+void EventDispatcher::_publish_parameter_events(Event* event)
+{
+    for (auto& listener : _parameter_change_listeners)
+    {
+        listener->process(event);
     }
 }
 

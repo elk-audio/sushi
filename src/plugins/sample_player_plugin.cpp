@@ -31,11 +31,6 @@ ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
         voice.set_samplerate(sample_rate);
         voice.set_sample(&_sample);
     }
-    /*auto status = load_sample_file(SAMPLE_FILE);
-    if (status != ProcessorReturnCode::OK)
-    {
-        MIND_LOG_ERROR("Sample file not found");
-    }*/
 
     return ProcessorReturnCode::OK;
 }
@@ -187,10 +182,8 @@ BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
 {
     SNDFILE*    sample_file;
     SF_INFO     soundfile_info = {};
-    std::cout << "Loading from: " << file_name << std::endl;
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
-        std::cout << "Loading error: " << std::endl;
         MIND_LOG_ERROR("Failed to open sample file: {}", file_name);
         return {0,0};
     }

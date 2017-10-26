@@ -7,7 +7,7 @@ namespace arpeggiator_plugin {
 MIND_GET_LOGGER;
 
 constexpr float SECONDS_IN_MINUTE = 60.0f;
-constexpr int   EIGHTH_NOTES = 8;
+constexpr float EIGHTH_NOTE = 0.125f;
 
 ArpeggiatorPlugin::ArpeggiatorPlugin()
 {
@@ -72,7 +72,7 @@ void ArpeggiatorPlugin::process_event(RtEvent event)
 
 void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/)
 {
-    float period = samples_per_note(EIGHTH_NOTES, _tempo_parameter->value(), _sample_rate);
+    float period = samples_per_note(EIGHTH_NOTE, _tempo_parameter->value(), _sample_rate);
     _sample_counter += AUDIO_CHUNK_SIZE;
     while (_sample_counter >= period)
     {
@@ -87,13 +87,15 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
     }
 }
 
-float samples_per_note(float note_denominator, float tempo, float samplerate)
+float samples_per_note(float note_fraction, float tempo, float samplerate)
 {
-    return (4.0f / note_denominator) * samplerate / tempo * SECONDS_IN_MINUTE;
+    return 4.0f * note_fraction * samplerate / tempo * SECONDS_IN_MINUTE;
 }
 
 Arpeggiator::Arpeggiator()
 {
+    /* Reserving a maximum capacity and never exceeding it makes std::vector
+     * safe to use in a real-time environment */
     _notes.reserve(MAX_ARP_NOTES);
     _notes.push_back(START_NOTE);
 }
@@ -105,7 +107,7 @@ void Arpeggiator::add_note(int note)
         _hold = false;
         _notes.clear();
     }
-    if (_notes.size() < MAX_ARP_NOTES)
+    if (_notes.size() < _notes.capacity())
     {
         _notes.push_back(note);
     }

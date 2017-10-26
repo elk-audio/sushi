@@ -152,6 +152,12 @@ public:
         return std::make_pair(EngineReturnStatus::OK, "");
     };
 
+    virtual std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& /*processor_name*/,
+                                                                                    const ObjectId /*id*/)
+    {
+        return std::make_pair(EngineReturnStatus::OK, "");
+    };
+
     virtual EngineReturnStatus create_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
     {
         return EngineReturnStatus::OK;
@@ -291,6 +297,14 @@ public:
      */
     std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
 
+    /**
+     * @brief Get the unique name of a parameter with a known unique id
+     * @param processor_name The unique name of the processor
+     * @param id The unique id of the parameter to lookup.
+     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
+     */
+    std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
+                                                                            const ObjectId id) override;
     /**
      * @brief Creates an empty plugin chain
      * @param chain_id The unique id of the chain to be created.

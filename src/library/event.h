@@ -14,13 +14,17 @@
 
 namespace sushi {
 
+constexpr size_t MIDI_DATA_SIZE = 4;
+
 class Event;
 
 enum class EventType
 {
-    KEYBOARD_EV,
+    BASIC_EVENT,
+    KEYBOARD_EVENT,
 
     PARAMETER_CHANGE,
+    STRING_PROPERTY_CHANGE,
     PARAMETER_CHANGE_NOTIFICATION,
 
     ASYNCHRONOUS_WORK,
@@ -48,29 +52,43 @@ class Event
 {
     friend class EventDispatcher;
 public:
-    Event() {}
+    Event(EventType type,
+          int64_t timestamp) : _type(type),
+                               _timestamp(timestamp) {}
+
     virtual ~Event() {}
 
-    EventType type() {return _type;}
-
+    EventType   type() {return _type;}
     int64_t     time() {return _timestamp;}
-    EventId     id() {return _id;}
-    int         sender() {return _sender;}
     int         receiver() {return _receiver;}
+    EventId     id() {return _id;}
+    /**
+     * @brief Set a callback function that will be called after the event has been handled
+     * @param callback A function pointer that will be called on completion
+     * @param data Data that will be passed as function argument
+     */
+    void set_completion_cb(EventCompletionCallback callback, void* data)
+    {
+        _completion_cb = callback;
+        _callback_arg = data;
+    }
+    //int         sender() {return _sender;}
 
     // TODO - put these under protected if possible
     EventCompletionCallback completion_cb() {return _completion_cb;}
     void*       callback_arg() {return _callback_arg;}
 protected:
+    /* Only the dispatcher can set the receiver */
+    void set_receiver(int receiver) {_receiver = receiver;}
 
-
+    EventType   _type;
+    int         _receiver{0};
+    int64_t     _timestamp;
     EventCompletionCallback _completion_cb{nullptr};
     void*       _callback_arg{nullptr};
-    int64_t     _timestamp;
-    EventType   _type;
     EventId     _id{EventIdGenerator::new_id()};
-    int         _sender;
-    int         _receiver;
+
+    //int         _sender;
 };
 
 /**
@@ -79,12 +97,29 @@ protected:
 class ProcessorEvent : public Event
 {
 public:
+    ProcessorEvent(EventType type,
+                   int64_t timestamp,
+                   const std::string& processor) : Event(type,  timestamp),
+                                                   _processor(processor),
+                                                   _access_by_id(false),
+                                                   _processor_id(0) {}
+    ProcessorEvent(EventType type,
+                   int64_t timestamp,
+                   ObjectId& processor_id) : Event(type,  timestamp),
+                                             _processor(),
+                                             _access_by_id{true},
+                                             _processor_id(processor_id){}
     virtual ~ProcessorEvent() {}
 
     const std::string& processor() {return _processor;}
+    ObjectId           processor_id() {return _processor_id;}
+    /* If true, processor is accessed by integer id and not by name */
+    bool access_by_id() {return _access_by_id;}
 
 protected:
     std::string _processor;
+    bool _access_by_id;
+    ObjectId _processor_id;
 };
 
 
@@ -100,17 +135,35 @@ public:
         PITCH_BEND,
         RAW_MIDI
     };
+    KeyboardEvent(Subtype subtype,
+                  const std::string& processor,
+                  int note,
+                  float velocity,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                                       _subtype(subtype),
+                                       _note(note),
+                                       _velocity(velocity) {}
+
+    KeyboardEvent(Subtype subtype,
+                  ObjectId processor_id,
+                  int note,
+                  float velocity,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                       _subtype(subtype),
+                                       _note(note),
+                                       _velocity(velocity) {}
+
 
     Subtype     subtype() {return _subtype;}
     int         note() {return _note;}
     float       velocity() {return _velocity;}
-    uint8_t*    midi_data() {return _midi_data;}
+    std::array<uint8_t, MIDI_DATA_SIZE>  midi_data() {return _midi_data;}
 
 protected:
     Subtype     _subtype;
     int         _note;
     float       _velocity;
-    uint8_t     _midi_data[3];
+    std::array<uint8_t, MIDI_DATA_SIZE>     _midi_data;
 };
 
 class ParameterChangeEvent : public ProcessorEvent
@@ -121,11 +174,33 @@ public:
         BOOL_PARAMETER_CHANGE,
         INT_PARAMETER_CHANGE,
         FLOAT_PARAMETER_CHANGE,
-        BLOB_PARAMETER_CHANGE
+        STRING_PROPERTY_CHANGE,
+        BLOB_PROPERTY_CHANGE
     };
+
+    ParameterChangeEvent(Subtype subtype,
+                         const std::string& processor,
+                         const std::string& parameter,
+                         float value,
+                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor),
+                                              _subtype(subtype),
+                                              _parameter(parameter),
+                                              _parameter_id(0),
+                                              _value(value) {}
+
+    ParameterChangeEvent(Subtype subtype,
+                         ObjectId processor_id,
+                         ObjectId parameter_id,
+                         float value,
+                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor_id),
+                                              _subtype(subtype),
+                                              _parameter(),
+                                              _parameter_id(parameter_id),
+                                              _value(value) {}
 
     Subtype             subtype() {return _subtype;}
     const std::string&  parameter() {return _parameter;}
+    ObjectId            parameter_id() {return _parameter_id;}
     float               float_value() {return _value;}
     int                 int_value() {return static_cast<int>(_value);}
     bool                bool_value() {return _value > 0.5f;}
@@ -133,30 +208,58 @@ public:
 protected:
     Subtype             _subtype;
     std::string         _parameter;
+    ObjectId            _parameter_id;
     float               _value;
 };
 
-class StringParameterChangeEvent : public ParameterChangeEvent
+class StringPropertyChangeEvent : public ParameterChangeEvent
 {
 public:
+    StringPropertyChangeEvent(const std::string& processor,
+                              const std::string& property,
+                              const std::string& string_value,
+                              int64_t timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
+                                                                        processor,
+                                                                        property,
+                                                                        0.0f,
+                                                                        timestamp),
+                                                   _string_value(string_value)
+    {
+        _type = EventType::STRING_PROPERTY_CHANGE;
+    }
+
+    StringPropertyChangeEvent(ObjectId processor_id,
+                              ObjectId property_id,
+                              const std::string& string_value,
+                              int64_t timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
+                                                                        processor_id,
+                                                                        property_id,
+                                                                        0.0f,
+                                                                        timestamp),
+                                                   _string_value(string_value)
+    {
+        _type = EventType::STRING_PROPERTY_CHANGE;
+    }
+
     const std::string& string_value() {return _string_value;}
 
 protected:
     std::string _string_value;
 };
 
-class BlobParameterChangeEvent : public ParameterChangeEvent
+/*class BlobPropertyChangeEvent : public ParameterChangeEvent
 {
 public:
     BlobData* string_value() {return _data;}
 
 protected:
     BlobData* _data;
-};
+};*/
 
 
 class ParameterChangeNotificationEvent : public ProcessorEvent
 {
+public:
     enum class Subtype
     {
         BOOL_PARAMETER_CHANGE_NOT,
@@ -165,14 +268,23 @@ class ParameterChangeNotificationEvent : public ProcessorEvent
         STRING_PARAMETER_CHANGE_NOT,
         BLOB_PARAMETER_CHANGE_NOT
     };
-
-    Subtype     subtype() {return _subtype;}
-    float       float_value() {return _value;}
-    int         int_value() {return static_cast<int>(_value);}
-    bool        bool_value() {return _value > 0.5f;}
+    ParameterChangeNotificationEvent(Subtype subtype,
+                                     const std::string& processor,
+                                     const std::string& parameter,
+                                     float value,
+                                     int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE_NOTIFICATION, timestamp, processor),
+                                                          _subtype(subtype),
+                                                          _parameter(parameter),
+                                                          _value(value) {}
+    Subtype             subtype() {return _subtype;}
+    const std::string&  parameter() {return _parameter;}
+    float               float_value() {return _value;}
+    int                 int_value() {return static_cast<int>(_value);}
+    bool                bool_value() {return _value > 0.5f;}
 
 protected:
     Subtype     _subtype;
+    std::string _parameter;
     float       _value;
 };
 
