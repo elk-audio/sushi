@@ -132,7 +132,11 @@ if (${WITH_VST3})
     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} adelay vst3_host)
 endif()
 
-add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
+if (${WITH_JACK})
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
+endif()
+
+    add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)

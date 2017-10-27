@@ -15,7 +15,6 @@
 #include "library/rt_event.h"
 #include "library/event.h"
 #include "library/event_interface.h"
-//#include "engine/engine.h"
 #include "library/event_fifo.h"
 
 namespace sushi {
@@ -33,7 +32,25 @@ enum class EventDispatcherStatus
     UNKNOWN_POSTER
 };
 
-class EventDispatcher : public EventPoster
+/* Abstract base class is solely for test mockups */
+class BaseEventDispatcher : public EventPoster
+{
+public:
+    virtual ~BaseEventDispatcher()
+    {}
+
+    virtual void run() {}
+    virtual void stop() {}
+
+    virtual void post_event(Event* event) = 0;
+
+    virtual int register_poster(EventPoster* /*poster*/) {return 0;};
+
+    virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+};
+
+class EventDispatcher : public BaseEventDispatcher
 {
 public:
     EventDispatcher(engine::BaseEngine* engine,
@@ -47,15 +64,15 @@ public:
     virtual ~EventDispatcher()
     {}
 
-    void run();
-    void stop();
+    void run() override ;
+    void stop() override;
 
-    void post_event(Event* event);
+    void post_event(Event* event) override;
 
-    int register_poster(EventPoster* poster);
+    int register_poster(EventPoster* poster) override;
 
-    EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver);
-    EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* receiver);
+    EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver) override;
+    EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
 
     int process(Event* event) override;
     int poster_id() override {return AUDIO_ENGINE_ID;}

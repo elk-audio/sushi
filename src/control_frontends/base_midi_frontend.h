@@ -10,12 +10,14 @@
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {
+// TODO - Investigate how to get rid of this fwd declaration
+namespace midi_dispatcher{ class MidiDispatcher;}
 namespace midi_frontend {
 
 class BaseMidiFrontend
 {
 public:
-    BaseMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher) : _dispatcher{dispatcher} {}
+    BaseMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher) : _dispatcher(dispatcher) {}
 
     virtual ~BaseMidiFrontend() {};
 
@@ -24,6 +26,8 @@ public:
     virtual void run() = 0;
 
     virtual void stop() = 0;
+
+    virtual void send_midi(int input, int offset, const uint8_t* data, uint64_t timestamp) = 0;
 
 protected:
     midi_dispatcher::MidiDispatcher* _dispatcher;

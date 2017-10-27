@@ -8,6 +8,7 @@ MIND_GET_LOGGER;
 
 constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float EIGHTH_NOTE = 0.125f;
+constexpr int   OCTAVE = 12;
 
 ArpeggiatorPlugin::ArpeggiatorPlugin()
 {
@@ -145,7 +146,7 @@ int Arpeggiator::next_note()
             _octave_idx = 0;
         }
     }
-    return _notes[_note_idx] + _octave_idx * 12;
+    return _notes[_note_idx] + _octave_idx * OCTAVE;
 }
 }// namespace sample_player_plugin
 }// namespace sushi

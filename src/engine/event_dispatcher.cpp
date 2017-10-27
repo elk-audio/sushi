@@ -81,10 +81,13 @@ void EventDispatcher::_event_loop()
         /* Handle incoming events */
         while (!_in_queue.empty())
         {
-            std::unique_lock<std::mutex> lock(_in_queue_mutex);
-            auto event = _in_queue.back();
-            _in_queue.pop_back();
-            lock.release();
+            Event* event;
+            {
+                std::lock_guard<std::mutex> lock(_in_queue_mutex);
+                event = _in_queue.back();
+                _in_queue.pop_back();
+            }
+
             int status;
             if (static_cast<int>(_posters.size()) > event->receiver())
             {
@@ -114,10 +117,19 @@ void EventDispatcher::_event_loop()
 
 int EventDispatcher::_process_kb_event(KeyboardEvent* event)
 {
-    auto id = _engine->processor_id_from_name(event->processor());
-    if (id.first != engine::EngineReturnStatus::OK)
+    ObjectId processor_id;
+    if (event->access_by_id())
     {
-        return EventStatus::NOT_HANDLED;
+        processor_id = event->processor_id();
+    }
+    else
+    {
+        auto processor_node = _engine->processor_id_from_name(event->processor());
+        if (processor_node.first != engine::EngineReturnStatus::OK)
+        {
+            return EventStatus::NOT_HANDLED;
+        }
+        processor_id = processor_node.second;
     }
     // TODO - handle translation from real time to sample offset.
     int offset = 0;
@@ -125,15 +137,15 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
     switch (event->subtype())
     {
         case KeyboardEvent::Subtype::NOTE_ON:
-            rt_event = RtEvent::make_note_on_event(id.second, offset, event->note(), event->velocity());
+            rt_event = RtEvent::make_note_on_event(processor_id, offset, event->note(), event->velocity());
             break;
 
         case KeyboardEvent::Subtype::NOTE_OFF:
-            rt_event = RtEvent::make_note_on_event(id.second, offset, event->note(), event->velocity());
+            rt_event = RtEvent::make_note_off_event(processor_id, offset, event->note(), event->velocity());
             break;
 
         case KeyboardEvent::Subtype::NOTE_AFTERTOUCH:
-            rt_event = RtEvent::make_note_aftertouch_event(id.second, offset, event->note(), event->velocity());
+            rt_event = RtEvent::make_note_aftertouch_event(processor_id, offset, event->note(), event->velocity());
             break;
 
         case KeyboardEvent::Subtype::PITCH_BEND:

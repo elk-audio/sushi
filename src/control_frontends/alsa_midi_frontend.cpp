@@ -101,7 +101,7 @@ void AlsaMidiFrontend::_poll_function()
                     if (byte_count > 0)
                     {
                         MIND_LOG_DEBUG("Alsa frontend: received midi message: [{:x} {:x} {:x} {:x}]", data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3]);
-                        _dispatcher->process_midi(0, 0, data_buffer, byte_count, false);
+                        _dispatcher->process_midi(0, 0, data_buffer, byte_count, 0);
                     }
                     MIND_LOG_WARNING_IF(byte_count < 0, "Alsa frontend: decoder returned {}", byte_count);
                 }
@@ -110,6 +110,11 @@ void AlsaMidiFrontend::_poll_function()
         }
     }
     delete[] descriptors;
+}
+
+void AlsaMidiFrontend::send_midi(int input, int offset, const uint8_t* data, uint64_t timestamp)
+{
+
 }
 
 } // end namespace midi_frontend

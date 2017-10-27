@@ -12,13 +12,19 @@
 #include <map>
 #include <array>
 #include <vector>
-#include "engine/engine.h"
+
 #include "library/constants.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event.h"
 #include "library/processor.h"
+#include "control_frontends/base_midi_frontend.h"
+#include "engine/engine.h"
+#include "engine/event_dispatcher.h"
+#include "library/event_interface.h"
+
 
 namespace sushi {
+namespace midi_frontend{ class BaseMidiFrontend;}
 namespace midi_dispatcher {
 
 struct Connection
@@ -37,14 +43,21 @@ enum class MidiDispatcherStatus
     INVALID_PROCESSOR,
     INVALID_PARAMETER
 };
-class MidiDispatcher
+class MidiDispatcher : public EventPoster
 {
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(engine::BaseEngine* engine) : _engine(engine) {}
+    MidiDispatcher(engine::BaseEngine* engine);
 
     ~MidiDispatcher() {}
+
+    // TODO - Eventually have the frontend as a constructor argument
+    // Doesn't work now since the dispatcher is created in main
+    void set_frontend(midi_frontend::BaseMidiFrontend* frontend)
+    {
+        _frontend = frontend;
+    }
 /**
  * @brief Sets the number of midi input channels.
  * @param channels number of input channels.
@@ -110,7 +123,23 @@ public:
      * @param size Length of data in bytes.
      * @param set to true if called from the rt audio part, false otherwise
      */
-    void process_midi(int input, int offset, const uint8_t* data, size_t size, bool realtime);
+    void process_midi(int input, int offset, const uint8_t* data, size_t size, int64_t timestamp);
+
+    /* Inherited from EventPoster */
+    virtual int process(Event* /*event*/) override;
+
+    /**
+     * @brief The unique id of this poster, returned from when registering the
+     *        poster with the EventDispatcher
+     * @return
+     */
+    virtual int poster_id() {return _id;}
+
+    /**
+     * @brief The name of this poster
+     * @return
+     */
+    virtual const std::string& poster_name() { return _name;}
 
 private:
 
@@ -120,6 +149,11 @@ private:
     int _midi_outputs{0};
 
     engine::BaseEngine* _engine;
+    midi_frontend::BaseMidiFrontend* _frontend;
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
+
+    int _id{10};
+    std::string _name{"Midi_dispatcher"};
 };
 
 } // end namespace midi_dispatcher

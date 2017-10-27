@@ -195,7 +195,7 @@ public:
         return tmp;
     }
 
-    virtual sushi::dispatcher::EventDispatcher* event_dispatcher()
+    virtual sushi::dispatcher::BaseEventDispatcher* event_dispatcher()
     {
         return nullptr;
     }
@@ -364,7 +364,7 @@ public:
         return _audio_graph;
     }
 
-    sushi::dispatcher::EventDispatcher* event_dispatcher() override
+    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
         return &_event_dispatcher;
     }

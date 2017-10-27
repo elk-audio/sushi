@@ -7,29 +7,38 @@ namespace midi_dispatcher {
 
 MIND_GET_LOGGER;
 
-inline RtEvent make_note_on_event(const Connection &c,
+inline Event* make_note_on_event(const Connection &c,
                                 const midi::NoteOnMessage &msg,
-                                int offset)
+                                int64_t timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return RtEvent::make_note_on_event(c.target, offset, msg.note, velocity);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.note, velocity, timestamp);
 }
 
-inline RtEvent make_note_off_event(const Connection &c,
-                                 const midi::NoteOffMessage &msg,
-                                 int offset)
+inline Event* make_note_off_event(const Connection &c,
+                                  const midi::NoteOffMessage &msg,
+                                  int64_t timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return RtEvent::make_note_off_event(c.target, offset, msg.note, velocity);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.note, velocity, timestamp);
 }
 
-inline RtEvent make_param_change_event(const Connection &c,
-                                     const midi::ControlChangeMessage &msg,
-                                     int offset)
+inline Event* make_param_change_event(const Connection &c,
+                                      const midi::ControlChangeMessage &msg,
+                                      int64_t timestamp)
 {
     float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return RtEvent::make_parameter_change_event(c.target, offset, c.parameter, value);
+    return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
+
+
+MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
+                                                             _frontend(nullptr)
+{
+    // TODO - eventually we can pass the event dispatcher directly and not have the engine dependency
+    _event_dispatcher = _engine->event_dispatcher();
+}
+
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              const std::string &processor_name,
@@ -98,10 +107,8 @@ void MidiDispatcher::clear_connections()
     _kb_routes.clear();
 }
 
-void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size, bool realtime)
+void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, size_t size, int64_t timestamp)
 {
-    std::function<engine::EngineReturnStatus(engine::BaseEngine*, RtEvent&)> dispatch_fun = realtime? &engine::BaseEngine::send_rt_event :
-                                                                                                    &engine::BaseEngine::send_async_event;
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)
     {
@@ -113,13 +120,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_param_change_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
                 for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_param_change_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
             }
             break;
@@ -133,13 +140,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_note_on_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_note_on_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
             }
             break;
@@ -153,13 +160,13 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_note_off_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, offset);
-                    dispatch_fun(_engine, event);
+                    auto event = make_note_off_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
                 }
             }
             break;
@@ -173,6 +180,11 @@ void MidiDispatcher::process_midi(int input, int offset, const uint8_t* data, si
         default:
             break;
     }
+}
+
+int MidiDispatcher::process(Event*)
+{
+    return EventStatus::NOT_HANDLED;
 }
 
 } // end namespace midi_dispatcher

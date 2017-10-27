@@ -32,6 +32,8 @@ public:
 
     void stop() override;
 
+    void send_midi(int input, int offset, const uint8_t* data, uint64_t timestamp);
+
 private:
 
     void                        _poll_function();
