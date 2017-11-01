@@ -37,6 +37,7 @@ void JackFrontend::cleanup()
         jack_client_close(_client);
         _client = nullptr;
     }
+    _midi_frontend->stop();
     _osc_control->stop();
 }
 
@@ -53,6 +54,7 @@ void JackFrontend::run()
     {
         connect_ports();
     }
+    _midi_frontend->run();
     _osc_control->run();
 }
 
@@ -86,7 +88,22 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Failed to setup sample rate handling");
         return status;
     }
-    return setup_ports();
+    status = setup_ports();
+    if (status != AudioFrontendStatus::OK)
+    {
+        MIND_LOG_ERROR("Failed to setup ports");
+        return status;
+    }
+    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
+    auto midi_ok = _midi_frontend->init();
+    if (!midi_ok)
+    {
+        MIND_LOG_ERROR("Failed to setup Alsa midi frontend");
+        return AudioFrontendStatus::MIDI_PORT_ERROR;
+    }
+    MIND_LOG_ERROR("Successfully setup alsa midi frontend");
+    _midi_dispatcher->set_frontend(_midi_frontend.get());
+    return AudioFrontendStatus::OK;
 }
 
 AudioFrontendStatus JackFrontend::setup_sample_rate()

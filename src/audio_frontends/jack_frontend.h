@@ -11,6 +11,7 @@
 #include "library/rt_event.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 #include <string>
 #include <tuple>
@@ -123,6 +124,7 @@ private:
     RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
+    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
 };
 
 }; // end namespace jack_frontend

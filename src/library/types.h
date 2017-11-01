@@ -1,5 +1,5 @@
 /**
- * @Brief General types not suitable to put elsewhere
+ * @Brief General types and typedefs not suitable to put elsewhere
  * @copyright MIND Music Labs AB, Stockholm
  *
  *
@@ -7,6 +7,8 @@
 
 #ifndef SUSHI_TYPES_H
 #define SUSHI_TYPES_H
+
+#include <array>
 
 namespace sushi {
 
@@ -23,6 +25,14 @@ struct BlobData
  * @brief Type used for timestamps with micro second granularity
  */
 typedef int64_t MicroTime;
+
+
+constexpr size_t MIDI_DATA_BYTE_SIZE = 4;
+/**
+ * @brief Convenience type for passing midi messages by value
+ */
+typedef std::array<uint8_t, 4> MidiDataByte;
+static_assert(sizeof(MidiDataByte) == MIDI_DATA_BYTE_SIZE, "");
 
 } // end namespace sushi
 

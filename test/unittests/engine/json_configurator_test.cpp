@@ -95,7 +95,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 
     status = _module_under_test->load_midi(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
     ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
 }
 

@@ -9,6 +9,33 @@ using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::midi_dispatcher;
 
+class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
+{
+public:
+    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
+
+    virtual ~DummyMidiFrontend() {};
+
+    bool init() override {return true;}
+    void run()  override {}
+    void stop() override {}
+    void send_midi(int i/*input*/, const uint8_t* /*data*/, int64_t /*timestamp*/) override
+    {
+        _sent = true;
+    }
+    bool midi_sent()
+    {
+        if (_sent)
+        {
+            _sent = false;
+            return true;
+        }
+        return false;
+    }
+    private:
+    bool _sent{false};
+};
+
 const uint8_t TEST_NOTE_ON_MSG[]   = {0x92, 62, 55}; /* Channel 2 */
 const uint8_t TEST_NOTE_OFF_MSG[]  = {0x83, 60, 45}; /* Channel 3 */
 const uint8_t TEST_CTRL_CH_MSG[]   = {0xB4, 67, 75}; /* Channel 4, cc 67 */
@@ -16,11 +43,9 @@ const uint8_t TEST_CTRL_CH_MSG_2[] = {0xB5, 40, 75}; /* Channel 5, cc 40 */
 const uint8_t TEST_CTRL_CH_MSG_3[] = {0xB5, 39, 75}; /* Channel 5, cc 39 */
 
 
-// mockup functions in the engine:
-
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
-    Connection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1};
     NoteOnMessage message = {1, 46, 64};
     Event* event = make_note_on_event(connection, message, 1000);
     EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
@@ -36,7 +61,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
-    Connection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1};
     NoteOffMessage message = {1, 46, 64};
     Event* event = make_note_off_event(connection, message, 1000);
     EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
@@ -51,7 +76,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
-    Connection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1};
     ControlChangeMessage message = {1, 50, 32};
     Event* event = make_param_change_event(connection, message, 1000);
     EXPECT_EQ(EventType::PARAMETER_CHANGE, event->type());
@@ -72,6 +97,7 @@ protected:
     void SetUp()
     {
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
+        _module_under_test.set_frontend(&_test_frontend);
     }
 
     void TearDown()
@@ -80,6 +106,7 @@ protected:
     EngineMockup _test_engine{41000};
     MidiDispatcher _module_under_test{&_test_engine};
     EventDispatcherMockup* _test_dispatcher;
+    DummyMidiFrontend _test_frontend;
 };
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
@@ -106,6 +133,21 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 
     _module_under_test.process_midi(2, 0, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), false);
     EXPECT_FALSE(_test_dispatcher->got_event());
+}
+
+TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
+{
+    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 0.5f, 12345);
+
+    /* Send midi message without connections */
+    auto status = _module_under_test.process(&event);
+    EXPECT_EQ(EventStatus::NOT_HANDLED, status);
+    EXPECT_FALSE(_test_frontend.midi_sent());
+
+    /* Connect track to output 1, channel 5 */
+    _module_under_test.set_midi_output_ports(3);
+    auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
+    ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 }
 
 TEST_F(TestMidiDispatcher, TestCCDataConnection)

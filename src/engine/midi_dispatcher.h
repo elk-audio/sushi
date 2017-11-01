@@ -16,6 +16,7 @@
 #include "library/constants.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event.h"
+#include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
 #include "engine/engine.h"
@@ -27,10 +28,19 @@ namespace sushi {
 namespace midi_frontend{ class BaseMidiFrontend;}
 namespace midi_dispatcher {
 
-struct Connection
+struct InputConnection
 {
     ObjectId target;
     ObjectId parameter;
+    float min_range;
+    float max_range;
+};
+
+struct OutputConnection
+{
+    int channel;
+    int output;
+    int cc_number;
     float min_range;
     float max_range;
 };
@@ -39,10 +49,13 @@ enum class MidiDispatcherStatus
 {
     OK,
     INVALID_MIDI_INPUT,
+    INVALID_MIDI_OUTPUT,
     INVALID_CHAIN_NAME,
     INVALID_PROCESSOR,
-    INVALID_PARAMETER
+    INVALID_PARAMETER,
+    INVAlID_CHANNEL
 };
+
 class MidiDispatcher : public EventPoster
 {
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
@@ -67,10 +80,10 @@ public:
         _midi_inputs = channels;
     }
 
-/**
- * @brief Sets the number of midi output channels.
- * @param channels number of output channels.
- */
+    /**
+     * @brief Sets the number of midi output channels.
+     * @param channels number of output channels.
+     */
     void set_midi_output_ports(int channels)
     {
         _midi_outputs = channels;
@@ -100,14 +113,24 @@ public:
      * @brief Connect a midi input to a track/processor chain
      *        Possibly filtering on midi channel.
      * @param midi_input Index of the midi input
-     * @param chain_no The track/plugin chain to send to
+     * @param chain_no The track/processor chain to send to
      * @param channel If not OMNI, only the given channel will be connected.
-     * @return
+     * @return OK if successfully connected the chain, error status otherwise
      */
     MidiDispatcherStatus connect_kb_to_track(int midi_input,
                                              const std::string &chain_name,
                                              int channel = midi::MidiChannel::OMNI);
 
+    /**
+     * @brief Connect midi kb data from a track/processor chain to a given midi output
+     * @param midi_output Index of the midi out
+     * @param chain_name The track/processor chain from where the data originates
+     * @param channel Which channel nr to output the data on
+     * @return OK if successfully connected the chain, error status otherwise
+     */
+    MidiDispatcherStatus connect_track_to_output(int midi_output,
+                                                 const std::string &chain_name,
+                                                 int channel);
     /**
      * @brief Clears all connections made with connect_kb_to_track
      *        and connect_cc_to_parameter.
@@ -123,28 +146,29 @@ public:
      * @param size Length of data in bytes.
      * @param set to true if called from the rt audio part, false otherwise
      */
-    void process_midi(int input, int offset, const uint8_t* data, size_t size, int64_t timestamp);
+    void process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp);
 
     /* Inherited from EventPoster */
-    virtual int process(Event* /*event*/) override;
+    int process(Event* /*event*/) override;
 
     /**
      * @brief The unique id of this poster, returned from when registering the
      *        poster with the EventDispatcher
      * @return
      */
-    virtual int poster_id() {return _id;}
+    int poster_id() override {return _id;}
 
     /**
      * @brief The name of this poster
      * @return
      */
-    virtual const std::string& poster_name() { return _name;}
+    const std::string& poster_name() override {return _name;}
 
 private:
 
-    std::map<int, std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>> _kb_routes;
-    std::map<int, std::array<std::array<std::vector<Connection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
+    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
+    std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
+    std::map<int, std::array<std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
     int _midi_inputs{0};
     int _midi_outputs{0};
 

@@ -58,13 +58,34 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
      * processing chain was empty */
     out = in_bfr;
-    /* If there are keyboard events not consumed, pass them on upwards */
+    /* If there are keyboard events not consumed, pass them on upwards
+     * Rewrite the processor id of the events with that of the chain.
+     * Eventually this should only be done for track objects */
     while (!_event_buffer.empty())
     {
         RtEvent event;
         if (_event_buffer.pop(event))
         {
-            output_event(event);
+            switch (event.type())
+            {
+                case RtEventType::NOTE_ON:
+                    output_event(RtEvent::make_note_on_event(this->id(), event.sample_offset(),
+                                                             event.keyboard_event()->note(),
+                                                             event.keyboard_event()->velocity()));
+                    break;
+                case RtEventType::NOTE_OFF:
+                    output_event(RtEvent::make_note_off_event(this->id(), event.sample_offset(),
+                                                              event.keyboard_event()->note(),
+                                                              event.keyboard_event()->velocity()));
+                    break;
+                case RtEventType::NOTE_AFTERTOUCH:
+                    output_event(RtEvent::make_note_aftertouch_event(this->id(), event.sample_offset(),
+                                                                     event.keyboard_event()->note(),
+                                                                     event.keyboard_event()->velocity()));
+                    break;
+                default:
+                    output_event(event);
+            }
         }
     }
 }

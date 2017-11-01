@@ -145,6 +145,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
+                        src/library/midi_encoder.h
                         src/library/rt_event.h
                         src/library/processor.h
                         src/library/internal_plugin.h

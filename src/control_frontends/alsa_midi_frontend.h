@@ -32,7 +32,7 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, int offset, const uint8_t* data, uint64_t timestamp);
+    void send_midi(int input, const uint8_t* data, int64_t timestamp) override;
 
 private:
 
@@ -41,7 +41,9 @@ private:
     std::atomic<bool>           _running{false};
     snd_seq_t*                  _seq_handle{nullptr};
     int                         _input_midi_port;
-    snd_midi_event_t*           _seq_parser{nullptr};
+    int                         _output_midi_port;
+    snd_midi_event_t*           _input_parser{nullptr};
+    snd_midi_event_t*           _output_parser{nullptr};
 };
 
 } // end namespace midi_frontend

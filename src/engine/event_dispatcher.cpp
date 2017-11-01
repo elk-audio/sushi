@@ -265,11 +265,11 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
 {
     // TODO - map offset to real world timestamp
     int64_t timestamp = 0;
-    auto processor = _engine->processor_name_from_id(event->processor_id());
+    /*auto processor = _engine->processor_name_from_id(event->processor_id());
     if (processor.first != engine::EngineReturnStatus::OK)
     {
         return 0;
-    }
+    }*/
     KeyboardEvent::Subtype subtype;
     switch (event->type())
     {
@@ -286,11 +286,9 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
             subtype = KeyboardEvent::Subtype::RAW_MIDI;
             // TODO - fill list
     }
-
-    KeyboardEvent e(subtype, processor.second, event->note(),
-                    event->velocity(), timestamp);
+    KeyboardEvent e(subtype, event->processor_id(), event->note(), event->velocity(), timestamp);
     _publish_keyboard_events(&e);
-    return 0;
+    return EventStatus::HANDLED_OK;
 }
 
 int EventDispatcher::_process_rt_parameter_change_events(const ParameterChangeRtEvent* event)
