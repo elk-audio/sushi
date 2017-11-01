@@ -286,7 +286,7 @@ void inline JackFrontend::process_midi(jack_nframes_t start_frame, jack_nframes_
         int ret = jack_midi_event_get(&midi_event, buffer, i);
         if (ret == 0 && midi_event.time>= start_frame && midi_event.time < start_frame + frame_count)
         {
-            _midi_dispatcher->process_midi(0, midi_event.time - start_frame, midi_event.buffer, midi_event.size, true);
+            //_midi_dispatcher->process_midi(0, midi_event.time - start_frame, midi_event.buffer, midi_event.size, true);
         }
     }
 }

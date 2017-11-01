@@ -8,16 +8,33 @@ namespace dispatcher {
 
 MIND_GET_LOGGER;
 
+EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
+                                 RtEventFifo* in_rt_queue,
+                                 RtEventFifo* out_rt_queue) : _engine{engine},
+                                                              _in_rt_queue{in_rt_queue},
+                                                              _out_rt_queue{out_rt_queue}
+{
+    for (auto& p : _posters)
+    {
+        p = nullptr;
+    }
+    _posters[EventPosterId::AUDIO_ENGINE] = this;
+}
+
 void EventDispatcher::post_event(Event* event)
 {
     std::lock_guard<std::mutex> lock(_in_queue_mutex);
     _in_queue.push_front(event);
 }
 
-int EventDispatcher::register_poster(EventPoster* poster)
+EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
 {
-    _posters.push_back(poster);
-    return static_cast<int>(_posters.size()) - 1;
+    if (_posters[poster->poster_id()] != nullptr)
+    {
+        return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+    }
+    _posters[poster->poster_id()] = poster;
+    return EventDispatcherStatus::OK;
 }
 
 void EventDispatcher::run()
@@ -75,10 +92,10 @@ int EventDispatcher::process(Event* event)
 
 void EventDispatcher::_event_loop()
 {
-    while (_running)
+    do
     {
         auto start_time = std::chrono::system_clock::now();
-        /* Handle incoming events */
+        /* Handle incoming Events */
         while (!_in_queue.empty())
         {
             Event* event;
@@ -87,15 +104,15 @@ void EventDispatcher::_event_loop()
                 event = _in_queue.back();
                 _in_queue.pop_back();
             }
-
+            assert(event->receiver() < static_cast<int>(_posters.size()));
+            EventPoster* receiver = _posters[event->receiver()];
             int status;
-            if (static_cast<int>(_posters.size()) > event->receiver())
+            if (receiver != nullptr)
             {
                 status = _posters[event->receiver()]->process(event);
             }
             else
             {
-                MIND_LOG_WARNING("Event addressed to unregistered poster {}", event->receiver());
                 status = EventStatus::UNRECOGNIZED_RECEIVER;
             }
             if (event->completion_cb() != nullptr)
@@ -113,6 +130,7 @@ void EventDispatcher::_event_loop()
         }
         std::this_thread::sleep_until(start_time + THREAD_PERIODICITY);
     }
+    while (_running);
 }
 
 int EventDispatcher::_process_kb_event(KeyboardEvent* event)
@@ -342,6 +360,41 @@ void EventDispatcher::_publish_parameter_events(Event* event)
         listener->process(event);
     }
 }
+
+EventDispatcherStatus EventDispatcher::deregister_poster(EventPoster* poster)
+{
+    if (_posters[poster->poster_id()] != nullptr)
+    {
+        _posters[poster->poster_id()] = nullptr;
+        return EventDispatcherStatus::OK;
+    }
+    return EventDispatcherStatus::UNKNOWN_POSTER;
+}
+
+EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
+{
+    for (auto i = _keyboard_event_listeners.begin(); i != _keyboard_event_listeners.end(); ++i)
+    {
+        if (*i == receiver)
+        {
+            _keyboard_event_listeners.erase(i);
+            return EventDispatcherStatus::OK;
+        }
+    }
+    return EventDispatcherStatus::UNKNOWN_POSTER;
+}
+
+EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
+{
+    for (auto i = _parameter_change_listeners.begin(); i != _parameter_change_listeners.end(); ++i)
+    {
+        if (*i == receiver)
+        {
+            _parameter_change_listeners.erase(i);
+            return EventDispatcherStatus::OK;
+        }
+    }
+    return EventDispatcherStatus::UNKNOWN_POSTER;}
 
 
 } // end namespace dispatcher

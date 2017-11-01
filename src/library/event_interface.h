@@ -16,6 +16,16 @@
 
 namespace sushi {
 
+
+enum EventPosterId : int
+{
+    AUDIO_ENGINE = 0,
+    MIDI_DISPATCHER,
+    OSC_FRONTEND,
+    WORKER,
+    MAX_POSTERS
+};
+
 class EventPoster
 {
 public:
@@ -35,12 +45,6 @@ public:
      * @return
      */
     virtual int poster_id() = 0;
-
-    /**
-     * @brief The name of this poster
-     * @return
-     */
-    virtual const std::string& poster_name() = 0;
 };
 
 

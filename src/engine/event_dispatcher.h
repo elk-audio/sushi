@@ -44,39 +44,36 @@ public:
 
     virtual void post_event(Event* event) = 0;
 
-    virtual int register_poster(EventPoster* /*poster*/) {return 0;};
-
+    virtual EventDispatcherStatus register_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+
+    virtual EventDispatcherStatus deregister_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
 };
 
 class EventDispatcher : public BaseEventDispatcher
 {
 public:
-    EventDispatcher(engine::BaseEngine* engine,
-                    RtEventFifo* in_rt_queue,  RtEventFifo* out_rt_queue) : _engine{engine},
-                                                                            _in_rt_queue{in_rt_queue},
-                                                                            _out_rt_queue{out_rt_queue}
-    {
-        _posters.push_back(this);
-    }
+    EventDispatcher(engine::BaseEngine* engine, RtEventFifo* in_rt_queue,  RtEventFifo* out_rt_queue);
 
-    virtual ~EventDispatcher()
-    {}
+    virtual ~EventDispatcher() {}
 
-    void run() override ;
+    void run() override;
     void stop() override;
 
     void post_event(Event* event) override;
 
-    int register_poster(EventPoster* poster) override;
-
+    EventDispatcherStatus register_poster(EventPoster* poster) override;
     EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver) override;
     EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
+    EventDispatcherStatus deregister_poster(EventPoster* poster) override;
+    EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* receiver) override;
+    EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* receiver) override;
 
     int process(Event* event) override;
     int poster_id() override {return AUDIO_ENGINE_ID;}
-    const std::string& poster_name() override {return _name;}
 
 private:
 
@@ -108,11 +105,9 @@ private:
     RtEventFifo* _out_rt_queue;
 
     std::atomic<bool> _running{false};
-    std::vector<EventPoster*> _posters;
+    std::array<EventPoster*, EventPosterId::MAX_POSTERS> _posters;
     std::vector<EventPoster*> _keyboard_event_listeners;
     std::vector<EventPoster*> _parameter_change_listeners;
-
-    std::string _name{AUDIO_ENGINE_NAME};
 };
 
 } // end namespace dispatcher

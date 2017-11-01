@@ -12,7 +12,7 @@ using namespace sushi::dispatcher;
 
 constexpr int DUMMY_POSTER_ID = 1;
 constexpr int DUMMY_STATUS = 100;
-constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::microseconds(20);
+constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::microseconds(2000);
 
 bool completed = false;
 int completion_status = 0;
@@ -34,8 +34,6 @@ public:
 
     int poster_id() override {return DUMMY_POSTER_ID;}
 
-    const std::string& poster_name() {return _name;}
-
     bool event_received()
     {
         if (_received)
@@ -48,11 +46,16 @@ public:
 
 private:
     bool _received{false};
-    std::string _name{"Dummy"};
 };
 
 class TestEventDispatcher : public ::testing::Test
 {
+public:
+    void crank_event_loop_once()
+    {
+        _module_under_test->_running = false;
+        _module_under_test->_event_loop();
+    }
 protected:
     TestEventDispatcher()
     {
@@ -94,8 +97,41 @@ TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
     event->set_receiver(DUMMY_POSTER_ID);
     _module_under_test->post_event(event);
     std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
-
     ASSERT_TRUE(_poster.event_received());
+    _module_under_test->stop();
+}
+
+TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
+{
+    auto status = _module_under_test->register_poster(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->register_poster(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+
+    status = _module_under_test->deregister_poster(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->deregister_poster(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+
+    status = _module_under_test->subscribe_to_keyboard_events(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->subscribe_to_keyboard_events(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+
+    status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+
+    status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+
+    status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
 }
 
 TEST_F(TestEventDispatcher, TestToRtEvent)
@@ -103,8 +139,7 @@ TEST_F(TestEventDispatcher, TestToRtEvent)
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, "processor", 50, 1.0f, 0);
     _module_under_test->post_event(event);
     ASSERT_TRUE(_out_rt_queue.empty());
-    _module_under_test->run();
-    std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
+    crank_event_loop_once();
 
     ASSERT_FALSE(_out_rt_queue.empty());
     RtEvent rt_event;
@@ -118,8 +153,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
     _in_rt_queue.push(rt_event);
 
     _module_under_test->subscribe_to_keyboard_events(&_poster);
-    _module_under_test->run();
-    std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
+    crank_event_loop_once();
 
     ASSERT_TRUE(_poster.event_received());
 }
@@ -130,8 +164,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
     _in_rt_queue.push(rt_event);
 
     _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
-    _module_under_test->run();
-    std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
+    crank_event_loop_once();
 
     ASSERT_TRUE(_poster.event_received());
 }
@@ -140,7 +173,6 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
     _module_under_test->register_poster(&_poster);
-    _module_under_test->run();
     auto event = new Event(EventType::BASIC_EVENT, 0);
     event->set_receiver(DUMMY_POSTER_ID);
     event->set_completion_cb(dummy_callback, nullptr);
@@ -148,10 +180,9 @@ TEST_F(TestEventDispatcher, TestCompletionCallback)
     completion_status = 0;
 
     _module_under_test->post_event(event);
-    std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
+    crank_event_loop_once();
 
     ASSERT_TRUE(_poster.event_received());
     ASSERT_TRUE(completed);
     ASSERT_EQ(DUMMY_STATUS, completion_status);
-
 }

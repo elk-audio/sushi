@@ -27,9 +27,7 @@ public:
         return EventStatus::HANDLED_OK;
     }
 
-    int poster_id() override {return 0;}
-
-    const std::string& poster_name() override {return _name;}
+    int poster_id() override {return EventPosterId::AUDIO_ENGINE;}
 
     void post_event(Event* event)
     {
@@ -51,7 +49,6 @@ public:
     }
 private:
     std::deque<Event*> _queue;
-    std::string _name{""};
 };
 
 // Bypass processor

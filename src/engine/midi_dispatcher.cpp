@@ -38,6 +38,14 @@ MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
 {
     // TODO - eventually we can pass the event dispatcher directly and avoid the engine dependency
     _event_dispatcher = _engine->event_dispatcher();
+    _event_dispatcher->register_poster(this);
+    _event_dispatcher->subscribe_to_keyboard_events(this);
+}
+
+MidiDispatcher::~MidiDispatcher()
+{
+    _event_dispatcher->unsubscribe_from_keyboard_events(this);
+    _event_dispatcher->deregister_poster(this);
 }
 
 

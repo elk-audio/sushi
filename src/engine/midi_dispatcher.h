@@ -15,7 +15,6 @@
 
 #include "library/constants.h"
 #include "library/midi_decoder.h"
-#include "library/rt_event.h"
 #include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
@@ -63,7 +62,7 @@ class MidiDispatcher : public EventPoster
 public:
     MidiDispatcher(engine::BaseEngine* engine);
 
-    ~MidiDispatcher() {}
+    virtual ~MidiDispatcher();
 
     // TODO - Eventually have the frontend as a constructor argument
     // Doesn't work now since the dispatcher is created in main
@@ -156,13 +155,7 @@ public:
      *        poster with the EventDispatcher
      * @return
      */
-    int poster_id() override {return _id;}
-
-    /**
-     * @brief The name of this poster
-     * @return
-     */
-    const std::string& poster_name() override {return _name;}
+    int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
 
@@ -175,9 +168,6 @@ private:
     engine::BaseEngine* _engine;
     midi_frontend::BaseMidiFrontend* _frontend;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
-
-    int _id{10};
-    std::string _name{"Midi_dispatcher"};
 };
 
 } // end namespace midi_dispatcher

@@ -10,8 +10,6 @@
 
 #include "types.h"
 
-#include "midi_encoder.h"
-
 namespace sushi {
 namespace midi {
 
@@ -48,7 +46,6 @@ MidiDataByte encode_poly_key_pressure(int channel, int note, float pressure)
     data[3] = 0;
     return data;
 }
-
 
 
 } // end namespace midi

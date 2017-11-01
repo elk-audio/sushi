@@ -198,9 +198,6 @@ int main(int argc, char* argv[])
     midi_dispatcher.set_midi_input_ports(1);
     midi_dispatcher.set_midi_output_ports(1);
 
-    auto event_dispatcher = engine.event_dispatcher();
-    event_dispatcher->subscribe_to_keyboard_events(&midi_dispatcher);
-
     sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
     auto status = configurator.load_host_config(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
