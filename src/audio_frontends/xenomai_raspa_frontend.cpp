@@ -15,9 +15,6 @@
 namespace sushi {
 namespace audio_frontend {
 
-static const int ALSA_MAX_EVENT_SIZE_BYTES = 8192;
-static const int ALSA_MIDI_POLL_TIMEOUT = 100;
-
 MIND_GET_LOGGER;
 
 AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* config)
