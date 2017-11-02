@@ -35,7 +35,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(RtEventFifo* queue, engine::BaseEngine* engine);
+    OSCFrontend(engine::BaseEngine* engine);
 
     ~OSCFrontend();
 
@@ -73,6 +73,11 @@ public:
 
     virtual void stop() override {_stop_server();}
 
+    /* Inherited from EventPoster */
+    int process(Event* event);
+
+    int poster_id() override {return EventPosterId::OSC_FRONTEND;}
+
 private:
     void _start_server();
 
@@ -83,6 +88,7 @@ private:
     lo_server_thread _osc_server;
     int _server_port;
     std::atomic_bool _running;
+
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
 };

@@ -10,20 +10,26 @@
 
 #include <string>
 
-#include "library/rt_event.h"
-#include "library/event_fifo.h"
+#include "library/event_interface.h"
 #include "engine/engine.h"
 
 namespace sushi {
 namespace control_frontend {
 
-class BaseControlFrontend
+class BaseControlFrontend : public EventPoster
 {
 public:
-    BaseControlFrontend(RtEventFifo* queue, engine::BaseEngine* engine) :_engine(engine),
-                                                                       _queue(queue) {}
+    BaseControlFrontend(engine::BaseEngine* engine, EventPosterId id) : _engine(engine),
+                                                                        _poster_id(id)
+    {
+        _event_dispatcher = _engine->event_dispatcher();
+        _event_dispatcher->register_poster(this);
+    }
 
-    virtual ~BaseControlFrontend() {};
+    virtual ~BaseControlFrontend()
+    {
+        _event_dispatcher->deregister_poster(this);
+    };
 
     virtual void run() = 0;
 
@@ -33,7 +39,11 @@ public:
 
     void send_string_parameter_change_event(ObjectId processor, ObjectId parameter, const std::string& value);
 
-    void send_keyboard_event(ObjectId processor, RtEventType type, int note, float value);
+    void send_keyboard_event(ObjectId processor, KeyboardEvent::Subtype type, int note, float value);
+
+    void send_note_on_event(ObjectId processor, int note, float value);
+
+    void send_note_off_event(ObjectId processor, int note, float value);
 
     void add_chain(const std::string& name, int channels);
 
@@ -43,11 +53,15 @@ public:
                        const std::string& file, engine::PluginType type);
 
     void delete_processor(const std::string& chain, const std::string& name);
+
+    int poster_id() override {return _poster_id;}
+
 protected:
     engine::BaseEngine* _engine;
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
 
 private:
-    RtEventFifo* _queue;
+    EventPosterId _poster_id;
 };
 
 }; // namespace control_frontend

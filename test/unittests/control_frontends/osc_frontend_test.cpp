@@ -29,6 +29,7 @@ protected:
         auto port_str = port_stream.str();
         _address = lo_address_new("localhost", port_str.c_str());
         _module_under_test.run();
+        _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
     }
 
     void TearDown()
@@ -36,10 +37,10 @@ protected:
         lo_address_free(_address);
     }
     EngineMockup _test_engine{44100};
-    RtEventFifo _event_queue;
     int _server_port{24024};
     lo_address _address;
-    OSCFrontend _module_under_test{&_event_queue, &_test_engine};
+    OSCFrontend _module_under_test{&_test_engine};
+    EventDispatcherMockup* _test_dispatcher;
 };
 
 
@@ -50,41 +51,58 @@ TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
 
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_event_queue.empty());
-    RtEvent event;
-    ASSERT_TRUE(_event_queue.pop(event));
-    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
-    auto typed_event = event.parameter_change_event();
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::PARAMETER_CHANGE, event->type());
+    auto typed_event = static_cast<ParameterChangeEvent*>(event.get());
     EXPECT_EQ(0u, typed_event->processor_id());
-    EXPECT_EQ(0u, typed_event->param_id());
-    EXPECT_FLOAT_EQ(5.0f, typed_event->value());
+    EXPECT_EQ(0u, typed_event->parameter_id());
+    EXPECT_EQ(5.0f, typed_event->float_value());
+    EXPECT_EQ(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, typed_event->subtype());
 
     /* Test with a not registered path */
     lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_event_queue.empty());
+    ASSERT_FALSE(_test_dispatcher->got_event());
 }
 
-TEST_F(TestOSCFrontend, TestSendKeyboardEvent)
+TEST_F(TestOSCFrontend, TestSendNoteOnEvent)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_on", 46, 0.8f);
 
     // Need to wait a bit to allow messages to come through
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_event_queue.empty());
-    RtEvent event;
-    ASSERT_TRUE(_event_queue.pop(event));
-    EXPECT_EQ(RtEventType::NOTE_ON, event.type());
-    auto typed_event = event.keyboard_event();
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(46, typed_event->note());
-    EXPECT_FLOAT_EQ(0.8f, typed_event->velocity());
+    EXPECT_EQ(0.8f, typed_event->velocity());
+    EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
+}
+
+TEST_F(TestOSCFrontend, TestSendNoteOffEvent)
+{
+    ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
+    lo_send(_address, "/keyboard_event/sampler", "sif", "note_off", 52, 0.7f);
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
+    EXPECT_EQ(0u, typed_event->processor_id());
+    EXPECT_EQ(52, typed_event->note());
+    EXPECT_EQ(0.7f, typed_event->velocity());
+    EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
 
     // Test with a path not registered
     lo_send(_address, "/keyboard_event/drums", "sif", "note_off", 46, 0.8f);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_event_queue.empty());
+    ASSERT_FALSE(_test_dispatcher->got_event());
 }
 
 TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)

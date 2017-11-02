@@ -22,7 +22,6 @@ namespace engine {class BaseEngine;}
 namespace dispatcher {
 
 constexpr int AUDIO_ENGINE_ID = 0;
-constexpr char AUDIO_ENGINE_NAME[] = "Audio Engine";
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
 
 enum class EventDispatcherStatus

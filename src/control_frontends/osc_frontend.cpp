@@ -19,7 +19,7 @@ namespace {
 
 static void osc_error(int num, const char* msg, const char* path)
 {
-    if (msg && path ) // Sometimes liblo passes a nullpointer for msg
+    if (msg && path) // Sometimes liblo passes a nullpointer for msg
     {
         MIND_LOG_ERROR("liblo server error {} in path {}: {}", num, path, msg);
     }
@@ -65,22 +65,19 @@ static int osc_send_keyboard_event(const char* /*path*/,
     int note = argv[1]->i;
     float value = argv[2]->f;
 
-    RtEventType type;
     if (event == "note_on")
     {
-        type = RtEventType::NOTE_ON;
+        connection->instance->send_note_on_event(connection->processor, note, value);
     }
     else if (event == "note_off")
     {
-        type = RtEventType::NOTE_OFF;
+        connection->instance->send_note_off_event(connection->processor, note, value);
     }
     else
     {
         MIND_LOG_WARNING("Unrecognized event: {}.", event);
         return 0;
     }
-
-    connection->instance->send_keyboard_event(connection->processor, type, note, value);
     MIND_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
     return 0;
 }
@@ -155,9 +152,9 @@ static int osc_delete_processor(const char* /*path*/,
 
 }; // anonymous namespace
 
-OSCFrontend::OSCFrontend(RtEventFifo* queue, engine::BaseEngine* engine) : BaseControlFrontend(queue, engine),
-                                                                         _osc_server(nullptr),
-                                                                         _server_port(DEFAULT_SERVER_PORT)
+OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                                                       _osc_server(nullptr),
+                                                       _server_port(DEFAULT_SERVER_PORT)
 {
     std::stringstream port_stream;
     port_stream << _server_port;
@@ -173,6 +170,7 @@ OSCFrontend::~OSCFrontend()
         _stop_server();
     }
     lo_server_thread_free(_osc_server);
+    _event_dispatcher->deregister_poster(this);
 }
 
 bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
@@ -304,6 +302,11 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_chain", "s", osc_delete_chain, this);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
+}
+
+int OSCFrontend::process(Event* event)
+{
+    return EventPoster::process(event);
 }
 
 std::string spaces_to_underscore(const std::string &s)

@@ -80,6 +80,7 @@ int EventDispatcher::process(Event* event)
             return _process_kb_event(static_cast<KeyboardEvent*>(event));
 
         case EventType::PARAMETER_CHANGE:
+        case EventType::STRING_PROPERTY_CHANGE:
             return _process_parameter_change_event(static_cast<ParameterChangeEvent*>(event));
 
         //case EventType::ASYNCHRONOUS_WORK:

@@ -55,7 +55,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     }
 
     // Control
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(&_event_queue, _engine);
+    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
     _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
     auto midi_ok = _midi_frontend->init();
     if (!midi_ok)

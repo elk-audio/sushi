@@ -16,24 +16,39 @@ void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
                                                       float value)
 {
-    _queue->push(RtEvent::make_parameter_change_event(processor, 0, parameter, value));
+    int64_t timestamp = 0;
+    auto e = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                      processor, parameter, value, timestamp);
+    _event_dispatcher->post_event(e);
 }
 
 void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
                                                              ObjectId parameter,
                                                              const std::string& value)
 {
-    auto str = new std::string(value);
-    _queue->push(RtEvent::make_string_parameter_change_event(processor, 0, parameter, str));
-}
+    int64_t timestamp = 0;
+    auto e = new StringPropertyChangeEvent(processor, parameter, value, timestamp);
+    _event_dispatcher->post_event(e);}
 
 
 void BaseControlFrontend::send_keyboard_event(ObjectId processor,
-                                              RtEventType type,
+                                              KeyboardEvent::Subtype type,
                                               int note,
-                                              float value)
+                                              float velocity)
 {
-    _queue->push(RtEvent::make_keyboard_event(type, processor, 0, note, value));
+    int64_t timestamp = 0;
+    auto e = new KeyboardEvent(type, processor, note, velocity, timestamp);
+    _event_dispatcher->post_event(e);
+}
+
+void BaseControlFrontend::send_note_on_event(ObjectId processor, int note, float velocity)
+{
+    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_ON, note, velocity);
+}
+
+void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, float velocity)
+{
+    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, note, velocity);
 }
 
 void BaseControlFrontend::add_chain(const std::string &name, int channels)

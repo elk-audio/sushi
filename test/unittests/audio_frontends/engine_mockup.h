@@ -47,6 +47,20 @@ public:
             return true;
         }
     }
+
+    std::unique_ptr<Event> retrieve_event()
+    {
+        if (_queue.empty())
+        {
+            return nullptr;
+        } else
+        {
+            Event* e = _queue.back();
+            _queue.pop_back();
+            return std::unique_ptr<Event>(e);
+        }
+    }
+
 private:
     std::deque<Event*> _queue;
 };
