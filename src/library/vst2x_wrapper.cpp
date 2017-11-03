@@ -216,10 +216,6 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
-        if (_sum_stereo_to_mono_output)
-        {
-            sum_stereo_to_mono(out_buffer, _dummy_output);
-        }
     }
 }
 
@@ -267,7 +263,6 @@ void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkS
 void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
 {
     _double_mono_input = false;
-    _sum_stereo_to_mono_output = false;
     if (speaker_arr_status)
     {
         return;
@@ -275,10 +270,6 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
     if (_current_input_channels == 1 && _max_input_channels == 2)
     {
         _double_mono_input = true;
-    }
-    if (_current_output_channels == 1 && _max_output_channels == 2)
-    {
-        _sum_stereo_to_mono_output = true;
     }
 }
 

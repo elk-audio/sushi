@@ -139,7 +139,6 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
 
     _module_under_test->set_output_channels(1);
     _module_under_test->set_input_channels(2);
-    EXPECT_TRUE(_module_under_test->_sum_stereo_to_mono_output);
     test_utils::fill_sample_buffer(stereo_buffer, 2.0f);
     _module_under_test->process_audio(stereo_buffer, mono_buffer);
     test_utils::assert_buffer_value(2.0f, mono_buffer);
@@ -166,7 +165,7 @@ TEST_F(TestVst2xWrapper, TestBypassProcessing)
     SetUp("libagain.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
-    auto event = Event::make_parameter_change_event(0, 0, 0, 5.0f);
+    auto event = Event::make_parameter_change_event(0, 0, 0, 0.5f);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
     _module_under_test->set_bypassed(true);

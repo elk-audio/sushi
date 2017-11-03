@@ -93,7 +93,7 @@ TEST_F(TestGainPlugin, TestInstantiation)
 
 TEST_F(TestGainPlugin, TestChannelSetup)
 {
-    module_under_test->set_input_channels(2);
+    _module_under_test->set_input_channels(2);
     ASSERT_EQ(2, _module_under_test->output_channels());
     ASSERT_EQ(2, _module_under_test->input_channels());
 

@@ -38,7 +38,6 @@ public:
             _process_outputs{},
             _can_do_soft_bypass{false},
             _double_mono_input{false},
-            _sum_stereo_to_mono_output{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
@@ -113,7 +112,6 @@ private:
     bool _can_do_soft_bypass;
     bool _double_mono_input;
     // Could also be turned into an externally configurable parameter
-    bool _sum_stereo_to_mono_output;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
@@ -121,14 +119,6 @@ private:
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
-
-void inline sum_stereo_to_mono(ChunkSampleBuffer& left, ChunkSampleBuffer& right)
-{
-    for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
-    {
-        left.channel(0)[i] = 0.5f * (left.channel(0)[i] + right.channel(0)[i]);
-    }
-};
 
 } // end namespace vst2
 } // end namespace sushi
