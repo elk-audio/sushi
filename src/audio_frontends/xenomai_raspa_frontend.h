@@ -13,12 +13,11 @@
 #include <vector>
 #include <thread>
 
-#include <alsa/asoundlib.h>
-
 #include "base_audio_frontend.h"
 #include "library/plugin_events.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -66,19 +65,9 @@ private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
 
-
-
     EventFifo _event_queue;
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
-
-    // ALSA MIDI stuff
-    void                        _midi_handler();
-    std::thread                 _midi_thread;
-    std::atomic<bool>           _midi_running;
-    snd_seq_t*                  _seq_handle;
-    int                         _input_midi_port;
-    snd_midi_event_t*           _seq_parser;
-    std::unique_ptr<uint8_t>    _midi_buffer;
+    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
 };
 
 }; // end namespace audio_frontend
