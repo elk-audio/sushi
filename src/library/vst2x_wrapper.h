@@ -111,7 +111,6 @@ private:
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _double_mono_input;
-    // Could also be turned into an externally configurable parameter
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
