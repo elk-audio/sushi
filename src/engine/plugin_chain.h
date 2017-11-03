@@ -69,24 +69,16 @@ public:
     /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;
 
-    bool set_input_channels(int channels) override
+    void set_input_channels(int channels) override
     {
-        if (Processor::set_input_channels(channels))
-        {
-            update_channel_config();
-            return true;
-        }
-        return false;
+        Processor::set_input_channels(channels);
+        update_channel_config();
     }
 
-    bool set_output_channels(int channels) override
+    void set_output_channels(int channels) override
     {
-        if (Processor::set_output_channels(channels))
-        {
-            update_channel_config();
-            return true;
-        }
-        return false;
+        Processor::set_output_channels(channels);
+        update_channel_config();
     }
 
 

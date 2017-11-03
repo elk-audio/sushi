@@ -100,8 +100,7 @@ void PluginChain::update_channel_config()
         input_channels = std::min(input_channels, _chain[i]->max_input_channels());
         if (input_channels != _chain[i]->input_channels())
         {
-            bool res = _chain[i]->set_input_channels(input_channels);
-            assert(res);
+            _chain[i]->set_input_channels(input_channels);
         }
         if (i < _chain.size() - 1)
         {
@@ -115,8 +114,7 @@ void PluginChain::update_channel_config()
         }
         if (output_channels != _chain[i]->output_channels())
         {
-            bool res = _chain[i]->set_output_channels(output_channels);
-            assert(res);
+            _chain[i]->set_output_channels(output_channels);
         }
         input_channels = output_channels;
     }
@@ -127,8 +125,7 @@ void PluginChain::update_channel_config()
         int chain_outputs = std::min(_current_output_channels, last->output_channels());
         if (chain_outputs != last->output_channels())
         {
-            bool res = last->set_output_channels(chain_outputs);
-            assert(res);
+            last->set_output_channels(chain_outputs);
         }
     }
 }

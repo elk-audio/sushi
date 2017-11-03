@@ -38,7 +38,6 @@ public:
             _process_outputs{},
             _can_do_soft_bypass{false},
             _double_mono_input{false},
-            _sum_stereo_to_mono_output{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
@@ -61,9 +60,9 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
-    bool set_input_channels(int channels) override;
+    void set_input_channels(int channels) override;
 
-    bool set_output_channels(int channels) override;
+    void set_output_channels(int channels) override;
 
     void set_enabled(bool enabled) override;
 
@@ -112,8 +111,6 @@ private:
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _double_mono_input;
-    // Could also be turned into an externally configurable parameter
-    bool _sum_stereo_to_mono_output;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
@@ -121,7 +118,6 @@ private:
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
-void sum_stereo_to_mono(ChunkSampleBuffer& left, ChunkSampleBuffer& right);
 
 } // end namespace vst2
 } // end namespace sushi

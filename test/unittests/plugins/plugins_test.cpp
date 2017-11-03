@@ -93,11 +93,11 @@ TEST_F(TestGainPlugin, TestInstantiation)
 
 TEST_F(TestGainPlugin, TestChannelSetup)
 {
-    ASSERT_TRUE(_module_under_test->set_input_channels(2));
+    _module_under_test->set_input_channels(2);
     ASSERT_EQ(2, _module_under_test->output_channels());
     ASSERT_EQ(2, _module_under_test->input_channels());
 
-    ASSERT_TRUE(_module_under_test->set_input_channels(1));
+    _module_under_test->set_input_channels(1);
     ASSERT_EQ(1, _module_under_test->output_channels());
     ASSERT_EQ(1, _module_under_test->input_channels());
 }
@@ -145,11 +145,11 @@ TEST_F(TestEqualizerPlugin, TestInstantiation)
 
 TEST_F(TestEqualizerPlugin, TestChannelSetup)
 {
-    ASSERT_TRUE(_module_under_test->set_input_channels(2));
+    _module_under_test->set_input_channels(2);
     ASSERT_EQ(2, _module_under_test->output_channels());
     ASSERT_EQ(2, _module_under_test->input_channels());
 
-    ASSERT_TRUE(_module_under_test->set_input_channels(1));
+    _module_under_test->set_input_channels(1);
     ASSERT_EQ(1, _module_under_test->output_channels());
     ASSERT_EQ(1, _module_under_test->input_channels());
 }
