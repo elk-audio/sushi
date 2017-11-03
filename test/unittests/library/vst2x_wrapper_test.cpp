@@ -84,8 +84,8 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 
-    EXPECT_TRUE(_module_under_test->set_input_channels(1));
-    EXPECT_TRUE(_module_under_test->set_output_channels(1));
+    _module_under_test->set_input_channels(1);
+    _module_under_test->set_output_channels(1);
 
     EXPECT_EQ(1, _module_under_test->input_channels());
     EXPECT_EQ(1, _module_under_test->output_channels());
@@ -131,14 +131,14 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
     ChunkSampleBuffer mono_buffer(1);
     ChunkSampleBuffer stereo_buffer(2);
 
-    ASSERT_TRUE(_module_under_test->set_input_channels(1));
+    _module_under_test->set_input_channels(1);
     EXPECT_TRUE(_module_under_test->_double_mono_input);
     test_utils::fill_sample_buffer(mono_buffer, 1.0f);
     _module_under_test->process_audio(mono_buffer, stereo_buffer);
     test_utils::assert_buffer_value(1.0f, stereo_buffer);
 
-    ASSERT_TRUE(_module_under_test->set_output_channels(1));
-    ASSERT_TRUE(_module_under_test->set_input_channels(2));
+    _module_under_test->set_output_channels(1);
+    _module_under_test->set_input_channels(2);
     EXPECT_TRUE(_module_under_test->_sum_stereo_to_mono_output);
     test_utils::fill_sample_buffer(stereo_buffer, 2.0f);
     _module_under_test->process_audio(stereo_buffer, mono_buffer);

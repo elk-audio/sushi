@@ -26,11 +26,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    bool set_input_channels(int channels) override;
-
-    // virtual bool set_output_channels(int channels) override;
-
-    // void process_event(Event /*event*/) {}
+    void set_input_channels(int channels) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

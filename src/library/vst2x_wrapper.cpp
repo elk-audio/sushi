@@ -95,26 +95,18 @@ void Vst2xWrapper::configure(float sample_rate)
     return;
 }
 
-bool Vst2xWrapper::set_input_channels(int channels)
+void Vst2xWrapper::set_input_channels(int channels)
 {
-    if(Processor::set_input_channels(channels))
-    {
-        bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-        _update_mono_mode(valid_arr);
-        return true;
-    }
-    return false;
+    Processor::set_input_channels(channels);
+    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    _update_mono_mode(valid_arr);
 }
 
-bool Vst2xWrapper::set_output_channels(int channels)
+void Vst2xWrapper::set_output_channels(int channels)
 {
-    if(Processor::set_output_channels(channels))
-    {
-        bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-        _update_mono_mode(valid_arr);
-        return true;
-    }
-    return false;
+    Processor::set_output_channels(channels);
+    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    _update_mono_mode(valid_arr);
 }
 
 
@@ -224,11 +216,10 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
-    }
-    if (_sum_stereo_to_mono_output)
-    {
-        out_buffer.apply_gain(0.5f);
-        out_buffer.add_with_gain(_dummy_output, 0.5f);
+        if (_sum_stereo_to_mono_output)
+        {
+            sum_stereo_to_mono(out_buffer, _dummy_output);
+        }
     }
 }
 
@@ -315,12 +306,6 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
             return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
     return kNumSpeakerArr;
-}
-
-void sum_stereo_to_mono(ChunkSampleBuffer &left, ChunkSampleBuffer &right)
-{
-    left.apply_gain(0.5f);
-    left.add_with_gain(right, 0.5f);
 }
 
 } // namespace vst2

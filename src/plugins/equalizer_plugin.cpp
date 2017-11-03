@@ -46,15 +46,13 @@ void EqualizerPlugin::configure(float sample_rate)
     return;
 }
 
-bool EqualizerPlugin::set_input_channels(int channels)
+void EqualizerPlugin::set_input_channels(int channels)
 {
-    if (Processor::set_input_channels(channels))
+    Processor::set_input_channels(channels);
     {
         _current_output_channels = channels;
         _max_output_channels = channels;
-        return true;
     }
-    return false;
 }
 
 void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)

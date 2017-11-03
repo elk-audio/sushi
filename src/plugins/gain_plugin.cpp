@@ -19,15 +19,11 @@ GainPlugin::GainPlugin()
 GainPlugin::~GainPlugin()
 {}
 
-bool GainPlugin::set_input_channels(int channels)
+void GainPlugin::set_input_channels(int channels)
 {
-    if (Processor::set_input_channels(channels))
-    {
-        _current_output_channels = channels;
-        _max_output_channels = channels;
-        return true;
-    }
-    return false;
+    Processor::set_input_channels(channels);
+    _current_output_channels = channels;
+    _max_output_channels = channels;
 }
 
 void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)

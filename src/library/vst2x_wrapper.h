@@ -61,9 +61,9 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
-    bool set_input_channels(int channels) override;
+    void set_input_channels(int channels) override;
 
-    bool set_output_channels(int channels) override;
+    void set_output_channels(int channels) override;
 
     void set_enabled(bool enabled) override;
 
@@ -121,7 +121,14 @@ private:
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
-void sum_stereo_to_mono(ChunkSampleBuffer& left, ChunkSampleBuffer& right);
+
+void inline sum_stereo_to_mono(ChunkSampleBuffer& left, ChunkSampleBuffer& right)
+{
+    for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        left.channel(0)[i] = 0.5f * (left.channel(0)[i] + right.channel(0)[i]);
+    }
+};
 
 } // end namespace vst2
 } // end namespace sushi
