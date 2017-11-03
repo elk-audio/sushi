@@ -149,21 +149,52 @@ public:
     int max_output_channels() {return _max_output_channels;}
     int input_channels() {return  _current_input_channels;}
     int output_channels() {return _current_output_channels;}
+
+    /**
+     * @brief Set the number of input audio channels of the Processor.
+     *        Must not be set to more channels than what is reported by
+     *        max_input_channels()
+     * @param channels The new number of input channels
+     */
     virtual void set_input_channels(int channels)
     {
-        assert( channels <= _max_input_channels);
-        _current_input_channels  = channels;
+        assert(channels <= _max_input_channels);
+        _current_input_channels = channels;
     }
+
+    /**
+     * @brief Set the number of output audio channels of the Processor.
+     *        Must not be set to more channels than what is reported by
+     *        max_output_channels()
+     * @param channels The new number of output channels
+     */
     virtual void set_output_channels(int channels)
     {
         assert(channels <= _max_output_channels);
-        _current_output_channels  = channels;
+        _current_output_channels = channels;
     }
 
     bool enabled() {return _enabled;}
 
     /* Override this for nested processors and set all sub processors to disabled */
+    /**
+     * @brief Set the processor to enabled or disabled. If disabled process_audio()
+     *        will not be called and the processor should clear any audio tails and
+     *        filter registers or anything else that could have an influence on future
+     *        calls to set_enabled(true).
+     * @param enabled New state of enabled.
+     */
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
+
+    bool bypassed() {return _bypassed;}
+
+    /**
+     * @brief Set the bypass state of the processor. If process_audio() is called
+     *        in bypass mode, the processor should pass the audio unchanged while
+     *        preserving any channel configuration set.
+     * @param bypassed New bypass state
+     */
+    virtual void set_bypassed(bool bypassed) {_bypassed = bypassed;}
 
 protected:
 
@@ -206,6 +237,32 @@ protected:
             _output_pipe->send_event(event);
     }
 
+    /**
+     * @brief Utility function do to general bypass/passthrough audio processing.
+     *        Useful for processors that don't implement this on their own.
+     * @param in_buffer Input SampleBuffer
+     * @param out_buffer Output SampleBuffer
+     */
+    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+    {
+        if (_current_input_channels == 0)
+        {
+            out_buffer.clear();
+        }
+        else if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
+        {
+            out_buffer = in_buffer;
+        }
+        else
+        {
+            for (int c = 0; c < _current_output_channels; ++c)
+            {
+                out_buffer.add(c, c % _current_input_channels, in_buffer);
+            }
+        }
+    }
+
+
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
     int _max_input_channels{0};
@@ -215,9 +272,9 @@ protected:
     int _current_output_channels{0};
 
     bool _enabled{true};
+    bool _bypassed{false};
 
 private:
-    /* This could easily be turned into a list if it is neccesary to broadcast events */
     EventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
     ObjectId _id{ProcessorIdGenerator::new_id()};
@@ -229,13 +286,6 @@ private:
     std::vector<ParameterDescriptor*> _parameters_by_index;
 };
 
-/**
- * @brief Interface class for distributing events to processors.
- */
-class EventCaller
-{
-
-};
 
 } // end namespace sushi
 #endif //SUSHI_PROCESSOR_H

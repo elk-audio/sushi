@@ -16,11 +16,8 @@
 namespace sushi {
 namespace vst2 {
 
-// TODO:
-//      For now, put a fixed number to avoid dynamic relocation of _process_[in|out]puts,
-//      and because we have to rework that part anyway (it's not flexible in InternalPlugin
-//      as well
-constexpr int VST_WRAPPER_MAX_N_CHANNELS = 2;
+/* Should match the maximum reasonable number of channels of a vst */
+constexpr int VST_WRAPPER_MAX_N_CHANNELS = 8;
 constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
@@ -39,6 +36,8 @@ public:
             _sample_rate{0},
             _process_inputs{},
             _process_outputs{},
+            _can_do_soft_bypass{false},
+            _double_mono_input{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
@@ -61,7 +60,13 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
+    void set_input_channels(int channels) override;
+
+    void set_output_channels(int channels) override;
+
     void set_enabled(bool enabled) override;
+
+    void set_bypassed(bool bypassed) override;
 
 private:
     /**
@@ -73,9 +78,9 @@ private:
     /**
      * @brief Commodity function to access VsT internals
      */
-    void _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
+    int _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
     {
-        _plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt);
+        return static_cast<int>(_plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt));
     }
 
     /**
@@ -85,16 +90,34 @@ private:
      */
     bool _register_parameters();
 
+    bool _update_speaker_arrangements(int inputs, int outputs);
+
+    /**
+     * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
+     *        we can provide the plugin with a dual mono input/output instead.
+     *        Calling this sets up possible dual mono mode.
+     * @param speaker_arr_status True if the plugin supports the given speaker arrangement.
+     */
+    void _update_mono_mode(bool speaker_arr_status);
+
+    void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
+    ChunkSampleBuffer _dummy_input{1};
+    ChunkSampleBuffer _dummy_output{1};
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
+    bool _can_do_soft_bypass;
+    bool _double_mono_input;
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
     AEffect *_plugin_handle;
 };
+
+VstSpeakerArrangementType arrangement_from_channels(int channels);
 
 } // end namespace vst2
 } // end namespace sushi

@@ -50,8 +50,7 @@ TEST_F(TestEngine, TestInstantiation)
 TEST_F(TestEngine, TestProcess)
 {
     /* Add a plugin chain since the engine by default doesn't have any */
-    PluginChain chain;
-    _module_under_test->_audio_graph.push_back(&chain);
+    _module_under_test->create_plugin_chain("test_chain", 2);
 
     /* Run tests */
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(4);

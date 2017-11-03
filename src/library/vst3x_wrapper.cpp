@@ -122,10 +122,29 @@ void Vst3xWrapper::process_event(Event event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    _process_data.assign_buffers(in_buffer, out_buffer);
-    _instance.processor()->process(_process_data);
-    _forward_events(_process_data);
+    if(_bypassed && !_can_do_soft_bypass)
+    {
+        bypass_process(in_buffer, out_buffer);
+    }
+    else
+    {
+        _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        _instance.processor()->process(_process_data);
+        _forward_events(_process_data);
+    }
     _process_data.clear();
+}
+
+void Vst3xWrapper::set_input_channels(int channels)
+{
+    Processor::set_input_channels(channels);
+    _setup_channels();
+}
+
+void Vst3xWrapper::set_output_channels(int channels)
+{
+    Processor::set_output_channels(channels);
+    _setup_channels();
 }
 
 
@@ -135,6 +154,16 @@ void Vst3xWrapper::set_enabled(bool enabled)
     if (res == Steinberg::kResultOk)
     {
         _enabled = enabled;
+    }
+}
+
+void Vst3xWrapper::set_bypassed(bool bypassed)
+{
+    Processor::set_bypassed(bypassed);
+    if(_can_do_soft_bypass)
+    {
+        Event e = Event::make_parameter_change_event(0, 0, _bypass_parameter_id, bypassed? 1.0f : 0.0f);
+        this->process_event(e);
     }
 }
 
@@ -161,7 +190,12 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             Steinberg::UString128 str(info.title, VST_NAME_BUFFER_SIZE);
             str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
-            if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
+            if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
+            {
+                _can_do_soft_bypass = true;
+                _bypass_parameter_id = info.id;
+            }
+            else if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
             {
                 MIND_LOG_INFO("Registered parameter {}.", name_c_str);
             } else
@@ -193,6 +227,7 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_input_channels = info.channelCount;
+            _current_input_channels = _max_input_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -200,6 +235,7 @@ bool Vst3xWrapper::_setup_audio_busses()
                 MIND_LOG_ERROR("Failed to activate plugin input bus {}", i);
                 return false;
             }
+            break;
         }
     }
     for (int i = 0; i < output_audio_busses; ++i)
@@ -209,6 +245,7 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_output_channels = info.channelCount;
+            _current_output_channels = _max_output_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kOutput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -216,8 +253,10 @@ bool Vst3xWrapper::_setup_audio_busses()
                 MIND_LOG_ERROR("Failed to activate plugin output bus {}", i);
                 return false;
             }
+            break;
         }
     }
+    MIND_LOG_INFO("Vst3 wrapper ({}) has {} inputs and {} outputs", this->name(), _max_input_channels, _max_output_channels);
     return true;
 }
 
@@ -252,10 +291,9 @@ bool Vst3xWrapper::_setup_event_busses()
 
 bool Vst3xWrapper::_setup_channels()
 {
-    /* Try set up a stereo output pair and, if there is an input bus, a stereo input pair */
-    Steinberg::Vst::SpeakerArrangement input_arr = (_max_input_channels == 0)? Steinberg::Vst::SpeakerArr::kEmpty :
-                                                                              Steinberg::Vst::SpeakerArr::kStereo;
-    Steinberg::Vst::SpeakerArrangement output_arr = Steinberg::Vst::SpeakerArr::kStereo;
+    MIND_LOG_INFO("Vst3 wrapper ({}) setting up {} inputs and {} outputs", this->name(), _current_input_channels, _current_output_channels);
+    Steinberg::Vst::SpeakerArrangement input_arr = speaker_arr_from_channels(_current_input_channels);
+    Steinberg::Vst::SpeakerArrangement output_arr = speaker_arr_from_channels(_current_output_channels);
 
     /* numIns and numOuts refer to the number of busses, not channels, the docs are very vague on this point */
     auto res = _instance.processor()->setBusArrangements(&input_arr, (_max_input_channels == 0)? 0:1, &output_arr, 1);
@@ -319,6 +357,30 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
 
 }
 
+Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
+{
+    switch (channels)
+    {
+        case 0:
+            return Steinberg::Vst::SpeakerArr::kEmpty;
+        case 1:
+            return Steinberg::Vst::SpeakerArr::kMono;
+        case 2:
+            return Steinberg::Vst::SpeakerArr::kStereo;
+        case 3:
+            return Steinberg::Vst::SpeakerArr::k30Music;
+        case 4:
+            return Steinberg::Vst::SpeakerArr::k40Music;
+        case 5:
+            return Steinberg::Vst::SpeakerArr::k50;
+        case 6:
+            return Steinberg::Vst::SpeakerArr::k60Music;
+        case 7:
+            return Steinberg::Vst::SpeakerArr::k70Music;
+        default:
+            return Steinberg::Vst::SpeakerArr::k80Music;
+    }
+}
 } // end namespace vst3
 } // end namespace sushi
 

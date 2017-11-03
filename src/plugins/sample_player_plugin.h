@@ -33,6 +33,8 @@ public:
 
     void configure(float sample_rate) override;
 
+    void set_bypassed(bool bypassed) override;
+
     void process_event(Event event) override ;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;

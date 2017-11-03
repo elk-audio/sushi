@@ -4,7 +4,8 @@
 namespace sushi {
 namespace vst3{
 
-void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output)
+void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output,
+                                      int in_channels, int out_channels)
 {
     assert(input.channel_count() <= VST_WRAPPER_MAX_N_CHANNELS &&
            output.channel_count() <= VST_WRAPPER_MAX_N_CHANNELS);
@@ -16,8 +17,8 @@ void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampl
     {
         _process_outputs[i] = output.channel(i);
     }
-    inputs->numChannels = input.channel_count();
-    outputs->numChannels = output.channel_count();
+    inputs->numChannels = in_channels;
+    outputs->numChannels = out_channels;
 }
 
 Steinberg::Vst::Event convert_note_on_event(const KeyboardEvent* event)

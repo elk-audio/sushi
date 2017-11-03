@@ -83,6 +83,12 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
     SetUp("libagain.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
+
+    _module_under_test->set_input_channels(1);
+    _module_under_test->set_output_channels(1);
+
+    EXPECT_EQ(1, _module_under_test->input_channels());
+    EXPECT_EQ(1, _module_under_test->output_channels());
 }
 
 TEST_F(TestVst2xWrapper, TestParameterInitialization)
@@ -91,6 +97,12 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
+}
+
+TEST_F(TestVst2xWrapper, TestPluginCanDos)
+{
+    SetUp("libagain.so");
+    EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
 }
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
@@ -113,6 +125,25 @@ TEST_F(TestVst2xWrapper, TestProcess)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
+TEST_F(TestVst2xWrapper, TestMonoProcess)
+{
+    SetUp("libagain.so");
+    ChunkSampleBuffer mono_buffer(1);
+    ChunkSampleBuffer stereo_buffer(2);
+
+    _module_under_test->set_input_channels(1);
+    EXPECT_TRUE(_module_under_test->_double_mono_input);
+    test_utils::fill_sample_buffer(mono_buffer, 1.0f);
+    _module_under_test->process_audio(mono_buffer, stereo_buffer);
+    test_utils::assert_buffer_value(1.0f, stereo_buffer);
+
+    _module_under_test->set_output_channels(1);
+    _module_under_test->set_input_channels(2);
+    test_utils::fill_sample_buffer(stereo_buffer, 2.0f);
+    _module_under_test->process_audio(stereo_buffer, mono_buffer);
+    test_utils::assert_buffer_value(2.0f, mono_buffer);
+}
+
 TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 {
     SetUp("libagain.so");
@@ -127,6 +158,20 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.123f, out_buffer);
+}
+
+TEST_F(TestVst2xWrapper, TestBypassProcessing)
+{
+    SetUp("libagain.so");
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    auto event = Event::make_parameter_change_event(0, 0, 0, 0.5f);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    _module_under_test->set_bypassed(true);
+    _module_under_test->process_event(event);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
 TEST_F(TestVst2xWrapper, TestMidiEvents)

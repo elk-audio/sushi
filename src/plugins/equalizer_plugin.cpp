@@ -7,6 +7,10 @@ namespace equalizer_plugin {
 
 EqualizerPlugin::EqualizerPlugin()
 {
+    _max_input_channels = MAX_CHANNELS_SUPPORTED;
+    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _current_input_channels = 1;
+    _current_output_channels = 1;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _frequency = register_float_parameter("frequency", "Frequency", 1000.0f, 20.0f, 20000.0f,
@@ -20,12 +24,18 @@ EqualizerPlugin::EqualizerPlugin()
     assert(_q);
 }
 
+EqualizerPlugin::~EqualizerPlugin()
+{}
+
 ProcessorReturnCode EqualizerPlugin::init(float sample_rate)
 {
     _sample_rate = sample_rate;
 
-    _filter.set_smoothing(AUDIO_CHUNK_SIZE);
-    _filter.reset();
+    for (auto& f : _filters)
+    {
+        f.set_smoothing(AUDIO_CHUNK_SIZE);
+        f.reset();
+    }
 
     return ProcessorReturnCode::OK;
 }
@@ -36,27 +46,38 @@ void EqualizerPlugin::configure(float sample_rate)
     return;
 }
 
-EqualizerPlugin::~EqualizerPlugin()
-{}
+void EqualizerPlugin::set_input_channels(int channels)
+{
+    Processor::set_input_channels(channels);
+    {
+        _current_output_channels = channels;
+        _max_output_channels = channels;
+    }
+}
 
 void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    /* For now, this plugin only supports mono in/out. */
-    assert(in_buffer.channel_count() == 1);
-    assert(out_buffer.channel_count() == 1);
-
-    /* Read the current parameter values */
+    /* Update parameter values */
     float frequency = _frequency->value();
     float gain = _gain->value();
     float q = _q->value();
 
-    /* Recalculates the coefficients once per audio chunk, this makes for
-     * predictable cpu load for every chunk */
-
-    dsp::biquad::Coefficients coefficients;
-    dsp::biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
-    _filter.set_coefficients(coefficients);
-    _filter.process(in_buffer.channel(0), out_buffer.channel(0), AUDIO_CHUNK_SIZE);
+    if (!_bypassed)
+    {
+        /* Recalculate the coefficients once per audio chunk, this makes for
+         * predictable cpu load for every chunk */
+        dsp::biquad::Coefficients coefficients;
+        dsp::biquad::calc_biquad_peak(coefficients, _sample_rate, frequency, q, gain);
+        for (int i = 0; i < _current_input_channels; ++i)
+        {
+            _filters[i].set_coefficients(coefficients);
+            _filters[i].process(in_buffer.channel(i), out_buffer.channel(i), AUDIO_CHUNK_SIZE);
+        }
+    }
+    else
+    {
+        out_buffer = in_buffer;
+    }
 }
 
 }// namespace equalizer_plugin

@@ -278,9 +278,7 @@ EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_nam
         MIND_LOG_ERROR("Invalid number of channels");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    PluginChain* chain = new PluginChain;
-    chain->set_input_channels(chain_channel_count);
-    chain->set_output_channels(chain_channel_count);
+    PluginChain* chain = new PluginChain(chain_channel_count);
     EngineReturnStatus status = _register_processor(chain, chain_name);
     if (status != EngineReturnStatus::OK)
     {
@@ -550,6 +548,16 @@ bool AudioEngine::_handle_internal_events(Event &event)
             else
                 typed_event->set_handled(false);
             break;
+        }
+        case EventType::SET_BYPASS:
+        {
+            auto typed_event = event.processor_command_event();
+            auto processor = static_cast<PluginChain*>(_realtime_processors[typed_event->processor_id()]);
+            if (processor)
+            {
+                processor->set_bypassed(typed_event->value());
+            }
+            return true;
         }
         default:
             return false;

@@ -7,6 +7,8 @@ namespace gain_plugin {
 
 GainPlugin::GainPlugin()
 {
+    _max_input_channels = MAX_CHANNELS;
+    _max_output_channels = MAX_CHANNELS;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _gain_parameter = register_float_parameter("gain", "Gain", 0.0f, -120.0f, 120.0f,
@@ -17,15 +19,24 @@ GainPlugin::GainPlugin()
 GainPlugin::~GainPlugin()
 {}
 
+void GainPlugin::set_input_channels(int channels)
+{
+    Processor::set_input_channels(channels);
+    _current_output_channels = channels;
+    _max_output_channels = channels;
+}
+
 void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    /* For now, assume equal number of channels in/out */
-    assert(in_buffer.channel_count() == out_buffer.channel_count());
-
     float gain = _gain_parameter->value();
-    /* With SampleBuffer operations */
-    out_buffer.clear();
-    out_buffer.add_with_gain(in_buffer, gain);
+    if (!_bypassed)
+    {
+        out_buffer.clear();
+        out_buffer.add_with_gain(in_buffer, gain);
+    } else
+    {
+        out_buffer = in_buffer;
+    }
 }
 
 

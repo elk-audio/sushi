@@ -125,4 +125,14 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
     // assert that something was written to the buffer
     ASSERT_NE(0.0f, out_buffer.channel(0)[10]);
     ASSERT_NE(0.0f, out_buffer.channel(0)[15]);
+
+    // Test that bypass works
+    _module_under_test->set_bypassed(true);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(0.0f, out_buffer);
+
+    // And that we have no hanging notes
+    _module_under_test->set_bypassed(false);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(0.0f, out_buffer);
 }

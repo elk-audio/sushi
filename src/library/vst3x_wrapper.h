@@ -59,7 +59,13 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
+    void set_input_channels(int channels) override;
+
+    void set_output_channels(int channels) override;
+
     void set_enabled(bool enabled) override;
+
+    void set_bypassed(bool bypassed) override;
 
 private:
     /**
@@ -104,7 +110,12 @@ private:
                                    &_in_parameter_changes,
                                    &_out_parameter_changes};
 
+    bool _can_do_soft_bypass{false};
+    ObjectId _bypass_parameter_id;
+
 };
+
+Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);
 
 } // end namespace vst3
 } // end namespace sushi
