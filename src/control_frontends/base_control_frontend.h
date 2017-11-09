@@ -9,6 +9,8 @@
 #define SUSHI_BASE_CONTROL_FRONTEND_H
 
 #include <string>
+#include <vector>
+#include <mutex>
 
 #include "library/event_interface.h"
 #include "engine/engine.h"
@@ -31,6 +33,11 @@ public:
         _event_dispatcher->deregister_poster(this);
     };
 
+    static void completion_callback(void *arg, Event* event, int return_status)
+    {
+        static_cast<BaseControlFrontend*>(arg)->_completion_callback(event, return_status);
+    }
+
     virtual void run() = 0;
 
     virtual void stop() = 0;
@@ -45,20 +52,26 @@ public:
 
     void send_note_off_event(ObjectId processor, int note, float value);
 
-    void add_chain(const std::string& name, int channels);
+    void send_add_chain_event(const std::string &name, int channels);
 
-    void delete_chain(const std::string& name);
+    void send_remove_chain_event(const std::string &name);
 
-    void add_processor(const std::string& chain, const std::string& uid, const std::string& name,
-                       const std::string& file, engine::PluginType type);
+    void send_add_processor_event(const std::string &chain, const std::string &uid, const std::string &name,
+                                  const std::string &file, AddProcessorEvent::ProcessorType type);
 
-    void delete_processor(const std::string& chain, const std::string& name);
+    void send_remove_processor_event(const std::string &chain, const std::string &name);
 
     int poster_id() override {return _poster_id;}
 
 protected:
+    virtual void _completion_callback(Event* event, int return_status) = 0;
+
+    void send_with_callback(Event *event);
+
     engine::BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
+    std::vector<EventId> _sendlist;
+    std::mutex _sendlist_mutex;
 
 private:
     EventPosterId _poster_id;

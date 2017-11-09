@@ -27,6 +27,11 @@ enum class EventType
     STRING_PROPERTY_CHANGE,
     PARAMETER_CHANGE_NOTIFICATION,
 
+    ADD_CHAIN,
+    REMOVE_CHAIN,
+    ADD_PROCESSOR,
+    REMOVE_PROCESSOR,
+
     ASYNCHRONOUS_WORK,
     ASYNC_WORK_COMPLETION_NOTIFICATION
 };
@@ -41,6 +46,7 @@ enum EventStatus : int
     NOT_HANDLED,
     UNRECOGNIZED_RECEIVER,
     UNRECOGNIZED_TYPE,
+    EVENT_SPECIFIC
 };
 }
 
@@ -290,6 +296,99 @@ protected:
 
 // TODO how to handle strings and blobs here?
 
+
+class AddChainEvent : public Event
+{
+public:
+    enum Status : int
+    {
+        INVALID_NAME = EventStatus::EVENT_SPECIFIC
+    };
+    AddChainEvent(const std::string& name, int channels, int64_t timestamp) : Event(EventType::ADD_CHAIN, timestamp),
+                                                                              _name(name),
+                                                                              _channels(channels){}
+    const std::string& name() {return _name;}
+    int channels() {return _channels;}
+
+private:
+    std::string _name;
+    int _channels;
+};
+
+class RemoveChainEvent : public Event
+{
+public:
+    enum Status : int
+    {
+        INVALID_CHAIN = EventStatus::EVENT_SPECIFIC
+    };
+    RemoveChainEvent(const std::string& name, int64_t timestamp) : Event(EventType::REMOVE_CHAIN, timestamp),
+                                                                   _name(name) {}
+    const std::string& name() {return _name;}
+
+private:
+    std::string _name;
+};
+
+class AddProcessorEvent : public Event
+{
+public:
+    enum Status : int
+    {
+        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
+        INVALID_CHAIN,
+        INVALID_UID,
+        INVALID_PLUGIN
+    };
+    enum class ProcessorType
+    {
+        INTERNAL,
+        VST2X,
+        VST3X
+    };
+    AddProcessorEvent(const std::string& chain, const std::string& uid,
+                      const std::string& name, const std::string& file,
+                      ProcessorType plugin_type, int64_t timestamp) : Event(EventType::ADD_PROCESSOR, timestamp),
+                                                                    _chain(chain),
+                                                                    _uid(uid),
+                                                                    _name(name),
+                                                                    _file(file),
+                                                                    _plugin_type(plugin_type) {}
+    const std::string& chain() {return _chain;}
+    const std::string& uid() {return _uid;}
+    const std::string& name() {return _name;}
+    const std::string& file() {return _file;}
+    ProcessorType processor_type() {return _plugin_type;}
+
+private:
+    std::string _chain;
+    std::string _uid;
+    std::string _name;
+    std::string _file;
+    ProcessorType _plugin_type;
+
+};
+
+class RemoveProcessorEvent : public Event
+{
+public:
+    enum Status : int
+    {
+        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
+        INVALID_CHAIN,
+    };
+    RemoveProcessorEvent(const std::string& name, const std::string& chain,
+                         int64_t timestamp) : Event(EventType::REMOVE_PROCESSOR, timestamp),
+                                              _name(name),
+                                              _chain(chain) {}
+
+    const std::string& name() {return _name;}
+    const std::string& chain() {return _chain;}
+
+private:
+    std::string _name;
+    std::string _chain;
+};
 
 typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
 

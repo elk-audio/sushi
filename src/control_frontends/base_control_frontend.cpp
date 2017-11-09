@@ -51,43 +51,44 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, floa
     send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, note, velocity);
 }
 
-void BaseControlFrontend::add_chain(const std::string &name, int channels)
+void BaseControlFrontend::send_add_chain_event(const std::string &name, int channels)
 {
-    auto status = _engine->create_plugin_chain(name, channels);
-    if (status != engine::EngineReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to create chain {}", name);
-    }
+    int64_t timestamp = 0;
+    auto e = new AddChainEvent(name, channels, timestamp);
+    send_with_callback(e);
 }
 
-void BaseControlFrontend::delete_chain(const std::string &name)
+void BaseControlFrontend::send_remove_chain_event(const std::string &name)
 {
-    auto status = _engine->delete_plugin_chain(name);
-    if (status != engine::EngineReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to delete chain {}", name);
-    }
-    MIND_LOG_ERROR("Succesfully deleted chain {}", name);
+    int64_t timestamp = 0;
+    auto e = new RemoveChainEvent(name, timestamp);
+    send_with_callback(e);
 }
 
-void BaseControlFrontend::add_processor(const std::string& chain, const std::string& uid, const std::string& name,
-                                        const std::string& file, engine::PluginType type)
+void BaseControlFrontend::send_add_processor_event(const std::string &chain, const std::string &uid,
+                                                   const std::string &name, const std::string &file,
+                                                   AddProcessorEvent::ProcessorType type)
 {
-    auto status = _engine->add_plugin_to_chain(chain, uid, name, file, type);
-    if (status != engine::EngineReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to add plugin {} ({}) to {}", name, uid, chain);
-    }
+    int64_t timestamp = 0;
+    auto e = new AddProcessorEvent(chain, uid, name, file, type, timestamp);
+    send_with_callback(e);
 }
 
-void BaseControlFrontend::delete_processor(const std::string& chain, const std::string& name)
+void BaseControlFrontend::send_remove_processor_event(const std::string &chain, const std::string &name)
 {
-    auto status = _engine->remove_plugin_from_chain(chain, name);
-    if (status != engine::EngineReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Failed to delete processor {}", name);
-    }
+    int64_t timestamp = 0;
+    auto e = new RemoveProcessorEvent(name, chain, timestamp);
+    send_with_callback(e);
 }
+
+void BaseControlFrontend::send_with_callback(Event* event)
+{
+    event->set_completion_cb(BaseControlFrontend::completion_callback, this);
+    //std::lock_guard<std::mutex> _lock(_sendlist_mutex);
+    //_sendlist.push_back(event->id());
+    _event_dispatcher->post_event(event);
+}
+
 
 } // end namespace control_frontend
 } // end namespace sushi

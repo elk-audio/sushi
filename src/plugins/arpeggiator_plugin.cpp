@@ -78,7 +78,7 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
     while (_sample_counter >= period)
     {
         _sample_counter -= period;
-        int offset = std::max(static_cast<int>(_sample_counter), AUDIO_CHUNK_SIZE -1);
+        int offset = std::min(static_cast<int>(_sample_counter), AUDIO_CHUNK_SIZE -1);
         RtEvent e = RtEvent::make_note_off_event(this->id(), offset, _current_note, 1.0f);
         output_event(e);
 

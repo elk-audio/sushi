@@ -128,7 +128,7 @@ void AlsaMidiFrontend::_poll_function()
     }
 }
 
-void AlsaMidiFrontend::send_midi(int output, const uint8_t* data, int64_t timestamp)
+void AlsaMidiFrontend::send_midi(int /*output*/, const uint8_t* data, int64_t /*timestamp*/)
 {
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);

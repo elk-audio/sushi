@@ -14,10 +14,10 @@
 #ifndef SUSHI_OSC_FRONTEND_H_H
 #define SUSHI_OSC_FRONTEND_H_H
 
+#include "lo/lo.h"
+
 #include "base_control_frontend.h"
 #include "engine/engine.h"
-
-#include "lo/lo.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -79,6 +79,8 @@ public:
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
 private:
+    void _completion_callback(Event* event, int return_status) override;
+
     void _start_server();
 
     void _stop_server();

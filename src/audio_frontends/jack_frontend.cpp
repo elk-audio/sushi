@@ -101,7 +101,6 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Failed to setup Alsa midi frontend");
         return AudioFrontendStatus::MIDI_PORT_ERROR;
     }
-    MIND_LOG_ERROR("Successfully setup alsa midi frontend");
     _midi_dispatcher->set_frontend(_midi_frontend.get());
     return AudioFrontendStatus::OK;
 }

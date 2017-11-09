@@ -83,6 +83,11 @@ private:
     int _process_string_parameter_change_event(StringPropertyChangeEvent* event);
     int _process_async_work_event(AsynchronousWorkEvent* event);
 
+    int _process_add_chain_event(AddChainEvent* event);
+    int _process_remove_chain_event(RemoveChainEvent* event);
+    int _process_add_processor_event(AddProcessorEvent* event);
+    int _process_remove_processor_event(RemoveProcessorEvent* event);
+
     int _process_rt_event(RtEvent& event);
     int _process_rt_keyboard_events(const KeyboardRtEvent* event);
     int _process_rt_parameter_change_events(const ParameterChangeRtEvent* event);

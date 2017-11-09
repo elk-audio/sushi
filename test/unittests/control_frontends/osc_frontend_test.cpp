@@ -105,6 +105,69 @@ TEST_F(TestOSCFrontend, TestSendNoteOffEvent)
     ASSERT_FALSE(_test_dispatcher->got_event());
 }
 
+TEST_F(TestOSCFrontend, TestAddChain)
+{
+    lo_send(_address, "/engine/add_chain", "si", "NewChain", 2);
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::ADD_CHAIN, event->type());
+    auto typed_event = static_cast<AddChainEvent*>(event.get());
+    EXPECT_EQ("NewChain", typed_event->name());
+    EXPECT_EQ(2, typed_event->channels());
+}
+
+TEST_F(TestOSCFrontend, TestDeleteChain)
+{
+    lo_send(_address, "/engine/delete_chain", "s", "NewChain");
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::REMOVE_CHAIN, event->type());
+    auto typed_event = static_cast<RemoveChainEvent*>(event.get());
+    EXPECT_EQ("NewChain", typed_event->name());
+}
+
+TEST_F(TestOSCFrontend, TestAddProcessor)
+{
+    lo_send(_address, "/engine/add_processor", "sssss", "chain", "uid", "plugin_name", "file_path", "internal");
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::ADD_PROCESSOR, event->type());
+    auto typed_event = static_cast<AddProcessorEvent*>(event.get());
+    EXPECT_EQ("chain", typed_event->chain());
+    EXPECT_EQ("uid", typed_event->uid());
+    EXPECT_EQ("plugin_name", typed_event->name());
+    EXPECT_EQ("file_path", typed_event->file());
+    EXPECT_EQ(AddProcessorEvent::ProcessorType::INTERNAL, typed_event->processor_type());
+
+    // Test with an invalid processor type, should result in no event being sent
+    lo_send(_address, "/engine/add_processor", "sssss", "chain", "uid", "plugin_name", "file_path", "ladspa");
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_FALSE(_test_dispatcher->got_event());
+}
+
+TEST_F(TestOSCFrontend, TestDeleteProcessor)
+{
+    lo_send(_address, "/engine/delete_processor", "ss", "chain", "processor");
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    EXPECT_EQ(EventType::REMOVE_PROCESSOR, event->type());
+    auto typed_event = static_cast<RemoveProcessorEvent*>(event.get());
+    EXPECT_EQ("chain", typed_event->chain());
+    EXPECT_EQ("processor", typed_event->name());
+}
+
 TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
 {
     std::string test_str("str with spaces ");

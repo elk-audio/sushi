@@ -93,8 +93,7 @@ static int osc_add_chain(const char* /*path*/,
     std::string name(&argv[0]->s);
     int channels = argv[1]->i;
     MIND_LOG_DEBUG("Got an add_processor request {} {}", name, channels);
-
-    instance->add_chain(name, channels);
+    instance->send_add_chain_event(name, channels);
     return 0;
 }
 
@@ -108,7 +107,7 @@ static int osc_delete_chain(const char* /*path*/,
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string name(&argv[0]->s);
     MIND_LOG_DEBUG("Got a delete_chain request {}", name);
-    instance->delete_chain(name);
+    instance->send_remove_chain_event(name);
     return 0;
 }
 
@@ -125,13 +124,28 @@ static int osc_add_processor(const char* /*path*/,
     std::string name(&argv[2]->s);
     std::string file(&argv[3]->s);
     std::string type(&argv[4]->s);
-    engine::PluginType enum_type = engine::PluginType::INTERNAL;
-    if (type == "vst2")
-        enum_type = engine::PluginType::VST2X;
-    else if (type == "vst3")
-        enum_type = engine::PluginType::VST3X;
+    // TODO If these are eventually to be accessed by a user we must sanitize
+    // the input and disallow supplying a direct library path for loading.
     MIND_LOG_DEBUG("Got an add_processor request {}", name);
-    instance->add_processor(chain, uid, name, file, enum_type);
+    AddProcessorEvent::ProcessorType processor_type;
+    if (type == "internal")
+    {
+        processor_type = AddProcessorEvent::ProcessorType::INTERNAL;
+    }
+    else if (type == "vst2x")
+    {
+        processor_type = AddProcessorEvent::ProcessorType::VST2X;
+    }
+    else if (type == "vst3x")
+    {
+        processor_type = AddProcessorEvent::ProcessorType::VST3X;
+    }
+    else
+    {
+        MIND_LOG_WARNING("Unrecognized plugin type \"{}\"", type);
+        return 0;
+    }
+    instance->send_add_processor_event(chain, uid, name, file, processor_type);
     return 0;
 }
 
@@ -146,7 +160,7 @@ static int osc_delete_processor(const char* /*path*/,
     std::string chain(&argv[0]->s);
     std::string name(&argv[1]->s);
     MIND_LOG_DEBUG("Got a delete_processor request {} from {}", name, chain);
-    instance->delete_processor(chain, name);
+    instance->send_remove_processor_event(chain, name);
     return 0;
 }
 
@@ -304,9 +318,42 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
 }
 
-int OSCFrontend::process(Event* event)
+int OSCFrontend::process(Event* /*event*/)
 {
-    return EventPoster::process(event);
+    return EventStatus::NOT_HANDLED;
+}
+
+void OSCFrontend::_completion_callback(Event* event, int return_status)
+{
+    switch (event->type())
+    {
+        case EventType::ADD_CHAIN:
+            MIND_LOG_INFO("Add chain {} completed with status {}({})",
+                          static_cast<AddChainEvent*>(event)->name(),
+                          return_status == 0? "ok" : "failure", return_status);
+            break;
+
+        case EventType::REMOVE_CHAIN:
+            MIND_LOG_INFO("Remove chain {} completed with status {}({})",
+                          static_cast<RemoveChainEvent*>(event)->name(),
+                          return_status == 0? "ok" : "failure", return_status);
+            break;
+
+        case EventType::ADD_PROCESSOR:
+            MIND_LOG_INFO("Add processor {} completed with status {}({})",
+                          static_cast<AddProcessorEvent*>(event)->name(),
+                          return_status == 0? "ok" : "failure", return_status);
+            break;
+
+        case EventType::REMOVE_PROCESSOR:
+            MIND_LOG_INFO("Remove processor {} completed with status {}({})",
+                          static_cast<RemoveProcessorEvent*>(event)->name(),
+                          return_status == 0? "ok" : "failure", return_status);
+            break;
+
+        default:
+            break;
+    }
 }
 
 std::string spaces_to_underscore(const std::string &s)

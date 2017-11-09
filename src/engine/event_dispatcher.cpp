@@ -83,6 +83,19 @@ int EventDispatcher::process(Event* event)
         case EventType::STRING_PROPERTY_CHANGE:
             return _process_parameter_change_event(static_cast<ParameterChangeEvent*>(event));
 
+        case EventType::ADD_CHAIN:
+            return _process_add_chain_event(static_cast<AddChainEvent*>(event));
+
+        case EventType::REMOVE_CHAIN:
+            return _process_remove_chain_event(static_cast<RemoveChainEvent*>(event));
+
+        case EventType::ADD_PROCESSOR:
+            return _process_add_processor_event(static_cast<AddProcessorEvent*>(event));
+
+        case EventType::REMOVE_PROCESSOR:
+            return _process_remove_processor_event(static_cast<RemoveProcessorEvent*>(event));
+
+
         //case EventType::ASYNCHRONOUS_WORK:
         //    return _process_async_work_event(static_cast<AsynchronousWorkEvent*>(event));
 
@@ -396,6 +409,90 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
         }
     }
     return EventDispatcherStatus::UNKNOWN_POSTER;}
+
+int EventDispatcher::_process_add_chain_event(AddChainEvent* event)
+{
+    auto status = _engine->create_plugin_chain(event->name(), event->channels());
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            return EventStatus::HANDLED_OK;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        default:
+            return AddChainEvent::Status::INVALID_NAME;
+    }
+}
+
+int EventDispatcher::_process_remove_chain_event(RemoveChainEvent* event)
+{
+    auto status = _engine->delete_plugin_chain(event->name());
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            return EventStatus::HANDLED_OK;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        default:
+            return RemoveChainEvent::Status::INVALID_CHAIN;
+    }
+}
+
+int EventDispatcher::_process_add_processor_event(AddProcessorEvent* event)
+{
+    engine::PluginType plugin_type;
+    switch (event->processor_type())
+    {
+        case AddProcessorEvent::ProcessorType::INTERNAL:
+            plugin_type = engine::PluginType::INTERNAL;
+            break;
+
+        case AddProcessorEvent::ProcessorType::VST2X:
+            plugin_type = engine::PluginType::VST2X;
+            break;
+
+        case AddProcessorEvent::ProcessorType::VST3X:
+            plugin_type = engine::PluginType::VST3X;
+            break;
+    }
+
+    // TODO where to do validation?
+    auto status = _engine->add_plugin_to_chain(event->chain(), event->uid(), event->name(), event->file(), plugin_type);
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            return EventStatus::HANDLED_OK;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+            return AddProcessorEvent::Status::INVALID_NAME;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_CHAIN:
+            return AddProcessorEvent::Status::INVALID_CHAIN;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_UID:
+            return AddProcessorEvent::Status::INVALID_UID;
+
+        default:
+            return AddProcessorEvent::Status::INVALID_PLUGIN;
+    }
+}
+
+int EventDispatcher::_process_remove_processor_event(RemoveProcessorEvent* event)
+{
+    auto status = _engine->remove_plugin_from_chain(event->chain(), event->name());
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            return EventStatus::HANDLED_OK;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+            return RemoveProcessorEvent::Status::INVALID_NAME;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_CHAIN:
+        default:
+            return RemoveProcessorEvent::Status::INVALID_CHAIN;
+    }
+}
 
 
 } // end namespace dispatcher
