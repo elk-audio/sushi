@@ -117,13 +117,13 @@ protected:
 class WrappedMidiRtEvent : public BaseRtEvent
 {
 public:
-    WrappedMidiRtEvent(int offset, ObjectId target, uint8_t byte_0, uint8_t byte_1, uint8_t byte_2) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
-                                                                                                      _midi_data{byte_0, byte_1, byte_2} {}
+    WrappedMidiRtEvent(int offset, ObjectId target, MidiDataByte data) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
+                                                                         _midi_data{data} {}
 
-    const uint8_t* midi_data() const {return _midi_data;}
+    MidiDataByte midi_data() const {return _midi_data;}
 
 protected:
-    uint8_t _midi_data[3];
+    MidiDataByte _midi_data;
 };
 /**
  * @brief Baseclass for simple parameter changes
@@ -442,9 +442,9 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_wrapped_midi_event(ObjectId target, int offset,  uint8_t byte_0, uint8_t byte_1, uint8_t byte_2)
+    static RtEvent make_wrapped_midi_event(ObjectId target, int offset, MidiDataByte data)
     {
-        WrappedMidiRtEvent typed_event(offset, target, byte_0, byte_1, byte_2);
+        WrappedMidiRtEvent typed_event(offset, target, data);
         return RtEvent(typed_event);
     }
 

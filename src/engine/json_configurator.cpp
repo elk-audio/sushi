@@ -65,9 +65,21 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
     {
         for (const auto& con : midi["chain_connections"].GetArray())
         {
-            auto res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
-                                                             con["chain"].GetString(),
-                                                             _get_midi_channel(con["channel"]));
+            bool raw_midi = con["raw_midi"].GetBool();
+            MidiDispatcherStatus res;
+            if (raw_midi)
+            {
+                res = _midi_dispatcher->connect_raw_midi_to_track(con["port"].GetInt(),
+                                                                  con["chain"].GetString(),
+                                                                  _get_midi_channel(con["channel"]));
+
+            }
+            else
+            {
+                res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
+                                                            con["chain"].GetString(),
+                                                            _get_midi_channel(con["channel"]));
+            }
             if (res != MidiDispatcherStatus::OK)
             {
                 if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)

@@ -143,7 +143,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestNoteAftertouchCreation)
 TEST_F(TestVst2xMidiEventFIFO, TestWrappedMidiCreation)
 {
     _module_under_test.flush();
-    auto ev = RtEvent::make_wrapped_midi_event(0, 0, 176u, 21u, 64u);
+    auto ev = RtEvent::make_wrapped_midi_event(0, 0, {176u, 21u, 64u, 0u});
     _module_under_test.push(ev);
     auto vst_events = _module_under_test.flush();
     auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);

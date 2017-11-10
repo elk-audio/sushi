@@ -145,6 +145,15 @@ TEST_F(TestEventDispatcher, TestToRtEvent)
     RtEvent rt_event;
     _out_rt_queue.pop(rt_event);
     ASSERT_EQ(RtEventType::NOTE_ON, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, "processor", {1u, 2u, 3u, 0u}, 0);
+    _module_under_test->post_event(event);
+    ASSERT_TRUE(_out_rt_queue.empty());
+    crank_event_loop_once();
+
+    ASSERT_FALSE(_out_rt_queue.empty());
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::WRAPPED_MIDI_EVENT, rt_event.type());
 }
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)

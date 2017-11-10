@@ -190,10 +190,9 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
             //rt_event = RtEvent::make_pol
             return EventStatus::NOT_HANDLED;
 
-        case KeyboardEvent::Subtype::RAW_MIDI:
-            // TODO - implement raw midi msg
-            // rt_event = RtEvent::make_raw_midi
-            return EventStatus::NOT_HANDLED;
+        case KeyboardEvent::Subtype::WRAPPED_MIDI:
+            rt_event = RtEvent::make_wrapped_midi_event(processor_id, offset, event->midi_data());
+            break;
     }
     // TODO - handle case when queue is full.
     _out_rt_queue->push(rt_event);
@@ -315,7 +314,7 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
             subtype = KeyboardEvent::Subtype::NOTE_AFTERTOUCH;
             break;
         default:
-            subtype = KeyboardEvent::Subtype::RAW_MIDI;
+            subtype = KeyboardEvent::Subtype::WRAPPED_MIDI;
             // TODO - fill list
     }
     KeyboardEvent e(subtype, event->processor_id(), event->note(), event->velocity(), timestamp);

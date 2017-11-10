@@ -24,6 +24,16 @@ inline Event* make_note_off_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.note, velocity, timestamp);
 }
 
+inline Event* make_wrapped_midi_event(const InputConnection &c,
+                                      const uint8_t* data,
+                                      size_t size,
+                                      int64_t timestamp)
+{
+    MidiDataByte midi_data{0};
+    std::copy(data, data + size, midi_data.data());
+    return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
+}
+
 inline Event* make_param_change_event(const InputConnection &c,
                                       const midi::ControlChangeMessage &msg,
                                       int64_t timestamp)
@@ -110,6 +120,30 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     return MidiDispatcherStatus::OK;
 }
 
+MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
+                                                               const std::string &chain_name,
+                                                               int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+    ObjectId id;
+    engine::EngineReturnStatus status;
+    std::tie(status, id) = _engine->processor_id_from_name(chain_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
+    }
+    InputConnection connection;
+    connection.target = id;
+    connection.parameter = 0;
+    connection.min_range = 0;
+    connection.max_range = 0;
+    _raw_routes_in[midi_input][channel].push_back(connection);
+    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to chain \"{}\"", midi_input, chain_name);
+    return MidiDispatcherStatus::OK;}
+
 MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &chain_name, int channel)
 {
     if (channel >= midi::MidiChannel::OMNI)
@@ -146,6 +180,22 @@ void MidiDispatcher::clear_connections()
 
 void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp)
 {
+    int channel = midi::decode_channel(data[0]);
+    const auto& cons = _raw_routes_in.find(input);
+    if (cons != _raw_routes_in.end())
+    {
+        for (auto c : cons->second[midi::MidiChannel::OMNI])
+        {
+            auto event = make_wrapped_midi_event(c, data, size, timestamp);
+            _event_dispatcher->post_event(event);
+        }
+        for (auto c : cons->second[channel])
+        {
+            auto event = make_wrapped_midi_event(c, data, size, timestamp);
+            _event_dispatcher->post_event(event);
+        }
+    }
+
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)
     {

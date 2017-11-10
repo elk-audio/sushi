@@ -139,7 +139,7 @@ public:
         NOTE_AFTERTOUCH,
         POLY_AFTERTOUCH,
         PITCH_BEND,
-        RAW_MIDI
+        WRAPPED_MIDI
     };
     KeyboardEvent(Subtype subtype,
                   const std::string& processor,
@@ -159,17 +159,30 @@ public:
                                        _note(note),
                                        _velocity(velocity) {}
 
+    KeyboardEvent(Subtype subtype,
+                  const std::string& processor,
+                  MidiDataByte midi_data,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                                       _subtype(subtype),
+                                       _midi_data(midi_data) {}
 
-    Subtype     subtype() {return _subtype;}
-    int         note() {return _note;}
-    float       velocity() {return _velocity;}
-    std::array<uint8_t, MIDI_DATA_SIZE>  midi_data() {return _midi_data;}
+    KeyboardEvent(Subtype subtype,
+                  ObjectId processor_id,
+                  MidiDataByte midi_data,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                       _subtype(subtype),
+                                       _midi_data(midi_data) {}
+
+    Subtype         subtype() {return _subtype;}
+    int             note() {return _note;}
+    float           velocity() {return _velocity;}
+    MidiDataByte    midi_data() {return _midi_data;}
 
 protected:
-    Subtype     _subtype;
-    int         _note;
-    float       _velocity;
-    std::array<uint8_t, MIDI_DATA_SIZE>     _midi_data;
+    Subtype         _subtype;
+    int             _note;
+    float           _velocity;
+    MidiDataByte    _midi_data;
 };
 
 class ParameterChangeEvent : public ProcessorEvent

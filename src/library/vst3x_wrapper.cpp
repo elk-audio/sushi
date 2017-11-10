@@ -113,6 +113,7 @@ void Vst3xWrapper::process_event(RtEvent event)
         case RtEventType::WRAPPED_MIDI_EVENT:
         {
             // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
+            // Or do nothing, no reason to send raw midi to at VST3 plugin
         }
         default:
             break;
