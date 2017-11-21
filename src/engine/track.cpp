@@ -9,13 +9,17 @@ namespace sushi {
 namespace engine {
 
 
-void Track::add(Processor* processor)
+bool Track::add(Processor* processor)
 {
-    // If a track adds itself to its process track, endless loops can arrise
-    assert(processor != this);
+    if (_processors.size() >= TRACK_MAX_PROCESSORS || processor == this)
+    {
+        // If a track adds itself to its process track, endless loops can arrise
+        return false;
+    }
     _processors.push_back(processor);
     processor->set_event_output(this);
     update_channel_config();
+    return true;
 }
 
 bool Track::remove(ObjectId processor)

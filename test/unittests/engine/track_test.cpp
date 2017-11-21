@@ -45,16 +45,16 @@ public:
     }
 };
 
-class PluginChainTest : public ::testing::Test
+class TrackTest : public ::testing::Test
 {
 protected:
-    PluginChainTest() {}
+    TrackTest() {}
 
     Track _module_under_test{2};
 };
 
 
-TEST_F(PluginChainTest, TestChannelManagement)
+TEST_F(TrackTest, TestChannelManagement)
 {
     DummyProcessor test_processor;
     test_processor.set_input_channels(2);
@@ -88,7 +88,7 @@ TEST_F(PluginChainTest, TestChannelManagement)
     EXPECT_EQ(1, gain_plugin.output_channels());
 }
 
-TEST_F(PluginChainTest, TestAddAndRemove)
+TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor;
     _module_under_test.add(&test_processor);
@@ -99,7 +99,7 @@ TEST_F(PluginChainTest, TestAddAndRemove)
     EXPECT_TRUE(_module_under_test._processors.empty());
 }
 
-TEST_F(PluginChainTest, TestNestedBypass)
+TEST_F(TrackTest, TestNestedBypass)
 {
     DummyProcessor test_processor;
     _module_under_test.add(&test_processor);
@@ -107,7 +107,7 @@ TEST_F(PluginChainTest, TestNestedBypass)
     EXPECT_TRUE(test_processor.bypassed());
 }
 
-TEST_F(PluginChainTest, TestEmptyChainProcessing)
+TEST_F(TrackTest, TestEmptyChainProcessing)
 {
     /* Test that audio goes right through an empty track unaffected */
     ChunkSampleBuffer in_buffer(2);
@@ -122,7 +122,7 @@ TEST_F(PluginChainTest, TestEmptyChainProcessing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(PluginChainTest, TestEventProcessing)
+TEST_F(TrackTest, TestEventProcessing)
 {
     ChunkSampleBuffer buffer(2);
     RtEventFifo event_queue;
@@ -142,7 +142,7 @@ TEST_F(PluginChainTest, TestEventProcessing)
     ASSERT_FALSE(event_queue.empty());
 }
 
-TEST_F(PluginChainTest, TestEventForwarding)
+TEST_F(TrackTest, TestEventForwarding)
 {
     ChunkSampleBuffer buffer(2);
     RtEventFifo event_queue;

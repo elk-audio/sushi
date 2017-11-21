@@ -37,6 +37,7 @@ constexpr int MAX_RT_PROCESSOR_ID = 1000;
 enum class EngineReturnStatus
 {
     OK,
+    ERROR,
     INVALID_N_CHANNELS,
     INVALID_PLUGIN_UID,
     INVALID_PLUGIN_NAME,

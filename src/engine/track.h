@@ -13,6 +13,7 @@
 #include "library/sample_buffer.h"
 #include "library/internal_plugin.h"
 #include "library/event_fifo.h"
+#include "library/constants.h"
 
 #include "EASTL/vector.h"
 
@@ -21,22 +22,18 @@ namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int TRACK_MAX_CHANNELS = 8;
+constexpr int TRACK_MAX_PROCESSORS = 32;
+
 
 class Track : public InternalPlugin, public RtEventPipe
 {
 public:
-    Track() : _bfr_1{TRACK_MAX_CHANNELS},
-              _bfr_2{TRACK_MAX_CHANNELS}
-    {
-        _max_input_channels = TRACK_MAX_CHANNELS;
-        _max_output_channels = TRACK_MAX_CHANNELS;
-        _current_input_channels = TRACK_MAX_CHANNELS;
-        _current_output_channels = TRACK_MAX_CHANNELS;
-    }
+    Track() : Track(TRACK_MAX_CHANNELS) {}
 
     Track(int channels) : _bfr_1{channels},
                           _bfr_2{channels}
     {
+        _processors.reserve(TRACK_MAX_PROCESSORS);
         _max_input_channels = channels;
         _max_output_channels = channels;
         _current_input_channels = channels;
@@ -50,7 +47,7 @@ public:
      * @brief Adds a plugin to the end of the track.
      * @param The plugin to add.
      */
-    void add(Processor* processor);
+    bool add(Processor* processor);
 
     /**
      * @brief Remove a plugin from the track.
@@ -59,14 +56,12 @@ public:
      */
     bool remove(ObjectId processor);
 
+    /* Inherited from Processor */
     void process_event(RtEvent event) override;
 
-    void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out);
+    void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out) override;
 
     void set_bypassed(bool bypassed) override;
-
-    /* Inherited from RtEventPipe */
-    void send_event(RtEvent event) override;
 
     void set_input_channels(int channels) override
     {
@@ -80,6 +75,8 @@ public:
         update_channel_config();
     }
 
+    /* Inherited from RtEventPipe */
+    void send_event(RtEvent event) override;
 
 private:
     /**

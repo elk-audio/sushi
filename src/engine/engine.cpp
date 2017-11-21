@@ -445,7 +445,10 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
     {
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin);
-        track->add(plugin);
+        if (track->add(plugin) == false)
+        {
+            return EngineReturnStatus::ERROR;
+        }
     }
     return EngineReturnStatus::OK;
 }
@@ -524,8 +527,8 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             Processor* processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
             if (track && processor)
             {
-                track->add(processor);
-                typed_event->set_handled(true);
+                auto ok = track->add(processor);
+                typed_event->set_handled(ok);
             }
             else
             {
