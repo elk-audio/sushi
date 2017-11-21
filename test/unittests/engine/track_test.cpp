@@ -3,7 +3,7 @@
 #define private public
 
 #include "test_utils.h"
-#include "engine/plugin_chain.cpp"
+#include "engine/track.cpp"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 
@@ -50,7 +50,7 @@ class PluginChainTest : public ::testing::Test
 protected:
     PluginChainTest() {}
 
-    PluginChain _module_under_test{2};
+    Track _module_under_test{2};
 };
 
 
@@ -58,9 +58,9 @@ TEST_F(PluginChainTest, TestChannelManagement)
 {
     DummyProcessor test_processor;
     test_processor.set_input_channels(2);
-    /* Add the test processor to a mono chain and verify
+    /* Add the test processor to a mono track and verify
      * it is configured in mono config */
-    PluginChain _module_under_test_mono(1);
+    Track _module_under_test_mono(1);
     _module_under_test_mono.set_input_channels(1);
     _module_under_test_mono.add(&test_processor);
     EXPECT_EQ(1, test_processor.input_channels());
@@ -92,11 +92,11 @@ TEST_F(PluginChainTest, TestAddAndRemove)
 {
     DummyProcessor test_processor;
     _module_under_test.add(&test_processor);
-    EXPECT_EQ(1u, _module_under_test._chain.size());
+    EXPECT_EQ(1u, _module_under_test._processors.size());
     EXPECT_FALSE(_module_under_test.remove(1234567u));
-    EXPECT_EQ(1u, _module_under_test._chain.size());
+    EXPECT_EQ(1u, _module_under_test._processors.size());
     EXPECT_TRUE(_module_under_test.remove(test_processor.id()));
-    EXPECT_TRUE(_module_under_test._chain.empty());
+    EXPECT_TRUE(_module_under_test._processors.empty());
 }
 
 TEST_F(PluginChainTest, TestNestedBypass)
@@ -109,7 +109,7 @@ TEST_F(PluginChainTest, TestNestedBypass)
 
 TEST_F(PluginChainTest, TestEmptyChainProcessing)
 {
-    /* Test that audio goes right through an empty chain unaffected */
+    /* Test that audio goes right through an empty track unaffected */
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     _module_under_test.set_input_channels(2);
@@ -163,7 +163,7 @@ TEST_F(PluginChainTest, TestEventForwarding)
     event_queue.pop(received_event);
     auto typed_event = received_event.keyboard_event();
     ASSERT_EQ(RtEventType::NOTE_ON, received_event.type());
-    /* Assert that the processor id of the event is that of the chain and
+    /* Assert that the processor id of the event is that of the track and
      * not the id set. */
     ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
 }

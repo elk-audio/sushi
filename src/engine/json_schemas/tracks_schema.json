@@ -2,12 +2,12 @@ R"(
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Sushi Plugin Chain JSON Schema",
-  "description": "JSON Schema to validate plugin chain definitions",
+  "description": "JSON Schema to validate track definitions",
 
   "type": "object",
   "properties":
   {
-    "plugin_chains":
+    "tracks":
     {
       "type": "array",
       "items":
@@ -106,6 +106,6 @@ R"(
       "minItems": 1
     }
   },
-  "required": ["plugin_chains"]
+  "required": ["tracks"]
 }
 )"

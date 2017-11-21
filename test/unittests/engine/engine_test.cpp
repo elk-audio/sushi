@@ -49,8 +49,8 @@ TEST_F(TestEngine, TestInstantiation)
  */
 TEST_F(TestEngine, TestProcess)
 {
-    /* Add a plugin chain since the engine by default doesn't have any */
-    _module_under_test->create_plugin_chain("test_chain", 2);
+    /* Add a plugin track since the engine by default doesn't have any */
+    _module_under_test->create_track("test_track", 2);
 
     /* Run tests */
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(4);
@@ -71,8 +71,8 @@ TEST_F(TestEngine, TestProcess)
 
 TEST_F(TestEngine, TestUidNameMapping)
 {
-    _module_under_test->create_plugin_chain("left",2);
-    auto status = _module_under_test->add_plugin_to_chain("left",
+    _module_under_test->create_track("left", 2);
+    auto status = _module_under_test->add_plugin_to_track("left",
                                                           "sushi.testing.equalizer",
                                                           "equalizer_0_l",
                                                           "",
@@ -111,44 +111,44 @@ TEST_F(TestEngine, TestUidNameMapping)
     ASSERT_EQ(EngineReturnStatus::INVALID_PARAMETER, status);
 }
 
-TEST_F(TestEngine, TestCreateEmptyPluginChain)
+TEST_F(TestEngine, TestCreateEmptyTrack)
 {
-    auto status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_track("left", 2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_TRUE(_module_under_test->_processor_exists("left"));
     ASSERT_EQ(_module_under_test->_audio_graph.size(),1u);
     ASSERT_EQ(_module_under_test->_audio_graph[0]->name(),"left");
 
     /* Test invalid name */
-    status = _module_under_test->create_plugin_chain("left",1);
+    status = _module_under_test->create_track("left", 1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PROCESSOR);
-    status = _module_under_test->create_plugin_chain("",1);
+    status = _module_under_test->create_track("", 1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_PLUGIN_NAME);
 
     /* Test removal */
-    status = _module_under_test->delete_plugin_chain("left");
+    status = _module_under_test->delete_track("left");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_FALSE(_module_under_test->_processor_exists("left"));
     ASSERT_EQ(_module_under_test->_audio_graph.size(),0u);
 
     /* Test invalid number of channels */
-    status = _module_under_test->create_plugin_chain("left",3);
+    status = _module_under_test->create_track("left", 3);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 
 TEST_F(TestEngine, TestAddAndRemovePlugin)
 {
     /* Test adding Internal plugin */
-    auto status = _module_under_test->create_plugin_chain("left", 2);
+    auto status = _module_under_test->create_track("left", 2);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "sushi.testing.gain",
                                                      "gain_0_r",
                                                      "   ",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::OK);
     char* full_plugin_path = realpath("libvstxsynth.so", NULL);
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "",
                                                      "vst_synth",
                                                      full_plugin_path,
@@ -157,57 +157,57 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
     ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
-    ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_chain.size());
-    ASSERT_EQ("gain_0_r", _module_under_test->_audio_graph[0]->_chain[0]->name());
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_chain[1]->name());
+    ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_processors.size());
+    ASSERT_EQ("gain_0_r", _module_under_test->_audio_graph[0]->_processors[0]->name());
+    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[1]->name());
 
     /* Test removal of plugin */
-    status = _module_under_test->remove_plugin_from_chain("left", "gain_0_r");
+    status = _module_under_test->remove_plugin_from_track("left", "gain_0_r");
     ASSERT_EQ(status, EngineReturnStatus::OK);
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_chain[0]->name());
+    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
 
     /* Negative tests */
-    status = _module_under_test->add_plugin_to_chain("not_found",
+    status = _module_under_test->add_plugin_to_track("not_found",
                                                      "sushi.testing.passthrough",
                                                      "dummyname",
                                                      "",
                                                      PluginType::INTERNAL);
-    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_CHAIN, status);
+    ASSERT_EQ(EngineReturnStatus::INVALID_TRACK, status);
 
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "sushi.testing.passthrough",
                                                      "",
                                                      "",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_NAME, status);
 
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "not_found",
                                                      "dummyname",
                                                      "",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "",
                                                      "dummyname",
                                                      "not_found",
                                                      PluginType::VST2X);
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
-    status = _module_under_test->remove_plugin_from_chain("left", "unknown_plugin");
+    status = _module_under_test->remove_plugin_from_track("left", "unknown_plugin");
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_NAME, status);
 
-    status = _module_under_test->remove_plugin_from_chain("unknown chain", "unknown_plugin");
-    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_CHAIN, status);
+    status = _module_under_test->remove_plugin_from_track("unknown track", "unknown_plugin");
+    ASSERT_EQ(EngineReturnStatus::INVALID_TRACK, status);
 }
 
 TEST_F(TestEngine, TestSetSamplerate)
 {
-    auto status = _module_under_test->create_plugin_chain("left",2);
+    auto status = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    status = _module_under_test->add_plugin_to_chain("left",
+    status = _module_under_test->add_plugin_to_track("left",
                                                      "sushi.testing.equalizer",
                                                      "eq",
                                                      "",
@@ -229,35 +229,35 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         e->process_chunk(&in_buffer, &out_buffer);
     };
-    // Add a chain, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
+    // Add a track, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
     _module_under_test->enable_realtime(true);
     auto rt = std::thread(faux_rt_thread, _module_under_test);
-    auto status = _module_under_test->create_plugin_chain("main", 2);
+    auto status = _module_under_test->create_track("main", 2);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     rt = std::thread(faux_rt_thread, _module_under_test);
-    status = _module_under_test->add_plugin_to_chain("main",
+    status = _module_under_test->add_plugin_to_track("main",
                                                      "sushi.testing.gain",
                                                      "gain_0_r",
                                                      "   ",
                                                      PluginType::INTERNAL);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[0]->_chain.size());
-    auto chain = _module_under_test->_audio_graph[0];
-    ObjectId chain_id = chain->id();
-    ObjectId processor_id = chain->_chain[0]->id();
+    ASSERT_EQ(1u, _module_under_test->_audio_graph[0]->_processors.size());
+    auto track = _module_under_test->_audio_graph[0];
+    ObjectId track_id = track->id();
+    ObjectId processor_id = track->_processors[0]->id();
 
-    // Remove the plugin and chain as well
+    // Remove the plugin and track as well
     rt = std::thread(faux_rt_thread, _module_under_test);
-    status = _module_under_test->remove_plugin_from_chain("main", "gain_0_r");
+    status = _module_under_test->remove_plugin_from_track("main", "gain_0_r");
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_chain.size());
+    ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_processors.size());
 
     rt = std::thread(faux_rt_thread, _module_under_test);
-    status = _module_under_test->delete_plugin_chain("main");
+    status = _module_under_test->delete_track("main");
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_EQ(0u, _module_under_test->_audio_graph.size());
@@ -265,6 +265,6 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     // Assert that they were also deleted from the map of processors
     ASSERT_FALSE(_module_under_test->_processor_exists("main"));
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_FALSE(_module_under_test->_realtime_processors[chain_id]);
+    ASSERT_FALSE(_module_under_test->_realtime_processors[track_id]);
     ASSERT_FALSE(_module_under_test->_realtime_processors[processor_id]);
 }

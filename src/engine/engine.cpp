@@ -62,11 +62,11 @@ void AudioEngine::enable_realtime(bool enabled)
     }
 };
 
-int AudioEngine::n_channels_in_chain(int chain)
+int AudioEngine::n_channels_in_track(int track)
 {
-    if (chain <= static_cast<int>(_audio_graph.size()))
+    if (track <= static_cast<int>(_audio_graph.size()))
     {
-        return _audio_graph[chain]->input_channels();
+        return _audio_graph[track]->input_channels();
     }
     return 0;
 }
@@ -189,9 +189,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     auto state = _state.load();
 
     int start_channel = 0;
-    for (auto &graph : _audio_graph)
+    for (auto &track : _audio_graph)
     {
-        int no_of_channels = graph->input_channels();
+        int no_of_channels = track->input_channels();
         if (start_channel + no_of_channels <= in_buffer->channel_count())
         {
             ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
@@ -200,7 +200,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
             ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
                                                                                    start_channel,
                                                                                    no_of_channels);
-            graph->process_audio(ch_in, ch_out);
+            track->process_audio(ch_in, ch_out);
             start_channel += no_of_channels;
         } else
         {
@@ -300,97 +300,97 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::parameter_name_fro
     return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, "");
 }
 
-EngineReturnStatus AudioEngine::create_plugin_chain(const std::string& chain_name, int chain_channel_count)
+EngineReturnStatus AudioEngine::create_track(const std::string &track_id, int channel_count)
 {
-    if((chain_channel_count != 1 && chain_channel_count != 2))
+    if((channel_count != 1 && channel_count != 2))
     {
         MIND_LOG_ERROR("Invalid number of channels");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    PluginChain* chain = new PluginChain(chain_channel_count);
-    EngineReturnStatus status = _register_processor(chain, chain_name);
+    Track* track = new Track(channel_count);
+    EngineReturnStatus status = _register_processor(track, track_id);
     if (status != EngineReturnStatus::OK)
     {
-        delete chain;
+        delete track;
         return status;
     }
-    chain->set_event_output(&_main_out_queue);
+    track->set_event_output(&_main_out_queue);
     if (realtime())
     {
-        auto insert_event = RtEvent::make_insert_processor_event(chain);
-        auto add_event = RtEvent::make_add_plugin_chain_event(chain->id());
+        auto insert_event = RtEvent::make_insert_processor_event(track);
+        auto add_event = RtEvent::make_add_track_event(track->id());
         send_async_event(insert_event);
         send_async_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
         {
-            MIND_LOG_ERROR("Failed to insert/add chain {} to processing part", chain_name);
+            MIND_LOG_ERROR("Failed to insert/add track {} to processing part", track_id);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     } else
     {
-        _insert_processor_in_realtime_part(chain);
-        _audio_graph.push_back(chain);
+        _insert_processor_in_realtime_part(track);
+        _audio_graph.push_back(track);
     }
-    MIND_LOG_INFO("Plugin Chain {} successfully added to engine", chain_name);
+    MIND_LOG_INFO("Track {} successfully added to engine", track_id);
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::delete_plugin_chain(const std::string &chain_name)
+EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
 {
-    // TODO - Until it's decided how chain report what processors they have,
-    // we assume that the chain is manually emptied before deleting
-    auto chain_node = _processors.find(chain_name);
-    if (chain_node == _processors.end())
+    // TODO - Until it's decided how tracks report what processors they have,
+    // we assume that the track has no processors before deleting
+    auto track_node = _processors.find(track_name);
+    if (track_node == _processors.end())
     {
-        MIND_LOG_ERROR("Couldn't delete chain {}, not found", chain_name);
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+        MIND_LOG_ERROR("Couldn't delete track {}, not found", track_name);
+        return EngineReturnStatus::INVALID_TRACK;
     }
-    auto chain = chain_node->second.get();
+    auto track = track_node->second.get();
     if (realtime())
     {
-        auto remove_chain_event = RtEvent::make_remove_plugin_chain_event(chain->id());
-        auto delete_event = RtEvent::make_remove_processor_event(chain->id());
-        send_async_event(remove_chain_event);
+        auto remove_track_event = RtEvent::make_remove_track_event(track->id());
+        auto delete_event = RtEvent::make_remove_processor_event(track->id());
+        send_async_event(remove_track_event);
         send_async_event(delete_event);
-        bool removed = _event_receiver.wait_for_response(remove_chain_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        bool removed = _event_receiver.wait_for_response(remove_track_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
-            MIND_LOG_ERROR("Failed to remove processor {} from processing part", chain_name);
+            MIND_LOG_ERROR("Failed to remove processor {} from processing part", track_name);
         }
-        return _deregister_processor(chain_name);
+        return _deregister_processor(track_name);
     }
     else
     {
-        for (auto chain_in_graph = _audio_graph.begin(); chain_in_graph != _audio_graph.end(); ++chain)
+        for (auto track_in_graph = _audio_graph.begin(); track_in_graph != _audio_graph.end(); ++track)
         {
-            if (*chain_in_graph == chain)
+            if (*track_in_graph == track)
             {
-                _audio_graph.erase(chain_in_graph);
-                _remove_processor_from_realtime_part(chain->id());
-                return _deregister_processor(chain_name);
+                _audio_graph.erase(track_in_graph);
+                _remove_processor_from_realtime_part(track->id());
+                return _deregister_processor(track_name);
             }
-            MIND_LOG_WARNING("Plugin chain {} was not in the audio graph", chain_name);
+            MIND_LOG_WARNING("Plugin track {} was not in the audio graph", track_name);
         }
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+        return EngineReturnStatus::INVALID_TRACK;
     }
 }
 
-EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_name,
-                                                    const std::string& plugin_uid,
-                                                    const std::string& plugin_name,
-                                                    const std::string& plugin_path,
+EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_name,
+                                                    const std::string &plugin_uid,
+                                                    const std::string &plugin_name,
+                                                    const std::string &plugin_path,
                                                     PluginType plugin_type)
 {
-    auto chain_node = _processors.find(chain_name);
-    if (chain_node == _processors.end())
+    auto track_node = _processors.find(track_name);
+    if (track_node == _processors.end())
     {
-        MIND_LOG_ERROR("Chain name {} does not exist in processor list", chain_name);
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+        MIND_LOG_ERROR("Track named {} does not exist in processor list", track_name);
+        return EngineReturnStatus::INVALID_TRACK;
     }
-    auto chain = static_cast<PluginChain*>(chain_node->second.get());
+    auto track = static_cast<Track*>(track_node->second.get());
     Processor* plugin;
     switch (plugin_type)
     {
@@ -430,7 +430,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     {
         // In realtime mode we need to handle this in the audio thread
         auto insert_event = RtEvent::make_insert_processor_event(plugin);
-        auto add_event = RtEvent::make_add_processor_to_chain_event(plugin->id(), chain->id());
+        auto add_event = RtEvent::make_add_processor_to_track_event(plugin->id(), track->id());
         send_async_event(insert_event);
         send_async_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
@@ -445,7 +445,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
     {
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin);
-        chain->add(plugin);
+        track->add(plugin);
     }
     return EngineReturnStatus::OK;
 }
@@ -453,12 +453,12 @@ EngineReturnStatus AudioEngine::add_plugin_to_chain(const std::string& chain_nam
 /* TODO - In the future it should be possible to remove plugins without deleting them
  * and consequentally to add them to a different track or have plugins not associated
  * to a particular track. */
-EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chain_name, const std::string &plugin_name)
+EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &track_name, const std::string &plugin_name)
 {
-    auto chain_node = _processors.find(chain_name);
-    if (chain_node == _processors.end())
+    auto track_node = _processors.find(track_name);
+    if (track_node == _processors.end())
     {
-        return EngineReturnStatus::INVALID_PLUGIN_CHAIN;
+        return EngineReturnStatus::INVALID_TRACK;
     }
     auto processor_node = _processors.find(plugin_name);
     if (processor_node == _processors.end())
@@ -466,11 +466,11 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
         return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
     auto processor = processor_node->second.get();
-    PluginChain* chain = static_cast<PluginChain*>(chain_node->second.get());
+    Track* track = static_cast<Track*>(track_node->second.get());
     if (realtime())
     {
         // Send events to handle this in the rt domain
-        auto remove_event = RtEvent::make_remove_processor_from_chain_event(processor->id(), chain->id());
+        auto remove_event = RtEvent::make_remove_processor_from_track_event(processor->id(), track->id());
         auto delete_event = RtEvent::make_remove_processor_event(processor->id());
         send_async_event(remove_event);
         send_async_event(delete_event);
@@ -483,9 +483,9 @@ EngineReturnStatus AudioEngine::remove_plugin_from_chain(const std::string &chai
     }
     else
     {
-        if (!chain->remove(processor->id()))
+        if (!track->remove(processor->id()))
         {
-            MIND_LOG_ERROR("Failed to remove processor {} from chain", plugin_name);
+            MIND_LOG_ERROR("Failed to remove processor {} from track {}", plugin_name, track_name);
         }
         _remove_processor_from_realtime_part(processor->id());
     }
@@ -517,14 +517,14 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             typed_event->set_handled(ok);
             break;
         }
-        case RtEventType::ADD_PROCESSOR_TO_CHAIN:
+        case RtEventType::ADD_PROCESSOR_TO_TRACK:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
+            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
             Processor* processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
-            if (chain && processor)
+            if (track && processor)
             {
-                chain->add(processor);
+                track->add(processor);
                 typed_event->set_handled(true);
             }
             else
@@ -533,46 +533,46 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             }
             break;
         }
-        case RtEventType::REMOVE_PROCESSOR_FROM_CHAIN:
+        case RtEventType::REMOVE_PROCESSOR_FROM_TRACK:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
-            if (chain)
+            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+            if (track)
             {
-                bool ok = chain->remove(typed_event->processor());
+                bool ok = track->remove(typed_event->processor());
                 typed_event->set_handled(ok);
             }
             else
                 typed_event->set_handled(true);
             break;
         }
-        case RtEventType::ADD_PLUGIN_CHAIN:
+        case RtEventType::ADD_TRACK:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
-            if (chain)
+            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+            if (track)
             {
-                _audio_graph.push_back(chain);
+                _audio_graph.push_back(track);
                 typed_event->set_handled(true);
             }
             else
                 typed_event->set_handled(false);
             break;
         }
-        case RtEventType::REMOVE_PLUGIN_CHAIN:
+        case RtEventType::REMOVE_TRACK:
         {
             auto typed_event = event.processor_reorder_event();
-            PluginChain* chain = static_cast<PluginChain*>(_realtime_processors[typed_event->chain()]);
-            if (chain)
+            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+            if (track)
             {
                 for (auto i = _audio_graph.begin(); i != _audio_graph.end(); ++i)
                 {
-                    if ((*i)->id() == typed_event->chain())
+                    if ((*i)->id() == typed_event->track())
                     {
                         _audio_graph.erase(i);
+                        typed_event->set_handled(true);
+                        break;
                     }
-                    typed_event->set_handled(true);
-                    break;
                 }
             }
             else
@@ -582,7 +582,7 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
         case RtEventType::SET_BYPASS:
         {
             auto typed_event = event.processor_command_event();
-            auto processor = static_cast<PluginChain*>(_realtime_processors[typed_event->processor_id()]);
+            auto processor = static_cast<Track*>(_realtime_processors[typed_event->processor_id()]);
             if (processor)
             {
                 processor->set_bypassed(typed_event->value());

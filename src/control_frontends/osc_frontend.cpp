@@ -82,7 +82,7 @@ static int osc_send_keyboard_event(const char* /*path*/,
     return 0;
 }
 
-static int osc_add_chain(const char* /*path*/,
+static int osc_add_track(const char* /*path*/,
                          const char* /*types*/,
                          lo_arg** argv,
                          int /*argc*/,
@@ -92,12 +92,12 @@ static int osc_add_chain(const char* /*path*/,
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string name(&argv[0]->s);
     int channels = argv[1]->i;
-    MIND_LOG_DEBUG("Got an add_processor request {} {}", name, channels);
-    instance->send_add_chain_event(name, channels);
+    MIND_LOG_DEBUG("Got an osc_add_track request {} {}", name, channels);
+    instance->send_add_track_event(name, channels);
     return 0;
 }
 
-static int osc_delete_chain(const char* /*path*/,
+static int osc_delete_track(const char* /*path*/,
                             const char* /*types*/,
                             lo_arg** argv,
                             int /*argc*/,
@@ -106,8 +106,8 @@ static int osc_delete_chain(const char* /*path*/,
 {
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string name(&argv[0]->s);
-    MIND_LOG_DEBUG("Got a delete_chain request {}", name);
-    instance->send_remove_chain_event(name);
+    MIND_LOG_DEBUG("Got an osc_delete_track request {}", name);
+    instance->send_remove_track_event(name);
     return 0;
 }
 
@@ -119,7 +119,7 @@ static int osc_add_processor(const char* /*path*/,
                              void* user_data)
 {
     auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string chain(&argv[0]->s);
+    std::string track(&argv[0]->s);
     std::string uid(&argv[1]->s);
     std::string name(&argv[2]->s);
     std::string file(&argv[3]->s);
@@ -145,7 +145,7 @@ static int osc_add_processor(const char* /*path*/,
         MIND_LOG_WARNING("Unrecognized plugin type \"{}\"", type);
         return 0;
     }
-    instance->send_add_processor_event(chain, uid, name, file, processor_type);
+    instance->send_add_processor_event(track, uid, name, file, processor_type);
     return 0;
 }
 
@@ -157,10 +157,10 @@ static int osc_delete_processor(const char* /*path*/,
                                 void* user_data)
 {
     auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string chain(&argv[0]->s);
+    std::string track(&argv[0]->s);
     std::string name(&argv[1]->s);
-    MIND_LOG_DEBUG("Got a delete_processor request {} from {}", name, chain);
-    instance->send_remove_processor_event(chain, name);
+    MIND_LOG_DEBUG("Got a delete_processor request {} from {}", name, track);
+    instance->send_remove_processor_event(track, name);
     return 0;
 }
 
@@ -243,17 +243,17 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
     return true;
 }
 
-bool OSCFrontend::connect_kb_to_track(const std::string &chain_name)
+bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
 {
     std::string osc_path = "/keyboard_event/";
     engine::EngineReturnStatus status;
     ObjectId processor_id;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(chain_name);
+    std::tie(status, processor_id) = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
-    osc_path = osc_path + spaces_to_underscore(chain_name);
+    osc_path = osc_path + spaces_to_underscore(track_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -282,10 +282,10 @@ void OSCFrontend::connect_all()
             }
         }
     }
-    auto& chains = _engine->all_chains();
-    for (auto& chain : chains)
+    auto& tracks = _engine->all_tracks();
+    for (auto& track : tracks)
     {
-        connect_kb_to_track(chain->name());
+        connect_kb_to_track(track->name());
     }
 }
 
@@ -312,8 +312,8 @@ void OSCFrontend::_stop_server()
 
 void OSCFrontend::setup_engine_control()
 {
-    lo_server_thread_add_method(_osc_server, "/engine/add_chain", "si", osc_add_chain, this);
-    lo_server_thread_add_method(_osc_server, "/engine/delete_chain", "s", osc_delete_chain, this);
+    lo_server_thread_add_method(_osc_server, "/engine/add_track", "si", osc_add_track, this);
+    lo_server_thread_add_method(_osc_server, "/engine/delete_track", "s", osc_delete_track, this);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
 }
@@ -327,15 +327,15 @@ void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
     switch (event->type())
     {
-        case EventType::ADD_CHAIN:
-            MIND_LOG_INFO("Add chain {} completed with status {}({})",
-                          static_cast<AddChainEvent*>(event)->name(),
+        case EventType::ADD_TRACK:
+            MIND_LOG_INFO("Add track {} completed with status {}({})",
+                          static_cast<AddTrackEvent*>(event)->name(),
                           return_status == 0? "ok" : "failure", return_status);
             break;
 
-        case EventType::REMOVE_CHAIN:
-            MIND_LOG_INFO("Remove chain {} completed with status {}({})",
-                          static_cast<RemoveChainEvent*>(event)->name(),
+        case EventType::REMOVE_TRACK:
+            MIND_LOG_INFO("Remove track {} completed with status {}({})",
+                          static_cast<RemoveTrackEvent*>(event)->name(),
                           return_status == 0? "ok" : "failure", return_status);
             break;
 

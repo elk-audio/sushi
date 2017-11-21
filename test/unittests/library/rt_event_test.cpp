@@ -82,17 +82,17 @@ TEST (TestPluginEvents, TestFactoryFunction)
     event = RtEvent::make_remove_processor_event(123u);
     EXPECT_EQ(RtEventType::REMOVE_PROCESSOR, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
-    EXPECT_EQ(0u, event.processor_reorder_event()->chain());
+    EXPECT_EQ(0u, event.processor_reorder_event()->track());
 
-    event = RtEvent::make_add_processor_to_chain_event(ObjectId(123), ObjectId(456));
-    EXPECT_EQ(RtEventType::ADD_PROCESSOR_TO_CHAIN, event.type());
+    event = RtEvent::make_add_processor_to_track_event(ObjectId(123), ObjectId(456));
+    EXPECT_EQ(RtEventType::ADD_PROCESSOR_TO_TRACK, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
-    EXPECT_EQ(456u, event.processor_reorder_event()->chain());
+    EXPECT_EQ(456u, event.processor_reorder_event()->track());
 
-    event = RtEvent::make_remove_processor_from_chain_event(ObjectId(123), ObjectId(456));
-    EXPECT_EQ(RtEventType::REMOVE_PROCESSOR_FROM_CHAIN, event.type());
+    event = RtEvent::make_remove_processor_from_track_event(ObjectId(123), ObjectId(456));
+    EXPECT_EQ(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
-    EXPECT_EQ(456u, event.processor_reorder_event()->chain());
+    EXPECT_EQ(456u, event.processor_reorder_event()->track());
 }
 
 TEST(TestPluginEvents, TestReturnableEvents)

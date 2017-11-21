@@ -2,7 +2,7 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "plugin_chains" : [
+    "tracks" : [
         {
             "name" : "left",
             "mode" : "stereo",
@@ -86,17 +86,17 @@
 
     ],
     "midi" : {
-        "chain_connections": [
+        "track_connections": [
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "left",
+                "track": "left",
                 "raw_midi": false
             },
             {
                 "port": 0,
                 "channel": 10,
-                "chain": "right",
+                "track": "right",
                 "raw_midi": true
             }
         ],

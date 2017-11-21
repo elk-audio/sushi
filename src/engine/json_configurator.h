@@ -4,7 +4,7 @@
  *
  * @details This file contains class JsonConfigurator which provides public methods
  * to read configuration data from Json config files, validate its schema and configure
- * the engine with it. It can load plugin chains and midi connections from the config file.
+ * the engine with it. It can load tracks and midi connections from the config file.
  */
 
 #ifndef SUSHI_CONFIG_FROM_JSON_H
@@ -22,7 +22,7 @@ enum class JsonConfigReturnStatus
 {
     OK,
     INVALID_CONFIGURATION,
-    INVALID_CHAIN_NAME,
+    INVALID_TRACK_NAME,
     INVALID_PLUGIN_PATH,
     INVALID_PARAMETER,
     INVALID_PLUGIN_NAME,
@@ -35,7 +35,7 @@ enum class JsonConfigReturnStatus
 enum class JsonSection
 {
     HOST_CONFIG,
-    CHAINS,
+    TRACKS,
     MIDI,
     EVENTS
 };
@@ -57,12 +57,12 @@ public:
     JsonConfigReturnStatus load_host_config(const std::string& path_to_file);
 
     /**
-     * @brief reads a json config file, searches for valid plugin chain
-     * definitions and configures the engine with the specified chains.
+     * @brief reads a json config file, searches for valid tracks
+     * definitions and configures the engine with the specified tracks.
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_chains(const std::string& path_to_file);
+    JsonConfigReturnStatus load_tracks(const std::string &path_to_file);
 
     /**
      * @brief reads a json config file, searches for valid MIDI connections and
@@ -84,7 +84,7 @@ public:
 private:
     /**
      * @brief Helper function to parse the json file using the JSONCPP library.
-     *        Used by load_chains and load_midi.
+     *        Used by load_tracks and load_midi.
      * @param path_to_file String which denotes the path of the file.
      * @param config rapidjson document object where the json data is stored after reading from the file.
      * @param section Jsonsection to denote which section is to be validated.
@@ -93,12 +93,12 @@ private:
     JsonConfigReturnStatus _parse_file(const std::string& path_to_file, rapidjson::Document& config, JsonSection section);
 
     /**
-     * @brief Uses Engine's API to create a single plugin chain with the specified number of channels and adds
-     *        the respective plugins to the chain if they are defined in the file. Used by load_chains.
-     * @param chain_def rapidjson document object representing a single plugin chain and its details.
+     * @brief Uses Engine's API to create a single track with the specified number of channels and adds
+     *        the respective plugins to the track if they are defined in the file. Used by load_tracks.
+     * @param track_def rapidjson document object representing a single track and its details.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus _make_chain(const rapidjson::Value& chain_def);
+    JsonConfigReturnStatus _make_track(const rapidjson::Value &track_def);
 
     /**
      * @brief Helper function to extract the number of midi channels in the midi definition.

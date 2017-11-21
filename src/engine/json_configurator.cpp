@@ -30,24 +30,24 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::load_chains(const std::string& path_to_file)
+JsonConfigReturnStatus JsonConfigurator::load_tracks(const std::string &path_to_file)
 {
     rapidjson::Document config;
-    auto status = _parse_file(path_to_file, config, JsonSection::CHAINS);
+    auto status = _parse_file(path_to_file, config, JsonSection::TRACKS);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
 
-    for (auto& chain : config["plugin_chains"].GetArray())
+    for (auto& track : config["tracks"].GetArray())
     {
-        status = _make_chain(chain);
+        status = _make_track(track);
         if (status != JsonConfigReturnStatus::OK)
         {
             return status;
         }
     }
-    MIND_LOG_INFO("Successfully configured engine with plugins chains in JSON config file \"{}\"", path_to_file);
+    MIND_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", path_to_file);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -61,23 +61,23 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
     }
 
     const rapidjson::Value& midi = config["midi"];
-    if(midi.HasMember("chain_connections"))
+    if(midi.HasMember("track_connections"))
     {
-        for (const auto& con : midi["chain_connections"].GetArray())
+        for (const auto& con : midi["track_connections"].GetArray())
         {
             bool raw_midi = con["raw_midi"].GetBool();
             MidiDispatcherStatus res;
             if (raw_midi)
             {
                 res = _midi_dispatcher->connect_raw_midi_to_track(con["port"].GetInt(),
-                                                                  con["chain"].GetString(),
+                                                                  con["track"].GetString(),
                                                                   _get_midi_channel(con["channel"]));
 
             }
             else
             {
                 res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
-                                                            con["chain"].GetString(),
+                                                            con["track"].GetString(),
                                                             _get_midi_channel(con["channel"]));
             }
             if (res != MidiDispatcherStatus::OK)
@@ -88,19 +88,19 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
-                                       "chain connection in Json config file.", con["chain"].GetString());
-                return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+                MIND_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                       "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
 
-    if(midi.HasMember("chain_out_connections"))
+    if(midi.HasMember("track_out_connections"))
     {
-        for (const auto& con : midi["chain_out_connections"].GetArray())
+        for (const auto& con : midi["track_out_connections"].GetArray())
         {
             auto res = _midi_dispatcher->connect_track_to_output(con["port"].GetInt(),
-                                                                 con["chain"].GetString(),
+                                                                 con["track"].GetString(),
                                                                  _get_midi_channel(con["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -110,9 +110,9 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                MIND_LOG_ERROR("Invalid plugin chain \"{}\" for midi "
-                                       "chain connection in Json config file.", con["chain"].GetString());
-                return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+                MIND_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                       "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -140,7 +140,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
                 {
                     MIND_LOG_ERROR("Invalid plugin name \"{}\" specified "
                                            "for midi cc mappings in Json Config file.", cc_map["plugin_name"].GetString());
-                    return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+                    return JsonConfigReturnStatus::INVALID_TRACK_NAME;
                 }
                 MIND_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
                                                                             cc_map["parameter_name"].GetString(),
@@ -214,10 +214,10 @@ JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::_make_chain(const rapidjson::Value& chain_def)
+JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &track_def)
 {
     int num_channels = 0;
-    if (chain_def["mode"] == "mono")
+    if (track_def["mode"] == "mono")
     {
         num_channels = 1;
     }
@@ -226,17 +226,16 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const rapidjson::Value& cha
         num_channels = 2;
     }
 
-    auto chain_name = chain_def["name"].GetString();
-    auto status = _engine->create_plugin_chain(chain_name, num_channels);
+    auto name = track_def["name"].GetString();
+    auto status = _engine->create_track(name, num_channels);
     if(status != EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Plugin Chain Name {} in JSON config file already exists in engine", chain_name);
-        return JsonConfigReturnStatus::INVALID_CHAIN_NAME;
+        MIND_LOG_ERROR("Plugin Chain Name {} in JSON config file already exists in engine", name);
+        return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
-    MIND_LOG_DEBUG("Successfully added Plugin Chain "
-                           "\"{}\" to the engine", chain_name);
+    MIND_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
 
-    for(const auto& def : chain_def["plugins"].GetArray())
+    for(const auto& def : track_def["plugins"].GetArray())
     {
         std::string plugin_uid;
         std::string plugin_path;
@@ -260,7 +259,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const rapidjson::Value& cha
             plugin_type = PluginType::VST3X;
         }
 
-        status = _engine->add_plugin_to_chain(chain_name, plugin_uid, plugin_name, plugin_path, plugin_type);
+        status = _engine->add_plugin_to_track(name, plugin_uid, plugin_name, plugin_path, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
@@ -272,10 +271,10 @@ JsonConfigReturnStatus JsonConfigurator::_make_chain(const rapidjson::Value& cha
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
         MIND_LOG_DEBUG("Successfully added Plugin \"{}\" to"
-                               " Chain \"{}\"", plugin_name, chain_name);
+                               " Chain \"{}\"", plugin_name, name);
     }
 
-    MIND_LOG_DEBUG("Successfully added Plugin Chain {} to the engine", chain_name);
+    MIND_LOG_DEBUG("Successfully added Track {} to the engine", name);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -299,9 +298,9 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, Jso
                                                               ;
             break;
 
-        case JsonSection::CHAINS:
+        case JsonSection::TRACKS:
             schema_char_array =
-                #include "json_schemas/plugin_chains_schema.json"
+                #include "json_schemas/tracks_schema.json"
                                                                 ;
             break;
 

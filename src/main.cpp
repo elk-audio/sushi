@@ -205,10 +205,10 @@ int main(int argc, char* argv[])
         MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
         std::exit(1);
     }
-    status = configurator.load_chains(config_filename);
+    status = configurator.load_tracks(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load chains from Json config file");
+        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
         std::exit(1);
     }
     configurator.load_midi(config_filename);
