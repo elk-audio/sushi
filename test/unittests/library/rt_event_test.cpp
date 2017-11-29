@@ -41,7 +41,7 @@ TEST (TestPluginEvents, TestFactoryFunction)
 
     event = RtEvent::make_wrapped_midi_event(126, 5, {6u, 7u, 8u, 0u});
     EXPECT_EQ(RtEventType::WRAPPED_MIDI_EVENT, event.type());
-    auto wm_event = event.wrapper_midi_event();
+    auto wm_event = event.wrapped_midi_event();
     EXPECT_EQ(ObjectId(126), wm_event->processor_id());
     EXPECT_EQ(5, wm_event->sample_offset());
     EXPECT_EQ(6, wm_event->midi_data()[0]);

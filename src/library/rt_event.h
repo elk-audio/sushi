@@ -342,7 +342,7 @@ public:
         return &_keyboard_event;
     }
 
-    const WrappedMidiRtEvent* wrapper_midi_event() const
+    const WrappedMidiRtEvent* wrapped_midi_event() const
     {
         assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
         return &_wrapped_midi_event;

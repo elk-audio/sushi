@@ -88,6 +88,20 @@ TEST_F(TrackTest, TestChannelManagement)
     EXPECT_EQ(1, gain_plugin.output_channels());
 }
 
+TEST_F(TrackTest, TestMultibusManagement)
+{
+    Track module_under_test(2, 2);
+    EXPECT_EQ(2, module_under_test.input_busses());
+    EXPECT_EQ(2, module_under_test.output_busses());
+    EXPECT_EQ(4, module_under_test.parameter_count());
+    EXPECT_EQ(4, module_under_test.input_buffer().channel_count());
+    EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
+    EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
+
+    //test_processor.set_input_channels(2);
+
+}
+
 TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor;
@@ -118,8 +132,17 @@ TEST_F(TrackTest, TestEmptyChainProcessing)
     test_utils::assert_buffer_value(1.0f, in_buffer);
 
     _module_under_test.process_audio(in_buffer, out_buffer);
-
     test_utils::assert_buffer_value(1.0f, out_buffer);
+}
+
+TEST_F(TrackTest, TestRendering)
+{
+    /* Test processing using the render function with busses */
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    _module_under_test.render();
+    auto out = _module_under_test.output_bus(0);
+    test_utils::assert_buffer_value(1.0f, out);
 }
 
 TEST_F(TrackTest, TestEventProcessing)
@@ -166,4 +189,24 @@ TEST_F(TrackTest, TestEventForwarding)
     /* Assert that the processor id of the event is that of the track and
      * not the id set. */
     ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
+}
+
+TEST(TestStandAloneFunctions, TestApplyPanAndGain)
+{
+    ChunkSampleBuffer buffer(2);
+    test_utils::fill_sample_buffer(buffer, 2.0f);
+    apply_pan_and_gain(buffer, 5.0f, 0);
+    test_utils::assert_buffer_value(10.0f, buffer);
+
+    /* Pan hard right */
+    test_utils::fill_sample_buffer(buffer, 1.0f);
+    apply_pan_and_gain(buffer, 1.0f, 1.0f);
+    EXPECT_EQ(0.0f, buffer.channel(LEFT_CHANNEL_INDEX)[0]);
+    EXPECT_NEAR(1.41f, buffer.channel(RIGHT_CHANNEL_INDEX)[0], 0.01f);
+
+    /* Pan mid left */
+    test_utils::fill_sample_buffer(buffer, 1.0f);
+    apply_pan_and_gain(buffer, 1.0f, -0.5f);
+    EXPECT_NEAR(1.2f, buffer.channel(LEFT_CHANNEL_INDEX)[0], 0.01f);
+    EXPECT_EQ(0.5f, buffer.channel(RIGHT_CHANNEL_INDEX)[0]);
 }
