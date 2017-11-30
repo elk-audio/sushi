@@ -88,7 +88,7 @@ TEST_F(TrackTest, TestChannelManagement)
     EXPECT_EQ(1, gain_plugin.output_channels());
 }
 
-TEST_F(TrackTest, TestMultibusManagement)
+TEST_F(TrackTest, TestMultibusSetup)
 {
     Track module_under_test(2, 2);
     EXPECT_EQ(2, module_under_test.input_busses());
@@ -97,9 +97,6 @@ TEST_F(TrackTest, TestMultibusManagement)
     EXPECT_EQ(4, module_under_test.input_buffer().channel_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
-
-    //test_processor.set_input_channels(2);
-
 }
 
 TEST_F(TrackTest, TestAddAndRemove)
@@ -121,28 +118,53 @@ TEST_F(TrackTest, TestNestedBypass)
     EXPECT_TRUE(test_processor.bypassed());
 }
 
-TEST_F(TrackTest, TestEmptyChainProcessing)
+TEST_F(TrackTest, TestEmptyChainRendering)
 {
-    /* Test that audio goes right through an empty track unaffected */
-    ChunkSampleBuffer in_buffer(2);
-    ChunkSampleBuffer out_buffer(2);
-    _module_under_test.set_input_channels(2);
-    _module_under_test.set_output_channels(2);
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    test_utils::assert_buffer_value(1.0f, in_buffer);
-
-    _module_under_test.process_audio(in_buffer, out_buffer);
-    test_utils::assert_buffer_value(1.0f, out_buffer);
-}
-
-TEST_F(TrackTest, TestRendering)
-{
-    /* Test processing using the render function with busses */
     auto in_bus = _module_under_test.input_bus(0);
     test_utils::fill_sample_buffer(in_bus, 1.0f);
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
     test_utils::assert_buffer_value(1.0f, out);
+}
+
+TEST_F(TrackTest, TestRenderingWithProcessors)
+{
+    passthrough_plugin::PassthroughPlugin plugin;
+    plugin.init(44100);
+    _module_under_test.add(&plugin);
+
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    _module_under_test.render();
+    auto out = _module_under_test.output_bus(0);
+    test_utils::assert_buffer_value(1.0f, out);
+}
+
+TEST_F(TrackTest, TestPanAndGain)
+{
+    passthrough_plugin::PassthroughPlugin plugin;
+    plugin.init(44100);
+    _module_under_test.add(&plugin);
+    auto gain_param = _module_under_test.parameter_from_name("gain");
+    auto pan_param = _module_under_test.parameter_from_name("pan");
+    ASSERT_FALSE(gain_param == nullptr);
+    ASSERT_FALSE(pan_param == nullptr);
+
+    /* Pan hard right and volume up 6 dB */
+    auto gain_ev = RtEvent::make_parameter_change_event(0, 0, gain_param->id(), 6.0f);
+    auto pan_ev = RtEvent::make_parameter_change_event(0, 0, pan_param->id(), 1.0f);
+
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    _module_under_test.process_event(gain_ev);
+    _module_under_test.process_event(pan_ev);
+
+    _module_under_test.render();
+    auto out = _module_under_test.output_bus(0);
+
+    /* Exact values will be tested by the pan function, just test that it had an effect */
+    EXPECT_EQ(0.0f, out.channel(LEFT_CHANNEL_INDEX)[0]);
+    EXPECT_LT(2.0f, out.channel(RIGHT_CHANNEL_INDEX)[0]);
 }
 
 TEST_F(TrackTest, TestEventProcessing)
@@ -161,7 +183,7 @@ TEST_F(TrackTest, TestEventProcessing)
     RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0);
 
     _module_under_test.process_event(event);
-    _module_under_test.process_audio(buffer, buffer);
+    _module_under_test.render();
     ASSERT_FALSE(event_queue.empty());
 }
 

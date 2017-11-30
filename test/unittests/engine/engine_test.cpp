@@ -14,6 +14,7 @@
 #include "library/mind_allocator.cpp"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
+constexpr int TEST_CHANNEL_COUNT = 4;
 using namespace sushi;
 using namespace sushi::engine;
 
@@ -30,6 +31,8 @@ protected:
     void SetUp()
     {
         _module_under_test = new AudioEngine(SAMPLE_RATE);
+        _module_under_test->set_audio_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_audio_output_channels(TEST_CHANNEL_COUNT);
     }
 
     void TearDown()
@@ -49,24 +52,36 @@ TEST_F(TestEngine, TestInstantiation)
  */
 TEST_F(TestEngine, TestProcess)
 {
-    /* Add a plugin track since the engine by default doesn't have any */
+    /* Add a plugin track and connect it to inputs and outputs */
     _module_under_test->create_track("test_track", 2);
+    auto res = _module_under_test->connect_audio_input_bus(0, 0, "test_track");
+    ASSERT_EQ(EngineReturnStatus::OK, res);
+    res = _module_under_test->connect_audio_output_bus(0, 0, "test_track");
+    ASSERT_EQ(EngineReturnStatus::OK, res);
 
     /* Run tests */
-    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(4);
-    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(4);
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     test_utils::fill_sample_buffer(out_buffer, 0.5f);
 
     _module_under_test->process_chunk(&in_buffer, &out_buffer);
 
     /* Separate the first 2 channels, which should pass through unprocessed
-     * and the 2 last, which should be set to 0 */
-    auto pair_1 = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
-    auto pair_2 = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 2, 2);
+     * and the 2 last, which should be set to 0 since they are not connected to anything */
+    auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
+    auto second_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 2, 2);
 
-    test_utils::assert_buffer_value(1.0f, pair_1);
-    test_utils::assert_buffer_value(0.0f, pair_2);
+    test_utils::assert_buffer_value(1.0f, main_bus);
+    test_utils::assert_buffer_value(0.0f, second_bus);
+
+    /* Add plugin to the track and do the same thing */
+    res = _module_under_test->add_plugin_to_track("test_track", "sushi.testing.gain",
+                                                  "gain", "", PluginType::INTERNAL);
+    ASSERT_EQ(EngineReturnStatus::OK, res);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+    main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
+    test_utils::assert_buffer_value(1.0f, main_bus);
 }
 
 TEST_F(TestEngine, TestUidNameMapping)

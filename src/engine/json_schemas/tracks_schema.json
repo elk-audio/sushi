@@ -24,6 +24,50 @@ R"(
           {
             "enum": ["mono", "stereo"]
           },
+          "inputs":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "properties":
+              {
+                "engine_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "track_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["engine_bus", "track_bus"]
+            }
+          },
+          "outputs":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "properties":
+              {
+                "engine_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "track_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["engine_bus", "track_bus"]
+            }
+          },
           "plugins":
           {
             "type": "array",

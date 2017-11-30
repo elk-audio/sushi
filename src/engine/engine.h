@@ -45,6 +45,7 @@ enum class EngineReturnStatus
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
     INVALID_TRACK,
+    INVALID_BUS,
     QUEUE_FULL
 };
 
@@ -102,16 +103,16 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_input(int /*left_channel_idx*/,
-                                                          int /*right_channel_idx*/,
-                                                          const std::string& /*track_id*/)
+    virtual EngineReturnStatus connect_audio_input_bus(int /*engine_bus_id */,
+                                                       int /*track_bus_id*/,
+                                                       const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_output(int /*left_channel_idx*/,
-                                                           int /*right_channel_idx*/,
-                                                           const std::string& /*track_id*/)
+    virtual EngineReturnStatus connect_audio_output_bus(int /*engine_bus_id */,
+                                                        int /*track_bus_id*/,
+                                                        const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -220,6 +221,31 @@ public:
      * @param sample_rate The new sample rate in Hz
      */
     void set_sample_rate(float sample_rate) override;
+
+    /**
+     * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
+     *        given track.
+     * @param input_bus The engine input bus to use.
+     *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
+     * @param track_bus The input bus of the track to connect to.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    virtual EngineReturnStatus connect_audio_input_bus(int input_bus,
+                                                       int track_bus,
+                                                       const std::string& track_name);
+
+    /**
+     * @brief Connect an output bus of a track to an output bus (stereo pair)
+     * @param output_bus The engine outpus bus to use.
+     *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
+     * @param track_bus The output bus of the track to connect from.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    virtual EngineReturnStatus connect_audio_output_bus(int output_bus,
+                                                        int track_bus,
+                                                        const std::string& track_name);
 
     /**
      * @brief Return the number of configured channels for a specific track
@@ -429,6 +455,13 @@ private:
      */
     bool _handle_internal_events(RtEvent &event);
 
+    struct Connection
+    {
+        int engine_bus;
+        int track_bus;
+        ObjectId track;
+    };
+
     std::vector<Track*> _audio_graph;
 
     // All registered processors indexed by their unique name
@@ -437,6 +470,9 @@ private:
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+
+    std::vector<Connection> _in_bus_connections;
+    std::vector<Connection> _out_bus_connections;
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 

@@ -6,6 +6,18 @@
         {
             "name" : "left",
             "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
             "plugins" : [
                 {
                     "uid" : "sushi.testing.passthrough",
@@ -27,6 +39,18 @@
         {
             "name" : "right",
             "mode" : "mono",
+            "inputs" : [
+                {
+                    "engine_bus" : 1,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 1,
+                    "track_bus" : 0
+                }
+            ],
             "plugins" : [
                 {
                     "uid" : "sushi.testing.gain",

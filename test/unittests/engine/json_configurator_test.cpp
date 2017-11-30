@@ -10,6 +10,8 @@
 #include "test_utils.h"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
+constexpr unsigned int ENGINE_CHANNELS = 8;
+
 using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::jsonconfig;
@@ -23,6 +25,8 @@ protected:
     void SetUp()
     {
         _engine = new AudioEngine(SAMPLE_RATE);
+        _engine->set_audio_input_channels(ENGINE_CHANNELS);
+        _engine->set_audio_output_channels(ENGINE_CHANNELS);
         _midi_dispatcher = new MidiDispatcher(_engine);
         _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher);
         _path = test_utils::get_data_dir_path();
@@ -122,9 +126,13 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     rapidjson::Value track(rapidjson::kObjectType);
     rapidjson::Value mode("mono");
     rapidjson::Value name("track_without_plugins");
+    rapidjson::Value inputs(rapidjson::kArrayType);
+    rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     track.AddMember("mode", mode, test_cfg.GetAllocator());
     track.AddMember("name", name, test_cfg.GetAllocator());
+    track.AddMember("inputs", inputs, test_cfg.GetAllocator());
+    track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     track.AddMember("plugins", plugins, test_cfg.GetAllocator());
     ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
 
@@ -237,9 +245,13 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
     rapidjson::Value example_track(rapidjson::kObjectType);
     rapidjson::Value track_name("track_name");
     rapidjson::Value mode("mono");
+    rapidjson::Value inputs(rapidjson::kArrayType);
+    rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     example_track.AddMember("name", track_name, test_cfg.GetAllocator());
     example_track.AddMember("mode", mode, test_cfg.GetAllocator());
+    example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
+    example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     example_track.AddMember("plugins", plugins, test_cfg.GetAllocator());
     test_cfg["tracks"].PushBack(example_track, test_cfg.GetAllocator());
 

@@ -36,6 +36,8 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_ERROR("Number of channels mismatch, check driver configuration.");
         return AudioFrontendStatus::INVALID_N_CHANNELS;
     }
+    _engine->set_audio_input_channels(RASPA_N_CHANNELS);
+    _engine->set_audio_output_channels(RASPA_N_CHANNELS);
 
     auto init_ret = raspa_init();
     if (init_ret < 0)

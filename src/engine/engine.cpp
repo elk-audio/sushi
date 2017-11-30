@@ -38,6 +38,42 @@ void AudioEngine::set_sample_rate(float sample_rate)
     }
 }
 
+EngineReturnStatus AudioEngine::connect_audio_input_bus(int input_bus, int track_bus, const std::string& track_name)
+{
+    auto processor_node = _processors.find(track_name);
+    if(processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_TRACK;
+    }
+    auto track = static_cast<Track*>(processor_node->second.get());
+    if (input_bus * 2  + 1 >= _audio_inputs || track_bus > track->input_busses())
+    {
+        return EngineReturnStatus::INVALID_BUS;
+    }
+    Connection con = {input_bus, track_bus, track->id()};
+    _in_bus_connections.push_back(con);
+    MIND_LOG_INFO("Connected inputs {} and {} to bus {} of track \"{}\"", input_bus * 2, input_bus * 2 + 1, track_bus, track_name);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int track_bus, const std::string& track_name)
+{
+    auto processor_node = _processors.find(track_name);
+    if(processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_TRACK;
+    }
+    auto track = static_cast<Track*>(processor_node->second.get());
+    if (output_bus * 2  + 1 >= _audio_outputs || track_bus > track->output_busses())
+    {
+        return EngineReturnStatus::INVALID_BUS;
+    }
+    Connection con = {output_bus, track_bus, track->id()};
+    _out_bus_connections.push_back(con);
+    MIND_LOG_INFO("Connected bus {} of track \"{}\" to outputs {} and {}", track_bus, track_name, output_bus * 2, output_bus * 2 + 1);
+    return EngineReturnStatus::OK;
+}
+
 bool AudioEngine::realtime()
 {
     return _state.load() != RealtimeState::STOPPED;
@@ -184,36 +220,28 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     {
         send_rt_event(in_event);
     }
-    /* Put the channels from in_buffer into the audio graph based on the graphs channel count
-     * Note that its assumed that number of input and output channels are equal. */
     auto state = _state.load();
 
-    int start_channel = 0;
-    for (auto &track : _audio_graph)
+    for (const auto& c : _in_bus_connections)
     {
-        int no_of_channels = track->input_channels();
-        if (start_channel + no_of_channels <= in_buffer->channel_count())
-        {
-            ChunkSampleBuffer ch_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer,
-                                                                                  start_channel,
-                                                                                  no_of_channels);
-            ChunkSampleBuffer ch_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
-                                                                                   start_channel,
-                                                                                   no_of_channels);
-            track->process_audio(ch_in, ch_out);
-            start_channel += no_of_channels;
-        } else
-        {
-            break;
-        }
+        auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer, c.engine_bus * 2, 2);
+        auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_bus(c.track_bus);
+        track_in = engine_in;
     }
-    if (start_channel < out_buffer->channel_count())
+
+    for (auto& track : _audio_graph)
     {
-        ChunkSampleBuffer remaining_channels = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer,
-                                                                                           start_channel,
-                                                                                           out_buffer->channel_count() - start_channel);
-        remaining_channels.clear();
+        track->render();
     }
+
+    out_buffer->clear();
+    for (const auto& c : _out_bus_connections)
+    {
+        auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_bus(c.track_bus);
+        auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, c.engine_bus * 2, 2);
+        engine_out = track_out;
+    }
+
     _state.store(update_state(state));
 }
 
@@ -600,7 +628,7 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
 }
 
 
-RealtimeState update_state(RealtimeState current_state)
+    RealtimeState update_state(RealtimeState current_state)
 {
     if (current_state == RealtimeState::STARTING)
     {

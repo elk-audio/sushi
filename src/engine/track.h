@@ -136,24 +136,22 @@ public:
     void set_input_channels(int channels) override
     {
         Processor::set_input_channels(channels);
-        update_channel_config();
+        _update_channel_config();
     }
 
     void set_output_channels(int channels) override
     {
         Processor::set_output_channels(channels);
-        update_channel_config();
+        _update_channel_config();
     }
 
     /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;
 
 private:
-    void _common_init();
-    /**
-     * @brief Loops through the chain of processors and negotiatiates channel configuration.
-     */
-    void update_channel_config();
+    void _init_parameters();
+    void _update_channel_config();
+    void _process_output_events();
 
     std::vector<Processor*> _processors;
     ChunkSampleBuffer _input_buffer;

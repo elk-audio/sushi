@@ -235,6 +235,27 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
     }
     MIND_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
 
+    for(const auto& con : track_def["inputs"].GetArray())
+    {
+        status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if(status != EngineReturnStatus::OK)
+        {
+            MIND_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
+            return JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS;
+        }
+    }
+
+    for(const auto& con : track_def["outputs"].GetArray())
+    {
+        status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if(status != EngineReturnStatus::OK)
+        {
+            MIND_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+        }
+    }
+
+
     for(const auto& def : track_def["plugins"].GetArray())
     {
         std::string plugin_uid;
