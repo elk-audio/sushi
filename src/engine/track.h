@@ -37,7 +37,7 @@ public:
      * @param channels The number of channels in the track.
      *                 Note that even mono tracks have a stereo output bus
      */
-    Track(int channels);
+    explicit Track(int channels);
 
     /**
      * @brief Create a track with a given number of stereo input and output busses
@@ -122,7 +122,8 @@ public:
     }
 
     /**
-     * @brief Render all processors of the track. Should be called after events have been
+     * @brief Render all processors of the track. Should be called after process_event() and
+     *        after input buffers have been filled
      */
     void render();
 
@@ -149,7 +150,7 @@ public:
     void send_event(RtEvent event) override;
 
 private:
-    void _init_parameters();
+    void _common_init();
     void _update_channel_config();
     void _process_output_events();
 
@@ -157,13 +158,11 @@ private:
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    // TODO - Maybe use a simpler queue here eventually
-    RtEventFifo _event_buffer;
+    RtEventFifo _kb_event_buffer;
 
     int _input_busses;
     int _output_busses;
     bool _multibus;
-
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;

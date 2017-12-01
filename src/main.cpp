@@ -193,8 +193,8 @@ int main(int argc, char* argv[])
 
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
-    engine.set_audio_input_channels(8);
-    engine.set_audio_output_channels(8);
+    engine.set_audio_input_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
+    engine.set_audio_output_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
     midi_dispatcher.set_midi_input_ports(1);
     midi_dispatcher.set_midi_output_ports(1);
 

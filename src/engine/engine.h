@@ -224,7 +224,7 @@ public:
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
-     *        given track.
+     *        given track. Not safe to use while the engine in running.
      * @param input_bus The engine input bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The input bus of the track to connect to.
@@ -233,10 +233,11 @@ public:
      */
     virtual EngineReturnStatus connect_audio_input_bus(int input_bus,
                                                        int track_bus,
-                                                       const std::string& track_name);
+                                                       const std::string& track_name) override;
 
     /**
      * @brief Connect an output bus of a track to an output bus (stereo pair)
+     *        Not safe to use while the engine in running.
      * @param output_bus The engine outpus bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The output bus of the track to connect from.
@@ -245,7 +246,7 @@ public:
      */
     virtual EngineReturnStatus connect_audio_output_bus(int output_bus,
                                                         int track_bus,
-                                                        const std::string& track_name);
+                                                        const std::string& track_name) override;
 
     /**
      * @brief Return the number of configured channels for a specific track

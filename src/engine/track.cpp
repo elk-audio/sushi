@@ -1,7 +1,6 @@
 
 #include "track.h"
 #include "logging.h"
-#include <iostream>
 #include <string>
 
 MIND_GET_LOGGER;
@@ -20,7 +19,7 @@ Track::Track(int channels) : _input_buffer{std::max(channels, 2)},
     _max_output_channels = channels;
     _current_input_channels = channels;
     _current_output_channels = channels;
-    _init_parameters();
+    _common_init();
 }
 
 Track::Track(int input_busses, int output_busses) :  _input_buffer{std::max(input_busses, output_busses) * 2},
@@ -34,7 +33,7 @@ Track::Track(int input_busses, int output_busses) :  _input_buffer{std::max(inpu
     _max_output_channels = channels;
     _current_input_channels = channels;
     _current_output_channels = channels;
-    _init_parameters();
+    _common_init();
 }
 
 
@@ -77,27 +76,27 @@ void Track::render()
 
 void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
 {
-    /* Alias the buffers so we can swap them without actually copying the data */
-    ChunkSampleBuffer in_bfr = ChunkSampleBuffer::create_non_owning_buffer(in);
-    ChunkSampleBuffer out_bfr = ChunkSampleBuffer::create_non_owning_buffer(out);
+    /* Alias the buffers so we can swap them without copying the underlying data */
+    ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(in);
+    ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
 
     for (auto &processor : _processors)
     {
-        while (!_event_buffer.empty()) // This should only contain keyboard/note events
+        while (!_kb_event_buffer.empty())
         {
             RtEvent event;
-            if (_event_buffer.pop(event))
+            if (_kb_event_buffer.pop(event))
             {
                 processor->process_event(event);
             }
         }
-        ChunkSampleBuffer in_tmp = ChunkSampleBuffer::create_non_owning_buffer(in_bfr, 0, processor->input_channels());
-        ChunkSampleBuffer out_tmp = ChunkSampleBuffer::create_non_owning_buffer(out_bfr, 0, processor->output_channels());
-        processor->process_audio(in_tmp, out_tmp);
-        std::swap(in_bfr, out_bfr);
+        ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
+        ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
+        processor->process_audio(proc_in, proc_out);
+        std::swap(aliased_in, aliased_out);
     }
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
-    ChunkSampleBuffer output = ChunkSampleBuffer::create_non_owning_buffer(in_bfr, 0, output_channels);
+    ChunkSampleBuffer output = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, output_channels);
     out = output;
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
@@ -114,7 +113,7 @@ void Track::process_event(RtEvent event)
         case RtEventType::NOTE_OFF:
         case RtEventType::NOTE_AFTERTOUCH:
         case RtEventType::WRAPPED_MIDI_EVENT:
-            _event_buffer.push(event);
+            _kb_event_buffer.push(event);
             break;
 
         default:
@@ -141,7 +140,7 @@ void Track::send_event(RtEvent event)
         case RtEventType::NOTE_OFF:
         case RtEventType::NOTE_AFTERTOUCH:
         case RtEventType::WRAPPED_MIDI_EVENT:
-            _event_buffer.push(event);
+            _kb_event_buffer.push(event);
             break;
 
             /* Other events are passed on upstream unprocessed */
@@ -150,7 +149,7 @@ void Track::send_event(RtEvent event)
     }
 }
 
-void Track::_init_parameters()
+void Track::_common_init()
 {
     _processors.reserve(TRACK_MAX_PROCESSORS);
     _gain_parameters[0]  = register_float_parameter("gain", "Gain", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
@@ -204,10 +203,10 @@ void Track::_update_channel_config()
 
 void Track::_process_output_events()
 {
-    while (!_event_buffer.empty())
+    while (!_kb_event_buffer.empty())
     {
         RtEvent event;
-        if (_event_buffer.pop(event))
+        if (_kb_event_buffer.pop(event))
         {
             switch (event.type())
             {
