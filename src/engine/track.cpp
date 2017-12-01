@@ -105,19 +105,15 @@ void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
 
 void Track::process_event(RtEvent event)
 {
-    switch (event.type())
+    if (is_keyboard_event(event))
     {
         /* Keyboard events are cached so they can be passed on
-         * to the first processor in the track */
-        case RtEventType::NOTE_ON:
-        case RtEventType::NOTE_OFF:
-        case RtEventType::NOTE_AFTERTOUCH:
-        case RtEventType::WRAPPED_MIDI_EVENT:
-            _kb_event_buffer.push(event);
-            break;
-
-        default:
-            InternalPlugin::process_event(event);
+         * to the next processor in the track */
+        _kb_event_buffer.push(event);
+    }
+    else
+    {
+        InternalPlugin::process_event(event);
     }
 }
 
@@ -132,20 +128,13 @@ void Track::set_bypassed(bool bypassed)
 
 void Track::send_event(RtEvent event)
 {
-    switch (event.type())
+    if (is_keyboard_event(event))
     {
-        /* Keyboard events are cached so they can be passed on
-         * to the next processor in the track */
-        case RtEventType::NOTE_ON:
-        case RtEventType::NOTE_OFF:
-        case RtEventType::NOTE_AFTERTOUCH:
-        case RtEventType::WRAPPED_MIDI_EVENT:
-            _kb_event_buffer.push(event);
-            break;
-
-            /* Other events are passed on upstream unprocessed */
-        default:
-            output_event(event);
+        _kb_event_buffer.push(event);
+    }
+    else
+    {
+        output_event(event);
     }
 }
 
