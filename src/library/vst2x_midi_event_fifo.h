@@ -24,7 +24,8 @@
 
 #include "constants.h"
 #include "library/rt_event.h"
-#include "midi_decoder.h"
+#include "library/midi_decoder.h"
+#include "library/midi_encoder.h"
 
 namespace sushi {
 namespace vst2 {
@@ -125,53 +126,40 @@ private:
     {
         auto midi_ev_p = &_midi_data[idx];
         midi_ev_p->deltaFrames = static_cast<VstInt32>(event.sample_offset());
+        MidiDataByte midi_data;
+
         switch (event.type())
         {
-        case RtEventType::NOTE_ON:
-        case RtEventType::NOTE_OFF:
-        case RtEventType::NOTE_AFTERTOUCH:
-        {
-            auto key_event = event.keyboard_event();
-            if (event.type() == RtEventType::NOTE_ON)
+            case RtEventType::NOTE_ON:
             {
-                midi_ev_p->midiData[0] = static_cast<char>(144);
+                auto typed_event = event.keyboard_event();
+                midi_data = midi::encode_note_on(0, typed_event->note(), typed_event->velocity());
+                break;
             }
-            else if (event.type() == RtEventType::NOTE_OFF)
+            case RtEventType::NOTE_OFF:
             {
-                midi_ev_p->midiData[0] = static_cast<char>(128);
+                auto typed_event = event.keyboard_event();
+                midi_data = midi::encode_note_off(0, typed_event->note(), typed_event->velocity());
+                // For some reason, VstMidiEvent has an additional explicit field noteOffVelocity
+                midi_ev_p->noteOffVelocity = midi_data[2];
+                break;
             }
-            else if (event.type() == RtEventType::NOTE_AFTERTOUCH)
+            case RtEventType::NOTE_AFTERTOUCH:
             {
-                midi_ev_p->midiData[0] = static_cast<char>(160);
+                auto typed_event = event.keyboard_event();
+                midi_data = midi::encode_poly_key_pressure(0, typed_event->note(), typed_event->velocity());
+                break;
             }
-            midi_ev_p->midiData[1] = static_cast<char>(key_event->note());
-            midi_ev_p->midiData[2] = static_cast<char>(std::round(key_event->velocity() * 127));
-        }
-            break;
-
-        case RtEventType::WRAPPED_MIDI_EVENT:
-        {
-            auto midi_event = event.wrapped_midi_event();
-            auto data = midi_event->midi_data();
-            for (int i=0; i<3; i++)
+            case RtEventType::WRAPPED_MIDI_EVENT:
             {
-                midi_ev_p->midiData[i] = data[i];
+                auto typed_event = event.wrapped_midi_event();
+                midi_data = typed_event->midi_data();
+                break;
             }
+            default:
+                return;
         }
-            break;
-
-        default:
-            break;
-        }
-
-        // for some reason,
-        // VstMidiEvent has an additional explicit field noteOffVelocity
-        if (midi::decode_message_type(reinterpret_cast<uint8_t*>(&midi_ev_p->midiData[0]), 3u)
-                                       == midi::MessageType::NOTE_OFF)
-        {
-            midi_ev_p->noteOffVelocity = midi_ev_p->midiData[2];
-        }
-
+        std::copy(midi_data.begin(), midi_data.end(), midi_ev_p->midiData);
     }
 
     int _size{0};
