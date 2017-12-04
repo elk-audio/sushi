@@ -79,6 +79,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/processor_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
+               unittests/library/midi_encoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/rt_event_test.cpp

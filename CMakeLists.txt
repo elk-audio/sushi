@@ -110,6 +110,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/receiver.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
+                      src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp

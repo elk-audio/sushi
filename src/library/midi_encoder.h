@@ -13,40 +13,57 @@
 namespace sushi {
 namespace midi {
 
-constexpr uint8_t NOTE_OFF_PREFIX   = 0b10000000;
-constexpr uint8_t NOTE_ON_PREFIX    = 0b10010000;
-constexpr uint8_t POLY_PRES_PREFIX  = 0b10100000;
+/**
+ * @brief Encode a midi note on message
+ * @param channel Midi channel to use (0-15)
+ * @param note Midi note number
+ * @param velocity Velocity (0-1)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_note_on(int channel, int note, float velocity);
 
-MidiDataByte encode_note_on(int channel, int note, float velocity)
-{
-    MidiDataByte data;
-    data[0] = NOTE_ON_PREFIX | static_cast<uint8_t>(channel);
-    data[1] = note;
-    data[2] = static_cast<uint8_t>(std::round(velocity * MAX_VALUE));
-    data[3] = 0;
-    return data;
-}
+/**
+ * @brief Encode a midi note off message
+ * @param channel Midi channel to use (0-15)
+ * @param note Midi note number
+ * @param velocity Release velocity (0-1)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_note_off(int channel, int note, float velocity);
 
-MidiDataByte encode_note_off(int channel, int note, float velocity)
-{
-    MidiDataByte data;
-    data[0] = NOTE_OFF_PREFIX | static_cast<uint8_t>(channel);
-    data[1] = note;
-    data[2] = static_cast<uint8_t>(std::round(velocity * MAX_VALUE));
-    data[3] = 0;
-    return data;
-}
+/**
+ * @brief Encode a polyphonic key pressure message
+ * @param channel Midi channel to use (0-15)
+ * @param note Midi note number
+ * @param pressure Pressure (0-1)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_poly_key_pressure(int channel, int note, float pressure);
 
-MidiDataByte encode_poly_key_pressure(int channel, int note, float pressure)
-{
-    MidiDataByte data;
-    data[0] = POLY_PRES_PREFIX | static_cast<uint8_t>(channel);
-    data[1] = note;
-    data[2] = static_cast<uint8_t>(std::round(pressure * MAX_VALUE));
-    data[3] = 0;
-    return data;
-}
+/**
+ * @brief Encode a control change message
+ * @param channel Midi channel to use (0-15)
+ * @param controller Midi controller number (0-119)
+ * @param value Value to send (0-1)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_control_change(int channel, int controller, float value);
 
+/**
+ * @brief Encode a channel pressure (after touch) message
+ * @param channel Midi channel to use (0-15)
+ * @param pressure Pressure (0-1)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_channel_pressure(int channel, float value);
+
+/**
+ * @brief Encode a pitch bend message
+ * @param channel Midi channel to use (0-15)
+ * @param value Pitch bend value (-1 to 1  where 0 is the middle position)
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_pitch_bend(int channel, float value);
 
 } // end namespace midi
 } // end namespace sushi
