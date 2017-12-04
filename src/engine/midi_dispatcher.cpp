@@ -10,7 +10,7 @@ MIND_GET_LOGGER;
 
 inline Event* make_note_on_event(const InputConnection &c,
                                 const midi::NoteOnMessage &msg,
-                                int64_t timestamp)
+                                 Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.note, velocity, timestamp);
@@ -18,7 +18,7 @@ inline Event* make_note_on_event(const InputConnection &c,
 
 inline Event* make_note_off_event(const InputConnection &c,
                                   const midi::NoteOffMessage &msg,
-                                  int64_t timestamp)
+                                  Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.note, velocity, timestamp);
@@ -27,7 +27,7 @@ inline Event* make_note_off_event(const InputConnection &c,
 inline Event* make_wrapped_midi_event(const InputConnection &c,
                                       const uint8_t* data,
                                       size_t size,
-                                      int64_t timestamp)
+                                      Time timestamp)
 {
     MidiDataByte midi_data{0};
     std::copy(data, data + size, midi_data.data());
@@ -36,7 +36,7 @@ inline Event* make_wrapped_midi_event(const InputConnection &c,
 
 inline Event* make_param_change_event(const InputConnection &c,
                                       const midi::ControlChangeMessage &msg,
-                                      int64_t timestamp)
+                                      Time timestamp)
 {
     float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
@@ -178,7 +178,7 @@ void MidiDispatcher::clear_connections()
     _kb_routes_in.clear();
 }
 
-void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp)
+void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, Time timestamp)
 {
     int channel = midi::decode_channel(data[0]);
     const auto& cons = _raw_routes_in.find(input);

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "library/constants.h"
+#include "library/types.h"
 #include "library/midi_decoder.h"
 #include "library/event.h"
 #include "library/processor.h"
@@ -57,9 +58,9 @@ enum class MidiDispatcherStatus
 
 class MidiDispatcher : public EventPoster
 {
+public:
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
-public:
     MidiDispatcher(engine::BaseEngine* engine);
 
     virtual ~MidiDispatcher();
@@ -157,7 +158,7 @@ public:
      * @param size Length of data in bytes.
      * @param set to true if called from the rt audio part, false otherwise
      */
-    void process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp);
+    void process_midi(int input, const uint8_t* data, size_t size, Time timestamp);
 
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;

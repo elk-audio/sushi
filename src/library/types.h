@@ -9,6 +9,7 @@
 #define SUSHI_TYPES_H
 
 #include <array>
+#include <chrono>
 
 namespace sushi {
 
@@ -24,7 +25,12 @@ struct BlobData
 /**
  * @brief Type used for timestamps with micro second granularity
  */
-typedef int64_t MicroTime;
+typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds> Time;
+
+/**
+ * @brief Convenience shorthand for setting timestamp to 0, i.e. process event as soon as possible.
+ */
+constexpr Time PROCESS_NOW = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>::min();
 
 
 constexpr size_t MIDI_DATA_BYTE_SIZE = 4;

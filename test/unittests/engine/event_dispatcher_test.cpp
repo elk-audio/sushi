@@ -93,7 +93,7 @@ TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
 {
     _module_under_test->register_poster(&_poster);
     _module_under_test->run();
-    auto event = new Event(EventType::BASIC_EVENT, 0);
+    auto event = new Event(EventType::BASIC_EVENT, PROCESS_NOW);
     event->set_receiver(DUMMY_POSTER_ID);
     _module_under_test->post_event(event);
     std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
@@ -136,7 +136,7 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
 
 TEST_F(TestEventDispatcher, TestToRtEvent)
 {
-    auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, "processor", 50, 1.0f, 0);
+    auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, "processor", 50, 1.0f, PROCESS_NOW);
     _module_under_test->post_event(event);
     ASSERT_TRUE(_out_rt_queue.empty());
     crank_event_loop_once();
@@ -146,7 +146,7 @@ TEST_F(TestEventDispatcher, TestToRtEvent)
     _out_rt_queue.pop(rt_event);
     ASSERT_EQ(RtEventType::NOTE_ON, rt_event.type());
 
-    event = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, "processor", {1u, 2u, 3u, 0u}, 0);
+    event = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, "processor", {1u, 2u, 3u, 0u}, PROCESS_NOW);
     _module_under_test->post_event(event);
     ASSERT_TRUE(_out_rt_queue.empty());
     crank_event_loop_once();
@@ -182,7 +182,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
     _module_under_test->register_poster(&_poster);
-    auto event = new Event(EventType::BASIC_EVENT, 0);
+    auto event = new Event(EventType::BASIC_EVENT, PROCESS_NOW);
     event->set_receiver(DUMMY_POSTER_ID);
     event->set_completion_cb(dummy_callback, nullptr);
     completed = false;

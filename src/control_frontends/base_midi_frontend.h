@@ -7,6 +7,7 @@
 #ifndef SUSHI_BASE_MIDI_FRONTEND_H
 #define SUSHI_BASE_MIDI_FRONTEND_H
 
+#include "library/types.h"
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {
@@ -27,7 +28,7 @@ public:
 
     virtual void stop() = 0;
 
-    virtual void send_midi(int input, const uint8_t* data, int64_t timestamp) = 0;
+    virtual void send_midi(int input, const uint8_t* data, Time timestamp) = 0;
 
 protected:
     midi_dispatcher::MidiDispatcher* _dispatcher;

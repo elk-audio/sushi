@@ -59,13 +59,13 @@ class Event
     friend class EventDispatcher;
 public:
     Event(EventType type,
-          int64_t timestamp) : _type(type),
-                               _timestamp(timestamp) {}
+          Time timestamp) : _type(type),
+                            _timestamp(timestamp) {}
 
     virtual ~Event() {}
 
     EventType   type() {return _type;}
-    int64_t     time() {return _timestamp;}
+    Time        time() {return _timestamp;}
     int         receiver() {return _receiver;}
     EventId     id() {return _id;}
     /**
@@ -89,7 +89,7 @@ protected:
 
     EventType   _type;
     int         _receiver{0};
-    int64_t     _timestamp;
+    Time        _timestamp;
     EventCompletionCallback _completion_cb{nullptr};
     void*       _callback_arg{nullptr};
     EventId     _id{EventIdGenerator::new_id()};
@@ -104,13 +104,13 @@ class ProcessorEvent : public Event
 {
 public:
     ProcessorEvent(EventType type,
-                   int64_t timestamp,
+                   Time timestamp,
                    const std::string& processor) : Event(type,  timestamp),
                                                    _processor(processor),
                                                    _access_by_id(false),
                                                    _processor_id(0) {}
     ProcessorEvent(EventType type,
-                   int64_t timestamp,
+                   Time timestamp,
                    ObjectId& processor_id) : Event(type,  timestamp),
                                              _processor(),
                                              _access_by_id{true},
@@ -145,7 +145,7 @@ public:
                   const std::string& processor,
                   int note,
                   float velocity,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
                                        _subtype(subtype),
                                        _note(note),
                                        _velocity(velocity) {}
@@ -154,24 +154,24 @@ public:
                   ObjectId processor_id,
                   int note,
                   float velocity,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _note(note),
-                                       _velocity(velocity) {}
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                    _subtype(subtype),
+                                    _note(note),
+                                    _velocity(velocity) {}
 
     KeyboardEvent(Subtype subtype,
                   const std::string& processor,
                   MidiDataByte midi_data,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
-                                       _subtype(subtype),
-                                       _midi_data(midi_data) {}
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                                    _subtype(subtype),
+                                    _midi_data(midi_data) {}
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
                   MidiDataByte midi_data,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _midi_data(midi_data) {}
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                    _subtype(subtype),
+                                    _midi_data(midi_data) {}
 
     Subtype         subtype() {return _subtype;}
     int             note() {return _note;}
@@ -201,21 +201,21 @@ public:
                          const std::string& processor,
                          const std::string& parameter,
                          float value,
-                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor),
-                                              _subtype(subtype),
-                                              _parameter(parameter),
-                                              _parameter_id(0),
-                                              _value(value) {}
+                         Time timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor),
+                                           _subtype(subtype),
+                                           _parameter(parameter),
+                                           _parameter_id(0),
+                                           _value(value) {}
 
     ParameterChangeEvent(Subtype subtype,
                          ObjectId processor_id,
                          ObjectId parameter_id,
                          float value,
-                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor_id),
-                                              _subtype(subtype),
-                                              _parameter(),
-                                              _parameter_id(parameter_id),
-                                              _value(value) {}
+                         Time timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor_id),
+                                           _subtype(subtype),
+                                           _parameter(),
+                                           _parameter_id(parameter_id),
+                                           _value(value) {}
 
     Subtype             subtype() {return _subtype;}
     const std::string&  parameter() {return _parameter;}
@@ -237,12 +237,12 @@ public:
     StringPropertyChangeEvent(const std::string& processor,
                               const std::string& property,
                               const std::string& string_value,
-                              int64_t timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
-                                                                        processor,
-                                                                        property,
-                                                                        0.0f,
-                                                                        timestamp),
-                                                   _string_value(string_value)
+                              Time timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
+                                                                     processor,
+                                                                     property,
+                                                                     0.0f,
+                                                                     timestamp),
+                                                _string_value(string_value)
     {
         _type = EventType::STRING_PROPERTY_CHANGE;
     }
@@ -250,12 +250,12 @@ public:
     StringPropertyChangeEvent(ObjectId processor_id,
                               ObjectId property_id,
                               const std::string& string_value,
-                              int64_t timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
-                                                                        processor_id,
-                                                                        property_id,
-                                                                        0.0f,
-                                                                        timestamp),
-                                                   _string_value(string_value)
+                              Time timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
+                                                                     processor_id,
+                                                                     property_id,
+                                                                     0.0f,
+                                                                     timestamp),
+                                                _string_value(string_value)
     {
         _type = EventType::STRING_PROPERTY_CHANGE;
     }
@@ -291,10 +291,10 @@ public:
                                      const std::string& processor,
                                      const std::string& parameter,
                                      float value,
-                                     int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE_NOTIFICATION, timestamp, processor),
-                                                          _subtype(subtype),
-                                                          _parameter(parameter),
-                                                          _value(value) {}
+                                     Time timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE_NOTIFICATION, timestamp, processor),
+                                                       _subtype(subtype),
+                                                       _parameter(parameter),
+                                                       _value(value) {}
     Subtype             subtype() {return _subtype;}
     const std::string&  parameter() {return _parameter;}
     float               float_value() {return _value;}
@@ -317,9 +317,9 @@ public:
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC
     };
-    AddTrackEvent(const std::string& name, int channels, int64_t timestamp) : Event(EventType::ADD_TRACK, timestamp),
-                                                                              _name(name),
-                                                                              _channels(channels){}
+    AddTrackEvent(const std::string& name, int channels, Time timestamp) : Event(EventType::ADD_TRACK, timestamp),
+                                                                           _name(name),
+                                                                           _channels(channels){}
     const std::string& name() {return _name;}
     int channels() {return _channels;}
 
@@ -335,8 +335,8 @@ public:
     {
         INVALID_TRACK = EventStatus::EVENT_SPECIFIC
     };
-    RemoveTrackEvent(const std::string& name, int64_t timestamp) : Event(EventType::REMOVE_TRACK, timestamp),
-                                                                   _name(name) {}
+    RemoveTrackEvent(const std::string& name, Time timestamp) : Event(EventType::REMOVE_TRACK, timestamp),
+                                                                _name(name) {}
     const std::string& name() {return _name;}
 
 private:
@@ -361,12 +361,12 @@ public:
     };
     AddProcessorEvent(const std::string& track, const std::string& uid,
                       const std::string& name, const std::string& file,
-                      ProcessorType plugin_type, int64_t timestamp) : Event(EventType::ADD_PROCESSOR, timestamp),
-                                                                    _track(track),
-                                                                    _uid(uid),
-                                                                    _name(name),
-                                                                    _file(file),
-                                                                    _plugin_type(plugin_type) {}
+                      ProcessorType plugin_type, Time timestamp) : Event(EventType::ADD_PROCESSOR, timestamp),
+                                                                   _track(track),
+                                                                   _uid(uid),
+                                                                   _name(name),
+                                                                   _file(file),
+                                                                   _plugin_type(plugin_type) {}
     const std::string& track() {return _track;}
     const std::string& uid() {return _uid;}
     const std::string& name() {return _name;}
@@ -391,9 +391,9 @@ public:
         INVALID_CHAIN,
     };
     RemoveProcessorEvent(const std::string& name, const std::string& track,
-                         int64_t timestamp) : Event(EventType::REMOVE_PROCESSOR, timestamp),
-                                              _name(name),
-                                              _track(track) {}
+                         Time timestamp) : Event(EventType::REMOVE_PROCESSOR, timestamp),
+                                           _name(name),
+                                           _track(track) {}
 
     const std::string& name() {return _name;}
     const std::string& track() {return _track;}

@@ -9,6 +9,8 @@
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
+#include "library/types.h"
+
 namespace sushi {
 namespace engine {
 
@@ -18,18 +20,18 @@ public:
     Transport() {}
     ~Transport() {}
 
-    void set_time(int64_t usec, int64_t samples)
+    void set_time(Time timestamp, int64_t samples)
     {
-        _time = usec;
+        _time = timestamp;
         _sample_count = samples;
     }
 
-    int64_t current_time() const;
+    Time current_time() const;
     int64_t current_samples() const;
 
 private:
     int64_t _sample_count{0};
-    int64_t _time{0};
+    Time    _time;
 };
 
 

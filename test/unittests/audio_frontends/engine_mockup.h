@@ -82,7 +82,7 @@ public:
         process_called = true;
     }
 
-    void update_time(int64_t /*usec*/, int64_t /*samples*/) override
+    void update_time(Time /*timestamp*/, int64_t /*samples*/) override
     { }
 
     EngineReturnStatus send_rt_event(RtEvent& /*event*/) override

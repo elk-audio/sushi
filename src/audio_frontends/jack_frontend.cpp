@@ -22,6 +22,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
+    _start_time = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now());
     _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
     _osc_control->connect_all();
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
@@ -240,7 +241,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
         uint64_t frametime = current_usecs + (frame * 1000000) / _sample_rate;
-        _engine->update_time(frametime + frame, current_frames + frame);
+        _engine->update_time(_start_time + std::chrono::microseconds(frametime), current_frames + frame);
         process_events();
         process_midi(frame, AUDIO_CHUNK_SIZE);
         process_audio(frame, AUDIO_CHUNK_SIZE);

@@ -16,7 +16,7 @@ void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
                                                       float value)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                       processor, parameter, value, timestamp);
     _event_dispatcher->post_event(e);
@@ -26,7 +26,7 @@ void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
                                                              ObjectId parameter,
                                                              const std::string& value)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new StringPropertyChangeEvent(processor, parameter, value, timestamp);
     _event_dispatcher->post_event(e);}
 
@@ -36,7 +36,7 @@ void BaseControlFrontend::send_keyboard_event(ObjectId processor,
                                               int note,
                                               float velocity)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new KeyboardEvent(type, processor, note, velocity, timestamp);
     _event_dispatcher->post_event(e);
 }
@@ -53,14 +53,14 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, floa
 
 void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new AddTrackEvent(name, channels, timestamp);
     send_with_callback(e);
 }
 
 void BaseControlFrontend::send_remove_track_event(const std::string &name)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new RemoveTrackEvent(name, timestamp);
     send_with_callback(e);
 }
@@ -69,14 +69,14 @@ void BaseControlFrontend::send_add_processor_event(const std::string &track, con
                                                    const std::string &name, const std::string &file,
                                                    AddProcessorEvent::ProcessorType type)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new AddProcessorEvent(track, uid, name, file, type, timestamp);
     send_with_callback(e);
 }
 
 void BaseControlFrontend::send_remove_processor_event(const std::string &track, const std::string &name)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     auto e = new RemoveProcessorEvent(name, track, timestamp);
     send_with_callback(e);
 }

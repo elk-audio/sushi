@@ -32,7 +32,7 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, const uint8_t* data, int64_t timestamp) override;
+    void send_midi(int input, const uint8_t* data, Time timestamp) override;
 
 private:
 

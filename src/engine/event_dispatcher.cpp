@@ -295,7 +295,7 @@ int EventDispatcher::_process_rt_event(RtEvent &event)
 int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
 {
     // TODO - map offset to real world timestamp
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     /*auto processor = _engine->processor_name_from_id(event->processor_id());
     if (processor.first != engine::EngineReturnStatus::OK)
     {
@@ -324,7 +324,7 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
 
 int EventDispatcher::_process_rt_parameter_change_events(const ParameterChangeRtEvent* event)
 {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     engine::EngineReturnStatus status;
     std::string processor_name;
     std::tie(status, processor_name) = _engine->processor_name_from_id(event->processor_id());

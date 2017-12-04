@@ -131,7 +131,7 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
-    virtual void update_time(int64_t /*usec*/, int64_t /*samples*/) = 0;
+    virtual void update_time(Time /*timestamp*/, int64_t /*samples*/) = 0;
 
     virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
 
@@ -283,7 +283,7 @@ public:
      * @param timestamp Current time in microseconds
      * @param samples Current number of samples processed
      */
-    void update_time(MicroTime timestamp, int64_t samples)
+    void update_time(Time timestamp, int64_t samples)
     {
         _transport.set_time(timestamp, samples);
     }
