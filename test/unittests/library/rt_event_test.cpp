@@ -5,7 +5,7 @@
 
 using namespace sushi;
 
-TEST (TestPluginEvents, TestFactoryFunction)
+TEST (TestRealtimeEvents, TestFactoryFunction)
 {
     auto event = RtEvent::make_note_on_event(123, 1, 46, 0.5);
     EXPECT_EQ(RtEventType::NOTE_ON, event.type());
@@ -116,7 +116,7 @@ TEST (TestPluginEvents, TestFactoryFunction)
     EXPECT_EQ(456u, event.processor_reorder_event()->track());
 }
 
-TEST(TestPluginEvents, TestReturnableEvents)
+TEST(TestRealtimeEvents, TestReturnableEvents)
 {
     auto event = RtEvent::make_stop_engine_event();
     auto event2 = RtEvent::make_stop_engine_event();
@@ -131,4 +131,13 @@ TEST(TestPluginEvents, TestReturnableEvents)
     EXPECT_EQ(ReturnableRtEvent::EventStatus::HANDLED_ERROR, typed_event->status());
 }
 
+TEST(TestRealtimeEvents, TestIsKeyboardEvent)
+{
+    auto event = RtEvent::make_parameter_change_event(1, 2, 3, 1.0f);
+    EXPECT_FALSE(is_keyboard_event(event));
+    event = RtEvent::make_note_off_event(1, 2, 3, 1.0f);
+    EXPECT_TRUE(is_keyboard_event(event));
+    event = RtEvent::make_wrapped_midi_event(1, 2, {0, 0 ,0, 0});
+    EXPECT_TRUE(is_keyboard_event(event));
+}
 

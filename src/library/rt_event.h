@@ -586,6 +586,7 @@ public:
         return typed_event;
     }
 
+
 private:
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
     RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
@@ -622,7 +623,20 @@ private:
 static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
-
+/**
+ * @brief Convenience function to encapsulate the logic to determine if it is a keyboard event
+ *        and hence should be passed on to the next processor, or sent upwards.
+ * @param event The event to test
+ * @return true if the event is a keyboard event, false otherwise.
+ */
+static inline bool is_keyboard_event(const RtEvent event)
+{
+    if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::WRAPPED_MIDI_EVENT)
+    {
+        return true;
+    }
+    return false;
+}
 
 } // namespace sushi
 
