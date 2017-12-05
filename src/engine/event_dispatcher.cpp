@@ -185,12 +185,10 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
             break;
 
         case KeyboardEvent::Subtype::PITCH_BEND:
-            MIND_LOG_INFO("Creating Pitch Bend Rt event");
             rt_event = RtEvent::make_pitch_bend_event(processor_id, offset, event->value());
             break;
 
         case KeyboardEvent::Subtype::MODULATION:
-            MIND_LOG_INFO("Creating Modulation Rt event");
             rt_event = RtEvent::make_kb_modulation_event(processor_id, offset, event->value());
             break;
 
@@ -285,6 +283,7 @@ int EventDispatcher::_process_rt_event(RtEvent &event)
             break;
 
         case RtEventType::AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
         case RtEventType::KB_MODULATION:
             _process_common_rt_keyboard_events(event.keyboard_common_event());
             break;
@@ -344,6 +343,9 @@ int EventDispatcher::_process_common_rt_keyboard_events(const KeyboardCommonRtEv
             break;
         case RtEventType::NOTE_OFF:
             subtype = KeyboardEvent::Subtype::MODULATION;
+            break;
+        case RtEventType::PITCH_BEND:
+            subtype = KeyboardEvent::Subtype::PITCH_BEND;
             break;
         default:
             return EventStatus::NOT_HANDLED;
