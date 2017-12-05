@@ -112,6 +112,9 @@ void Track::process_event(RtEvent event)
         case RtEventType::NOTE_ON:
         case RtEventType::NOTE_OFF:
         case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::KB_MODULATION:
         case RtEventType::WRAPPED_MIDI_EVENT:
             _kb_event_buffer.push(event);
             break;
@@ -139,6 +142,9 @@ void Track::send_event(RtEvent event)
         case RtEventType::NOTE_ON:
         case RtEventType::NOTE_OFF:
         case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::KB_MODULATION:
         case RtEventType::WRAPPED_MIDI_EVENT:
             _kb_event_buffer.push(event);
             break;
@@ -224,6 +230,18 @@ void Track::_process_output_events()
                     output_event(RtEvent::make_note_aftertouch_event(id(), event.sample_offset(),
                                                                      event.keyboard_event()->note(),
                                                                      event.keyboard_event()->velocity()));
+                    break;
+                case RtEventType::AFTERTOUCH:
+                    output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
+                                                                event.keyboard_common_event()->value()));
+                    break;
+                case RtEventType::PITCH_BEND:
+                    output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
+                                                                event.keyboard_common_event()->value()));
+                    break;
+                case RtEventType::KB_MODULATION:
+                    output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
+                                                                   event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::WRAPPED_MIDI_EVENT:
                     output_event(RtEvent::make_wrapped_midi_event(id(), event.sample_offset(),

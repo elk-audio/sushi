@@ -90,6 +90,8 @@ private:
 
     int _process_rt_event(RtEvent& event);
     int _process_rt_keyboard_events(const KeyboardRtEvent* event);
+    int _process_common_rt_keyboard_events(const KeyboardCommonRtEvent* event);
+    int _process_wrapped_midi_events(const WrappedMidiRtEvent* event);
     int _process_rt_parameter_change_events(const ParameterChangeRtEvent* event);
 
     void _publish_keyboard_events(Event* event);

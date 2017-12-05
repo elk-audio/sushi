@@ -30,6 +30,9 @@ enum class RtEventType
     NOTE_ON,
     NOTE_OFF,
     NOTE_AFTERTOUCH,
+    PITCH_BEND,
+    AFTERTOUCH,
+    KB_MODULATION,
     WRAPPED_MIDI_EVENT,
     INT_PARAMETER_CHANGE,
     FLOAT_PARAMETER_CHANGE,
@@ -107,6 +110,22 @@ public:
 protected:
     int _note;
     float _velocity;
+};
+
+class KeyboardCommonRtEvent : public BaseRtEvent
+{
+public:
+    KeyboardCommonRtEvent(RtEventType type, ObjectId target, int offset, float value) : BaseRtEvent(type, target, offset),
+                                                                                         _value(value)
+    {
+        assert(type == RtEventType::AFTERTOUCH ||
+               type == RtEventType::PITCH_BEND ||
+               type == RtEventType::KB_MODULATION);
+    }
+    float value() const {return _value;}
+
+protected:
+    float _value;
 };
 
 /**
@@ -342,6 +361,14 @@ public:
         return &_keyboard_event;
     }
 
+    const KeyboardCommonRtEvent* keyboard_common_event()
+    {
+        assert(_keyboard_event.type() == RtEventType::AFTERTOUCH ||
+               _keyboard_event.type() == RtEventType::PITCH_BEND ||
+               _keyboard_event.type() == RtEventType::KB_MODULATION);
+        return &_keyboard_common_event;
+    }
+
     const WrappedMidiRtEvent* wrapped_midi_event() const
     {
         assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
@@ -433,6 +460,27 @@ public:
     static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int note, float velocity)
     {
         KeyboardRtEvent typed_event(type, target, offset, note, velocity);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_aftertouch_event(ObjectId target, int offset, float value)
+    {
+        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, value);
+    }
+
+    static RtEvent make_pitch_bend_event(ObjectId target, int offset, float value)
+    {
+        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, value);
+    }
+
+    static RtEvent make_kb_modulation_event(ObjectId target, int offset, float value)
+    {
+        return make_keyboard_common_event(RtEventType::KB_MODULATION, target, offset, value);
+    }
+
+    static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, float value)
+    {
+        KeyboardCommonRtEvent typed_event(type, target, offset, value);
         return RtEvent(typed_event);
     }
 
@@ -540,6 +588,7 @@ public:
 
 private:
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
+    RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
     RtEvent(const WrappedMidiRtEvent& e) : _wrapped_midi_event(e) {}
     RtEvent(const StringParameterChangeRtEvent& e) : _string_parameter_change_event(e) {}
@@ -555,6 +604,7 @@ private:
     {
         BaseRtEvent                   _base_event;
         KeyboardRtEvent               _keyboard_event;
+        KeyboardCommonRtEvent         _keyboard_common_event;
         WrappedMidiRtEvent            _wrapped_midi_event;
         ParameterChangeRtEvent        _parameter_change_event;
         StringParameterChangeRtEvent  _string_parameter_change_event;

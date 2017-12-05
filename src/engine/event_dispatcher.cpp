@@ -180,15 +180,19 @@ int EventDispatcher::_process_kb_event(KeyboardEvent* event)
             rt_event = RtEvent::make_note_aftertouch_event(processor_id, offset, event->note(), event->velocity());
             break;
 
-        case KeyboardEvent::Subtype::PITCH_BEND:
-            // TODO - implement pb event
-            //rt_event = RtEvent::make_p
-            return EventStatus::NOT_HANDLED;
+        case KeyboardEvent::Subtype::AFTERTOUCH:
+            rt_event = RtEvent::make_aftertouch_event(processor_id, offset, event->value());
+            break;
 
-        case KeyboardEvent::Subtype::POLY_AFTERTOUCH:
-            // TODO - implement poly aftertouch event
-            //rt_event = RtEvent::make_pol
-            return EventStatus::NOT_HANDLED;
+        case KeyboardEvent::Subtype::PITCH_BEND:
+            MIND_LOG_INFO("Creating Pitch Bend Rt event");
+            rt_event = RtEvent::make_pitch_bend_event(processor_id, offset, event->value());
+            break;
+
+        case KeyboardEvent::Subtype::MODULATION:
+            MIND_LOG_INFO("Creating Modulation Rt event");
+            rt_event = RtEvent::make_kb_modulation_event(processor_id, offset, event->value());
+            break;
 
         case KeyboardEvent::Subtype::WRAPPED_MIDI:
             rt_event = RtEvent::make_wrapped_midi_event(processor_id, offset, event->midi_data());
@@ -280,6 +284,15 @@ int EventDispatcher::_process_rt_event(RtEvent &event)
             _process_rt_keyboard_events(event.keyboard_event());
             break;
 
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::KB_MODULATION:
+            _process_common_rt_keyboard_events(event.keyboard_common_event());
+            break;
+
+        case RtEventType::WRAPPED_MIDI_EVENT:
+            _process_wrapped_midi_events(event.wrapped_midi_event());
+            break;
+
         case RtEventType::BOOL_PARAMETER_CHANGE:
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::FLOAT_PARAMETER_CHANGE:
@@ -314,10 +327,35 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
             subtype = KeyboardEvent::Subtype::NOTE_AFTERTOUCH;
             break;
         default:
-            subtype = KeyboardEvent::Subtype::WRAPPED_MIDI;
-            // TODO - fill list
+            return EventStatus::NOT_HANDLED;
     }
     KeyboardEvent e(subtype, event->processor_id(), event->note(), event->velocity(), timestamp);
+    _publish_keyboard_events(&e);
+    return EventStatus::HANDLED_OK;
+}
+
+int EventDispatcher::_process_common_rt_keyboard_events(const KeyboardCommonRtEvent*event) {
+    int64_t timestamp = 0;
+    KeyboardEvent::Subtype subtype;
+    switch (event->type())
+    {
+        case RtEventType::NOTE_ON:
+            subtype = KeyboardEvent::Subtype::AFTERTOUCH;
+            break;
+        case RtEventType::NOTE_OFF:
+            subtype = KeyboardEvent::Subtype::MODULATION;
+            break;
+        default:
+            return EventStatus::NOT_HANDLED;
+    }
+    KeyboardEvent e(subtype, event->processor_id(), event->value(), timestamp);
+    _publish_keyboard_events(&e);
+    return EventStatus::HANDLED_OK;
+}
+
+int EventDispatcher::_process_wrapped_midi_events(const WrappedMidiRtEvent*event) {
+    int64_t timestamp = 0;
+    KeyboardEvent e(KeyboardEvent::Subtype::WRAPPED_MIDI, event->processor_id(), event->midi_data(), timestamp);
     _publish_keyboard_events(&e);
     return EventStatus::HANDLED_OK;
 }

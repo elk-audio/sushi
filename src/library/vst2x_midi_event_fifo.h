@@ -150,6 +150,24 @@ private:
                 midi_data = midi::encode_poly_key_pressure(0, typed_event->note(), typed_event->velocity());
                 break;
             }
+            case RtEventType::PITCH_BEND:
+            {
+                auto typed_event = event.keyboard_common_event();
+                midi_data = midi::encode_pitch_bend(0, typed_event->value());
+                break;
+            }
+            case RtEventType::AFTERTOUCH:
+            {
+                auto typed_event = event.keyboard_common_event();
+                midi_data = midi::encode_channel_pressure(0, typed_event->value());
+                break;
+            }
+            case RtEventType::KB_MODULATION:
+            {
+                auto typed_event = event.keyboard_common_event();
+                midi_data = midi::encode_control_change(0, midi::MOD_WHEEL_CONTROLLER_NO, typed_event->value());
+                break;
+            }
             case RtEventType::WRAPPED_MIDI_EVENT:
             {
                 auto typed_event = event.wrapped_midi_event();

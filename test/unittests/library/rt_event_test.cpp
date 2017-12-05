@@ -31,6 +31,27 @@ TEST (TestPluginEvents, TestFactoryFunction)
     EXPECT_EQ(48, note_at_event->note());
     EXPECT_FLOAT_EQ(0.5, note_at_event->velocity());
 
+    event = RtEvent::make_aftertouch_event(111, 3, 0.6);
+    EXPECT_EQ(RtEventType::AFTERTOUCH, event.type());
+    auto at_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(111), at_event->processor_id());
+    EXPECT_EQ(3, at_event->sample_offset());
+    EXPECT_FLOAT_EQ(0.6, at_event->value());
+
+    event = RtEvent::make_pitch_bend_event(112, 4, 0.7);
+    EXPECT_EQ(RtEventType::PITCH_BEND, event.type());
+    auto pb_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(112), pb_event->processor_id());
+    EXPECT_EQ(4, pb_event->sample_offset());
+    EXPECT_FLOAT_EQ(0.7, pb_event->value());
+
+    event = RtEvent::make_kb_modulation_event(113, 5, 0.8);
+    EXPECT_EQ(RtEventType::KB_MODULATION, event.type());
+    auto mod_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(113), mod_event->processor_id());
+    EXPECT_EQ(5, mod_event->sample_offset());
+    EXPECT_FLOAT_EQ(0.8, mod_event->value());
+
     event = RtEvent::make_parameter_change_event(125, 4, 64, 0.5);
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     auto pc_event = event.parameter_change_event();

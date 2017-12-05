@@ -190,6 +190,9 @@ void Vst2xWrapper::process_event(RtEvent event)
     case RtEventType::NOTE_ON:
     case RtEventType::NOTE_OFF:
     case RtEventType::NOTE_AFTERTOUCH:
+    case RtEventType::AFTERTOUCH:
+    case RtEventType::PITCH_BEND:
+    case RtEventType::KB_MODULATION:
     case RtEventType::WRAPPED_MIDI_EVENT:
         if (!_vst_midi_events_fifo.push(event))
         {
