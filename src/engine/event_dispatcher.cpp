@@ -338,10 +338,10 @@ int EventDispatcher::_process_common_rt_keyboard_events(const KeyboardCommonRtEv
     KeyboardEvent::Subtype subtype;
     switch (event->type())
     {
-        case RtEventType::NOTE_ON:
+        case RtEventType::AFTERTOUCH:
             subtype = KeyboardEvent::Subtype::AFTERTOUCH;
             break;
-        case RtEventType::NOTE_OFF:
+        case RtEventType::MODULATION:
             subtype = KeyboardEvent::Subtype::MODULATION;
             break;
         case RtEventType::PITCH_BEND:
