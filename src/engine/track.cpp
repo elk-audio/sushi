@@ -222,7 +222,7 @@ void Track::_process_output_events()
                     output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
                                                                 event.keyboard_common_event()->value()));
                     break;
-                case RtEventType::KB_MODULATION:
+                case RtEventType::MODULATION:
                     output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
                                                                    event.keyboard_common_event()->value()));
                     break;

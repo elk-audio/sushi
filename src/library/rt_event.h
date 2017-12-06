@@ -32,7 +32,7 @@ enum class RtEventType
     NOTE_AFTERTOUCH,
     PITCH_BEND,
     AFTERTOUCH,
-    KB_MODULATION,
+    MODULATION,
     WRAPPED_MIDI_EVENT,
     INT_PARAMETER_CHANGE,
     FLOAT_PARAMETER_CHANGE,
@@ -120,7 +120,7 @@ public:
     {
         assert(type == RtEventType::AFTERTOUCH ||
                type == RtEventType::PITCH_BEND ||
-               type == RtEventType::KB_MODULATION);
+               type == RtEventType::MODULATION);
     }
     float value() const {return _value;}
 
@@ -365,7 +365,7 @@ public:
     {
         assert(_keyboard_event.type() == RtEventType::AFTERTOUCH ||
                _keyboard_event.type() == RtEventType::PITCH_BEND ||
-               _keyboard_event.type() == RtEventType::KB_MODULATION);
+               _keyboard_event.type() == RtEventType::MODULATION);
         return &_keyboard_common_event;
     }
 
@@ -475,7 +475,7 @@ public:
 
     static RtEvent make_kb_modulation_event(ObjectId target, int offset, float value)
     {
-        return make_keyboard_common_event(RtEventType::KB_MODULATION, target, offset, value);
+        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, value);
     }
 
     static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, float value)

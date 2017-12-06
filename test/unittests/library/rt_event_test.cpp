@@ -46,7 +46,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_FLOAT_EQ(0.7, pb_event->value());
 
     event = RtEvent::make_kb_modulation_event(113, 5, 0.8);
-    EXPECT_EQ(RtEventType::KB_MODULATION, event.type());
+    EXPECT_EQ(RtEventType::MODULATION, event.type());
     auto mod_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(113), mod_event->processor_id());
     EXPECT_EQ(5, mod_event->sample_offset());

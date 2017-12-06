@@ -162,7 +162,7 @@ private:
                 midi_data = midi::encode_channel_pressure(0, typed_event->value());
                 break;
             }
-            case RtEventType::KB_MODULATION:
+            case RtEventType::MODULATION:
             {
                 auto typed_event = event.keyboard_common_event();
                 midi_data = midi::encode_control_change(0, midi::MOD_WHEEL_CONTROLLER_NO, typed_event->value());

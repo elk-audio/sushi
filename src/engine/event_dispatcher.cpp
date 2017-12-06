@@ -284,7 +284,7 @@ int EventDispatcher::_process_rt_event(RtEvent &event)
 
         case RtEventType::AFTERTOUCH:
         case RtEventType::PITCH_BEND:
-        case RtEventType::KB_MODULATION:
+        case RtEventType::MODULATION:
             _process_common_rt_keyboard_events(event.keyboard_common_event());
             break;
 
