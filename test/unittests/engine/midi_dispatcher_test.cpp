@@ -158,7 +158,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event);
-    EXPECT_EQ(EventStatus::NOT_HANDLED, status);
+    EXPECT_EQ(EventStatus::HANDLED_OK, status);
     EXPECT_FALSE(_test_frontend.midi_sent());
 
     /* Connect track to output 1, channel 5 */

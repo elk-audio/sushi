@@ -137,10 +137,27 @@ public:
         NOTE_ON,
         NOTE_OFF,
         NOTE_AFTERTOUCH,
-        POLY_AFTERTOUCH,
+        AFTERTOUCH,
         PITCH_BEND,
+        MODULATION,
         WRAPPED_MIDI
     };
+    KeyboardEvent(Subtype subtype,
+                  const std::string& processor,
+                  float value,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                                       _subtype(subtype),
+                                       _note(0),
+                                       _velocity(value) {}
+
+    KeyboardEvent(Subtype subtype,
+                  ObjectId processor_id,
+                  float value,
+                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                       _subtype(subtype),
+                                       _note(0),
+                                       _velocity(value) {}
+
     KeyboardEvent(Subtype subtype,
                   const std::string& processor,
                   int note,
@@ -176,6 +193,7 @@ public:
     Subtype         subtype() {return _subtype;}
     int             note() {return _note;}
     float           velocity() {return _velocity;}
+    float           value() {return _velocity;}
     MidiDataByte    midi_data() {return _midi_data;}
 
 protected:

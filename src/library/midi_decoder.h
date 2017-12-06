@@ -20,6 +20,9 @@ constexpr int MAX_PITCH_BEND = 16384;
 constexpr int PITCH_BEND_MIDDLE = 8192;
 /* Maximum controller number for cc messages */
 constexpr int MAX_CONTROLLER_NO = 119;
+/* Modulation wheel controller number */
+constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
+
 
 
 /**

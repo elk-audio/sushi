@@ -90,8 +90,8 @@ TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
     EXPECT_EQ(1u, parameters.size());
     EXPECT_EQ("Delay", parameters[0]->name());
     EXPECT_EQ(DELAY_PARAM_ID, parameters[0]->id());
-    EXPECT_TRUE(_module_under_test->_can_do_soft_bypass);
-    EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_module_under_test->_bypass_parameter_id));
+    EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
+    EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_module_under_test->_bypass_parameter.id));
 }
 
 TEST_F(TestVst3xWrapper, TestProcessing)

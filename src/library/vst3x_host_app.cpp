@@ -108,7 +108,7 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
     {
         Steinberg::PClassInfo info;
         factory->getClassInfo(i, &info);
-        MIND_LOG_DEBUG("Querying plugin {} of type {}", info.name, info.category);
+        MIND_LOG_INFO("Querying plugin {} of type {}", info.name, info.category);
         if (info.name == plugin_name)
         {
             Steinberg::Vst::IComponent* component;

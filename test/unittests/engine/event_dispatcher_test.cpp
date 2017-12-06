@@ -154,6 +154,36 @@ TEST_F(TestEventDispatcher, TestToRtEvent)
     ASSERT_FALSE(_out_rt_queue.empty());
     _out_rt_queue.pop(rt_event);
     ASSERT_EQ(RtEventType::WRAPPED_MIDI_EVENT, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, "processor", 50, 1.0f, 0);
+    _module_under_test->post_event(event);
+    crank_event_loop_once();
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::NOTE_OFF, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, "processor", 50, 1.0f, 0);
+    _module_under_test->post_event(event);
+    crank_event_loop_once();
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, "processor", 1.0f, 0);
+    _module_under_test->post_event(event);
+    crank_event_loop_once();
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::PITCH_BEND, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, "processor", 1.0f, 0);
+    _module_under_test->post_event(event);
+    crank_event_loop_once();
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::MODULATION, rt_event.type());
+
+    event = new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, "processor", 1.0f, 0);
+    _module_under_test->post_event(event);
+    crank_event_loop_once();
+    _out_rt_queue.pop(rt_event);
+    ASSERT_EQ(RtEventType::AFTERTOUCH, rt_event.type());
 }
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
