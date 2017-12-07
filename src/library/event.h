@@ -145,27 +145,27 @@ public:
     KeyboardEvent(Subtype subtype,
                   const std::string& processor,
                   float value,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
-                                       _subtype(subtype),
-                                       _note(0),
-                                       _velocity(value) {}
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                                    _subtype(subtype),
+                                    _note(0),
+                                    _velocity(value) {}
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
                   float value,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _note(0),
-                                       _velocity(value) {}
+                  Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
+                                    _subtype(subtype),
+                                    _note(0),
+                                    _velocity(value) {}
 
     KeyboardEvent(Subtype subtype,
                   const std::string& processor,
                   int note,
                   float velocity,
                   Time timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
-                                       _subtype(subtype),
-                                       _note(note),
-                                       _velocity(velocity) {}
+                                    _subtype(subtype),
+                                    _note(note),
+                                    _velocity(velocity) {}
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,

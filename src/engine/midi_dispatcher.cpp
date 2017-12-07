@@ -26,7 +26,7 @@ inline Event* make_note_off_event(const InputConnection &c,
 
 inline Event* make_note_aftertouch_event(const InputConnection &c,
                                          const midi::PolyKeyPressureMessage &msg,
-                                         int64_t timestamp)
+                                         Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.note, pressure, timestamp);
@@ -34,7 +34,7 @@ inline Event* make_note_aftertouch_event(const InputConnection &c,
 
 inline Event* make_aftertouch_event(const InputConnection &c,
                                     const midi::ChannelPressureMessage &msg,
-                                    int64_t timestamp)
+                                    Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, pressure, timestamp);
@@ -42,7 +42,7 @@ inline Event* make_aftertouch_event(const InputConnection &c,
 
 inline Event* make_modulation_event(const InputConnection &c,
                                     const midi::ControlChangeMessage &msg,
-                                    int64_t timestamp)
+                                    Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, value, timestamp);
@@ -50,7 +50,7 @@ inline Event* make_modulation_event(const InputConnection &c,
 
 inline Event* make_pitch_bend_event(const InputConnection &c,
                                     const midi::PitchBendMessage &msg,
-                                    int64_t timestamp)
+                                    Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
     return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, value, timestamp);

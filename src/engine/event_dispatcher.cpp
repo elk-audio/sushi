@@ -334,7 +334,7 @@ int EventDispatcher::_process_rt_keyboard_events(const KeyboardRtEvent* event)
 }
 
 int EventDispatcher::_process_common_rt_keyboard_events(const KeyboardCommonRtEvent*event) {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     KeyboardEvent::Subtype subtype;
     switch (event->type())
     {
@@ -356,7 +356,7 @@ int EventDispatcher::_process_common_rt_keyboard_events(const KeyboardCommonRtEv
 }
 
 int EventDispatcher::_process_wrapped_midi_events(const WrappedMidiRtEvent*event) {
-    int64_t timestamp = 0;
+    Time timestamp = PROCESS_NOW;
     KeyboardEvent e(KeyboardEvent::Subtype::WRAPPED_MIDI, event->processor_id(), event->midi_data(), timestamp);
     _publish_keyboard_events(&e);
     return EventStatus::HANDLED_OK;
