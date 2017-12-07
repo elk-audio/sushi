@@ -6,11 +6,8 @@
  *
  */
 
-
 #ifndef SUSHI_EVENT_INTERFACE_H
 #define SUSHI_EVENT_INTERFACE_H
-
-#include <list>
 
 #include "event.h"
 
@@ -40,8 +37,7 @@ public:
     virtual int process(Event* /*event*/) {return EventStatus::UNRECOGNIZED_TYPE;};
 
     /**
-     * @brief The unique id of this poster, returned from when registering the
-     *        poster with the EventDispatcher
+     * @brief The unique id of this poster.
      * @return
      */
     virtual int poster_id() = 0;

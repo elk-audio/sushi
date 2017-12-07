@@ -140,10 +140,9 @@ public:
      * @brief Process a raw midi message and send it of according to the
      *        configured connections.
      * @param input Index of the originating midi port.
-     * @param offset Offset from the start of the current chunk in samples.
      * @param data Pointer to the raw midi message.
      * @param size Length of data in bytes.
-     * @param set to true if called from the rt audio part, false otherwise
+     * @param timestamp timestamp of the midi event
      */
     void process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp);
 
@@ -151,8 +150,7 @@ public:
     int process(Event* /*event*/) override;
 
     /**
-     * @brief The unique id of this poster, returned from when registering the
-     *        poster with the EventDispatcher
+     * @brief The unique id of this poster.
      * @return
      */
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
