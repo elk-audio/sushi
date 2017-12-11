@@ -11,7 +11,7 @@ namespace midi_frontend {
 
 constexpr int ALSA_POLL_TIMEOUT_MS = 200;
 
-AlsaMidiFrontend::AlsaMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher)
+AlsaMidiFrontend::AlsaMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
 {}
 
@@ -120,7 +120,7 @@ void AlsaMidiFrontend::_poll_function()
                     if (byte_count > 0)
                     {
                         MIND_LOG_DEBUG("Alsa frontend: received midi message: [{:x} {:x} {:x} {:x}]", data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3]);
-                        _dispatcher->process_midi(0, data_buffer, byte_count, 0);
+                        _dispatcher->send_midi(0, data_buffer, byte_count, 0);
                     }
                     MIND_LOG_WARNING_IF(byte_count < 0, "Alsa frontend: decoder returned {}", byte_count);
                 }

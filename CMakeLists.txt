@@ -161,6 +161,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/track.h
                         src/engine/midi_dispatcher.h
                         src/engine/json_configurator.h
+                        src/engine/midi_receiver.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
