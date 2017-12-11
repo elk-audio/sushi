@@ -179,8 +179,8 @@ set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
 
-if (${WITH_XENOMAI})
-    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.cpp
+if (${WITH_XENOMAI} OR ${WITH_JACK})
+    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.h
                                        src/control_frontends/alsa_midi_frontend.cpp)
 endif()
 
@@ -231,7 +231,7 @@ if (${WITH_VST3})
 endif()
 
 if (${WITH_JACK})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
 endif()
 
 if (${WITH_XENOMAI})
