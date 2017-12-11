@@ -15,7 +15,7 @@ namespace midi_frontend {
 class BaseMidiFrontend
 {
 public:
-    BaseMidiFrontend(midi_receiver::MidiReceiver* dispatcher) : _dispatcher(dispatcher) {}
+    BaseMidiFrontend(midi_receiver::MidiReceiver* receiver) : _receiver(receiver) {}
 
     virtual ~BaseMidiFrontend() {};
 
@@ -28,7 +28,7 @@ public:
     virtual void send_midi(int input, const uint8_t* data, int64_t timestamp) = 0;
 
 protected:
-    midi_receiver::MidiReceiver* _dispatcher;
+    midi_receiver::MidiReceiver* _receiver;
 };
 
 } // end namespace midi_frontend
