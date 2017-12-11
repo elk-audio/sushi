@@ -140,8 +140,8 @@ void OfflineFrontend::run()
 {
     int readcount;
     int samplecount = 0;
-    float usec_time = 0.0f;
-    Time start_time = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now());
+    double usec_time = 0.0f;
+    Time start_time = std::chrono::microseconds(0);
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          _file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )

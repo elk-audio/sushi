@@ -25,13 +25,15 @@ struct BlobData
 /**
  * @brief Type used for timestamps with micro second granularity
  */
-typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds> Time;
+//typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds> Time;
+typedef std::chrono::microseconds Time;
+
 
 /**
  * @brief Convenience shorthand for setting timestamp to 0, i.e. process event as soon as possible.
  */
-constexpr Time PROCESS_NOW = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>::min();
-
+//constexpr Time PROCESS_NOW = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>::min();
+constexpr Time PROCESS_NOW = std::chrono::microseconds(0);
 
 constexpr size_t MIDI_DATA_BYTE_SIZE = 4;
 /**

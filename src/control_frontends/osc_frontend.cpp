@@ -4,11 +4,11 @@
  */
 
 #include <algorithm>
+#include <sstream>
 
 #include "osc_frontend.h"
 #include "logging.h"
 
-#include <sstream>
 
 namespace sushi {
 namespace control_frontend {
