@@ -43,9 +43,13 @@ R"(
               {
                 "type": "string",
                 "minLength": 1
+              },
+              "raw_midi":
+              {
+                "type": "boolean"
               }
             },
-            "required": ["port", "channel", "chain"]
+            "required": ["port", "channel", "chain", "raw_midi"]
           }
         },
         "cc_mappings":

@@ -121,6 +121,18 @@ public:
                                              int channel = midi::MidiChannel::OMNI);
 
     /**
+     * @brief Connect a midi input to a track/processor chain and send unprocessed
+     *        Midi data to it. Possibly filtering on midi channel.
+     * @param midi_input Index of the midi input
+     * @param chain_no The track/processor chain to send to
+     * @param channel If not OMNI, only the given channel will be connected.
+     * @return OK if successfully connected the chain, error status otherwise
+     */
+    MidiDispatcherStatus connect_raw_midi_to_track(int midi_input,
+                                                   const std::string &chain_name,
+                                                   int channel = midi::MidiChannel::OMNI);
+
+    /**
      * @brief Connect midi kb data from a track/processor chain to a given midi output
      * @param midi_output Index of the midi out
      * @param chain_name The track/processor chain from where the data originates
@@ -160,6 +172,7 @@ private:
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
     std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
     std::map<int, std::array<std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
+    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI +1>> _raw_routes_in;
     int _midi_inputs{0};
     int _midi_outputs{0};
 

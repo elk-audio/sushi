@@ -90,7 +90,14 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "left"
+                "chain": "left",
+                "raw_midi": false
+            },
+            {
+                "port": 0,
+                "channel": 10,
+                "chain": "right",
+                "raw_midi": true
             }
         ],
         "cc_mappings": [

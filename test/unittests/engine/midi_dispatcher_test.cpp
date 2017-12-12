@@ -74,6 +74,23 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
     delete event;
 }
 
+TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
+{
+    InputConnection connection = {25, 26, 0, 1};
+    uint8_t message[] = {1, 46, 64};
+    Event* event = make_wrapped_midi_event(connection, message, sizeof(message), 1000);
+    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_EQ(1000, event->time());
+    auto typed_event = static_cast<KeyboardEvent*>(event);
+    EXPECT_EQ(KeyboardEvent::Subtype::WRAPPED_MIDI, typed_event->subtype());
+    EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(1u, typed_event->midi_data()[0]);
+    EXPECT_EQ(46u, typed_event->midi_data()[1]);
+    EXPECT_EQ(64u, typed_event->midi_data()[2]);
+    EXPECT_EQ(0u, typed_event->midi_data()[3]);
+    delete event;
+}
+
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
@@ -148,6 +165,33 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     _module_under_test.set_midi_output_ports(3);
     auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
+}
+
+
+TEST_F(TestMidiDispatcher, TestRawDataConnection)
+{
+    /* Send midi message without connections */
+    _module_under_test.process_midi(1, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), false);
+    _module_under_test.process_midi(0, TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG), false);
+    EXPECT_FALSE(_test_dispatcher->got_event());
+
+    /* Connect all midi channels (OMNI) */
+    _module_under_test.set_midi_input_ports(5);
+    _module_under_test.connect_raw_midi_to_track(1, "processor");
+    _module_under_test.process_midi(1, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), false);
+    EXPECT_TRUE(_test_dispatcher->got_event());
+
+    _module_under_test.process_midi(0, TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG), false);
+    EXPECT_FALSE(_test_dispatcher->got_event());
+    _module_under_test.clear_connections();
+
+    /* Connect with a specific midi channel (2) */
+    _module_under_test.connect_raw_midi_to_track(2, "processor_2", 3);
+    _module_under_test.process_midi(2, TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG), false);
+    EXPECT_TRUE(_test_dispatcher->got_event());
+
+    _module_under_test.process_midi(2, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), false);
+    EXPECT_FALSE(_test_dispatcher->got_event());
 }
 
 TEST_F(TestMidiDispatcher, TestCCDataConnection)

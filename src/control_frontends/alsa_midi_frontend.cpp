@@ -109,9 +109,11 @@ void AlsaMidiFrontend::_poll_function()
             uint8_t data_buffer[ALSA_MAX_EVENT_SIZE_BYTES]{0};
             while (snd_seq_event_input(_seq_handle, &ev) > 0)
             {
+                // TODO - Consider if we should be filtering at all here or in the dispatcher instead
                 if ((ev->type == SND_SEQ_EVENT_NOTEON)
                     || (ev->type == SND_SEQ_EVENT_NOTEOFF)
-                    || (ev->type == SND_SEQ_EVENT_CONTROLLER))
+                    || (ev->type == SND_SEQ_EVENT_CONTROLLER)
+                    || (ev->type == SND_SEQ_EVENT_PITCHBEND))
                 {
                     const long byte_count = snd_midi_event_decode(_input_parser, data_buffer,
                                                                   sizeof(data_buffer), ev);
