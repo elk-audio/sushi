@@ -14,7 +14,7 @@
 
 #include "library/id_generator.h"
 #include "library/event_fifo.h"
-#include "library/plugin_events.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 namespace receiver {
@@ -23,7 +23,7 @@ namespace receiver {
 class AsynchronousEventReceiver
 {
 public:
-    AsynchronousEventReceiver(EventFifo* queue) : _queue{queue} {}
+    AsynchronousEventReceiver(RtEventFifo* queue) : _queue{queue} {}
 
     /**
      * @brief Blocks the current thread while waiting for a response to a given event
@@ -40,7 +40,7 @@ private:
         bool    status;
     };
     std::vector<Node> _receive_list;
-    EventFifo* _queue;
+    RtEventFifo* _queue;
     std::mutex _list_lock;
 };
 

@@ -7,17 +7,17 @@
  * not intended to process or consume events, only pass them on.
  */
 
-#ifndef SUSHI_EVENT_PIPE_H
-#define SUSHI_EVENT_PIPE_H
+#ifndef SUSHI_RT_EVENT_PIPE_H
+#define SUSHI_RT_EVENT_PIPE_H
 
-#include "library/plugin_events.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 
-class EventPipe
+class RtEventPipe
 {
 public:
-    virtual void send_event(Event event) = 0;
+    virtual void send_event(RtEvent event) = 0;
 
 };
 
@@ -29,4 +29,4 @@ public:
 } // end namespace sushi
 
 
-#endif //SUSHI_EVENT_PIPE_H
+#endif //SUSHI_RT_EVENT_PIPE_H

@@ -23,7 +23,7 @@ namespace engine {
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int PLUGIN_CHAIN_MAX_CHANNELS = 8;
 
-class PluginChain : public Processor, public EventPipe
+class PluginChain : public Processor, public RtEventPipe
 {
 public:
     PluginChain() : _bfr_1{PLUGIN_CHAIN_MAX_CHANNELS},
@@ -60,14 +60,14 @@ public:
      */
     bool remove(ObjectId processor);
 
-    void process_event(Event event) override;
+    void process_event(RtEvent event) override;
 
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out);
 
     void set_bypassed(bool bypassed) override;
 
-    /* Inherited from EventPipe */
-    void send_event(Event event) override;
+    /* Inherited from RtEventPipe */
+    void send_event(RtEvent event) override;
 
     void set_input_channels(int channels) override
     {
@@ -93,7 +93,7 @@ private:
     ChunkSampleBuffer _bfr_2;
 
     // TODO - Maybe use a simpler queue here eventually
-    EventFifo _event_buffer;
+    RtEventFifo _event_buffer;
 };
 
 

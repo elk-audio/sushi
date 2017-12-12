@@ -174,11 +174,11 @@ bool Vst2xWrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Vst2xWrapper::process_event(Event event)
+void Vst2xWrapper::process_event(RtEvent event)
 {
     switch (event.type())
     {
-    case EventType::FLOAT_PARAMETER_CHANGE:
+    case RtEventType::FLOAT_PARAMETER_CHANGE:
     {
         auto typed_event = event.parameter_change_event();
         auto id = typed_event->param_id();
@@ -187,10 +187,10 @@ void Vst2xWrapper::process_event(Event event)
     }
     break;
 
-    case EventType::NOTE_ON:
-    case EventType::NOTE_OFF:
-    case EventType::NOTE_AFTERTOUCH:
-    case EventType::WRAPPED_MIDI_EVENT:
+    case RtEventType::NOTE_ON:
+    case RtEventType::NOTE_OFF:
+    case RtEventType::NOTE_AFTERTOUCH:
+    case RtEventType::WRAPPED_MIDI_EVENT:
         if (!_vst_midi_events_fifo.push(event))
         {
             MIND_LOG_WARNING("Vst wrapper, plugin: {}, MIDI queue Overflow!", name());

@@ -26,7 +26,7 @@ public:
         return ProcessorReturnCode::OK;
     }
 
-    void process_event(Event /*event*/) override {}
+    void process_event(RtEvent /*event*/) override {}
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
     {
         out_buffer = in_buffer;
@@ -125,7 +125,7 @@ TEST_F(PluginChainTest, TestEmptyChainProcessing)
 TEST_F(PluginChainTest, TestEventProcessing)
 {
     ChunkSampleBuffer buffer(2);
-    EventFifo event_queue;
+    RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin;
     plugin.init(44100);
@@ -135,9 +135,35 @@ TEST_F(PluginChainTest, TestEventProcessing)
     _module_under_test.set_event_output(&event_queue);
     _module_under_test.add(&plugin);
 
-    Event event = Event::make_note_on_event(0, 0, 0, 0);
+    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0);
 
     _module_under_test.process_event(event);
     _module_under_test.process_audio(buffer, buffer);
     ASSERT_FALSE(event_queue.empty());
+}
+
+TEST_F(PluginChainTest, TestEventForwarding)
+{
+    ChunkSampleBuffer buffer(2);
+    RtEventFifo event_queue;
+    ASSERT_TRUE(event_queue.empty());
+    passthrough_plugin::PassthroughPlugin plugin;
+    plugin.init(44100);
+    plugin.set_event_output(&event_queue);
+
+    _module_under_test.set_event_output(&event_queue);
+    _module_under_test.add(&plugin);
+
+    RtEvent event = RtEvent::make_note_on_event(125, 13, 48, 0.0f);
+
+    _module_under_test.process_event(event);
+    _module_under_test.process_audio(buffer, buffer);
+    ASSERT_FALSE(event_queue.empty());
+    RtEvent received_event;
+    event_queue.pop(received_event);
+    auto typed_event = received_event.keyboard_event();
+    ASSERT_EQ(RtEventType::NOTE_ON, received_event.type());
+    /* Assert that the processor id of the event is that of the chain and
+     * not the id set. */
+    ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
 }

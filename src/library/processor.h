@@ -11,8 +11,8 @@
 #include <map>
 
 #include "library/sample_buffer.h"
-#include "library/plugin_events.h"
-#include "library/event_pipe.h"
+#include "library/rt_event.h"
+#include "library/rt_event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
 
@@ -59,7 +59,7 @@ public:
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(Event event) = 0;
+    virtual void process_event(RtEvent event) = 0;
 
     /**
      * @brief Process a chunk of audio.
@@ -102,7 +102,7 @@ public:
      * @brief Set an output pipe for events.
      * @param output_pipe the output EventPipe that should receive events
      */
-    virtual void set_event_output(EventPipe* pipe)
+    virtual void set_event_output(RtEventPipe* pipe)
     {
         _output_pipe = pipe;
     }
@@ -231,7 +231,7 @@ protected:
         return true;
     }
 
-    void output_event(Event event)
+    void output_event(RtEvent event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);
@@ -275,7 +275,7 @@ protected:
     bool _bypassed{false};
 
 private:
-    EventPipe* _output_pipe{nullptr};
+    RtEventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
     ObjectId _id{ProcessorIdGenerator::new_id()};
 

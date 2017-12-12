@@ -95,13 +95,13 @@ bool InternalPlugin::register_data_property(const std::string &id,
 }
 
 
-void InternalPlugin::process_event(Event event)
+void InternalPlugin::process_event(RtEvent event)
 {
     switch (event.type())
     {
-        case EventType::FLOAT_PARAMETER_CHANGE:
-        case EventType::INT_PARAMETER_CHANGE:
-        case EventType::BOOL_PARAMETER_CHANGE:
+        case RtEventType::FLOAT_PARAMETER_CHANGE:
+        case RtEventType::INT_PARAMETER_CHANGE:
+        case RtEventType::BOOL_PARAMETER_CHANGE:
         {
             /* These are "managed events" and not handled directly by the stompbox,
              * other events are passed on unaltered. Maybe in the future we'll do

@@ -19,7 +19,7 @@
 #undef DEVELOPMENT
 
 #include "library/sample_buffer.h"
-#include "library/plugin_events.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 namespace vst3 {
@@ -95,21 +95,21 @@ private:
  * @param event A Sushi note on event
  * @return a Vst3 note on event
  */
-Steinberg::Vst::Event convert_note_on_event(const KeyboardEvent* event);
+Steinberg::Vst::Event convert_note_on_event(const KeyboardRtEvent* event);
 
 /**
  * @brief Convert a Sushi NoteOff event to a Vst3 Note off event
  * @param event A Sushi note off event
  * @return a Vst3 note off event
  */
-Steinberg::Vst::Event convert_note_off_event(const KeyboardEvent* event);
+Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event);
 
 /**
  * @brief Convert a Sushi Aftertouch event to a Vst3 event
  * @param event A Sushi Aftertouch event
  * @return a Vst3 poly pressure event
  */
-Steinberg::Vst::Event convert_aftertouch_event(const KeyboardEvent* event);
+Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event);
 
 
 } // end namespace vst3

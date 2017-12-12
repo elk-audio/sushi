@@ -51,10 +51,10 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    EventFifo event_queue;
+    RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     _module_under_test->set_event_output(&event_queue);
-    Event event = Event::make_note_on_event(0, 0, 0, 0);
+    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0);
 
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -179,5 +179,3 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
-
-

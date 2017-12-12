@@ -5,6 +5,7 @@
 
 #include "audio_frontends/jack_frontend.cpp"
 #include "engine_mockup.h"
+#include "control_frontends/alsa_midi_frontend.cpp"
 
 
 using ::testing::internal::posix::GetEnv;

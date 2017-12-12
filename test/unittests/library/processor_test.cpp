@@ -13,7 +13,7 @@ class ProcessorTest : public Processor
     virtual ~ProcessorTest() {}
     virtual void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
                                ChunkSampleBuffer& /*out_buffer*/) override {}
-    virtual void process_event(Event /*event*/) override {}
+    virtual void process_event(RtEvent /*event*/) override {}
 };
 
 

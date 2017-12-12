@@ -63,6 +63,7 @@ set(CMAKE_EXE_LINKER_FLAGS "")
 #####################
 
 SET(TEST_FILES unittests/sample_test.cpp
+               unittests/plugins/arpeggiator_plugin_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
                unittests/engine/plugin_chain_test.cpp
@@ -70,6 +71,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/engine/json_configurator_test.cpp
                unittests/engine/receiver_test.cpp
+               unittests/engine/event_dispatcher_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
@@ -79,7 +81,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
-               unittests/library/plugin_events_test.cpp
+               unittests/library/rt_event_test.cpp
                unittests/library/vst2x_plugin_loader_test.cpp
                unittests/library/vst2x_wrapper_test.cpp
                unittests/library/vst2x_midi_event_fifo_test.cpp
@@ -130,7 +132,11 @@ if (${WITH_VST3})
     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} adelay vst3_host)
 endif()
 
-add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
+if (${WITH_JACK})
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
+endif()
+
+    add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)

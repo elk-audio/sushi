@@ -25,17 +25,14 @@ SamplePlayerPlugin::SamplePlayerPlugin()
 
 ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
 {
+    _sample.set_sample(&_dummy_sample, 0);
     for (auto& voice : _voices)
     {
         voice.set_samplerate(sample_rate);
-    }
-    auto status = load_sample_file(SAMPLE_FILE);
-    if (status != ProcessorReturnCode::OK)
-    {
-        MIND_LOG_ERROR("Sample file not found");
+        voice.set_sample(&_sample);
     }
 
-    return status;
+    return ProcessorReturnCode::OK;
 }
 
 void SamplePlayerPlugin::configure(float sample_rate)
@@ -54,7 +51,7 @@ void SamplePlayerPlugin::set_bypassed(bool bypassed)
     {
         for (auto &voice : _voices)
         {
-            voice.note_off(10.f, 0);
+            voice.note_off(1.0f, 0);
         }
     }
     Processor::set_bypassed(bypassed);
@@ -62,14 +59,15 @@ void SamplePlayerPlugin::set_bypassed(bool bypassed)
 
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
-    delete[] _sample_buffer;
+    delete _sample_buffer;
+    delete _sample_file_property;
 }
 
-void SamplePlayerPlugin::process_event(Event event)
+void SamplePlayerPlugin::process_event(RtEvent event)
 {
     switch (event.type())
     {
-        case EventType::NOTE_ON:
+        case RtEventType::NOTE_ON:
         {
             if (_bypassed)
             {
@@ -102,7 +100,7 @@ void SamplePlayerPlugin::process_event(Event event)
             }
             break;
         }
-        case EventType::NOTE_OFF:
+        case RtEventType::NOTE_OFF:
         {
             if (_bypassed)
             {
@@ -121,6 +119,37 @@ void SamplePlayerPlugin::process_event(Event event)
             }
             break;
         }
+        case RtEventType::STRING_PARAMETER_CHANGE:
+        {
+            MIND_LOG_INFO("Got a string param change");
+            /* Currently there is only 1 string parameter and it's for changing the sample
+             * file, hence no need to check the parameter id */
+            auto typed_event = event.string_parameter_change_event();
+            for (auto& voice : _voices)
+            {
+                voice.note_off(1.0f, 0);
+            }
+            _sample_file_property = typed_event->value();
+            /* Schedule a non-rt callback to handle this */
+            auto e = RtEvent::make_async_work_event(&SamplePlayerPlugin::non_rt_callback, this->id(), this);
+            _pending_event_id = e.async_work_event()->event_id();
+            output_event(e);
+            break;
+        }
+        case RtEventType::ASYNC_WORK_NOTIFICATION:
+        {
+            auto typed_event = event.async_work_completion_event();
+            if (typed_event->sending_event_id() == _pending_event_id &&
+                typed_event->return_status() == SampleChangeStatus::SUCCESS)
+            {
+                _sample_buffer = reinterpret_cast<float*>(_pending_sample.data);
+                _sample.set_sample(_sample_buffer, _pending_sample.size / sizeof(float));
+                auto delete_event = RtEvent::make_delete_blob_event(_pending_sample);
+                output_event(delete_event);
+            }
+            break;
+        }
+
         default:
             InternalPlugin::process_event(event);
             break;
@@ -149,33 +178,45 @@ void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */,
     }
 }
 
-
-ProcessorReturnCode SamplePlayerPlugin::load_sample_file(const std::string &file_name)
+BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
 {
     SNDFILE*    sample_file;
     SF_INFO     soundfile_info = {};
-
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
-        return ProcessorReturnCode::ERROR;
+        MIND_LOG_ERROR("Failed to open sample file: {}", file_name);
+        return {0,0};
     }
     assert(soundfile_info.channels == 1);
-
-    // Read sample data
-    delete _sample_buffer;
-    _sample_buffer = new float[soundfile_info.frames];
-    int samples = sf_readf_float(sample_file, _sample_buffer, soundfile_info.frames);
+    float* sample_buffer = new float[soundfile_info.frames];
+    int samples = sf_readf_float(sample_file, sample_buffer, soundfile_info.frames);
     assert(samples == soundfile_info.frames);
-
-    _sample.set_sample(_sample_buffer, soundfile_info.frames);
-    for (auto& voice : _voices)
-    {
-        voice.set_sample(&_sample);
-    }
     sf_close(sample_file);
-    return ProcessorReturnCode::OK;
+
+    return BlobData{static_cast<int>(samples * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
 }
 
+int SamplePlayerPlugin::_non_rt_callback(EventId id)
+{
+    if (id == _pending_event_id)
+    {
+        auto sample_data = load_sample_file(*_sample_file_property);
+        delete _sample_file_property;
+        _sample_file_property = nullptr;
+        if (sample_data.size > 0)
+        {
+            _pending_sample = sample_data;
+            MIND_LOG_INFO("Sucessfully replaced sample data");
+            return SampleChangeStatus::SUCCESS;
+        }
+        return SampleChangeStatus::FAILURE;
+    }
+    else
+    {
+        MIND_LOG_WARNING("Sampleplayer: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
+        return SampleChangeStatus::FAILURE;
+    }
+}
 
 
 }// namespace sample_player_plugin

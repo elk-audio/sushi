@@ -196,6 +196,7 @@ int main(int argc, char* argv[])
     engine.set_audio_input_channels(2);
     engine.set_audio_output_channels(2);
     midi_dispatcher.set_midi_input_ports(1);
+    midi_dispatcher.set_midi_output_ports(1);
 
     sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
     auto status = configurator.load_host_config(config_filename);

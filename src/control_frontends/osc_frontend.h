@@ -14,10 +14,10 @@
 #ifndef SUSHI_OSC_FRONTEND_H_H
 #define SUSHI_OSC_FRONTEND_H_H
 
+#include "lo/lo.h"
+
 #include "base_control_frontend.h"
 #include "engine/engine.h"
-
-#include "lo/lo.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -35,7 +35,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(EventFifo* queue, engine::BaseEngine* engine);
+    OSCFrontend(engine::BaseEngine* engine);
 
     ~OSCFrontend();
 
@@ -50,6 +50,8 @@ public:
     bool connect_to_parameter(const std::string &processor_name,
                               const std::string &parameter_name);
 
+    bool connect_to_string_parameter(const std::string &processor_name,
+                                     const std::string &parameter_name);
     /**
      * @brief Connect keyboard messages to a given plugin chain.
      *        The target osc path will be:
@@ -71,7 +73,14 @@ public:
 
     virtual void stop() override {_stop_server();}
 
+    /* Inherited from EventPoster */
+    int process(Event* event);
+
+    int poster_id() override {return EventPosterId::OSC_FRONTEND;}
+
 private:
+    void _completion_callback(Event* event, int return_status) override;
+
     void _start_server();
 
     void _stop_server();
@@ -81,6 +90,7 @@ private:
     lo_server_thread _osc_server;
     int _server_port;
     std::atomic_bool _running;
+
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
 };

@@ -103,6 +103,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/engine.cpp
+                      src/engine/event_dispatcher.cpp
                       src/engine/plugin_chain.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
@@ -114,6 +115,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
                       src/library/vst3x_wrapper.cpp
+                      src/plugins/arpeggiator_plugin.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
@@ -138,14 +140,17 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
                         src/engine/receiver.h
+                        src/library/event.h
+                        src/library/event_interface.h
                         src/library/sample_buffer.h
                         src/library/mind_allocator.h
                         src/library/midi_decoder.h
-                        src/library/plugin_events.h
+                        src/library/midi_encoder.h
+                        src/library/rt_event.h
                         src/library/processor.h
                         src/library/internal_plugin.h
                         src/library/event_fifo.h
-                        src/library/event_pipe.h
+                        src/library/rt_event_pipe.h
                         src/library/vst2x_wrapper.h
                         src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h
@@ -155,6 +160,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/plugin_chain.h
                         src/engine/midi_dispatcher.h
                         src/engine/json_configurator.h
+                        src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h

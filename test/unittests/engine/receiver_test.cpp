@@ -23,7 +23,7 @@ protected:
     void TearDown()
     { }
 
-    EventFifo _queue;
+    RtEventFifo _queue;
     AsynchronousEventReceiver _module_under_test{&_queue};
 };
 
@@ -31,7 +31,7 @@ protected:
 TEST_F(TestAsyncReceiver, TestBasicHandling)
 {
     ASSERT_FALSE(_module_under_test.wait_for_response(123u, ZERO_TIMEOUT));
-    auto event = Event::make_insert_processor_event(nullptr);
+    auto event = RtEvent::make_insert_processor_event(nullptr);
     EventId id = event.returnable_event()->event_id();
     event.returnable_event()->set_handled(true);
     _queue.push(event);
@@ -41,8 +41,8 @@ TEST_F(TestAsyncReceiver, TestBasicHandling)
 TEST_F(TestAsyncReceiver, TestMultipleEvents)
 {
     ASSERT_FALSE(_module_under_test.wait_for_response(123u, ZERO_TIMEOUT));
-    auto event1 = Event::make_insert_processor_event(nullptr);
-    auto event2 = Event::make_add_processor_to_chain_event(123, 234);
+    auto event1 = RtEvent::make_insert_processor_event(nullptr);
+    auto event2 = RtEvent::make_add_processor_to_chain_event(123, 234);
     event1.returnable_event()->set_handled(true);
     event2.returnable_event()->set_handled(true);
     EventId id1 = event1.returnable_event()->event_id();

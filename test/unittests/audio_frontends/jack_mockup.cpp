@@ -6,6 +6,7 @@
  */
 
 constexpr int JACK_NFRAMES = 128;
+constexpr uint64_t FRAMETIME_64_SMP_44100 = 64 * 1000000 / 48000;
 uint8_t midi_buffer[3] = {0x81, 60, 45};
 float buffer[JACK_NFRAMES];
 
@@ -89,6 +90,17 @@ int jack_midi_event_get(jack_midi_event_t *event,
 {
     event->size = 3;
     event->buffer = midi_buffer;
+    return 0;
+}
+
+
+int jack_get_cycle_times(const jack_client_t* /*client*/, jack_nframes_t* current_frames,
+                         jack_time_t* current_usecs, jack_time_t* next_usecs, float* period_usecs)
+{
+    *current_frames = 128;
+    *current_usecs = 1000;
+    *next_usecs = 1000 + FRAMETIME_64_SMP_44100;
+    *period_usecs = FRAMETIME_64_SMP_44100;
     return 0;
 }
 

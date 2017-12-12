@@ -23,7 +23,7 @@
 #pragma GCC diagnostic pop
 
 #include "constants.h"
-#include "library/plugin_events.h"
+#include "library/rt_event.h"
 #include "midi_decoder.h"
 
 namespace sushi {
@@ -64,7 +64,7 @@ public:
      *  @brief Push an element to the FIFO.
      *  @return false if overflow happened during the operation
      */
-    bool push(Event event)
+    bool push(RtEvent event)
     {
         bool res = !_limit_reached;
         _fill_vst_event(_write_idx, event);
@@ -121,26 +121,26 @@ private:
     *             so at the moment just pass 0. We'll have to rewrite this
     *             when we'll have a MidiEncoder available.
     */
-    void _fill_vst_event(const int idx, Event event)
+    void _fill_vst_event(const int idx, RtEvent event)
     {
         auto midi_ev_p = &_midi_data[idx];
         midi_ev_p->deltaFrames = static_cast<VstInt32>(event.sample_offset());
         switch (event.type())
         {
-        case EventType::NOTE_ON:
-        case EventType::NOTE_OFF:
-        case EventType::NOTE_AFTERTOUCH:
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
         {
             auto key_event = event.keyboard_event();
-            if (event.type() == EventType::NOTE_ON)
+            if (event.type() == RtEventType::NOTE_ON)
             {
                 midi_ev_p->midiData[0] = static_cast<char>(144);
             }
-            else if (event.type() == EventType::NOTE_OFF)
+            else if (event.type() == RtEventType::NOTE_OFF)
             {
                 midi_ev_p->midiData[0] = static_cast<char>(128);
             }
-            else if (event.type() == EventType::NOTE_AFTERTOUCH)
+            else if (event.type() == RtEventType::NOTE_AFTERTOUCH)
             {
                 midi_ev_p->midiData[0] = static_cast<char>(160);
             }
@@ -149,7 +149,7 @@ private:
         }
             break;
 
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::WRAPPED_MIDI_EVENT:
         {
             auto midi_event = event.wrapper_midi_event();
             auto data = midi_event->midi_data();

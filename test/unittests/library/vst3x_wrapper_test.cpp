@@ -101,7 +101,7 @@ TEST_F(TestVst3xWrapper, TestProcessing)
     ChunkSampleBuffer out_buffer(2);
     test_utils::fill_sample_buffer(in_buffer, 1);
     /* Set delay to 0 */
-    auto event = Event::make_parameter_change_event(0u, 0, DELAY_PARAM_ID, 0.0f);
+    auto event = RtEvent::make_parameter_change_event(0u, 0, DELAY_PARAM_ID, 0.0f);
 
     _module_under_test->set_enabled(true);
     _module_under_test->process_event(event);
@@ -117,7 +117,7 @@ TEST_F(TestVst3xWrapper, TestProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    EventFifo queue;
+    RtEventFifo queue;
     _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;
@@ -139,15 +139,15 @@ TEST_F(TestVst3xWrapper, TestEventForwarding)
     _module_under_test->_forward_events(_module_under_test->_process_data);
 
     ASSERT_FALSE(queue.empty());
-    Event event;
+    RtEvent event;
     ASSERT_TRUE(queue.pop(event));
-    ASSERT_EQ(EventType::NOTE_ON, event.type());
+    ASSERT_EQ(RtEventType::NOTE_ON, event.type());
     ASSERT_EQ(5, event.sample_offset());
     ASSERT_EQ(46, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
 
     ASSERT_TRUE(queue.pop(event));
-    ASSERT_EQ(EventType::NOTE_OFF, event.type());
+    ASSERT_EQ(RtEventType::NOTE_OFF, event.type());
     ASSERT_EQ(6, event.sample_offset());
     ASSERT_EQ(48, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());

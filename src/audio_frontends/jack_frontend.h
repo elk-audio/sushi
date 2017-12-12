@@ -8,9 +8,9 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 
 #include "base_audio_frontend.h"
-#include "library/plugin_events.h"
 #include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 #include <string>
 #include <tuple>
@@ -107,8 +107,8 @@ private:
     int internal_samplerate_callback(jack_nframes_t nframes);
 
     void process_events();
-    void process_midi(jack_nframes_t no_frames);
-    void process_audio(jack_nframes_t no_frames);
+    void process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count);
+    void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
@@ -120,9 +120,10 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
 
-    EventFifo _event_queue;
+    RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
+    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
 };
 
 }; // end namespace jack_frontend

@@ -1,6 +1,9 @@
 
 #include "plugin_chain.h"
+#include "logging.h"
 #include <iostream>
+
+MIND_GET_LOGGER;
 
 namespace sushi {
 namespace engine {
@@ -42,7 +45,7 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     {
         while (!_event_buffer.empty()) // This should only contain keyboard/note events
         {
-            Event event;
+            RtEvent event;
             if (_event_buffer.pop(event))
             {
                 plugin->process_event(event);
@@ -55,13 +58,34 @@ void PluginChain::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& 
     /* Yes, it is in_bfr buffer here. Either it was swapped with out_bfr or the
      * processing chain was empty */
     out = in_bfr;
-    /* If there are keyboard events not consumed, pass them on upwards */
+    /* If there are keyboard events not consumed, pass them on upwards
+     * Rewrite the processor id of the events with that of the chain.
+     * Eventually this should only be done for track objects */
     while (!_event_buffer.empty())
     {
-        Event event;
+        RtEvent event;
         if (_event_buffer.pop(event))
         {
-            output_event(event);
+            switch (event.type())
+            {
+                case RtEventType::NOTE_ON:
+                    output_event(RtEvent::make_note_on_event(this->id(), event.sample_offset(),
+                                                             event.keyboard_event()->note(),
+                                                             event.keyboard_event()->velocity()));
+                    break;
+                case RtEventType::NOTE_OFF:
+                    output_event(RtEvent::make_note_off_event(this->id(), event.sample_offset(),
+                                                              event.keyboard_event()->note(),
+                                                              event.keyboard_event()->velocity()));
+                    break;
+                case RtEventType::NOTE_AFTERTOUCH:
+                    output_event(RtEvent::make_note_aftertouch_event(this->id(), event.sample_offset(),
+                                                                     event.keyboard_event()->note(),
+                                                                     event.keyboard_event()->velocity()));
+                    break;
+                default:
+                    output_event(event);
+            }
         }
     }
 }
@@ -106,16 +130,16 @@ void PluginChain::update_channel_config()
     }
 }
 
-void PluginChain::process_event(Event event)
+void PluginChain::process_event(RtEvent event)
 {
     switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the first processor in the chain */
-        case EventType::NOTE_ON:
-        case EventType::NOTE_OFF:
-        case EventType::NOTE_AFTERTOUCH:
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::WRAPPED_MIDI_EVENT:
             _event_buffer.push(event);
             break;
 
@@ -133,16 +157,16 @@ void PluginChain::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void PluginChain::send_event(Event event)
+void PluginChain::send_event(RtEvent event)
 {
     switch (event.type())
     {
         /* Keyboard events are cached so they can be passed on
          * to the next processor in the chain */
-        case EventType::NOTE_ON:
-        case EventType::NOTE_OFF:
-        case EventType::NOTE_AFTERTOUCH:
-        case EventType::WRAPPED_MIDI_EVENT:
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::WRAPPED_MIDI_EVENT:
             _event_buffer.push(event);
             break;
 

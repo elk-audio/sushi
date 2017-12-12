@@ -16,19 +16,23 @@
 
 #include "EASTL/vector.h"
 
+#include "engine/event_dispatcher.h"
 #include "plugin_chain.h"
 #include "engine/receiver.h"
+#include "engine/transport.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/event_fifo.h"
+#include "library/types.h"
 
 
 namespace sushi {
 namespace engine {
 
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
+
 
 enum class EngineReturnStatus
 {
@@ -67,7 +71,7 @@ public:
     virtual ~BaseEngine()
     {}
 
-    int sample_rate()
+    float sample_rate()
     {
         return _sample_rate;
     }
@@ -125,9 +129,11 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
-    virtual EngineReturnStatus send_rt_event(Event& event) = 0;
+    virtual void update_time(int64_t /*usec*/, int64_t /*samples*/) = 0;
 
-    virtual EngineReturnStatus send_async_event(Event& event) = 0;
+    virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
+
+    virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
 
 
     virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
@@ -142,6 +148,12 @@ public:
     };
 
     virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId /*id*/)
+    {
+        return std::make_pair(EngineReturnStatus::OK, "");
+    };
+
+    virtual std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& /*processor_name*/,
+                                                                                    const ObjectId /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
@@ -183,6 +195,11 @@ public:
         return tmp;
     }
 
+    virtual sushi::dispatcher::BaseEventDispatcher* event_dispatcher()
+    {
+        return nullptr;
+    }
+
 protected:
     float _sample_rate;
     int _audio_inputs{0};
@@ -201,7 +218,7 @@ public:
      * @brief Configure the Engine with a new samplerate.
      * @param sample_rate The new sample rate in Hz
      */
-    void set_sample_rate(float sample_rate);
+    void set_sample_rate(float sample_rate) override;
 
     /**
      * @brief Return the number of configured channels for a specific processing chainn
@@ -234,19 +251,29 @@ public:
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
 
     /**
+     * @brief Set the current time for the start of the current audio chunk
+     * @param timestamp Current time in microseconds
+     * @param samples Current number of samples processed
+     */
+    void update_time(MicroTime timestamp, int64_t samples)
+    {
+        _transport.set_time(timestamp, samples);
+    }
+
+    /**
      * @brief Process an event directly. In a realtime processing setup this must be
      *        called from the realtime thread before calling process_chunk()
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(Event& event) override;
+    EngineReturnStatus send_rt_event(RtEvent& event) override;
 
     /**
      * @brief Called from a non-realtime thread to process an event in the realtime
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_async_event(Event& event) override;
+    EngineReturnStatus send_async_event(RtEvent& event) override;
     /**
      * @brief Get the unique id of a processor given its name
      * @param unique_name The unique name of a processor
@@ -270,6 +297,14 @@ public:
      */
     std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
 
+    /**
+     * @brief Get the unique name of a parameter with a known unique id
+     * @param processor_name The unique name of the processor
+     * @param id The unique id of the parameter to lookup.
+     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
+     */
+    std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
+                                                                            const ObjectId id) override;
     /**
      * @brief Creates an empty plugin chain
      * @param chain_id The unique id of the chain to be created.
@@ -307,13 +342,13 @@ public:
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
     EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
-                                                        const std::string& plugin_id) override;
+                                                const std::string& plugin_id) override;
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually
      *        there should be better and safer ways of accessing processors.
      * @return An std::map containing all registered processors.
      */
-    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
+    const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
     {
         return _processors;
     };
@@ -324,11 +359,15 @@ public:
      *        from outside the engine.
      * @return An std::vector of containing all PluginChains
      */
-    virtual const std::vector<PluginChain*>& all_chains()
+    const std::vector<PluginChain*>& all_chains()
     {
         return _audio_graph;
     }
 
+    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
+    {
+        return &_event_dispatcher;
+    }
 
 private:
     /**
@@ -387,7 +426,7 @@ private:
      * @param event The event to handle
      * @return true if handled, false if not an engine event
      */
-    bool _handle_internal_events(Event &event);
+    bool _handle_internal_events(RtEvent &event);
 
     std::vector<PluginChain*> _audio_graph;
 
@@ -400,10 +439,15 @@ private:
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    EventFifo _control_queue_in;
-    EventFifo _control_queue_out;
+    RtEventFifo _internal_control_queue;
+    RtEventFifo _main_in_queue;
+    RtEventFifo _main_out_queue;
+    RtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
+    Transport _transport;
+
+    dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 };
 
 /**
