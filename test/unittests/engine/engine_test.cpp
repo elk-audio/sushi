@@ -84,6 +84,28 @@ TEST_F(TestEngine, TestProcess)
     test_utils::assert_buffer_value(1.0f, main_bus);
 }
 
+TEST_F(TestEngine, TestOutputMixing)
+{
+    _module_under_test->create_track("1", 2);
+    _module_under_test->create_track("2", 2);
+    _module_under_test->connect_audio_input_bus(0, 0, "1");
+    _module_under_test->connect_audio_input_bus(1, 0, "2");
+    _module_under_test->connect_audio_output_bus(0, 0, "1");
+    _module_under_test->connect_audio_output_bus(0, 0, "2");
+
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+
+    /* Both track's outputs are routed to bus 0, so they should sum to 2 */
+    auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
+
+    test_utils::assert_buffer_value(2.0f, main_bus);
+}
+
+
 TEST_F(TestEngine, TestUidNameMapping)
 {
     _module_under_test->create_track("left", 2);

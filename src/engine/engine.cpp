@@ -239,7 +239,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     {
         auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_bus(c.track_bus);
         auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, c.engine_bus * 2, 2);
-        engine_out = track_out;
+        engine_out.add(track_out);
     }
 
     _state.store(update_state(state));
