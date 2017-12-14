@@ -22,7 +22,7 @@ constexpr int ALSA_MAX_EVENT_SIZE_BYTES = 12;
 class AlsaMidiFrontend : public BaseMidiFrontend
 {
 public:
-    AlsaMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher);
+    AlsaMidiFrontend(midi_receiver::MidiReceiver* dispatcher);
 
     ~AlsaMidiFrontend();
 

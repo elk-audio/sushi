@@ -210,7 +210,7 @@ void MidiDispatcher::clear_connections()
     _kb_routes_in.clear();
 }
 
-void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp)
+void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, int64_t timestamp)
 {
     int channel = midi::decode_channel(data[0]);
     const auto& cons = _raw_routes_in.find(input);

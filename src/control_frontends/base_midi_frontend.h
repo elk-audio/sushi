@@ -7,17 +7,15 @@
 #ifndef SUSHI_BASE_MIDI_FRONTEND_H
 #define SUSHI_BASE_MIDI_FRONTEND_H
 
-#include "engine/midi_dispatcher.h"
+#include "engine/midi_receiver.h"
 
 namespace sushi {
-// TODO - Investigate how to get rid of this fwd declaration
-namespace midi_dispatcher{ class MidiDispatcher;}
 namespace midi_frontend {
 
 class BaseMidiFrontend
 {
 public:
-    BaseMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher) : _dispatcher(dispatcher) {}
+    BaseMidiFrontend(midi_receiver::MidiReceiver* receiver) : _receiver(receiver) {}
 
     virtual ~BaseMidiFrontend() {};
 
@@ -30,7 +28,7 @@ public:
     virtual void send_midi(int input, const uint8_t* data, int64_t timestamp) = 0;
 
 protected:
-    midi_dispatcher::MidiDispatcher* _dispatcher;
+    midi_receiver::MidiReceiver* _receiver;
 };
 
 } // end namespace midi_frontend

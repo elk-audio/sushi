@@ -20,11 +20,11 @@
 #include "control_frontends/base_midi_frontend.h"
 #include "engine/engine.h"
 #include "engine/event_dispatcher.h"
+#include "midi_receiver.h"
 #include "library/event_interface.h"
 
 
 namespace sushi {
-namespace midi_frontend{ class BaseMidiFrontend;}
 namespace midi_dispatcher {
 
 struct InputConnection
@@ -55,7 +55,7 @@ enum class MidiDispatcherStatus
     INVAlID_CHANNEL
 };
 
-class MidiDispatcher : public EventPoster
+class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
 {
     MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
 
@@ -151,12 +151,12 @@ public:
     /**
      * @brief Process a raw midi message and send it of according to the
      *        configured connections.
-     * @param input Index of the originating midi port.
+     * @param port Index of the originating midi port.
      * @param data Pointer to the raw midi message.
      * @param size Length of data in bytes.
      * @param timestamp timestamp of the midi event
      */
-    void process_midi(int input, const uint8_t* data, size_t size, int64_t timestamp);
+    void send_midi(int port, const uint8_t* data, size_t size, int64_t timestamp) override;
 
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;
