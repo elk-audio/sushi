@@ -39,18 +39,10 @@ constexpr uint8_t OMNI_ON_CTRL      = 125;
 constexpr uint8_t MONO_MODE_CTRL    = 126;
 constexpr uint8_t POLY_MODE_CTRL    = 127;
 
-
-inline uint8_t decode_channel(uint8_t byte)
-{
-    return byte & 0x0F;
-}
-
-
 inline bool realtime_msg(uint8_t byte)
 {
     return byte & 0b00001000;
 }
-
 
 MessageType decode_common_messages(uint8_t data, size_t size)
 {

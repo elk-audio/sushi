@@ -37,8 +37,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Vst3xWrapper(const std::string& vst_plugin_path, const std::string& plugin_name) : _loader{vst_plugin_path,
-                                                                                               plugin_name}
+    Vst3xWrapper(const std::string& vst_plugin_path, const std::string& plugin_name) : _loader{vst_plugin_path, plugin_name}
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -96,6 +95,14 @@ private:
      */
     void _forward_events(Steinberg::Vst::ProcessData& data);
 
+    inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);
+
+    struct SpecialParameter
+    {
+        bool supported{false};
+        Steinberg::Vst::ParamID id{0};
+    };
+
     float _sample_rate;
     PluginLoader _loader;
     PluginInstance _instance;
@@ -110,9 +117,10 @@ private:
                                    &_in_parameter_changes,
                                    &_out_parameter_changes};
 
-    bool _can_do_soft_bypass{false};
-    ObjectId _bypass_parameter_id;
-
+    SpecialParameter _bypass_parameter;
+    SpecialParameter _pitch_bend_parameter;
+    SpecialParameter _mod_wheel_parameter;
+    SpecialParameter _aftertouch_parameter;
 };
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);

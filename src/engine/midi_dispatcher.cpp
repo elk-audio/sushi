@@ -24,6 +24,38 @@ inline Event* make_note_off_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.note, velocity, timestamp);
 }
 
+inline Event* make_note_aftertouch_event(const InputConnection &c,
+                                         const midi::PolyKeyPressureMessage &msg,
+                                         int64_t timestamp)
+{
+    float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.note, pressure, timestamp);
+}
+
+inline Event* make_aftertouch_event(const InputConnection &c,
+                                    const midi::ChannelPressureMessage &msg,
+                                    int64_t timestamp)
+{
+    float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
+    return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, pressure, timestamp);
+}
+
+inline Event* make_modulation_event(const InputConnection &c,
+                                    const midi::ControlChangeMessage &msg,
+                                    int64_t timestamp)
+{
+    float value = msg.value / static_cast<float>(midi::MAX_VALUE);
+    return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, value, timestamp);
+}
+
+inline Event* make_pitch_bend_event(const InputConnection &c,
+                                    const midi::PitchBendMessage &msg,
+                                    int64_t timestamp)
+{
+    float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
+    return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, value, timestamp);
+}
+
 inline Event* make_wrapped_midi_event(const InputConnection &c,
                                       const uint8_t* data,
                                       size_t size,
@@ -216,6 +248,23 @@ void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, i
                     _event_dispatcher->post_event(event);
                 }
             }
+            if (decoded_msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
+            {
+                const auto& cons = _kb_routes_in.find(input);
+                if (cons != _kb_routes_in.end())
+                {
+                    for (auto c : cons->second[midi::MidiChannel::OMNI])
+                    {
+                        auto event = make_modulation_event(c, decoded_msg, timestamp);
+                        _event_dispatcher->post_event(event);
+                    }
+                    for (auto c : cons->second[decoded_msg.channel])
+                    {
+                        auto event = make_modulation_event(c, decoded_msg, timestamp);
+                        _event_dispatcher->post_event(event);
+                    }
+                }
+            }
             break;
         }
 
@@ -260,9 +309,65 @@ void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, i
         }
 
         case midi::MessageType::PITCH_BEND:
+        {
+            midi::PitchBendMessage decoded_msg = midi::decode_pitch_bend(data);
+            const auto& cons = _kb_routes_in.find(input);
+            if (cons != _kb_routes_in.end())
+            {
+                for (auto c : cons->second[midi::MidiChannel::OMNI])
+                {
+                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+                for (auto c : cons->second[decoded_msg.channel])
+                {
+                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+            }
+            break;
+        }
+
         case midi::MessageType::POLY_KEY_PRESSURE:
+
+        {
+            midi::PolyKeyPressureMessage decoded_msg = midi::decode_poly_key_pressure(data);
+            const auto& cons = _kb_routes_in.find(input);
+            if (cons != _kb_routes_in.end())
+            {
+                for (auto c : cons->second[midi::MidiChannel::OMNI])
+                {
+                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+                for (auto c : cons->second[decoded_msg.channel])
+                {
+                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+            }
+            break;
+        }
+
         case midi::MessageType::CHANNEL_PRESSURE:
-        {}
+        {
+            midi::ChannelPressureMessage decoded_msg = midi::decode_channel_pressure(data);
+            const auto& cons = _kb_routes_in.find(input);
+            if (cons != _kb_routes_in.end())
+            {
+                for (auto c : cons->second[midi::MidiChannel::OMNI])
+                {
+                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+                for (auto c : cons->second[decoded_msg.channel])
+                {
+                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
+                    _event_dispatcher->post_event(event);
+                }
+            }
+            break;
+        }
 
         default:
             break;
@@ -288,16 +393,26 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::NOTE_OFF:
                         midi_data = midi::encode_note_off(c.channel, typed_event->note(), typed_event->velocity());
                         break;
-                    case KeyboardEvent::Subtype::POLY_AFTERTOUCH:
+                    case KeyboardEvent::Subtype::NOTE_AFTERTOUCH:
                         midi_data = midi::encode_poly_key_pressure(c.channel, typed_event->note(), typed_event->velocity());
                         break;
-                    default:
-                        return EventStatus::NOT_HANDLED;
+                    case KeyboardEvent::Subtype::AFTERTOUCH:
+                        midi_data = midi::encode_channel_pressure(c.channel, typed_event->value());
+                        break;
+                    case KeyboardEvent::Subtype::PITCH_BEND:
+                        midi_data = midi::encode_pitch_bend(c.channel, typed_event->value());
+                        break;
+                    case KeyboardEvent::Subtype::MODULATION:
+                        midi_data = midi::encode_control_change(c.channel, midi::MOD_WHEEL_CONTROLLER_NO, typed_event->value());
+                        break;
+                    case KeyboardEvent::Subtype::WRAPPED_MIDI:
+                        midi_data = typed_event->midi_data();
                 }
                 MIND_LOG_INFO("Alsa midi: Dispatching midi [{:x} {:x} {:x} {:x}]", midi_data[0], midi_data[1], midi_data[2], midi_data[3]);
                 _frontend->send_midi(c.output, midi_data.data(), event->time());
             }
         }
+        return EventStatus::HANDLED_OK;
     }
     return EventStatus::NOT_HANDLED;
 }

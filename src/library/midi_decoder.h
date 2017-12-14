@@ -20,6 +20,9 @@ constexpr int MAX_PITCH_BEND = 16384;
 constexpr int PITCH_BEND_MIDDLE = 8192;
 /* Maximum controller number for cc messages */
 constexpr int MAX_CONTROLLER_NO = 119;
+/* Modulation wheel controller number */
+constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
+
 
 
 /**
@@ -164,7 +167,10 @@ MessageType decode_message_type(const uint8_t* data, size_t size);
  * @param data First byte of the midi message.
  * @return The decoded channel number (0-15) from the given message
  */
-uint8_t decode_channel(const uint8_t data);
+inline uint8_t decode_channel(uint8_t byte)
+{
+    return byte & 0x0F;
+}
 
 /**
  * @brief Decode a midi note off message.

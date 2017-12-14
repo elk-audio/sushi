@@ -176,30 +176,23 @@ bool Vst2xWrapper::_register_parameters()
 
 void Vst2xWrapper::process_event(RtEvent event)
 {
-    switch (event.type())
-    {
-    case RtEventType::FLOAT_PARAMETER_CHANGE:
+    if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
         auto typed_event = event.parameter_change_event();
         auto id = typed_event->param_id();
         assert(static_cast<VstInt32>(id) < _plugin_handle->numParams);
         _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), typed_event->value());
     }
-    break;
-
-    case RtEventType::NOTE_ON:
-    case RtEventType::NOTE_OFF:
-    case RtEventType::NOTE_AFTERTOUCH:
-    case RtEventType::WRAPPED_MIDI_EVENT:
-        if (!_vst_midi_events_fifo.push(event))
+    else if (is_keyboard_event(event))
+    {
+        if (_vst_midi_events_fifo.push(event) == false)
         {
             MIND_LOG_WARNING("Vst wrapper, plugin: {}, MIDI queue Overflow!", name());
         }
-        break;
-
-    default:
+    }
+    else
+    {
         MIND_LOG_INFO("Vst wrapper, plugin: {}, received unhandled event", name());
-        break;
     }
 
 }

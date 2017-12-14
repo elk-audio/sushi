@@ -1,6 +1,8 @@
 #ifdef SUSHI_BUILD_WITH_VST3
 
 #include <pluginterfaces/base/ustring.h>
+#include <pluginterfaces/vst/ivstmidicontrollers.h>
+
 #include "vst3x_wrapper.h"
 #include "logging.h"
 
@@ -73,7 +75,6 @@ void Vst3xWrapper::configure(float sample_rate)
     {
         set_enabled(true);
     }
-    return;
 }
 
 
@@ -83,13 +84,8 @@ void Vst3xWrapper::process_event(RtEvent event)
     {
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
-            int index;
             auto typed_event = event.parameter_change_event();
-            auto param_queue = _in_parameter_changes.addParameterData(typed_event->param_id(), index);
-            if (param_queue)
-            {
-                param_queue->addPoint(typed_event->sample_offset(), typed_event->value(), index);
-            }
+            _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
             break;
         }
         case RtEventType::NOTE_ON:
@@ -110,6 +106,34 @@ void Vst3xWrapper::process_event(RtEvent event)
             _in_event_list.addEvent(vst_event);
             break;
         }
+        case RtEventType::MODULATION:
+        {
+            if (_mod_wheel_parameter.supported)
+            {
+                auto typed_event = event.keyboard_common_event();
+                _add_parameter_change(_mod_wheel_parameter.id, typed_event->value(), typed_event->sample_offset());
+            }
+            break;
+        }
+        case RtEventType::PITCH_BEND:
+        {
+            if (_pitch_bend_parameter.supported)
+            {
+                auto typed_event = event.keyboard_common_event();
+                float pb_value = (typed_event->value() + 1.0f) * 0.5f;
+                _add_parameter_change(_pitch_bend_parameter.id, pb_value, typed_event->sample_offset());
+            }
+            break;
+        }
+        case RtEventType::AFTERTOUCH:
+        {
+            if (_aftertouch_parameter.supported)
+            {
+                auto typed_event = event.keyboard_common_event();
+                _add_parameter_change(_aftertouch_parameter.id, typed_event->value(), typed_event->sample_offset());
+            }
+            break;
+        }
         case RtEventType::WRAPPED_MIDI_EVENT:
         {
             // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
@@ -118,12 +142,11 @@ void Vst3xWrapper::process_event(RtEvent event)
         default:
             break;
     }
-    return;
 }
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if(_bypassed && !_can_do_soft_bypass)
+    if(_bypassed && _bypass_parameter.supported == false)
     {
         bypass_process(in_buffer, out_buffer);
     }
@@ -161,9 +184,9 @@ void Vst3xWrapper::set_enabled(bool enabled)
 void Vst3xWrapper::set_bypassed(bool bypassed)
 {
     Processor::set_bypassed(bypassed);
-    if(_can_do_soft_bypass)
+    if(_bypass_parameter.supported)
     {
-        RtEvent e = RtEvent::make_parameter_change_event(0, 0, _bypass_parameter_id, bypassed? 1.0f : 0.0f);
+        RtEvent e = RtEvent::make_parameter_change_event(0, 0, _bypass_parameter.id, bypassed? 1.0f : 0.0f);
         this->process_event(e);
     }
 }
@@ -193,8 +216,8 @@ bool Vst3xWrapper::_register_parameters()
             str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
             if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
-                _can_do_soft_bypass = true;
-                _bypass_parameter_id = info.id;
+                _bypass_parameter.id = info.id;
+                _bypass_parameter.supported = true;
             }
             else if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
             {
@@ -204,6 +227,39 @@ bool Vst3xWrapper::_register_parameters()
                 MIND_LOG_INFO("Error registering parameter {}.", name_c_str);
             }
         }
+    }
+    /* Steinberg decided not support standard midi, nor provide special events for common
+     * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
+     * parameters and we can query the plugin for what 'default' midi cc:s these parameters
+     * would be mapped to if the plugin was able to handle native midi. Kinda backwards,
+     * but we query the plugin for this and if that's the case, store the id:s of these
+     * 'special' parameters so we can map PB and Mod events to them.
+     * Currently we dont hide these parameters, unlike the bypass parameter, so they can
+     * still be controlled via OSC or other controllers. */
+    Steinberg::Vst::IMidiMapping *midi_mapper;
+    auto res = _instance.controller()->queryInterface(Steinberg::Vst::IMidiMapping::iid, reinterpret_cast<void**>(&midi_mapper));
+    if (res != Steinberg::kResultOk)
+    {
+        MIND_LOG_INFO("No midi mapping interface in plugin");
+        return true;
+    }
+    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kCtrlModWheel,
+                                                 _mod_wheel_parameter.id) == Steinberg::kResultOk)
+    {
+        MIND_LOG_INFO("Plugin supports mod wheel parameter mapping");
+        _mod_wheel_parameter.supported = true;
+    }
+    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kPitchBend,
+                                                 _pitch_bend_parameter.id) == Steinberg::kResultOk)
+    {
+        MIND_LOG_INFO("Plugin supports pitch bend parameter mapping");
+        _pitch_bend_parameter.supported = true;
+    }
+    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kAfterTouch,
+                                                 _aftertouch_parameter.id) == Steinberg::kResultOk)
+    {
+        MIND_LOG_INFO("Plugin supports aftertouch parameter mapping");
+        _aftertouch_parameter.supported = true;
     }
     return true;
 }
@@ -356,6 +412,16 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
         }
     }
 
+}
+
+inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset)
+{
+    int index;
+    auto param_queue = _in_parameter_changes.addParameterData(id, index);
+    if (param_queue)
+    {
+        param_queue->addPoint(sample_offset, value, index);
+    }
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
