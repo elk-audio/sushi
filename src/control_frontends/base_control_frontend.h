@@ -52,14 +52,14 @@ public:
 
     void send_note_off_event(ObjectId processor, int note, float value);
 
-    void send_add_chain_event(const std::string &name, int channels);
+    void send_add_track_event(const std::string &name, int channels);
 
-    void send_remove_chain_event(const std::string &name);
+    void send_remove_track_event(const std::string &name);
 
-    void send_add_processor_event(const std::string &chain, const std::string &uid, const std::string &name,
+    void send_add_processor_event(const std::string &track, const std::string &uid, const std::string &name,
                                   const std::string &file, AddProcessorEvent::ProcessorType type);
 
-    void send_remove_processor_event(const std::string &chain, const std::string &name);
+    void send_remove_processor_event(const std::string &track, const std::string &name);
 
     int poster_id() override {return _poster_id;}
 

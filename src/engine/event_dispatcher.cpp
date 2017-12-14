@@ -83,11 +83,11 @@ int EventDispatcher::process(Event* event)
         case EventType::STRING_PROPERTY_CHANGE:
             return _process_parameter_change_event(static_cast<ParameterChangeEvent*>(event));
 
-        case EventType::ADD_CHAIN:
-            return _process_add_chain_event(static_cast<AddChainEvent*>(event));
+        case EventType::ADD_TRACK:
+            return _process_add_track_event(static_cast<AddTrackEvent*>(event));
 
-        case EventType::REMOVE_CHAIN:
-            return _process_remove_chain_event(static_cast<RemoveChainEvent*>(event));
+        case EventType::REMOVE_TRACK:
+            return _process_remove_track_event(static_cast<RemoveTrackEvent*>(event));
 
         case EventType::ADD_PROCESSOR:
             return _process_add_processor_event(static_cast<AddProcessorEvent*>(event));
@@ -409,9 +409,9 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
     }
     return EventDispatcherStatus::UNKNOWN_POSTER;}
 
-int EventDispatcher::_process_add_chain_event(AddChainEvent* event)
+int EventDispatcher::_process_add_track_event(AddTrackEvent* event)
 {
-    auto status = _engine->create_plugin_chain(event->name(), event->channels());
+    auto status = _engine->create_track(event->name(), event->channels());
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -419,13 +419,13 @@ int EventDispatcher::_process_add_chain_event(AddChainEvent* event)
 
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
         default:
-            return AddChainEvent::Status::INVALID_NAME;
+            return AddTrackEvent::Status::INVALID_NAME;
     }
 }
 
-int EventDispatcher::_process_remove_chain_event(RemoveChainEvent* event)
+int EventDispatcher::_process_remove_track_event(RemoveTrackEvent* event)
 {
-    auto status = _engine->delete_plugin_chain(event->name());
+    auto status = _engine->delete_track(event->name());
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -433,7 +433,7 @@ int EventDispatcher::_process_remove_chain_event(RemoveChainEvent* event)
 
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
         default:
-            return RemoveChainEvent::Status::INVALID_CHAIN;
+            return RemoveTrackEvent::Status::INVALID_TRACK;
     }
 }
 
@@ -456,7 +456,7 @@ int EventDispatcher::_process_add_processor_event(AddProcessorEvent* event)
     }
 
     // TODO where to do validation?
-    auto status = _engine->add_plugin_to_chain(event->chain(), event->uid(), event->name(), event->file(), plugin_type);
+    auto status = _engine->add_plugin_to_track(event->track(), event->uid(), event->name(), event->file(), plugin_type);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -465,7 +465,7 @@ int EventDispatcher::_process_add_processor_event(AddProcessorEvent* event)
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
             return AddProcessorEvent::Status::INVALID_NAME;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_CHAIN:
+        case engine::EngineReturnStatus::INVALID_TRACK:
             return AddProcessorEvent::Status::INVALID_CHAIN;
 
         case engine::EngineReturnStatus::INVALID_PLUGIN_UID:
@@ -478,7 +478,7 @@ int EventDispatcher::_process_add_processor_event(AddProcessorEvent* event)
 
 int EventDispatcher::_process_remove_processor_event(RemoveProcessorEvent* event)
 {
-    auto status = _engine->remove_plugin_from_chain(event->chain(), event->name());
+    auto status = _engine->remove_plugin_from_track(event->track(), event->name());
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -487,7 +487,7 @@ int EventDispatcher::_process_remove_processor_event(RemoveProcessorEvent* event
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
             return RemoveProcessorEvent::Status::INVALID_NAME;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_CHAIN:
+        case engine::EngineReturnStatus::INVALID_TRACK:
         default:
             return RemoveProcessorEvent::Status::INVALID_CHAIN;
     }

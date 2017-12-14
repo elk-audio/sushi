@@ -193,8 +193,8 @@ int main(int argc, char* argv[])
 
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
-    engine.set_audio_input_channels(2);
-    engine.set_audio_output_channels(2);
+    engine.set_audio_input_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
+    engine.set_audio_output_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
     midi_dispatcher.set_midi_input_ports(1);
     midi_dispatcher.set_midi_output_ports(1);
 
@@ -205,10 +205,10 @@ int main(int argc, char* argv[])
         MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
         std::exit(1);
     }
-    status = configurator.load_chains(config_filename);
+    status = configurator.load_tracks(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load chains from Json config file");
+        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
         std::exit(1);
     }
     configurator.load_midi(config_filename);

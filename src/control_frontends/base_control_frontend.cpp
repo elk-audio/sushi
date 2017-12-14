@@ -51,33 +51,33 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, floa
     send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, note, velocity);
 }
 
-void BaseControlFrontend::send_add_chain_event(const std::string &name, int channels)
+void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
 {
     int64_t timestamp = 0;
-    auto e = new AddChainEvent(name, channels, timestamp);
+    auto e = new AddTrackEvent(name, channels, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_chain_event(const std::string &name)
+void BaseControlFrontend::send_remove_track_event(const std::string &name)
 {
     int64_t timestamp = 0;
-    auto e = new RemoveChainEvent(name, timestamp);
+    auto e = new RemoveTrackEvent(name, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_add_processor_event(const std::string &chain, const std::string &uid,
+void BaseControlFrontend::send_add_processor_event(const std::string &track, const std::string &uid,
                                                    const std::string &name, const std::string &file,
                                                    AddProcessorEvent::ProcessorType type)
 {
     int64_t timestamp = 0;
-    auto e = new AddProcessorEvent(chain, uid, name, file, type, timestamp);
+    auto e = new AddProcessorEvent(track, uid, name, file, type, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_processor_event(const std::string &chain, const std::string &name)
+void BaseControlFrontend::send_remove_processor_event(const std::string &track, const std::string &name)
 {
     int64_t timestamp = 0;
-    auto e = new RemoveProcessorEvent(name, chain, timestamp);
+    auto e = new RemoveProcessorEvent(name, track, timestamp);
     send_with_callback(e);
 }
 

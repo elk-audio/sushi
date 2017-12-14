@@ -96,7 +96,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
-                                                         const std::string &chain_name,
+                                                         const std::string &track_name,
                                                          int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
@@ -105,7 +105,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     }
     ObjectId id;
     engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(chain_name);
+    std::tie(status, id) = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -116,12 +116,12 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to chain \"{}\"", midi_input, chain_name);
+    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
-                                                               const std::string &chain_name,
+                                                               const std::string &track_name,
                                                                int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
@@ -130,7 +130,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     }
     ObjectId id;
     engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(chain_name);
+    std::tie(status, id) = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -141,10 +141,10 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _raw_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to chain \"{}\"", midi_input, chain_name);
+    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;}
 
-MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &chain_name, int channel)
+MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &track_name, int channel)
 {
     if (channel >= midi::MidiChannel::OMNI)
     {
@@ -156,7 +156,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     }
     ObjectId id;
     engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(chain_name);
+    std::tie(status, id) = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -168,7 +168,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     connection.max_range = 4.5678f;
     connection.cc_number = 123;
     _kb_routes_out[id].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI from chain \"{}\" to port \"{}\" with channel {}", midi_output, chain_name, channel);
+    MIND_LOG_DEBUG("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
     return MidiDispatcherStatus::OK;
 }
 

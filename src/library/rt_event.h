@@ -44,10 +44,10 @@ enum class RtEventType
     /* Processor add/delete/reorder events */
     INSERT_PROCESSOR,
     REMOVE_PROCESSOR,
-    ADD_PROCESSOR_TO_CHAIN,
-    REMOVE_PROCESSOR_FROM_CHAIN,
-    ADD_PLUGIN_CHAIN,
-    REMOVE_PLUGIN_CHAIN,
+    ADD_PROCESSOR_TO_TRACK,
+    REMOVE_PROCESSOR_FROM_TRACK,
+    ADD_TRACK,
+    REMOVE_TRACK,
     ASYNC_WORK,
     ASYNC_WORK_NOTIFICATION,
     /* Delete object event */
@@ -278,14 +278,14 @@ private:
 class ProcessorReorderRtEvent : public ReturnableRtEvent
 {
 public:
-    ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId chain) : ReturnableRtEvent(type, 0),
+    ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId track) : ReturnableRtEvent(type, 0),
                                                                                     _processor{processor},
-                                                                                    _chain{chain} {}
+                                                                                    _track{track} {}
     ObjectId processor() {return _processor;}
-    ObjectId chain() {return _chain;}
+    ObjectId track() {return _track;}
 private:
     ObjectId _processor;
-    ObjectId _chain;
+    ObjectId _track;
 };
 
 typedef int (*AsyncWorkCallback)(void* data, EventId id);
@@ -342,7 +342,7 @@ public:
         return &_keyboard_event;
     }
 
-    const WrappedMidiRtEvent* wrapper_midi_event() const
+    const WrappedMidiRtEvent* wrapped_midi_event() const
     {
         assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
         return &_wrapped_midi_event;
@@ -385,10 +385,10 @@ public:
     ProcessorReorderRtEvent* processor_reorder_event()
     {
         assert(_processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR ||
-               _processor_reorder_event.type() == RtEventType::ADD_PROCESSOR_TO_CHAIN ||
-               _processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR_FROM_CHAIN ||
-               _processor_reorder_event.type() == RtEventType::ADD_PLUGIN_CHAIN ||
-               _processor_reorder_event.type() == RtEventType::REMOVE_PLUGIN_CHAIN);
+               _processor_reorder_event.type() == RtEventType::ADD_PROCESSOR_TO_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR_FROM_TRACK ||
+               _processor_reorder_event.type() == RtEventType::ADD_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_TRACK);
         ;
         return &_processor_reorder_event;
     }
@@ -484,27 +484,27 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_add_processor_to_chain_event(ObjectId processor, ObjectId chain)
+    static RtEvent make_add_processor_to_track_event(ObjectId processor, ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_CHAIN, processor, chain);
+        ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_TRACK, processor, track);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_remove_processor_from_chain_event(ObjectId processor, ObjectId chain)
+    static RtEvent make_remove_processor_from_track_event(ObjectId processor, ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR_FROM_CHAIN, processor, chain);
+        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, processor, track);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_add_plugin_chain_event(ObjectId chain)
+    static RtEvent make_add_track_event(ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::ADD_PLUGIN_CHAIN, 0, chain);
+        ProcessorReorderRtEvent typed_event(RtEventType::ADD_TRACK, 0, track);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_remove_plugin_chain_event(ObjectId chain)
+    static RtEvent make_remove_track_event(ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PLUGIN_CHAIN, 0, chain);
+        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_TRACK, 0, track);
         return RtEvent(typed_event);
     }
 

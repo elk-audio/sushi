@@ -17,7 +17,7 @@
 #include "EASTL/vector.h"
 
 #include "engine/event_dispatcher.h"
-#include "plugin_chain.h"
+#include "track.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "library/sample_buffer.h"
@@ -37,13 +37,15 @@ constexpr int MAX_RT_PROCESSOR_ID = 1000;
 enum class EngineReturnStatus
 {
     OK,
+    ERROR,
     INVALID_N_CHANNELS,
     INVALID_PLUGIN_UID,
     INVALID_PLUGIN_NAME,
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
-    INVALID_PLUGIN_CHAIN,
+    INVALID_TRACK,
+    INVALID_BUS,
     QUEUE_FULL
 };
 
@@ -91,31 +93,31 @@ public:
         _audio_outputs = channels;
     }
 
-    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*chain_id*/)
+    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*chain_id*/)
+    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_input(int /*left_channel_idx*/,
-                                                          int /*right_channel_idx*/,
-                                                          const std::string& /*chain_id*/)
+    virtual EngineReturnStatus connect_audio_input_bus(int /*engine_bus_id */,
+                                                       int /*track_bus_id*/,
+                                                       const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_stereo_output(int /*left_channel_idx*/,
-                                                           int /*right_channel_idx*/,
-                                                           const std::string& /*chain_id*/)
+    virtual EngineReturnStatus connect_audio_output_bus(int /*engine_bus_id */,
+                                                        int /*track_bus_id*/,
+                                                        const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual int n_channels_in_chain(int /*chain*/)
+    virtual int n_channels_in_track(int /*track_no*/)
     {
         return 2;
     }
@@ -158,27 +160,27 @@ public:
         return std::make_pair(EngineReturnStatus::OK, "");
     };
 
-    virtual EngineReturnStatus create_plugin_chain(const std::string& /*chain_id*/, int /*chain_channel_count*/)
+    virtual EngineReturnStatus create_track(const std::string & /*track_id*/, int /*channel_count*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus delete_plugin_chain(const std::string& /*chain_id*/)
+    virtual EngineReturnStatus delete_track(const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus add_plugin_to_chain(const std::string& /*chain_id*/,
-                                                   const std::string& /*uid*/,
-                                                   const std::string& /*name*/,
-                                                   const std::string& /*file*/,
+    virtual EngineReturnStatus add_plugin_to_track(const std::string & /*track_id*/,
+                                                   const std::string & /*uid*/,
+                                                   const std::string & /*name*/,
+                                                   const std::string & /*file*/,
                                                    PluginType /*plugin_type*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus remove_plugin_from_chain(const std::string& /*chain_id*/,
-                                                        const std::string& /*plugin_id*/)
+    virtual EngineReturnStatus remove_plugin_from_track(const std::string & /*track_id*/,
+                                                        const std::string & /*plugin_id*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -189,9 +191,9 @@ public:
         return tmp;
     }
 
-    virtual const std::vector<PluginChain*>& all_chains()
+    virtual const std::vector<Track*>& all_tracks()
     {
-        static std::vector<PluginChain*> tmp;
+        static std::vector<Track*> tmp;
         return tmp;
     }
 
@@ -221,12 +223,38 @@ public:
     void set_sample_rate(float sample_rate) override;
 
     /**
-     * @brief Return the number of configured channels for a specific processing chainn
-     *
-     * @param chain The index to the chain
-     * @return Number of channels the chain is configured to use.
+     * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
+     *        given track. Not safe to use while the engine in running.
+     * @param input_bus The engine input bus to use.
+     *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
+     * @param track_bus The input bus of the track to connect to.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
      */
-    int n_channels_in_chain(int chain) override;
+    virtual EngineReturnStatus connect_audio_input_bus(int input_bus,
+                                                       int track_bus,
+                                                       const std::string& track_name) override;
+
+    /**
+     * @brief Connect an output bus of a track to an output bus (stereo pair)
+     *        Not safe to use while the engine in running.
+     * @param output_bus The engine outpus bus to use.
+     *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
+     * @param track_bus The output bus of the track to connect from.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    virtual EngineReturnStatus connect_audio_output_bus(int output_bus,
+                                                        int track_bus,
+                                                        const std::string& track_name) override;
+
+    /**
+     * @brief Return the number of configured channels for a specific track
+     *
+     * @param track The index to the track
+     * @return Number of channels the track is configured to use.
+     */
+    int n_channels_in_track(int track) override;
 
     /**
      * @brief Returns whether the engine is running in a realtime mode or not
@@ -306,43 +334,43 @@ public:
     std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
                                                                             const ObjectId id) override;
     /**
-     * @brief Creates an empty plugin chain
-     * @param chain_id The unique id of the chain to be created.
-     * @param chain_channel_count The number of channels in the plugin chain.
+     * @brief Creates an empty track
+     * @param track_id The unique id of the track to be created.
+     * @param channel_count The number of channels in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus create_plugin_chain(const std::string& chain_id, int chain_channel_count) override;
+    EngineReturnStatus create_track(const std::string &track_id, int channel_count) override;
 
     /**
-     * @brief Delete a chain, currently assumes that the chain is empty before calling
-     * @param chain_id The unique name of the chain to delete
+     * @brief Delete a track, currently assumes that the track is empty before calling
+     * @param track_name The unique name of the track to delete
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus delete_plugin_chain(const std::string& chain_id) override;
+    EngineReturnStatus delete_track(const std::string &track_name) override;
 
     /**
-     * @brief Creates and adds a plugin to a chain.
-     * @param chain_id The unique id of the chain to which the processor will be appended
+     * @brief Creates and adds a plugin to a track.
+     * @param track_id The unique id of the track to which the processor will be appended
      * @param uid The unique id of the plugin
      * @param name The name to give the plugin after loading
      * @param plugin_path The file to load the plugin from, only valid for external plugins
      * @param plugin_type The type of plugin, i.e. internal or external
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_chain(const std::string& chain_id,
-                                           const std::string& uid,
-                                           const std::string& name,
-                                           const std::string& plugin_path,
+    EngineReturnStatus add_plugin_to_track(const std::string &track_name,
+                                           const std::string &uid,
+                                           const std::string &name,
+                                           const std::string &plugin_path,
                                            PluginType plugin_type) override;
 
     /**
-     * @brief Remove a given plugin from a chain and delete it
-     * @param chain_id The unique name of the chain the contains the plugin
-     * @param plugin_id The unique name of the plugin
+     * @brief Remove a given plugin from a track and delete it
+     * @param track_name The unique name of the track that contains the plugin
+     * @param plugin_name The unique name of the plugin
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
-    EngineReturnStatus remove_plugin_from_chain(const std::string& chain_id,
-                                                const std::string& plugin_id) override;
+    EngineReturnStatus remove_plugin_from_track(const std::string &track_name,
+                                                const std::string &plugin_name) override;
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually
      *        there should be better and safer ways of accessing processors.
@@ -354,12 +382,12 @@ public:
     };
 
     /**
-     * @brief Return all processor chains. Potentially unsafe so use with care. Should
-     *        eventually be replaces with a better way of accessing chains/processors
+     * @brief Return all tracks. Potentially unsafe so use with care. Should
+     *        eventually be replaces with a better way of accessing tracks/processors
      *        from outside the engine.
-     * @return An std::vector of containing all PluginChains
+     * @return An std::vector of containing all Tracks
      */
-    const std::vector<PluginChain*>& all_chains()
+    const std::vector<Track*>& all_tracks()
     {
         return _audio_graph;
     }
@@ -428,7 +456,14 @@ private:
      */
     bool _handle_internal_events(RtEvent &event);
 
-    std::vector<PluginChain*> _audio_graph;
+    struct Connection
+    {
+        int engine_bus;
+        int track_bus;
+        ObjectId track;
+    };
+
+    std::vector<Track*> _audio_graph;
 
     // All registered processors indexed by their unique name
     std::map<std::string, std::unique_ptr<Processor>> _processors;
@@ -436,6 +471,9 @@ private:
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+
+    std::vector<Connection> _in_bus_connections;
+    std::vector<Connection> _out_bus_connections;
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 

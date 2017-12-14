@@ -53,17 +53,17 @@ public:
     bool connect_to_string_parameter(const std::string &processor_name,
                                      const std::string &parameter_name);
     /**
-     * @brief Connect keyboard messages to a given plugin chain.
+     * @brief Connect keyboard messages to a given track.
      *        The target osc path will be:
-     *        "/keyboard_event/chain_name,sif(note_on/note_off, note_value, velocity)"
-     * @param chain_name The track/plugin chain to send to
+     *        "/keyboard_event/track_name,sif(note_on/note_off, note_value, velocity)"
+     * @param track_name The track to send to
      * @return true
      */
-    bool connect_kb_to_track(const std::string &chain_name);
+    bool connect_kb_to_track(const std::string &track_name);
 
     /**
      * @brief Register OSC callbacks far all parameters of all plugins and
-     *        connect midi kb data to all chain.
+     *        connect midi kb data to a track.
      *        This should eventually be replaced by a more elaborate way of
      *        registering parameters.
      */

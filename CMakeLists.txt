@@ -104,7 +104,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/engine.cpp
                       src/engine/event_dispatcher.cpp
-                      src/engine/plugin_chain.cpp
+                      src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
                       src/engine/receiver.cpp
@@ -157,7 +157,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_plugin_loader.h
                         src/library/vst3x_wrapper.h
                         src/engine/engine.h
-                        src/engine/plugin_chain.h
+                        src/engine/track.h
                         src/engine/midi_dispatcher.h
                         src/engine/json_configurator.h
                         src/plugins/arpeggiator_plugin.h

@@ -26,6 +26,8 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     _osc_control->connect_all();
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
+    _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
+    _engine->set_audio_output_channels(MAX_FRONTEND_CHANNELS);
     return setup_client(jack_config->client_name, jack_config->server_name);
 }
 

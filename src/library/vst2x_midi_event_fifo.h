@@ -151,7 +151,7 @@ private:
 
         case RtEventType::WRAPPED_MIDI_EVENT:
         {
-            auto midi_event = event.wrapper_midi_event();
+            auto midi_event = event.wrapped_midi_event();
             auto data = midi_event->midi_data();
             for (int i=0; i<3; i++)
             {

@@ -16,6 +16,9 @@
 
 namespace sushi {
 
+constexpr int LEFT_CHANNEL_INDEX = 0;
+constexpr int RIGHT_CHANNEL_INDEX = 1;
+
 template<int size>
 class SampleBuffer
 {
@@ -23,9 +26,9 @@ public:
     /**
      * @brief Construct a zeroed buffer with specified number of channels
      */
-    SampleBuffer(int channel_count) : _channel_count(channel_count),
-                                      _own_buffer(true),
-                                      _buffer(new float[size * channel_count])
+    explicit SampleBuffer(int channel_count) : _channel_count(channel_count),
+                                               _own_buffer(true),
+                                               _buffer(new float[size * channel_count])
     {
         clear();
     }

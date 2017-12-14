@@ -83,8 +83,8 @@ private:
     int _process_string_parameter_change_event(StringPropertyChangeEvent* event);
     int _process_async_work_event(AsynchronousWorkEvent* event);
 
-    int _process_add_chain_event(AddChainEvent* event);
-    int _process_remove_chain_event(RemoveChainEvent* event);
+    int _process_add_track_event(AddTrackEvent* event);
+    int _process_remove_track_event(RemoveTrackEvent* event);
     int _process_add_processor_event(AddProcessorEvent* event);
     int _process_remove_processor_event(RemoveProcessorEvent* event);
 

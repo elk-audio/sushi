@@ -2,18 +2,20 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "plugin_chains" : [
+    "tracks" : [
         {
             "name" : "main",
             "mode" : "stereo",
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
             "plugins" : [
                 {
-                    "path" : "/home/sharan/sushi/build/debug/test/libvstxsynth.so",
-                    "name" : "synth",
-                    "type"   : "vst2x"
-                },
-                {
-                    "path" : "/home/sharan/sushi/build/debug/test/libagain.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
                     "name" : "gain",
                     "type"   : "vst2x"
                 }
@@ -21,11 +23,13 @@
         }
     ],
     "midi" : {
-        "chain_connections": [
+        "track_connections": [
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "main"
+                "chain": "main",
+                "raw_midi": false
+
             }
         ],
         "cc_mappings": [

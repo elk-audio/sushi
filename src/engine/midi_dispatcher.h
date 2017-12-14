@@ -109,38 +109,38 @@ public:
                                                  int channel = midi::MidiChannel::OMNI);
 
     /**
-     * @brief Connect a midi input to a track/processor chain
+     * @brief Connect a midi input to a track
      *        Possibly filtering on midi channel.
      * @param midi_input Index of the midi input
-     * @param chain_no The track/processor chain to send to
+     * @param track_name The track/processor track to send to
      * @param channel If not OMNI, only the given channel will be connected.
-     * @return OK if successfully connected the chain, error status otherwise
+     * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_kb_to_track(int midi_input,
-                                             const std::string &chain_name,
+                                             const std::string &track_name,
                                              int channel = midi::MidiChannel::OMNI);
 
     /**
-     * @brief Connect a midi input to a track/processor chain and send unprocessed
+     * @brief Connect a midi input to a track and send unprocessed
      *        Midi data to it. Possibly filtering on midi channel.
      * @param midi_input Index of the midi input
-     * @param chain_no The track/processor chain to send to
+     * @param track_name The track/processor track to send to
      * @param channel If not OMNI, only the given channel will be connected.
-     * @return OK if successfully connected the chain, error status otherwise
+     * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_raw_midi_to_track(int midi_input,
-                                                   const std::string &chain_name,
+                                                   const std::string &track_name,
                                                    int channel = midi::MidiChannel::OMNI);
 
     /**
-     * @brief Connect midi kb data from a track/processor chain to a given midi output
+     * @brief Connect midi kb data from a track to a given midi output
      * @param midi_output Index of the midi out
-     * @param chain_name The track/processor chain from where the data originates
+     * @param track_name The track/processor track from where the data originates
      * @param channel Which channel nr to output the data on
-     * @return OK if successfully connected the chain, error status otherwise
+     * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_track_to_output(int midi_output,
-                                                 const std::string &chain_name,
+                                                 const std::string &track_name,
                                                  int channel);
     /**
      * @brief Clears all connections made with connect_kb_to_track

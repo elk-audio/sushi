@@ -2,12 +2,12 @@ R"(
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Sushi Plugin Chain JSON Schema",
-  "description": "JSON Schema to validate plugin chain definitions",
+  "description": "JSON Schema to validate track definitions",
 
   "type": "object",
   "properties":
   {
-    "plugin_chains":
+    "tracks":
     {
       "type": "array",
       "items":
@@ -23,6 +23,50 @@ R"(
           "mode":
           {
             "enum": ["mono", "stereo"]
+          },
+          "inputs":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "properties":
+              {
+                "engine_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "track_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["engine_bus", "track_bus"]
+            }
+          },
+          "outputs":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "properties":
+              {
+                "engine_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "track_bus":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["engine_bus", "track_bus"]
+            }
           },
           "plugins":
           {
@@ -106,6 +150,6 @@ R"(
       "minItems": 1
     }
   },
-  "required": ["plugin_chains"]
+  "required": ["tracks"]
 }
 )"
