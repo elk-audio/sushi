@@ -108,6 +108,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
                       src/engine/receiver.cpp
+                      src/library/event.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp

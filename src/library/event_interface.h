@@ -34,7 +34,7 @@ public:
      *         does not have a completion callback, the return value will be
      *         ignored
      */
-    virtual int process(Event* /*event*/) {return EventStatus::UNRECOGNIZED_TYPE;};
+    virtual int process(Event* /*event*/) {return EventStatus::UNRECOGNIZED_EVENT;};
 
     /**
      * @brief The unique id of this poster.

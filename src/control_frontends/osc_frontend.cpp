@@ -325,35 +325,7 @@ int OSCFrontend::process(Event* /*event*/)
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    switch (event->type())
-    {
-        case EventType::ADD_TRACK:
-            MIND_LOG_INFO("Add track {} completed with status {}({})",
-                          static_cast<AddTrackEvent*>(event)->name(),
-                          return_status == 0? "ok" : "failure", return_status);
-            break;
-
-        case EventType::REMOVE_TRACK:
-            MIND_LOG_INFO("Remove track {} completed with status {}({})",
-                          static_cast<RemoveTrackEvent*>(event)->name(),
-                          return_status == 0? "ok" : "failure", return_status);
-            break;
-
-        case EventType::ADD_PROCESSOR:
-            MIND_LOG_INFO("Add processor {} completed with status {}({})",
-                          static_cast<AddProcessorEvent*>(event)->name(),
-                          return_status == 0? "ok" : "failure", return_status);
-            break;
-
-        case EventType::REMOVE_PROCESSOR:
-            MIND_LOG_INFO("Remove processor {} completed with status {}({})",
-                          static_cast<RemoveProcessorEvent*>(event)->name(),
-                          return_status == 0? "ok" : "failure", return_status);
-            break;
-
-        default:
-            break;
-    }
+    MIND_LOG_INFO("EngineEvent {} completed with status {}({})", event->id(), return_status == 0? "ok" : "failure", return_status);
 }
 
 std::string spaces_to_underscore(const std::string &s)

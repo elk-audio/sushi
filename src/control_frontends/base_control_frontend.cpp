@@ -84,8 +84,6 @@ void BaseControlFrontend::send_remove_processor_event(const std::string &track, 
 void BaseControlFrontend::send_with_callback(Event* event)
 {
     event->set_completion_cb(BaseControlFrontend::completion_callback, this);
-    //std::lock_guard<std::mutex> _lock(_sendlist_mutex);
-    //_sendlist.push_back(event->id());
     _event_dispatcher->post_event(event);
 }
 

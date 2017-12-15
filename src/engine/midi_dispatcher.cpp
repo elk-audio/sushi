@@ -376,7 +376,7 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, int6
 
 int MidiDispatcher::process(Event* event)
 {
-    if (event->type() == EventType::KEYBOARD_EVENT)
+    if (event->is_keyboard_event())
     {
         auto typed_event = static_cast<KeyboardEvent*>(event);
         const auto& cons = _kb_routes_out.find(typed_event->processor_id());
