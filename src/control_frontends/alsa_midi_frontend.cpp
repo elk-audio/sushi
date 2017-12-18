@@ -11,7 +11,7 @@ namespace midi_frontend {
 
 constexpr int ALSA_POLL_TIMEOUT_MS = 200;
 
-AlsaMidiFrontend::AlsaMidiFrontend(midi_dispatcher::MidiDispatcher* dispatcher)
+AlsaMidiFrontend::AlsaMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
 {}
 
@@ -115,25 +115,12 @@ void AlsaMidiFrontend::_poll_function()
                     || (ev->type == SND_SEQ_EVENT_CONTROLLER)
                     || (ev->type == SND_SEQ_EVENT_PITCHBEND))
                 {
-                    Time timestamp;
-                    if (ev->flags | SND_SEQ_TIME_STAMP_REAL)
-                    {
-                        timestamp = std::chrono::seconds(ev->time.time.tv_sec) +
-                                std::chrono::duration_cast<Time>(std::chrono::nanoseconds(ev->time.time.tv_nsec));
-                        MIND_LOG_INFO("Midi event has real time stamp of {}, bits {}", timestamp.count(), ev->flags);
-
-                    } else
-                    {
-                        MIND_LOG_INFO("Tick time {}", ev->time.tick);
-                    }
-
                     const long byte_count = snd_midi_event_decode(_input_parser, data_buffer,
                                                                   sizeof(data_buffer), ev);
                     if (byte_count > 0)
                     {
-                        ;
                         MIND_LOG_DEBUG("Alsa frontend: received midi message: [{:x} {:x} {:x} {:x}]", data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3]);
-                        _dispatcher->process_midi(0, data_buffer, byte_count, PROCESS_NOW);
+                        _receiver->send_midi(0, data_buffer, byte_count, PROCESS_NOW);
                     }
                     MIND_LOG_WARNING_IF(byte_count < 0, "Alsa frontend: decoder returned {}", byte_count);
                 }

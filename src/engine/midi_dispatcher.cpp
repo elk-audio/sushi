@@ -210,7 +210,7 @@ void MidiDispatcher::clear_connections()
     _kb_routes_in.clear();
 }
 
-void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, Time timestamp)
+void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time timestamp)
 {
     int channel = midi::decode_channel(data[0]);
     const auto& cons = _raw_routes_in.find(input);
@@ -376,7 +376,7 @@ void MidiDispatcher::process_midi(int input, const uint8_t* data, size_t size, T
 
 int MidiDispatcher::process(Event* event)
 {
-    if (event->type() == EventType::KEYBOARD_EVENT)
+    if (event->is_keyboard_event())
     {
         auto typed_event = static_cast<KeyboardEvent*>(event);
         const auto& cons = _kb_routes_out.find(typed_event->processor_id());

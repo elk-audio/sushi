@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#define private public
 #include "control_frontends/base_control_frontend.cpp"
 #include "control_frontends/osc_frontend.cpp"
 #pragma GCC diagnostic pop
@@ -53,7 +54,7 @@ TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::PARAMETER_CHANGE, event->type());
+    EXPECT_TRUE(event->is_parameter_change_event());
     auto typed_event = static_cast<ParameterChangeEvent*>(event.get());
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(0u, typed_event->parameter_id());
@@ -75,7 +76,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOnEvent)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_TRUE(event->is_keyboard_event());
     auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(46, typed_event->note());
@@ -92,7 +93,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOffEvent)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_TRUE(event->is_keyboard_event());
     auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(0u, typed_event->processor_id());
     EXPECT_EQ(52, typed_event->note());
@@ -113,10 +114,10 @@ TEST_F(TestOSCFrontend, TestAddTrack)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::ADD_TRACK, event->type());
+    EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<AddTrackEvent*>(event.get());
-    EXPECT_EQ("NewTrack", typed_event->name());
-    EXPECT_EQ(2, typed_event->channels());
+    EXPECT_EQ("NewTrack", typed_event->_name);
+    EXPECT_EQ(2, typed_event->_channels);
 }
 
 TEST_F(TestOSCFrontend, TestDeleteTrack)
@@ -127,9 +128,9 @@ TEST_F(TestOSCFrontend, TestDeleteTrack)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::REMOVE_TRACK, event->type());
+    EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<RemoveTrackEvent*>(event.get());
-    EXPECT_EQ("NewTrack", typed_event->name());
+    EXPECT_EQ("NewTrack", typed_event->_name);
 }
 
 TEST_F(TestOSCFrontend, TestAddProcessor)
@@ -140,13 +141,13 @@ TEST_F(TestOSCFrontend, TestAddProcessor)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::ADD_PROCESSOR, event->type());
+    EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<AddProcessorEvent*>(event.get());
-    EXPECT_EQ("track", typed_event->track());
-    EXPECT_EQ("uid", typed_event->uid());
-    EXPECT_EQ("plugin_name", typed_event->name());
-    EXPECT_EQ("file_path", typed_event->file());
-    EXPECT_EQ(AddProcessorEvent::ProcessorType::INTERNAL, typed_event->processor_type());
+    EXPECT_EQ("track", typed_event->_track);
+    EXPECT_EQ("uid", typed_event->_uid);
+    EXPECT_EQ("plugin_name", typed_event->_name);
+    EXPECT_EQ("file_path", typed_event->_file);
+    EXPECT_EQ(AddProcessorEvent::ProcessorType::INTERNAL, typed_event->_processor_type);
 
     // Test with an invalid processor type, should result in no event being sent
     lo_send(_address, "/engine/add_processor", "sssss", "track", "uid", "plugin_name", "file_path", "ladspa");
@@ -162,10 +163,10 @@ TEST_F(TestOSCFrontend, TestDeleteProcessor)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     auto event = _test_dispatcher->retrieve_event();
     ASSERT_NE(nullptr, event);
-    EXPECT_EQ(EventType::REMOVE_PROCESSOR, event->type());
+    EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<RemoveProcessorEvent*>(event.get());
-    EXPECT_EQ("track", typed_event->track());
-    EXPECT_EQ("processor", typed_event->name());
+    EXPECT_EQ("track", typed_event->_track);
+    EXPECT_EQ("processor", typed_event->_name);
 }
 
 TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)

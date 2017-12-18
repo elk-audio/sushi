@@ -2,10 +2,17 @@
     "host_config" : {
         "samplerate" : 48000
     },
-    "plugin_chains" : [
+    "tracks" : [
         {
             "name" : "main",
             "mode" : "stereo",
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
             "plugins" : [
                 {
                     "uid" : "sushi.testing.sampleplayer",
@@ -22,6 +29,18 @@
         {
             "name" : "sub",
             "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
             "plugins" : [
                 {
                     "uid" : "sushi.testing.passthrough",

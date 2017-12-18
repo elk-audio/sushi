@@ -119,7 +119,7 @@ void SamplePlayerPlugin::process_event(RtEvent event)
             }
             break;
         }
-        case RtEventType::STRING_PARAMETER_CHANGE:
+        case RtEventType::STRING_PROPERTY_CHANGE:
         {
             MIND_LOG_INFO("Got a string param change");
             /* Currently there is only 1 string parameter and it's for changing the sample

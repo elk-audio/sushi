@@ -39,8 +39,8 @@ enum class RtEventType
     BOOL_PARAMETER_CHANGE,
     /* Complex parameters like those below should only be updated through events
      * since a change should always be handled and could be expensive to handle */
-    DATA_PARAMETER_CHANGE,
-    STRING_PARAMETER_CHANGE,
+    DATA_PROPERTY_CHANGE,
+    STRING_PROPERTY_CHANGE,
     SET_BYPASS,
     /* Engine commands */
     STOP_ENGINE,
@@ -201,7 +201,7 @@ public:
     StringParameterChangeRtEvent(ObjectId processor,
                                  int offset,
                                  ObjectId param_id,
-                                 std::string* value) : BaseRtEvent(RtEventType::STRING_PARAMETER_CHANGE,
+                                 std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
                                                                    processor,
                                                                    offset),
                                                        _data(value),
@@ -226,7 +226,7 @@ public:
     DataParameterChangeRtEvent(ObjectId processor,
                                int offset,
                                ObjectId param_id,
-                               BlobData value) : DataPayloadRtEvent(RtEventType::DATA_PARAMETER_CHANGE,
+                               BlobData value) : DataPayloadRtEvent(RtEventType::DATA_PROPERTY_CHANGE,
                                                                     processor,
                                                                     offset,
                                                                     value),
@@ -382,12 +382,12 @@ public:
     }
     const StringParameterChangeRtEvent* string_parameter_change_event() const
     {
-        assert(_string_parameter_change_event.type() == RtEventType::STRING_PARAMETER_CHANGE);
+        assert(_string_parameter_change_event.type() == RtEventType::STRING_PROPERTY_CHANGE);
         return &_string_parameter_change_event;
     }
     const DataParameterChangeRtEvent* data_parameter_change_event() const
     {
-        assert(_data_parameter_change_event.type() == RtEventType::DATA_PARAMETER_CHANGE);
+        assert(_data_parameter_change_event.type() == RtEventType::DATA_PROPERTY_CHANGE);
         return &_data_parameter_change_event;
     }
 

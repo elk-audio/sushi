@@ -35,8 +35,7 @@ enum class EventDispatcherStatus
 class BaseEventDispatcher : public EventPoster
 {
 public:
-    virtual ~BaseEventDispatcher()
-    {}
+    virtual ~BaseEventDispatcher() = default;
 
     virtual void run() {}
     virtual void stop() {}
@@ -57,7 +56,7 @@ class EventDispatcher : public BaseEventDispatcher
 public:
     EventDispatcher(engine::BaseEngine* engine, RtEventFifo* in_rt_queue,  RtEventFifo* out_rt_queue);
 
-    virtual ~EventDispatcher() {}
+    virtual ~EventDispatcher() = default;
 
     void run() override;
     void stop() override;
@@ -78,25 +77,10 @@ private:
 
     void _event_loop();
 
-    int _process_kb_event(KeyboardEvent* event);
-    int _process_parameter_change_event(ParameterChangeEvent* event);
-    int _process_string_parameter_change_event(StringPropertyChangeEvent* event);
-    int _process_async_work_event(AsynchronousWorkEvent* event);
-
-    int _process_add_track_event(AddTrackEvent* event);
-    int _process_remove_track_event(RemoveTrackEvent* event);
-    int _process_add_processor_event(AddProcessorEvent* event);
-    int _process_remove_processor_event(RemoveProcessorEvent* event);
-
-    int _process_rt_event(RtEvent& event);
-    int _process_rt_keyboard_events(const KeyboardRtEvent* event);
-    int _process_common_rt_keyboard_events(const KeyboardCommonRtEvent* event);
-    int _process_wrapped_midi_events(const WrappedMidiRtEvent* event);
-    int _process_rt_parameter_change_events(const ParameterChangeRtEvent* event);
+    int _process_rt_event(RtEvent& rt_event);
 
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
-
 
     std::thread _event_thread;
 

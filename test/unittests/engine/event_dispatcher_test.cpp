@@ -93,7 +93,7 @@ TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
 {
     _module_under_test->register_poster(&_poster);
     _module_under_test->run();
-    auto event = new Event(EventType::BASIC_EVENT, PROCESS_NOW);
+    auto event = new Event(PROCESS_NOW);
     event->set_receiver(DUMMY_POSTER_ID);
     _module_under_test->post_event(event);
     std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
@@ -134,57 +134,6 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
     EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
 }
 
-TEST_F(TestEventDispatcher, TestToRtEvent)
-{
-    auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, "processor", 50, 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    ASSERT_TRUE(_out_rt_queue.empty());
-    crank_event_loop_once();
-
-    ASSERT_FALSE(_out_rt_queue.empty());
-    RtEvent rt_event;
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::NOTE_ON, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, "processor", {1u, 2u, 3u, 0u}, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    ASSERT_TRUE(_out_rt_queue.empty());
-    crank_event_loop_once();
-
-    ASSERT_FALSE(_out_rt_queue.empty());
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::WRAPPED_MIDI_EVENT, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, "processor", 50, 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::NOTE_OFF, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, "processor", 50, 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, "processor", 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::PITCH_BEND, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, "processor", 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::MODULATION, rt_event.type());
-
-    event = new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, "processor", 1.0f, PROCESS_NOW);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    _out_rt_queue.pop(rt_event);
-    ASSERT_EQ(RtEventType::AFTERTOUCH, rt_event.type());
-}
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
 {
@@ -212,7 +161,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
     _module_under_test->register_poster(&_poster);
-    auto event = new Event(EventType::BASIC_EVENT, PROCESS_NOW);
+    auto event = new Event(PROCESS_NOW);
     event->set_receiver(DUMMY_POSTER_ID);
     event->set_completion_cb(dummy_callback, nullptr);
     completed = false;

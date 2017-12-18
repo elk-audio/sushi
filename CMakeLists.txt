@@ -108,6 +108,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
                       src/engine/receiver.cpp
+                      src/library/event.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
@@ -161,6 +162,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/track.h
                         src/engine/midi_dispatcher.h
                         src/engine/json_configurator.h
+                        src/engine/midi_receiver.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h
@@ -178,8 +180,8 @@ set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
 
-if (${WITH_XENOMAI})
-    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.cpp
+if (${WITH_XENOMAI} OR ${WITH_JACK})
+    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.h
                                        src/control_frontends/alsa_midi_frontend.cpp)
 endif()
 
@@ -230,7 +232,7 @@ if (${WITH_VST3})
 endif()
 
 if (${WITH_JACK})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
 endif()
 
 if (${WITH_XENOMAI})
