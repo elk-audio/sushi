@@ -38,6 +38,11 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     }
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
     _engine->set_audio_output_channels(RASPA_N_CHANNELS);
+    if (_engine->sample_rate() != RASPA_SAMPLING_FREQ_HZ)
+    {
+        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_SAMPLING_FREQ_HZ);
+        _engine->set_sample_rate(RASPA_SAMPLING_FREQ_HZ);
+    }
 
     auto init_ret = raspa_init();
     if (init_ret < 0)
