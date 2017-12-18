@@ -76,6 +76,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
                unittests/dsp_library/sample_wrapper_test.cpp
+               unittests/library/event_test.cpp
                unittests/library/processor_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp

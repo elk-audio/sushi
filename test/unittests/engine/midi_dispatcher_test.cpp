@@ -48,12 +48,11 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
     InputConnection connection = {25, 26, 0, 1};
     NoteOnMessage message = {1, 46, 64};
     Event* event = make_note_on_event(connection, message, 1000);
-    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(1000, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
-    EXPECT_TRUE(typed_event->access_by_id());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
     delete event;
@@ -64,7 +63,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
     InputConnection connection = {25, 26, 0, 1};
     NoteOffMessage message = {1, 46, 64};
     Event* event = make_note_off_event(connection, message, 1000);
-    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(1000, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
@@ -79,7 +78,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
     InputConnection connection = {25, 26, 0, 1};
     uint8_t message[] = {1, 46, 64};
     Event* event = make_wrapped_midi_event(connection, message, sizeof(message), 1000);
-    EXPECT_EQ(EventType::KEYBOARD_EVENT, event->type());
+    EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(1000, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::WRAPPED_MIDI, typed_event->subtype());
@@ -96,7 +95,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
     InputConnection connection = {25, 26, 0, 1};
     ControlChangeMessage message = {1, 50, 32};
     Event* event = make_param_change_event(connection, message, 1000);
-    EXPECT_EQ(EventType::PARAMETER_CHANGE, event->type());
+    EXPECT_TRUE(event->is_parameter_change_event());
     EXPECT_EQ(1000, event->time());
     auto typed_event = static_cast<ParameterChangeEvent*>(event);
     EXPECT_EQ(25u, typed_event->processor_id());

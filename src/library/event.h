@@ -11,30 +11,11 @@
 
 #include "types.h"
 #include "id_generator.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 
-constexpr size_t MIDI_DATA_SIZE = 4;
-
 class Event;
-
-enum class EventType
-{
-    BASIC_EVENT,
-    KEYBOARD_EVENT,
-
-    PARAMETER_CHANGE,
-    STRING_PROPERTY_CHANGE,
-    PARAMETER_CHANGE_NOTIFICATION,
-
-    ADD_TRACK,
-    REMOVE_TRACK,
-    ADD_PROCESSOR,
-    REMOVE_PROCESSOR,
-
-    ASYNCHRONOUS_WORK,
-    ASYNC_WORK_COMPLETION_NOTIFICATION
-};
 
 /* This is a weakly typed enum to allow for an opaque communication channel
  * between Receivers and avoid having to define all possible values inside
@@ -45,7 +26,7 @@ enum EventStatus : int
     HANDLED_OK,
     NOT_HANDLED,
     UNRECOGNIZED_RECEIVER,
-    UNRECOGNIZED_TYPE,
+    UNRECOGNIZED_EVENT,
     EVENT_SPECIFIC
 };
 }
@@ -58,16 +39,42 @@ class Event
 {
     friend class EventDispatcher;
 public:
-    Event(EventType type,
-          int64_t timestamp) : _type(type),
-                               _timestamp(timestamp) {}
 
     virtual ~Event() {}
 
-    EventType   type() {return _type;}
+    /**
+     * @brief Creates an Event from its RtEvent counterpart if possible
+     * @param rt_event The RtEvent to convert from
+     * @param timestamp the timestamp to assign to the Event
+     * @return pointer to an Event if successful, nullptr if there is no possible conversion
+     */
+    static Event* from_rt_event(RtEvent& rt_event, int64_t timestamp);
+
     int64_t     time() {return _timestamp;}
     int         receiver() {return _receiver;}
     EventId     id() {return _id;}
+
+    /**
+     * @brief Whether the event should be processes asynchronously in a low priority thread or not
+     * @return true if the Event should be processed asynchronously, false otherwise.
+     */
+    virtual bool process_asynchronously() {return false;}
+
+    /* Convertible to KeyboardEvent */
+    virtual bool is_keyboard_event() {return false;}
+
+    /* Convertible to ParameterChangeEvent */
+    virtual bool is_parameter_change_event() {return false;}
+
+    /* Convertible to EngineEvent */
+    virtual bool is_engine_event() {return false;}
+
+    /* Event is directly convertible to an RtEvent */
+    virtual bool maps_to_rt_event() {return false;}
+
+    /** Return the RtEvent counterpart of the Event */
+    virtual RtEvent to_rt_event(int /*sample_offset*/) {return RtEvent();}
+
     /**
      * @brief Set a callback function that will be called after the event has been handled
      * @param callback A function pointer that will be called on completion
@@ -83,53 +90,21 @@ public:
     // TODO - put these under protected if possible
     EventCompletionCallback completion_cb() {return _completion_cb;}
     void*       callback_arg() {return _callback_arg;}
+
 protected:
+    explicit Event(int64_t timestamp) : _timestamp(timestamp) {}
+
     /* Only the dispatcher can set the receiver */
     void set_receiver(int receiver) {_receiver = receiver;}
 
-    EventType   _type;
     int         _receiver{0};
     int64_t     _timestamp;
     EventCompletionCallback _completion_cb{nullptr};
     void*       _callback_arg{nullptr};
     EventId     _id{EventIdGenerator::new_id()};
-
-    //int         _sender;
 };
 
-/**
- * @brief Baseclass for all events going to or from an rt processor
- */
-class ProcessorEvent : public Event
-{
-public:
-    ProcessorEvent(EventType type,
-                   int64_t timestamp,
-                   const std::string& processor) : Event(type,  timestamp),
-                                                   _processor(processor),
-                                                   _access_by_id(false),
-                                                   _processor_id(0) {}
-    ProcessorEvent(EventType type,
-                   int64_t timestamp,
-                   ObjectId& processor_id) : Event(type,  timestamp),
-                                             _processor(),
-                                             _access_by_id{true},
-                                             _processor_id(processor_id){}
-    virtual ~ProcessorEvent() {}
-
-    const std::string& processor() {return _processor;}
-    ObjectId           processor_id() {return _processor_id;}
-    /* If true, processor is accessed by integer id and not by name */
-    bool access_by_id() {return _access_by_id;}
-
-protected:
-    std::string _processor;
-    bool _access_by_id;
-    ObjectId _processor_id;
-};
-
-
-class KeyboardEvent : public ProcessorEvent
+class KeyboardEvent : public Event
 {
 public:
     enum class Subtype
@@ -143,54 +118,40 @@ public:
         WRAPPED_MIDI
     };
     KeyboardEvent(Subtype subtype,
-                  const std::string& processor,
+                  ObjectId processor_id,
                   float value,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                  int64_t timestamp) : Event(timestamp),
                                        _subtype(subtype),
+                                       _processor_id(processor_id),
                                        _note(0),
                                        _velocity(value) {}
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
-                  float value,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _note(0),
-                                       _velocity(value) {}
-
-    KeyboardEvent(Subtype subtype,
-                  const std::string& processor,
                   int note,
                   float velocity,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                  int64_t timestamp) : Event(timestamp),
                                        _subtype(subtype),
+                                       _processor_id(processor_id),
                                        _note(note),
                                        _velocity(velocity) {}
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
-                  int note,
-                  float velocity,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _note(note),
-                                       _velocity(velocity) {}
-
-    KeyboardEvent(Subtype subtype,
-                  const std::string& processor,
                   MidiDataByte midi_data,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor),
+                  int64_t timestamp) : Event(timestamp),
                                        _subtype(subtype),
+                                       _processor_id(processor_id),
                                        _midi_data(midi_data) {}
 
-    KeyboardEvent(Subtype subtype,
-                  ObjectId processor_id,
-                  MidiDataByte midi_data,
-                  int64_t timestamp) : ProcessorEvent(EventType::KEYBOARD_EVENT, timestamp, processor_id),
-                                       _subtype(subtype),
-                                       _midi_data(midi_data) {}
+    bool is_keyboard_event() override  {return true;}
+
+    bool maps_to_rt_event() override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) override;
 
     Subtype         subtype() {return _subtype;}
+    ObjectId        processor_id() {return _processor_id;}
     int             note() {return _note;}
     float           velocity() {return _velocity;}
     float           value() {return _velocity;}
@@ -198,12 +159,13 @@ public:
 
 protected:
     Subtype         _subtype;
+    ObjectId        _processor_id;
     int             _note;
     float           _velocity;
     MidiDataByte    _midi_data;
 };
 
-class ParameterChangeEvent : public ProcessorEvent
+class ParameterChangeEvent : public Event
 {
 public:
     enum class Subtype
@@ -216,27 +178,23 @@ public:
     };
 
     ParameterChangeEvent(Subtype subtype,
-                         const std::string& processor,
-                         const std::string& parameter,
-                         float value,
-                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor),
-                                              _subtype(subtype),
-                                              _parameter(parameter),
-                                              _parameter_id(0),
-                                              _value(value) {}
-
-    ParameterChangeEvent(Subtype subtype,
                          ObjectId processor_id,
                          ObjectId parameter_id,
                          float value,
-                         int64_t timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE, timestamp, processor_id),
+                         int64_t timestamp) : Event(timestamp),
                                               _subtype(subtype),
-                                              _parameter(),
+                                              _processor_id(processor_id),
                                               _parameter_id(parameter_id),
                                               _value(value) {}
 
+    virtual bool is_parameter_change_event() override {return true;}
+
+    virtual bool maps_to_rt_event() override {return true;}
+
+    virtual RtEvent to_rt_event(int sample_offset) override;
+
     Subtype             subtype() {return _subtype;}
-    const std::string&  parameter() {return _parameter;}
+    ObjectId            processor_id() {return _processor_id;}
     ObjectId            parameter_id() {return _parameter_id;}
     float               float_value() {return _value;}
     int                 int_value() {return static_cast<int>(_value);}
@@ -244,7 +202,7 @@ public:
 
 protected:
     Subtype             _subtype;
-    std::string         _parameter;
+    ObjectId            _processor_id;
     ObjectId            _parameter_id;
     float               _value;
 };
@@ -252,19 +210,6 @@ protected:
 class StringPropertyChangeEvent : public ParameterChangeEvent
 {
 public:
-    StringPropertyChangeEvent(const std::string& processor,
-                              const std::string& property,
-                              const std::string& string_value,
-                              int64_t timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
-                                                                        processor,
-                                                                        property,
-                                                                        0.0f,
-                                                                        timestamp),
-                                                   _string_value(string_value)
-    {
-        _type = EventType::STRING_PROPERTY_CHANGE;
-    }
-
     StringPropertyChangeEvent(ObjectId processor_id,
                               ObjectId property_id,
                               const std::string& string_value,
@@ -273,28 +218,39 @@ public:
                                                                         property_id,
                                                                         0.0f,
                                                                         timestamp),
-                                                   _string_value(string_value)
-    {
-        _type = EventType::STRING_PROPERTY_CHANGE;
-    }
+                                                   _string_value(string_value) {}
 
-    const std::string& string_value() {return _string_value;}
+    RtEvent to_rt_event(int sample_offset) override;
+    ObjectId property_id() {return _parameter_id;}
 
 protected:
     std::string _string_value;
 };
 
-/*class BlobPropertyChangeEvent : public ParameterChangeEvent
+class DataPropertyChangeEvent : public ParameterChangeEvent
 {
 public:
-    BlobData* string_value() {return _data;}
+    DataPropertyChangeEvent(ObjectId processor_id,
+                            ObjectId property_id,
+                            BlobData blob_value,
+                            int64_t timestamp) : ParameterChangeEvent(Subtype::BLOB_PROPERTY_CHANGE,
+                                                                      processor_id,
+                                                                      property_id,
+                                                                      0.0f,
+                                                                      timestamp),
+                                                 _blob_value(blob_value) {}
+
+
+    RtEvent to_rt_event(int sample_offset) override;
+    ObjectId property_id() {return _parameter_id;}
+    BlobData blob_value() {return _blob_value;}
 
 protected:
-    BlobData* _data;
-};*/
+    BlobData _blob_value;
+};
 
-
-class ParameterChangeNotificationEvent : public ProcessorEvent
+// TODO - Maybe notifications are just ParameterChangeEvents
+/*class ParameterChangeNotificationEvent : public ProcessorEvent
 {
 public:
     enum class Subtype
@@ -323,45 +279,58 @@ protected:
     Subtype     _subtype;
     std::string _parameter;
     float       _value;
-};
+};*/
 
 // TODO how to handle strings and blobs here?
 
+namespace engine {class BaseEngine;}
 
-class AddTrackEvent : public Event
+class EngineEvent : public Event
+{
+public:
+    virtual bool process_asynchronously() override {return true;}
+
+    virtual bool is_engine_event() override {return true;}
+
+    virtual int execute(engine::BaseEngine*engine) = 0;
+
+protected:
+    explicit EngineEvent(int64_t timestamp) : Event(timestamp) {}
+};
+
+class AddTrackEvent : public EngineEvent
 {
 public:
     enum Status : int
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC
     };
-    AddTrackEvent(const std::string& name, int channels, int64_t timestamp) : Event(EventType::ADD_TRACK, timestamp),
+    AddTrackEvent(const std::string& name, int channels, int64_t timestamp) : EngineEvent(timestamp),
                                                                               _name(name),
                                                                               _channels(channels){}
-    const std::string& name() {return _name;}
-    int channels() {return _channels;}
+    int execute(engine::BaseEngine*engine) override;
 
 private:
     std::string _name;
     int _channels;
 };
 
-class RemoveTrackEvent : public Event
+class RemoveTrackEvent : public EngineEvent
 {
 public:
     enum Status : int
     {
         INVALID_TRACK = EventStatus::EVENT_SPECIFIC
     };
-    RemoveTrackEvent(const std::string& name, int64_t timestamp) : Event(EventType::REMOVE_TRACK, timestamp),
+    RemoveTrackEvent(const std::string& name, int64_t timestamp) : EngineEvent(timestamp),
                                                                    _name(name) {}
-    const std::string& name() {return _name;}
+    int execute(engine::BaseEngine*engine) override;
 
 private:
     std::string _name;
 };
 
-class AddProcessorEvent : public Event
+class AddProcessorEvent : public EngineEvent
 {
 public:
     enum Status : int
@@ -379,28 +348,24 @@ public:
     };
     AddProcessorEvent(const std::string& track, const std::string& uid,
                       const std::string& name, const std::string& file,
-                      ProcessorType plugin_type, int64_t timestamp) : Event(EventType::ADD_PROCESSOR, timestamp),
-                                                                    _track(track),
-                                                                    _uid(uid),
-                                                                    _name(name),
-                                                                    _file(file),
-                                                                    _plugin_type(plugin_type) {}
-    const std::string& track() {return _track;}
-    const std::string& uid() {return _uid;}
-    const std::string& name() {return _name;}
-    const std::string& file() {return _file;}
-    ProcessorType processor_type() {return _plugin_type;}
+                      ProcessorType processor_type, int64_t timestamp) : EngineEvent(timestamp),
+                                                                         _track(track),
+                                                                         _uid(uid),
+                                                                         _name(name),
+                                                                         _file(file),
+                                                                         _processor_type(processor_type) {}
+    int execute(engine::BaseEngine*engine) override;
 
 private:
-    std::string _track;
-    std::string _uid;
-    std::string _name;
-    std::string _file;
-    ProcessorType _plugin_type;
+    std::string     _track;
+    std::string     _uid;
+    std::string     _name;
+    std::string     _file;
+    ProcessorType   _processor_type;
 
 };
 
-class RemoveProcessorEvent : public Event
+class RemoveProcessorEvent : public EngineEvent
 {
 public:
     enum Status : int
@@ -409,12 +374,11 @@ public:
         INVALID_CHAIN,
     };
     RemoveProcessorEvent(const std::string& name, const std::string& track,
-                         int64_t timestamp) : Event(EventType::REMOVE_PROCESSOR, timestamp),
+                         int64_t timestamp) : EngineEvent(timestamp),
                                               _name(name),
                                               _track(track) {}
 
-    const std::string& name() {return _name;}
-    const std::string& track() {return _track;}
+    int execute(engine::BaseEngine*engine) override;
 
 private:
     std::string _name;
@@ -428,6 +392,9 @@ class AsynchronousWorkEvent : public Event
 public:
 
 protected:
+
+    AsynchronousWorkEvent(int64_t timestamp) : Event(timestamp) {}
+
     AsynchronousWorkCallback _callback;
     ObjectId                 _rt_processor_id;
     EventId                  _rt_event_id;
@@ -437,10 +404,14 @@ class AsynchronousWorkCompletionNotification : public Event
 {
 
 protected:
+
+    AsynchronousWorkCompletionNotification() : Event(0) {}
+
     int         _return_value;
     ObjectId    _rt_processor_id;
     EventId     _rt_event_id;
 };
+
 
 } // end namespace sushi
 
