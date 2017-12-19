@@ -97,6 +97,15 @@ Event* Event::from_rt_event(RtEvent& rt_event, int64_t timestamp)
                                             typed_ev->value(),
                                             timestamp);
         }
+        case RtEventType::ASYNC_WORK:
+        {
+            auto typed_ev = rt_event.async_work_event();
+            return new AsynchronousWorkEvent(typed_ev->callback(),
+                                             typed_ev->callback_data(),
+                                             typed_ev->processor_id(),
+                                             typed_ev->event_id(),
+                                             timestamp);
+        }
         default:
             return nullptr;
 
@@ -245,7 +254,17 @@ int RemoveProcessorEvent::execute(engine::BaseEngine*engine)
     }
 }
 
-#pragma GCC diagnostic pop
+Event* AsynchronousWorkEvent::execute()
+{
+    int status = _work_callback(_data, _rt_event_id);
+    return new AsynchronousWorkCompletionEvent(status, _rt_processor, _rt_event_id, 0);
+}
 
+RtEvent AsynchronousWorkCompletionEvent::to_rt_event(int /*sample_offset*/)
+{
+    return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
+}
+
+#pragma GCC diagnostic pop
 
 } // end namespace sushi

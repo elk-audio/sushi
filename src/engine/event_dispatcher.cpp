@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include "event_dispatcher.h"
 #include "engine/engine.h"
 #include "logging.h"
@@ -10,15 +12,15 @@ MIND_GET_LOGGER;
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtEventFifo* in_rt_queue,
-                                 RtEventFifo* out_rt_queue) : _engine{engine},
+                                 RtEventFifo* out_rt_queue) : _running{false},
+                                                              _engine{engine},
                                                               _in_rt_queue{in_rt_queue},
-                                                              _out_rt_queue{out_rt_queue}
+                                                              _out_rt_queue{out_rt_queue},
+                                                              _worker{engine, this}
 {
-    for (auto& p : _posters)
-    {
-        p = nullptr;
-    }
-    _posters[EventPosterId::AUDIO_ENGINE] = this;
+    std::fill(_posters.begin(), _posters.end(), nullptr);
+    register_poster(this);
+    register_poster(&_worker);
 }
 
 void EventDispatcher::post_event(Event* event)
@@ -41,11 +43,13 @@ void EventDispatcher::run()
 {
     _running = true;
     _event_thread = std::thread(&EventDispatcher::_event_loop, this);
+    _worker.run();
 }
 
 void EventDispatcher::stop()
 {
     _running = false;
+    _worker.stop();
     if (_event_thread.joinable())
     {
         _event_thread.join();
@@ -74,11 +78,11 @@ EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notificatio
 
 int EventDispatcher::process(Event* event)
 {
-    /*if (event->process_asynchronously())
+    if (event->process_asynchronously())
     {
-        // TODO - send to low prio handler when it's implemented
-        return EventStatus::NOT_HANDLED;
-    }*/
+        event->set_receiver(EventPosterId::WORKER);
+        return _posters[event->receiver()]->process(event);
+    }
     if (event->maps_to_rt_event())
     {
         // TODO - handle translation from real time to sample offset.
@@ -86,11 +90,6 @@ int EventDispatcher::process(Event* event)
         // TODO - handle case when queue is full.
         _out_rt_queue->push(event->to_rt_event(sample_offset));
         return EventStatus::HANDLED_OK;
-    }
-    if (event->is_engine_event())
-    {
-        auto typed_event = static_cast<EngineEvent*>(event);
-        return typed_event->execute(_engine);
     }
     return EventStatus::UNRECOGNIZED_EVENT;
 }
@@ -111,14 +110,15 @@ void EventDispatcher::_event_loop()
             }
             assert(event->receiver() < static_cast<int>(_posters.size()));
             EventPoster* receiver = _posters[event->receiver()];
-            int status;
+            int status = EventStatus::UNRECOGNIZED_RECEIVER;
             if (receiver != nullptr)
             {
                 status = _posters[event->receiver()]->process(event);
             }
-            else
+            if (status == EventStatus::QUEUED_HANDLING)
             {
-                status = EventStatus::UNRECOGNIZED_RECEIVER;
+                /* Event has not finished processing, so dont call comp cb or delete it */
+                continue;
             }
             if (event->completion_cb() != nullptr)
             {
@@ -141,37 +141,27 @@ void EventDispatcher::_event_loop()
 int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 {
     // TODO - handle translation from real time to sample offset.
-    uint64_t timestamp = 0;
+    int64_t timestamp = 0;
     Event* event = Event::from_rt_event(rt_event, timestamp);
-    if (event != nullptr)
+    if (event == nullptr)
     {
-        if (event->is_keyboard_event())
-        {
-            _publish_keyboard_events(event);
-        }
-        if (event->is_parameter_change_event())
-        {
-            _publish_parameter_events(event);
-        }
-        // TODO - better lifetime management of events
-        delete event;
-        return EventStatus::HANDLED_OK;
+        /* Currently there are no RtEvents that need special handling */
+        return EventStatus::UNRECOGNIZED_EVENT;
     }
-    switch (rt_event.type())
+    if (event->is_keyboard_event())
     {
-        case RtEventType::ASYNC_WORK:
-        {
-            auto typed_event = rt_event.async_work_event();
-            MIND_LOG_INFO("Got an ASYNC_WORK event with id {}", typed_event->event_id());
-            int status = typed_event->callback()(typed_event->callback_data(), typed_event->event_id());
-            _out_rt_queue->push(RtEvent::make_async_work_completion_event(typed_event->processor_id(),
-                                                                         typed_event->event_id(),
-                                                                         status));
-            break;
-        }
-        default:
-            return EventStatus::UNRECOGNIZED_EVENT;
+        _publish_keyboard_events(event);
     }
+    if (event->is_parameter_change_event())
+    {
+        _publish_parameter_events(event);
+    }
+    if (event->process_asynchronously())
+    {
+        return _worker.process(event);
+    }
+    // TODO - better lifetime management of events
+    delete event;
     return EventStatus::HANDLED_OK;
 }
 
@@ -227,6 +217,66 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
         }
     }
     return EventDispatcherStatus::UNKNOWN_POSTER;}
+
+
+void Worker::run()
+{
+    _running = true;
+    _worker_thread = std::thread(&Worker::_worker, this);
+}
+
+void Worker::stop()
+{
+    _running = false;
+    if (_worker_thread.joinable())
+    {
+        _worker_thread.join();
+    }
+}
+
+int Worker::process(Event*event)
+{
+    std::lock_guard<std::mutex> lock(_queue_mutex);
+    _queue.push_front(event);
+    return EventStatus::QUEUED_HANDLING;
+}
+
+void Worker::_worker()
+{
+    do
+    {
+        auto start_time = std::chrono::system_clock::now();
+        while (!_queue.empty())
+        {
+            int status = EventStatus::UNRECOGNIZED_EVENT;
+            Event*event;
+            {
+                std::lock_guard<std::mutex> lock(_queue_mutex);
+                event = _queue.back();
+                _queue.pop_back();
+            }
+
+            if (event->is_engine_event())
+            {
+                auto typed_event = static_cast<EngineEvent*>(event);
+                status = typed_event->execute(_engine);
+            }
+            if (event->is_async_work_event())
+            {
+                auto typed_event = static_cast<AsynchronousWorkEvent*>(event);
+                _dispatcher->post_event(typed_event->execute());
+            }
+
+            if (event->completion_cb() != nullptr)
+            {
+                event->completion_cb()(event->callback_arg(), event, status);
+            }
+            delete (event);
+        }
+        std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODOCITY);
+    }
+    while (_running);
+}
 
 
 } // end namespace dispatcher
