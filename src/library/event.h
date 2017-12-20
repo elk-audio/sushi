@@ -390,26 +390,34 @@ private:
     std::string _track;
 };
 
-typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
-
 class AsynchronousWorkEvent : public Event
 {
 public:
-    AsynchronousWorkEvent(AsynchronousWorkCallback callback,
-                          void* data,
-                          ObjectId processor,
-                          EventId rt_event_id,
-                          int64_t timestamp) : Event(timestamp),
-                                               _work_callback(callback),
-                                               _data(data),
-                                               _rt_processor(processor),
-                                               _rt_event_id(rt_event_id)
+    virtual bool process_asynchronously() override {return true;}
+    virtual bool is_async_work_event() override {return true;}
+    virtual Event* execute() = 0;
+
+protected:
+    explicit AsynchronousWorkEvent(int64_t timestamp) : Event(timestamp) {}
+};
+
+typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
+
+class AsynchronousProcessorWorkEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousProcessorWorkEvent(AsynchronousWorkCallback callback,
+                                   void* data,
+                                   ObjectId processor,
+                                   EventId rt_event_id,
+                                   int64_t timestamp) : AsynchronousWorkEvent(timestamp),
+                                                       _work_callback(callback),
+                                                       _data(data),
+                                                       _rt_processor(processor),
+                                                       _rt_event_id(rt_event_id)
     {}
 
-    virtual bool process_asynchronously() {return true;}
-    virtual bool is_async_work_event() {return true;}
-
-    virtual Event* execute();
+    virtual Event* execute() override;
 
 protected:
     AsynchronousWorkCallback _work_callback;
@@ -418,16 +426,16 @@ protected:
     EventId                  _rt_event_id;
 };
 
-class AsynchronousWorkCompletionEvent : public Event
+class AsynchronousProcessorWorkCompletionEvent : public Event
 {
 public:
-    AsynchronousWorkCompletionEvent(int return_value,
-                                           ObjectId processor,
-                                           EventId rt_event_id,
-                                           int64_t timestamp) : Event(timestamp),
-                                                                _return_value(return_value),
-                                                                _rt_processor(processor),
-                                                                _rt_event_id(rt_event_id) {}
+    AsynchronousProcessorWorkCompletionEvent(int return_value,
+                                             ObjectId processor,
+                                             EventId rt_event_id,
+                                             int64_t timestamp) : Event(timestamp),
+                                                                  _return_value(return_value),
+                                                                  _rt_processor(processor),
+                                                                  _rt_event_id(rt_event_id) {}
 
     bool maps_to_rt_event() override {return true;}
     RtEvent to_rt_event(int sample_offset) override;
@@ -436,6 +444,18 @@ private:
     int         _return_value;
     ObjectId    _rt_processor;
     EventId     _rt_event_id;
+};
+
+class AsynchronousBlobDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousBlobDeleteEvent(BlobData data,
+                                int64_t timestamp) : AsynchronousWorkEvent(timestamp),
+                                                     _data(data) {}
+    virtual Event* execute() override ;
+
+private:
+    BlobData _data;
 };
 
 

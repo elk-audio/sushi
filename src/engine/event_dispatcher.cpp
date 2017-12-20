@@ -264,7 +264,11 @@ void Worker::_worker()
             if (event->is_async_work_event())
             {
                 auto typed_event = static_cast<AsynchronousWorkEvent*>(event);
-                _dispatcher->post_event(typed_event->execute());
+                Event* response_event = typed_event->execute();
+                if (response_event != nullptr)
+                {
+                    _dispatcher->post_event(response_event);
+                }
             }
 
             if (event->completion_cb() != nullptr)
