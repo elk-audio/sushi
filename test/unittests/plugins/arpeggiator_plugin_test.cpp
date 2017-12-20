@@ -2,7 +2,7 @@
 
 #define private public
 
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 #include "plugins/arpeggiator_plugin.cpp"
 
 using namespace sushi;

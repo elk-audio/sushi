@@ -7,15 +7,15 @@
 #ifndef SUSHI_EVENT_DISPATCHER_H
 #define SUSHI_EVENT_DISPATCHER_H
 
-#include <deque>
 #include <mutex>
 #include <thread>
 
 #include "logging.h"
 #include "library/rt_event.h"
+#include "library/synchronised_fifo.h"
 #include "library/event.h"
 #include "library/event_interface.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 
 namespace sushi {
 namespace engine {class BaseEngine;}
@@ -54,15 +54,14 @@ public:
     int poster_id() override {return EventPosterId::WORKER;}
 
 private:
-    engine::BaseEngine*  _engine;
-    BaseEventDispatcher* _dispatcher;
+    engine::BaseEngine*         _engine;
+    BaseEventDispatcher*        _dispatcher;
 
-    void                 _worker();
-    std::thread          _worker_thread;
-    std::atomic<bool>    _running;
+    void                        _worker();
+    std::thread                 _worker_thread;
+    std::atomic<bool>           _running;
 
-    std::deque<Event*>   _queue;
-    std::mutex           _queue_mutex;
+    SynchronizedQueue<Event*>   _queue;
 };
 
 
@@ -118,17 +117,16 @@ private:
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
 
-    std::atomic<bool>   _running;
-    std::thread         _event_thread;
+    std::atomic<bool>           _running;
+    std::thread                 _event_thread;
 
-    engine::BaseEngine* _engine;
+    engine::BaseEngine*         _engine;
 
-    std::deque<Event*>  _in_queue;
-    std::mutex          _in_queue_mutex;
-    RtEventFifo*        _in_rt_queue;
-    RtEventFifo*        _out_rt_queue;
+    SynchronizedQueue<Event*>   _in_queue;
+    RtEventFifo*                _in_rt_queue;
+    RtEventFifo*                _out_rt_queue;
 
-    Worker              _worker;
+    Worker                      _worker;
 
     std::array<EventPoster*, EventPosterId::MAX_POSTERS> _posters;
     std::vector<EventPoster*> _keyboard_event_listeners;

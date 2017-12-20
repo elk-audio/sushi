@@ -24,7 +24,7 @@
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 #include "library/types.h"
 
 

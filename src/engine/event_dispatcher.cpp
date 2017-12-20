@@ -25,8 +25,7 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
 
 void EventDispatcher::post_event(Event* event)
 {
-    std::lock_guard<std::mutex> lock(_in_queue_mutex);
-    _in_queue.push_front(event);
+    _in_queue.push(event);
 }
 
 EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
@@ -102,12 +101,8 @@ void EventDispatcher::_event_loop()
         /* Handle incoming Events */
         while (!_in_queue.empty())
         {
-            Event* event;
-            {
-                std::lock_guard<std::mutex> lock(_in_queue_mutex);
-                event = _in_queue.back();
-                _in_queue.pop_back();
-            }
+            Event* event = _in_queue.pop();
+
             assert(event->receiver() < static_cast<int>(_posters.size()));
             EventPoster* receiver = _posters[event->receiver()];
             int status = EventStatus::UNRECOGNIZED_RECEIVER;
@@ -236,8 +231,7 @@ void Worker::stop()
 
 int Worker::process(Event*event)
 {
-    std::lock_guard<std::mutex> lock(_queue_mutex);
-    _queue.push_front(event);
+    _queue.push(event);
     return EventStatus::QUEUED_HANDLING;
 }
 
@@ -249,12 +243,7 @@ void Worker::_worker()
         while (!_queue.empty())
         {
             int status = EventStatus::UNRECOGNIZED_EVENT;
-            Event*event;
-            {
-                std::lock_guard<std::mutex> lock(_queue_mutex);
-                event = _queue.back();
-                _queue.pop_back();
-            }
+            Event* event = _queue.pop();
 
             if (event->is_engine_event())
             {
