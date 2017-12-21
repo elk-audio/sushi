@@ -268,6 +268,7 @@ add_dependencies(vst3_host sdk)
 if (${WITH_XENOMAI})
     set(WITH_RASPA_APPS false)
     set(WITH_RASPA_TESTS false)
+    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
     add_subdirectory(raspalib)
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
