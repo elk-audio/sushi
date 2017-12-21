@@ -13,7 +13,7 @@
 #include <mutex>
 
 #include "library/id_generator.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 #include "library/rt_event.h"
 
 namespace sushi {

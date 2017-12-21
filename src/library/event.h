@@ -1,5 +1,5 @@
 /**
- * @brief Main event class used for communiction across modules outside the rt part
+ * @brief Main event class used for communication across modules outside the rt part
  * @copyright MIND Music Labs AB, Stockholm
  */
 
@@ -14,6 +14,7 @@
 #include "library/rt_event.h"
 
 namespace sushi {
+namespace dispatcher {class EventDispatcher;};
 
 class Event;
 
@@ -25,6 +26,7 @@ enum EventStatus : int
 {
     HANDLED_OK,
     NOT_HANDLED,
+    QUEUED_HANDLING,
     UNRECOGNIZED_RECEIVER,
     UNRECOGNIZED_EVENT,
     EVENT_SPECIFIC
@@ -37,7 +39,7 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
  */
 class Event
 {
-    friend class EventDispatcher;
+    friend class dispatcher::EventDispatcher;
 public:
 
     virtual ~Event() {}
@@ -68,6 +70,9 @@ public:
 
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() {return false;}
+
+    /* Convertible to AsynchronousWorkEvent */
+    virtual bool is_async_work_event() {return false;}
 
     /* Event is directly convertible to an RtEvent */
     virtual bool maps_to_rt_event() {return false;}
@@ -307,7 +312,7 @@ public:
     };
     AddTrackEvent(const std::string& name, int channels, int64_t timestamp) : EngineEvent(timestamp),
                                                                               _name(name),
-                                                                              _channels(channels){}
+                                                                              _channels(channels) {}
     int execute(engine::BaseEngine*engine) override;
 
 private:
@@ -385,31 +390,72 @@ private:
     std::string _track;
 };
 
-typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
-
 class AsynchronousWorkEvent : public Event
 {
 public:
+    virtual bool process_asynchronously() override {return true;}
+    virtual bool is_async_work_event() override {return true;}
+    virtual Event* execute() = 0;
 
 protected:
+    explicit AsynchronousWorkEvent(int64_t timestamp) : Event(timestamp) {}
+};
 
-    AsynchronousWorkEvent(int64_t timestamp) : Event(timestamp) {}
+typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
 
-    AsynchronousWorkCallback _callback;
-    ObjectId                 _rt_processor_id;
+class AsynchronousProcessorWorkEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousProcessorWorkEvent(AsynchronousWorkCallback callback,
+                                   void* data,
+                                   ObjectId processor,
+                                   EventId rt_event_id,
+                                   int64_t timestamp) : AsynchronousWorkEvent(timestamp),
+                                                       _work_callback(callback),
+                                                       _data(data),
+                                                       _rt_processor(processor),
+                                                       _rt_event_id(rt_event_id)
+    {}
+
+    virtual Event* execute() override;
+
+protected:
+    AsynchronousWorkCallback _work_callback;
+    void*                    _data;
+    ObjectId                 _rt_processor;
     EventId                  _rt_event_id;
 };
 
-class AsynchronousWorkCompletionNotification : public Event
+class AsynchronousProcessorWorkCompletionEvent : public Event
 {
+public:
+    AsynchronousProcessorWorkCompletionEvent(int return_value,
+                                             ObjectId processor,
+                                             EventId rt_event_id,
+                                             int64_t timestamp) : Event(timestamp),
+                                                                  _return_value(return_value),
+                                                                  _rt_processor(processor),
+                                                                  _rt_event_id(rt_event_id) {}
 
-protected:
+    bool maps_to_rt_event() override {return true;}
+    RtEvent to_rt_event(int sample_offset) override;
 
-    AsynchronousWorkCompletionNotification() : Event(0) {}
-
+private:
     int         _return_value;
-    ObjectId    _rt_processor_id;
+    ObjectId    _rt_processor;
     EventId     _rt_event_id;
+};
+
+class AsynchronousBlobDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousBlobDeleteEvent(BlobData data,
+                                int64_t timestamp) : AsynchronousWorkEvent(timestamp),
+                                                     _data(data) {}
+    virtual Event* execute() override ;
+
+private:
+    BlobData _data;
 };
 
 

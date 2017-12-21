@@ -5,6 +5,11 @@
 
 using namespace sushi;
 
+static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
+{
+    return 0;
+}
+
 TEST(EventTest, TestToRtEvent)
 {
     auto note_on_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, 1, 48, 1.0f, 0);
@@ -89,6 +94,13 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(52u, rt_event.data_parameter_change_event()->param_id());
     EXPECT_EQ(0, rt_event.data_parameter_change_event()->value().size);
     EXPECT_EQ(nullptr, rt_event.data_parameter_change_event()->value().data);
+
+    auto async_comp_not = AsynchronousProcessorWorkCompletionEvent(123, 9, 53, 0);
+    rt_event = async_comp_not.to_rt_event(11);
+    EXPECT_EQ(RtEventType::ASYNC_WORK_NOTIFICATION, rt_event.type());
+    EXPECT_EQ(123, rt_event.async_work_completion_event()->return_status());
+    EXPECT_EQ(9u, rt_event.async_work_completion_event()->processor_id());
+    EXPECT_EQ(53u, rt_event.async_work_completion_event()->sending_event_id());
 }
 
 TEST(EventTest, TestFromRtEvent)
@@ -183,4 +195,20 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_EQ(9u, pc_event->processor_id());
     EXPECT_EQ(50u, pc_event->parameter_id());
     EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());
+    delete event;
+
+    auto async_work_event = RtEvent::make_async_work_event(dummy_processor_callback, 10, nullptr);
+    event = Event::from_rt_event(async_work_event, 0);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_async_work_event());
+    EXPECT_TRUE(event->process_asynchronously());
+    delete event;
+
+    BlobData testdata = {0, nullptr};
+    auto async_blod_del_event = RtEvent::make_delete_blob_event(testdata);
+    event = Event::from_rt_event(async_blod_del_event, 0);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_async_work_event());
+    EXPECT_TRUE(event->process_asynchronously());
+    delete event;
 }

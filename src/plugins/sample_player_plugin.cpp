@@ -121,7 +121,6 @@ void SamplePlayerPlugin::process_event(RtEvent event)
         }
         case RtEventType::STRING_PROPERTY_CHANGE:
         {
-            MIND_LOG_INFO("Got a string param change");
             /* Currently there is only 1 string parameter and it's for changing the sample
              * file, hence no need to check the parameter id */
             auto typed_event = event.string_parameter_change_event();
@@ -130,7 +129,7 @@ void SamplePlayerPlugin::process_event(RtEvent event)
                 voice.note_off(1.0f, 0);
             }
             _sample_file_property = typed_event->value();
-            /* Schedule a non-rt callback to handle this */
+            /* Schedule a non-rt callback to handle sample loading */
             auto e = RtEvent::make_async_work_event(&SamplePlayerPlugin::non_rt_callback, this->id(), this);
             _pending_event_id = e.async_work_event()->event_id();
             output_event(e);
@@ -142,9 +141,12 @@ void SamplePlayerPlugin::process_event(RtEvent event)
             if (typed_event->sending_event_id() == _pending_event_id &&
                 typed_event->return_status() == SampleChangeStatus::SUCCESS)
             {
+                float* old_sample = _sample_buffer;
                 _sample_buffer = reinterpret_cast<float*>(_pending_sample.data);
                 _sample.set_sample(_sample_buffer, _pending_sample.size / sizeof(float));
-                auto delete_event = RtEvent::make_delete_blob_event(_pending_sample);
+                /* Delete the old sample data outside the rt thread */
+                BlobData data{0, reinterpret_cast<uint8_t*>(old_sample)};
+                auto delete_event = RtEvent::make_delete_blob_event(data);
                 output_event(delete_event);
             }
             break;
@@ -200,13 +202,15 @@ int SamplePlayerPlugin::_non_rt_callback(EventId id)
 {
     if (id == _pending_event_id)
     {
+        /* Note that this doesn't handle multiple requests at once, several outstanding work
+         * requests can leak the address string */
         auto sample_data = load_sample_file(*_sample_file_property);
         delete _sample_file_property;
         _sample_file_property = nullptr;
         if (sample_data.size > 0)
         {
             _pending_sample = sample_data;
-            MIND_LOG_INFO("Sucessfully replaced sample data");
+            MIND_LOG_INFO("SamplePlayer: Successfully loaded sample data");
             return SampleChangeStatus::SUCCESS;
         }
         return SampleChangeStatus::FAILURE;
