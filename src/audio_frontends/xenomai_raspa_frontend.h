@@ -22,6 +22,15 @@
 namespace sushi {
 namespace audio_frontend {
 
+
+/**
+ * @brief Workaround for Xenomai process initialization, which should happen
+ *        as the _first_ thing in main() before everything else.
+ *
+ * @return 0 if successful, raspa_init() error code otherwise
+ */
+int global_init();
+
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
