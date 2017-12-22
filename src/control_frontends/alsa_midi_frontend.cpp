@@ -113,6 +113,7 @@ void AlsaMidiFrontend::_poll_function()
                 if ((ev->type == SND_SEQ_EVENT_NOTEON)
                     || (ev->type == SND_SEQ_EVENT_NOTEOFF)
                     || (ev->type == SND_SEQ_EVENT_CONTROLLER)
+                    || (ev->type == SND_SEQ_EVENT_PGMCHANGE)
                     || (ev->type == SND_SEQ_EVENT_PITCHBEND))
                 {
                     const long byte_count = snd_midi_event_decode(_input_parser, data_buffer,
