@@ -27,8 +27,8 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "main",
-                "raw_midi": false
+                "track": "main",
+                "raw_midi": true
 
             }
         ],
