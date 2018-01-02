@@ -5,7 +5,7 @@
 #include "test_utils.h"
 #include "plugins/sample_player_voice.cpp"
 #include "plugins/sample_player_plugin.cpp"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 
 
 using namespace sushi;

@@ -151,8 +151,9 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/rt_event.h
                         src/library/processor.h
                         src/library/internal_plugin.h
-                        src/library/event_fifo.h
+                        src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
+                        src/library/synchronised_fifo.h
                         src/library/vst2x_wrapper.h
                         src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h
@@ -267,6 +268,7 @@ add_dependencies(vst3_host sdk)
 if (${WITH_XENOMAI})
     set(WITH_RASPA_APPS false)
     set(WITH_RASPA_TESTS false)
+    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
     add_subdirectory(raspalib)
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)

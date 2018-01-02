@@ -14,7 +14,6 @@
 #include <jack/jack.h>
 
 #include "base_audio_frontend.h"
-#include "library/event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/alsa_midi_frontend.h"
 
@@ -116,7 +115,6 @@ private:
     jack_client_t* _client{nullptr};
     jack_nframes_t _sample_rate;
     bool _autoconnect_ports{false};
-    //Time _start_time;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};

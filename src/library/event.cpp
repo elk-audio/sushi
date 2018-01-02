@@ -97,6 +97,20 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
                                             typed_ev->value(),
                                             timestamp);
         }
+        case RtEventType::ASYNC_WORK:
+        {
+            auto typed_ev = rt_event.async_work_event();
+            return new AsynchronousProcessorWorkEvent(typed_ev->callback(),
+                                                      typed_ev->callback_data(),
+                                                      typed_ev->processor_id(),
+                                                      typed_ev->event_id(),
+                                                      timestamp);
+        }
+        case RtEventType::BLOB_DELETE:
+        {
+            auto typed_ev = rt_event.data_payload_event();
+            return new AsynchronousBlobDeleteEvent(typed_ev->value(), timestamp);
+        }
         default:
             return nullptr;
 
@@ -245,7 +259,23 @@ int RemoveProcessorEvent::execute(engine::BaseEngine*engine)
     }
 }
 
-#pragma GCC diagnostic pop
+Event* AsynchronousProcessorWorkEvent::execute()
+{
+    int status = _work_callback(_data, _rt_event_id);
+    return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, PROCESS_NOW);
+}
 
+RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/)
+{
+    return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
+}
+
+Event*AsynchronousBlobDeleteEvent::execute()
+{
+    delete(_data.data);
+    return nullptr;
+}
+
+#pragma GCC diagnostic pop
 
 } // end namespace sushi

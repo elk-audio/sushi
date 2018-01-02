@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "test_utils.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 #include "library/vst3x_host_app.cpp"
 #include "library/vst3x_utils.cpp"
 

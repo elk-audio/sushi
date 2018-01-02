@@ -15,12 +15,21 @@
 
 #include "base_audio_frontend.h"
 #include "library/rt_event.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
+
+
+/**
+ * @brief Workaround for Xenomai process initialization, which should happen
+ *        as the _first_ thing in main() before everything else.
+ *
+ * @return 0 if successful, raspa_init() error code otherwise
+ */
+int global_init();
 
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {

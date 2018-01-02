@@ -17,6 +17,11 @@ namespace audio_frontend {
 
 MIND_GET_LOGGER;
 
+int global_init()
+{
+    return raspa_init();
+}
+
 AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto ret_code = BaseAudioFrontend::init(config);
@@ -38,12 +43,10 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     }
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
     _engine->set_audio_output_channels(RASPA_N_CHANNELS);
-
-    auto init_ret = raspa_init();
-    if (init_ret < 0)
+    if (_engine->sample_rate() != RASPA_SAMPLING_FREQ_HZ)
     {
-        MIND_LOG_ERROR("Error initializing RASPA: {}", strerror(-init_ret));
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
+        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_SAMPLING_FREQ_HZ);
+        _engine->set_sample_rate(RASPA_SAMPLING_FREQ_HZ);
     }
 
     auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this);

@@ -9,7 +9,7 @@
 #define PASSTHROUGH_PLUGIN_H
 
 #include "library/internal_plugin.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 
 
 namespace sushi {

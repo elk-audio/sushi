@@ -66,6 +66,15 @@ void print_version_and_build_info()
 
 int main(int argc, char* argv[])
 {
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    auto ret = sushi::audio_frontend::global_init();
+    if (ret < 0)
+    {
+        std::cerr << "Failed to initialize Xenomai process, err. code: " << ret << std::endl;
+        exit(ret);
+    }
+#endif
+
     print_sushi_headline();
 
     signal(SIGINT, sigint_handler);

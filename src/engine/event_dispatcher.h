@@ -7,22 +7,25 @@
 #ifndef SUSHI_EVENT_DISPATCHER_H
 #define SUSHI_EVENT_DISPATCHER_H
 
-#include <deque>
 #include <mutex>
 #include <thread>
 
 #include "logging.h"
 #include "library/rt_event.h"
+#include "library/synchronised_fifo.h"
 #include "library/event.h"
 #include "library/event_interface.h"
-#include "library/event_fifo.h"
+#include "library/rt_event_fifo.h"
 
 namespace sushi {
 namespace engine {class BaseEngine;}
 namespace dispatcher {
 
+class BaseEventDispatcher;
+
 constexpr int AUDIO_ENGINE_ID = 0;
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
+constexpr auto WORKER_THREAD_PERIODOCITY = std::chrono::milliseconds(1);
 
 enum class EventDispatcherStatus
 {
@@ -30,6 +33,38 @@ enum class EventDispatcherStatus
     ALREADY_SUBSCRIBED,
     UNKNOWN_POSTER
 };
+
+/**
+ * @brief Low priority worker for handling possibly time consuming tasks like
+ * instantiating plugins or do asynchronous work from processors.
+ */
+class Worker : public EventPoster
+{
+public:
+    Worker(engine::BaseEngine* engine, BaseEventDispatcher* dispatcher) : _engine(engine),
+                                                                          _dispatcher(dispatcher),
+                                                                          _running(false) {}
+
+    virtual ~Worker() = default;
+
+    void run();
+    void stop();
+
+    int process(Event* event) override;
+    int poster_id() override {return EventPosterId::WORKER;}
+
+private:
+    engine::BaseEngine*         _engine;
+    BaseEventDispatcher*        _dispatcher;
+
+    void                        _worker();
+    std::thread                 _worker_thread;
+    std::atomic<bool>           _running;
+
+    SynchronizedQueue<Event*>   _queue;
+};
+
+
 
 /* Abstract base class is solely for test mockups */
 class BaseEventDispatcher : public EventPoster
@@ -82,19 +117,17 @@ private:
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
 
-    std::thread _event_thread;
+    std::atomic<bool>           _running;
+    std::thread                 _event_thread;
 
-    engine::BaseEngine* _engine;
+    engine::BaseEngine*         _engine;
 
-    std::deque<Event*> _in_queue;
-    std::deque<Event*> _out_queue;
-    std::mutex _in_queue_mutex;
-    std::mutex _out_queue_mutex;
+    SynchronizedQueue<Event*>   _in_queue;
+    RtEventFifo*                _in_rt_queue;
+    RtEventFifo*                _out_rt_queue;
 
-    RtEventFifo* _in_rt_queue;
-    RtEventFifo* _out_rt_queue;
+    Worker                      _worker;
 
-    std::atomic<bool> _running{false};
     std::array<EventPoster*, EventPosterId::MAX_POSTERS> _posters;
     std::vector<EventPoster*> _keyboard_event_listeners;
     std::vector<EventPoster*> _parameter_change_listeners;

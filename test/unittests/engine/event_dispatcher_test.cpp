@@ -23,6 +23,12 @@ void dummy_callback(void* /*arg*/, Event* /*event*/, int status)
     completion_status = status;
 }
 
+int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
+{
+    completed = true;
+    return DUMMY_STATUS;
+}
+
 class DummyPoster : public EventPoster
 {
 public:
@@ -173,4 +179,70 @@ TEST_F(TestEventDispatcher, TestCompletionCallback)
     ASSERT_TRUE(_poster.event_received());
     ASSERT_TRUE(completed);
     ASSERT_EQ(DUMMY_STATUS, completion_status);
+}
+
+TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
+{
+    auto rt_event = RtEvent::make_async_work_event(dummy_processor_callback, 123, nullptr);
+    EventId sending_ev_id = rt_event.async_work_event()->event_id();
+    _in_rt_queue.push(rt_event);
+
+    /* Run the process loop once to convert from RtEvent and send the event to the worker,
+     * then run the workers process loop once to execute the event, finally run the
+     * dispatchers process loop a second time and assert that what we ended up with is
+     * an RtEvent containing a completion notification */
+    crank_event_loop_once();
+    _module_under_test->_worker._worker();
+    crank_event_loop_once();
+
+    ASSERT_TRUE(_module_under_test->_in_queue.empty());
+    ASSERT_FALSE(_out_rt_queue.empty());
+    _out_rt_queue.pop(rt_event);
+    EXPECT_EQ(RtEventType::ASYNC_WORK_NOTIFICATION, rt_event.type());
+    auto typed_event = rt_event.async_work_completion_event();
+    EXPECT_EQ(DUMMY_STATUS, typed_event->return_status());
+    EXPECT_EQ(sending_ev_id, typed_event->sending_event_id());
+    EXPECT_EQ(123u, typed_event->processor_id());
+}
+
+class TestWorker : public ::testing::Test
+{
+public:
+    void crank_event_loop_once()
+    {
+        _module_under_test->_running = false;
+        _module_under_test->_worker();
+    }
+protected:
+    TestWorker()
+    {
+    }
+
+    void SetUp()
+    {
+        _module_under_test = new Worker(&_test_engine,
+                                        _test_engine.event_dispatcher());
+    }
+
+    void TearDown()
+    {
+        _module_under_test->stop();
+        delete _module_under_test;
+    }
+    Worker*          _module_under_test;
+    EngineMockup     _test_engine{44100};
+};
+
+TEST_F(TestWorker, TestEventQueueingAndProcessing)
+{
+    completed = false;
+    completion_status = 0;
+    auto event = new RemoveProcessorEvent("plugin", "track", PROCESS_NOW);
+    event->set_completion_cb(dummy_callback, nullptr);
+    auto status = _module_under_test->process(event);
+    ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
+    ASSERT_FALSE(_module_under_test->_queue.empty());
+    crank_event_loop_once();
+    ASSERT_TRUE(completed);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status);
 }
