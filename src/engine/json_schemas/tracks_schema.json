@@ -22,7 +22,17 @@ R"(
           },
           "mode":
           {
-            "enum": ["mono", "stereo"]
+            "enum": ["mono", "stereo", "multibus"]
+          },
+          "input_busses" :
+          {
+            "type": "integer",
+            "minimum":  0
+          },
+          "output_busses" :
+          {
+            "type": "integer",
+            "minimum":  0
           },
           "inputs":
           {

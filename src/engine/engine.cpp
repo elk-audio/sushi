@@ -349,41 +349,26 @@ std::pair<EngineReturnStatus, const std::string> AudioEngine::parameter_name_fro
     return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, "");
 }
 
-EngineReturnStatus AudioEngine::create_track(const std::string &track_id, int channel_count)
+EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, int input_busses, int output_busses)
+{
+    if((input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES))
+    {
+        MIND_LOG_ERROR("Invalid number of busses for new track");
+        return EngineReturnStatus::INVALID_N_CHANNELS;
+    }
+    Track* track = new Track(input_busses, output_busses);
+    return _register_new_track(name, track);
+}
+
+EngineReturnStatus AudioEngine::create_track(const std::string &name, int channel_count)
 {
     if((channel_count != 1 && channel_count != 2))
     {
-        MIND_LOG_ERROR("Invalid number of channels");
+        MIND_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
     Track* track = new Track(channel_count);
-    EngineReturnStatus status = _register_processor(track, track_id);
-    if (status != EngineReturnStatus::OK)
-    {
-        delete track;
-        return status;
-    }
-    track->set_event_output(&_main_out_queue);
-    if (realtime())
-    {
-        auto insert_event = RtEvent::make_insert_processor_event(track);
-        auto add_event = RtEvent::make_add_track_event(track->id());
-        send_async_event(insert_event);
-        send_async_event(add_event);
-        bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        if (!inserted || !added)
-        {
-            MIND_LOG_ERROR("Failed to insert/add track {} to processing part", track_id);
-            return EngineReturnStatus::INVALID_PROCESSOR;
-        }
-    } else
-    {
-        _insert_processor_in_realtime_part(track);
-        _audio_graph.push_back(track);
-    }
-    MIND_LOG_INFO("Track {} successfully added to engine", track_id);
-    return EngineReturnStatus::OK;
+    return _register_new_track(name, track);
 }
 
 EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
@@ -544,6 +529,37 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
     return _deregister_processor(processor->name());
 }
 
+EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
+{
+    auto status = _register_processor(track, name);
+    if (status != EngineReturnStatus::OK)
+    {
+        delete track;
+        return status;
+    }
+    track->set_event_output(&_main_out_queue);
+    if (realtime())
+    {
+        auto insert_event = RtEvent::make_insert_processor_event(track);
+        auto add_event = RtEvent::make_add_track_event(track->id());
+        send_async_event(insert_event);
+        send_async_event(add_event);
+        bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        if (!inserted || !added)
+        {
+            MIND_LOG_ERROR("Failed to insert/add track {} to processing part", name);
+            return EngineReturnStatus::INVALID_PROCESSOR;
+        }
+    } else
+    {
+        _insert_processor_in_realtime_part(track);
+        _audio_graph.push_back(track);
+    }
+    MIND_LOG_INFO("Track {} successfully added to engine", name);
+    return EngineReturnStatus::OK;
+}
+
 bool AudioEngine::_handle_internal_events(RtEvent &event)
 {
     switch (event.type())
@@ -647,7 +663,6 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     _control_queue_out.push(event); // Send event back to non-rt domain
     return true;
 }
-
 
 RealtimeState update_state(RealtimeState current_state)
 {

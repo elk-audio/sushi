@@ -170,6 +170,11 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus create_multibus_track(const std::string & /*track_id*/, int /*input_busses*/, int /*output_busses*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
     virtual EngineReturnStatus delete_track(const std::string & /*track_id*/)
     {
         return EngineReturnStatus::OK;
@@ -363,13 +368,21 @@ public:
     std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
                                                                             const ObjectId id) override;
     /**
-     * @brief Creates an empty track
-     * @param track_id The unique id of the track to be created.
+     * @brief Create an empty track
+     * @param name The unique name of the track to be created.
      * @param channel_count The number of channels in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus create_track(const std::string &track_id, int channel_count) override;
+    EngineReturnStatus create_track(const std::string& name, int channel_count) override;
 
+    /**
+     * @brief Create an empty track
+     * @param name The unique name of the track to be created.
+     * @param input_busses The number of input stereo pairs in the track.
+     * @param output_busses The number of output stereo pairs in the track.
+     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     */
+    EngineReturnStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_name The unique name of the track to delete
@@ -462,6 +475,13 @@ private:
      * @return True if the processor existed and it was correctly deleted
      */
     bool _remove_processor_from_realtime_part(ObjectId processor);
+
+    /**
+     * @brief Register a newly created track
+     * @param track Pointer to the track
+     * @return OK if succesfull, error code otherwise
+     */
+    EngineReturnStatus _register_new_track(const std::string& name, Track* track);
 
     /**
      * @brief Checks whether a processor exists in the engine.
