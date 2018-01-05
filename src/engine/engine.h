@@ -46,6 +46,7 @@ enum class EngineReturnStatus
     INVALID_PARAMETER,
     INVALID_TRACK,
     INVALID_BUS,
+    INVALID_CHANNEL,
     QUEUE_FULL
 };
 
@@ -93,26 +94,30 @@ public:
         _audio_outputs = channels;
     }
 
-    virtual EngineReturnStatus connect_audio_mono_input(int /*channel*/, const std::string& /*track_id*/)
+    virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
+                                                           int /*track_channel*/,
+                                                           const std::string& /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_mono_output(int /*channel*/, const std::string& /*track_id*/)
+    virtual EngineReturnStatus connect_audio_output_channel(int /*engine_channel*/,
+                                                            int /*track_channel*/,
+                                                            const std::string& /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_input_bus(int /*engine_bus_id */,
-                                                       int /*track_bus_id*/,
-                                                       const std::string & /*track_id*/)
+    virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
+                                                       int /*track_bus*/,
+                                                       const std::string & /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus connect_audio_output_bus(int /*engine_bus_id */,
-                                                        int /*track_bus_id*/,
-                                                        const std::string & /*track_id*/)
+    virtual EngineReturnStatus connect_audio_output_bus(int /*output_bus*/,
+                                                        int /*track_bus*/,
+                                                        const std::string & /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -221,6 +226,30 @@ public:
      * @param sample_rate The new sample rate in Hz
      */
     void set_sample_rate(float sample_rate) override;
+
+    /**
+     * @brief Connect an engine input channel to an input channel of a given track.
+     *        Not safe to call while the engine is running.
+     * @param input_channel Index of the engine input channel to connect.
+     * @param track_channel Index of the input channel of the track to connect to.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    virtual EngineReturnStatus connect_audio_input_channel(int input_channel,
+                                                           int track_channel,
+                                                           const std::string& track_name) override;
+
+    /**
+     * @brief Connect an output channel of a track to an engine output channel.
+     *        Not safe to call while the engine is running.
+     * @param output_channel Index of the engine output channel to connect to.
+     * @param track_channel Index of the output channel of the track to connect from.
+     * @param track_name The unique name of the track.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    virtual EngineReturnStatus connect_audio_output_channel(int output_channel,
+                                                            int track_channel,
+                                                            const std::string& track_name) override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -458,8 +487,8 @@ private:
 
     struct Connection
     {
-        int engine_bus;
-        int track_bus;
+        int engine_channel;
+        int track_channel;
         ObjectId track;
     };
 
@@ -472,8 +501,8 @@ private:
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
 
-    std::vector<Connection> _in_bus_connections;
-    std::vector<Connection> _out_bus_connections;
+    std::vector<Connection> _in_audio_connections;
+    std::vector<Connection> _out_audio_connections;
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 

@@ -237,17 +237,32 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
 
     for(const auto& con : track_def["inputs"].GetArray())
     {
-        status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        }
+        else
+        {
+            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+        }
         if(status != EngineReturnStatus::OK)
         {
             MIND_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
-            return JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS;
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
 
     for(const auto& con : track_def["outputs"].GetArray())
     {
-        status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        }
+        else
+        {
+            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+
+        }
         if(status != EngineReturnStatus::OK)
         {
             MIND_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
