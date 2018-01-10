@@ -14,6 +14,8 @@
 #ifndef SUSHI_OSC_FRONTEND_H_H
 #define SUSHI_OSC_FRONTEND_H_H
 
+#include <map>
+
 #include "lo/lo.h"
 
 #include "base_control_frontend.h"
@@ -23,6 +25,8 @@ namespace sushi {
 namespace control_frontend {
 
 constexpr int DEFAULT_SERVER_PORT = 24024;
+constexpr int DEFAULT_SEND_PORT = 24025;
+
 
 class OSCFrontend;
 struct OscConnection
@@ -52,6 +56,17 @@ public:
 
     bool connect_to_string_parameter(const std::string &processor_name,
                                      const std::string &parameter_name);
+
+    /**
+     * @brief Output changes from the given parameter of the given
+     *        processor to osc messages. The output will be on the form:
+     *        "/parameter/processor_name/parameter_name,f(value)"
+     * @param processor_name
+     * @param parameter_name
+     * @return
+     */
+    bool connect_from_parameter(const std::string &processor_name,
+                                const std::string &parameter_name);
     /**
      * @brief Connect keyboard messages to a given track.
      *        The target osc path will be:
@@ -89,10 +104,14 @@ private:
 
     lo_server_thread _osc_server;
     int _server_port;
+    int _send_port;
+    lo_address _osc_out_address;
+
     std::atomic_bool _running;
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
+    std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 
 std::string spaces_to_underscore(const std::string &s);

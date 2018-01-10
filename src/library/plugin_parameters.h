@@ -12,6 +12,7 @@
 #include <memory>
 #include <cmath>
 #include <string>
+#include <cassert>
 
 #include "library/constants.h"
 #include "library/id_generator.h"
