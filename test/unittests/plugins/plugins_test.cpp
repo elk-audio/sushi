@@ -8,6 +8,7 @@
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
+#include "plugins/peak_meter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 #include "library/internal_plugin.cpp"
 
@@ -178,4 +179,32 @@ TEST_F(TestEqualizerPlugin, TestProcess)
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
+}
+
+
+class TestPeakMeterPlugin : public ::testing::Test
+{
+protected:
+    TestPeakMeterPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new peak_meter_plugin::PeakMeterPlugin();
+        ProcessorReturnCode status = _module_under_test->init(48000);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    peak_meter_plugin::PeakMeterPlugin* _module_under_test;
+};
+
+TEST_F(TestPeakMeterPlugin, TestInstantiation)
+{
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Peak Meter", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.peakmeter", _module_under_test->name());
 }

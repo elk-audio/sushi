@@ -221,6 +221,19 @@ public:
     }
 };
 
+/**
+ * @brief Preprocessor example to map from linear gain to decibels.
+ */
+class LinTodBPreProcessor : public FloatParameterPreProcessor
+{
+public:
+    LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+    float process(float raw_value) override
+    {
+        return 20.0f * log10(this->clip(raw_value));
+    }
+};
+
 template<typename T, ParameterType enumerated_type>
 class ParameterValue
 {
