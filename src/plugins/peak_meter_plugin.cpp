@@ -10,7 +10,7 @@ constexpr int MAX_CHANNELS = 16;
 /* Number of updates per second */
 constexpr float REFRESH_RATE = 25;
 /* Tweaked by eyeballing mostly */
-constexpr float SMOOTHING_FACTOR = 35;
+constexpr float SMOOTHING_FACTOR = 38;
 /* Represents -120dB */
 constexpr float OUTPUT_MIN = 0.000001f;
 static const std::string DEFAULT_NAME = "sushi.testing.peakmeter";
@@ -33,13 +33,12 @@ void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
 {
     bypass_process(in_buffer, out_buffer);
 
-    for (int ch = 0; ch < std::min(2, in_buffer.channel_count()); ++ch)
+    for (int ch = 0; ch < std::min(MAX_METERED_CHANNELS, in_buffer.channel_count()); ++ch)
     {
         float max = 0.0f;
         for (int i{0}; i < AUDIO_CHUNK_SIZE; ++i)
         {
-            float sample = in_buffer.channel(ch)[i];
-            max = std::max(max, sample * sample);
+            max = std::max(max, std::abs(in_buffer.channel(ch)[i]));
         }
         _smoothed[ch] = _smoothing_coef * max + (1.0f - _smoothing_coef) * _smoothed[ch];
     }

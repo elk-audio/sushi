@@ -264,8 +264,8 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     {
         return false;
     }
-    std::string id_string = "/parameter/" + spaces_to_underscore(parameter_name) + "/" +
-            spaces_to_underscore(processor_name);
+    std::string id_string = "/parameter/" + spaces_to_underscore(processor_name) + "/" +
+            spaces_to_underscore(parameter_name);
     _outgoing_connections[processor_id][parameter_id] = id_string;
     MIND_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
     return true;

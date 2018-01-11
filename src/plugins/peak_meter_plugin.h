@@ -10,6 +10,8 @@
 namespace sushi {
 namespace peak_meter_plugin {
 
+constexpr int MAX_METERED_CHANNELS = 2;
+
 class PeakMeterPlugin : public InternalPlugin
 {
 public:
@@ -31,7 +33,7 @@ private:
     int _refresh_interval;
     int _sample_count{0};
     float _smoothing_coef{0.0f};
-    std::array<float, 2> _smoothed{0.0f, 0.0f};
+    std::array<float, MAX_METERED_CHANNELS> _smoothed{0.0f, 0.0f};
 };
 
 }// namespace peak_meter_plugin
