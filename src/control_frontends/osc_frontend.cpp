@@ -353,9 +353,9 @@ void OSCFrontend::setup_engine_control()
 
 int OSCFrontend::process(Event* event)
 {
-    if (event->is_parameter_change_event())
+    if (event->is_parameter_change_notification())
     {
-        auto typed_event = static_cast<ParameterChangeEvent*>(event);
+        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
         const auto& node = _outgoing_connections.find(typed_event->processor_id());
         if (node != _outgoing_connections.end())
         {

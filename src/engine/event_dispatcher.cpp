@@ -90,6 +90,11 @@ int EventDispatcher::process(Event* event)
         _out_rt_queue->push(event->to_rt_event(sample_offset));
         return EventStatus::HANDLED_OK;
     }
+    if (event->is_parameter_change_notification())
+    {
+        _publish_parameter_events(event);
+        return EventStatus::HANDLED_OK;
+    }
     return EventStatus::UNRECOGNIZED_EVENT;
 }
 
