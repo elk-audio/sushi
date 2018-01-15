@@ -52,6 +52,8 @@ public:
 
     void send_note_off_event(ObjectId processor, int note, float value);
 
+    void send_program_change_event(ObjectId processor, int program);
+
     void send_add_track_event(const std::string &name, int channels);
 
     void send_remove_track_event(const std::string &name);

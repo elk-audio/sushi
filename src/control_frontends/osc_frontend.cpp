@@ -73,6 +73,10 @@ static int osc_send_keyboard_event(const char* /*path*/,
     {
         connection->instance->send_note_off_event(connection->processor, note, value);
     }
+    else if (event == "program_change")
+    {
+        connection->instance->send_program_change_event(connection->processor, note);
+    }
     else
     {
         MIND_LOG_WARNING("Unrecognized event: {}.", event);

@@ -51,6 +51,14 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, floa
     send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, note, velocity);
 }
 
+void BaseControlFrontend::send_program_change_event(ObjectId processor, int program)
+{
+    MidiDataByte midi_msg = {192u, static_cast<uint8_t>(program), 0, 0};
+    int64_t timestamp = 0;
+    auto e = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, processor, midi_msg, timestamp);
+    _event_dispatcher->post_event(e);
+}
+
 void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
 {
     int64_t timestamp = 0;
