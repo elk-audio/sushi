@@ -251,7 +251,7 @@ int main(int argc, char* argv[])
         std::cerr << "Error initializing frontend, check logs for details." << std::endl;
         std::exit(1);
     }
-    if (!use_jack)
+    if (!use_jack && !use_xenomai_raspa)
     {
         rapidjson::Document config;
         status = configurator.parse_events_from_file(config_filename, config);

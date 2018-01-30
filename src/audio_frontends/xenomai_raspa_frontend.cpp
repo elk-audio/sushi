@@ -30,6 +30,15 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return ret_code;
     }
 
+    // Control
+    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
+    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
+    auto midi_ok = _midi_frontend->init();
+    if (!midi_ok)
+    {
+        return AudioFrontendStatus::MIDI_PORT_ERROR;
+    }
+
     // RASPA
     if (RASPA_N_FRAMES_PER_BUFFER != AUDIO_CHUNK_SIZE)
     {
@@ -56,14 +65,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    // Control
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
-    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        return AudioFrontendStatus::MIDI_PORT_ERROR;
-    }
     return AudioFrontendStatus::OK;
 }
 
