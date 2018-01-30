@@ -68,6 +68,9 @@ public:
     /* Convertible to ParameterChangeEvent */
     virtual bool is_parameter_change_event() {return false;}
 
+    /* Convertible to ParameterChangeNotification */
+    virtual bool is_parameter_change_notification() {return false;}
+
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() {return false;}
 
@@ -205,8 +208,9 @@ public:
     int                 int_value() {return static_cast<int>(_value);}
     bool                bool_value() {return _value > 0.5f;}
 
-protected:
+private:
     Subtype             _subtype;
+protected:
     ObjectId            _processor_id;
     ObjectId            _parameter_id;
     float               _value;
@@ -254,37 +258,39 @@ protected:
     BlobData _blob_value;
 };
 
-// TODO - Maybe notifications are just ParameterChangeEvents
-/*class ParameterChangeNotificationEvent : public ProcessorEvent
+// Inheriting from ParameterChangeEvent because they share the same data members but have
+// different behaviour
+class ParameterChangeNotificationEvent : public ParameterChangeEvent
 {
 public:
     enum class Subtype
     {
         BOOL_PARAMETER_CHANGE_NOT,
         INT_PARAMETER_CHANGE_NOT,
-        FLOAT_PARAMETER_CHANGE_NOT,
-        STRING_PARAMETER_CHANGE_NOT,
-        BLOB_PARAMETER_CHANGE_NOT
+        FLOAT_PARAMETER_CHANGE_NOT
     };
     ParameterChangeNotificationEvent(Subtype subtype,
-                                     const std::string& processor,
-                                     const std::string& parameter,
+                                     ObjectId processor_id,
+                                     ObjectId parameter_id,
                                      float value,
-                                     Time timestamp) : ProcessorEvent(EventType::PARAMETER_CHANGE_NOTIFICATION, timestamp, processor),
-                                                       _subtype(subtype),
-                                                       _parameter(parameter),
-                                                       _value(value) {}
-    Subtype             subtype() {return _subtype;}
-    const std::string&  parameter() {return _parameter;}
-    float               float_value() {return _value;}
-    int                 int_value() {return static_cast<int>(_value);}
-    bool                bool_value() {return _value > 0.5f;}
+                                     Time timestamp) : ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                                            processor_id,
+                                                                            parameter_id,
+                                                                            value,
+                                                                            timestamp),
+                                                       _subtype(subtype) {}
 
-protected:
+    virtual bool is_parameter_change_notification() override {return true;}
+
+    virtual bool is_parameter_change_event() override {return false;}
+
+    virtual bool maps_to_rt_event() override {return false;}
+
+    Subtype             subtype() {return _subtype;}
+
+private:
     Subtype     _subtype;
-    std::string _parameter;
-    float       _value;
-};*/
+};
 
 // TODO how to handle strings and blobs here?
 

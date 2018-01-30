@@ -188,10 +188,10 @@ TEST(EventTest, TestFromRtEvent)
     auto param_ch_event = RtEvent::make_parameter_change_event(9, 0, 50, 0.1f);
     event = Event::from_rt_event(param_ch_event, PROCESS_NOW);
     ASSERT_TRUE(event != nullptr);
-    EXPECT_TRUE(event->is_parameter_change_event());
+    EXPECT_TRUE(event->is_parameter_change_notification());
     EXPECT_EQ(PROCESS_NOW, event->time());
-    auto pc_event = static_cast<ParameterChangeEvent*>(event);
-    EXPECT_EQ(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, pc_event->subtype());
+    auto pc_event = static_cast<ParameterChangeNotificationEvent*>(event);
+    EXPECT_EQ(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT, pc_event->subtype());
     EXPECT_EQ(9u, pc_event->processor_id());
     EXPECT_EQ(50u, pc_event->parameter_id());
     EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());

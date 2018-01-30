@@ -88,10 +88,10 @@ int EventDispatcher::process(Event* event)
         _out_rt_queue->push(event->to_rt_event(sample_offset));
         return EventStatus::HANDLED_OK;
     }
-    if (event->is_engine_event())
+    if (event->is_parameter_change_notification())
     {
-        auto typed_event = static_cast<EngineEvent*>(event);
-        return typed_event->execute(_engine);
+        _publish_parameter_events(event);
+        return EventStatus::HANDLED_OK;
     }
     return EventStatus::UNRECOGNIZED_EVENT;
 }
@@ -150,7 +150,7 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     {
         _publish_keyboard_events(event);
     }
-    if (event->is_parameter_change_event())
+    if (event->is_parameter_change_notification())
     {
         _publish_parameter_events(event);
     }
