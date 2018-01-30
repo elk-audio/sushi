@@ -38,6 +38,8 @@ public:
 
     virtual ~InternalPlugin() {};
 
+    void process_event(RtEvent event) override;
+
     /**
      * @brief Register a float typed parameter and return a pointer to a value
      *        storage object that will hold the value and set automaticaly when
@@ -78,7 +80,7 @@ public:
 
     /**
      * @brief Register a bool typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -108,8 +110,30 @@ public:
     bool register_data_property(const std::string& name,
                                 const std::string& label);
 
+protected:
+    /**
+     * @brief Update the value of a parameter and send an event notifying
+     *        the host of the change.
+     * @param storage The ParameterValue to update
+     * @param new_value The new value to use
+     */
+    void set_float_parameter_value_asynchronously(FloatParameterValue* storage, float new_value);
 
-    void process_event(RtEvent event) override;
+    /**
+     * @brief Update the value of a parameter and send an event notifying
+     *        the host of the change.
+     * @param storage The ParameterValue to update
+     * @param new_value The new value to use
+     */
+    void set_int_parameter_value_asynchronously(IntParameterValue* storage, int new_value);
+
+    /**
+     * @brief Update the value of a parameter and send an event notifying
+     *        the host of the change.
+     * @param storage The ParameterValue to update
+     * @param new_value The new value to use
+     */
+    void set_bool_parameter_value_asynchronously(BoolParameterValue* storage, bool new_value);
 
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property
