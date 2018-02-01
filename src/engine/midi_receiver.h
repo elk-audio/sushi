@@ -6,7 +6,7 @@
 #ifndef SUSHI_MIDI_RECEIVER_H
 #define SUSHI_MIDI_RECEIVER_H
 
-#include "library/types.h"
+#include "library/time.h"
 
 namespace sushi {
 namespace midi_receiver {

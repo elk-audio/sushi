@@ -139,7 +139,7 @@ void EventDispatcher::_event_loop()
 int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 {
     // TODO - handle translation from real time to sample offset.
-    Time timestamp = PROCESS_NOW;
+    Time timestamp = IMMEDIATE_PROCESS;
     Event* event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
     {

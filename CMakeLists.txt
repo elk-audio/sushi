@@ -155,6 +155,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
                         src/library/synchronised_fifo.h
+                        src/library/time.h
                         src/library/vst2x_wrapper.h
                         src/library/vst2x_midi_event_fifo.h
                         src/library/vst2x_host_callback.h

@@ -20,6 +20,7 @@
 #include "track.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
+#include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
 #include "library/internal_plugin.h"

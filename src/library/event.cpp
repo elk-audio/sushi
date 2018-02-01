@@ -262,7 +262,7 @@ int RemoveProcessorEvent::execute(engine::BaseEngine*engine)
 Event* AsynchronousProcessorWorkEvent::execute()
 {
     int status = _work_callback(_data, _rt_event_id);
-    return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, PROCESS_NOW);
+    return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
 }
 
 RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/)

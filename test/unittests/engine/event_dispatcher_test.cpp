@@ -99,7 +99,7 @@ TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
 {
     _module_under_test->register_poster(&_poster);
     _module_under_test->run();
-    auto event = new Event(PROCESS_NOW);
+    auto event = new Event(IMMEDIATE_PROCESS);
     event->set_receiver(DUMMY_POSTER_ID);
     _module_under_test->post_event(event);
     std::this_thread::sleep_for(EVENT_PROCESS_WAIT_TIME);
@@ -167,7 +167,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
     _module_under_test->register_poster(&_poster);
-    auto event = new Event(PROCESS_NOW);
+    auto event = new Event(IMMEDIATE_PROCESS);
     event->set_receiver(DUMMY_POSTER_ID);
     event->set_completion_cb(dummy_callback, nullptr);
     completed = false;
@@ -237,7 +237,7 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
 {
     completed = false;
     completion_status = 0;
-    auto event = new RemoveProcessorEvent("plugin", "track", PROCESS_NOW);
+    auto event = new RemoveProcessorEvent("plugin", "track", IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
     auto status = _module_under_test->process(event);
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);

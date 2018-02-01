@@ -12,6 +12,7 @@
 #include "types.h"
 #include "id_generator.h"
 #include "library/rt_event.h"
+#include "library/time.h"
 
 namespace sushi {
 namespace dispatcher {class EventDispatcher;};

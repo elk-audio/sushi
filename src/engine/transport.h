@@ -1,15 +1,12 @@
 /**
- * @Brief Handles time and tempo inside the engine
+ * @Brief Handles time, tempo and start/stop inside the engine
  * @copyright MIND Music Labs AB, Stockholm
- *
- *
  */
-
 
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
-#include "library/types.h"
+#include "library/time.h"
 
 namespace sushi {
 namespace engine {
