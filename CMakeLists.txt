@@ -108,6 +108,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/midi_dispatcher.cpp
                       src/engine/json_configurator.cpp
                       src/engine/receiver.cpp
+                      src/engine/event_timer.cpp
                       src/library/event.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
@@ -142,7 +143,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
-                        src/engine/receiver.h
                         src/library/event.h
                         src/library/event_interface.h
                         src/library/sample_buffer.h
@@ -163,7 +163,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst3x_wrapper.h
                         src/engine/engine.h
                         src/engine/track.h
+                        src/engine/receiver.h
                         src/engine/midi_dispatcher.h
+                        src/engine/event_dispatcher.h
+                        src/engine/event_timer.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h
                         src/plugins/arpeggiator_plugin.h

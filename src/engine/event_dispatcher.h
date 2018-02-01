@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "logging.h"
+#include "engine/event_timer.h"
 #include "library/rt_event.h"
 #include "library/synchronised_fifo.h"
 #include "library/event.h"
