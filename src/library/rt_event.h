@@ -12,6 +12,7 @@
 
 #include "id_generator.h"
 #include "library/types.h"
+#include "library/time.h"
 
 namespace sushi {
 
@@ -56,7 +57,9 @@ enum class RtEventType
     /* Delete object event */
     STRING_DELETE,
     BLOB_DELETE,
-    VOID_DELETE
+    VOID_DELETE,
+    /* Synchronisation events */
+    SYNC
 };
 
 class BaseRtEvent
@@ -335,6 +338,21 @@ public:
 private:
     uint16_t  _event_id;
 };
+
+/**
+ * @brief Class for string parameter changes
+ */
+class SynchronisationRtEvent : public BaseRtEvent
+{
+public:
+    SynchronisationRtEvent(Time timestamp) : BaseRtEvent(RtEventType::SYNC, 0, 0),
+                                             _timestamp(timestamp) {}
+
+    Time timestamp() const {return _timestamp;}
+
+protected:
+    Time _timestamp;
+};
 /**
  * @brief Container class for rt events. Functionally this take the role of a
  *        baseclass for events, from which you can access the derived event
@@ -439,6 +457,12 @@ public:
                _processor_reorder_event.type() == RtEventType::VOID_DELETE );
         return &_data_payload_event;
 
+    }
+
+    SynchronisationRtEvent* syncronisation_event()
+    {
+        assert(_processor_reorder_event.type() == RtEventType::SYNC);
+        return &_synchronisation_event;
     }
 
     /* Factory functions for constructing events */
@@ -586,6 +610,12 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_synchronisation_event(Time timestamp)
+    {
+        SynchronisationRtEvent typed_event(timestamp);
+        return typed_event;
+    }
+
 
 private:
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
@@ -601,6 +631,7 @@ private:
     RtEvent(const AsyncWorkRtEvent& e) : _async_work_event(e) {}
     RtEvent(const AsyncWorkRtCompletionEvent& e) : _async_work_completion_event(e) {}
     RtEvent(const DataPayloadRtEvent& e) : _data_payload_event(e) {}
+    RtEvent(const SynchronisationRtEvent& e) : _synchronisation_event(e) {}
     union
     {
         BaseRtEvent                   _base_event;
@@ -617,6 +648,7 @@ private:
         AsyncWorkRtEvent              _async_work_event;
         AsyncWorkRtCompletionEvent    _async_work_completion_event;
         DataPayloadRtEvent            _data_payload_event;
+        SynchronisationRtEvent        _synchronisation_event;
     };
 };
 

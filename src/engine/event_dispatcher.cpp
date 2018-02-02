@@ -14,7 +14,8 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                               _engine{engine},
                                                               _in_rt_queue{in_rt_queue},
                                                               _out_rt_queue{out_rt_queue},
-                                                              _worker{engine, this}
+                                                              _worker{engine, this},
+                                                              _event_timer{engine->sample_rate()}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
@@ -82,11 +83,18 @@ int EventDispatcher::process(Event* event)
     }
     if (event->maps_to_rt_event())
     {
-        // TODO - handle translation from real time to sample offset.
-        int sample_offset = 0;
-        // TODO - handle case when queue is full.
-        _out_rt_queue->push(event->to_rt_event(sample_offset));
-        return EventStatus::HANDLED_OK;
+        bool send_now;
+        int sample_offset;
+        std::tie(send_now, sample_offset) = _event_timer.sample_offset_from_realtime(event->time());
+        if (send_now)
+        {
+            if (_out_rt_queue->push(event->to_rt_event(sample_offset)))
+            {
+                return EventStatus::HANDLED_OK;
+            }
+        }
+        _waiting_list.push_front(event);
+        return EventStatus::QUEUED_HANDLING;
     }
     if (event->is_parameter_change_notification())
     {
@@ -101,10 +109,28 @@ void EventDispatcher::_event_loop()
     do
     {
         auto start_time = std::chrono::system_clock::now();
+        bool has_events = true;
+        bool old_events = true;
+        Event* event;
+
         /* Handle incoming Events */
-        while (!_in_queue.empty())
+        while (has_events)
         {
-            Event* event = _in_queue.pop();
+            if (old_events && !_waiting_list.empty())
+            {
+                event = _waiting_list.back();
+                _waiting_list.pop_back();
+            }
+            else if (!_in_queue.empty())
+            {
+                event = _in_queue.pop();
+                old_events = false;
+            }
+            else
+            {
+                has_events = false;
+                continue;
+            }
 
             assert(event->receiver() < static_cast<int>(_posters.size()));
             EventPoster* receiver = _posters[event->receiver()];
@@ -138,13 +164,21 @@ void EventDispatcher::_event_loop()
 
 int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 {
-    // TODO - handle translation from real time to sample offset.
-    Time timestamp = IMMEDIATE_PROCESS;
+    Time timestamp = _event_timer.real_time_from_sample_offset(rt_event.sample_offset());
     Event* event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
     {
-        /* Currently there are no RtEvents that need special handling */
-        return EventStatus::UNRECOGNIZED_EVENT;
+        switch (rt_event.type())
+        {
+            case RtEventType::SYNC:
+            {
+                auto typed_event = rt_event.syncronisation_event();
+                _event_timer.set_outgoing_time(typed_event->timestamp());
+                return EventStatus::HANDLED_OK;
+            }
+            default:
+                return EventStatus::UNRECOGNIZED_EVENT;
+        }
     }
     if (event->is_keyboard_event())
     {
@@ -269,7 +303,7 @@ void Worker::_worker()
             }
             delete (event);
         }
-        std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODOCITY);
+        std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);
     }
     while (_running);
 }

@@ -5,7 +5,6 @@
 #include "library/constants.h"
 
 namespace sushi {
-namespace engine {
 namespace event_timer {
 
 using namespace std::chrono_literals;
@@ -16,7 +15,7 @@ inline Time calc_chunk_time(float samplerate)
      return std::chrono::microseconds(static_cast<int64_t>(std::round(MICROSECONDS / samplerate * AUDIO_CHUNK_SIZE)));
 }
 
-EventTimer::EventTimer(float default_sample_rate) : _samplerate{default_sample_rate},
+EventTimer::EventTimer(float default_sample_rate) : _sample_rate{default_sample_rate},
                                                     _chunk_time{calc_chunk_time(default_sample_rate)}
 {}
 
@@ -34,20 +33,16 @@ std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
     }
 }
 
-
 Time EventTimer::real_time_from_sample_offset(int offset)
 {
     return _outgoing_chunk_time + offset * _chunk_time / AUDIO_CHUNK_SIZE;
 }
 
-void EventTimer::set_samplerate(float samplerate)
+void EventTimer::set_sample_rate(float sample_rate)
 {
-    _samplerate = samplerate;
-    _chunk_time = calc_chunk_time(samplerate);
+    _sample_rate = sample_rate;
+    _chunk_time = calc_chunk_time(sample_rate);
 }
 
-
-
 } // end event_timer
-} // end engine
 } // end sushi

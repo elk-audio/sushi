@@ -23,8 +23,8 @@ public:
         _sample_count = samples;
     }
 
-    Time current_time() const;
-    int64_t current_samples() const;
+    Time current_time() const {return _time;}
+    int64_t current_samples() const {return _sample_count;}
 
 private:
     int64_t _sample_count{0};

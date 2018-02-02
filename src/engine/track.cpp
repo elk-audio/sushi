@@ -70,7 +70,8 @@ void Track::render()
     process_audio(_input_buffer, _output_buffer);
     for (int bus = 0; bus < _output_busses; ++bus)
     {
-        apply_pan_and_gain(_output_buffer, _gain_parameters[bus]->value(), _pan_parameters[bus]->value());
+        auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
+        apply_pan_and_gain(buffer, _gain_parameters[bus]->value(), _pan_parameters[bus]->value());
     }
 }
 
@@ -95,10 +96,17 @@ void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
         processor->process_audio(proc_in, proc_out);
         std::swap(aliased_in, aliased_out);
     }
+    // TODO - This is a hack, fix the SampleBuffer so that the channels doesn't change
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
-    ChunkSampleBuffer output = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, output_channels);
-    out = output;
-
+    if (output_channels > 0)
+    {
+        ChunkSampleBuffer output = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, output_channels);
+        out = output;
+    }
+    else
+    {
+        out.clear();
+    }
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
 }

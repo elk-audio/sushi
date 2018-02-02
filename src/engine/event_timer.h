@@ -13,13 +13,15 @@
 #include "library/time.h"
 
 namespace sushi {
-namespace engine {
 namespace event_timer {
 
 class EventTimer
 {
 public:
     explicit EventTimer(float default_sample_rate);
+
+    ~EventTimer() = default;
+
     /**
      * @brief Convert a timestamp to a sample offset within the next chunk
      * @param timestamp A real time timestamp
@@ -39,9 +41,9 @@ public:
 
     /**
      * @brief Set the samplerate of the converter.
-     * @param samplerate Samplerate in Hz
+     * @param sample_rate Samplerate in Hz
      */
-    void set_samplerate(float samplerate);
+    void set_sample_rate(float sample_rate);
 
     /**
      * @brief Called from the rt part when all rt events have been processed, essentially
@@ -58,18 +60,15 @@ public:
     void set_outgoing_time(Time timestamp) {_outgoing_chunk_time = timestamp + _chunk_time;}
 
 private:
-    float _samplerate;
-    Time _chunk_time;
-    /* Start time of last chunk coming from the rt part */
-    Time _outgoing_chunk_time{IMMEDIATE_PROCESS};
-    /* Start time of chunk about to be processed by the rt part */
-    std::atomic<Time> _incoming_chunk_time{IMMEDIATE_PROCESS};
+    float               _sample_rate;
+    Time                _chunk_time;
+    Time                _outgoing_chunk_time{IMMEDIATE_PROCESS};
+    std::atomic<Time>   _incoming_chunk_time{IMMEDIATE_PROCESS};
 };
 
 static_assert(std::atomic<Time>::is_always_lock_free);
 
 } // end event_timer
-} // end engine
 } // end sushi
 
 
