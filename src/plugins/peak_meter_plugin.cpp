@@ -9,8 +9,8 @@ namespace peak_meter_plugin {
 constexpr int MAX_CHANNELS = 16;
 /* Number of updates per second */
 constexpr float REFRESH_RATE = 25;
-/* Tweaked by eyeballing mostly */
-constexpr float SMOOTHING_FACTOR = 38;
+/* fc in Hz, Tweaked by eyeballing mostly */
+constexpr float SMOOTHING_CUTOFF = 2.3;
 /* Represents -120dB */
 constexpr float OUTPUT_MIN = 0.000001f;
 static const std::string DEFAULT_NAME = "sushi.testing.peakmeter";
@@ -40,7 +40,7 @@ void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
         {
             max = std::max(max, std::abs(in_buffer.channel(ch)[i]));
         }
-        _smoothed[ch] = _smoothing_coef * max + (1.0f - _smoothing_coef) * _smoothed[ch];
+        _smoothed[ch] = _smoothing_coef * _smoothed[ch] + (1.0f - _smoothing_coef) * max;
     }
 
     _sample_count += AUDIO_CHUNK_SIZE;
@@ -66,7 +66,7 @@ void PeakMeterPlugin::configure(float sample_rate)
 void PeakMeterPlugin::_update_refresh_interval(float sample_rate)
 {
     _refresh_interval = static_cast<int>(std::round(sample_rate / REFRESH_RATE));
-    _smoothing_coef = std::exp(-2 * M_PI * SMOOTHING_FACTOR / AUDIO_CHUNK_SIZE);
+    _smoothing_coef = std::exp(-2.0f * M_PI * SMOOTHING_CUTOFF * AUDIO_CHUNK_SIZE/ sample_rate);
 }
 
 

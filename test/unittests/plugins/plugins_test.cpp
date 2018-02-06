@@ -232,5 +232,5 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
     /*  The value should approach 0 dB eventually, but test that it is reasonably close */
-    EXPECT_GT(event.parameter_change_event()->value(), -6.0f);
+    EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
 }
