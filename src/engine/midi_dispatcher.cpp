@@ -408,7 +408,8 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::WRAPPED_MIDI:
                         midi_data = typed_event->midi_data();
                 }
-                MIND_LOG_INFO("Alsa midi: Dispatching midi [{:x} {:x} {:x} {:x}]", midi_data[0], midi_data[1], midi_data[2], midi_data[3]);
+                MIND_LOG_INFO("Alsa midi: Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
+                              midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
                 _frontend->send_midi(c.output, midi_data.data(), event->time());
             }
         }
