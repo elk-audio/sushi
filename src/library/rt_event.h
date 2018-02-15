@@ -339,9 +339,6 @@ private:
     uint16_t  _event_id;
 };
 
-/**
- * @brief Class for string parameter changes
- */
 class SynchronisationRtEvent : public BaseRtEvent
 {
 public:

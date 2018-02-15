@@ -640,8 +640,7 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     return true;
 }
 
-
-    RealtimeState update_state(RealtimeState current_state)
+RealtimeState update_state(RealtimeState current_state)
 {
     if (current_state == RealtimeState::STARTING)
     {

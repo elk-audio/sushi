@@ -109,29 +109,10 @@ void EventDispatcher::_event_loop()
     do
     {
         auto start_time = std::chrono::system_clock::now();
-        bool has_events = true;
-        bool old_events = true;
-        Event* event;
 
         /* Handle incoming Events */
-        while (has_events)
+        while (Event* event = _next_event())
         {
-            if (old_events && !_waiting_list.empty())
-            {
-                event = _waiting_list.back();
-                _waiting_list.pop_back();
-            }
-            else if (!_in_queue.empty())
-            {
-                event = _in_queue.pop();
-                old_events = false;
-            }
-            else
-            {
-                has_events = false;
-                continue;
-            }
-
             assert(event->receiver() < static_cast<int>(_posters.size()));
             EventPoster* receiver = _posters[event->receiver()];
             int status = EventStatus::UNRECOGNIZED_RECEIVER;
@@ -197,6 +178,20 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     return EventStatus::HANDLED_OK;
 }
 
+Event*EventDispatcher::_next_event()
+{
+    Event* event = nullptr;
+    if (!_waiting_list.empty())
+    {
+        event = _waiting_list.back();
+        _waiting_list.pop_back();
+    }
+    else if (!_in_queue.empty())
+    {
+        event = _in_queue.pop();
+    }
+    return event;
+}
 
 void EventDispatcher::_publish_keyboard_events(Event* event)
 {
@@ -248,8 +243,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
             return EventDispatcherStatus::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;}
-
+    return EventDispatcherStatus::UNKNOWN_POSTER;
+}
 
 void Worker::run()
 {

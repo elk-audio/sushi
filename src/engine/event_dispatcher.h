@@ -121,6 +121,8 @@ private:
 
     int _process_rt_event(RtEvent& rt_event);
 
+    Event* _next_event();
+
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
 

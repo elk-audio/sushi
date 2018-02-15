@@ -9,7 +9,7 @@ namespace midi_dispatcher {
 MIND_GET_LOGGER;
 
 inline Event* make_note_on_event(const InputConnection &c,
-                                const midi::NoteOnMessage &msg,
+                                 const midi::NoteOnMessage &msg,
                                  Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
