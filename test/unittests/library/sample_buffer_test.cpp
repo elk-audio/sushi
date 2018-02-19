@@ -82,7 +82,7 @@ TEST(TestSampleBuffer, TestNonOwningBuffer)
         non_owning_buffer = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(test_buffer, 2, 2);
         test_utils::assert_buffer_value(4.0f, non_owning_buffer);
         // Excercise assignment and move contructors
-        SampleBuffer<AUDIO_CHUNK_SIZE> new_buffer;
+        SampleBuffer<AUDIO_CHUNK_SIZE> new_buffer(2);
         SampleBuffer<AUDIO_CHUNK_SIZE> new_buffer_2;
         new_buffer = non_owning_buffer;
         new_buffer_2 = std::move(non_owning_buffer);
@@ -230,6 +230,9 @@ TEST(TestSampleBuffer,TestReplace)
         ASSERT_FLOAT_EQ(2.0f, buffer_1.channel(0)[n]);
         ASSERT_FLOAT_EQ(1.0f, buffer_1.channel(1)[n]);
     }
+    // copy all channels of buffer 2 to buffer 1
+    buffer_1.replace(buffer_2);
+    test_utils::assert_buffer_value(2.0f, buffer_1);
 }
 
 TEST (TestSampleBuffer, TestAdd)

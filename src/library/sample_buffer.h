@@ -89,7 +89,7 @@ public:
     {
         if (this != &o)  // Avoid self-assignment
         {
-            if (_own_buffer)
+            if (_own_buffer && o._own_buffer)
             {
                 if (_channel_count != o._channel_count)
                 {
@@ -100,13 +100,17 @@ public:
             }
             else
             {
-                /* TODO - Consider what should happen if you assign to a non-owning
-                 * buffer with a buffer with different number of channels.
-                 * Currently we disallow this by an assert.
-                 * Perhaps this scenario should trigger a re-allocation of the buffer,
-                 * memory that the SampleBuffer then takes ownership of. But that
-                 * solution also loses the connection to the buffer originally
-                 * owning the data buffer. */
+                /* Assigning to or from a non owning buffer is only allowed if their
+                 * channel count matches. In that case the underlying sample data is
+                 * copied.
+                 * If their sample counts differs this might trigger a (re)allocation
+                 * of the internal data buffer, This would need to be resolved by
+                 * either forcing the SampleBuffer owning the data to change its
+                 * channel count or turn the non-owning SampleBuffer into a normal
+                 * SampleBuffer that owns its data buffer, and hence losing the
+                 * connection to the SampleBuffer that originally owned the data.
+                 * Both of which will have unexpected, and most likely unwanted, side
+                 * effects. */
                 assert(_channel_count == o._channel_count);
             }
             std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
@@ -315,9 +319,31 @@ public:
     }
 
     /**
+     * @brief Replace the contents of the buffer with that of another buffer
+     * @param source SampleBuffer with either 1 channel or the same number of
+     *               channels as the destination buffer
+     */
+    void replace(const SampleBuffer &source)
+    {
+        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+
+        if (source.channel_count() == 1) // mono input, copy to all dest channels
+        {
+            for (int channel = 0; channel < _channel_count; ++channel)
+            {
+                std::copy(source._buffer, source._buffer + size, _buffer + channel * size);
+            }
+        }
+        else
+        {
+            std::copy(source._buffer, source._buffer + _channel_count * size, _buffer);
+        }
+    }
+
+    /**
      * @brief Copy data channel by channel into this buffer from source buffer. No bounds checking.
      */
-    void replace(int dest_channel, int source_channel, SampleBuffer &source)
+    void replace(int dest_channel, int source_channel, const SampleBuffer &source)
     {
         std::copy(source.channel(source_channel),
                   source.channel(source_channel) + size,
@@ -326,9 +352,8 @@ public:
 
     /**
      * @brief Sums the content of source into this buffer.
-     *
-     * source has to be either a 1 channel buffer or have the same number of channels
-     * as the destination buffer.
+     * @param source SampleBuffer with either 1 channel or the same number of
+     *               channels as the destination buffer
      */
     void add(const SampleBuffer &source)
     {
