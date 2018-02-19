@@ -148,7 +148,7 @@ public:
      *                           minus start_channel.
      * @return The created, non-owning SampleBuffer.
      */
-    static SampleBuffer create_non_owning_buffer(const SampleBuffer& source,
+    static SampleBuffer create_non_owning_buffer(SampleBuffer& source,
                                                  int start_channel,
                                                  int number_of_channels)
     {
@@ -164,10 +164,11 @@ public:
     /**
      * @brief Defaulted version of the above function.
      */
-    static SampleBuffer create_non_owning_buffer(const SampleBuffer& source)
+    static SampleBuffer create_non_owning_buffer(SampleBuffer& source)
     {
         return create_non_owning_buffer(source, 0, source.channel_count());
     }
+
 
     /**
      * @brief Create a Samplebuffer by wrapping a raw data pointer.
