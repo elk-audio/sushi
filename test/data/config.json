@@ -4,7 +4,7 @@
     },
     "tracks" : [
         {
-            "name" : "left",
+            "name" : "main",
             "mode" : "stereo",
             "inputs" : [
                 {
@@ -37,18 +37,18 @@
             ]
         },
         {
-            "name" : "right",
+            "name" : "monotrack",
             "mode" : "mono",
             "inputs" : [
                 {
-                    "engine_bus" : 1,
-                    "track_bus" : 0
+                    "engine_channel" : 2,
+                    "track_channel" : 0
                 }
             ],
             "outputs" : [
                 {
-                    "engine_bus" : 1,
-                    "track_bus" : 0
+                    "engine_channel" : 2,
+                    "track_channel" : 0
                 }
             ],
             "plugins" : [
@@ -68,8 +68,23 @@
                     "type" : "internal"
                 }
             ]
+        },
+        {
+            "name" : "multi",
+            "mode" : "multibus",
+            "input_busses" : 2,
+            "output_busses" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 1,
+                    "track_bus" : 1
+                }
+            ],
+            "plugins" : []
         }
     ],
+
     "events" : [
         {
             "time" : 0.9,
@@ -114,13 +129,13 @@
             {
                 "port": 0,
                 "channel": "all",
-                "track": "left",
+                "track": "main",
                 "raw_midi": false
             },
             {
                 "port": 0,
                 "channel": 10,
-                "track": "right",
+                "track": "monotrack",
                 "raw_midi": true
             }
         ],

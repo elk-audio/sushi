@@ -63,25 +63,6 @@ public:
     bool remove(ObjectId processor);
 
     /**
-     * @brief Return a reference to the track's input buffer.
-     * @param buffer Audio data from this buffer will be sent to the track.
-     */
-    ChunkSampleBuffer& input_buffer()
-    {
-        return _input_buffer;
-    }
-
-    /**
-     * @brief Return a reference to the track's output buffer. After a call to render(),
-     *        this contains the tracks output, panned and ready.
-     * @return A reference to an audio buffer that contains the output of the track.
-     */
-    const ChunkSampleBuffer& output_buffer()
-    {
-        return _output_buffer;
-    }
-
-    /**
      * @brief Return a SampleBuffer to an input bus
      * @param bus The index of the bus, must not be greater than the number of busses configured
      * @return A non-owning SampleBuffer pointing to the given bus
@@ -101,6 +82,28 @@ public:
     {
         assert(bus < _output_busses);
         return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
+    }
+
+    /**
+     * @brief Return a SampleBuffer to an input channel
+     * @param bus The index of the channel, must not be greater than the number of channels configured
+     * @return A non-owning SampleBuffer pointing to the given bus
+     */
+    ChunkSampleBuffer input_channel(int index)
+    {
+        assert(index < _max_input_channels);
+        return ChunkSampleBuffer::create_non_owning_buffer(_input_buffer, index, 1);
+    }
+
+    /**
+    * @brief Return a SampleBuffer to an output bus
+    * @param bus The index of the channel, must not be greater than the number of channels configured
+    * @return A non-owning SampleBuffer pointing to the given bus
+    */
+    ChunkSampleBuffer output_channel(int index)
+    {
+        assert(index < _max_output_channels);
+        return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, index, 1);
     }
 
     /**

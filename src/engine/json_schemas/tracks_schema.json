@@ -22,7 +22,17 @@ R"(
           },
           "mode":
           {
-            "enum": ["mono", "stereo"]
+            "enum": ["mono", "stereo", "multibus"]
+          },
+          "input_busses" :
+          {
+            "type": "integer",
+            "minimum":  0
+          },
+          "output_busses" :
+          {
+            "type": "integer",
+            "minimum":  0
           },
           "inputs":
           {
@@ -30,20 +40,43 @@ R"(
             "items":
             {
               "type": "object",
-              "properties":
-              {
-                "engine_bus":
+              "oneOf":
+              [
                 {
-                  "type": "integer",
-                  "minimum": 0
+                  "type": "object",
+                  "properties":
+                  {
+                    "engine_bus":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "track_bus":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["engine_bus","track_bus"]
                 },
-                "track_bus":
                 {
-                  "type": "integer",
-                  "minimum": 0
+                  "type": "object",
+                  "properties":
+                  {
+                    "engine_channel":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "track_channel":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["engine_channel","track_channel"]
                 }
-              },
-              "required": ["engine_bus", "track_bus"]
+              ]
             }
           },
           "outputs":
@@ -52,20 +85,43 @@ R"(
             "items":
             {
               "type": "object",
-              "properties":
-              {
-                "engine_bus":
+              "oneOf":
+              [
                 {
-                  "type": "integer",
-                  "minimum": 0
+                  "type": "object",
+                  "properties":
+                  {
+                    "engine_bus":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "track_bus":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["engine_bus","track_bus"]
                 },
-                "track_bus":
                 {
-                  "type": "integer",
-                  "minimum": 0
+                  "type": "object",
+                  "properties":
+                  {
+                    "engine_channel":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "track_channel":
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["engine_channel","track_channel"]
                 }
-              },
-              "required": ["engine_bus", "track_bus"]
+              ]
             }
           },
           "plugins":

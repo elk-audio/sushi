@@ -216,45 +216,72 @@ JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_
 
 JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &track_def)
 {
-    int num_channels = 0;
+    auto name = track_def["name"].GetString();
+    EngineReturnStatus status = EngineReturnStatus::ERROR;
     if (track_def["mode"] == "mono")
     {
-        num_channels = 1;
+        status = _engine->create_track(name, 1);
     }
-    else
+    else if (track_def["mode"] == "stereo")
     {
-        num_channels = 2;
+        status = _engine->create_track(name, 2);
+    }
+    else if (track_def["mode"] == "multibus")
+    {
+        if (track_def.HasMember("input_busses") && track_def.HasMember("output_busses"))
+        {
+            status = _engine->create_multibus_track(name, track_def["input_busses"].GetInt(),
+                                                    track_def["output_busses"].GetInt());
+        }
     }
 
-    auto name = track_def["name"].GetString();
-    auto status = _engine->create_track(name, num_channels);
-    if(status != EngineReturnStatus::OK)
+    if(status == EngineReturnStatus::INVALID_PLUGIN_NAME || status == EngineReturnStatus::INVALID_PROCESSOR)
     {
-        MIND_LOG_ERROR("Plugin Chain Name {} in JSON config file already exists in engine", name);
+        MIND_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
+    if(status != EngineReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Track Name {} failed to create", name);
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+    }
+
     MIND_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
 
     for(const auto& con : track_def["inputs"].GetArray())
     {
-        status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        }
+        else
+        {
+            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+        }
         if(status != EngineReturnStatus::OK)
         {
             MIND_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
-            return JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS;
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
 
     for(const auto& con : track_def["outputs"].GetArray())
     {
-        status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+        }
+        else
+        {
+            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+
+        }
         if(status != EngineReturnStatus::OK)
         {
             MIND_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
-
 
     for(const auto& def : track_def["plugins"].GetArray())
     {

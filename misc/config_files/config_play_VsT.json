@@ -27,9 +27,8 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "main",
+                "track": "main",
                 "raw_midi": false
-
             }
         ],
         "cc_mappings": [

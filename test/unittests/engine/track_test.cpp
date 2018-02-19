@@ -94,7 +94,6 @@ TEST_F(TrackTest, TestMultibusSetup)
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
     EXPECT_EQ(4, module_under_test.parameter_count());
-    EXPECT_EQ(4, module_under_test.input_buffer().channel_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
 }
