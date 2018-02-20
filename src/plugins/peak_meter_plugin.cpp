@@ -12,7 +12,7 @@ constexpr float REFRESH_RATE = 25;
 /* fc in Hz, Tweaked by eyeballing mostly */
 constexpr float SMOOTHING_CUTOFF = 2.3;
 /* Represents -120dB */
-constexpr float OUTPUT_MIN = 0.000001f;
+constexpr float OUTPUT_MIN = 1.0e-6f;
 static const std::string DEFAULT_NAME = "sushi.testing.peakmeter";
 static const std::string DEFAULT_LABEL = "Peak Meter";
 
@@ -47,8 +47,8 @@ void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     if (_sample_count > _refresh_interval)
     {
         _sample_count -= _refresh_interval;
-        set_float_parameter_value_asynchronously(_left_level, _smoothed[LEFT_CHANNEL_INDEX]);
-        set_float_parameter_value_asynchronously(_right_level, _smoothed[RIGHT_CHANNEL_INDEX]);
+        set_parameter_and_notify(_left_level, _smoothed[LEFT_CHANNEL_INDEX]);
+        set_parameter_and_notify(_right_level, _smoothed[RIGHT_CHANNEL_INDEX]);
     }
 }
 

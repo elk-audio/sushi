@@ -142,21 +142,21 @@ void InternalPlugin::process_event(RtEvent event)
     }
 }
 
-void InternalPlugin::set_float_parameter_value_asynchronously(FloatParameterValue* storage, float new_value)
+void InternalPlugin::set_parameter_and_notify(FloatParameterValue*storage, float new_value)
 {
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
     output_event(e);
 }
 
-void InternalPlugin::set_int_parameter_value_asynchronously(IntParameterValue* storage, int new_value)
+void InternalPlugin::set_parameter_and_notify(IntParameterValue*storage, int new_value)
 {
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
     output_event(e);
 }
 
-void InternalPlugin::set_bool_parameter_value_asynchronously(BoolParameterValue* storage, bool new_value)
+void InternalPlugin::set_parameter_and_notify(BoolParameterValue*storage, bool new_value)
 {
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());

@@ -359,9 +359,9 @@ int OSCFrontend::process(Event* event)
             if (param_node != node->second.end())
             {
                 lo_send(_osc_out_address, param_node->second.c_str(), "f", typed_event->float_value());
+                MIND_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
             }
         }
-        //MIND_LOG_INFO("Outputing parameter change {} {} {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
         return EventStatus::HANDLED_OK;
     }
     return EventStatus::NOT_HANDLED;

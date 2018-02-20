@@ -117,7 +117,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_float_parameter_value_asynchronously(FloatParameterValue* storage, float new_value);
+    void set_parameter_and_notify(FloatParameterValue*storage, float new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -125,7 +125,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_int_parameter_value_asynchronously(IntParameterValue* storage, int new_value);
+    void set_parameter_and_notify(IntParameterValue*storage, int new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -133,7 +133,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_bool_parameter_value_asynchronously(BoolParameterValue* storage, bool new_value);
+    void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
 
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property
