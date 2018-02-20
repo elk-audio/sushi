@@ -45,11 +45,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_ERROR("Chunk size mismatch, check driver configuration.");
         return AudioFrontendStatus::INVALID_CHUNK_SIZE;
     }
-    if (RASPA_N_CHANNELS != MAX_FRONTEND_CHANNELS)
-    {
-        MIND_LOG_ERROR("Number of channels mismatch, check driver configuration.");
-        return AudioFrontendStatus::INVALID_N_CHANNELS;
-    }
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
     _engine->set_audio_output_channels(RASPA_N_CHANNELS);
     if (_engine->sample_rate() != RASPA_SAMPLING_FREQ_HZ)

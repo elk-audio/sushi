@@ -202,25 +202,9 @@ int main(int argc, char* argv[])
 
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
-    engine.set_audio_input_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
-    engine.set_audio_output_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
+
     midi_dispatcher.set_midi_input_ports(1);
     midi_dispatcher.set_midi_output_ports(1);
-
-    sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
-    auto status = configurator.load_host_config(config_filename);
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
-        std::exit(1);
-    }
-    status = configurator.load_tracks(config_filename);
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
-    {
-        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
-        std::exit(1);
-    }
-    configurator.load_midi(config_filename);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
@@ -251,6 +235,22 @@ int main(int argc, char* argv[])
         std::cerr << "Error initializing frontend, check logs for details." << std::endl;
         std::exit(1);
     }
+
+    sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
+    auto status = configurator.load_host_config(config_filename);
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
+        std::exit(1);
+    }
+    status = configurator.load_tracks(config_filename);
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
+        std::exit(1);
+    }
+    configurator.load_midi(config_filename);
+
     if (!use_jack && !use_xenomai_raspa)
     {
         rapidjson::Document config;
