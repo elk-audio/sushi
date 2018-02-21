@@ -142,5 +142,26 @@ void InternalPlugin::process_event(RtEvent event)
     }
 }
 
+void InternalPlugin::set_parameter_and_notify(FloatParameterValue*storage, float new_value)
+{
+    storage->set(new_value);
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+    output_event(e);
+}
+
+void InternalPlugin::set_parameter_and_notify(IntParameterValue*storage, int new_value)
+{
+    storage->set(new_value);
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+    output_event(e);
+}
+
+void InternalPlugin::set_parameter_and_notify(BoolParameterValue*storage, bool new_value)
+{
+    storage->set(new_value);
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+    output_event(e);
+}
+
 
 } // end namespace sushi

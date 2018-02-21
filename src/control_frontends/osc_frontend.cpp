@@ -168,13 +168,18 @@ static int osc_delete_processor(const char* /*path*/,
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                                        _osc_server(nullptr),
-                                                       _server_port(DEFAULT_SERVER_PORT)
+                                                       _server_port(DEFAULT_SERVER_PORT),
+                                                       _send_port(DEFAULT_SEND_PORT)
 {
     std::stringstream port_stream;
     port_stream << _server_port;
-
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
+
+    std::stringstream send_port_stream;
+    send_port_stream << _send_port;
+    _osc_out_address = lo_address_new(nullptr, send_port_stream.str().c_str());
     setup_engine_control();
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
 }
 
 OSCFrontend::~OSCFrontend()
@@ -184,7 +189,8 @@ OSCFrontend::~OSCFrontend()
         _stop_server();
     }
     lo_server_thread_free(_osc_server);
-    _event_dispatcher->deregister_poster(this);
+    lo_address_free(_osc_out_address);
+    _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
 }
 
 bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
@@ -243,6 +249,28 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
     return true;
 }
 
+bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
+{
+    engine::EngineReturnStatus status;
+    ObjectId processor_id;
+    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    ObjectId parameter_id;
+    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    std::string id_string = "/parameter/" + spaces_to_underscore(processor_name) + "/" +
+            spaces_to_underscore(parameter_name);
+    _outgoing_connections[processor_id][parameter_id] = id_string;
+    MIND_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    return true;
+}
+
 bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
 {
     std::string osc_path = "/keyboard_event/";
@@ -275,6 +303,7 @@ void OSCFrontend::connect_all()
             if (param->type() == ParameterType::FLOAT)
             {
                 connect_to_parameter(processor.second->name(), param->name());
+                connect_from_parameter(processor.second->name(), param->name());
             }
             if (param->type() == ParameterType::STRING)
             {
@@ -318,8 +347,23 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
 }
 
-int OSCFrontend::process(Event* /*event*/)
+int OSCFrontend::process(Event* event)
 {
+    if (event->is_parameter_change_event())
+    {
+        auto typed_event = static_cast<ParameterChangeEvent*>(event);
+        const auto& node = _outgoing_connections.find(typed_event->processor_id());
+        if (node != _outgoing_connections.end())
+        {
+            const auto& param_node = node->second.find(typed_event->parameter_id());
+            if (param_node != node->second.end())
+            {
+                lo_send(_osc_out_address, param_node->second.c_str(), "f", typed_event->float_value());
+                MIND_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
+            }
+        }
+        return EventStatus::HANDLED_OK;
+    }
     return EventStatus::NOT_HANDLED;
 }
 

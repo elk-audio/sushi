@@ -8,11 +8,13 @@
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
+#include "plugins/peak_meter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 #include "library/internal_plugin.cpp"
 
 using namespace sushi;
 
+constexpr float TEST_SAMPLERATE = 48000;
 
 class TestPassthroughPlugin : public ::testing::Test
 {
@@ -73,7 +75,7 @@ protected:
     void SetUp()
     {
         _module_under_test = new gain_plugin::GainPlugin();
-        ProcessorReturnCode status = _module_under_test->init(48000);
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
@@ -125,7 +127,7 @@ protected:
     void SetUp()
     {
         _module_under_test = new equalizer_plugin::EqualizerPlugin();
-        ProcessorReturnCode status = _module_under_test->init(48000);
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
@@ -178,4 +180,57 @@ TEST_F(TestEqualizerPlugin, TestProcess)
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
+}
+
+
+class TestPeakMeterPlugin : public ::testing::Test
+{
+protected:
+    TestPeakMeterPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new peak_meter_plugin::PeakMeterPlugin();
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    peak_meter_plugin::PeakMeterPlugin* _module_under_test;
+    RtEventFifo _fifo;
+};
+
+TEST_F(TestPeakMeterPlugin, TestInstantiation)
+{
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Peak Meter", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.peakmeter", _module_under_test->name());
+}
+
+TEST_F(TestPeakMeterPlugin, TestProcess)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    /* Process enough samples to catch some event outputs */
+    ASSERT_TRUE(_fifo.empty());
+    for (int i = 0; i <= TEST_SAMPLERATE / (peak_meter_plugin::REFRESH_RATE * AUDIO_CHUNK_SIZE) ; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+    }
+    /* check that audio goes through unprocessed */
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    RtEvent event;
+    ASSERT_TRUE(_fifo.pop(event));
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+    EXPECT_EQ(_module_under_test->id(), event.processor_id());
+    /*  The value should approach 0 dB eventually, but test that it is reasonably close */
+    EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
 }

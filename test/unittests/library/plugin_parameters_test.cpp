@@ -39,6 +39,21 @@ TEST_F(TestdBToLinPreProcessor, TestProcessing)
     EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), test_utils::DECIBEL_ERROR);
 }
 
+class TestLinTodBPreProcessor : public ::testing::Test
+{
+protected:
+    TestLinTodBPreProcessor() {}
+
+    LinTodBPreProcessor _module_under_test{0, 10.0f};
+};
+
+TEST_F(TestLinTodBPreProcessor, TestProcessing)
+{
+    EXPECT_NEAR(0.0f, _module_under_test.process(1.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(6.02f, _module_under_test.process(2.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(-12.04f, _module_under_test.process(0.25f), test_utils::DECIBEL_ERROR);
+}
+
 /*
  * Templated testing is difficult since we want to test with different values for each type
  * Therefore we test each type separately.

@@ -12,6 +12,7 @@
 #include <memory>
 #include <cmath>
 #include <string>
+#include <cassert>
 
 #include "library/constants.h"
 #include "library/id_generator.h"
@@ -218,6 +219,19 @@ public:
     float process(float raw_value) override
     {
         return powf(10.0f, this->clip(raw_value) / 20.0f);
+    }
+};
+
+/**
+ * @brief Preprocessor example to map from linear gain to decibels.
+ */
+class LinTodBPreProcessor : public FloatParameterPreProcessor
+{
+public:
+    LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+    float process(float raw_value) override
+    {
+        return 20.0f * log10(this->clip(raw_value));
     }
 };
 
