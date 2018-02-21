@@ -75,10 +75,14 @@ void Track::render()
     }
 }
 
-void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
+void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& out)
 {
-    /* Alias the buffers so we can swap them without copying the underlying data */
-    ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(in);
+    /* For Tracks, process function is called from render() and the input audio data
+     * should be copied to _input_buffer prior to this call.
+     * We alias the buffers so we can swap them cheaply, without copying the underlying
+     * data, though we can't alias in since it is const, even though it points to
+     * _input_buffer  */
+    ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(_input_buffer);
     ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
 
     for (auto &processor : _processors)
@@ -96,17 +100,16 @@ void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
         processor->process_audio(proc_in, proc_out);
         std::swap(aliased_in, aliased_out);
     }
-    // TODO - This is a hack, fix the SampleBuffer so that the channels doesn't change
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
     if (output_channels > 0)
     {
-        ChunkSampleBuffer output = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, output_channels);
-        out = output;
+        _output_buffer.replace(_input_buffer);
     }
     else
     {
-        out.clear();
+        _output_buffer.clear();
     }
+
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
 }

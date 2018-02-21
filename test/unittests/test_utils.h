@@ -16,31 +16,33 @@ namespace test_utils {
 // Enough leeway to approximate 6dB to 2 times amplification.
 const float DECIBEL_ERROR = 0.01;
 
-
-inline void fill_sample_buffer(SampleBuffer <AUDIO_CHUNK_SIZE> &buffer, float value)
+template <int size>
+inline void fill_sample_buffer(SampleBuffer <size> &buffer, float value)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
     {
-        std::fill(buffer.channel(ch), buffer.channel(ch) + AUDIO_CHUNK_SIZE, value);
+        std::fill(buffer.channel(ch), buffer.channel(ch) + size, value);
     }
 };
 
-inline void assert_buffer_value(float value, SampleBuffer <AUDIO_CHUNK_SIZE> &buffer)
+template <int size>
+inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
     {
-        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+        for (int i = 0; i < size; ++i)
         {
             ASSERT_FLOAT_EQ(value, buffer.channel(ch)[i]);
         }
     }
 };
 
-inline void assert_buffer_value(float value, SampleBuffer <AUDIO_CHUNK_SIZE> &buffer, float error_margin)
+template <int size>
+inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer, float error_margin)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
     {
-        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+        for (int i = 0; i < size; ++i)
         {
             ASSERT_NEAR(value, buffer.channel(ch)[i], error_margin);
         }
