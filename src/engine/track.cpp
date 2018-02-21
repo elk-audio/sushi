@@ -103,11 +103,11 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
     if (output_channels > 0)
     {
-        _output_buffer.replace(_input_buffer);
+        aliased_out.replace(aliased_in);
     }
     else
     {
-        _output_buffer.clear();
+        aliased_out.clear();
     }
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
