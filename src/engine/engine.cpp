@@ -250,6 +250,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     {
         send_rt_event(in_event);
     }
+
+    _event_dispatcher.set_time(_transport.current_time());
     auto state = _state.load();
 
     for (const auto& c : _in_audio_connections)
@@ -263,6 +265,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     {
         track->render();
     }
+
+    _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_time()));
 
     out_buffer->clear();
     for (const auto& c : _out_audio_connections)

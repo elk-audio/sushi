@@ -140,13 +140,14 @@ void OfflineFrontend::run()
 {
     int readcount;
     int samplecount = 0;
-    float usec_time = 0.0f;
+    double usec_time = 0.0f;
+    Time start_time = std::chrono::microseconds(0);
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          _file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
         // Update time and sample counter
-        _engine->update_time(static_cast<int64_t>(usec_time), samplecount);
+        _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
         samplecount += readcount;
         usec_time += readcount * 1000000.f / _engine->sample_rate();
 

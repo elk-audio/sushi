@@ -4,11 +4,11 @@
  */
 
 #include <algorithm>
+#include <sstream>
 
 #include "osc_frontend.h"
 #include "logging.h"
 
-#include <sstream>
 
 namespace sushi {
 namespace control_frontend {
@@ -72,6 +72,10 @@ static int osc_send_keyboard_event(const char* /*path*/,
     else if (event == "note_off")
     {
         connection->instance->send_note_off_event(connection->processor, note, value);
+    }
+    else if (event == "program_change")
+    {
+        connection->instance->send_program_change_event(connection->processor, note);
     }
     else
     {
@@ -349,9 +353,9 @@ void OSCFrontend::setup_engine_control()
 
 int OSCFrontend::process(Event* event)
 {
-    if (event->is_parameter_change_event())
+    if (event->is_parameter_change_notification())
     {
-        auto typed_event = static_cast<ParameterChangeEvent*>(event);
+        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
         const auto& node = _outgoing_connections.find(typed_event->processor_id());
         if (node != _outgoing_connections.end())
         {

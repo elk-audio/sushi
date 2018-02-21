@@ -237,10 +237,11 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
         MIND_LOG_ERROR("Error getting time from jack frontend");
     }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
+    Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
-        uint64_t frametime = current_usecs + (frame * 1000000) / _sample_rate;
-        _engine->update_time(frametime + frame, current_frames + frame);
+        Time delta_time = std::chrono::microseconds((frame * 1000000) / _sample_rate);
+        _engine->update_time(start_time + delta_time, current_frames + frame);
         process_events();
         process_midi(frame, AUDIO_CHUNK_SIZE);
         process_audio(frame, AUDIO_CHUNK_SIZE);

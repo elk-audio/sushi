@@ -1,6 +1,4 @@
 
-#include <algorithm>
-
 #include "event_dispatcher.h"
 #include "engine/engine.h"
 #include "logging.h"
@@ -16,7 +14,8 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                               _engine{engine},
                                                               _in_rt_queue{in_rt_queue},
                                                               _out_rt_queue{out_rt_queue},
-                                                              _worker{engine, this}
+                                                              _worker{engine, this},
+                                                              _event_timer{engine->sample_rate()}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
@@ -84,10 +83,22 @@ int EventDispatcher::process(Event* event)
     }
     if (event->maps_to_rt_event())
     {
-        // TODO - handle translation from real time to sample offset.
-        int sample_offset = 0;
-        // TODO - handle case when queue is full.
-        _out_rt_queue->push(event->to_rt_event(sample_offset));
+        bool send_now;
+        int sample_offset;
+        std::tie(send_now, sample_offset) = _event_timer.sample_offset_from_realtime(event->time());
+        if (send_now)
+        {
+            if (_out_rt_queue->push(event->to_rt_event(sample_offset)))
+            {
+                return EventStatus::HANDLED_OK;
+            }
+        }
+        _waiting_list.push_front(event);
+        return EventStatus::QUEUED_HANDLING;
+    }
+    if (event->is_parameter_change_notification())
+    {
+        _publish_parameter_events(event);
         return EventStatus::HANDLED_OK;
     }
     return EventStatus::UNRECOGNIZED_EVENT;
@@ -98,11 +109,10 @@ void EventDispatcher::_event_loop()
     do
     {
         auto start_time = std::chrono::system_clock::now();
-        /* Handle incoming Events */
-        while (!_in_queue.empty())
-        {
-            Event* event = _in_queue.pop();
 
+        /* Handle incoming Events */
+        while (Event* event = _next_event())
+        {
             assert(event->receiver() < static_cast<int>(_posters.size()));
             EventPoster* receiver = _posters[event->receiver()];
             int status = EventStatus::UNRECOGNIZED_RECEIVER;
@@ -135,19 +145,27 @@ void EventDispatcher::_event_loop()
 
 int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 {
-    // TODO - handle translation from real time to sample offset.
-    int64_t timestamp = 0;
+    Time timestamp = _event_timer.real_time_from_sample_offset(rt_event.sample_offset());
     Event* event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
     {
-        /* Currently there are no RtEvents that need special handling */
-        return EventStatus::UNRECOGNIZED_EVENT;
+        switch (rt_event.type())
+        {
+            case RtEventType::SYNC:
+            {
+                auto typed_event = rt_event.syncronisation_event();
+                _event_timer.set_outgoing_time(typed_event->timestamp());
+                return EventStatus::HANDLED_OK;
+            }
+            default:
+                return EventStatus::UNRECOGNIZED_EVENT;
+        }
     }
     if (event->is_keyboard_event())
     {
         _publish_keyboard_events(event);
     }
-    if (event->is_parameter_change_event())
+    if (event->is_parameter_change_notification())
     {
         _publish_parameter_events(event);
     }
@@ -160,6 +178,20 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     return EventStatus::HANDLED_OK;
 }
 
+Event*EventDispatcher::_next_event()
+{
+    Event* event = nullptr;
+    if (!_waiting_list.empty())
+    {
+        event = _waiting_list.back();
+        _waiting_list.pop_back();
+    }
+    else if (!_in_queue.empty())
+    {
+        event = _in_queue.pop();
+    }
+    return event;
+}
 
 void EventDispatcher::_publish_keyboard_events(Event* event)
 {
@@ -211,8 +243,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
             return EventDispatcherStatus::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;}
-
+    return EventDispatcherStatus::UNKNOWN_POSTER;
+}
 
 void Worker::run()
 {
@@ -266,7 +298,7 @@ void Worker::_worker()
             }
             delete (event);
         }
-        std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODOCITY);
+        std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);
     }
     while (_running);
 }

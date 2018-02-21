@@ -7,16 +7,15 @@
 #define SUSHI_JACK_FRONTEND_H
 #ifdef SUSHI_BUILD_WITH_JACK
 
-#include "base_audio_frontend.h"
-#include "library/rt_event_fifo.h"
-#include "control_frontends/osc_frontend.h"
-#include "control_frontends/alsa_midi_frontend.h"
-
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include <jack/jack.h>
+
+#include "base_audio_frontend.h"
+#include "control_frontends/osc_frontend.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
 

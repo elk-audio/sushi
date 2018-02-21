@@ -9,6 +9,7 @@
 #define SUSHI_TYPES_H
 
 #include <array>
+#include <chrono>
 
 namespace sushi {
 
@@ -20,12 +21,6 @@ struct BlobData
     int   size{0};
     uint8_t* data{nullptr};
 };
-
-/**
- * @brief Type used for timestamps with micro second granularity
- */
-typedef int64_t MicroTime;
-
 
 constexpr size_t MIDI_DATA_BYTE_SIZE = 4;
 /**

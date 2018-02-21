@@ -13,6 +13,7 @@
 #include <alsa/asoundlib.h>
 
 #include "base_midi_frontend.h"
+#include "library/time.h"
 
 namespace sushi {
 namespace midi_frontend {
@@ -32,9 +33,14 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, const uint8_t* data, int64_t timestamp) override;
+    void send_midi(int input, const uint8_t* data, Time timestamp) override;
 
 private:
+
+    bool _init_ports();
+    bool _init_time();
+    Time _to_sushi_time(const snd_seq_real_time_t* alsa_time);
+    snd_seq_real_time_t _to_alsa_time(Time timestamp);
 
     void                        _poll_function();
     std::thread                 _worker;
@@ -42,15 +48,14 @@ private:
     snd_seq_t*                  _seq_handle{nullptr};
     int                         _input_midi_port;
     int                         _output_midi_port;
+    int                         _queue;
+
     snd_midi_event_t*           _input_parser{nullptr};
     snd_midi_event_t*           _output_parser{nullptr};
+    Time                        _time_offset;
 };
 
 } // end namespace midi_frontend
 } // end namespace sushi
-#endif //SUSHI_BASE_MIDI_FRONTEND_H
-
-#ifndef SUSHI_ALSA_MIDI_FRONTEND_H_H
-#define SUSHI_ALSA_MIDI_FRONTEND_H_H
 
 #endif //SUSHI_ALSA_MIDI_FRONTEND_H_H

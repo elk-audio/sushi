@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "library/constants.h"
+#include "library/types.h"
 #include "library/midi_decoder.h"
 #include "library/event.h"
 #include "library/processor.h"
@@ -156,7 +157,7 @@ public:
      * @param size Length of data in bytes.
      * @param timestamp timestamp of the midi event
      */
-    void send_midi(int port, const uint8_t* data, size_t size, int64_t timestamp) override;
+    void send_midi(int port, const uint8_t* data, size_t size, Time timestamp) override;
 
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;
