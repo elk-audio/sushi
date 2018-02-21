@@ -84,6 +84,12 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    ret = jack_set_latency_callback(_client, latency_callback, this);
+    if (ret != 0)
+    {
+        MIND_LOG_ERROR("Failed to set latency callback function, error: {}.", ret);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
     auto status = setup_sample_rate();
     if (status != AudioFrontendStatus::OK)
     {
@@ -237,7 +243,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
         MIND_LOG_ERROR("Error getting time from jack frontend");
     }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
-    Time start_time = std::chrono::microseconds(current_usecs);
+    Time start_time = std::chrono::microseconds(current_usecs) + _output_latency;
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1000000) / _sample_rate);
@@ -264,6 +270,26 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
     return 0;
 }
 
+void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
+{
+    /* Currently all we want to know is the output latency so we can add
+     * that to the time
+     * We also don't support individual latency compensation on ports so
+     * we get the maximum latency and pass that on to Sushi. */
+    if (mode == JackPlaybackLatency)
+    {
+        int sample_latency = 0;
+        jack_latency_range_t range;
+        for (auto& port : _output_ports)
+        {
+            jack_port_get_latency_range(port, JackPlaybackLatency, &range);
+            sample_latency = std::max(sample_latency, static_cast<int>(range.max));
+        }
+        _output_latency = std::chrono::microseconds((sample_latency * 1000000) / _sample_rate);
+        MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, _output_latency.count() / 1000.0f);
+    }
+
+}
 
 void inline JackFrontend::process_events()
 {
