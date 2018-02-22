@@ -29,6 +29,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     {
         return ret_code;
     }
+    auto raspa_config = static_cast<XenomaiRaspaFrontendConfiguration*>(_config);
 
     // Control
     _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
@@ -53,8 +54,13 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_SAMPLING_FREQ_HZ);
         _engine->set_sample_rate(RASPA_SAMPLING_FREQ_HZ);
     }
+    unsigned int debug_flags = 0;
+    if (raspa_config->break_on_mode_sw)
+    {
+        debug_flags |= RASPA_DEBUG_SIGNAL_ON_MODE_SW;
+    }
 
-    auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this, 0);
+    auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this, debug_flags);
     if (raspa_ret < 0)
     {
         MIND_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
