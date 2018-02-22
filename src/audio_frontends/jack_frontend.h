@@ -124,7 +124,6 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
-    Time        _output_latency{std::chrono::microseconds(0)};
     RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;

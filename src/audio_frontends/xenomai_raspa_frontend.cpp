@@ -45,20 +45,16 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_ERROR("Chunk size mismatch, check driver configuration.");
         return AudioFrontendStatus::INVALID_CHUNK_SIZE;
     }
-    if (RASPA_N_CHANNELS != MAX_FRONTEND_CHANNELS)
-    {
-        MIND_LOG_ERROR("Number of channels mismatch, check driver configuration.");
-        return AudioFrontendStatus::INVALID_N_CHANNELS;
-    }
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
     _engine->set_audio_output_channels(RASPA_N_CHANNELS);
+    _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
     if (_engine->sample_rate() != RASPA_SAMPLING_FREQ_HZ)
     {
         MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_SAMPLING_FREQ_HZ);
         _engine->set_sample_rate(RASPA_SAMPLING_FREQ_HZ);
     }
 
-    auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this);
+    auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this, 0);
     if (raspa_ret < 0)
     {
         MIND_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
@@ -88,6 +84,10 @@ void XenomaiRaspaFrontend::run()
 
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
+    Time timestamp = Time(raspa_get_time());
+    int64_t samplecount = raspa_get_samplecount();
+    _engine->update_time(timestamp, samplecount);
+
     while (!_event_queue.empty())
     {
         RtEvent event;

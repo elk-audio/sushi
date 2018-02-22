@@ -222,6 +222,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
             MIND_LOG_WARNING("Failed to connect Midi port, error {}.", ret);
         }
     }
+
     jack_free(midi_ports);
     return AudioFrontendStatus::OK;
 }
@@ -243,7 +244,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
         MIND_LOG_ERROR("Error getting time from jack frontend");
     }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
-    Time start_time = std::chrono::microseconds(current_usecs) + _output_latency;
+    Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1000000) / _sample_rate);
@@ -272,8 +273,8 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
 
 void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
 {
-    /* Currently all we want to know is the output latency so we can add
-     * that to the time
+    /* Currently all we want to know is the output latency to a physical
+     * audio output.
      * We also don't support individual latency compensation on ports so
      * we get the maximum latency and pass that on to Sushi. */
     if (mode == JackPlaybackLatency)
@@ -285,10 +286,10 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
             jack_port_get_latency_range(port, JackPlaybackLatency, &range);
             sample_latency = std::max(sample_latency, static_cast<int>(range.max));
         }
-        _output_latency = std::chrono::microseconds((sample_latency * 1000000) / _sample_rate);
-        MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, _output_latency.count() / 1000.0f);
+        Time latency = std::chrono::microseconds((sample_latency * 1000000) / _sample_rate);
+        _engine->set_output_latency(latency);
+        MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
     }
-
 }
 
 void inline JackFrontend::process_events()

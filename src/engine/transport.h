@@ -19,8 +19,13 @@ public:
 
     void set_time(Time timestamp, int64_t samples)
     {
-        _time = timestamp;
+        _time = timestamp + _latency;
         _sample_count = samples;
+    }
+
+    void set_latency(Time output_latency)
+    {
+        _latency = output_latency;
     }
 
     Time current_time() const {return _time;}
@@ -28,7 +33,8 @@ public:
 
 private:
     int64_t _sample_count{0};
-    Time    _time;
+    Time    _time{0};
+    Time    _latency{0};
 };
 
 
