@@ -60,6 +60,9 @@ void print_version_and_build_info()
     std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    std::cout << "Audio in/out channels: " << RASPA_N_CHANNELS << std::endl;
+#endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
 }
