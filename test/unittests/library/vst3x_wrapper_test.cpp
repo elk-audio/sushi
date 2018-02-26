@@ -1,11 +1,13 @@
 #include "gtest/gtest.h"
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 #include "library/rt_event_fifo.h"
 #include "library/vst3x_host_app.cpp"
 #include "library/vst3x_utils.cpp"
 
 #define private public
+
+#include "test_utils/host_control_mockup.h"
 #include "library/vst3x_wrapper.cpp"
 
 using namespace sushi;
@@ -64,7 +66,7 @@ protected:
     void SetUp(char* plugin_file, char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
-        _module_under_test = new Vst3xWrapper(full_plugin_path, plugin_name);
+        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(), full_plugin_path, plugin_name);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(48000);
@@ -76,7 +78,7 @@ protected:
     {
         delete _module_under_test;
     }
-
+    HostControlMockup _host_control;
     Vst3xWrapper* _module_under_test;
 };
 

@@ -2,7 +2,7 @@
 #define private public
 
 #include "engine/midi_dispatcher.cpp"
-#include "../test/unittests/audio_frontends/engine_mockup.h"
+#include "test_utils/engine_mockup.h"
 
 using namespace midi;
 using namespace sushi;

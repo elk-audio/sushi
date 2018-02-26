@@ -21,7 +21,7 @@ static const std::string DEFAULT_LABEL = "Passthrough";
 class PassthroughPlugin : public InternalPlugin
 {
 public:
-    PassthroughPlugin();
+    PassthroughPlugin(HostControl host_control);
 
     ~PassthroughPlugin();
 

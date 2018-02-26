@@ -17,7 +17,7 @@ static const std::string DEFAULT_LABEL = "Gain";
 class GainPlugin : public InternalPlugin
 {
 public:
-    GainPlugin();
+    GainPlugin(HostControl host_control);
 
     ~GainPlugin();
 

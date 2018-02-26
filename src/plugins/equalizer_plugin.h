@@ -18,7 +18,7 @@ static const std::string DEFAULT_LABEL = "Equalizer";
 class EqualizerPlugin : public InternalPlugin
 {
 public:
-    EqualizerPlugin();
+    EqualizerPlugin(HostControl hostControl);
 
     ~EqualizerPlugin();
 

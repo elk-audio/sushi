@@ -15,6 +15,7 @@
 #include "library/rt_event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
+#include "engine/host_control.h"
 
 namespace sushi {
 
@@ -34,6 +35,8 @@ enum class ProcessorReturnCode
 class Processor
 {
 public:
+    explicit Processor(HostControl host_control) : _host_control(host_control) {}
+
     virtual ~Processor() {};
 
     /**
@@ -273,6 +276,8 @@ protected:
 
     bool _enabled{true};
     bool _bypassed{false};
+
+    HostControl _host_control;
 
 private:
     RtEventPipe* _output_pipe{nullptr};

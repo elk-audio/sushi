@@ -1,10 +1,9 @@
 #include "gtest/gtest.h"
 
 #define private public
-#include "jack_mockup.cpp"
-
+#include "test_utils/jack_mockup.cpp"
+#include "test_utils/engine_mockup.h"
 #include "audio_frontends/jack_frontend.cpp"
-#include "engine_mockup.h"
 #include "control_frontends/alsa_midi_frontend.cpp"
 
 

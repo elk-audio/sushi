@@ -4,7 +4,8 @@
 
 #define private public
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
@@ -24,13 +25,14 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new passthrough_plugin::PassthroughPlugin();
+        _module_under_test = new passthrough_plugin::PassthroughPlugin(_host_control.make_host_control_mockup());
     }
 
     void TearDown()
     {
         delete _module_under_test;
     }
+    HostControlMockup _host_control;
     InternalPlugin* _module_under_test;
 };
 
@@ -74,7 +76,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new gain_plugin::GainPlugin();
+        _module_under_test = new gain_plugin::GainPlugin(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
@@ -83,6 +85,7 @@ protected:
     {
         delete _module_under_test;
     }
+    HostControlMockup _host_control;
     gain_plugin::GainPlugin* _module_under_test;
 };
 
@@ -126,7 +129,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new equalizer_plugin::EqualizerPlugin();
+        _module_under_test = new equalizer_plugin::EqualizerPlugin(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
@@ -135,6 +138,7 @@ protected:
     {
         delete _module_under_test;
     }
+    HostControlMockup _host_control;
     equalizer_plugin::EqualizerPlugin* _module_under_test;
 };
 
@@ -191,7 +195,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new peak_meter_plugin::PeakMeterPlugin();
+        _module_under_test = new peak_meter_plugin::PeakMeterPlugin(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);
@@ -201,6 +205,7 @@ protected:
     {
         delete _module_under_test;
     }
+    HostControlMockup _host_control;
     peak_meter_plugin::PeakMeterPlugin* _module_under_test;
     RtEventFifo _fifo;
 };

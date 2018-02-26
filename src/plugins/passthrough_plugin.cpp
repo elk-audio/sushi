@@ -6,7 +6,7 @@
 namespace sushi {
 namespace passthrough_plugin {
 
-PassthroughPlugin::PassthroughPlugin()
+PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);

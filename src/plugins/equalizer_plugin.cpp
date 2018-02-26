@@ -5,7 +5,7 @@
 namespace sushi {
 namespace equalizer_plugin {
 
-EqualizerPlugin::EqualizerPlugin()
+EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS_SUPPORTED;
     _max_output_channels = MAX_CHANNELS_SUPPORTED;

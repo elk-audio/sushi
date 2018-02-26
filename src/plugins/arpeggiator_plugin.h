@@ -62,7 +62,7 @@ private:
 class ArpeggiatorPlugin : public InternalPlugin
 {
 public:
-    ArpeggiatorPlugin();
+    ArpeggiatorPlugin(HostControl host_control);
 
     ~ArpeggiatorPlugin() {}
 

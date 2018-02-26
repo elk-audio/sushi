@@ -10,7 +10,7 @@ namespace sample_player_plugin {
 
 MIND_GET_LOGGER;
 
-SamplePlayerPlugin::SamplePlayerPlugin()
+SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);

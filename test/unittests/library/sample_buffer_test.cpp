@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 #include "library/sample_buffer.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 using namespace sushi;
 

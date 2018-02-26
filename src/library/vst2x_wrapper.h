@@ -32,7 +32,8 @@ public:
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
 
-    Vst2xWrapper(const std::string &vst_plugin_path) :
+    Vst2xWrapper(HostControl host_control, const std::string &vst_plugin_path) :
+            Processor(host_control),
             _sample_rate{0},
             _process_inputs{},
             _process_outputs{},

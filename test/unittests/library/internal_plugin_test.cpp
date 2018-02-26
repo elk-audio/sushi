@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #define private public
 
+#include "test_utils/host_control_mockup.h"
 #include "library/internal_plugin.h"
 
 using namespace sushi;
@@ -8,7 +9,7 @@ using namespace sushi;
 class TestPlugin : public InternalPlugin
 {
 public:
-    TestPlugin()
+    TestPlugin(HostControl host_control) : InternalPlugin(host_control)
     {
         set_name("test_plugin");
     }
@@ -28,13 +29,14 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new TestPlugin;
+        _module_under_test = new TestPlugin(_host_control.make_host_control_mockup());
     }
 
     void TearDown()
     {
         delete(_module_under_test);
     }
+    HostControlMockup _host_control;
     InternalPlugin* _module_under_test;
 };
 

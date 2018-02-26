@@ -134,31 +134,31 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     Processor* instance = nullptr;
     if (uid == "sushi.testing.passthrough")
     {
-        instance = new passthrough_plugin::PassthroughPlugin();
+        instance = new passthrough_plugin::PassthroughPlugin(_host_control);
     }
     else if (uid == "sushi.testing.gain")
     {
-        instance = new gain_plugin::GainPlugin();
+        instance = new gain_plugin::GainPlugin(_host_control);
     }
     else if (uid == "sushi.testing.equalizer")
     {
-        instance = new equalizer_plugin::EqualizerPlugin();
+        instance = new equalizer_plugin::EqualizerPlugin(_host_control);
     }
     else if (uid == "sushi.testing.sampleplayer")
     {
-        instance = new sample_player_plugin::SamplePlayerPlugin();
+        instance = new sample_player_plugin::SamplePlayerPlugin(_host_control);
     }
     else if (uid == "sushi.testing.arpeggiator")
     {
-        instance = new arpeggiator_plugin::ArpeggiatorPlugin();
+        instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
     }
     else if (uid == "sushi.testing.arpeggiator")
     {
-        instance = new arpeggiator_plugin::ArpeggiatorPlugin();
+        instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
     }
     else if (uid == "sushi.testing.peakmeter")
     {
-        instance = new peak_meter_plugin::PeakMeterPlugin();
+        instance = new peak_meter_plugin::PeakMeterPlugin(_host_control);
     }
     return instance;
 }
@@ -369,7 +369,7 @@ EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, i
         MIND_LOG_ERROR("Invalid number of busses for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(input_busses, output_busses);
+    Track* track = new Track(_host_control, input_busses, output_busses);
     return _register_new_track(name, track);
 }
 
@@ -380,7 +380,7 @@ EngineReturnStatus AudioEngine::create_track(const std::string &name, int channe
         MIND_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(channel_count);
+    Track* track = new Track(_host_control, channel_count);
     return _register_new_track(name, track);
 }
 
@@ -451,11 +451,11 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
             break;
 
         case PluginType::VST2X:
-            plugin = new vst2::Vst2xWrapper(plugin_path);
+            plugin = new vst2::Vst2xWrapper(_host_control, plugin_path);
             break;
 
         case PluginType::VST3X:
-            plugin = new vst3::Vst3xWrapper(plugin_path, plugin_uid);
+            plugin = new vst3::Vst3xWrapper(_host_control, plugin_path, plugin_uid);
             break;
     }
 

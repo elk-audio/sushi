@@ -15,7 +15,7 @@ constexpr int MAX_METERED_CHANNELS = 2;
 class PeakMeterPlugin : public InternalPlugin
 {
 public:
-    PeakMeterPlugin();
+    PeakMeterPlugin(HostControl host_control);
 
     virtual ~PeakMeterPlugin() = default;
 

@@ -84,7 +84,7 @@ public:
 
     void update_time(Time /*timestamp*/, int64_t /*samples*/) override {}
 
-    virtual void set_output_latency(Time /*latency*/) override {}
+    void set_output_latency(Time /*latency*/) override {}
 
     EngineReturnStatus send_rt_event(RtEvent& /*event*/) override
     {

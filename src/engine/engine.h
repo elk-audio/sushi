@@ -20,6 +20,7 @@
 #include "track.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
+#include "engine/host_control.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
@@ -547,6 +548,8 @@ private:
     Transport _transport;
 
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+
+    HostControl _host_control{&_event_dispatcher, &_transport};
 };
 
 /**

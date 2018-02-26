@@ -29,7 +29,7 @@ enum SampleChange : int
 class SamplePlayerPlugin : public InternalPlugin
 {
 public:
-    SamplePlayerPlugin();
+    SamplePlayerPlugin(HostControl host_control);
 
     ~SamplePlayerPlugin();
 

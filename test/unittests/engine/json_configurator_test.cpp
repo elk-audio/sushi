@@ -7,7 +7,7 @@
 #include "engine/engine.h"
 #include "engine/midi_dispatcher.h"
 #include "engine/json_configurator.cpp"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;

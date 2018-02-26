@@ -16,7 +16,7 @@ constexpr float OUTPUT_MIN = 1.0e-6f;
 static const std::string DEFAULT_NAME = "sushi.testing.peakmeter";
 static const std::string DEFAULT_LABEL = "Peak Meter";
 
-PeakMeterPlugin::PeakMeterPlugin()
+PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS;
     _max_output_channels = MAX_CHANNELS;

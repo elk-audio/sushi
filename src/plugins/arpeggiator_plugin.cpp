@@ -10,7 +10,7 @@ constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float EIGHTH_NOTE = 0.125f;
 constexpr int   OCTAVE = 12;
 
-ArpeggiatorPlugin::ArpeggiatorPlugin()
+ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);

@@ -37,7 +37,7 @@ public:
      * @param channels The number of channels in the track.
      *                 Note that even mono tracks have a stereo output bus
      */
-    explicit Track(int channels);
+    Track(HostControl host_control, int channels);
 
     /**
      * @brief Create a track with a given number of stereo input and output busses
@@ -45,7 +45,7 @@ public:
      * @param input_buffers The number of input busses
      * @param output_buffers The number of output busses
      */
-    Track(int input_busses, int output_busses);
+    Track(HostControl host_control, int input_busses, int output_busses);
 
     ~Track() = default;
 

@@ -2,7 +2,8 @@
 
 #define private public
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
 
 #include "library/vst2x_wrapper.cpp"
 
@@ -50,7 +51,7 @@ protected:
     void SetUp(const std::string& plugin_path)
     {
         char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
-        _module_under_test = new Vst2xWrapper(full_plugin_path);
+        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(), full_plugin_path);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(48000);
@@ -62,7 +63,7 @@ protected:
     {
         delete _module_under_test;
     }
-
+    HostControlMockup _host_control;
     Vst2xWrapper* _module_under_test;
 };
 
