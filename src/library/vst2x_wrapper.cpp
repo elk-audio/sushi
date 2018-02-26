@@ -2,8 +2,6 @@
 
 #include "logging.h"
 
-#include <algorithm>
-
 namespace {
 
 static constexpr int VST_STRING_BUFFER_SIZE = 256;
@@ -76,6 +74,8 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
+    // Register yourself
+    _plugin_handle->user = this;
     return ProcessorReturnCode::OK;
 }
 
@@ -223,6 +223,18 @@ bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
     int res = _vst_dispatcher(effSetSpeakerArrangement, 0, (VstIntPtr)&in_arr, &out_arr, 0);
     return res == 1;
 }
+
+VstTimeInfo* Vst2xWrapper::time_info()
+{
+    _time_info.sampleRate = _sample_rate;
+    // Only time (in ns) and sample count is supported atm.
+    _time_info.samplePos = _host_control.transport()->current_samples();
+    _time_info.nanoSeconds = _host_control.transport()->current_time().count() * 1000;
+    _time_info.tempo = 0;
+    _time_info.flags = kVstNanosValid;
+    return &_time_info;
+}
+
 
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {

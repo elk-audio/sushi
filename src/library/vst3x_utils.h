@@ -52,6 +52,7 @@ public:
         numSamples = AUDIO_CHUNK_SIZE;
         symbolicSampleSize = Steinberg::Vst::SymbolicSampleSizes::kSample32;
         processMode = Steinberg::Vst::ProcessModes::kRealtime;
+        processContext = &_context;
 
         inputEvents = in_event_list;
         outputEvents = out_event_list;
@@ -83,6 +84,7 @@ private:
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
     Steinberg::Vst::AudioBusBuffers _input_buffers;
     Steinberg::Vst::AudioBusBuffers _output_buffers;
+    Steinberg::Vst::ProcessContext  _context;
     /* Keep pointers to the implementations so we can call clear on them */
     Steinberg::Vst::EventList* _in_events;
     Steinberg::Vst::EventList* _out_events;

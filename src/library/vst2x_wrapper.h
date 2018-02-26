@@ -7,11 +7,11 @@
 #ifndef SUSHI_VST2X_PLUGIN_H
 #define SUSHI_VST2X_PLUGIN_H
 
+#include <map>
+
 #include "library/processor.h"
 #include "library/vst2x_plugin_loader.h"
 #include "library/vst2x_midi_event_fifo.h"
-
-#include <map>
 
 namespace sushi {
 namespace vst2 {
@@ -69,6 +69,29 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    /**
+     * @brief Notify the host of a parameter change from inside the plugin
+     *        This must be called from the realtime thread
+     * @param parameter_index The index of the parameter that has changed
+     * @param value The new value of the parameter
+     */
+    void notify_parameter_change_rt(VstInt32 parameter_index, float value);
+
+    /**
+      * @brief Notify the host of a parameter change from inside the plugin
+      *        This must be called from a non-rt thread and not from the
+      *        audio thread
+      * @param parameter_index The index of the parameter that has changed
+      * @param value The new value of the parameter
+      */
+    void notify_parameter_change(VstInt32 parameter_index, float value);
+
+    /**
+     * @brief Get the vst time information
+     * @return A populated VstTimeInfo struct
+     */
+    VstTimeInfo* time_info();
+
 private:
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -116,6 +139,8 @@ private:
     std::string _plugin_path;
     LibraryHandle _library_handle;
     AEffect *_plugin_handle;
+
+    VstTimeInfo _time_info;
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
