@@ -146,7 +146,7 @@ class Vst3xWrapper : public Processor
 {
 public:
     Vst3xWrapper(HostControl host_control, const std::string& /* vst_plugin_path */, const std::string& /* plugin_name */) :
-         Processor(host_control) {}
+        Processor(host_control) {}
     ProcessorReturnCode init(float sample_rate) override;
     void process_event(RtEvent /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
