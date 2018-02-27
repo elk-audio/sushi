@@ -247,7 +247,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
-        Time delta_time = std::chrono::microseconds((frame * 1000000) / _sample_rate);
+        Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         _engine->update_time(start_time + delta_time, current_frames + frame);
         process_events();
         process_midi(frame, AUDIO_CHUNK_SIZE);
@@ -286,7 +286,7 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
             jack_port_get_latency_range(port, JackPlaybackLatency, &range);
             sample_latency = std::max(sample_latency, static_cast<int>(range.max));
         }
-        Time latency = std::chrono::microseconds((sample_latency * 1000000) / _sample_rate);
+        Time latency = std::chrono::microseconds((sample_latency * 1'000'000) / _sample_rate);
         _engine->set_output_latency(latency);
         MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
     }

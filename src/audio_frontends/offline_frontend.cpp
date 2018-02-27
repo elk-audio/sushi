@@ -150,7 +150,7 @@ void OfflineFrontend::run()
         // Update time and sample counter
         _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
         samplecount += readcount;
-        usec_time += readcount * 1000000.f / _engine->sample_rate();
+        usec_time += readcount * 1'000'000.f / _engine->sample_rate();
 
         // Process all events until the end of the frame
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )

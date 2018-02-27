@@ -82,7 +82,7 @@ std::shared_ptr<spdlog::logger> setup_logging()
      * that they are defined before calling get_logger()
      */
     const size_t LOGGER_QUEUE_SIZE  = 4096;                 // Should be power of 2
-    const int  MAX_LOG_FILE_SIZE    = 10000000;             // In bytes
+    const int  MAX_LOG_FILE_SIZE    = 10'000'000;           // In bytes
     const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
 
     spdlog::set_level(Logger::min_log_level());
