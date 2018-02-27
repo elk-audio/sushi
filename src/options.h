@@ -86,7 +86,8 @@ enum OptionIndex
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER,
-    OPT_IDX_USE_XENOMAI_RASPA
+    OPT_IDX_USE_XENOMAI_RASPA,
+    OPT_IDX_XENOMAI_DEBUG_MODE_SW
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -195,6 +196,14 @@ const optionparser::Descriptor usage[] =
         "raspa",
         SushiArg::Optional,
         "\t\t-r --raspa \tUse Xenomai real-time frontend with RASPA driver."
+    },
+    {
+        OPT_IDX_XENOMAI_DEBUG_MODE_SW,
+        OPT_TYPE_DISABLED,
+        "",
+        "debug-mode-sw",
+        SushiArg::Optional,
+        "\t\t--debug-mode-sw \tBreak to debugger if a mode switch is detected (Xenomai only)."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

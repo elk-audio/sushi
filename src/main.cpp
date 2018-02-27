@@ -60,6 +60,9 @@ void print_version_and_build_info()
     std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    std::cout << "Audio in/out channels: " << RASPA_N_CHANNELS << std::endl;
+#endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
 }
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
     bool use_jack = false;
     bool use_xenomai_raspa = false;
     bool connect_ports = false;
+    bool debug_mode_switches = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -179,6 +183,10 @@ int main(int argc, char* argv[])
             use_xenomai_raspa = true;
             break;
 
+        case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
+            debug_mode_switches = true;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -202,10 +210,39 @@ int main(int argc, char* argv[])
 
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
-    engine.set_audio_input_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
-    engine.set_audio_output_channels(sushi::audio_frontend::MAX_FRONTEND_CHANNELS);
+
     midi_dispatcher.set_midi_input_ports(1);
     midi_dispatcher.set_midi_output_ports(1);
+
+    sushi::audio_frontend::BaseAudioFrontend* frontend;
+    sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
+    if (use_jack)
+    {
+        MIND_LOG_INFO("Setting up Jack audio frontend");
+        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
+                                                                         jack_server_name,
+                                                                         connect_ports);
+        frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
+    }
+    else if (use_xenomai_raspa)
+    {
+        MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+        fe_config = new sushi::audio_frontend::XenomaiRaspaFrontendConfiguration(debug_mode_switches);
+        frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
+    }
+    else
+    {
+        MIND_LOG_INFO("Setting up offline audio frontend");
+        fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
+        frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
+    }
+
+    auto fe_ret_code = frontend->init(fe_config);
+    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+    {
+        std::cerr << "Error initializing frontend, check logs for details." << std::endl;
+        std::exit(1);
+    }
 
     sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
     auto status = configurator.load_host_config(config_filename);
@@ -222,35 +259,6 @@ int main(int argc, char* argv[])
     }
     configurator.load_midi(config_filename);
 
-    sushi::audio_frontend::BaseAudioFrontend* frontend;
-    sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
-    if (use_jack)
-    {
-        MIND_LOG_INFO("Setting up Jack audio frontend");
-        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
-                                                                         jack_server_name,
-                                                                         connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
-    }
-    else if (use_xenomai_raspa)
-    {
-        MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
-        fe_config = new sushi::audio_frontend::BaseAudioFrontendConfiguration();
-        frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
-    }
-    else
-    {
-        MIND_LOG_INFO("Setting up offline audio frontend");
-        fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
-    }
-
-    auto fe_ret_code = frontend->init(fe_config);
-    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
-    {
-        std::cerr << "Error initializing frontend, check logs for details." << std::endl;
-        std::exit(1);
-    }
     if (!use_jack && !use_xenomai_raspa)
     {
         rapidjson::Document config;
