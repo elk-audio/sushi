@@ -60,6 +60,9 @@ void print_version_and_build_info()
     std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    std::cout << "Audio in/out channels: " << RASPA_N_CHANNELS << std::endl;
+#endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
 }
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
     bool use_jack = false;
     bool use_xenomai_raspa = false;
     bool connect_ports = false;
+    bool debug_mode_switches = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -179,6 +183,10 @@ int main(int argc, char* argv[])
             use_xenomai_raspa = true;
             break;
 
+        case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
+            debug_mode_switches = true;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -219,7 +227,7 @@ int main(int argc, char* argv[])
     else if (use_xenomai_raspa)
     {
         MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
-        fe_config = new sushi::audio_frontend::BaseAudioFrontendConfiguration();
+        fe_config = new sushi::audio_frontend::XenomaiRaspaFrontendConfiguration(debug_mode_switches);
         frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
     }
     else

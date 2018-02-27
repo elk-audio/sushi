@@ -31,6 +31,17 @@ namespace audio_frontend {
  */
 int global_init();
 
+struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
+{
+    XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw) :
+                                                break_on_mode_sw(break_on_mode_sw)
+    {}
+
+    virtual ~XenomaiRaspaFrontendConfiguration()
+    {}
+    bool break_on_mode_sw;
+};
+
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
@@ -91,8 +102,7 @@ namespace sushi {
 namespace audio_frontend {
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    XenomaiRaspaFrontendConfiguration(const std::string,
-                              const std::string) {}
+    XenomaiRaspaFrontendConfiguration(bool) {}
 };
 
 class XenomaiRaspaFrontend : public BaseAudioFrontend
