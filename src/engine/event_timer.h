@@ -66,8 +66,6 @@ private:
     std::atomic<Time>   _incoming_chunk_time{IMMEDIATE_PROCESS};
 };
 
-static_assert(std::atomic<Time>::is_always_lock_free);
-
 } // end event_timer
 } // end sushi
 

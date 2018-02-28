@@ -17,7 +17,9 @@ inline Time calc_chunk_time(float samplerate)
 
 EventTimer::EventTimer(float default_sample_rate) : _sample_rate{default_sample_rate},
                                                     _chunk_time{calc_chunk_time(default_sample_rate)}
-{}
+{
+    assert(EventTimer::_incoming_chunk_time.is_lock_free());
+}
 
 std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
 {
