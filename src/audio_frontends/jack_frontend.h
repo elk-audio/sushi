@@ -89,6 +89,14 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     /**
+     * @brief Connects the OSC frontend to all parameters and processors
+     */
+    void connect_control_frontends() override
+    {
+        _osc_control->connect_all();
+    }
+
+    /**
      * @brief Call to clean up resources and release ports
      */
     void cleanup() override;

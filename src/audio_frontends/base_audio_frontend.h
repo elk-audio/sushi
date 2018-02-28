@@ -69,6 +69,11 @@ public:
     }
 
     /**
+     * @brief Connects any control frontend instatiated (OSC, etc) by the audio frontend
+     */
+    virtual void connect_control_frontends() {};
+
+    /**
      * @brief Free resources allocated during init. stops the frontend if currently running.
      */
     virtual void cleanup() = 0;
