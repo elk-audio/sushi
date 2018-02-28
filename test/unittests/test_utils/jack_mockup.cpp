@@ -68,6 +68,14 @@ int jack_set_sample_rate_callback (jack_client_t* /*client*/,
     return 0;
 }
 
+
+int jack_set_latency_callback (jack_client_t* /*client*/,
+                               JackLatencyCallback /*latency_callback*/,
+                               void* /*arg*/)
+{
+    return 0;
+}
+
 int jack_activate (jack_client_t* client)
 {
     client->callback_function(JACK_NFRAMES, client->instance);
@@ -103,6 +111,15 @@ int jack_get_cycle_times(const jack_client_t* /*client*/, jack_nframes_t* curren
     *period_usecs = FRAMETIME_64_SMP_44100;
     return 0;
 }
+
+void jack_port_get_latency_range (jack_port_t* /*port*/, jack_latency_callback_mode_t /*mode*/,
+                                  jack_latency_range_t* range)
+{
+    range->min = 0;
+    range->max = 0;
+    return;
+}
+
 
 /* Functions below are only added for completion, not implemented
  * and shouldn't be called*/

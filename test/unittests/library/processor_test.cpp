@@ -4,12 +4,15 @@
 #define protected public
 
 #include "library/processor.h"
+#include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
 
 /* Implement dummies of virtual methods to we can instantiate a test class */
 class ProcessorTest : public Processor
 {
+public:
+    ProcessorTest(HostControl host_control) : Processor(host_control) {}
     virtual ~ProcessorTest() {}
     virtual void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
                                ChunkSampleBuffer& /*out_buffer*/) override {}
@@ -25,12 +28,13 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new ProcessorTest;
+        _module_under_test = new ProcessorTest(_host_control.make_host_control_mockup());
     }
     void TearDown()
     {
         delete(_module_under_test);
     }
+    HostControlMockup _host_control;
     Processor* _module_under_test;
 };
 

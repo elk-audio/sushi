@@ -170,6 +170,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/event_timer.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h
+                        src/engine/host_control.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h

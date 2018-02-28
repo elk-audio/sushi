@@ -9,11 +9,12 @@ namespace sushi {
 namespace engine {
 
 
-Track::Track(int channels) : _input_buffer{std::max(channels, 2)},
-                             _output_buffer{std::max(channels, 2)},
-                             _input_busses{1},
-                             _output_busses{1},
-                             _multibus{false}
+Track::Track(HostControl host_control, int channels) : InternalPlugin(host_control),
+                                                       _input_buffer{std::max(channels, 2)},
+                                                       _output_buffer{std::max(channels, 2)},
+                                                       _input_busses{1},
+                                                       _output_busses{1},
+                                                       _multibus{false}
 {
     _max_input_channels = channels;
     _max_output_channels = channels;
@@ -22,11 +23,12 @@ Track::Track(int channels) : _input_buffer{std::max(channels, 2)},
     _common_init();
 }
 
-Track::Track(int input_busses, int output_busses) :  _input_buffer{std::max(input_busses, output_busses) * 2},
-                                                     _output_buffer{std::max(input_busses, output_busses) * 2},
-                                                     _input_busses{input_busses},
-                                                     _output_busses{output_busses},
-                                                     _multibus{(input_busses > 1 || output_busses > 1)}
+Track::Track(HostControl host_control, int input_busses, int output_busses) :  InternalPlugin(host_control),
+                                                                               _input_buffer{std::max(input_busses, output_busses) * 2},
+                                                                               _output_buffer{std::max(input_busses, output_busses) * 2},
+                                                                               _input_busses{input_busses},
+                                                                               _output_busses{output_busses},
+                                                                               _multibus{(input_busses > 1 || output_busses > 1)}
 {
     int channels = std::max(input_busses, output_busses) * 2;
     _max_input_channels = channels;

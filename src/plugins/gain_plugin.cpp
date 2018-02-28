@@ -5,7 +5,7 @@
 namespace sushi {
 namespace gain_plugin {
 
-GainPlugin::GainPlugin()
+GainPlugin::GainPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS;
     _max_output_channels = MAX_CHANNELS;

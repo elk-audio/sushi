@@ -76,12 +76,25 @@ public:
         return static_cast<JackFrontend*>(arg)->internal_samplerate_callback(nframes);
     }
 
+    static void latency_callback(jack_latency_callback_mode_t mode, void *arg)
+    {
+        return static_cast<JackFrontend*>(arg)->internal_latency_callback(mode);
+    }
+
     /**
      * @brief Initialize the frontend and setup Jack client.
      * @param config Configuration struct
      * @return OK on successful initialization, error otherwise.
      */
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
+
+    /**
+     * @brief Connects the OSC frontend to all parameters and processors
+     */
+    void connect_control_frontends() override
+    {
+        _osc_control->connect_all();
+    }
 
     /**
      * @brief Call to clean up resources and release ports
@@ -104,6 +117,7 @@ private:
     /* Internal process callback function */
     int internal_process_callback(jack_nframes_t nframes);
     int internal_samplerate_callback(jack_nframes_t nframes);
+    void internal_latency_callback(jack_latency_callback_mode_t mode);
 
     void process_events();
     void process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count);
@@ -118,7 +132,6 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
-
     RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;

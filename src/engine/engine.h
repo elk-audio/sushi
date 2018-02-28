@@ -20,6 +20,7 @@
 #include "track.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
+#include "engine/host_control.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
@@ -138,6 +139,8 @@ public:
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
 
     virtual void update_time(Time /*timestamp*/, int64_t /*samples*/) = 0;
+
+    virtual void set_output_latency(Time /*latency*/) = 0;
 
     virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
 
@@ -318,9 +321,18 @@ public:
      * @param timestamp Current time in microseconds
      * @param samples Current number of samples processed
      */
-    void update_time(Time timestamp, int64_t samples)
+    void update_time(Time timestamp, int64_t samples) override
     {
         _transport.set_time(timestamp, samples);
+    }
+
+    /**
+     * @brief Inform the engine of the current system latency
+     * @param latency The output latency of the audio system
+     */
+    virtual void set_output_latency(Time latency) override
+    {
+        _transport.set_latency(latency);
     }
 
     /**
@@ -536,6 +548,8 @@ private:
     Transport _transport;
 
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+
+    HostControl _host_control{&_event_dispatcher, &_transport};
 };
 
 /**

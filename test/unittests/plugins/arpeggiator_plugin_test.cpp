@@ -4,6 +4,7 @@
 
 #include "library/rt_event_fifo.h"
 #include "plugins/arpeggiator_plugin.cpp"
+#include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
 using namespace sushi::arpeggiator_plugin;
@@ -78,7 +79,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin();
+        _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);
@@ -89,6 +90,7 @@ protected:
         delete _module_under_test;
     }
     RtEventFifo _fifo;
+    HostControlMockup _host_control;
     arpeggiator_plugin::ArpeggiatorPlugin* _module_under_test;
 };
 

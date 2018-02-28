@@ -2,7 +2,8 @@
 
 #define private public
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
 #include "engine/track.cpp"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
@@ -13,7 +14,7 @@ using namespace engine;
 class DummyProcessor : public Processor
 {
 public:
-    DummyProcessor()
+    DummyProcessor(HostControl host_control) : Processor(host_control)
     {
         _max_input_channels = 2;
         _max_output_channels = 2;
@@ -36,7 +37,7 @@ public:
 class DummyMonoProcessor : public DummyProcessor
 {
 public:
-    DummyMonoProcessor()
+    DummyMonoProcessor(HostControl host_control) :DummyProcessor(host_control)
     {
         _max_input_channels = 1;
         _max_output_channels = 1;
@@ -50,17 +51,18 @@ class TrackTest : public ::testing::Test
 protected:
     TrackTest() {}
 
-    Track _module_under_test{2};
+    HostControlMockup _host_control;
+    Track _module_under_test{_host_control.make_host_control_mockup(), 2};
 };
 
 
 TEST_F(TrackTest, TestChannelManagement)
 {
-    DummyProcessor test_processor;
+    DummyProcessor test_processor(_host_control.make_host_control_mockup());
     test_processor.set_input_channels(2);
     /* Add the test processor to a mono track and verify
      * it is configured in mono config */
-    Track _module_under_test_mono(1);
+    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1);
     _module_under_test_mono.set_input_channels(1);
     _module_under_test_mono.add(&test_processor);
     EXPECT_EQ(1, test_processor.input_channels());
@@ -68,8 +70,8 @@ TEST_F(TrackTest, TestChannelManagement)
 
     /* Put a stereo and then a mono-only plugin on a
      * stereo track */
-    gain_plugin::GainPlugin gain_plugin;
-    DummyMonoProcessor mono_processor;
+    gain_plugin::GainPlugin gain_plugin(_host_control.make_host_control_mockup());
+    DummyMonoProcessor mono_processor(_host_control.make_host_control_mockup());
     _module_under_test.set_output_channels(1);
     _module_under_test.add(&gain_plugin);
     _module_under_test.add(&mono_processor);
@@ -90,7 +92,7 @@ TEST_F(TrackTest, TestChannelManagement)
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
-    Track module_under_test(2, 2);
+    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
     EXPECT_EQ(4, module_under_test.parameter_count());
@@ -100,7 +102,7 @@ TEST_F(TrackTest, TestMultibusSetup)
 
 TEST_F(TrackTest, TestAddAndRemove)
 {
-    DummyProcessor test_processor;
+    DummyProcessor test_processor(_host_control.make_host_control_mockup());
     _module_under_test.add(&test_processor);
     EXPECT_EQ(1u, _module_under_test._processors.size());
     EXPECT_FALSE(_module_under_test.remove(1234567u));
@@ -111,7 +113,7 @@ TEST_F(TrackTest, TestAddAndRemove)
 
 TEST_F(TrackTest, TestNestedBypass)
 {
-    DummyProcessor test_processor;
+    DummyProcessor test_processor(_host_control.make_host_control_mockup());
     _module_under_test.add(&test_processor);
     _module_under_test.set_bypassed(true);
     EXPECT_TRUE(test_processor.bypassed());
@@ -128,7 +130,7 @@ TEST_F(TrackTest, TestEmptyChainRendering)
 
 TEST_F(TrackTest, TestRenderingWithProcessors)
 {
-    passthrough_plugin::PassthroughPlugin plugin;
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     _module_under_test.add(&plugin);
 
@@ -141,7 +143,7 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
 
 TEST_F(TrackTest, TestPanAndGain)
 {
-    passthrough_plugin::PassthroughPlugin plugin;
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     _module_under_test.add(&plugin);
     auto gain_param = _module_under_test.parameter_from_name("gain");
@@ -171,7 +173,7 @@ TEST_F(TrackTest, TestEventProcessing)
     ChunkSampleBuffer buffer(2);
     RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
-    passthrough_plugin::PassthroughPlugin plugin;
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_event_output(&event_queue);
     _module_under_test.set_input_channels(2);
@@ -191,7 +193,7 @@ TEST_F(TrackTest, TestEventForwarding)
     ChunkSampleBuffer buffer(2);
     RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
-    passthrough_plugin::PassthroughPlugin plugin;
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_event_output(&event_queue);
 

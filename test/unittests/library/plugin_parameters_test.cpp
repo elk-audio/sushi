@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "library/plugin_parameters.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 using namespace sushi;
 

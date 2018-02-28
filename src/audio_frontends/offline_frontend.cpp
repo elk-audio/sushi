@@ -36,6 +36,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     _buffer = ChunkSampleBuffer(_soundfile_info.channels);
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
     _engine->set_audio_output_channels(MAX_FRONTEND_CHANNELS);
+    _engine->set_output_latency(std::chrono::microseconds(0));
     auto sample_rate_file = _soundfile_info.samplerate;
     if (sample_rate_file != _engine->sample_rate())
     {
@@ -149,7 +150,7 @@ void OfflineFrontend::run()
         // Update time and sample counter
         _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
         samplecount += readcount;
-        usec_time += readcount * 1000000.f / _engine->sample_rate();
+        usec_time += readcount * 1'000'000.f / _engine->sample_rate();
 
         // Process all events until the end of the frame
         while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )

@@ -2,7 +2,8 @@
 
 #define private public
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
 #include "plugins/sample_player_voice.cpp"
 #include "plugins/sample_player_plugin.cpp"
 #include "library/rt_event_fifo.h"
@@ -93,7 +94,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new SamplePlayerPlugin();
+        _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(48000);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
@@ -101,7 +102,7 @@ protected:
     {
         delete _module_under_test;
     }
-
+    HostControlMockup _host_control;
     SamplePlayerPlugin* _module_under_test;
 
 };

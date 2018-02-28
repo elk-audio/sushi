@@ -37,7 +37,9 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Vst3xWrapper(const std::string& vst_plugin_path, const std::string& plugin_name) : _loader{vst_plugin_path, plugin_name}
+    Vst3xWrapper(HostControl host_control, const std::string& vst_plugin_path, const std::string& plugin_name) :
+            Processor(host_control),
+            _loader{vst_plugin_path, plugin_name}
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -95,6 +97,8 @@ private:
      */
     void _forward_events(Steinberg::Vst::ProcessData& data);
 
+    void _fill_processing_context();
+
     inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);
 
     struct SpecialParameter
@@ -141,7 +145,8 @@ namespace vst3 {
 class Vst3xWrapper : public Processor
 {
 public:
-    Vst3xWrapper(const std::string & /*path*/, const std::string & /*name*/) {}
+    Vst3xWrapper(HostControl host_control, const std::string& /* vst_plugin_path */, const std::string& /* plugin_name */) :
+        Processor(host_control) {}
     ProcessorReturnCode init(float sample_rate) override;
     void process_event(RtEvent /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}

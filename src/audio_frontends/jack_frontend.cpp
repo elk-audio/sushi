@@ -23,7 +23,6 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
         return ret_code;
     }
     _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
-    _osc_control->connect_all();
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
@@ -82,6 +81,12 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
     if (ret != 0)
     {
         MIND_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    ret = jack_set_latency_callback(_client, latency_callback, this);
+    if (ret != 0)
+    {
+        MIND_LOG_ERROR("Failed to set latency callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     auto status = setup_sample_rate();
@@ -216,6 +221,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
             MIND_LOG_WARNING("Failed to connect Midi port, error {}.", ret);
         }
     }
+
     jack_free(midi_ports);
     return AudioFrontendStatus::OK;
 }
@@ -240,7 +246,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
     {
-        Time delta_time = std::chrono::microseconds((frame * 1000000) / _sample_rate);
+        Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         _engine->update_time(start_time + delta_time, current_frames + frame);
         process_events();
         process_midi(frame, AUDIO_CHUNK_SIZE);
@@ -264,6 +270,26 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
     return 0;
 }
 
+void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
+{
+    /* Currently all we want to know is the output latency to a physical
+     * audio output.
+     * We also don't support individual latency compensation on ports so
+     * we get the maximum latency and pass that on to Sushi. */
+    if (mode == JackPlaybackLatency)
+    {
+        int sample_latency = 0;
+        jack_latency_range_t range;
+        for (auto& port : _output_ports)
+        {
+            jack_port_get_latency_range(port, JackPlaybackLatency, &range);
+            sample_latency = std::max(sample_latency, static_cast<int>(range.max));
+        }
+        Time latency = std::chrono::microseconds((sample_latency * 1'000'000) / _sample_rate);
+        _engine->set_output_latency(latency);
+        MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
+    }
+}
 
 void inline JackFrontend::process_events()
 {

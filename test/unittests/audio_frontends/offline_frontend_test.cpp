@@ -4,9 +4,9 @@
 #define private public
 
 #include "audio_frontends/offline_frontend.cpp"
-#include "engine_mockup.h"
+#include "test_utils/engine_mockup.h"
 #include "engine/json_configurator.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 using ::testing::internal::posix::GetEnv;
 

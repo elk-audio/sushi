@@ -28,7 +28,7 @@ class InternalPlugin : public Processor
 public:
     MIND_DECLARE_NON_COPYABLE(InternalPlugin)
 
-    InternalPlugin()
+    explicit InternalPlugin(HostControl host_control) : Processor(host_control)
     {
         _max_input_channels = STOMPBOX_MAX_CHANNELS;
         _max_output_channels = STOMPBOX_MAX_CHANNELS;

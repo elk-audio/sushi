@@ -268,6 +268,8 @@ int main(int argc, char* argv[])
             static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
         }
     }
+
+    frontend->connect_control_frontends();
     frontend->run();
 
     if (use_jack || use_xenomai_raspa)

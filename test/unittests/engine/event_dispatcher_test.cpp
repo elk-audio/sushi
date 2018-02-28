@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 #define private public
 #define protected public
 
 #include "engine/event_dispatcher.cpp"
-#include "../audio_frontends/engine_mockup.h"
+#include "test_utils/engine_mockup.h"
 
 using namespace sushi;
 using namespace sushi::dispatcher;

@@ -11,6 +11,8 @@ namespace vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
 
+constexpr uint32_t SUSHI_HOST_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
+                                             Steinberg::Vst::ProcessContext::kContTimeValid;
 MIND_GET_LOGGER;
 
 void Vst3xWrapper::_cleanup()
@@ -152,6 +154,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     }
     else
     {
+        _fill_processing_context();
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
         _forward_events(_process_data);
@@ -364,6 +367,7 @@ bool Vst3xWrapper::_setup_channels()
 
 bool Vst3xWrapper::_setup_processing()
 {
+    _process_data.processContext->sampleRate = _sample_rate;
     Steinberg::Vst::ProcessSetup setup;
     setup.maxSamplesPerBlock = AUDIO_CHUNK_SIZE;
     setup.processMode = Steinberg::Vst::ProcessModes::kRealtime;
@@ -412,6 +416,15 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
         }
     }
 
+}
+
+void Vst3xWrapper::_fill_processing_context()
+{
+    _process_data.processContext->state = SUSHI_HOST_CAPABILITIES;
+    // TODO - get time and samples and fill here.
+    _process_data.processContext->projectTimeSamples = 0;
+    _process_data.processContext->continousTimeSamples = 0;
+    _process_data.processContext->systemTime = 0;
 }
 
 inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset)

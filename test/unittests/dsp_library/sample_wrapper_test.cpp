@@ -2,7 +2,7 @@
 
 #define private public
 
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 #include "dsp_library/sample_wrapper.h"
 
 using namespace dsp;

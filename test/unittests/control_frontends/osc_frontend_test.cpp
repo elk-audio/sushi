@@ -7,7 +7,7 @@
 #include "control_frontends/osc_frontend.cpp"
 #pragma GCC diagnostic pop
 
-#include "audio_frontends/engine_mockup.h"
+#include "test_utils/engine_mockup.h"
 
 using namespace sushi;
 using namespace sushi::control_frontend;

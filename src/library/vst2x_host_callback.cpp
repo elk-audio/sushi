@@ -1,4 +1,6 @@
 #include "vst2x_host_callback.h"
+#include "vst2x_wrapper.h"
+
 #include "logging.h"
 
 namespace sushi {
@@ -9,7 +11,7 @@ MIND_GET_LOGGER;
 // Disable unused variable warnings as the host callback just print debug info atm
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
+VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
                                     VstInt32 opcode, VstInt32 index,
                                     VstIntPtr value, void* ptr, float opt)
 {
@@ -22,6 +24,13 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
     case audioMasterVersion :
         result = kVstVersion;
         break;
+
+    case  audioMasterGetTime:
+    {
+        // Pass a pointer to a VstTimeInfo populated with updated data to the plugin
+        auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+        result = reinterpret_cast<VstIntPtr>(wrapper_instance->time_info());
+    }
     default:
         break;
     }
