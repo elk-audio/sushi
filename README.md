@@ -27,16 +27,14 @@ Configuration files are used for global host configs, track and plugins configur
 
 Sushi listen on port 24024 for the following OSC commands:
 
-|---------------------------------------|:--------:|--------------------------------------:| 
-|              Path                     | Typespec |                  Arguments            | 
-|---------------------------------------|:--------:|--------------------------------------:| 
-|/parameter/plugin_id/parameter_name    |  f       | parameter value                       | 
-|/keyboard/track_name                   |  sif     | event type, note index, norm. value   | 
-|/engine/add_track                      |  si      | name, n. of channels                  | 
-|/engine/delete_track                   |  s       | name                                  | 
-|/engine/add_processor                  |  sssss   | track, id, name, file path, type      | 
-|/engine/delete_processor               |  ss      | track name, plugin id                 | 
-|---------------------------------------|:--------:|--------------------------------------:| 
+Path                                   | Typespec | Arguments
+---------------------------------------|----------|--------------------------------------
+/parameter/plugin_id/parameter_name    |  f       | parameter value
+/keyboard/track_name                   |  sif     | event type, note index, norm. value
+/engine/add_track                      |  si      | name, n. of channels
+/engine/delete_track                   |  s       | name
+/engine/add_processor                  |  sssss   | track, id, name, file path, type
+/engine/delete_processor               |  ss      | track name, plugin id
 
 
 Copyright 2016-2018 MIND Music Labs AB, Stockholm, Sweden.
