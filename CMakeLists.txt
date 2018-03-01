@@ -283,7 +283,7 @@ if (${WITH_XENOMAI})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
 endif()
 
-add_subdirectory(third-party)
+add_subdirectory(third-party EXCLUDE_FROM_ALL)
 add_subdirectory(test)
 
 ####################
@@ -298,3 +298,29 @@ add_dependencies(sushi liblo)
 if (${WITH_VST3})
     add_dependencies(sushi vst3_host sdk base)
 endif()
+
+####################
+#  Install         #
+####################
+set(DOC_FILES_INSTALL
+    "${PROJECT_SOURCE_DIR}/LICENSE"
+    "${PROJECT_SOURCE_DIR}/README.md"
+    "${PROJECT_SOURCE_DIR}/HISTORY.md"
+)
+set(EXAMPLE_CONFIGS_INSTALL
+    "${PROJECT_SOURCE_DIR}/misc/config_files/config_empty.json"
+    "${PROJECT_SOURCE_DIR}/misc/config_files/config_fx.json"
+    "${PROJECT_SOURCE_DIR}/misc/config_files/config_synth.json"
+    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multi_track.json"
+    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multichannel_plugin.json"
+    "${PROJECT_SOURCE_DIR}/test/data/config.json"
+)
+
+install(TARGETS sushi DESTINATION bin)
+foreach(ITEM ${DOC_FILES_INSTALL})
+    install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_PREFIX})
+endforeach()
+foreach(ITEM ${EXAMPLE_CONFIGS_INSTALL})
+    install(FILES ${ITEM} DESTINATION example_configs)
+endforeach()
+
