@@ -1,0 +1,36 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "mode" : "stereo",
+            "inputs" : [
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "/home/mind/plugins/mdaJX10.so",
+                    "name" : "jx10",
+                    "type"   : "vst2x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "track": "main",
+		        "raw_midi" : true
+            }
+        ]
+    }
+}

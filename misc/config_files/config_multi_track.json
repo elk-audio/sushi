@@ -1,0 +1,79 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "guitar",
+            "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "/home/minddev/plugins/mdaCombo.so",
+                    "name" : "g1_combo",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaBandisto.so",
+                    "name" : "g1_band_distortion",
+                    "type"   : "vst2x"
+                }
+            ]
+        },
+        {
+            "name" : "synth",
+            "mode" : "stereo",
+            "inputs" : [
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "/home/minddev/plugins/mdaEPiano.so",
+                    "name" : "epiano",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaRezFilter.so",
+                    "name" : "g2_compressor",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaAmbience.so",
+                    "name" : "g2_band_distortion",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaDelay.so",
+                    "name" : "g2_leslie",
+                    "type"   : "vst2x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "track": "synth",
+		        "raw_midi" : true
+            }
+        ]
+    }
+}

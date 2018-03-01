@@ -1,0 +1,47 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "/home/minddev/plugins/mdaOverdrive.so",
+                    "name" : "overdrive",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaDubDelay.so",
+                    "name" : "dubdelay",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaDelay.so",
+                    "name" : "delay",
+                    "type"   : "vst2x"
+                },
+                {
+                    "path" : "/home/minddev/plugins/mdaAmbience.so",
+                    "name" : "ambience",
+                    "type"   : "vst2x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+    }
+}
