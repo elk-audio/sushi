@@ -26,8 +26,8 @@ std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
     auto diff = timestamp - _incoming_chunk_time.load();
     if (diff < _chunk_time)
     {
-        int offset = static_cast<int>(64 * diff / _chunk_time);
-        return std::make_pair(true, std::max(0, offset));
+        int64_t offset = (AUDIO_CHUNK_SIZE * diff) / _chunk_time;
+        return std::make_pair(true, std::max(0L, offset));
     }
     else
     {
