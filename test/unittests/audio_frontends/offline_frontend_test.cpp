@@ -1,12 +1,12 @@
 #include <fstream>
 #include "gtest/gtest.h"
 
-#define private public
-
-#include "audio_frontends/offline_frontend.cpp"
 #include "test_utils/engine_mockup.h"
 #include "engine/json_configurator.h"
 #include "test_utils/test_utils.h"
+
+#define private public
+#include "audio_frontends/offline_frontend.cpp"
 
 using ::testing::internal::posix::GetEnv;
 

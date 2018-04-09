@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
 
-#define private public
-
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
-#include "plugins/sample_player_voice.cpp"
-#include "plugins/sample_player_plugin.cpp"
 #include "library/rt_event_fifo.h"
 
+#define private public
+
+#include "plugins/sample_player_voice.cpp"
+#include "plugins/sample_player_plugin.cpp"
 
 using namespace sushi;
 using namespace sushi::sample_player_plugin;

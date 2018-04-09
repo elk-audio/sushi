@@ -2,9 +2,11 @@
 
 #define private public
 #define protected public
-
 #include "library/processor.h"
+#undef private
+
 #include "test_utils/host_control_mockup.h"
+
 
 using namespace sushi;
 

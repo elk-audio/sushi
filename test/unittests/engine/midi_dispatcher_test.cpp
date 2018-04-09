@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#define private public
 
 #include "engine/midi_dispatcher.cpp"
 #include "test_utils/engine_mockup.h"

@@ -1,28 +1,32 @@
-[submodule "third-party/EASTL"]
+[submodule "EA Stl"]
 	path = third-party/EASTL
 	url = https://github.com/electronicarts/EASTL.git
-[submodule "third-party/liblo"]
+[submodule "Liblo"]
 	path = third-party/liblo
 	url = git://github.com/radarsat1/liblo.git
-[submodule "vst3_pluginterfaces"]
+[submodule "Vst3 Pluginterfaces"]
 	path = third-party/vstsdk3/pluginterfaces
 	url = git://github.com/steinbergmedia/vst3_pluginterfaces.git
-[submodule "vst3_cmake"]
+[submodule "Vst3 Cmake"]
 	path = third-party/vstsdk3/cmake
 	url = git://github.com/steinbergmedia/vst3_cmake.git
-[submodule "vst3_base"]
+[submodule "Vst3 Base"]
 	path = third-party/vstsdk3/base
 	url = git://github.com/steinbergmedia/vst3_base.git
-[submodule "vst3_public_sdk"]
+[submodule "Vst3 Public Sdk"]
 	path = third-party/vstsdk3/public.sdk
 	url = git@bitbucket.org:mindswteam/vst3_public_sdk_fork.git
-[submodule "third-party/rapidjson"]
+[submodule "Rapid Json"]
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = master
-[submodule "third-party/spdlog"]
+[submodule "Spdlog"]
 	path = third-party/spdlog
 	url = git://github.com/gabime/spdlog.git
-[submodule "raspalib"]
+[submodule "Raspalib"]
 	path = raspalib
 	url = git@bitbucket.org:mindswteam/raspalib.git
+[submodule "Ableton Link"]
+	path = third-party/link
+	url = git://github.com/Ableton/link.git
+	

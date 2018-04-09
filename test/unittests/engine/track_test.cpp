@@ -2,11 +2,15 @@
 
 #define private public
 
+#include "engine/track.cpp"
+#undef private
+
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
-#include "engine/track.cpp"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
+
+
 
 using namespace sushi;
 using namespace engine;

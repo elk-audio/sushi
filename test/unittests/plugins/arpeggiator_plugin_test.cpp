@@ -1,10 +1,11 @@
 #include "gtest/gtest.h"
 
+#include "library/rt_event_fifo.h"
+#include "test_utils/host_control_mockup.h"
+
 #define private public
 
-#include "library/rt_event_fifo.h"
 #include "plugins/arpeggiator_plugin.cpp"
-#include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
 using namespace sushi::arpeggiator_plugin;

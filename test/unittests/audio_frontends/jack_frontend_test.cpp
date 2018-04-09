@@ -1,10 +1,11 @@
 #include "gtest/gtest.h"
 
-#define private public
-#include "test_utils/jack_mockup.cpp"
 #include "test_utils/engine_mockup.h"
-#include "audio_frontends/jack_frontend.cpp"
+#include "test_utils/jack_mockup.cpp"
 #include "control_frontends/alsa_midi_frontend.cpp"
+
+#define private public
+#include "audio_frontends/jack_frontend.cpp"
 
 
 using ::testing::internal::posix::GetEnv;

@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#define private public
 
 #include "library/event.cpp"
 
