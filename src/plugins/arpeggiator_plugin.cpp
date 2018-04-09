@@ -63,7 +63,7 @@ void ArpeggiatorPlugin::process_event(RtEvent event)
             {
                 _arp.set_range(static_cast<int>(typed_event->value()));
             }
-            /* Intentional fall through */
+            __attribute__ ((fallthrough));
         }
         default:
             InternalPlugin::process_event(event);

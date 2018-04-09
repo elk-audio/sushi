@@ -511,6 +511,9 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
         case PluginType::VST3X:
             plugin = new vst3::Vst3xWrapper(_host_control, plugin_path, plugin_uid);
             break;
+
+        default:
+            __builtin_unreachable(); /* Will make the compiler happy */
     }
 
     auto processor_status = plugin->init(_sample_rate);
