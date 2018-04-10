@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "EASTL/vector.h"
+#include "ableton/Link.hpp"
 
 #include "engine/event_dispatcher.h"
 #include "track.h"
@@ -550,6 +551,8 @@ private:
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
+
+    ableton::Link _link_controller{120};
 };
 
 /**

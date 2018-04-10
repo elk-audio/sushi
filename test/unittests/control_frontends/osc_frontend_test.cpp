@@ -1,13 +1,15 @@
 #include <thread>
 #include "gtest/gtest.h"
 
+#include "ableton/Link.hpp"
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define private public
 #include "control_frontends/base_control_frontend.cpp"
 #include "control_frontends/osc_frontend.cpp"
 #pragma GCC diagnostic pop
-
 #include "test_utils/engine_mockup.h"
+
 
 using namespace sushi;
 using namespace sushi::control_frontend;

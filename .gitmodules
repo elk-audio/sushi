@@ -29,4 +29,3 @@
 [submodule "Ableton Link"]
 	path = third-party/link
 	url = git://github.com/Ableton/link.git
-	

@@ -218,6 +218,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include"
                  "${PROJECT_SOURCE_DIR}/third-party")
 
 # /usr/local doesn't get added by default in Mac OS X
@@ -225,6 +226,7 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
+include(third-party/link/AbletonLinkConfig.cmake)
 
 #################################
 #  Linked libraries             #
@@ -237,6 +239,7 @@ set(COMMON_LIBRARIES
     sndfile
     pthread
     dl
+    Ableton::Link
 )
 
 if (${WITH_VST3})

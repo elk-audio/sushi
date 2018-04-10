@@ -3,6 +3,7 @@ include(ExternalProject)
 
 add_subdirectory(EASTL)
 add_subdirectory(vstsdk3 EXCLUDE_FROM_ALL)
+#add_subdirectory(link EXCLUDE_FROM_ALL)
 
 #####################################################
 #  External Projects definitions (non-Cmake based)  #

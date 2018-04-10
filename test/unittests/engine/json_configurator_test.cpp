@@ -1,9 +1,9 @@
 #include <fstream>
 #include "gtest/gtest.h"
+#include "ableton/Link.hpp"
 
 #define private public
 #define protected public
-
 #include "engine/engine.h"
 #include "engine/midi_dispatcher.h"
 #include "engine/json_configurator.cpp"

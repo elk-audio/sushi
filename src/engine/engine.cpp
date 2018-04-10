@@ -20,13 +20,35 @@ constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 
 MIND_GET_LOGGER;
 
+void peer_callback(size_t peers)
+{
+    MIND_LOG_INFO("Ableton link reports {} peers connected ", peers);
+}
+
+void tempo_callback(double tempo)
+{
+    MIND_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
+}
+
+void start_stop_callback(bool playing)
+{
+    MIND_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
+}
+
+
 AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate)
 {
     _event_dispatcher.run();
+    _link_controller.setNumPeersCallback(peer_callback);
+    _link_controller.setTempoCallback(tempo_callback);
+    _link_controller.setStartStopCallback(start_stop_callback);
+    _link_controller.enableStartStopSync(true);
+    _link_controller.enable(true);
 }
 
 AudioEngine::~AudioEngine()
 {
+    _link_controller.enable(false);
     _event_dispatcher.stop();
 }
 
@@ -253,6 +275,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
 
     _event_dispatcher.set_time(_transport.current_time());
     auto state = _state.load();
+
+    auto link_session = _link_controller.captureAppSessionState();
 
     for (const auto& c : _in_audio_connections)
     {

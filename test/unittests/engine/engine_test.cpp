@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+/* include this first, otherwise we break it when defining private as public */
+#include "ableton/Link.hpp"
 
 #include "gtest/gtest.h"
 #include "test_utils/test_utils.h"
