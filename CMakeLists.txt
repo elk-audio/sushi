@@ -63,8 +63,11 @@ add_definitions( -D__cdecl= )
 # Change these instead than the CMAKE_*_FLAGS directly, and avoid
 # putting target-specific definitions here.
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Preprocessor
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -std=c++17 -fno-rtti")
+set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -fno-rtti")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
         set(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS} -faligned-new")
