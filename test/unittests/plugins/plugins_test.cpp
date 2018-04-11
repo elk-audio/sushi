@@ -25,7 +25,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new passthrough_plugin::PassthroughPlugin(_host_control.make_host_control_mockup());
+        _module_under_test = new passthrough_plugin::PassthroughPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
     }
 
     void TearDown()
@@ -129,7 +129,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new equalizer_plugin::EqualizerPlugin(_host_control.make_host_control_mockup());
+        _module_under_test = new equalizer_plugin::EqualizerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
@@ -195,7 +195,7 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new peak_meter_plugin::PeakMeterPlugin(_host_control.make_host_control_mockup());
+        _module_under_test = new peak_meter_plugin::PeakMeterPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);

@@ -9,6 +9,8 @@
 using namespace sushi;
 using namespace sushi::arpeggiator_plugin;
 
+constexpr float TEST_SAMPLERATE = 48000;
+
 class TestArpeggiator : public ::testing::Test
 {
 protected:
@@ -79,8 +81,8 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control.make_host_control_mockup());
-        ProcessorReturnCode status = _module_under_test->init(48000);
+        _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);
     }
