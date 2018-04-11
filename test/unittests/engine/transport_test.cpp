@@ -8,15 +8,6 @@ using namespace sushi::engine;
 constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0);
 constexpr float TEST_SAMPLERATE = 48000;
 
-TEST(TestTransportInternal, TestTimesignatureMultiplierCalculation)
-{
-    EXPECT_EQ(1, calc_qn_multipler({4, 4}));
-    EXPECT_EQ(1, calc_qn_multipler({3, 4}));
-    EXPECT_EQ(3, calc_qn_multipler({6, 8}));
-    EXPECT_EQ(3, calc_qn_multipler({9, 8}));
-    EXPECT_EQ(2, calc_qn_multipler({4, 8}));
-}
-
 class TestTransport : public ::testing::Test
 {
 protected:
@@ -59,53 +50,53 @@ TEST_F(TestTransport, TestTimeline44Time)
     _module_under_test.set_time_signature({4, 4});
 
     /* Check that the starting point is 0 */
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_quarter_notes());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_beats(0));
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_beats(0));
 
     /* Advance time by 1 second equal to 1/2 bar at 120 bpm */
     _module_under_test.set_time(std::chrono::seconds(1), 32768 );
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_quarter_notes());
+    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
+
+    /* Test also that offset works correctly */
+    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_beats(32768 / 2));
+    EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_beats(32768));
 
     /* Advance time by 1.5 second equal to 3/4 bar at 120 bpm  which should bring us
      * in to the next bar*/
     _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * 32768 / 2);
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(5.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_bar_start_quarter_notes());
+    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(5.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_bar_start_beats());
 }
 
 TEST_F(TestTransport, TestTimeline68Time)
 {
-    /* Test the above but with a triplet time signature so beats and quarter notes differ */
+    /* Test the above but with another time signature  */
     _module_under_test.set_sample_rate(32768);
     _module_under_test.set_tempo(120);
     _module_under_test.set_time_signature({6, 8});
 
     /* Check that the starting point is 0 */
     _module_under_test.set_time(std::chrono::seconds(0), 0);
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_quarter_notes());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
 
-    /* Advance time by 1/2 second equal to 1/2 bar at 120 bpm */
-    _module_under_test.set_time(std::chrono::milliseconds(500), 32768 / 2);
-    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_quarter_notes());
+    /* Advance time by 1 second equal to 2/3 bar at 120 bpm */
+    _module_under_test.set_time(std::chrono::seconds(1), 32768 );
+    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
 
-    /* Advance time by 1 second equal to 1 bar at 120 bpm
+    /* Advance time by 1 second equal to 4/3 bar at 120 bpm
      * which should bring us halfway  in to the next bar */
-    _module_under_test.set_time(std::chrono::milliseconds(1500), 3 * 32768 / 2);
-    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_beat());
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_quarter_notes());
-    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_quarter_notes());
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_start_quarter_notes());
+    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * 32768 / 2);
+    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
+    EXPECT_FLOAT_EQ(5.0f, _module_under_test.current_beats());
+    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_start_beats());
 }

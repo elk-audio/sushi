@@ -61,10 +61,10 @@ public:
     void set_time_signature(TimeSignature signature);
 
     /**
-     * @brief Set the tempo of the engine
+     * @brief Set the tempo of the engine in beats (quarter notes) per minute
      * @param tempo The new tempo in beats per minute
      */
-    void set_tempo(float tempo);
+    void set_tempo(float tempo) {_tempo = tempo;}
 
     /**
      * @brief Set the current mode of synchronising tempo and beats
@@ -76,7 +76,7 @@ public:
      * @return Set the sample rate.
      * @param sample_rate The current sample rate the engine is running at
      */
-    void set_sample_rate(float sample_rate);
+    void set_sample_rate(float sample_rate) {_samplerate = sample_rate;}
 
     /**
      * @brief Query the current time, Safe to call from rt and non-rt context. If called from
@@ -108,58 +108,53 @@ public:
     float current_tempo() const {return _tempo;}
 
     /**
-     * @brief Query the current position in the bar. Return a double in the range from 0 to the
-     *        current time signature numerator. Safe to call from rt and non-rt context but will
-     *        only return approximate values if called from a non-rt context
-     * @return A double representing the position in the current bar.
-     */
-    double current_bar_beat() const {return _current_bar_qn_count * _qn_multiplier;}
-
-    /**
-    * @brief Query the number of quarter notes in the current bar. The number of quarter notes
-     *       depend on the time signature set. For 4/4 time this will return a float in the
-     *       range (0, 4), for 6/8 time this will return a range (0, 2).
-     *       Safe to call from rt and non-rt context but will only return approximate values
-     *       if called from a non-rt context
+    * @brief Query the position in beats (quarter notes) in the current bar with an optional
+    *        sample offset from the start of the current processing chunk.
+    *        The number of quarter notes in a bar will depend on the time signature set.
+    *        For 4/4 time this will return a float in the range (0, 4), for 6/8 time this
+    *        will return a range (0, 2). Safe to call from rt and non-rt context but will
+    *        only return approximate values if called from a non-rt context
+    * @param samples The number of samples offset form sample 0 in the current audio chunk
     * @return A double representing the position in the current bar.
     */
-    double current_bar_quarter_notes() const {return _current_bar_qn_count;}
+    double current_bar_beats(int samples) const;
+    double current_bar_beats() const {return _current_bar_beat_count;}
 
     /**
-     * @brief Query the current position in quarter notes. This runs continuously and is
-     *        monotonically increasing. Safe to call from rt and non-rt context but will
-     *        only return approximate values if called from a non-rt context
+     * @brief Query the current position in beats (quarter notes( with an optional sample
+     *        offset from the start of the current processing chunk. This runs continuously
+     *        and is monotonically increasing. Safe to call from rt and non-rt context but
+     *        will only return approximate values if called from a non-rt context
+     * @param samples The number of samples offset form sample 0 in the current audio chunk
      * @return A double representing the current position in quarter notes.
      */
-    double current_quarter_notes() const {return _qn_count;}
+    double current_beats(int samples) const;
+    double current_beats() const {return _beat_count;}
 
     /**
-     * @return Query the position, in quarter notes, of the start of the current bar. Safe
-     *         to call from rt and non-rt context but will only return approximate values
+     * @return Query the position, in beats (quarter notes), of the start of the current bar.
+     *         Safe to call from rt and non-rt context but will only return approximate values
      *         if called from a non-rt context
      * @return A double representing the start position of the current bar in quarter notes
      */
-    double current_bar_start_quarter_notes() const {return _bar_start_qn_count;}
-
+    double current_bar_start_beats() const {return _bar_start_beat_count;}
 
 private:
-    void _update_coeffcients();
+    void _update_internals();
 
     int64_t         _sample_count{0};
     Time            _time{0};
     Time            _latency{0};
     float           _tempo{120};
-    double          _current_bar_qn_count{0.0};
-    double          _qn_count{0.0};
-    double          _bar_start_qn_count{0};
-    double          _qns_per_chunk{0};
-    float           _qn_multiplier{1};
-    float           _qns_per_bar;
+    double          _current_bar_beat_count{0.0};
+    double          _beat_count{0.0};
+    double          _bar_start_beat_count{0};
+    double          _beats_per_chunk{0};
+    float           _beats_per_bar;
     float           _samplerate{};
     SyncMode        _sync_mode{SyncMode::MASTER};
     TimeSignature   _time_signature{4, 4};
 };
-
 
 } // namespace engine
 } // namespace sushi
