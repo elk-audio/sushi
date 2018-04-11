@@ -110,6 +110,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/json_configurator.cpp
                       src/engine/receiver.cpp
                       src/engine/event_timer.cpp
+                      src/engine/transport.cpp
                       src/library/event.cpp
                       src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
@@ -171,6 +172,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h
                         src/engine/host_control.h
+                        src/engine/transport.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/passthrough_plugin.h

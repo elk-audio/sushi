@@ -11,30 +11,153 @@
 namespace sushi {
 namespace engine {
 
+/**
+ * @brief Mode of tempo/beat synchronization in the engine
+ */
+enum class SyncMode
+{
+    MASTER,
+    MIDI_SLAVE,
+    ABLETON_LINK
+};
+
+/**
+ * @brief Struct to represent a defined time signature
+ */
+struct TimeSignature
+{
+    int numerator;
+    int denominator;
+};
+
 class Transport
 {
 public:
-    Transport() {}
+    explicit Transport(float sample_rate) : _samplerate(sample_rate) {}
     ~Transport() {}
 
-    void set_time(Time timestamp, int64_t samples)
-    {
-        _time = timestamp + _latency;
-        _sample_count = samples;
-    }
+    /**
+     * @brief Set the current time. Called from the audio thread
+     * @param timestamp The current timestamp
+     * @param samples   The number of samples passed
+     */
+    void set_time(Time timestamp, int64_t samples);
 
+    /**
+     * @brief Set the output latency, i.e. the time it takes for the audio to travel through
+     *        the driver stack to a physical output, including any DAC latency. Should be
+     *        called by the audio frontend
+     * @param output_latency The output latency
+     */
     void set_latency(Time output_latency)
     {
         _latency = output_latency;
     }
 
-    Time current_time() const {return _time;}
+    /**
+     * @brief Set the time signature used in the engine
+     * @param signature The new time signature to use
+     */
+    void set_time_signature(TimeSignature signature);
+
+    /**
+     * @brief Set the tempo of the engine
+     * @param tempo The new tempo in beats per minute
+     */
+    void set_tempo(float tempo);
+
+    /**
+     * @brief Set the current mode of synchronising tempo and beats
+     * @param mode The mode of synchronisation to use
+     */
+    void set_sync_mode(SyncMode mode) {_sync_mode = mode;}
+
+    /**
+     * @return Set the sample rate.
+     * @param sample_rate The current sample rate the engine is running at
+     */
+    void set_sample_rate(float sample_rate);
+
+    /**
+     * @brief Query the current time, Safe to call from rt and non-rt context. If called from
+     *        an rt context it will return the time at which sample 0 of the current audio
+     *        chunk being processed will appear on an output.
+     * @return The current processing time.
+     */
+    Time current_process_time() const {return _time;}
+
+    /**
+     * @brief Query the current samplecount. Safe to call from rt and non-rt context. If called
+     *        from an rt context it will return the total number of samples passed before sample
+     *        0 of the current audio chunk being processed.
+     * @return Total samplecount
+     */
     int64_t current_samples() const {return _sample_count;}
 
+    /**
+     * @brief Query the current time signature being used
+     * @return A TimeSignature struct describing the current time signature
+     */
+    TimeSignature current_time_signature() const {return _time_signature;}
+
+    /**
+     * @brief Query the current tempo. Safe to call from rt and non-rt context but will
+     *        only return approximate value if called from a non-rt context
+     * @return A float representing the tempo in beats per minute
+     */
+    float current_tempo() const {return _tempo;}
+
+    /**
+     * @brief Query the current position in the bar. Return a double in the range from 0 to the
+     *        current time signature numerator. Safe to call from rt and non-rt context but will
+     *        only return approximate values if called from a non-rt context
+     * @return A double representing the position in the current bar.
+     */
+    double current_bar_beat() const {return _current_bar_qn_count * _qn_multiplier;}
+
+    /**
+    * @brief Query the number of quarter notes in the current bar. The number of quarter notes
+     *       depend on the time signature set. For 4/4 time this will return a float in the
+     *       range (0, 4), for 6/8 time this will return a range (0, 2).
+     *       Safe to call from rt and non-rt context but will only return approximate values
+     *       if called from a non-rt context
+    * @return A double representing the position in the current bar.
+    */
+    double current_bar_quarter_notes() const {return _current_bar_qn_count;}
+
+    /**
+     * @brief Query the current position in quarter notes. This runs continuously and is
+     *        monotonically increasing. Safe to call from rt and non-rt context but will
+     *        only return approximate values if called from a non-rt context
+     * @return A double representing the current position in quarter notes.
+     */
+    double current_quarter_notes() const {return _qn_count;}
+
+    /**
+     * @return Query the position, in quarter notes, of the start of the current bar. Safe
+     *         to call from rt and non-rt context but will only return approximate values
+     *         if called from a non-rt context
+     * @return A double representing the start position of the current bar in quarter notes
+     */
+    double current_bar_start_quarter_notes() const {return _bar_start_qn_count;}
+
+
 private:
-    int64_t _sample_count{0};
-    Time    _time{0};
-    Time    _latency{0};
+    void _update_coeffcients();
+
+    int64_t         _sample_count{0};
+    Time            _time{0};
+    Time            _latency{0};
+    float           _tempo{120};
+    double          _current_bar_qn_count{0.0};
+    double          _qn_count{0.0};
+    double          _bar_start_qn_count{0};
+    double          _qns_per_chunk{0};
+    float           _qn_multiplier{1};
+    float           _qns_per_bar;
+    float           _samplerate{};
+    SyncMode        _sync_mode{SyncMode::MASTER};
+    TimeSignature   _time_signature{4, 4};
 };
 
 

@@ -229,7 +229,7 @@ VstTimeInfo* Vst2xWrapper::time_info()
     _time_info.sampleRate = _sample_rate;
     // Only time (in ns) and sample count is supported atm.
     _time_info.samplePos = _host_control.transport()->current_samples();
-    _time_info.nanoSeconds = _host_control.transport()->current_time().count() * 1000;
+    _time_info.nanoSeconds = _host_control.transport()->current_process_time().count() * 1000;
     _time_info.tempo = 0;
     _time_info.flags = kVstNanosValid;
     return &_time_info;
