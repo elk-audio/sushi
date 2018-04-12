@@ -12,6 +12,9 @@ static char canDoBypass[] = "bypass";
 namespace sushi {
 namespace vst2 {
 
+constexpr uint32_t SUSHI_HOST_SYNC_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
+                                                  kVstBarsValid | kVstTimeSigValid;
+
 MIND_GET_LOGGER;
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
@@ -226,12 +229,18 @@ bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
 
 VstTimeInfo* Vst2xWrapper::time_info()
 {
-    _time_info.sampleRate = _sample_rate;
-    // Only time (in ns) and sample count is supported atm.
-    _time_info.samplePos = _host_control.transport()->current_samples();
-    _time_info.nanoSeconds = _host_control.transport()->current_process_time().count() * 1000;
-    _time_info.tempo = 0;
-    _time_info.flags = kVstNanosValid;
+    auto transport = _host_control.transport();
+    auto ts = transport->current_time_signature();
+
+    _time_info.samplePos          = transport->current_samples();
+    _time_info.sampleRate         = _sample_rate;
+    _time_info.nanoSeconds        = std::chrono::nanoseconds(transport->current_process_time()).count();
+    _time_info.ppqPos             = transport->current_beats();
+    _time_info.tempo              = transport->current_tempo();
+    _time_info.barStartPos        = transport->current_bar_start_beats();
+    _time_info.timeSigNumerator   = ts.numerator;
+    _time_info.timeSigDenominator = ts.denominator;
+    _time_info.flags = SUSHI_HOST_SYNC_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
     return &_time_info;
 }
 

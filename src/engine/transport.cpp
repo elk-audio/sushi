@@ -48,8 +48,7 @@ double Transport::current_beats(int samples) const
 void Transport::_update_internals()
 {
     assert(_samplerate > 0.0f);
-    _beats_per_chunk = 4.0 * static_cast<double>(AUDIO_CHUNK_SIZE) /
-                     (static_cast<double>(_tempo) / 60.0 * _samplerate);
+    _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     /* Time signatures are seen in relation to 4/4 and remapped to quarter notes
      * the same way most DAWs seem to do it. This makes 3/4 and 6/8 identical and
      * they will play beatsynched with 4/4, i.e. not on triplets. */

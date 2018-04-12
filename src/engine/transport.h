@@ -99,7 +99,7 @@ public:
      *        as sushi as of now is mostly intended for live use.
      * @return true if the transport is currently playing
      */
-    bool playing() {return true;}
+    bool playing() const {return true;}
 
     /**
      * @brief Query the current time signature being used

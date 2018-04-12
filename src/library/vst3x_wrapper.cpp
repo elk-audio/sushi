@@ -11,8 +11,12 @@ namespace vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
 
-constexpr uint32_t SUSHI_HOST_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
-                                             Steinberg::Vst::ProcessContext::kContTimeValid;
+constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
+                                                  Steinberg::Vst::ProcessContext::kContTimeValid &
+                                                  Steinberg::Vst::ProcessContext::kBarPositionValid &
+                                                  Steinberg::Vst::ProcessContext::kTempoValid &
+                                                  Steinberg::Vst::ProcessContext::kTimeSigValid;
+
 MIND_GET_LOGGER;
 
 void Vst3xWrapper::_cleanup()
@@ -420,11 +424,20 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
 
 void Vst3xWrapper::_fill_processing_context()
 {
-    _process_data.processContext->state = SUSHI_HOST_CAPABILITIES;
-    // TODO - get time and samples and fill here.
-    _process_data.processContext->projectTimeSamples = 0;
-    _process_data.processContext->continousTimeSamples = 0;
-    _process_data.processContext->systemTime = 0;
+    auto transport = _host_control.transport();
+    auto context = _process_data.processContext;
+    auto ts = transport->current_time_signature();
+
+    context->state = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0;
+    context->sampleRate             = _sample_rate;
+    context->projectTimeSamples     = transport->current_samples();
+    context->systemTime             = std::chrono::nanoseconds(transport->current_process_time()).count();
+    context->continousTimeSamples   = transport->current_samples();
+    context->projectTimeMusic       = transport->current_beats();
+    context->barPositionMusic       = transport->current_bar_start_beats();
+    context->tempo                  = transport->current_tempo();
+    context->timeSigNumerator       = ts.numerator;
+    context->timeSigDenominator     = ts.denominator;
 }
 
 inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset)

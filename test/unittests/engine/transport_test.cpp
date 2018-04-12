@@ -42,10 +42,11 @@ TEST_F(TestTransport, TestBasicQuerying)
 
 TEST_F(TestTransport, TestTimeline44Time)
 {
+    constexpr int TEST_SAMPLERATE_X2 = 32768;
     /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier
      * as bar boundaries end up on a power of 2 samplecount if  AUDIO_CHUNK_SIZE is
      * a power of 2*/
-    _module_under_test.set_sample_rate(32768);
+    _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
     _module_under_test.set_tempo(120);
     _module_under_test.set_time_signature({4, 4});
 
@@ -57,18 +58,18 @@ TEST_F(TestTransport, TestTimeline44Time)
     EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_beats(0));
 
     /* Advance time by 1 second equal to 1/2 bar at 120 bpm */
-    _module_under_test.set_time(std::chrono::seconds(1), 32768 );
+    _module_under_test.set_time(std::chrono::seconds(1), TEST_SAMPLERATE_X2 );
     EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
     EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_beats());
     EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
 
     /* Test also that offset works correctly */
-    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_beats(32768 / 2));
-    EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_beats(32768));
+    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_beats(TEST_SAMPLERATE_X2 / 2));
+    EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_beats(TEST_SAMPLERATE_X2));
 
     /* Advance time by 1.5 second equal to 3/4 bar at 120 bpm  which should bring us
      * in to the next bar*/
-    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * 32768 / 2);
+    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
     EXPECT_FLOAT_EQ(1.0f, _module_under_test.current_bar_beats());
     EXPECT_FLOAT_EQ(5.0f, _module_under_test.current_beats());
     EXPECT_FLOAT_EQ(4.0f, _module_under_test.current_bar_start_beats());
@@ -76,10 +77,11 @@ TEST_F(TestTransport, TestTimeline44Time)
 
 TEST_F(TestTransport, TestTimeline68Time)
 {
-    /* Test the above but with another time signature  */
-    _module_under_test.set_sample_rate(32768);
-    _module_under_test.set_tempo(120);
+    /* Test the above but with different time signature and samplerate */
+    _module_under_test.set_sample_rate(TEST_SAMPLERATE);
+    _module_under_test.set_tempo(180);
     _module_under_test.set_time_signature({6, 8});
+    constexpr float precision = 3.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLERATE;
 
     /* Check that the starting point is 0 */
     _module_under_test.set_time(std::chrono::seconds(0), 0);
@@ -87,16 +89,17 @@ TEST_F(TestTransport, TestTimeline68Time)
     EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_beats());
     EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
 
-    /* Advance time by 1 second equal to 2/3 bar at 120 bpm */
-    _module_under_test.set_time(std::chrono::seconds(1), 32768 );
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_beats());
-    EXPECT_FLOAT_EQ(0.0f, _module_under_test.current_bar_start_beats());
+    /* Advance time by 1/2 second equal to 1/2 bar at 180 bpm. Cant test exact
+     * values here since 48000 is not an even multiple of AUDIO_CHUNK_SIZE */
+    _module_under_test.set_time(std::chrono::milliseconds(500), TEST_SAMPLERATE / 2);
+    EXPECT_NEAR(1.5f, _module_under_test.current_bar_beats(), precision);
+    EXPECT_NEAR(1.5f, _module_under_test.current_beats(), precision);
+    EXPECT_NEAR(0.0f, _module_under_test.current_bar_start_beats(), precision);
 
-    /* Advance time by 1 second equal to 4/3 bar at 120 bpm
+    /* Advance time by 1 second equal to 1 bar at 180 bpm
      * which should bring us halfway  in to the next bar */
-    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * 32768 / 2);
-    EXPECT_FLOAT_EQ(2.0f, _module_under_test.current_bar_beats());
-    EXPECT_FLOAT_EQ(5.0f, _module_under_test.current_beats());
-    EXPECT_FLOAT_EQ(3.0f, _module_under_test.current_bar_start_beats());
+    _module_under_test.set_time(std::chrono::milliseconds(1500), 3 * TEST_SAMPLERATE / 2);
+    EXPECT_NEAR(1.5f, _module_under_test.current_bar_beats(), precision);
+    EXPECT_NEAR(4.5f, _module_under_test.current_beats(), precision);
+    EXPECT_NEAR(3.0f, _module_under_test.current_bar_start_beats(), precision);
 }
