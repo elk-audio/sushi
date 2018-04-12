@@ -102,16 +102,14 @@ TEST_F(TestArpeggiatorPlugin, TestOutput)
     ChunkSampleBuffer buffer;
     auto event = RtEvent::make_note_on_event(0, 0, 50, 1.0f);
     _module_under_test->process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, 0, 120.0f);
-    _module_under_test->process_event(event);
+    _host_control._transport.set_tempo(120.0f);
 
-    /* 1/8 notes at 120 bpm equals 4 notes/sec, @48000 this means we need
-     * tp process at least 12000 samples to catch one note */
     ASSERT_TRUE(_fifo.empty());
-    for (int i = 0; i < 12500 / AUDIO_CHUNK_SIZE ; ++i)
-    {
-        _module_under_test->process_audio(buffer, buffer);
-    }
+    /* 1/8 notes at 120 bpm equals 4 notes/sec, @48000 results in  at least
+     * 12000 samples and 1/4 sec to catch one note, use the host control to
+     * fast forward the time directly */
+    _host_control._transport.set_time(std::chrono::milliseconds(250), 12000);
+    _module_under_test->process_audio(buffer, buffer);
     ASSERT_FALSE(_fifo.empty());
     RtEvent e;
     _fifo.pop(e);
@@ -121,4 +119,5 @@ TEST_F(TestArpeggiatorPlugin, TestOutput)
     ASSERT_EQ(_module_under_test->id(), e.processor_id());
     ASSERT_EQ(RtEventType::NOTE_ON, e.type());
     ASSERT_EQ(50, e.keyboard_event()->note());
+    ASSERT_TRUE(_fifo.empty());
 }

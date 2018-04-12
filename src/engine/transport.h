@@ -95,6 +95,13 @@ public:
     int64_t current_samples() const {return _sample_count;}
 
     /**
+     * @brief Always returns true as we don't really have a concept of stop and start yet and
+     *        as sushi as of now is mostly intended for live use.
+     * @return true if the transport is currently playing
+     */
+    bool playing() {return true;}
+
+    /**
      * @brief Query the current time signature being used
      * @return A TimeSignature struct describing the current time signature
      */
