@@ -23,7 +23,7 @@ namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int TRACK_MAX_CHANNELS = 8;
-constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 4;
+constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 
