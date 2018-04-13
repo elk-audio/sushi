@@ -20,6 +20,7 @@ namespace sushi {
 
 namespace audio_frontend {
 
+constexpr int OFFLINE_FRONTEND_CHANNELS = 2;
 
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -43,9 +44,10 @@ public:
     OfflineFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
             BaseAudioFrontend(engine, midi_dispatcher),
             _input_file(nullptr),
-            _output_file(nullptr),
-            _file_buffer(nullptr)
-    {}
+            _output_file(nullptr)
+    {
+        _buffer.clear();
+    }
 
     virtual ~OfflineFrontend()
     {
@@ -68,9 +70,9 @@ private:
     SNDFILE*    _input_file;
     SNDFILE*    _output_file;
     SF_INFO     _soundfile_info;
+    bool        _mono;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer;
-    float*  _file_buffer;
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{OFFLINE_FRONTEND_CHANNELS};
 
     // TODO - Not really a queue in offline mode, just a list of events sorted by time
     std::vector<std::tuple<int, RtEvent>> _event_queue;

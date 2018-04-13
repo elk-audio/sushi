@@ -27,15 +27,9 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
         return AudioFrontendStatus::INVALID_INPUT_FILE;
     }
-    if (_soundfile_info.channels != _engine->n_channels_in_track(0))
-    {
-        MIND_LOG_ERROR("Mismatch in number of channels of audio file, which is {}", _soundfile_info.channels);
-        cleanup();
-        return AudioFrontendStatus::INVALID_N_CHANNELS;
-    }
-    _buffer = ChunkSampleBuffer(_soundfile_info.channels);
-    _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(MAX_FRONTEND_CHANNELS);
+    _mono = _soundfile_info.channels == 1;
+    _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
+    _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
     _engine->set_output_latency(std::chrono::microseconds(0));
     auto sample_rate_file = _soundfile_info.samplerate;
     if (sample_rate_file != _engine->sample_rate())
@@ -52,10 +46,6 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
         return AudioFrontendStatus::INVALID_OUTPUT_FILE;
     }
-
-    // Initialize buffers
-    _file_buffer = new float[_engine->n_channels_in_track(0) * AUDIO_CHUNK_SIZE];
-
     return ret_code;
 }
 
@@ -130,11 +120,6 @@ void OfflineFrontend::cleanup()
         sf_close(_output_file);
         _output_file = nullptr;
     }
-    if (_file_buffer)
-    {
-        delete _file_buffer;
-        _file_buffer = nullptr;
-    }
 }
 
 void OfflineFrontend::run()
@@ -143,8 +128,9 @@ void OfflineFrontend::run()
     int samplecount = 0;
     double usec_time = 0.0f;
     Time start_time = std::chrono::microseconds(0);
+    float file_buffer[OFFLINE_FRONTEND_CHANNELS * AUDIO_CHUNK_SIZE];
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
-                                                         _file_buffer,
+                                                         file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
         // Update time and sample counter
@@ -160,16 +146,32 @@ void OfflineFrontend::run()
 
             _event_queue.pop_back();
         }
+        _buffer.clear();
 
         // Render audio buffer
-        _buffer.from_interleaved(_file_buffer);
+        if (_mono)
+        {
+            std::copy(file_buffer, file_buffer + AUDIO_CHUNK_SIZE, _buffer.channel(0));
+        }
+        else
+        {
+            _buffer.from_interleaved(file_buffer);
+        }
         _engine->process_chunk(&_buffer, &_buffer);
-        _buffer.to_interleaved(_file_buffer);
+
+        if (_mono)
+        {
+            std::copy(_buffer.channel(0), _buffer.channel(0) + AUDIO_CHUNK_SIZE, file_buffer );
+        }
+        else
+        {
+            _buffer.to_interleaved(file_buffer);
+        }
 
         // Write to file
         // Should we check the number of samples effectively written?
         // Not done in libsndfile's example
-        sf_writef_float(_output_file, _file_buffer, static_cast<sf_count_t>(readcount));
+        sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
 }
 
