@@ -35,8 +35,8 @@ void start_stop_callback(bool playing)
     MIND_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
 
-
-AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate)
+AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate),
+                                              _transport(sample_rate)
 {
     _event_dispatcher.run();
     _link_controller.setNumPeersCallback(peer_callback);
@@ -59,6 +59,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
     {
         node.second->configure(sample_rate);
     }
+    _transport.set_sample_rate(sample_rate);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
@@ -273,10 +274,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         send_rt_event(in_event);
     }
 
-    _event_dispatcher.set_time(_transport.current_time());
+    _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
-
-    auto link_session = _link_controller.captureAppSessionState();
 
     for (const auto& c : _in_audio_connections)
     {
@@ -290,7 +289,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         track->render();
     }
 
-    _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_time()));
+    _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
 
     out_buffer->clear();
     for (const auto& c : _out_audio_connections)

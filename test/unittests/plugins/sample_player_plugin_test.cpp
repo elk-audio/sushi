@@ -13,6 +13,7 @@ using namespace sushi;
 using namespace sushi::sample_player_plugin;
 using namespace sample_player_voice;
 
+constexpr float TEST_SAMPLERATE = 44100;
 const float SAMPLE_DATA[] = {1.0f, 2.0f, 2.0f, 1.0f, 1.0f};
 const int SAMPLE_DATA_LENGTH = sizeof(SAMPLE_DATA) / sizeof(float);
 
@@ -29,7 +30,7 @@ protected:
     void SetUp()
     {
         _module_under_test.set_sample(&_sample);
-        _module_under_test.set_samplerate(44100);
+        _module_under_test.set_samplerate(TEST_SAMPLERATE);
         _module_under_test.set_envelope(0,0,1,0);
     }
 
@@ -94,8 +95,8 @@ protected:
     }
     void SetUp()
     {
-        _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup());
-        ProcessorReturnCode status = _module_under_test->init(48000);
+        _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
     void TearDown()

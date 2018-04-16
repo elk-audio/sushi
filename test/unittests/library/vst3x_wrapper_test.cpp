@@ -20,6 +20,8 @@ char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
+constexpr float TEST_SAMPLE_RATE = 48000;
+
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginLoader, TestLoadPlugin)
@@ -65,10 +67,10 @@ protected:
     void SetUp(char* plugin_file, char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
-        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(), full_plugin_path, plugin_name);
+        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, plugin_name);
         free(full_plugin_path);
 
-        auto ret = _module_under_test->init(48000);
+        auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
     }
@@ -161,4 +163,25 @@ TEST_F(TestVst3xWrapper, TestConfigurationChange)
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+}
+
+TEST_F(TestVst3xWrapper, TestTimeInfo)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    _host_control._transport.set_tempo(120);
+    _host_control._transport.set_time_signature({3, 4});
+    _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
+
+    _module_under_test->_fill_processing_context();
+    auto context = _module_under_test->_process_data.processContext;
+
+    EXPECT_FLOAT_EQ(TEST_SAMPLE_RATE, context->sampleRate);
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), context->projectTimeSamples);
+    EXPECT_EQ(1'000'000'000, context->systemTime);
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), context->continousTimeSamples);
+    EXPECT_FLOAT_EQ(2.0f, context->projectTimeMusic);
+    EXPECT_FLOAT_EQ(0.0f, context->barPositionMusic);
+    EXPECT_FLOAT_EQ(120.0f, context->tempo);
+    EXPECT_EQ(3, context->timeSigNumerator);
+    EXPECT_EQ(4, context->timeSigDenominator);
 }

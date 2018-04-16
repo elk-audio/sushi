@@ -10,12 +10,13 @@ class HostControlMockup
 {
 public:
     // Get a HostControl object with dummy dispatcher and transport members
-    sushi::HostControl make_host_control_mockup()
+    sushi::HostControl make_host_control_mockup(float sample_rate = 44100)
     {
+        _transport.set_sample_rate(sample_rate);
         return sushi::HostControl(&_dummy_dispatcher, &_transport);
     }
 
-    engine::Transport     _transport;
+    engine::Transport     _transport{44100};
     EventDispatcherMockup _dummy_dispatcher;
 };
 
