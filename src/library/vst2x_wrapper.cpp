@@ -12,7 +12,7 @@ static char canDoBypass[] = "bypass";
 namespace sushi {
 namespace vst2 {
 
-constexpr uint32_t SUSHI_HOST_SYNC_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
+constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
 MIND_GET_LOGGER;
@@ -240,7 +240,7 @@ VstTimeInfo* Vst2xWrapper::time_info()
     _time_info.barStartPos        = transport->current_bar_start_beats();
     _time_info.timeSigNumerator   = ts.numerator;
     _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = SUSHI_HOST_SYNC_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
+    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
     return &_time_info;
 }
 
