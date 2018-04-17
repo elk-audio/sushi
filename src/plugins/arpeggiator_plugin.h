@@ -79,14 +79,12 @@ public:
 private:
 
     float                _sample_rate;
-    float                _sample_counter{0.0f};
+    double               _last_note_beat{0};
     int                  _current_note{0};
 
-    FloatParameterValue* _tempo_parameter;
     IntParameterValue*   _range_parameter;
     Arpeggiator          _arp;
 };
-
 
 float samples_per_note(float note_fraction, float tempo, float samplerate);
 
