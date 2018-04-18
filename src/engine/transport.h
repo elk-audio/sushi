@@ -157,7 +157,9 @@ private:
     float           _samplerate{};
     SyncMode        _sync_mode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    PlayingMode     _mode{PlayingMode::PLAYING};
+    ableton::Link   _link_controller{DEFAULT_TEMPO};
+    int             _link_update_count{0};
+    PlayingMode   _mode{PlayingMode::PLAYING};
 };
 
 } // namespace engine

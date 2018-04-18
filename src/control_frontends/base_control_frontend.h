@@ -63,6 +63,14 @@ public:
 
     void send_remove_processor_event(const std::string &track, const std::string &name);
 
+    void send_set_tempo_event(float tempo);
+
+    void send_set_time_signature_event(TimeSignature signature);
+
+    void send_set_playing_mode_event(PlayingMode mode);
+
+    void send_set_sync_mode_event(SyncMode mode);
+
     int poster_id() override {return _poster_id;}
 
 protected:

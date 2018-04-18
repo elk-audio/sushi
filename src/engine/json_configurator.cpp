@@ -23,10 +23,63 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
     {
         return status;
     }
-
-    float sample_rate = config["host_config"]["samplerate"].GetFloat();
+    const auto& host_config = config["host_config"].GetObject();
+    float sample_rate = host_config["samplerate"].GetFloat();
     MIND_LOG_INFO("Setting engine sample rate to {}", sample_rate);
     _engine->set_sample_rate(sample_rate);
+
+    if (config.HasMember("tempo"))
+    {
+        float tempo = host_config["tempo"].GetFloat();
+        MIND_LOG_INFO("Setting engine tempo to {}", sample_rate);
+        _engine->set_tempo(tempo);
+    }
+
+    if (config.HasMember("time_signature"))
+    {
+        const auto& sig = host_config["time_signature"].GetObject();
+        int numerator = sig["numerator"].GetInt();
+        int denominator = sig["denominator"].GetInt();
+
+        MIND_LOG_INFO("Setting engine time signature to {}/{}", numerator, denominator);
+        _engine->set_time_signature({numerator, denominator});
+    }
+
+    if (config.HasMember("playing_mode"))
+    {
+        PlayingMode mode;
+        if (host_config["playing_mode"] == "stopped")
+        {
+            mode = PlayingMode::STOPPED;
+        }
+        else
+        {
+            mode = PlayingMode::PLAYING;
+        }
+        MIND_LOG_INFO("Setting engine playing mode to {}", mode == PlayingMode::PLAYING? "playing " : "stopped");
+        _engine->set_transport_mode(mode);
+    }
+
+    if (config.HasMember("tempo_sync"))
+    {
+        SyncMode mode;
+        if (host_config["tempo_sync"] == "ableton link")
+        {
+            mode = SyncMode::ABLETON_LINK;
+        }
+        else if (host_config["tempo_sync"] == "midi")
+        {
+            mode = SyncMode::MIDI_SLAVE;
+        }
+        else
+        {
+            mode = SyncMode::INTERNAL;
+        }
+        MIND_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
+                                                              mode == SyncMode::MIDI_SLAVE? "external Midi" : "internal"));
+        _engine->set_tempo_sync_mode(mode);
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 
