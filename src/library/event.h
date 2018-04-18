@@ -13,6 +13,7 @@
 #include "id_generator.h"
 #include "library/rt_event.h"
 #include "library/time.h"
+#include "library/types.h"
 
 namespace sushi {
 namespace dispatcher {class EventDispatcher;};
@@ -465,7 +466,69 @@ private:
     BlobData _data;
 };
 
+class SetEngineTempoEvent : public Event
+{
+public:
+    SetEngineTempoEvent(float tempo, Time timestamp) : Event(timestamp),
+                                                       _tempo(tempo) {}
 
+    bool maps_to_rt_event() override {return true;}
+    RtEvent to_rt_event(int sample_offset) override
+    {
+        return RtEvent::make_tempo_event(sample_offset, _tempo);
+    }
+
+private:
+    float _tempo;
+};
+
+class SetEngineTimeSignatureEvent : public Event
+{
+public:
+    SetEngineTimeSignatureEvent(TimeSignature signature, Time timestamp) : Event(timestamp),
+                                                                           _signature(signature) {}
+
+    bool maps_to_rt_event() override {return true;}
+    RtEvent to_rt_event(int sample_offset) override
+    {
+        return RtEvent::make_time_signature_event(sample_offset, _signature);
+    }
+
+private:
+    TimeSignature _signature;
+};
+
+class SetEnginePlayingModeStateEvent : public Event
+{
+public:
+    SetEnginePlayingModeStateEvent(PlayingMode mode, Time timestamp) : Event(timestamp),
+                                                                       _mode(mode) {}
+
+    bool maps_to_rt_event() override {return true;}
+    RtEvent to_rt_event(int sample_offset) override
+    {
+        return RtEvent::make_playing_mode_event(sample_offset, _mode);
+    }
+
+private:
+    PlayingMode _mode;
+};
+
+class SetEngineSyncModeEvent : public Event
+{
+public:
+    SetEngineSyncModeEvent(SyncMode mode, Time timestamp) : Event(timestamp),
+                                                            _mode(mode) {}
+
+    bool maps_to_rt_event() override {return true;}
+    RtEvent to_rt_event(int sample_offset) override
+    {
+        return RtEvent::make_sync_mode_event(sample_offset, _mode);
+    }
+
+private:
+    SyncMode _mode;
+};
 } // end namespace sushi
 
 #endif //SUSHI_CONTROL_EVENT_H

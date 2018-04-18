@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include "engine/transport.h"
+
 #define private public
 
 #include "engine/track.cpp"
