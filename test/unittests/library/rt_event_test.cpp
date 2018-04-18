@@ -114,6 +114,27 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
     EXPECT_EQ(456u, event.processor_reorder_event()->track());
+
+    event = RtEvent::make_tempo_event(25, 130);
+    EXPECT_EQ(RtEventType::TEMPO, event.type());
+    EXPECT_EQ(25, event.tempo_event()->sample_offset());
+    EXPECT_EQ(130.0f, event.tempo_event()->tempo());
+
+    event = RtEvent::make_time_signature_event(26, {7, 8});
+    EXPECT_EQ(RtEventType::TIME_SIGNATURE, event.type());
+    EXPECT_EQ(26, event.time_signature_event()->sample_offset());
+    EXPECT_EQ(7, event.time_signature_event()->time_signature().numerator);
+    EXPECT_EQ(8, event.time_signature_event()->time_signature().denominator);
+
+    event = RtEvent::make_playing_mode_event(27, PlayingMode::PLAYING);
+    EXPECT_EQ(RtEventType::PLAYING_MODE, event.type());
+    EXPECT_EQ(27, event.transport_event()->sample_offset());
+    EXPECT_EQ(PlayingMode::PLAYING, event.transport_event()->mode());
+
+    event = RtEvent::make_sync_mode_event(28, SyncMode::MIDI_SLAVE);
+    EXPECT_EQ(RtEventType::SYNC_MODE, event.type());
+    EXPECT_EQ(28, event.sync_mode_event()->sample_offset());
+    EXPECT_EQ(SyncMode::MIDI_SLAVE, event.sync_mode_event()->mode());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)

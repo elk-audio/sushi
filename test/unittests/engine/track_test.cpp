@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include "engine/transport.h"
+
 #define private public
 
 #include "test_utils/test_utils.h"

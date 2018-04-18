@@ -29,6 +29,15 @@ constexpr size_t MIDI_DATA_BYTE_SIZE = 4;
 typedef std::array<uint8_t, MIDI_DATA_BYTE_SIZE> MidiDataByte;
 static_assert(sizeof(MidiDataByte) == MIDI_DATA_BYTE_SIZE, "");
 
+/**
+ * @brief Struct to represent a defined time signature
+ */
+struct TimeSignature
+{
+    int numerator;
+    int denominator;
+};
+
 } // end namespace sushi
 
 #endif //SUSHI_TYPES_H

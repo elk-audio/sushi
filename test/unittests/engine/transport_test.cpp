@@ -44,7 +44,7 @@ TEST_F(TestTransport, TestTimeline44Time)
 {
     constexpr int TEST_SAMPLERATE_X2 = 32768;
     /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier
-     * as bar boundaries end up on a power of 2 samplecount if  AUDIO_CHUNK_SIZE is
+     * as bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
      * a power of 2*/
     _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
     _module_under_test.set_tempo(120);

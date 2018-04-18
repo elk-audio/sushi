@@ -6,29 +6,17 @@
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
+#include <library/constants.h>
 #include "library/time.h"
+#include "library/types.h"
+#include "library/rt_event.h"
 
 namespace sushi {
 namespace engine {
 
-/**
- * @brief Mode of tempo/beat synchronization in the engine
- */
-enum class SyncMode
-{
-    MASTER,
-    MIDI_SLAVE,
-    ABLETON_LINK
-};
-
-/**
- * @brief Struct to represent a defined time signature
- */
-struct TimeSignature
-{
-    int numerator;
-    int denominator;
-};
+constexpr float DEFAULT_TEMPO = 120;
+/* Ableton recomends this to be around 10 Hz */
+constexpr int LINK_UPDATE_RATE = 48000 / (10 * AUDIO_CHUNK_SIZE);
 
 class Transport
 {
@@ -67,6 +55,12 @@ public:
     void set_tempo(float tempo) {_tempo = tempo;}
 
     /**
+     * @brief Set the playing mode, i.e. playing, stopped, recodring etc..
+     * @param mode The new playing mode.
+     */
+    void set_playing_mode(PlayingMode mode) {_mode = mode;}
+
+    /**
      * @brief Set the current mode of synchronising tempo and beats
      * @param mode The mode of synchronisation to use
      */
@@ -95,11 +89,12 @@ public:
     int64_t current_samples() const {return _sample_count;}
 
     /**
-     * @brief Always returns true as we don't really have a concept of stop and start yet and
+     * @brief If the transport is currently playing or not. If in master mode, this always
+     *        returns true as we don't really have a concept of stop and start yet and
      *        as sushi as of now is mostly intended for live use.
-     * @return true if the transport is currently playing
+     * @return true if the transport is currently playing, false if stopped
      */
-    bool playing() const {return true;}
+    bool playing() const {return _mode != PlayingMode::STOPPED;}
 
     /**
      * @brief Query the current time signature being used
@@ -152,15 +147,17 @@ private:
     int64_t         _sample_count{0};
     Time            _time{0};
     Time            _latency{0};
-    float           _tempo{120};
+    float           _set_tempo{DEFAULT_TEMPO};
+    float           _tempo{DEFAULT_TEMPO};
     double          _current_bar_beat_count{0.0};
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
     float           _beats_per_bar;
     float           _samplerate{};
-    SyncMode        _sync_mode{SyncMode::MASTER};
+    SyncMode        _sync_mode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
+    PlayingMode     _mode{PlayingMode::PLAYING};
 };
 
 } // namespace engine

@@ -142,6 +142,14 @@ public:
 
     virtual void set_output_latency(Time /*latency*/) = 0;
 
+    virtual void set_tempo(float /*tempo*/) = 0;
+
+    virtual void set_time_signature(TimeSignature /*signature*/) = 0;
+
+    virtual void set_transport_mode(PlayingMode /*mode*/) = 0;
+
+    virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
+
     virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
 
     virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
@@ -335,6 +343,33 @@ public:
         _transport.set_latency(latency);
     }
 
+    /**
+     * @brief Set the tempo of the engine. Intended to be called from a non-thread.
+     * @param tempo The new tempo in beats (quarter notes) per minute
+     */
+    void set_tempo(float tempo) override;
+
+    /**
+     * @brief Set the time signature of the engine. Intended to be called from a non-thread.
+     * @param signature A TimeSignature object describing the new time signature to use
+     */
+    void set_time_signature(TimeSignature signature) override;
+
+    /**
+     * @brief Set the current transport mode, i.e stopped, playing, recording. This will be
+     *        passed on to processors. Note stopped here means that audio is still running
+     *        but sequencers and similiar should be in a stopped state.
+     *        Currently only STOPPED and PLAYING are implemented and default is PLAYING
+     * @param mode A TransportMode mode with the current state
+     */
+    void set_transport_mode(PlayingMode mode) override;
+
+    /**
+     * @brief Set the current mode of synchronising the engine tempo and beats. Default is
+     *        INTERNAL.
+     * @param mode A SyncMode with the current mode of syncronisation
+     */
+    void set_tempo_sync_mode(SyncMode mode) override;
     /**
      * @brief Process an event directly. In a realtime processing setup this must be
      *        called from the realtime thread before calling process_chunk()
