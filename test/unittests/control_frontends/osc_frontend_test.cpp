@@ -169,6 +169,63 @@ TEST_F(TestOSCFrontend, TestDeleteProcessor)
     EXPECT_EQ("processor", typed_event->_name);
 }
 
+TEST_F(TestOSCFrontend, TestSetTempo)
+{
+    lo_send(_address, "/engine/set_tempo", "f", 136.0f);
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    ASSERT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
+    EXPECT_FLOAT_EQ(136.0f, rt_event.tempo_event()->tempo());
+}
+
+TEST_F(TestOSCFrontend, TestSetTimeSignature)
+{
+    lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    ASSERT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::TIME_SIGNATURE, rt_event.type());
+    EXPECT_EQ(7, rt_event.time_signature_event()->time_signature().numerator);
+    EXPECT_EQ(8, rt_event.time_signature_event()->time_signature().denominator);
+}
+
+TEST_F(TestOSCFrontend, TestSetPlayingMode)
+{
+    lo_send(_address, "/engine/set_playing_mode", "s", "playing");
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    ASSERT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
+    EXPECT_EQ(PlayingMode::PLAYING, rt_event.playing_mode_event()->mode());
+}
+
+TEST_F(TestOSCFrontend, TestSetSyncMode)
+{
+    lo_send(_address, "/engine/set_sync_mode", "s", "midi");
+
+    // Need to wait a bit to allow messages to come through
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto event = _test_dispatcher->retrieve_event();
+    ASSERT_NE(nullptr, event);
+    ASSERT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
+    EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
+}
+
+
 TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
 {
     std::string test_str("str with spaces ");

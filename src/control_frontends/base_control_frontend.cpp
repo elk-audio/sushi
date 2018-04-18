@@ -89,12 +89,35 @@ void BaseControlFrontend::send_remove_processor_event(const std::string &track, 
     send_with_callback(e);
 }
 
+void BaseControlFrontend::send_set_tempo_event(float tempo)
+{
+    auto e = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(e);
+}
+
+void BaseControlFrontend::send_set_time_signature_event(TimeSignature signature)
+{
+    auto e = new SetEngineTimeSignatureEvent(signature, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(e);
+}
+
+void BaseControlFrontend::send_set_playing_mode_event(PlayingMode mode)
+{
+    auto e = new SetEnginePlayingModeStateEvent(mode, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(e);
+}
+
+void BaseControlFrontend::send_set_sync_mode_event(SyncMode mode)
+{
+    auto e = new SetEngineSyncModeEvent(mode, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(e);
+}
+
 void BaseControlFrontend::send_with_callback(Event* event)
 {
     event->set_completion_cb(BaseControlFrontend::completion_callback, this);
     _event_dispatcher->post_event(event);
 }
-
 
 } // end namespace control_frontend
 } // end namespace sushi

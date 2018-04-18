@@ -122,7 +122,7 @@ TEST(EventTest, TestToRtEvent)
     rt_event = trans_state_event.to_rt_event(14);
     EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
     EXPECT_EQ(14, rt_event.sample_offset());
-    EXPECT_EQ(PlayingMode::RECORDING, rt_event.transport_event()->mode());
+    EXPECT_EQ(PlayingMode::RECORDING, rt_event.playing_mode_event()->mode());
 
     auto sync_mode_event = SetEngineSyncModeEvent(SyncMode::ABLETON_LINK, IMMEDIATE_PROCESS);
     EXPECT_TRUE(sync_mode_event.maps_to_rt_event());

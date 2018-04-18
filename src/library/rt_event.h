@@ -545,7 +545,7 @@ public:
         return &_time_signature_event;
     }
 
-    PlayingModeRtEvent* transport_event()
+    PlayingModeRtEvent* playing_mode_event()
     {
         assert(_playing_mode_event.type() == RtEventType::PLAYING_MODE);
         return &_playing_mode_event;

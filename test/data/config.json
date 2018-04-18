@@ -1,6 +1,14 @@
 {
     "host_config" : {
-        "samplerate" : 48000
+        "samplerate" : 48000,
+        "tempo" : 100,
+        "time_signature" :
+        {
+            "numerator" : 4,
+            "denominator": 4
+        },
+        "playing_mode" : "playing",
+        "tempo_sync" : "internal"
     },
     "tracks" : [
         {

@@ -128,8 +128,8 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
 
     event = RtEvent::make_playing_mode_event(27, PlayingMode::PLAYING);
     EXPECT_EQ(RtEventType::PLAYING_MODE, event.type());
-    EXPECT_EQ(27, event.transport_event()->sample_offset());
-    EXPECT_EQ(PlayingMode::PLAYING, event.transport_event()->mode());
+    EXPECT_EQ(27, event.playing_mode_event()->sample_offset());
+    EXPECT_EQ(PlayingMode::PLAYING, event.playing_mode_event()->mode());
 
     event = RtEvent::make_sync_mode_event(28, SyncMode::MIDI_SLAVE);
     EXPECT_EQ(RtEventType::SYNC_MODE, event.type());

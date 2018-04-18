@@ -724,6 +724,32 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             }
             return true;
         }
+        case RtEventType::TEMPO:
+        {
+            /* Eventually we might want to do sample accurate tempo changes */
+            _transport.set_tempo(event.tempo_event()->tempo());
+            break;
+        }
+
+        case RtEventType::TIME_SIGNATURE:
+        {
+            /* Eventually we might want to do sample accurate time signature changes */
+            _transport.set_time_signature(event.time_signature_event()->time_signature());
+            break;
+        }
+
+        case RtEventType::PLAYING_MODE:
+        {
+            _transport.set_playing_mode(event.playing_mode_event()->mode());
+            break;
+        }
+
+        case RtEventType::SYNC_MODE:
+        {
+            _transport.set_sync_mode(event.sync_mode_event()->mode());
+            break;
+        }
+
         default:
             return false;
     }
