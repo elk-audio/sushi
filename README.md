@@ -25,7 +25,7 @@ Configuration files are used for global host configs, track and plugins configur
 
 ## Run-time OSC control
 
-Sushi listen on port 24024 for the following OSC commands:
+Sushi listens on port 24024 for the following OSC commands:
 
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
@@ -35,6 +35,9 @@ Path                                   | Typespec | Arguments
 /engine/delete_track                   |  s       | name
 /engine/add_processor                  |  sssss   | track, id, name, file path, type
 /engine/delete_processor               |  ss      | track name, plugin id
-
+/engine/set_tempo                      |  f       | tempo in beats per minute
+/engine/set_time_signature             |  ii      | time signature numerator, time signature denominator
+/engine/set_playing_mode               |  s       | "playing" or "stopped"
+/engine/set_sync_mode                  |  s       | "internal", "ableton_link" or "midi"
 
 Copyright 2016-2018 MIND Music Labs AB, Stockholm, Sweden.

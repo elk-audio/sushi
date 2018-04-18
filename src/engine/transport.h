@@ -6,10 +6,7 @@
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
-#include <library/constants.h>
 #include "library/time.h"
-#include "library/types.h"
-#include "library/rt_event.h"
 
 namespace sushi {
 namespace engine {
