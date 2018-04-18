@@ -147,7 +147,6 @@ private:
     int64_t         _sample_count{0};
     Time            _time{0};
     Time            _latency{0};
-    float           _set_tempo{DEFAULT_TEMPO};
     float           _tempo{DEFAULT_TEMPO};
     double          _current_bar_beat_count{0.0};
     double          _beat_count{0.0};
@@ -157,9 +156,7 @@ private:
     float           _samplerate{};
     SyncMode        _sync_mode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    ableton::Link   _link_controller{DEFAULT_TEMPO};
-    int             _link_update_count{0};
-    PlayingMode   _mode{PlayingMode::PLAYING};
+    PlayingMode     _mode{PlayingMode::PLAYING};
 };
 
 } // namespace engine
