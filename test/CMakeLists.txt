@@ -55,6 +55,9 @@ enable_testing()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMIND_DISABLE_LOGGING")
 
+# Disable Link in tests as this slows down the testing a lot due to network activity etc
+remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+
 # Overwrite parent definition to avoid issues with Xenomai wrappers
 set(CMAKE_EXE_LINKER_FLAGS "")
 

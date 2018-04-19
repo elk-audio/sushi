@@ -30,6 +30,7 @@ include_directories(${CMAKE_BINARY_DIR}/generated)
 set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
+set(WITH_LINK true CACHE BOOL "Enable Ableton Link support")
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
 
@@ -46,6 +47,11 @@ endif()
 if (${WITH_VST3})
     add_definitions(-DSUSHI_BUILD_WITH_VST3)
     message("Building with Vst 3 support.")
+endif()
+
+if (${WITH_LINK})
+    add_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+    message("Building with Ableton Link support.")
 endif()
 
 #############################

@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <lo/lo_types.h>
 
 #include "osc_frontend.h"
 #include "logging.h"

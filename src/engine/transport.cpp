@@ -1,13 +1,52 @@
 #include <cassert>
 #include <cmath>
-#include <library/rt_event.h>
 
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+#include "ableton/Link.hpp"
+#else
+#include "link_dummy.h"
+#endif
+
+#include <library/rt_event.h>
 #include "library/constants.h"
 #include "transport.h"
 #include "logging.h"
 
 namespace sushi {
 namespace engine {
+
+MIND_GET_LOGGER;
+
+void peer_callback(size_t peers)
+{
+    MIND_LOG_INFO("Ableton link reports {} peers connected ", peers);
+}
+
+void tempo_callback(double tempo)
+{
+    MIND_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
+}
+
+void start_stop_callback(bool playing)
+{
+    MIND_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
+}
+
+
+Transport::Transport(float sample_rate) : _samplerate(sample_rate)
+{
+    /*_link_controller.reset(new ableton::Link(sample_rate));
+    _link_controller->setNumPeersCallback(peer_callback);
+    _link_controller->setTempoCallback(tempo_callback);
+    _link_controller->setStartStopCallback(start_stop_callback);
+    _link_controller->enableStartStopSync(true);
+    _link_controller->enable(true);*/
+}
+
+Transport::~Transport()
+{
+
+}
 
 void Transport::set_time(Time timestamp, int64_t samples)
 {
@@ -27,6 +66,23 @@ void Transport::set_time(Time timestamp, int64_t samples)
         _bar_start_beat_count += _beats_per_bar;
     }
     _beat_count += chunks_passed * _beats_per_chunk;
+
+    switch (_sync_mode)
+    {
+        case SyncMode::MIDI_SLAVE: // Not implemented, so treat like master
+        case SyncMode::INTERNAL:
+            //_tempo = _set_tempo;
+            break;
+
+        case SyncMode::ABLETON_LINK:
+        {
+            if (++_link_update_count < LINK_UPDATE_RATE)
+            {
+                //_handle_link_sync();
+                _link_update_count = 0;
+            }
+        }
+    }
 }
 
 void Transport::set_time_signature(TimeSignature signature)
@@ -55,8 +111,15 @@ void Transport::_update_internals()
      * the same way most DAWs seem to do it. This makes 3/4 and 6/8 identical and
      * they will play beatsynched with 4/4, i.e. not on triplets. */
     _beats_per_bar = 4.0f * static_cast<float>(_time_signature.numerator) /
-                          static_cast<float>(_time_signature.denominator);
+                            static_cast<float>(_time_signature.denominator);
 }
+
+/*void Transport::_handle_link_sync()
+{
+    auto session = _link_controller.captureAudioSessionState();
+    _tempo = session.tempo();
+
+}*/
 
 } // namespace engine
 } // namespace sushi

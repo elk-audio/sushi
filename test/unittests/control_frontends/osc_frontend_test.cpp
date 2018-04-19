@@ -1,8 +1,6 @@
 #include <thread>
 #include "gtest/gtest.h"
 
-#include "ableton/Link.hpp"
-
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define private public
 #include "control_frontends/base_control_frontend.cpp"

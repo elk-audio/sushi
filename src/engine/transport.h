@@ -6,7 +6,17 @@
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
+#include <memory>
+
+#include <library/constants.h>
 #include "library/time.h"
+#include "library/types.h"
+#include "library/rt_event.h"
+
+/* Forward declare Link, then we can include link.hpp from transport.cpp and
+ * nowhere else, it pulls in a lot of dependencies that slow down compilation
+ * significantly otherwise. */
+namespace ableton {class Link;}
 
 namespace sushi {
 namespace engine {
@@ -18,8 +28,8 @@ constexpr int LINK_UPDATE_RATE = 48000 / (10 * AUDIO_CHUNK_SIZE);
 class Transport
 {
 public:
-    explicit Transport(float sample_rate) : _samplerate(sample_rate) {}
-    ~Transport() {}
+    explicit Transport(float sample_rate);
+    ~Transport();
 
     /**
      * @brief Set the current time. Called from the audio thread
@@ -52,7 +62,7 @@ public:
     void set_tempo(float tempo) {_tempo = tempo;}
 
     /**
-     * @brief Set the playing mode, i.e. playing, stopped, recodring etc..
+     * @brief Set the playing mode, i.e. playing, stopped, recording etc..
      * @param mode The new playing mode.
      */
     void set_playing_mode(PlayingMode mode) {_mode = mode;}
@@ -154,9 +164,9 @@ private:
     float           _samplerate{};
     SyncMode        _sync_mode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    ableton::Link   _link_controller{DEFAULT_TEMPO};
     int             _link_update_count{0};
-    PlayingMode   _mode{PlayingMode::PLAYING};
+    PlayingMode     _mode{PlayingMode::PLAYING};
+    std::unique_ptr<ableton::Link>  _link_controller;
 };
 
 } // namespace engine
