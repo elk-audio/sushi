@@ -168,6 +168,96 @@ static int osc_delete_processor(const char* /*path*/,
     return 0;
 }
 
+static int osc_set_tempo(const char* /*path*/,
+                                const char* /*types*/,
+                                lo_arg** argv,
+                                int /*argc*/,
+                                void* /*data*/,
+                                void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    float tempo = argv[0]->f;
+    MIND_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
+    instance->send_set_tempo_event(tempo);
+    return 0;
+}
+
+static int osc_set_time_signature(const char* /*path*/,
+                                  const char* /*types*/,
+                                  lo_arg** argv,
+                                  int /*argc*/,
+                                  void* /*data*/,
+                                  void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    int numerator = argv[0]->i;
+    int denominator = argv[1]->i;
+    MIND_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
+    instance->send_set_time_signature_event({numerator, denominator});
+    return 0;
+}
+
+static int osc_set_playing_mode(const char* /*path*/,
+                                const char* /*types*/,
+                                lo_arg** argv,
+                                int /*argc*/,
+                                void* /*data*/,
+                                void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string mode_str(&argv[0]->s);
+    PlayingMode mode;
+    if (mode_str == "playing")
+    {
+        mode = PlayingMode::PLAYING;
+    }
+    else if (mode_str == "stopped")
+    {
+        mode = PlayingMode::STOPPED;
+    }
+    else
+    {
+        MIND_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
+        return 0;
+    }
+
+    MIND_LOG_DEBUG("Got a set playing mode {} request", mode_str);
+    instance->send_set_playing_mode_event(mode);
+    return 0;
+}
+
+static int osc_set_tempo_sync_mode(const char* /*path*/,
+                                   const char* /*types*/,
+                                   lo_arg** argv,
+                                   int /*argc*/,
+                                   void* /*data*/,
+                                   void* user_data)
+{
+    auto instance = static_cast<OSCFrontend*>(user_data);
+    std::string mode_str(&argv[0]->s);
+    SyncMode mode;
+    if (mode_str == "internal")
+    {
+        mode = SyncMode::INTERNAL;
+    }
+    else if (mode_str == "ableton_link")
+    {
+        mode = SyncMode::ABLETON_LINK;
+    }
+    else if (mode_str == "midi")
+    {
+        mode = SyncMode::MIDI_SLAVE;
+    }
+    else
+    {
+        MIND_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
+        return 0;
+    }
+    MIND_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
+    instance->send_set_sync_mode_event(mode);
+    return 0;
+}
+
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
@@ -349,6 +439,10 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_track", "s", osc_delete_track, this);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
+    lo_server_thread_add_method(_osc_server, "/engine/set_tempo", "f", osc_set_tempo, this);
+    lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this);
+    lo_server_thread_add_method(_osc_server, "/engine/set_playing_mode", "s", osc_set_playing_mode, this);
+    lo_server_thread_add_method(_osc_server, "/engine/set_sync_mode", "s", osc_set_tempo_sync_mode, this);
 }
 
 int OSCFrontend::process(Event* event)

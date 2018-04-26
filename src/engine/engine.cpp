@@ -281,6 +281,58 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _state.store(update_state(state));
 }
 
+void AudioEngine::set_tempo(float tempo)
+{
+    if (_state.load() == RealtimeState::STOPPED)
+    {
+        _transport.set_tempo(tempo);
+    }
+    else
+    {
+        auto e = RtEvent::make_tempo_event(0, tempo);
+        send_async_event(e);
+    }
+}
+
+void AudioEngine::set_time_signature(TimeSignature signature)
+{
+    if (_state.load() == RealtimeState::STOPPED)
+    {
+        _transport.set_time_signature(signature);
+    }
+    else
+    {
+        auto e = RtEvent::make_time_signature_event(0, signature);
+        send_async_event(e);
+    }
+}
+
+void AudioEngine::set_transport_mode(PlayingMode mode)
+{
+    if (_state.load() == RealtimeState::STOPPED)
+    {
+        _transport.set_playing_mode(mode);
+    }
+    else
+    {
+        auto e = RtEvent::make_playing_mode_event(0, mode);
+        send_async_event(e);
+    }
+}
+
+void AudioEngine::set_tempo_sync_mode(SyncMode mode)
+{
+    if (_state.load() == RealtimeState::STOPPED)
+    {
+        _transport.set_sync_mode(mode);
+    }
+    else
+    {
+        auto e = RtEvent::make_sync_mode_event(0, mode);
+        send_async_event(e);
+    }
+}
+
 EngineReturnStatus AudioEngine::send_rt_event(RtEvent& event)
 {
     if (_handle_internal_events(event))
@@ -672,6 +724,32 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             }
             return true;
         }
+        case RtEventType::TEMPO:
+        {
+            /* Eventually we might want to do sample accurate tempo changes */
+            _transport.set_tempo(event.tempo_event()->tempo());
+            break;
+        }
+
+        case RtEventType::TIME_SIGNATURE:
+        {
+            /* Eventually we might want to do sample accurate time signature changes */
+            _transport.set_time_signature(event.time_signature_event()->time_signature());
+            break;
+        }
+
+        case RtEventType::PLAYING_MODE:
+        {
+            _transport.set_playing_mode(event.playing_mode_event()->mode());
+            break;
+        }
+
+        case RtEventType::SYNC_MODE:
+        {
+            _transport.set_sync_mode(event.sync_mode_event()->mode());
+            break;
+        }
+
         default:
             return false;
     }

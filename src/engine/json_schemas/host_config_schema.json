@@ -17,6 +17,30 @@ R"(
           "type": "integer",
           "minimum": 1000,
           "maximum": 192000
+        },
+        "time_signature" :
+        {
+          "type": "object",
+          "properties":
+          {
+            "numerator":
+            {
+              "type": "integer"
+            },
+            "denominator":
+            {
+              "type": "integer"
+            },
+            "required": ["numerator", "denominator"]
+          }
+        },
+        "playing_mode":
+        {
+          "enum": ["stopped", "playing"]
+        },
+        "tempo_sync":
+        {
+          "enum": ["internal", "midi", "ableton link"]
         }
       },
       "required": ["samplerate"]

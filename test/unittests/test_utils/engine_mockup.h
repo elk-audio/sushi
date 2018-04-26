@@ -86,6 +86,14 @@ public:
 
     void set_output_latency(Time /*latency*/) override {}
 
+    void set_tempo(float /*tempo*/) override {}
+
+    void set_time_signature(TimeSignature /*signature*/) override {}
+
+    void set_transport_mode(PlayingMode /*mode*/) override {}
+
+    void set_tempo_sync_mode(SyncMode /*mode*/) override {}
+
     EngineReturnStatus send_rt_event(RtEvent& /*event*/) override
     {
         got_rt_event = true;

@@ -1,8 +1,11 @@
 #include "gtest/gtest.h"
+
 #define private public
+#include "library/internal_plugin.h"
+#undef private
 
 #include "test_utils/host_control_mockup.h"
-#include "library/internal_plugin.h"
+
 
 using namespace sushi;
 

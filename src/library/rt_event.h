@@ -45,6 +45,10 @@ enum class RtEventType
     SET_BYPASS,
     /* Engine commands */
     STOP_ENGINE,
+    TEMPO,
+    TIME_SIGNATURE,
+    PLAYING_MODE,
+    SYNC_MODE,
     /* Processor add/delete/reorder events */
     INSERT_PROCESSOR,
     REMOVE_PROCESSOR,
@@ -339,6 +343,7 @@ private:
     uint16_t  _event_id;
 };
 
+/* RtEvent for passing timestaps synced to sample offsets */
 class SynchronisationRtEvent : public BaseRtEvent
 {
 public:
@@ -349,6 +354,72 @@ public:
 
 protected:
     Time _timestamp;
+};
+
+/* RtEvent for passing tempo information */
+class TempoRtEvent : public BaseRtEvent
+{
+public:
+    TempoRtEvent(int offset, float tempo) : BaseRtEvent(RtEventType::TEMPO, 0, offset),
+                                            _tempo(tempo) {}
+
+    float tempo() const {return _tempo;}
+
+protected:
+    float _tempo;
+};
+
+/* RtEvent for passing time signature information */
+class TimeSignatureRtEvent : public BaseRtEvent
+{
+public:
+    TimeSignatureRtEvent(int offset, TimeSignature signature) : BaseRtEvent(RtEventType::TIME_SIGNATURE, 0, offset),
+                                                                _signature(signature) {}
+
+    TimeSignature time_signature() const {return _signature;}
+
+protected:
+    TimeSignature _signature;
+};
+
+enum class PlayingMode
+{
+    STOPPED,
+    PLAYING,
+    RECORDING
+};
+
+/* RtEvent for passing transport commands */
+class PlayingModeRtEvent : public BaseRtEvent
+{
+public:
+    PlayingModeRtEvent(int offset, PlayingMode mode) : BaseRtEvent(RtEventType::PLAYING_MODE, 0, offset),
+                                                       _mode(mode) {}
+
+    PlayingMode mode() const {return _mode;}
+
+protected:
+    PlayingMode _mode;
+};
+
+enum class SyncMode
+{
+    INTERNAL,
+    MIDI_SLAVE,
+    ABLETON_LINK
+};
+
+/* RtEvent for setting the mode of external tempo sync */
+class SyncModeRtEvent : public BaseRtEvent
+{
+public:
+    SyncModeRtEvent(int offset, SyncMode mode) : BaseRtEvent(RtEventType::SYNC_MODE, 0, offset),
+                                                 _mode(mode) {}
+
+    SyncMode mode() const {return _mode;}
+
+protected:
+    SyncMode _mode;
 };
 /**
  * @brief Container class for rt events. Functionally this take the role of a
@@ -449,18 +520,43 @@ public:
 
     DataPayloadRtEvent* data_payload_event()
     {
-        assert(_processor_reorder_event.type() == RtEventType::STRING_DELETE ||
-               _processor_reorder_event.type() == RtEventType::BLOB_DELETE ||
-               _processor_reorder_event.type() == RtEventType::VOID_DELETE );
+        assert(_data_payload_event.type() == RtEventType::STRING_DELETE ||
+               _data_payload_event.type() == RtEventType::BLOB_DELETE ||
+               _data_payload_event.type() == RtEventType::VOID_DELETE );
         return &_data_payload_event;
 
     }
 
     SynchronisationRtEvent* syncronisation_event()
     {
-        assert(_processor_reorder_event.type() == RtEventType::SYNC);
+        assert(_synchronisation_event.type() == RtEventType::SYNC);
         return &_synchronisation_event;
     }
+
+    TempoRtEvent* tempo_event()
+    {
+        assert(_tempo_event.type() == RtEventType::TEMPO);
+        return &_tempo_event;
+    }
+
+    TimeSignatureRtEvent* time_signature_event()
+    {
+        assert(_time_signature_event.type() == RtEventType::TIME_SIGNATURE);
+        return &_time_signature_event;
+    }
+
+    PlayingModeRtEvent* playing_mode_event()
+    {
+        assert(_playing_mode_event.type() == RtEventType::PLAYING_MODE);
+        return &_playing_mode_event;
+    }
+
+    SyncModeRtEvent* sync_mode_event()
+    {
+        assert(_sync_mode_event.type() == RtEventType::SYNC_MODE);
+        return &_sync_mode_event;
+    }
+
 
     /* Factory functions for constructing events */
     static RtEvent make_note_on_event(ObjectId target, int offset, int note, float velocity)
@@ -613,6 +709,30 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_tempo_event(int offset, float tempo)
+    {
+        TempoRtEvent typed_event(offset, tempo);
+        return typed_event;
+    }
+
+    static RtEvent make_time_signature_event(int offset, TimeSignature signature)
+    {
+        TimeSignatureRtEvent typed_event(offset, signature);
+        return typed_event;
+    }
+
+    static RtEvent make_playing_mode_event(int offset, PlayingMode mode)
+    {
+        PlayingModeRtEvent typed_event(offset, mode);
+        return typed_event;
+    }
+
+    static RtEvent make_sync_mode_event(int offset, SyncMode mode)
+    {
+        SyncModeRtEvent typed_event(offset, mode);
+        return typed_event;
+    }
+
 
 private:
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
@@ -629,6 +749,10 @@ private:
     RtEvent(const AsyncWorkRtCompletionEvent& e) : _async_work_completion_event(e) {}
     RtEvent(const DataPayloadRtEvent& e) : _data_payload_event(e) {}
     RtEvent(const SynchronisationRtEvent& e) : _synchronisation_event(e) {}
+    RtEvent(const TempoRtEvent& e) : _tempo_event(e) {}
+    RtEvent(const TimeSignatureRtEvent& e) : _time_signature_event(e) {}
+    RtEvent(const PlayingModeRtEvent& e) : _playing_mode_event(e) {}
+    RtEvent(const SyncModeRtEvent& e) : _sync_mode_event(e) {}
     union
     {
         BaseRtEvent                   _base_event;
@@ -646,9 +770,15 @@ private:
         AsyncWorkRtCompletionEvent    _async_work_completion_event;
         DataPayloadRtEvent            _data_payload_event;
         SynchronisationRtEvent        _synchronisation_event;
+        TempoRtEvent                  _tempo_event;
+        TimeSignatureRtEvent          _time_signature_event;
+        PlayingModeRtEvent            _playing_mode_event;
+        SyncModeRtEvent               _sync_mode_event;
     };
 };
 
+/* Compile time check that the event container fits withing given memory constraints and
+ * they can be safely copied without side effects. Important for real-time performance*/
 static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
