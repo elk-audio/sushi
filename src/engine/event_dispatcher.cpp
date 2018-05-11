@@ -6,7 +6,7 @@
 namespace sushi {
 namespace dispatcher {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("Event Dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtEventFifo* in_rt_queue,

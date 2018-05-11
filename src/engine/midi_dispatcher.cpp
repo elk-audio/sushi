@@ -6,7 +6,7 @@
 namespace sushi {
 namespace midi_dispatcher {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("Midi Dispatcher");
 
 inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,

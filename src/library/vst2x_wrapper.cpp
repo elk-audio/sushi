@@ -15,7 +15,7 @@ namespace vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("VsT2 Wrapper");
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
@@ -165,11 +165,11 @@ bool Vst2xWrapper::_register_parameters()
         param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
-            MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
+            MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            MIND_LOG_ERROR("VsT wrapper, plugin: {}, Error while registering param: {}", name(), param_name);
+            MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -190,12 +190,12 @@ void Vst2xWrapper::process_event(RtEvent event)
     {
         if (_vst_midi_events_fifo.push(event) == false)
         {
-            MIND_LOG_WARNING("Vst wrapper, plugin: {}, MIDI queue Overflow!", name());
+            MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else
     {
-        MIND_LOG_INFO("Vst wrapper, plugin: {}, received unhandled event", name());
+        MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 
 }

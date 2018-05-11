@@ -7,7 +7,9 @@
  * disappears without a trace. Useful for testing and outside releases.
  *
  * Usage:
- * Call MIND_GET_LOGGER before any code in each file.
+ * Call MIND_GET_LOGGER before any code in each file or preferably call
+ * MIND_GET_LOGGER_WITH_MODULE_NAME() to set a module name that will be
+ * used by all log entries from that file.
  *
  * Write to the logger using the MIND_LOG_XXX macros with cppformat style
  * ie: MIND_LOG_INFO("Setting x to {} and y to {}", x, y);
@@ -37,7 +39,7 @@
 //#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 
 /* Use this macro  at the top of a source file to declare a local logger */
-#define MIND_GET_LOGGER_WITH_PREFIX(prefix) static auto spdlog_instance = mind::Logger::get_logger(); \
+#define MIND_GET_LOGGER_WITH_MODULE_NAME(prefix) static auto spdlog_instance = mind::Logger::get_logger(); \
             constexpr char local_log_prefix[] = prefix": " ;
 
 #define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger(); \
@@ -153,6 +155,7 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #else
 /* Define empty macros */
 #define MIND_GET_LOGGER
+#define MIND_GET_LOGGER_WITH_MODULE_NAME(...)
 #define MIND_LOG_DEBUG(...)
 #define MIND_LOG_INFO(...)
 #define MIND_LOG_WARNING(...)
