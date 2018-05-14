@@ -54,13 +54,13 @@ bool AlsaMidiFrontend::init()
         return false;
     }
 
-    alsamidi_ret = snd_midi_event_new(ALSA_MAX_EVENT_SIZE_BYTES, &_input_parser);
+    alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_input_parser);
     if (alsamidi_ret < 0)
     {
         MIND_LOG_ERROR("Error creating ALSA MIDI Input RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
-    alsamidi_ret = snd_midi_event_new(ALSA_MAX_EVENT_SIZE_BYTES, &_output_parser);
+    alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_output_parser);
     if (alsamidi_ret < 0)
     {
         MIND_LOG_ERROR("Error creating ALSA MIDI Output RtEvent Parser: {}", strerror(-alsamidi_ret));
@@ -113,7 +113,7 @@ void AlsaMidiFrontend::_poll_function()
         if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
         {
             snd_seq_event_t* ev{nullptr};
-            uint8_t data_buffer[ALSA_MAX_EVENT_SIZE_BYTES]{0};
+            uint8_t data_buffer[ALSA_EVENT_MAX_SIZE]{0};
             while (snd_seq_event_input(_seq_handle, &ev) > 0)
             {
                 // TODO - Consider if we should be filtering at all here or in the dispatcher instead
