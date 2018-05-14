@@ -54,7 +54,7 @@
 #define MIND_LOG_INFO(...)     spdlog_instance->info(__VA_ARGS__)
 #define MIND_LOG_WARNING(...)  spdlog_instance->warn(__VA_ARGS__)
 #define MIND_LOG_ERROR(...)    spdlog_instance->error(__VA_ARGS__)
-#define MIND_LOG_CRITICAL(...) spdlog_instance->crit(__VA_ARGS__)
+#define MIND_LOG_CRITICAL(...) spdlog_instance->critical(__VA_ARGS__)
 
 #ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 #define MIND_LOG_DEBUG_IF(condition, msg, ...) spdlog_instance->debug_if(condition, msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
@@ -64,7 +64,7 @@
 #define MIND_LOG_INFO_IF(condition, ...)     spdlog_instance->info_if(condition, __VA_ARGS__)
 #define MIND_LOG_WARNING_IF(condition, ...)  spdlog_instance->warn_if(condition, __VA_ARGS__)
 #define MIND_LOG_ERROR_IF(condition, ...)    spdlog_instance->error_if(condition, __VA_ARGS__)
-#define MIND_LOG_CRITICAL_IF(condition, ...) spdlog_instance->crit_if(condition, __VA_ARGS__)
+#define MIND_LOG_CRITICAL_IF(condition, ...) spdlog_instance->critical_if(condition, __VA_ARGS__)
 
 /** Error codes returned by set_logger_params
  */
