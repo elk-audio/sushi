@@ -125,7 +125,7 @@ void OfflineFrontend::cleanup()
 
 void OfflineFrontend::run()
 {
-    disable_denormals();
+    set_flush_denormals_to_zero();
     int readcount;
     int samplecount = 0;
     double usec_time = 0.0f;

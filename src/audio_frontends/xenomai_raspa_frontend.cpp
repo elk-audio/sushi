@@ -92,7 +92,7 @@ void XenomaiRaspaFrontend::run()
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
     Time timestamp = Time(raspa_get_time());
-    disable_denormals();
+    set_flush_denormals_to_zero();
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
 

@@ -9,7 +9,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-inline void disable_denormals()
+inline void set_flush_denormals_to_zero()
 {
     _mm_setcsr(0x9FC0);
 }
