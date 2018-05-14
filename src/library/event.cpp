@@ -219,6 +219,12 @@ int AddProcessorEvent::execute(engine::BaseEngine*engine)
         case AddProcessorEvent::ProcessorType::VST3X:
             plugin_type = engine::PluginType::VST3X;
             break;
+
+        default:
+            /* GCC is overzealous and warns even with a class enum that plugin_type
+             * may be unitialised. This is apparently a by design and not a bug, see:
+             * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53479*/
+            __builtin_unreachable();
     }
 
     // TODO where to do validation?

@@ -64,7 +64,7 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
     EXPECT_EQ(5u, parameter_list.size());
 
     EXPECT_EQ(5u, _module_under_test->_parameter_values.size());
-    IntParameterValue* value;
+    IntParameterValue* value = nullptr;
     ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[3].int_parameter_value());
     EXPECT_EQ(3, value->value());
 }

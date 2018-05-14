@@ -119,9 +119,9 @@ TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
     _module_under_test->process_event(sample_ev);
 
     /* Simulate an event dispatcher receieving the event and calling the non-rt callback */
-    ASSERT_FALSE(queue.empty());
     RtEvent async_event;
-    queue.pop(async_event);
+    bool got_event = queue.pop(async_event);
+    ASSERT_TRUE(got_event);
     auto typed_event = async_event.async_work_event();
     int status = typed_event->callback()(typed_event->callback_data(), typed_event->event_id());
     ASSERT_EQ(SampleChangeStatus::SUCCESS, status);
