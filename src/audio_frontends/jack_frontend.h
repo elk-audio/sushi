@@ -20,8 +20,6 @@
 namespace sushi {
 namespace audio_frontend {
 
-constexpr int MAX_EVENTS_PER_CHUNK = 100;
-
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     JackFrontendConfiguration(const std::string client_name,
@@ -118,7 +116,6 @@ private:
     int internal_samplerate_callback(jack_nframes_t nframes);
     void internal_latency_callback(jack_latency_callback_mode_t mode);
 
-    void process_events();
     void process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count);
     void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
 
@@ -131,7 +128,6 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
-    RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
     std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
