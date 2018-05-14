@@ -1,9 +1,6 @@
 [submodule "third-party/EASTL"]
 	path = third-party/EASTL
 	url = https://github.com/electronicarts/EASTL.git
-[submodule "third-party/liblo"]
-	path = third-party/liblo
-	url = git://github.com/radarsat1/liblo.git
 [submodule "vst3_pluginterfaces"]
 	path = third-party/vstsdk3/pluginterfaces
 	url = git://github.com/steinbergmedia/vst3_pluginterfaces.git
