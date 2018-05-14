@@ -8,6 +8,7 @@
 
 #include "logging.h"
 #include "jack_frontend.h"
+#include "audio_frontend_internals.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -229,6 +230,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
 
 int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
 {
+    disable_denormals();
     if (no_frames < 64 || no_frames % 64)
     {
         MIND_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");

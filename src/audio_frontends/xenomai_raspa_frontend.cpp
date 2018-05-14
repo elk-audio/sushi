@@ -10,6 +10,7 @@
 #include "raspa.h"
 
 #include "xenomai_raspa_frontend.h"
+#include "audio_frontend_internals.h"
 #include "logging.h"
 
 namespace sushi {
@@ -91,6 +92,7 @@ void XenomaiRaspaFrontend::run()
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
     Time timestamp = Time(raspa_get_time());
+    disable_denormals();
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
 

@@ -3,6 +3,7 @@
 
 #include "logging.h"
 #include "offline_frontend.h"
+#include "audio_frontend_internals.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -124,6 +125,7 @@ void OfflineFrontend::cleanup()
 
 void OfflineFrontend::run()
 {
+    disable_denormals();
     int readcount;
     int samplecount = 0;
     double usec_time = 0.0f;

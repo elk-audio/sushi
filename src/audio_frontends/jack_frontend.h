@@ -18,7 +18,6 @@
 #include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
-
 namespace audio_frontend {
 
 constexpr int MAX_EVENTS_PER_CHUNK = 100;
