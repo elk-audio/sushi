@@ -111,9 +111,9 @@ TEST_F(TestArpeggiatorPlugin, TestOutput)
      * fast forward the time directly */
     _host_control._transport.set_time(std::chrono::milliseconds(250), 12000);
     _module_under_test->process_audio(buffer, buffer);
-    ASSERT_FALSE(_fifo.empty());
     RtEvent e;
-    _fifo.pop(e);
+    bool got_event = _fifo.pop(e);
+    ASSERT_TRUE(got_event);
     ASSERT_EQ(_module_under_test->id(), e.processor_id());
     ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
     _fifo.pop(e);

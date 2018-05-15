@@ -18,7 +18,7 @@
 namespace sushi {
 namespace midi_frontend {
 
-constexpr int ALSA_MAX_EVENT_SIZE_BYTES = 12;
+constexpr int ALSA_EVENT_MAX_SIZE = 12;
 
 class AlsaMidiFrontend : public BaseMidiFrontend
 {
