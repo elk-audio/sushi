@@ -8,6 +8,7 @@
 
 #include "logging.h"
 #include "jack_frontend.h"
+#include "audio_frontend_internals.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -159,12 +160,6 @@ AudioFrontendStatus JackFrontend::setup_ports()
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
-    _midi_port = jack_port_register(_client, "midi_input", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-    if (!_midi_port)
-    {
-        MIND_LOG_ERROR("Failed to open Jack Midi input port.");
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
-    }
     return AudioFrontendStatus::OK;
 }
 
@@ -212,26 +207,16 @@ AudioFrontendStatus JackFrontend::connect_ports()
     }
     jack_free(in_ports);
 
-    const char** midi_ports = jack_get_ports(_client, nullptr, JACK_DEFAULT_MIDI_TYPE, JackPortIsPhysical|JackPortIsOutput);
-    if (midi_ports)
-    {
-        int ret = jack_connect(_client, jack_port_name(_midi_port), midi_ports[0]);
-        if (ret != 0)
-        {
-            MIND_LOG_WARNING("Failed to connect Midi port, error {}.", ret);
-        }
-    }
-
-    jack_free(midi_ports);
     return AudioFrontendStatus::OK;
 }
 
 
 int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
 {
+    set_flush_denormals_to_zero();
     if (no_frames < 64 || no_frames % 64)
     {
-        MIND_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
+        MIND_LOG_CRITICAL("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
     }
     jack_nframes_t 	current_frames{0};
@@ -248,8 +233,6 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         _engine->update_time(start_time + delta_time, current_frames + frame);
-        process_events();
-        process_midi(frame, AUDIO_CHUNK_SIZE);
         process_audio(frame, AUDIO_CHUNK_SIZE);
     }
     return 0;
@@ -290,35 +273,6 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
         MIND_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
     }
 }
-
-void inline JackFrontend::process_events()
-{
-    while (!_event_queue.empty())
-    {
-        RtEvent event;
-        if (_event_queue.pop(event))
-        {
-            _engine->send_rt_event(event);
-        }
-    }
-}
-
-
-void inline JackFrontend::process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count)
-{
-    auto* buffer = jack_port_get_buffer(_midi_port, frame_count);
-    auto no_events = jack_midi_get_event_count(buffer);
-    for (auto i = 0u; i < no_events; ++i)
-    {
-        jack_midi_event_t midi_event;
-        int ret = jack_midi_event_get(&midi_event, buffer, i);
-        if (ret == 0 && midi_event.time>= start_frame && midi_event.time < start_frame + frame_count)
-        {
-            //_midi_dispatcher->process_midi(0, midi_event.time - start_frame, midi_event.buffer, midi_event.size, true);
-        }
-    }
-}
-
 
 void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count)
 {
