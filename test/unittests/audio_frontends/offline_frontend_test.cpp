@@ -46,7 +46,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
         EXPECT_TRUE(false) << "Can't access Test Data environment variable";
     }
 
-    // Initialize with a file cointaining 0.5 on both channels
+    // Initialize with a file containing 0.5 on both channels
     std::string test_data_file(test_data_dir);
     test_data_file.append("/test_sndfile_05.wav");
     std::string output_file_name("./test_out.wav");
@@ -90,20 +90,23 @@ TEST_F(TestOfflineFrontend, TestInvalidInputFile)
     ASSERT_EQ(AudioFrontendStatus::INVALID_INPUT_FILE, ret_code);
 }
 
-TEST_F(TestOfflineFrontend, TestChannelMatch)
+TEST_F(TestOfflineFrontend, TestMonoMode)
 {
     char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
     if (test_data_dir == nullptr)
     {
         EXPECT_TRUE(false) << "Can't access Test Data environment variable";
     }
-
-    // Initialize with a file cointaining 0.5 on both channels
+    // Initialize with a mono file
     std::string test_data_file(test_data_dir);
     test_data_file.append("/mono.wav");
+    std::string output_file_name("./test_out.wav");
     OfflineFrontendConfiguration config(test_data_file, "./test_out.wav");
     auto ret_code = _module_under_test->init(&config);
-    ASSERT_EQ(AudioFrontendStatus::INVALID_N_CHANNELS, ret_code);
+    ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
+
+    // Process with the dummy bypass engine and make check this doesnt crash
+    _module_under_test->run();
 }
 
 TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
