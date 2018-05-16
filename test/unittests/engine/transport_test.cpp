@@ -33,6 +33,7 @@ TEST_F(TestTransport, TestBasicQuerying)
     EXPECT_EQ(std::chrono::microseconds(1001500), _module_under_test.current_process_time());
 
     _module_under_test.set_tempo(130);
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
     EXPECT_FLOAT_EQ(130, _module_under_test.current_tempo());
 
     _module_under_test.set_time_signature({5, 8});

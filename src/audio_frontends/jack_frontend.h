@@ -122,6 +122,7 @@ private:
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
     jack_client_t* _client{nullptr};
     jack_nframes_t _sample_rate;
+    jack_nframes_t _start_frame{0};
     bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};

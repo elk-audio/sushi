@@ -23,7 +23,7 @@ namespace engine {
 
 constexpr float DEFAULT_TEMPO = 120;
 /* Ableton recomends this to be around 10 Hz */
-constexpr int LINK_UPDATE_RATE = 48000 / (10 * AUDIO_CHUNK_SIZE);
+constexpr int LINK_UPDATE_RATE = 1;// = 48000 / (10 * AUDIO_CHUNK_SIZE);
 
 class Transport
 {
@@ -59,19 +59,19 @@ public:
      * @brief Set the tempo of the engine in beats (quarter notes) per minute
      * @param tempo The new tempo in beats per minute
      */
-    void set_tempo(float tempo) {_tempo = tempo;}
+    void set_tempo(float tempo) {_set_tempo = tempo; _new_tempo = true;}
 
     /**
      * @brief Set the playing mode, i.e. playing, stopped, recording etc..
      * @param mode The new playing mode.
      */
-    void set_playing_mode(PlayingMode mode) {_mode = mode;}
+    void set_playing_mode(PlayingMode mode) {_set_playmode = mode; _new_playmode = true;}
 
     /**
      * @brief Set the current mode of synchronising tempo and beats
      * @param mode The mode of synchronisation to use
      */
-    void set_sync_mode(SyncMode mode) {_sync_mode = mode;}
+    void set_sync_mode(SyncMode mode) {_sync_mode = mode; _new_playmode = true;}
 
     /**
      * @return Set the sample rate.
@@ -101,7 +101,7 @@ public:
      *        as sushi as of now is mostly intended for live use.
      * @return true if the transport is currently playing, false if stopped
      */
-    bool playing() const {return _mode != PlayingMode::STOPPED;}
+    bool playing() const {return _playmode != PlayingMode::STOPPED;}
 
     /**
      * @brief Query the current time signature being used
@@ -111,7 +111,9 @@ public:
 
     /**
      * @brief Query the current tempo. Safe to call from rt and non-rt context but will
-     *        only return approximate value if called from a non-rt context
+     *        only return approximate value if called from a non-rt context. If sync is
+     *        not set to INTERNAL, this might be different then what was previously used
+     *        as an argument to set_tempo()
      * @return A float representing the tempo in beats per minute
      */
     float current_tempo() const {return _tempo;}
@@ -150,6 +152,9 @@ public:
 
 private:
     void _update_internals();
+    void _update_internal_sync(int64_t samples);
+    void _update_link_sync(Time timestamp);
+
 
     int64_t         _sample_count{0};
     Time            _time{0};
@@ -162,10 +167,13 @@ private:
     double          _beats_per_chunk{0};
     float           _beats_per_bar;
     float           _samplerate{};
+    PlayingMode     _playmode{PlayingMode::PLAYING};
+    PlayingMode     _set_playmode{PlayingMode::PLAYING};
+    bool            _new_tempo{false};
+    bool            _new_playmode{false};
     SyncMode        _sync_mode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
     int             _link_update_count{0};
-    PlayingMode     _mode{PlayingMode::PLAYING};
     std::unique_ptr<ableton::Link>  _link_controller;
 };
 
