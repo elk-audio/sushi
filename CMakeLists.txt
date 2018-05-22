@@ -234,9 +234,9 @@ endif()
 
 # Common libraries between all builds, and safe to be included in test targets
 set(COMMON_LIBRARIES
-    "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
     EASTL
     sndfile
+    lo
     pthread
     dl
 )
@@ -299,7 +299,6 @@ target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
-add_dependencies(sushi liblo)
 if (${WITH_VST3})
     add_dependencies(sushi vst3_host sdk base)
 endif()
