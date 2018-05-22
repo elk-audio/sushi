@@ -18,7 +18,7 @@ namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate),
                                               _transport(sample_rate)

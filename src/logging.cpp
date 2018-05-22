@@ -42,6 +42,7 @@ MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
     {
         ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
 
     Logger::_logger_file_name.assign(file_name);
     Logger::_logger_name.assign(logger_name);

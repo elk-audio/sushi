@@ -12,8 +12,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER;
-
+MIND_GET_LOGGER_WITH_MODULE_NAME("jack audio");
 
 AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 {
