@@ -6,7 +6,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // Disable unused variable warnings as the host callback just print debug info atm
 #pragma GCC diagnostic push

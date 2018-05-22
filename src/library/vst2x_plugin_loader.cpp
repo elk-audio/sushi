@@ -35,7 +35,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
