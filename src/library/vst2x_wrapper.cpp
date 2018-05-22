@@ -15,7 +15,7 @@ namespace vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("VsT2 Wrapper");
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {

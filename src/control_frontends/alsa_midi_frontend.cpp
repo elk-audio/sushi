@@ -4,7 +4,7 @@
 #include "alsa_midi_frontend.h"
 #include "logging.h"
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("Alsa Midi");
+MIND_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 
 namespace sushi {
 namespace midi_frontend {

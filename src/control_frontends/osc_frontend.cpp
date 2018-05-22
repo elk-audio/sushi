@@ -13,7 +13,7 @@
 namespace sushi {
 namespace control_frontend {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("Osc Frontend");
+MIND_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 namespace {
 

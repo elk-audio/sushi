@@ -40,7 +40,7 @@
 
 /* Use this macro  at the top of a source file to declare a local logger */
 #define MIND_GET_LOGGER_WITH_MODULE_NAME(prefix) static auto spdlog_instance = mind::Logger::get_logger(); \
-            constexpr char local_log_prefix[] = prefix": " ;
+            constexpr char local_log_prefix[] = "[" prefix "] " ;
 
 #define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger(); \
             constexpr char local_log_prefix[] = "";

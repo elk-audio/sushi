@@ -15,7 +15,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
 int global_init()
 {

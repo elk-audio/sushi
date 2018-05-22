@@ -13,7 +13,7 @@ namespace jsonconfig {
 using namespace engine;
 using namespace midi_dispatcher;
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
 JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& path_to_file)
 {

@@ -12,7 +12,7 @@
 namespace sushi {
 namespace vst3 {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
 constexpr char HOST_NAME[] = "Sushi";
 

@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
         std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 
-    MIND_GET_LOGGER_WITH_MODULE_NAME("Main");
+    MIND_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
