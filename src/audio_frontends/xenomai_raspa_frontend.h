@@ -93,7 +93,6 @@ private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
 
-    RtEventFifo _event_queue;
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
     std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
 };

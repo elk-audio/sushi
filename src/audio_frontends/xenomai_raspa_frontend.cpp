@@ -10,6 +10,7 @@
 #include "raspa.h"
 
 #include "xenomai_raspa_frontend.h"
+#include "audio_frontend_internals.h"
 #include "logging.h"
 
 namespace sushi {
@@ -91,17 +92,9 @@ void XenomaiRaspaFrontend::run()
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
     Time timestamp = Time(raspa_get_time());
+    set_flush_denormals_to_zero();
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
-
-    while (!_event_queue.empty())
-    {
-        RtEvent event;
-        if (_event_queue.pop(event))
-        {
-            _engine->send_rt_event(event);
-        }
-    }
 
     ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, RASPA_N_CHANNELS);
     ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, RASPA_N_CHANNELS);

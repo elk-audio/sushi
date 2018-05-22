@@ -18,10 +18,7 @@
 #include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
-
 namespace audio_frontend {
-
-constexpr int MAX_EVENTS_PER_CHUNK = 100;
 
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -119,20 +116,16 @@ private:
     int internal_samplerate_callback(jack_nframes_t nframes);
     void internal_latency_callback(jack_latency_callback_mode_t mode);
 
-    void process_events();
-    void process_midi(jack_nframes_t start_frame, jack_nframes_t frame_count);
     void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
-    jack_port_t* _midi_port;
     jack_client_t* _client{nullptr};
     jack_nframes_t _sample_rate;
     bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
-    RtEventFifo _event_queue;
 
     std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
     std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
