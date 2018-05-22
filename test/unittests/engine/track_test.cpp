@@ -208,7 +208,8 @@ TEST_F(TrackTest, TestEventForwarding)
     _module_under_test.process_audio(buffer, buffer);
     ASSERT_FALSE(event_queue.empty());
     RtEvent received_event;
-    event_queue.pop(received_event);
+    bool got_event = event_queue.pop(received_event);
+    ASSERT_TRUE(got_event);
     auto typed_event = received_event.keyboard_event();
     ASSERT_EQ(RtEventType::NOTE_ON, received_event.type());
     /* Assert that the processor id of the event is that of the track and

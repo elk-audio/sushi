@@ -21,7 +21,7 @@ bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
 
-void sigint_handler(int __attribute__((unused)) sig)
+void sigint_handler([[maybe_unused]] int sig)
 {
     exit_flag = true;
     exit_notifier.notify_one();

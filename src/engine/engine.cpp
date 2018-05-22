@@ -492,14 +492,14 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
         return EngineReturnStatus::INVALID_TRACK;
     }
     auto track = static_cast<Track*>(track_node->second.get());
-    Processor* plugin;
+    Processor* plugin{nullptr};
     switch (plugin_type)
     {
         case PluginType::INTERNAL:
             plugin = _make_internal_plugin(plugin_uid);
             if(plugin == nullptr)
             {
-                MIND_LOG_ERROR("Incorrect stompbox UID \"{}\"", plugin_uid);
+                MIND_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
                 return EngineReturnStatus::INVALID_PLUGIN_UID;
             }
             break;
