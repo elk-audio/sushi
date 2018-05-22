@@ -96,15 +96,6 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
 
-    while (!_event_queue.empty())
-    {
-        RtEvent event;
-        if (_event_queue.pop(event))
-        {
-            _engine->send_rt_event(event);
-        }
-    }
-
     ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, RASPA_N_CHANNELS);
     ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, RASPA_N_CHANNELS);
     out_buffer.clear();
