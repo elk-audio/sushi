@@ -63,14 +63,14 @@
 #define MIND_LOG_CRITICAL(msg, ...)      spdlog_instance->critical("{}" msg, local_log_prefix, ##__VA_ARGS__)
 
 #ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
-#define MIND_LOG_DEBUG_IF(condition, msg, ...) spdlog_instance->debug_if(condition, "{}" msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#define MIND_LOG_DEBUG_IF(condition, msg, ...) if (condition) { spdlog_instance->debug_if(condition, "{}" msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__); }
 #else
-#define MIND_LOG_DEBUG_IF(condition, msg, ...)    spdlog_instance->debug_if(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__)
+#define MIND_LOG_DEBUG_IF(condition, msg, ...)    if (condition) { spdlog_instance->debug(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__);}
 #endif
-#define MIND_LOG_INFO_IF(condition, msg, ...)     spdlog_instance->info_if(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__)
-#define MIND_LOG_WARNING_IF(condition, msg, ...)  spdlog_instance->warn_if(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__)
-#define MIND_LOG_ERROR_IF(condition, msg, ...)    spdlog_instance->error_if(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__)
-#define MIND_LOG_CRITICAL_IF(condition, msg, ...) spdlog_instance->critical_if(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__)
+#define MIND_LOG_INFO_IF(condition, msg, ...)     if (condition) { spdlog_instance->info("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_WARNING_IF(condition, msg, ...)  if (condition) { spdlog_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_ERROR_IF(condition, msg, ...)    if (condition) { spdlog_instance->error("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_CRITICAL_IF(condition, msg, ...) if (condition) { spdlog_instance->critical"{}" msg, local_log_prefix, ##__VA_ARGS__); }
 
 /** Error codes returned by set_logger_params
  */
