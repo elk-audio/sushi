@@ -10,7 +10,6 @@
 #include <tuple>
 #include <vector>
 
-#include "rapidjson/document.h"
 #include <sndfile.h>
 
 #include "base_audio_frontend.h"
@@ -57,10 +56,10 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     /**
-     * @brief Parse timestamped events from JSON structure and put them into an internal queue.
-     * @param config rapidjson document containing the events definition.
+     * @brief Add events that should be run during the processing
+     * @param An std::vector containing the timestamped events.
      */
-    void add_sequencer_events_from_json_def(const rapidjson::Document& config);
+    void add_sequencer_events(std::vector<Event*> events);
 
     void cleanup() override;
 
@@ -74,8 +73,7 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{OFFLINE_FRONTEND_CHANNELS};
 
-    // TODO - Not really a queue in offline mode, just a list of events sorted by time
-    std::vector<std::tuple<int, RtEvent>> _event_queue;
+    std::vector<Event*> _event_queue;
 };
 
 }; // end namespace audio_frontend

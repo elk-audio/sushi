@@ -301,3 +301,13 @@ TEST_F(TestJsonConfigurator, TestMidiSchema)
     track_connections["channel"] = 16;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
 }
+
+TEST_F(TestJsonConfigurator, TestLoadEventList)
+{
+    // Load the tracks first so we can find the processors
+    ASSERT_EQ(JsonConfigReturnStatus::OK, _module_under_test->load_tracks(_path));
+
+    auto [status, events] = _module_under_test->load_event_list(_path);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+    ASSERT_EQ(4u, events.size());
+}

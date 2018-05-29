@@ -206,16 +206,42 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
     return JsonConfigReturnStatus::OK;
 }
 
-JsonConfigReturnStatus JsonConfigurator::parse_events_from_file(const std::string& path_to_file,
-                                                                rapidjson::Document& config)
+JsonConfigReturnStatus JsonConfigurator::load_events(const std::string& path_to_file)
 {
-    auto status = _parse_file(path_to_file, config, JsonSection::EVENTS);
+    rapidjson::Document events;
+    auto status = _parse_file(path_to_file, events, JsonSection::EVENTS);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
+    auto dispatcher = _engine->event_dispatcher();
+    for (auto& json_event : events["events"].GetArray())
+    {
+        if (Event* e = _parse_event(json_event, IGNORE_TIMESTAMP); e != nullptr)
+            dispatcher->post_event(e);
+    }
     return JsonConfigReturnStatus::OK;
 }
+
+std::pair<JsonConfigReturnStatus, std::vector<Event*>>
+JsonConfigurator::load_event_list(const std::string& path_to_file)
+{
+    rapidjson::Document json_events;
+    std::vector<Event*> events;
+    auto status = _parse_file(path_to_file, json_events, JsonSection::EVENTS);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return std::make_pair(status, events);
+    }
+    for (auto& json_event : json_events["events"].GetArray())
+    {
+        if (Event* e = _parse_event(json_event, USE_TIMESTAMP); e != nullptr)
+            events.push_back(e);
+    }
+    return std::make_pair(JsonConfigReturnStatus::OK, events);
+}
+
+
 JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_file,
                                                      rapidjson::Document& config,
                                                      JsonSection section)
@@ -386,6 +412,50 @@ int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
         return midi::MidiChannel::OMNI;
     }
     return channels.GetInt();
+}
+
+Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool with_timestamp)
+{
+    Time timestamp = with_timestamp? std::chrono::microseconds(
+            static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))): IMMEDIATE_PROCESS;
+
+    const rapidjson::Value& data = json_event["data"];
+    auto [status, processor_id] = _engine->processor_id_from_name(data["plugin_name"].GetString());
+    if (status != sushi::engine::EngineReturnStatus::OK)
+    {
+        MIND_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
+        return nullptr;
+    }
+    if (json_event["type"] == "parameter_change")
+    {
+        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
+                                                                      data["parameter_name"].GetString());
+        if (status != sushi::engine::EngineReturnStatus::OK)
+        {
+            MIND_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
+            return nullptr;
+        }
+        return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                        processor_id,
+                                        parameter_id,
+                                        data["value"].GetFloat(),
+                                        timestamp);
+    }
+    else if (json_event["type"] == "note_on")
+    {
+        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
+                                 data["note"].GetUint(),
+                                 data["velocity"].GetFloat(),
+                                 timestamp);
+    }
+    else if (json_event["type"] == "note_off")
+    {
+        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
+                                 data["note"].GetUint(),
+                                 data["velocity"].GetFloat(),
+                                 timestamp);
+    }
+    return nullptr;
 }
 
 bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, JsonSection section)

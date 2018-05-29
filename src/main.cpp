@@ -261,14 +261,16 @@ int main(int argc, char* argv[])
 
     if (!use_jack && !use_xenomai_raspa)
     {
-        rapidjson::Document config;
-        status = configurator.parse_events_from_file(config_filename, config);
+        auto [status, events] = configurator.load_event_list(config_filename);
         if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events_from_json_def(config);
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events(events);
         }
     }
-
+    else
+    {
+        configurator.load_events(config_filename);
+    }
     frontend->connect_control_frontends();
     frontend->run();
 
