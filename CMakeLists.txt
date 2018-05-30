@@ -20,8 +20,6 @@ configure_file(
     ${CMAKE_BINARY_DIR}/generated/version.h
 )
 
-include_directories(${CMAKE_BINARY_DIR}/generated)
-
 ##################################
 #  Build and link configuration  #
 ##################################
@@ -212,6 +210,7 @@ set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
+                 "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}/raspalib/include"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"

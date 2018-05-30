@@ -11,7 +11,7 @@
 
 #include "logging.h"
 #include "options.h"
-#include "version.h"
+#include "generated/version.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
@@ -30,7 +30,7 @@ void sigint_handler([[maybe_unused]] int sig)
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2016-2017 MIND Music Labs, Stockholm" << std::endl;
+    std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
 }
 
 void print_version_and_build_info()
