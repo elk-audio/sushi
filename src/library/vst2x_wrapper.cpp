@@ -215,6 +215,29 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     }
 }
 
+void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float value)
+{
+    /* The default Vst2.4 implementation calls set_parameter() in set_parameter_automated()
+     * so the plugin is already aware of the change, we just need to send a notification
+     * to the non-rt part */
+    if (parameter_index > this->parameter_count())
+    {
+        return;
+    }
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
+    output_event(e);
+}
+
+void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
+{
+    auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
+                                                  this->id(),
+                                                  static_cast<ObjectId>(parameter_index),
+                                                  value,
+                                                  IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(e);
+}
+
 bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
 {
     VstSpeakerArrangement in_arr;
@@ -286,6 +309,7 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
         _double_mono_input = true;
     }
 }
+
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)
 {

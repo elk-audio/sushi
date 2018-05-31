@@ -218,7 +218,7 @@ TEST(EventTest, TestFromRtEvent)
     event = Event::from_rt_event(param_ch_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_parameter_change_notification());
-    EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
+    EXPECT_FALSE(event->is_parameter_change_event());
     auto pc_event = static_cast<ParameterChangeNotificationEvent*>(event);
     EXPECT_EQ(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT, pc_event->subtype());
     EXPECT_EQ(9u, pc_event->processor_id());

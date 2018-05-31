@@ -17,10 +17,20 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
 {
     VstIntPtr result = 0;
 
-    MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
+    //MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
 
     switch (opcode)
     {
+    case audioMasterAutomate:
+    {
+        auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+        /* Assuming this is called from the non-rt part of the plugin */
+        wrapper_instance->notify_parameter_change(index, opt);
+        MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                       wrapper_instance->name(), index, opt);
+
+        break;
+    }
     case audioMasterVersion :
         result = kVstVersion;
         break;

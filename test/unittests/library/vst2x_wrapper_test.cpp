@@ -5,6 +5,7 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
+#include "test_utils/engine_mockup.h"
 #include "library/vst2x_wrapper.cpp"
 
 using namespace sushi;
@@ -53,7 +54,7 @@ protected:
     void SetUp(const std::string& plugin_path)
     {
         char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
-        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
+        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, &_dispatcher);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
@@ -66,6 +67,7 @@ protected:
         delete _module_under_test;
     }
     HostControlMockup _host_control;
+    EventDispatcherMockup _dispatcher;
     Vst2xWrapper* _module_under_test;
 };
 
@@ -220,4 +222,14 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
     SetUp("libagain.so");
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+}
+
+TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
+{
+    SetUp("libagain.so");
+    ASSERT_FALSE(_dispatcher.got_event());
+    _module_under_test->notify_parameter_change(0, 0.5f);
+    auto event = std::move(_dispatcher.retrieve_event());
+    ASSERT_FALSE(event == nullptr);
+    ASSERT_TRUE(event->is_parameter_change_notification());
 }
