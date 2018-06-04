@@ -54,9 +54,9 @@ public:
      */
     static Event* from_rt_event(RtEvent& rt_event, Time timestamp);
 
-    Time        time() {return _timestamp;}
-    int         receiver() {return _receiver;}
-    EventId     id() {return _id;}
+    Time        time() const {return _timestamp;}
+    int         receiver() const {return _receiver;}
+    EventId     id() const {return _id;}
 
     /**
      * @brief Whether the event should be processes asynchronously in a low priority thread or not

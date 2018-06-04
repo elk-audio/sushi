@@ -122,8 +122,9 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     test_config_file.append("config.json");
     sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher);
     rapidjson::Document config;
-    configurator.parse_events_from_file(test_config_file, config);
-    _module_under_test->add_sequencer_events_from_json_def(config);
+    auto [status, events] = configurator.load_event_list(test_config_file);
+    ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
+    _module_under_test->add_sequencer_events(events);
 
     auto event_q = _module_under_test->_event_queue;
     ASSERT_EQ(4u, event_q.size());
@@ -132,7 +133,7 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     auto jt = --event_q.end();
     for(auto it = event_q.begin(); it != jt; ++it)
     {
-        ASSERT_GE(std::get<0>(*it), std::get<0>(*(it+1)));
+        ASSERT_GE((*it)->time(), (*(it + 1))->time());
     }
 
 }

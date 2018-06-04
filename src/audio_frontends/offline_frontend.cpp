@@ -50,63 +50,14 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-void OfflineFrontend::add_sequencer_events_from_json_def(const rapidjson::Document& config)
+void OfflineFrontend::add_sequencer_events(std::vector<Event*> events)
 {
-    _event_queue.reserve(config["events"].GetArray().Size());
-    for(const auto& e : config["events"].GetArray())
-    {
-        int sample = static_cast<int>( std::round(e["time"].GetDouble() * static_cast<double>(_engine->sample_rate()) ) );
-        const rapidjson::Value& data = e["data"];
-        ObjectId processor_id;
-        sushi::engine::EngineReturnStatus status;
-        std::tie(status, processor_id) = _engine->processor_id_from_name(data["plugin_name"].GetString());
-        if (status != sushi::engine::EngineReturnStatus::OK)
-        {
-            MIND_LOG_WARNING("Unknown plugin name: \"{}\"", data["plugin_name"].GetString());
-            continue;
-        }
-        if (e["type"] == "parameter_change")
-        {
-            ObjectId parameterId;
-            std::tie(status, parameterId) = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                            data["parameter_name"].GetString());
-            if (status != sushi::engine::EngineReturnStatus::OK)
-            {
-                MIND_LOG_WARNING("Unknown parameter name: {}", data["parameter_name"].GetString());
-                continue;
-            }
-            _event_queue.push_back(std::make_tuple(sample,
-                                                   RtEvent::make_parameter_change_event(processor_id,
-                                                                                      sample % AUDIO_CHUNK_SIZE,
-                                                                                      parameterId,
-                                                                                      data["value"].GetFloat())));
-        }
-        else if (e["type"] == "note_on")
-        {
-            _event_queue.push_back(std::make_tuple(sample,
-                                                   RtEvent::make_note_on_event(processor_id,
-                                                                             sample % AUDIO_CHUNK_SIZE,
-                                                                             data["note"].GetInt(),
-                                                                             data["velocity"].GetFloat())));
-        }
-        else if (e["type"] == "note_off")
-        {
-            _event_queue.push_back(std::make_tuple(sample,
-                                                   RtEvent::make_note_off_event(processor_id,
-                                                                              sample % AUDIO_CHUNK_SIZE,
-                                                                              data["note"].GetInt(),
-                                                                              data["velocity"].GetFloat())));
-        }
-    }
-
-    // Sort events by reverse time (lambda function compares first tuple element)
-    std::sort(std::begin(_event_queue), std::end(_event_queue),
-              [](std::tuple<int, RtEvent> const &t1,
-                 std::tuple<int, RtEvent> const &t2)
-              {
-                  return std::get<0>(t1) >= std::get<0>(t2);
-              }
-    );
+    // Sort events by reverse time
+    std::sort(events.begin(), events.end(), [](const Event* lhs, const Event* rhs)
+                                              {
+                                                  return lhs->time() >= rhs->time();
+                                              });
+    _event_queue = std::move(events);
 }
 
 void OfflineFrontend::cleanup()
@@ -123,6 +74,12 @@ void OfflineFrontend::cleanup()
     }
 }
 
+int time_to_sample_offset(Time chunk_end_time, Time event_time, float samplerate)
+{
+    Time chunktime = std::chrono::microseconds(static_cast<uint64_t>(1'000'000.f * AUDIO_CHUNK_SIZE / samplerate));
+    return AUDIO_CHUNK_SIZE - static_cast<int>((AUDIO_CHUNK_SIZE * (chunk_end_time - event_time) / chunktime));
+}
+
 void OfflineFrontend::run()
 {
     set_flush_denormals_to_zero();
@@ -130,6 +87,7 @@ void OfflineFrontend::run()
     int samplecount = 0;
     double usec_time = 0.0f;
     Time start_time = std::chrono::microseconds(0);
+
     float file_buffer[OFFLINE_FRONTEND_CHANNELS * AUDIO_CHUNK_SIZE];
     while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          file_buffer,
@@ -137,16 +95,23 @@ void OfflineFrontend::run()
     {
         // Update time and sample counter
         _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
+
         samplecount += readcount;
         usec_time += readcount * 1'000'000.f / _engine->sample_rate();
 
         // Process all events until the end of the frame
-        while ( !_event_queue.empty() && (std::get<0>(_event_queue.back()) < samplecount) )
+        Time chunk_end_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
+        while (!_event_queue.empty() && _event_queue.back()->time() < chunk_end_time)
         {
             auto next_event = _event_queue.back();
-            _engine->send_rt_event(std::get<1>(next_event));
-
+            if (next_event->maps_to_rt_event())
+            {
+                int offset = time_to_sample_offset(chunk_end_time, next_event->time(), _engine->sample_rate());
+                auto rt_event = next_event->to_rt_event(offset);
+                _engine->send_rt_event(rt_event);
+            }
             _event_queue.pop_back();
+            delete next_event;
         }
         _buffer.clear();
 
