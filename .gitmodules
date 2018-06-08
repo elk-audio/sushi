@@ -23,3 +23,6 @@
 [submodule "raspalib"]
 	path = raspalib
 	url = git@bitbucket.org:mindswteam/raspalib.git
+[submodule "twine"]
+	path = twine
+	url = git@bitbucket.org:mindswteam/twine.git

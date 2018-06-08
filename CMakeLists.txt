@@ -212,6 +212,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}/raspalib/include"
+                 "${PROJECT_SOURCE_DIR}/twine/include"
+                 "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
@@ -239,6 +241,7 @@ set(COMMON_LIBRARIES
     lo
     pthread
     dl
+    twine
 )
 
 if (${WITH_VST3})
@@ -281,12 +284,16 @@ add_dependencies(vst3_host sdk)
 if (${WITH_XENOMAI})
     set(WITH_RASPA_APPS false)
     set(WITH_RASPA_TESTS false)
+    set(WITH_TWINE_XENOMAI true)
     add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
     add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
     add_subdirectory(raspalib)
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
 endif()
+
+set(WITH_TWINE_TESTS false)
+add_subdirectory(twine)
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 add_subdirectory(test)

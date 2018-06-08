@@ -1,9 +1,8 @@
 #include <cassert>
 #include <sndfile.h>
-#include <iostream>
+
 #include "sample_player_plugin.h"
 #include "logging.h"
-
 
 namespace sushi {
 namespace sample_player_plugin {
