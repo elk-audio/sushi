@@ -54,7 +54,7 @@ protected:
     void SetUp(const std::string& plugin_path)
     {
         char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
-        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, &_dispatcher);
+        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
@@ -67,7 +67,6 @@ protected:
         delete _module_under_test;
     }
     HostControlMockup _host_control;
-    EventDispatcherMockup _dispatcher;
     Vst2xWrapper* _module_under_test;
 };
 
@@ -227,9 +226,9 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
     SetUp("libagain.so");
-    ASSERT_FALSE(_dispatcher.got_event());
+    ASSERT_FALSE(_host_control._dummy_dispatcher.got_event());
     _module_under_test->notify_parameter_change(0, 0.5f);
-    auto event = std::move(_dispatcher.retrieve_event());
+    auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
 }

@@ -235,7 +235,7 @@ void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value
                                                   static_cast<ObjectId>(parameter_index),
                                                   value,
                                                   IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(e);
+    _host_control.post_event(e);
 }
 
 bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)

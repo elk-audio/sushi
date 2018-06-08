@@ -506,7 +506,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
             break;
 
         case PluginType::VST2X:
-            plugin = new vst2::Vst2xWrapper(_host_control, plugin_path, &_event_dispatcher);
+            plugin = new vst2::Vst2xWrapper(_host_control, plugin_path);
             break;
 
         case PluginType::VST3X:

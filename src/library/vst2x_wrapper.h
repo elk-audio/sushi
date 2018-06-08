@@ -32,8 +32,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Vst2xWrapper(HostControl host_control, const std::string &vst_plugin_path,
-                 dispatcher::BaseEventDispatcher* event_dispatcher) :
+    Vst2xWrapper(HostControl host_control, const std::string &vst_plugin_path) :
             Processor(host_control),
             _sample_rate{0},
             _process_inputs{},
@@ -42,8 +41,7 @@ public:
             _double_mono_input{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
-            _plugin_handle{nullptr},
-            _event_dispatcher{event_dispatcher}
+            _plugin_handle{nullptr}
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -143,9 +141,6 @@ private:
     AEffect *_plugin_handle;
 
     VstTimeInfo _time_info;
-    /* Note, Vst2Wrapper only needs to post events, so it doesn't implement
-     * Eventposter or register with the EventDispatcher */
-    dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);

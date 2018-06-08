@@ -25,10 +25,16 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
     case audioMasterAutomate:
     {
         auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
-        /* Assuming this is called from the non-rt part of the plugin */
-        wrapper_instance->notify_parameter_change(index, opt);
-        MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
-                       wrapper_instance->name(), index, opt);
+        if (twine::is_current_thread_realtime())
+        {
+            wrapper_instance->notify_parameter_change_rt(index, opt);
+        }
+        else
+        {
+            wrapper_instance->notify_parameter_change(index, opt);
+            MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                           wrapper_instance->name(), index, opt);
+        }
 
         break;
     }
