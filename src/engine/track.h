@@ -85,6 +85,30 @@ public:
     }
 
     /**
+     * @brief Return a reference to an RtEventFifo containing RtEvents outputed from the
+     *        processors on the track. set_event_output_internal() must be called first
+     *        to direct outputed event to the internal buffer.
+     *
+     * @return A reference to an RtEventFifo containing buffered events
+     */
+    RtEventFifo& output_event_buffer()
+    {
+        return _output_event_buffer;
+    }
+
+    /**
+     * @brief If called, events from processors will be buffered internally in a queue
+     *        instead of being passed on to the set event output. Events can then be
+     *        retrieved by calling output_event_buffer() to access the buffer.
+     *        This is useful in multithreaded processing where multiple tracks might
+     *        otherwise output to the same event output.
+     */
+    void set_event_output_internal()
+    {
+        set_event_output(&_output_event_buffer);
+    }
+
+    /**
      * @brief Return a SampleBuffer to an input channel
      * @param bus The index of the channel, must not be greater than the number of channels configured
      * @return A non-owning SampleBuffer pointing to the given bus
@@ -130,6 +154,15 @@ public:
      */
     void render();
 
+    /**
+     * @brief Static render function for passing to a thread manager
+     * @param arg Void* pointing to an instance of a Track.
+     */
+    static void ext_render_function(void* arg)
+    {
+        reinterpret_cast<Track*>(arg)->render();
+    }
+
     /* Inherited from Processor */
     void process_event(RtEvent event) override;
 
@@ -161,14 +194,15 @@ private:
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    RtEventFifo _kb_event_buffer;
-
     int _input_busses;
     int _output_busses;
     bool _multibus;
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
+
+    RtEventFifo _kb_event_buffer;
+    RtEventFifo _output_event_buffer;
 };
 
 void apply_pan_and_gain(ChunkSampleBuffer& buffer, float gain, float pan);

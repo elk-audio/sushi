@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "EASTL/vector.h"
+#include "twine.h"
 
 #include "engine/event_dispatcher.h"
 #include "track.h"
@@ -234,7 +235,17 @@ protected:
 class AudioEngine : public BaseEngine
 {
 public:
-    AudioEngine(float sample_rate);
+    MIND_DECLARE_NON_COPYABLE(AudioEngine);
+
+    /**
+     * @brief Construct a new AudioEngine
+     * @param sample_rate The sample to use in Hz
+     * @param rt_cpu_cores The maximum number of cpu cores to use for audio processing. Default
+     *                     is 1 and means that audio processing is done only in the rt callback
+     *                     of the audio frontend.
+     *                     With values >1 tracks will be processed in parallel threads.
+     */
+    explicit AudioEngine(float sample_rate, int rt_cpu_cores = 1);
 
      ~AudioEngine();
 
@@ -553,12 +564,21 @@ private:
      */
     bool _handle_internal_events(RtEvent &event);
 
+    inline void _retrieve_events_from_tracks();
+
+    inline void _copy_audio_to_tracks(ChunkSampleBuffer* input);
+
+    inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
+
     struct Connection
     {
         int engine_channel;
         int track_channel;
         ObjectId track;
     };
+    const bool _multicore_processing;
+    const int  _rt_cores;
+    std::unique_ptr<twine::WorkerPool> _worker_pool;
 
     std::vector<Track*> _audio_graph;
 
