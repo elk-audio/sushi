@@ -165,7 +165,7 @@ TEST_F(TrackTest, TestPanAndGain)
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
 
-    /* Exact values will be tested by the pan function, just test that it had an effect */
+    /* Exact values will be tested by the pan function, just verify that it had an effect */
     EXPECT_EQ(0.0f, out.channel(LEFT_CHANNEL_INDEX)[0]);
     EXPECT_LT(2.0f, out.channel(RIGHT_CHANNEL_INDEX)[0]);
 }
@@ -188,6 +188,19 @@ TEST_F(TrackTest, TestEventProcessing)
     _module_under_test.process_event(event);
     _module_under_test.render();
     ASSERT_FALSE(event_queue.empty());
+    RtEvent e;
+    event_queue.pop(e);
+
+    /* Test with internal event buffering */
+    _module_under_test.set_event_output_internal();
+    auto& output_event_buffer = _module_under_test.output_event_buffer();
+    ASSERT_TRUE(output_event_buffer.empty());
+
+    _module_under_test.process_event(event);
+    _module_under_test.render();
+    ASSERT_FALSE(output_event_buffer.empty());
+    ASSERT_TRUE(event_queue.empty());
+
 }
 
 TEST_F(TrackTest, TestEventForwarding)

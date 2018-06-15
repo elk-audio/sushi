@@ -9,6 +9,8 @@
 #include <csignal>
 #include <condition_variable>
 
+#include "twine/src/twine_internal.h"
+
 #include "logging.h"
 #include "options.h"
 #include "generated/version.h"
@@ -129,6 +131,7 @@ int main(int argc, char* argv[])
     bool use_xenomai_raspa = false;
     bool connect_ports = false;
     bool debug_mode_switches = false;
+    int  rt_cpu_cores = 1;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -188,6 +191,10 @@ int main(int argc, char* argv[])
             debug_mode_switches = true;
             break;
 
+        case OPT_IDX_MULTICORE_PROCESSING:
+            rt_cpu_cores = atoi(opt.arg);
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -209,7 +216,11 @@ int main(int argc, char* argv[])
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
 
-    sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
+    if (use_xenomai_raspa)
+    {
+        twine::init_xenomai(); // must be called before setting up any worker pools
+    }
+    sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
 
     midi_dispatcher.set_midi_inputs(1);

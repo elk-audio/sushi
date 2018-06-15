@@ -18,10 +18,16 @@ constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
 
-AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate),
-                                              _transport(sample_rate)
+AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
+                                                                _multicore_processing(rt_cpu_cores > 1),
+                                                                _rt_cores(rt_cpu_cores),
+                                                                _transport(sample_rate)
 {
     _event_dispatcher.run();
+    if (_multicore_processing)
+    {
+        _worker_pool = twine::WorkerPool::CreateWorkerPool(_rt_cores);
+    }
 }
 
 AudioEngine::~AudioEngine()
@@ -244,6 +250,11 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
+    if (_multicore_processing)
+    {
+        _worker_pool->wait_for_workers_idle();
+    }
+
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
     {
@@ -257,28 +268,23 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
 
-    for (const auto& c : _in_audio_connections)
-    {
-        auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer, c.engine_channel, 1);
-        auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
-        track_in = engine_in;
-    }
+    _copy_audio_to_tracks(in_buffer);
 
-    for (auto& track : _audio_graph)
+    if (_multicore_processing)
     {
-        track->render();
+        _worker_pool->wakeup_workers();
+        _retrieve_events_from_tracks();
+    }
+    else
+    {
+        for (auto& track : _audio_graph)
+        {
+            track->render();
+        }
     }
 
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
-
-    out_buffer->clear();
-    for (const auto& c : _out_audio_connections)
-    {
-        auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
-        auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, c.engine_channel, 1);
-        engine_out.add(track_out);
-    }
-
+    _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 }
 
@@ -605,7 +611,15 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
         delete track;
         return status;
     }
-    track->set_event_output(&_main_out_queue);
+    if (_multicore_processing)
+    {
+        // Have tracks buffer their events internally as outputting directly might not be thread safe
+        track->set_event_output_internal();
+    }
+    else
+    {
+        track->set_event_output(&_main_out_queue);
+    }
     if (realtime())
     {
         auto insert_event = RtEvent::make_insert_processor_event(track);
@@ -623,6 +637,10 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
     {
         _insert_processor_in_realtime_part(track);
         _audio_graph.push_back(track);
+    }
+    if (_multicore_processing)
+    {
+        _worker_pool->add_worker(Track::ext_render_function, track);
     }
     MIND_LOG_INFO("Track {} successfully added to engine", name);
     return EngineReturnStatus::OK;
@@ -756,6 +774,40 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     }
     _control_queue_out.push(event); // Send event back to non-rt domain
     return true;
+}
+
+void AudioEngine::_retrieve_events_from_tracks()
+{
+    for (auto& track : _audio_graph)
+    {
+        auto& event_buffer = track->output_event_buffer();
+        RtEvent event;
+        while (event_buffer.pop(event))
+        {
+            _main_out_queue.push(event);
+        }
+    }
+}
+
+void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
+{
+    for (const auto& c : _in_audio_connections)
+    {
+        auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*input, c.engine_channel, 1);
+        auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
+        track_in = engine_in;
+    }
+}
+
+void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
+{
+    output->clear();
+    for (const auto& c : _out_audio_connections)
+    {
+        auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
+        auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*output, c.engine_channel, 1);
+        engine_out.add(track_out);
+    }
 }
 
 RealtimeState update_state(RealtimeState current_state)
