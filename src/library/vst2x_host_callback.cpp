@@ -18,7 +18,7 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
 {
     VstIntPtr result = 0;
 
-    //MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
+    MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
 
     switch (opcode)
     {
