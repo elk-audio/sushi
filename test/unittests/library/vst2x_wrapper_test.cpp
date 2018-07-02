@@ -232,3 +232,16 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
 }
+
+TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
+{
+    SetUp("libagain.so");
+    RtEventFifo queue;
+    _module_under_test->set_event_output(&queue);
+    ASSERT_TRUE(queue.empty());
+    _module_under_test->notify_parameter_change_rt(0, 0.5f);
+    RtEvent event;
+    auto received = queue.pop(event);
+    ASSERT_TRUE(received);
+    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+}
