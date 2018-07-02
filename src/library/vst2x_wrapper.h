@@ -12,6 +12,7 @@
 #include "library/processor.h"
 #include "library/vst2x_plugin_loader.h"
 #include "library/vst2x_midi_event_fifo.h"
+#include "engine/event_dispatcher.h"
 
 namespace sushi {
 namespace vst2 {
@@ -31,7 +32,6 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-
     Vst2xWrapper(HostControl host_control, const std::string &vst_plugin_path) :
             Processor(host_control),
             _sample_rate{0},

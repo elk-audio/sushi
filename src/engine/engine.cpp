@@ -1,7 +1,6 @@
+#include "twine/src/twine_internal.h"
+
 #include "engine.h"
-
-#include <iostream>
-
 #include "logging.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
@@ -11,7 +10,6 @@
 #include "plugins/peak_meter_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
-
 
 namespace sushi {
 namespace engine {
@@ -243,6 +241,9 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
+    /* Signal that this is a realtime audio processing thread */
+    twine::ThreadRtFlag rt_flag;
+
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
     {

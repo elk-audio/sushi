@@ -5,6 +5,7 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
+#include "test_utils/engine_mockup.h"
 #include "library/vst2x_wrapper.cpp"
 
 using namespace sushi;
@@ -220,4 +221,14 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
     SetUp("libagain.so");
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+}
+
+TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
+{
+    SetUp("libagain.so");
+    ASSERT_FALSE(_host_control._dummy_dispatcher.got_event());
+    _module_under_test->notify_parameter_change(0, 0.5f);
+    auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
+    ASSERT_FALSE(event == nullptr);
+    ASSERT_TRUE(event->is_parameter_change_notification());
 }
