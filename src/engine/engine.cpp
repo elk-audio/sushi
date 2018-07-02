@@ -26,7 +26,7 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
     _event_dispatcher.run();
     if (_multicore_processing)
     {
-        _worker_pool = twine::WorkerPool::CreateWorkerPool(_rt_cores);
+        _worker_pool = twine::WorkerPool::create_worker_pool(_rt_cores);
     }
 }
 
