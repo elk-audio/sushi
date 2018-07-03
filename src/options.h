@@ -199,6 +199,14 @@ const optionparser::Descriptor usage[] =
         "\t\t-r --raspa \tUse Xenomai real-time frontend with RASPA driver."
     },
     {
+        OPT_IDX_XENOMAI_DEBUG_MODE_SW,
+        OPT_TYPE_DISABLED,
+        "",
+        "debug-mode-sw",
+        SushiArg::Optional,
+        "\t\t--debug-mode-sw \tBreak to debugger if a mode switch is detected (Xenomai only)."
+    },
+    {
         OPT_IDX_MULTICORE_PROCESSING,
         OPT_TYPE_UNUSED,
         "m",
