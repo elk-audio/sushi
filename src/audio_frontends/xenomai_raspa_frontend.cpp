@@ -83,6 +83,7 @@ void XenomaiRaspaFrontend::cleanup()
 
 void XenomaiRaspaFrontend::run()
 {
+    raspa_start_realtime();
     _osc_control->run();
     _osc_control->connect_all();
     _midi_frontend->run();
