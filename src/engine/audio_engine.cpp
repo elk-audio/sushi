@@ -15,6 +15,7 @@ namespace sushi {
 namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
+constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -23,6 +24,7 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
                                                                 _rt_cores(rt_cpu_cores),
                                                                 _transport(sample_rate)
 {
+    this->set_sample_rate(sample_rate);
     _event_dispatcher.run();
     if (_multicore_processing)
     {
@@ -43,6 +45,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
         node.second->configure(sample_rate);
     }
     _transport.set_sample_rate(sample_rate);
+    _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
@@ -254,6 +257,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     {
         _worker_pool->wait_for_workers_idle();
     }
+    auto engine_timestamp = _process_timer.start_timer();
 
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
@@ -286,6 +290,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
+
+    _process_timer.stop_timer_rt_safe(engine_timestamp, ENGINE_TIMING_ID);
+
 }
 
 void AudioEngine::set_tempo(float tempo)
@@ -430,7 +437,7 @@ EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, i
         MIND_LOG_ERROR("Invalid number of busses for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(_host_control, input_busses, output_busses);
+    Track* track = new Track(_host_control, input_busses, output_busses, &_process_timer);
     return _register_new_track(name, track);
 }
 
@@ -441,7 +448,7 @@ EngineReturnStatus AudioEngine::create_track(const std::string &name, int channe
         MIND_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(_host_control, channel_count);
+    Track* track = new Track(_host_control, channel_count, &_process_timer);
     return _register_new_track(name, track);
 }
 
@@ -807,6 +814,30 @@ void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
         auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
         auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*output, c.engine_channel, 1);
         engine_out.add(track_out);
+    }
+}
+
+void AudioEngine::print_timings()
+{
+    if (_timings_enabled == false)
+    {
+        return;
+    }
+    for (const auto& processor : _processors)
+    {
+        auto id = processor.second->id();
+        auto timings = _process_timer.timings_for_node(id);
+        if (timings.has_value())
+        {
+            MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                          timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+        }
+    }
+    auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
+    if (timings.has_value())
+    {
+        MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
+                      timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
     }
 }
 

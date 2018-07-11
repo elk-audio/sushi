@@ -87,6 +87,7 @@ void XenomaiRaspaFrontend::run()
     _osc_control->run();
     _osc_control->connect_all();
     _midi_frontend->run();
+    _engine->enable_timing_statistics(true);
 }
 
 

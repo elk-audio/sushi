@@ -16,6 +16,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 #include "library/constants.h"
+#include "library/performance_timer.h"
 
 namespace sushi {
 namespace engine {
@@ -34,7 +35,7 @@ public:
      * @param channels The number of channels in the track.
      *                 Note that even mono tracks have a stereo output bus
      */
-    Track(HostControl host_control, int channels);
+    Track(HostControl host_control, int channels, performance::ProcessTimer* timer);
 
     /**
      * @brief Create a track with a given number of stereo input and output busses
@@ -42,7 +43,7 @@ public:
      * @param input_buffers The number of input busses
      * @param output_buffers The number of output busses
      */
-    Track(HostControl host_control, int input_busses, int output_busses);
+    Track(HostControl host_control, int input_busses, int output_busses, performance::ProcessTimer* timer);
 
     ~Track() = default;
 
@@ -179,6 +180,7 @@ public:
         _update_channel_config();
     }
 
+
     /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;
 
@@ -197,6 +199,8 @@ private:
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
+
+    performance::ProcessTimer* _timer;
 
     RtEventFifo _kb_event_buffer;
     RtEventFifo _output_event_buffer;

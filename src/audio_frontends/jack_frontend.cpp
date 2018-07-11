@@ -42,6 +42,7 @@ void JackFrontend::cleanup()
 void JackFrontend::run()
 {
     _engine->enable_realtime(true);
+    _engine->enable_timing_statistics(true);
     int status = jack_activate(_client);
     if (status != 0)
     {

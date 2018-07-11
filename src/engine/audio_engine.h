@@ -13,7 +13,6 @@
 #include <utility>
 #include <mutex>
 
-#include "EASTL/vector.h"
 #include "twine.h"
 
 #include "engine/event_dispatcher.h"
@@ -29,7 +28,7 @@
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"
 #include "library/types.h"
-
+#include "library/performance_timer.h"
 
 namespace sushi {
 namespace engine {
@@ -302,6 +301,14 @@ public:
         return &_event_dispatcher;
     }
 
+    void enable_timing_statistics(bool enabled) override
+    {
+        _timings_enabled = enabled;
+        _process_timer.enable(enabled);
+    }
+
+    void print_timings() override;
+
 private:
     /**
      * @brief Instantiate a plugin instance of a given type
@@ -382,6 +389,7 @@ private:
     };
     const bool _multicore_processing;
     const int  _rt_cores;
+
     std::unique_ptr<twine::WorkerPool> _worker_pool;
 
     std::vector<Track*> _audio_graph;
@@ -409,6 +417,8 @@ private:
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
+    performance::ProcessTimer _process_timer;
+    bool _timings_enabled{false};
 };
 
 /**

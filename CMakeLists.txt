@@ -117,6 +117,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
+                      src/library/performance_timer.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
@@ -155,6 +156,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/midi_encoder.h
                         src/library/rt_event.h
                         src/library/processor.h
+                        src/library/performance_timer.h
                         src/library/internal_plugin.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h

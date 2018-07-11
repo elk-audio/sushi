@@ -102,7 +102,8 @@ endif()
 #  Additional compilation units needed by tests #
 #################################################
 
-set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp
+                      ${PROJECT_SOURCE_DIR}/src/library/performance_timer.cpp)
 if (NOT ${WITH_VST3})
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
 endif()
