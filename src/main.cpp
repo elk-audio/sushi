@@ -211,8 +211,8 @@ int main(int argc, char* argv[])
     sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT);
     sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
 
-    midi_dispatcher.set_midi_input_ports(1);
-    midi_dispatcher.set_midi_output_ports(1);
+    midi_dispatcher.set_midi_inputs(1);
+    midi_dispatcher.set_midi_outputs(1);
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;

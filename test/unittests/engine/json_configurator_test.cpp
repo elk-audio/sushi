@@ -97,7 +97,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
     auto status = _module_under_test->load_tracks(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    _midi_dispatcher->set_midi_input_ports(1);
+    _midi_dispatcher->set_midi_inputs(1);
 
     status = _module_under_test->load_midi(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);

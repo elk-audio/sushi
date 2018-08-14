@@ -213,21 +213,23 @@ void MidiDispatcher::clear_connections()
 void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time timestamp)
 {
     int channel = midi::decode_channel(data[0]);
-    const auto& cons = _raw_routes_in.find(input);
-    if (cons != _raw_routes_in.end())
+    /* Dispatch raw midi messages */
     {
-        for (auto c : cons->second[midi::MidiChannel::OMNI])
+        const auto& cons = _raw_routes_in.find(input);
+        if (cons != _raw_routes_in.end())
         {
-            auto event = make_wrapped_midi_event(c, data, size, timestamp);
-            _event_dispatcher->post_event(event);
-        }
-        for (auto c : cons->second[channel])
-        {
-            auto event = make_wrapped_midi_event(c, data, size, timestamp);
-            _event_dispatcher->post_event(event);
+            for (auto c : cons->second[midi::MidiChannel::OMNI])
+            {
+                _event_dispatcher->post_event(make_wrapped_midi_event(c, data, size, timestamp));
+            }
+            for (auto c : cons->second[channel])
+            {
+                _event_dispatcher->post_event(make_wrapped_midi_event(c, data, size, timestamp));
+            }
         }
     }
 
+    /* Dispatch decoded midi messages */
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)
     {
@@ -239,13 +241,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
             }
             if (decoded_msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
@@ -255,13 +255,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
                 {
                     for (auto c : cons->second[midi::MidiChannel::OMNI])
                     {
-                        auto event = make_modulation_event(c, decoded_msg, timestamp);
-                        _event_dispatcher->post_event(event);
+                        _event_dispatcher->post_event(make_modulation_event(c, decoded_msg, timestamp));
                     }
                     for (auto c : cons->second[decoded_msg.channel])
                     {
-                        auto event = make_modulation_event(c, decoded_msg, timestamp);
-                        _event_dispatcher->post_event(event);
+                        _event_dispatcher->post_event(make_modulation_event(c, decoded_msg, timestamp));
                     }
                 }
             }
@@ -276,13 +274,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_on_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_on_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -296,13 +292,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_off_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_off_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -316,20 +310,17 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_pitch_bend_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_pitch_bend_event(c, decoded_msg, timestamp));
                 }
             }
             break;
         }
 
         case midi::MessageType::POLY_KEY_PRESSURE:
-
         {
             midi::PolyKeyPressureMessage decoded_msg = midi::decode_poly_key_pressure(data);
             const auto& cons = _kb_routes_in.find(input);
@@ -337,13 +328,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_aftertouch_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_aftertouch_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -357,13 +346,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_aftertouch_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event( make_aftertouch_event(c, decoded_msg, timestamp));
                 }
             }
             break;
