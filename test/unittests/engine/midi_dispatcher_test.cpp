@@ -133,7 +133,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_input_ports(5);
+    _module_under_test.set_midi_inputs(5);
     _module_under_test.connect_kb_to_track(1, "processor");
     _module_under_test.send_midi(1, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
@@ -161,7 +161,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     EXPECT_FALSE(_test_frontend.midi_sent());
 
     /* Connect track to output 1, channel 5 */
-    _module_under_test.set_midi_output_ports(3);
+    _module_under_test.set_midi_outputs(3);
     auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 }
@@ -175,7 +175,7 @@ TEST_F(TestMidiDispatcher, TestRawDataConnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_input_ports(5);
+    _module_under_test.set_midi_inputs(5);
     _module_under_test.connect_raw_midi_to_track(1, "processor");
     _module_under_test.send_midi(1, TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG), IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
@@ -202,7 +202,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_input_ports(5);
+    _module_under_test.set_midi_inputs(5);
     _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 67, 0, 100);
     _module_under_test.send_midi(1, TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG), IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
@@ -227,7 +227,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
 
 /*TEST_F(TestMidiDispatcher, TestRtAndNonRtDispatch)
 {
-    _module_under_test.set_midi_input_ports(1);
+    _module_under_test.set_midi_inputs(1);
     _module_under_test.connect_cc_to_parameter(0, "processor", "parameter", 40, 0, 100, 5);
     _module_under_test.send_midi(0, 0, TEST_CTRL_CH_MSG_2, sizeof(TEST_CTRL_CH_MSG_2), false);
     EXPECT_TRUE(_test_engine.got_event);
