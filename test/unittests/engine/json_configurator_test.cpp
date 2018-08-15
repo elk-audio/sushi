@@ -4,7 +4,7 @@
 #define private public
 #define protected public
 
-#include "engine/engine.h"
+#include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
 #include "engine/json_configurator.cpp"
 #include "test_utils/test_utils.h"

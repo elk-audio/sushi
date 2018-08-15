@@ -26,6 +26,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
+#include <cstdlib>
 
 #include "library/vst2x_plugin_loader.h"
 #include "library/vst2x_host_callback.h"

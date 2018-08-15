@@ -34,7 +34,6 @@
 #define SUSHI_VST2X_PLUGIN_LOADER_H
 
 #include <string>
-#include <cstdlib>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define VST_FORCE_DEPRECATED 0

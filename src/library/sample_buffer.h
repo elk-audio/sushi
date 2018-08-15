@@ -8,7 +8,6 @@
 #ifndef SUSHI_SAMPLEBUFFER_H
 #define SUSHI_SAMPLEBUFFER_H
 
-#include <cstring>
 #include <algorithm>
 #include <cassert>
 

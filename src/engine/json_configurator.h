@@ -12,7 +12,7 @@
 
 #include "rapidjson/document.h"
 
-#include "engine/engine.h"
+#include "base_engine.h"
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {

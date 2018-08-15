@@ -8,14 +8,13 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 
 #include <string>
-#include <tuple>
-#include <vector>
+#include <memory>
 
 #include <jack/jack.h>
 
 #include "base_audio_frontend.h"
 #include "control_frontends/osc_frontend.h"
-#include "control_frontends/alsa_midi_frontend.h"
+#include "control_frontends/base_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -138,7 +137,7 @@ private:
 #ifndef SUSHI_BUILD_WITH_JACK
 /* If Jack is disabled in the build config, the jack frontend is replaced with
    this dummy frontend whose only purpose is to assert if you try to use it */
-
+#include <string>
 #include "base_audio_frontend.h"
 #include "engine/midi_dispatcher.h"
 namespace sushi {

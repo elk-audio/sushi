@@ -1,5 +1,5 @@
 /**
- * @Brief Main event handler in Sushi and responsible for convertion between
+ * @Brief Main event handler in Sushi and responsible for conversion between
  *        regular and rt events.
  * @copyright MIND Music Labs AB, Stockholm
  */
@@ -7,12 +7,11 @@
 #ifndef SUSHI_EVENT_DISPATCHER_H
 #define SUSHI_EVENT_DISPATCHER_H
 
-#include <mutex>
+#include <deque>
+#include <vector>
 #include <thread>
 
-#include "logging.h"
 #include "engine/event_timer.h"
-#include "library/rt_event.h"
 #include "library/synchronised_fifo.h"
 #include "library/event.h"
 #include "library/event_interface.h"

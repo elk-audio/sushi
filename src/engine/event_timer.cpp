@@ -1,5 +1,5 @@
 #include <cmath>
-#include <iostream>
+#include <cassert>
 
 #include "event_timer.h"
 #include "library/constants.h"
@@ -27,7 +27,7 @@ std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
     if (diff < _chunk_time)
     {
         int64_t offset = (AUDIO_CHUNK_SIZE * diff) / _chunk_time;
-        return std::make_pair(true, std::max(0L, offset));
+        return std::make_pair(true, static_cast<int>(std::max(0L, offset)));
     }
     else
     {

@@ -7,7 +7,6 @@
 #define SUSHI_OFFLINE_FRONTEND_H
 
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include <sndfile.h>

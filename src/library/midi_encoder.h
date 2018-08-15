@@ -6,8 +6,6 @@
 #ifndef SUSHI_MIDI_ENCODER_H
 #define SUSHI_MIDI_ENCODER_H
 
-#include <algorithm>
-
 #include "types.h"
 
 namespace sushi {

@@ -1,7 +1,7 @@
 #ifndef SUSHI_ENGINE_MOCKUP_H
 #define SUSHI_ENGINE_MOCKUP_H
 
-#include "engine/engine.h"
+#include "engine/base_engine.h"
 #include "engine/event_dispatcher.h"
 
 using namespace sushi;

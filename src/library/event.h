@@ -7,7 +7,6 @@
 #define SUSHI_CONTROL_EVENT_H
 
 #include <string>
-#include <cstdint>
 
 #include "types.h"
 #include "id_generator.h"

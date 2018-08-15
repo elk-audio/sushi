@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <signal.h>
+#include <csignal>
 #include <condition_variable>
 
 #include "logging.h"
@@ -15,6 +15,7 @@
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
+#include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
 
 bool                    exit_flag = false;

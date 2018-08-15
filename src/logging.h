@@ -21,7 +21,7 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <iostream>
+#include <string>
 
 /* Prevent name collisions with Xenomai that for some inexplicable reason
  * defines 'debug' as a macro */
