@@ -171,6 +171,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
                         src/engine/event_dispatcher.h
+                        src/engine/base_event_dispatcher.h
                         src/engine/event_timer.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h

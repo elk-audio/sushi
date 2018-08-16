@@ -20,7 +20,7 @@
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
 #include "base_engine.h"
-#include "event_dispatcher.h"
+#include "base_event_dispatcher.h"
 #include "midi_receiver.h"
 #include "library/event_interface.h"
 

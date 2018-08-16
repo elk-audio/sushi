@@ -1,7 +1,7 @@
 #ifndef SUSHI_HOST_CONTROL_H
 #define SUSHI_HOST_CONTROL_H
 
-#include "engine/event_dispatcher.h"
+#include "base_event_dispatcher.h"
 #include "engine/transport.h"
 
 namespace sushi {

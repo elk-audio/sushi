@@ -12,7 +12,7 @@
 #include "library/processor.h"
 #include "library/vst2x_plugin_loader.h"
 #include "library/vst2x_midi_event_fifo.h"
-#include "engine/event_dispatcher.h"
+#include "../engine/base_event_dispatcher.h"
 
 namespace sushi {
 namespace vst2 {
