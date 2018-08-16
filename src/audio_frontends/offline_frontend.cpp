@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 
 #include "logging.h"
 #include "offline_frontend.h"
