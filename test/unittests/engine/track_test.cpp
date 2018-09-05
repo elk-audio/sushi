@@ -54,7 +54,7 @@ protected:
     TrackTest() {}
 
     HostControlMockup _host_control;
-    performance::ProcessTimer _timer;
+    performance::PerformanceTimer _timer;
     Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
 };
 

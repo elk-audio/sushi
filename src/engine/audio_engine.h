@@ -417,7 +417,7 @@ private:
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
-    performance::ProcessTimer _process_timer;
+    performance::PerformanceTimer _process_timer;
     bool _timings_enabled{false};
 };
 

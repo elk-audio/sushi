@@ -12,7 +12,7 @@ constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 
 Track::Track(HostControl host_control, int channels,
-             performance::ProcessTimer* timer) : InternalPlugin(host_control),
+             performance::PerformanceTimer* timer) : InternalPlugin(host_control),
                                                  _input_buffer{std::max(channels, 2)},
                                                  _output_buffer{std::max(channels, 2)},
                                                  _input_busses{1},
@@ -28,7 +28,7 @@ Track::Track(HostControl host_control, int channels,
 }
 
 Track::Track(HostControl host_control, int input_busses, int output_busses,
-             performance::ProcessTimer* timer) :  InternalPlugin(host_control),
+             performance::PerformanceTimer* timer) :  InternalPlugin(host_control),
                                                   _input_buffer{std::max(input_busses, output_busses) * 2},
                                                   _output_buffer{std::max(input_busses, output_busses) * 2},
                                                   _input_busses{input_busses},

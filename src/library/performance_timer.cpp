@@ -10,7 +10,7 @@ namespace performance {
 
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
-ProcessTimer::~ProcessTimer()
+PerformanceTimer::~PerformanceTimer()
 {
     if (_enabled.load() == true)
     {
@@ -18,17 +18,17 @@ ProcessTimer::~ProcessTimer()
     }
 }
 
-void ProcessTimer::set_timing_period(TimePoint timing_period)
+void PerformanceTimer::set_timing_period(TimePoint timing_period)
 {
     _period = static_cast<float>(timing_period.count());
 }
 
-void ProcessTimer::set_timing_period(float samplerate, int buffer_size)
+void PerformanceTimer::set_timing_period(float samplerate, int buffer_size)
 {
     _period = static_cast<double>(buffer_size) / samplerate * SEC_TO_NANOSEC;
 }
 
-std::optional<ProcessTimings> ProcessTimer::timings_for_node(int id)
+std::optional<ProcessTimings> PerformanceTimer::timings_for_node(int id)
 {
     std::unique_lock<std::mutex> lock(_timing_lock);
     const auto& node = _timings.find(id);
@@ -39,21 +39,21 @@ std::optional<ProcessTimings> ProcessTimer::timings_for_node(int id)
     return std::nullopt;
 }
 
-void ProcessTimer::save_all_to_file(const std::string& path)
+void PerformanceTimer::save_all_to_file(const std::string& path)
 {
 
 }
 
-void ProcessTimer::enable(bool enabled)
+void PerformanceTimer::enable(bool enabled)
 {
-    if (enabled && _enabled.load() == false)
+    if (enabled && _enabled == false)
     {
-        _enabled.store(true);
-        _process_thread = std::thread(&ProcessTimer::_worker, this);
+        _enabled = true;
+        _process_thread = std::thread(&PerformanceTimer::_worker, this);
     }
-    else if (!enabled && _enabled.load() == true)
+    else if (!enabled && _enabled == true)
     {
-        _enabled.store(false);
+        _enabled = false;
         if (_process_thread.joinable())
         {
             _process_thread.join();
@@ -61,7 +61,7 @@ void ProcessTimer::enable(bool enabled)
     }
 }
 
-void ProcessTimer::_worker()
+void PerformanceTimer::_worker()
 {
     while(_enabled.load())
     {
@@ -86,7 +86,7 @@ void ProcessTimer::_worker()
     }
 }
 
-ProcessTimings ProcessTimer::_calculate_timings(const std::vector<TimingLogPoint>& entries)
+ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogPoint>& entries)
 {
     float min_value{100};
     float max_value{0};
@@ -101,7 +101,7 @@ ProcessTimings ProcessTimer::_calculate_timings(const std::vector<TimingLogPoint
     return {.avg_case = sum / entries.size(), .min_case = min_value, .max_case = max_value};
 }
 
-ProcessTimings ProcessTimer::_merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings)
+ProcessTimings PerformanceTimer::_merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings)
 {
     if (prev_timings.avg_case == 0.0f)
     {

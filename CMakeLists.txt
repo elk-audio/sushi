@@ -160,6 +160,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/internal_plugin.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
+                        src/library/spinlock.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h

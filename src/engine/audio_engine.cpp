@@ -291,8 +291,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
-    _process_timer.stop_timer_rt_safe(engine_timestamp, ENGINE_TIMING_ID);
-
+    _process_timer.stop_timer(engine_timestamp, ENGINE_TIMING_ID);
 }
 
 void AudioEngine::set_tempo(float tempo)
