@@ -22,6 +22,8 @@ constexpr int MAX_LOG_ENTRIES = 20000;
 
 struct ProcessTimings
 {
+    ProcessTimings() : avg_case{0.0f}, min_case{100.0f}, max_case{0.0f} {}
+    ProcessTimings(float avg, float min, float max) : avg_case{avg}, min_case{min}, max_case{max} {}
     float avg_case{1};
     float min_case{1};
     float max_case{0};
@@ -35,19 +37,37 @@ public:
     PerformanceTimer() = default;
     ~PerformanceTimer();
 
+    /**
+     * @brief Set the period to use for timings
+     * @param timing_period The timing period in nanoseconds
+     */
     void set_timing_period(TimePoint timing_period);
 
+    /**
+     * @brief Ser the period to use for timings implicitly
+     * @param samplerate The samplerate in Hz
+     * @param buffer_size The audio buffer size in samples
+     */
     void set_timing_period(float samplerate, int buffer_size);
 
+    /**
+     * @brief Entry point for timing section
+     * @return A timestamp representing the start of the timing period
+     */
     TimePoint start_timer()
     {
-        if (_enabled.load())
+        if (_enabled)
         {
             return twine::current_rt_time();
         }
         return std::chrono::nanoseconds(0);
     }
 
+    /**
+     * @brief Exit point for timing section.
+     * @param start_time A timestamp from a previous call to start_timer()
+     * @param node_id An integer id to identify timings from this node
+     */
     void stop_timer(TimePoint start_time, int node_id)
     {
         if (_enabled)
@@ -58,6 +78,12 @@ public:
         }
     }
 
+    /**
+     * @brief Exit point for timing section. Safe to call concurrently from
+     *       several threads.
+     * @param start_time A timestamp from a previous call to start_timer()
+     * @param node_id An integer id to identify timings from this node
+     */
     void stop_timer_rt_safe(TimePoint start_time, int node_id)
     {
         if(_enabled)
@@ -70,9 +96,30 @@ public:
         }
     }
 
+    /**
+     * @brief Enable or disable timings
+     * @param enabled Enable timings if true, disable if false
+     */
     void enable(bool enabled);
 
+    /**
+     * @brief Get the recorded timings from a specific node
+     * @param id An integer id representing a timing node
+     * @return A ProcessTimings object populated if the node has any timing records. Empty otherwise
+     */
     std::optional<ProcessTimings> timings_for_node(int id);
+
+    /**
+     * @brief Clear the recorded timings for a particular node
+     * @param id An integer id representing a timing node
+     * @return true if the node was found, false otherwise
+     */
+    bool clear_timings_for_node(int id);
+
+    /**
+     * @brief Reset all recorded timings
+     */
+    void clear_all_timings();
 
 protected:
 
@@ -89,6 +136,8 @@ protected:
     };
 
     void _worker();
+    void _update_timings();
+
     ProcessTimings _calculate_timings(const std::vector<TimingLogPoint>& entries);
     ProcessTimings _merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings);
 

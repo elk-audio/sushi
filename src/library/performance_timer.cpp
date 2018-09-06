@@ -10,6 +10,7 @@ namespace performance {
 
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
+constexpr float AVERAGEING_FACTOR = 0.3f;
 PerformanceTimer::~PerformanceTimer()
 {
     if (_enabled.load() == true)
@@ -53,6 +54,8 @@ void PerformanceTimer::enable(bool enabled)
         {
             _process_thread.join();
         }
+        // Run once to clear all records
+        _update_timings();
     }
 }
 
@@ -61,23 +64,26 @@ void PerformanceTimer::_worker()
     while(_enabled.load())
     {
         auto start_time = std::chrono::system_clock::now();
-        std::map<int, std::vector<TimingLogPoint>> sorted_data;
-        TimingLogPoint log_point;
-        while (_entry_queue.pop(log_point))
-        {
-            sorted_data[log_point.id].push_back(log_point);
-        }
-        for (const auto& node : sorted_data)
-        {
-            int id = node.first;
-            std::unique_lock<std::mutex> lock(_timing_lock);
-            const auto& timings = _timings[id];
-            lock.unlock();
-            auto new_timings = _calculate_timings(node.second);
-            lock.lock();
-            _timings[id].timings = _merge_timings(timings.timings, new_timings);
-        }
+        this->_update_timings();
         std::this_thread::sleep_until(start_time + EVALUATION_INTERVAL);
+    }
+}
+
+void PerformanceTimer::_update_timings()
+{
+    std::map<int, std::vector<TimingLogPoint>> sorted_data;
+    TimingLogPoint log_point;
+    while (_entry_queue.pop(log_point))
+    {
+        sorted_data[log_point.id].push_back(log_point);
+    }
+    for (const auto& node : sorted_data)
+    {
+        int id = node.first;
+        std::lock_guard<std::mutex> lock(_timing_lock);
+        const auto& timings = _timings[id];
+        auto new_timings = _calculate_timings(node.second);
+        _timings[id].timings = _merge_timings(timings.timings, new_timings);
     }
 }
 
@@ -93,7 +99,7 @@ ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogP
         min_value = std::min(min_value, process_time);
         max_value = std::max(max_value, process_time);
     }
-    return {.avg_case = sum / entries.size(), .min_case = min_value, .max_case = max_value};
+    return {sum / entries.size(), min_value, max_value};
 }
 
 ProcessTimings PerformanceTimer::_merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings)
@@ -104,13 +110,33 @@ ProcessTimings PerformanceTimer::_merge_timings(ProcessTimings prev_timings, Pro
     }
     else
     {
-        prev_timings.avg_case = (prev_timings.avg_case + new_timings.avg_case) / 2.0f;
+        prev_timings.avg_case = (1.0f - AVERAGEING_FACTOR) * prev_timings.avg_case + AVERAGEING_FACTOR * new_timings.avg_case;
     }
     prev_timings.min_case = std::min(prev_timings.min_case, new_timings.min_case);
     prev_timings.max_case = std::max(prev_timings.max_case, new_timings.max_case);
     return prev_timings;
 }
 
+bool PerformanceTimer::clear_timings_for_node(int id)
+{
+    std::lock_guard<std::mutex> lock(_timing_lock);
+    const auto& node = _timings.find(id);
+    if (node != _timings.end())
+    {
+        new (&node->second.timings) (ProcessTimings);
+        return true;
+    }
+    return false;
+}
+
+void PerformanceTimer::clear_all_timings()
+{
+    std::lock_guard<std::mutex> lock(_timing_lock);
+    for (auto& node : _timings)
+    {
+        new (&node.second.timings) (ProcessTimings);
+    }
+}
 
 } // namespace performance
 } // namespace sushi

@@ -301,13 +301,16 @@ public:
         return &_event_dispatcher;
     }
 
-    void enable_timing_statistics(bool enabled) override
-    {
-        _timings_enabled = enabled;
-        _process_timer.enable(enabled);
-    }
+    /**
+     * @brief Enable timings of all audio processors
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_timing_statistics(bool enabled) override;
 
-    void print_timings() override;
+    /**
+     * @brief Print the current processor timings (in enabled) in the log
+     */
+    void print_timings_to_log() override;
 
 private:
     /**

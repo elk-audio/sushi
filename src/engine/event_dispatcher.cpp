@@ -303,7 +303,7 @@ void Worker::_worker()
         if (start_time > print_timing_counter + PRINT_TIMING_INTERVAL)
         {
             print_timing_counter = start_time;
-            _engine->print_timings();
+            _engine->print_timings_to_log();
         }
 
         std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);

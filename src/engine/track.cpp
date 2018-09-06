@@ -13,13 +13,13 @@ constexpr float PAN_GAIN_3_DB = 1.412537f;
 
 Track::Track(HostControl host_control, int channels,
              performance::PerformanceTimer* timer) : InternalPlugin(host_control),
-                                                 _input_buffer{std::max(channels, 2)},
-                                                 _output_buffer{std::max(channels, 2)},
-                                                 _input_busses{1},
-                                                 _output_busses{1},
-                                                 _multibus{false},
-                                                 _timer{timer}
-{
+                                                     _input_buffer{std::max(channels, 2)},
+                                                     _output_buffer{std::max(channels, 2)},
+                                                     _input_busses{1},
+                                                     _output_busses{1},
+                                                     _multibus{false},
+                                                     _timer{timer}
+    {
     _max_input_channels = channels;
     _max_output_channels = channels;
     _current_input_channels = channels;
@@ -29,12 +29,12 @@ Track::Track(HostControl host_control, int channels,
 
 Track::Track(HostControl host_control, int input_busses, int output_busses,
              performance::PerformanceTimer* timer) :  InternalPlugin(host_control),
-                                                  _input_buffer{std::max(input_busses, output_busses) * 2},
-                                                  _output_buffer{std::max(input_busses, output_busses) * 2},
-                                                  _input_busses{input_busses},
-                                                  _output_busses{output_busses},
-                                                  _multibus{(input_busses > 1 || output_busses > 1)},
-                                                  _timer{timer}
+                                                      _input_buffer{std::max(input_busses, output_busses) * 2},
+                                                      _output_buffer{std::max(input_busses, output_busses) * 2},
+                                                      _input_busses{input_busses},
+                                                      _output_busses{output_busses},
+                                                      _multibus{(input_busses > 1 || output_busses > 1)},
+                                                      _timer{timer}
 {
     int channels = std::max(input_busses, output_busses) * 2;
     _max_input_channels = channels;

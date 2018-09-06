@@ -83,6 +83,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/midi_encoder_test.cpp
+               unittests/library/performance_timer_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/rt_event_test.cpp
@@ -102,8 +103,7 @@ endif()
 #  Additional compilation units needed by tests #
 #################################################
 
-set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp
-                      ${PROJECT_SOURCE_DIR}/src/library/performance_timer.cpp)
+set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
 if (NOT ${WITH_VST3})
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
 endif()

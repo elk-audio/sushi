@@ -211,7 +211,7 @@ public:
 
     virtual void enable_timing_statistics(bool /*enabled*/) {}
 
-    virtual void print_timings() {}
+    virtual void print_timings_to_log() {}
 
 protected:
     float _sample_rate;

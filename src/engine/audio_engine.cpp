@@ -41,6 +41,7 @@ AudioEngine::~AudioEngine()
     _event_dispatcher.stop();
     if (_timings_enabled)
     {
+        _process_timer.enable(false);
         print_timings_to_file(TIMING_FILE_NAME);
     }
 }
@@ -824,7 +825,13 @@ void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
     }
 }
 
-void AudioEngine::print_timings()
+void AudioEngine::enable_timing_statistics(bool enabled)
+{
+    _timings_enabled = enabled;
+    _process_timer.enable(enabled);
+}
+
+void AudioEngine::print_timings_to_log()
 {
     if (_timings_enabled == false)
     {
@@ -870,9 +877,9 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
         return;
     }
     file.setf(std::ios::left);
-    file << "Performance timings for all processors in percentages of 1 audio buffer  (100% = "<< 1000000.0 / _sample_rate * AUDIO_CHUNK_SIZE
-         << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average" << std::setw(16) << "minimum"
-         << std::setw(16) << "maximum" << std::endl;
+    file << "Performance timings for all processors in percentages of audio buffer (100% = "<< 1000000.0 / _sample_rate * AUDIO_CHUNK_SIZE
+         << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average(%)" << std::setw(16) << "minimum(%)"
+         << std::setw(16) << "maximum(%)" << std::endl;
 
     for (const auto& track : _audio_graph)
     {
