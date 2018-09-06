@@ -73,7 +73,6 @@ public:
     void enable(bool enabled);
 
     std::optional<ProcessTimings> timings_for_node(int id);
-    void save_all_to_file(const std::string& path);
 
 protected:
 
@@ -86,7 +85,6 @@ protected:
     struct TimingNode
     {
         int id;
-        std::string name;
         ProcessTimings timings;
     };
 

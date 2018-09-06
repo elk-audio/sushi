@@ -1,3 +1,6 @@
+#include <fstream>
+#include <iomanip>
+
 #include "twine/src/twine_internal.h"
 
 #include "audio_engine.h"
@@ -35,6 +38,7 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
 AudioEngine::~AudioEngine()
 {
     _event_dispatcher.stop();
+    print_timings_to_file("./timings.txt");
 }
 
 void AudioEngine::set_sample_rate(float sample_rate)
@@ -838,6 +842,51 @@ void AudioEngine::print_timings()
         MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
                       timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
     }
+}
+
+
+void print_single_timings_for_node(std::fstream& f, performance::PerformanceTimer& timer, int id)
+{
+    auto timings = timer.timings_for_node(id);
+    if (timings.has_value())
+    {
+        f << std::setw(16) << timings.value().avg_case * 100.0
+          << std::setw(16) << timings.value().min_case * 100.0
+          << std::setw(16) << timings.value().max_case * 100.0 <<"\n";
+    }
+}
+
+void AudioEngine::print_timings_to_file(const std::string& filename)
+{
+    std::fstream file;
+    file.open(filename, std::ios_base::out);
+    if (!file.is_open())
+    {
+        MIND_LOG_WARNING("Couldn't write timings to file");
+        return;
+    }
+    file.setf(std::ios::left);
+    file << "Performance timings for all processors in percentages of 1 audio buffer  (100% = "<< 1000000.0 / _sample_rate * AUDIO_CHUNK_SIZE
+         << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average" << std::setw(16) << "minimum"
+         << std::setw(16) << "maximum" << std::endl;
+
+    for (const auto& track : _audio_graph)
+    {
+        file << std::setw(0) << "Track: " << track->name() << "\n";
+        auto processors = track->process_chain();
+        for (auto& p : processors)
+        {
+            file << std::setw(8) << "" << std::setw(16) << p->name();
+            print_single_timings_for_node(file, _process_timer, p->id());
+        }
+        file << std::setw(8) << "" << std::setw(16) << "Track total";
+        print_single_timings_for_node(file, _process_timer, track->id());
+        file << "\n";
+    }
+
+    file << "\n" << std::setw(24) << "Engine total";
+    print_single_timings_for_node(file, _process_timer, ENGINE_TIMING_ID);
+    file.close();
 }
 
 RealtimeState update_state(RealtimeState current_state)

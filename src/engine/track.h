@@ -180,6 +180,10 @@ public:
         _update_channel_config();
     }
 
+    const std::vector<Processor*> process_chain()
+    {
+        return _processors;
+    }
 
     /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;

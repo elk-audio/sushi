@@ -381,6 +381,8 @@ private:
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
 
+    void print_timings_to_file(const std::string& filename);
+
     struct Connection
     {
         int engine_channel;

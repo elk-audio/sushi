@@ -39,11 +39,6 @@ std::optional<ProcessTimings> PerformanceTimer::timings_for_node(int id)
     return std::nullopt;
 }
 
-void PerformanceTimer::save_all_to_file(const std::string& path)
-{
-
-}
-
 void PerformanceTimer::enable(bool enabled)
 {
     if (enabled && _enabled == false)
