@@ -19,6 +19,7 @@ namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
+constexpr char TIMING_FILE_NAME[] = "timings.txt";
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -38,7 +39,10 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
 AudioEngine::~AudioEngine()
 {
     _event_dispatcher.stop();
-    print_timings_to_file("./timings.txt");
+    if (_timings_enabled)
+    {
+        print_timings_to_file(TIMING_FILE_NAME);
+    }
 }
 
 void AudioEngine::set_sample_rate(float sample_rate)
@@ -884,7 +888,7 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
         file << "\n";
     }
 
-    file << "\n" << std::setw(24) << "Engine total";
+    file << std::setw(24) << "Engine total";
     print_single_timings_for_node(file, _process_timer, ENGINE_TIMING_ID);
     file.close();
 }
