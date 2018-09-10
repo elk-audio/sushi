@@ -86,7 +86,6 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
      * _input_buffer  */
     ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(_input_buffer);
     ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
-
     for (auto &processor : _processors)
     {
         while (!_kb_event_buffer.empty())
