@@ -14,6 +14,7 @@
 #include "logging.h"
 #include "options.h"
 #include "generated/version.h"
+#include "engine/audio_engine.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"

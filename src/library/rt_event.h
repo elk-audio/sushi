@@ -8,7 +8,6 @@
 
 #include <string>
 #include <cassert>
-#include <vector>
 
 #include "id_generator.h"
 #include "library/types.h"

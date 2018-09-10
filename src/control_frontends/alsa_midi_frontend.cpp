@@ -1,4 +1,5 @@
-#include <stdlib.h>
+#include <cstdlib>
+
 #include <alsa/seq_event.h>
 
 #include "alsa_midi_frontend.h"

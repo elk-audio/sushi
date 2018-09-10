@@ -2,6 +2,16 @@
 
 namespace sushi {
 
+constexpr int DEFAULT_CHANNELS = 2;
+
+InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
+{
+    _max_input_channels = DEFAULT_CHANNELS;
+    _max_output_channels = DEFAULT_CHANNELS;
+    _current_input_channels = DEFAULT_CHANNELS;
+    _current_output_channels = DEFAULT_CHANNELS;
+};
+
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
                                                               float default_value,
@@ -162,6 +172,5 @@ void InternalPlugin::set_parameter_and_notify(BoolParameterValue*storage, bool n
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
     output_event(e);
 }
-
 
 } // end namespace sushi

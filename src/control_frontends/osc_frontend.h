@@ -14,12 +14,12 @@
 #ifndef SUSHI_OSC_FRONTEND_H_H
 #define SUSHI_OSC_FRONTEND_H_H
 
+#include <vector>
 #include <map>
 
 #include "lo/lo.h"
 
 #include "base_control_frontend.h"
-#include "engine/engine.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -84,12 +84,12 @@ public:
      */
     void connect_all();
 
-    virtual void run() override {_start_server();}
+    void run() override {_start_server();}
 
-    virtual void stop() override {_stop_server();}
+    void stop() override {_stop_server();}
 
     /* Inherited from EventPoster */
-    int process(Event* event);
+    int process(Event* event) override;
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 

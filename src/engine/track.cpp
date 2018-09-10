@@ -1,13 +1,15 @@
+#include <cassert>
 
 #include "track.h"
 #include "logging.h"
-#include <string>
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("track");
 
 namespace sushi {
 namespace engine {
 
+constexpr int TRACK_MAX_PROCESSORS = 32;
+constexpr float PAN_GAIN_3_DB = 1.412537f;
 
 Track::Track(HostControl host_control, int channels) : InternalPlugin(host_control),
                                                        _input_buffer{std::max(channels, 2)},

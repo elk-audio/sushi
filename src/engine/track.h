@@ -7,8 +7,8 @@
 #ifndef SUSHI_TRACK_H
 #define SUSHI_TRACK_H
 
+#include <string>
 #include <memory>
-#include <cassert>
 #include <array>
 #include <vector>
 
@@ -17,15 +17,12 @@
 #include "library/rt_event_fifo.h"
 #include "library/constants.h"
 
-
 namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int TRACK_MAX_CHANNELS = 8;
 constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
-constexpr int TRACK_MAX_PROCESSORS = 32;
-constexpr float PAN_GAIN_3_DB = 1.412537f;
 
 class Track : public InternalPlugin, public RtEventPipe
 {

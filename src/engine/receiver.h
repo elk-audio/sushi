@@ -10,11 +10,9 @@
 
 #include <vector>
 #include <chrono>
-#include <mutex>
 
 #include "library/id_generator.h"
 #include "library/rt_event_fifo.h"
-#include "library/rt_event.h"
 
 namespace sushi {
 namespace receiver {
@@ -41,7 +39,6 @@ private:
     };
     std::vector<Node> _receive_list;
     RtEventFifo* _queue;
-    std::mutex _list_lock;
 };
 
 

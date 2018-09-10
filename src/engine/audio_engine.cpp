@@ -1,6 +1,6 @@
 #include "twine/src/twine_internal.h"
 
-#include "engine.h"
+#include "audio_engine.h"
 #include "logging.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"

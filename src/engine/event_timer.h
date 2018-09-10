@@ -7,7 +7,6 @@
 #define SUSHI_EVENT_TIMER_H
 
 #include <atomic>
-#include <cassert>
 #include <tuple>
 
 #include "library/time.h"

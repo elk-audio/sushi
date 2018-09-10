@@ -8,7 +8,6 @@
 #ifndef SUSHI_PLUGIN_PARAMETERS_H
 #define SUSHI_PLUGIN_PARAMETERS_H
 
-#include <atomic>
 #include <memory>
 #include <cmath>
 #include <string>

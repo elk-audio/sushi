@@ -104,7 +104,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
-                      src/engine/engine.cpp
+                      src/engine/audio_engine.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
@@ -165,11 +165,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_host_callback.h
                         src/library/vst2x_plugin_loader.h
                         src/library/vst3x_wrapper.h
-                        src/engine/engine.h
+                        src/engine/base_engine.h
+                        src/engine/audio_engine.h
                         src/engine/track.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
                         src/engine/event_dispatcher.h
+                        src/engine/base_event_dispatcher.h
                         src/engine/event_timer.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h

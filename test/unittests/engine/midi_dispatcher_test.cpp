@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
-#define private public
 
-#include "engine/midi_dispatcher.cpp"
 #include "test_utils/engine_mockup.h"
+
+#define private public
+#include "engine/midi_dispatcher.cpp"
 
 using namespace midi;
 using namespace sushi;

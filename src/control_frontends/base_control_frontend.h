@@ -9,11 +9,9 @@
 #define SUSHI_BASE_CONTROL_FRONTEND_H
 
 #include <string>
-#include <vector>
-#include <mutex>
 
 #include "library/event_interface.h"
-#include "engine/engine.h"
+#include "engine/base_engine.h"
 
 namespace sushi {
 namespace control_frontend {
@@ -80,8 +78,6 @@ protected:
 
     engine::BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
-    std::vector<EventId> _sendlist;
-    std::mutex _sendlist_mutex;
 
 private:
     EventPosterId _poster_id;

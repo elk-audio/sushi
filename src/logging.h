@@ -21,13 +21,21 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <iostream>
+#include <string>
 
 /* Prevent name collisions with Xenomai that for some inexplicable reason
  * defines 'debug' as a macro */
 #ifdef debug
 #undef debug
 #endif
+
+/** Error codes returned by set_logger_params
+ */
+enum MIND_LOG_ERROR_CODE
+{
+    MIND_LOG_ERROR_CODE_OK = 0,
+    MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL = 1,
+};
 
 #define SPDLOG_DEBUG_ON
 
@@ -71,14 +79,6 @@
 #define MIND_LOG_WARNING_IF(condition, msg, ...)  if (condition) { spdlog_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #define MIND_LOG_ERROR_IF(condition, msg, ...)    if (condition) { spdlog_instance->error("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #define MIND_LOG_CRITICAL_IF(condition, msg, ...) if (condition) { spdlog_instance->critical"{}" msg, local_log_prefix, ##__VA_ARGS__); }
-
-/** Error codes returned by set_logger_params
- */
-enum MIND_LOG_ERROR_CODE
-{
-    MIND_LOG_ERROR_CODE_OK = 0,
-    MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL = 1,
-};
 
 /*
  * Call this _before_ instantiating any object that use MIND_GET_LOGGER
@@ -167,7 +167,8 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #define MIND_LOG_ERROR_IF(...)
 #define MIND_LOG_CRITICAL_IF(...)
 
-#define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL)
+#define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL) 0
+#define MIND_LOG_GET_ERROR_MESSAGE(retcode) ""
 
 #endif
 

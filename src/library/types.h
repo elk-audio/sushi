@@ -9,7 +9,6 @@
 #define SUSHI_TYPES_H
 
 #include <array>
-#include <chrono>
 
 namespace sushi {
 

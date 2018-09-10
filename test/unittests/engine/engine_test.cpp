@@ -1,18 +1,15 @@
-
 #include <algorithm>
-#include <fstream>
-#include <iostream>
 #include <thread>
 
 #include "gtest/gtest.h"
+
 #include "test_utils/test_utils.h"
 #include "engine/transport.h"
 
 #define private public
 #define protected public
 
-#include "engine/engine.cpp"
-#include "library/mind_allocator.cpp"
+#include "engine/audio_engine.cpp"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
