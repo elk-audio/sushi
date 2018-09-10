@@ -30,6 +30,7 @@ set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
+set(WITH_UNIT_TESTS true CACHE BOOL "Enable unit testing after compilation")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -298,7 +299,9 @@ set(WITH_TWINE_TESTS false)
 add_subdirectory(twine)
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
-add_subdirectory(test)
+if (${WITH_UNIT_TESTS})
+    add_subdirectory(test)
+endif()
 
 ####################
 #  Target Objects  #
