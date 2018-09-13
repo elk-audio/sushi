@@ -19,34 +19,39 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     }
 
     auto off_config = static_cast<OfflineFrontendConfiguration*>(_config);
+    _dummy_mode = off_config->dummy_mode;
 
-    // Open audio file and check channels / sample rate
-    memset(&_soundfile_info, 0, sizeof(_soundfile_info));
-    if (! (_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)) )
+    if (_dummy_mode == false)
     {
-        cleanup();
-        MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
-        return AudioFrontendStatus::INVALID_INPUT_FILE;
+        // Open audio file and check channels / sample rate
+        memset(&_soundfile_info, 0, sizeof(_soundfile_info));
+        if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
+        {
+            cleanup();
+            MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
+            return AudioFrontendStatus::INVALID_INPUT_FILE;
+        }
+        _mono = _soundfile_info.channels == 1;
+        auto sample_rate_file = _soundfile_info.samplerate;
+        if (sample_rate_file != _engine->sample_rate())
+        {
+            MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
+                             sample_rate_file,
+                             _engine->sample_rate());
+        }
+
+        // Open output file with same format as input file
+        if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
+        {
+            cleanup();
+            MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
+            return AudioFrontendStatus::INVALID_OUTPUT_FILE;
+        }
     }
-    _mono = _soundfile_info.channels == 1;
     _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
     _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
     _engine->set_output_latency(std::chrono::microseconds(0));
-    auto sample_rate_file = _soundfile_info.samplerate;
-    if (sample_rate_file != _engine->sample_rate())
-    {
-        MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                         sample_rate_file,
-                         _engine->sample_rate());
-    }
 
-    // Open output file with same format as input file
-    if (! (_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)) )
-    {
-        cleanup();
-        MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
-        return AudioFrontendStatus::INVALID_OUTPUT_FILE;
-    }
     return ret_code;
 }
 
@@ -62,6 +67,11 @@ void OfflineFrontend::add_sequencer_events(std::vector<Event*> events)
 
 void OfflineFrontend::cleanup()
 {
+    _running = false;
+    if (_worker.joinable())
+    {
+        _worker.join();
+    }
     if (_input_file)
     {
         sf_close(_input_file);
@@ -82,6 +92,58 @@ int time_to_sample_offset(Time chunk_end_time, Time event_time, float samplerate
 
 void OfflineFrontend::run()
 {
+    if (_dummy_mode)
+    {
+        _worker = std::thread(&OfflineFrontend::_process_dummy, this);
+    }
+    else
+    {
+        _run_blocking();
+    }
+}
+
+// Process all events up until end_time
+void OfflineFrontend::_process_events(Time end_time)
+{
+    while (!_event_queue.empty() && _event_queue.back()->time() < end_time)
+    {
+        auto next_event = _event_queue.back();
+        if (next_event->maps_to_rt_event())
+        {
+            int offset = time_to_sample_offset(end_time, next_event->time(), _engine->sample_rate());
+            auto rt_event = next_event->to_rt_event(offset);
+            _engine->send_rt_event(rt_event);
+        }
+        _event_queue.pop_back();
+        delete next_event;
+    }
+}
+
+void OfflineFrontend::_process_dummy()
+{
+    set_flush_denormals_to_zero();
+    int samplecount = 0;
+    double usec_time = 0.0f;
+    Time start_time = std::chrono::microseconds(0);
+
+    while (_running)
+    {
+        // Update time and sample counter
+        _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
+
+        samplecount += AUDIO_CHUNK_SIZE;
+        usec_time += AUDIO_CHUNK_SIZE * 1'000'000.f / _engine->sample_rate();
+
+        Time chunk_end_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
+        _process_events(chunk_end_time);
+
+        _buffer.clear();
+        _engine->process_chunk(&_buffer, &_buffer);
+    }
+}
+
+void OfflineFrontend::_run_blocking()
+{
     set_flush_denormals_to_zero();
     int readcount;
     int samplecount = 0;
@@ -99,23 +161,11 @@ void OfflineFrontend::run()
         samplecount += readcount;
         usec_time += readcount * 1'000'000.f / _engine->sample_rate();
 
-        // Process all events until the end of the frame
         Time chunk_end_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
-        while (!_event_queue.empty() && _event_queue.back()->time() < chunk_end_time)
-        {
-            auto next_event = _event_queue.back();
-            if (next_event->maps_to_rt_event())
-            {
-                int offset = time_to_sample_offset(chunk_end_time, next_event->time(), _engine->sample_rate());
-                auto rt_event = next_event->to_rt_event(offset);
-                _engine->send_rt_event(rt_event);
-            }
-            _event_queue.pop_back();
-            delete next_event;
-        }
+        _process_events(chunk_end_time);
+
         _buffer.clear();
 
-        // Render audio buffer
         if (_mono)
         {
             std::copy(file_buffer, file_buffer + AUDIO_CHUNK_SIZE, _buffer.channel(0));
