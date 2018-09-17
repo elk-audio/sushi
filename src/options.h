@@ -88,7 +88,8 @@ enum OptionIndex
     OPT_IDX_JACK_SERVER,
     OPT_IDX_USE_XENOMAI_RASPA,
     OPT_IDX_XENOMAI_DEBUG_MODE_SW,
-    OPT_IDX_MULTICORE_PROCESSING
+    OPT_IDX_MULTICORE_PROCESSING,
+    OPT_IDX_TIMINGS_STATISTICS
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -213,6 +214,14 @@ const optionparser::Descriptor usage[] =
         "multicore-processing",
         SushiArg::Numeric,
         "\t\t-m <n>, --multicore-processing=<n> \tProcess audio multithreaded with n cores [default n=1 (off)]."
+    },
+    {
+        OPT_IDX_TIMINGS_STATISTICS,
+        OPT_TYPE_DISABLED,
+        "",
+        "timing-statistics",
+        SushiArg::Optional,
+        "\t\t--timing-statistics \tEnable performance timings on all audio processors."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

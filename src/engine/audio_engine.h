@@ -28,7 +28,7 @@
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"
 #include "library/types.h"
-
+#include "library/performance_timer.h"
 
 namespace sushi {
 namespace engine {
@@ -301,6 +301,17 @@ public:
         return &_event_dispatcher;
     }
 
+    /**
+     * @brief Enable timings of all audio processors
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_timing_statistics(bool enabled) override;
+
+    /**
+     * @brief Print the current processor timings (in enabled) in the log
+     */
+    void print_timings_to_log() override;
+
 private:
     /**
      * @brief Instantiate a plugin instance of a given type
@@ -373,6 +384,8 @@ private:
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
 
+    void print_timings_to_file(const std::string& filename);
+
     struct Connection
     {
         int engine_channel;
@@ -381,6 +394,7 @@ private:
     };
     const bool _multicore_processing;
     const int  _rt_cores;
+
     std::unique_ptr<twine::WorkerPool> _worker_pool;
 
     std::vector<Track*> _audio_graph;
@@ -408,6 +422,8 @@ private:
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
+    performance::PerformanceTimer _process_timer;
+    bool _timings_enabled{false};
 };
 
 /**

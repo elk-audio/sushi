@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "plugins/arpeggiator_plugin.h"
 #include "logging.h"
 
@@ -75,7 +77,7 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
     double beat = _host_control.transport()->current_beats();
     double last_beat_this_chunk = _host_control.transport()->current_beats(AUDIO_CHUNK_SIZE);
     double beat_period = last_beat_this_chunk - beat;
-    auto notes_this_chunk = MULTIPLIER_8TH_NOTE * (last_beat_this_chunk -_last_note_beat);
+    auto notes_this_chunk = std::min(MULTIPLIER_8TH_NOTE * (last_beat_this_chunk -_last_note_beat), 2.0);
 
     while (notes_this_chunk > 1.0)
     {

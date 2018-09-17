@@ -132,6 +132,7 @@ int main(int argc, char* argv[])
     bool connect_ports = false;
     bool debug_mode_switches = false;
     int  rt_cpu_cores = 1;
+    bool enable_timings = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -193,6 +194,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_MULTICORE_PROCESSING:
             rt_cpu_cores = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_TIMINGS_STATISTICS:
+            enable_timings = true;
             break;
 
         default:
@@ -283,6 +288,12 @@ int main(int argc, char* argv[])
     {
         configurator.load_events(config_filename);
     }
+
+    if (enable_timings)
+    {
+        engine.enable_timing_statistics(true);
+    }
+
     frontend->connect_control_frontends();
     frontend->run();
 

@@ -54,7 +54,8 @@ protected:
     TrackTest() {}
 
     HostControlMockup _host_control;
-    Track _module_under_test{_host_control.make_host_control_mockup(), 2};
+    performance::PerformanceTimer _timer;
+    Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
 };
 
 
@@ -64,7 +65,7 @@ TEST_F(TrackTest, TestChannelManagement)
     test_processor.set_input_channels(2);
     /* Add the test processor to a mono track and verify
      * it is configured in mono config */
-    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1);
+    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1, &_timer);
     _module_under_test_mono.set_input_channels(1);
     _module_under_test_mono.add(&test_processor);
     EXPECT_EQ(1, test_processor.input_channels());
@@ -94,7 +95,7 @@ TEST_F(TrackTest, TestChannelManagement)
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
-    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2);
+    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
     EXPECT_EQ(4, module_under_test.parameter_count());

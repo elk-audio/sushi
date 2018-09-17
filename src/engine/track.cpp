@@ -11,13 +11,15 @@ namespace engine {
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 
-Track::Track(HostControl host_control, int channels) : InternalPlugin(host_control),
-                                                       _input_buffer{std::max(channels, 2)},
-                                                       _output_buffer{std::max(channels, 2)},
-                                                       _input_busses{1},
-                                                       _output_busses{1},
-                                                       _multibus{false}
-{
+Track::Track(HostControl host_control, int channels,
+             performance::PerformanceTimer* timer) : InternalPlugin(host_control),
+                                                     _input_buffer{std::max(channels, 2)},
+                                                     _output_buffer{std::max(channels, 2)},
+                                                     _input_busses{1},
+                                                     _output_busses{1},
+                                                     _multibus{false},
+                                                     _timer{timer}
+    {
     _max_input_channels = channels;
     _max_output_channels = channels;
     _current_input_channels = channels;
@@ -25,12 +27,14 @@ Track::Track(HostControl host_control, int channels) : InternalPlugin(host_contr
     _common_init();
 }
 
-Track::Track(HostControl host_control, int input_busses, int output_busses) :  InternalPlugin(host_control),
-                                                                               _input_buffer{std::max(input_busses, output_busses) * 2},
-                                                                               _output_buffer{std::max(input_busses, output_busses) * 2},
-                                                                               _input_busses{input_busses},
-                                                                               _output_busses{output_busses},
-                                                                               _multibus{(input_busses > 1 || output_busses > 1)}
+Track::Track(HostControl host_control, int input_busses, int output_busses,
+             performance::PerformanceTimer* timer) :  InternalPlugin(host_control),
+                                                      _input_buffer{std::max(input_busses, output_busses) * 2},
+                                                      _output_buffer{std::max(input_busses, output_busses) * 2},
+                                                      _input_busses{input_busses},
+                                                      _output_busses{output_busses},
+                                                      _multibus{(input_busses > 1 || output_busses > 1)},
+                                                      _timer{timer}
 {
     int channels = std::max(input_busses, output_busses) * 2;
     _max_input_channels = channels;
@@ -81,6 +85,7 @@ void Track::render()
 
 void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& out)
 {
+    auto track_timestamp = _timer->start_timer();
     /* For Tracks, process function is called from render() and the input audio data
      * should be copied to _input_buffer prior to this call.
      * We alias the buffers so we can swap them cheaply, without copying the underlying
@@ -90,6 +95,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
     ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
     for (auto &processor : _processors)
     {
+        auto processor_timestamp = _timer->start_timer();
         while (!_kb_event_buffer.empty())
         {
             RtEvent event;
@@ -102,6 +108,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
         ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
         processor->process_audio(proc_in, proc_out);
         std::swap(aliased_in, aliased_out);
+        _timer->stop_timer_rt_safe(processor_timestamp, processor->id());
     }
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
     if (output_channels > 0)
@@ -115,6 +122,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
+    _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
 void Track::process_event(RtEvent event)
