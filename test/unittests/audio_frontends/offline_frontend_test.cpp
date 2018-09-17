@@ -50,7 +50,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
     std::string test_data_file(test_data_dir);
     test_data_file.append("/test_sndfile_05.wav");
     std::string output_file_name("./test_out.wav");
-    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav");
+    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false);
     auto ret_code = _module_under_test->init(&config);
     if (ret_code != AudioFrontendStatus::OK)
     {
@@ -85,7 +85,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
 
 TEST_F(TestOfflineFrontend, TestInvalidInputFile)
 {
-    OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav");
+    OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav", false);
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::INVALID_INPUT_FILE, ret_code);
 }
@@ -101,7 +101,7 @@ TEST_F(TestOfflineFrontend, TestMonoMode)
     std::string test_data_file(test_data_dir);
     test_data_file.append("/mono.wav");
     std::string output_file_name("./test_out.wav");
-    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav");
+    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false);
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 

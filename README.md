@@ -10,7 +10,7 @@ Common use cases are:
 
   * Test in offline mode with I/O from audio file:
 
-    sushi -c config_file.json input_file.wav
+    sushi -o -i input_file.wav -c config_file.json
 
   * Use JACK for realtime audio:
 
