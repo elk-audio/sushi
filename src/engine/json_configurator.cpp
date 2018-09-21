@@ -441,9 +441,24 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                         data["value"].GetFloat(),
                                         timestamp);
     }
+    else if (json_event["type"] == "property_change")
+    {
+        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
+                                                                      data["property_name"].GetString());
+        if (status != sushi::engine::EngineReturnStatus::OK)
+        {
+            MIND_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
+            return nullptr;
+        }
+        return new StringPropertyChangeEvent(processor_id,
+                                             parameter_id,
+                                             data["value"].GetString(),
+                                             timestamp);
+    }
     else if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
+                                 processor_id,
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);
@@ -451,6 +466,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     else if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
+                                 processor_id,
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);

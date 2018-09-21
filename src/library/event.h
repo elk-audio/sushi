@@ -133,7 +133,12 @@ public:
                                     _subtype(subtype),
                                     _processor_id(processor_id),
                                     _note(0),
-                                    _velocity(value) {}
+                                    _velocity(value)
+    {
+        assert(_subtype == Subtype::AFTERTOUCH ||
+               _subtype == Subtype::PITCH_BEND ||
+               _subtype == Subtype::MODULATION);
+    }
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,

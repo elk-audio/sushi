@@ -20,6 +20,15 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
 
+enum class FrontendType
+{
+    OFFLINE,
+    DUMMY,
+    JACK,
+    XENOMAI_RASPA,
+    NONE
+};
+
 bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
@@ -106,7 +115,7 @@ int main(int argc, char* argv[])
     {
         return 1;
     }
-    if ( (cl_parser.nonOptionsCount() == 0 && cl_parser.optionsCount() == 0) || (cl_options[OPT_IDX_HELP]) )
+    if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
     {
         optionparser::printUsage(fwrite, stdout, usage);
         return 0;
@@ -114,21 +123,13 @@ int main(int argc, char* argv[])
 
     std::string input_filename;
     std::string output_filename;
-    if (cl_parser.nonOptionsCount() > 0)
-    {
-        input_filename = std::string(cl_parser.nonOption(0));
-        // By default, append .proc to filename
-        output_filename = std::string(input_filename);
-        output_filename.append(".proc.wav");
-    }
 
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
     std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
-    bool use_jack = false;
-    bool use_xenomai_raspa = false;
+    FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
     int  rt_cpu_cores = 1;
@@ -164,12 +165,24 @@ int main(int argc, char* argv[])
             config_filename.assign(opt.arg);
             break;
 
+        case OPT_IDX_USE_OFFLINE:
+            frontend_type = FrontendType::OFFLINE;
+            break;
+
+        case OPT_IDX_INPUT_FILE:
+            input_filename.assign(opt.arg);
+            break;
+
         case OPT_IDX_OUTPUT_FILE:
             output_filename.assign(opt.arg);
             break;
 
+        case OPT_IDX_USE_DUMMY:
+            frontend_type = FrontendType::DUMMY;
+            break;
+
         case OPT_IDX_USE_JACK:
-            use_jack = true;
+            frontend_type = FrontendType::JACK;
             break;
 
         case OPT_IDX_CONNECT_PORTS:
@@ -185,7 +198,7 @@ int main(int argc, char* argv[])
             break;
 
         case OPT_IDX_USE_XENOMAI_RASPA:
-            use_xenomai_raspa = true;
+            frontend_type = FrontendType::XENOMAI_RASPA;
             break;
 
         case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
@@ -206,6 +219,11 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (output_filename.empty() && !input_filename.empty())
+    {
+        output_filename = input_filename + "_proc.wav";
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
@@ -221,7 +239,7 @@ int main(int argc, char* argv[])
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
 
-    if (use_xenomai_raspa)
+    if (frontend_type == FrontendType::XENOMAI_RASPA)
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
@@ -233,25 +251,47 @@ int main(int argc, char* argv[])
 
     sushi::audio_frontend::BaseAudioFrontend* frontend;
     sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
-    if (use_jack)
+    switch (frontend_type)
     {
-        MIND_LOG_INFO("Setting up Jack audio frontend");
-        fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
-                                                                         jack_server_name,
-                                                                         connect_ports);
-        frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
-    }
-    else if (use_xenomai_raspa)
-    {
-        MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
-        fe_config = new sushi::audio_frontend::XenomaiRaspaFrontendConfiguration(debug_mode_switches);
-        frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
-    }
-    else
-    {
-        MIND_LOG_INFO("Setting up offline audio frontend");
-        fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename);
-        frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
+        case FrontendType::JACK:
+        {
+            MIND_LOG_INFO("Setting up Jack audio frontend");
+            fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
+                                                                             jack_server_name,
+                                                                             connect_ports);
+            frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
+            break;
+        }
+
+        case FrontendType::XENOMAI_RASPA:
+        {
+            MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+            fe_config = new sushi::audio_frontend::XenomaiRaspaFrontendConfiguration(debug_mode_switches);
+            frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
+            break;
+        }
+
+        case FrontendType::DUMMY:
+        case FrontendType::OFFLINE:
+        {
+            bool dummy = false;
+            if (frontend_type == FrontendType::DUMMY)
+            {
+                dummy = true;
+                MIND_LOG_INFO("Setting up dummy audio frontend");
+            }
+            else
+            {
+                MIND_LOG_INFO("Setting up offline audio frontend");
+            }
+            fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename, dummy);
+            frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
+            break;
+        }
+
+        default:
+            std::cerr << "No audio frontend selected." << std::endl;
+            std::exit(1);
     }
 
     auto fe_ret_code = frontend->init(fe_config);
@@ -276,7 +316,7 @@ int main(int argc, char* argv[])
     }
     configurator.load_midi(config_filename);
 
-    if (!use_jack && !use_xenomai_raspa)
+    if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator.load_event_list(config_filename);
         if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -297,7 +337,7 @@ int main(int argc, char* argv[])
     frontend->connect_control_frontends();
     frontend->run();
 
-    if (use_jack || use_xenomai_raspa)
+    if (frontend_type != FrontendType::OFFLINE)
     {
         std::mutex m;
         std::unique_lock<std::mutex> lock(m);

@@ -28,8 +28,14 @@ configure_file(
 set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
+
+set(BUILD_TWINE true CACHE BOOL "Build included Twine library")
+
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
-set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
+set(XENOMAI_N_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
+set(XENOMAI_AUDIO_SAMPLE_RATE 48000 CACHE STRING "Set the sampling rate in Raspa")
+
+set(WITH_UNIT_TESTS true CACHE BOOL "Enable unit testing after compilation")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -234,6 +240,33 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
+#############################################
+#  Subdirectory projects                    #
+#############################################
+if (${WITH_XENOMAI})
+    set(WITH_RASPA_APPS false)
+    set(WITH_RASPA_TESTS false)
+    set(WITH_TWINE_XENOMAI true)
+    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
+    add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_N_CHANNELS})
+    add_definitions(-DRASPA_AUDIO_SAMPLE_RATE=${XENOMAI_AUDIO_SAMPLE_RATE})
+    add_subdirectory(raspalib)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
+endif()
+
+if (${BUILD_TWINE})
+    set(TWINE_WITH_TESTS false)
+    add_subdirectory(twine)
+    set(TWINE_LIB twine)
+else()
+    find_library(TWINE_LIB
+        NAMES twine
+        PATHS /usr/lib /usr/local/lib
+    )
+endif()
+
+add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
 #################################
 #  Linked libraries             #
@@ -246,7 +279,7 @@ set(COMMON_LIBRARIES
     lo
     pthread
     dl
-    twine
+    ${TWINE_LIB}
 )
 
 if (${WITH_VST3})
@@ -283,25 +316,6 @@ set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unu
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 add_dependencies(vst3_host sdk)
 
-#############################################
-#  Subdirectory projects                    #
-#############################################
-if (${WITH_XENOMAI})
-    set(WITH_RASPA_APPS false)
-    set(WITH_RASPA_TESTS false)
-    set(WITH_TWINE_XENOMAI true)
-    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
-    add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
-    add_subdirectory(raspalib)
-
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
-endif()
-
-set(WITH_TWINE_TESTS false)
-add_subdirectory(twine)
-
-add_subdirectory(third-party EXCLUDE_FROM_ALL)
-add_subdirectory(test)
 
 ####################
 #  Target Objects  #
@@ -313,6 +327,14 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 if (${WITH_VST3})
     add_dependencies(sushi vst3_host sdk base)
+endif()
+
+######################
+#  Tests subproject  #
+######################
+
+if (${WITH_UNIT_TESTS})
+    add_subdirectory(test)
 endif()
 
 ####################

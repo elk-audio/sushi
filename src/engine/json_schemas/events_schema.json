@@ -21,7 +21,7 @@ R"(
           },
           "type":
           {
-            "enum": ["parameter_change", "note_on", "note_off"]
+            "enum": ["parameter_change", "property_change", "note_on", "note_off"]
           },
           "data":
           {
@@ -45,6 +45,24 @@ R"(
                   }
                 },
                 "required": ["plugin_name", "parameter_name", "value"]
+              },
+              {
+                "properties":
+                {
+                  "plugin_name":
+                  {
+                    "type": "string"
+                  },
+                  "property_name":
+                  {
+                    "type": "string"
+                  },
+                  "value":
+                  {
+                    "type": "string"
+                  }
+                },
+                "required": ["plugin_name", "property_name", "value"]
               },
               {
                 "properties":
