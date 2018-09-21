@@ -444,6 +444,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     else if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
+                                 processor_id,
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);
@@ -451,6 +452,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     else if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
+                                 processor_id,
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);

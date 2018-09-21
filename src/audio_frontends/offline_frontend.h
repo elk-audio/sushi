@@ -8,6 +8,8 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
+#include <thread>
 
 #include <sndfile.h>
 
@@ -24,16 +26,18 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
 
     OfflineFrontendConfiguration(const std::string input_filename,
-                                 const std::string output_filename) :
+                                 const std::string output_filename,
+                                 bool dummy_mode) :
             input_filename(input_filename),
-            output_filename(output_filename)
+            output_filename(output_filename),
+            dummy_mode(dummy_mode)
     {}
 
     virtual ~OfflineFrontendConfiguration()
     {}
-
     std::string input_filename;
     std::string output_filename;
+    bool dummy_mode;
 };
 
 class OfflineFrontend : public BaseAudioFrontend
@@ -42,7 +46,8 @@ public:
     OfflineFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
             BaseAudioFrontend(engine, midi_dispatcher),
             _input_file(nullptr),
-            _output_file(nullptr)
+            _output_file(nullptr),
+            _running{true}
     {
         _buffer.clear();
     }
@@ -65,10 +70,17 @@ public:
     void run() override;
 
 private:
-    SNDFILE*    _input_file;
-    SNDFILE*    _output_file;
-    SF_INFO     _soundfile_info;
-    bool        _mono;
+    void _process_events(Time end_time);
+    void _process_dummy();
+    void _run_blocking();
+
+    SNDFILE*            _input_file;
+    SNDFILE*            _output_file;
+    SF_INFO             _soundfile_info;
+    bool                _mono;
+    bool                _dummy_mode;
+    std::atomic_bool    _running;
+    std::thread         _worker;
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{OFFLINE_FRONTEND_CHANNELS};
 

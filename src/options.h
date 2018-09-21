@@ -81,7 +81,10 @@ enum OptionIndex
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_CONFIG_FILE,
+    OPT_IDX_USE_OFFLINE,
+    OPT_IDX_INPUT_FILE,
     OPT_IDX_OUTPUT_FILE,
+    OPT_IDX_USE_DUMMY,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -152,12 +155,36 @@ const optionparser::Descriptor usage[] =
         "\t\t-c <filename>, --config-file=<filename> \tSpecify configuration JSON file [default=" SUSHI_JSON_FILENAME_DEFAULT "]."
     },
     {
+        OPT_IDX_USE_OFFLINE,
+        OPT_TYPE_DISABLED,
+        "o",
+        "offline",
+        SushiArg::Optional,
+        "\t\t-o --offline \tUse offline file audio frontend."
+    },
+    {
+        OPT_IDX_INPUT_FILE,
+        OPT_TYPE_UNUSED,
+        "i",
+        "input",
+        SushiArg::NonEmpty,
+        "\t\t-i <filename>, --input=<filename> \tSpecify input file, required for --offline option."
+    },
+    {
         OPT_IDX_OUTPUT_FILE,
         OPT_TYPE_UNUSED,
-        "o",
+        "O",
         "output",
         SushiArg::NonEmpty,
-        "\t\t-o <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+        "\t\t-O <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+    },
+    {
+        OPT_IDX_USE_DUMMY,
+        OPT_TYPE_DISABLED,
+        "d",
+        "dummy",
+        SushiArg::Optional,
+        "\t\t-d --dummy \tUse dummy audio frontend. Useful for debugging."
     },
     {
         OPT_IDX_USE_JACK,
