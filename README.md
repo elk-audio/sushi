@@ -30,7 +30,7 @@ Sushi listens on port 24024 for the following OSC commands:
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
 /parameter/plugin_id/parameter_name    |  f       | parameter value
-/keyboard/track_name                   |  sif     | event type, note index, norm. value
+/keyboard_event/track_name             |  sif     | event type, note index, norm. value
 /engine/add_track                      |  si      | name, n. of channels
 /engine/delete_track                   |  s       | name
 /engine/add_processor                  |  sssss   | track, id, name, file path, type
