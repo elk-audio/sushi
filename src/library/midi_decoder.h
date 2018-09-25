@@ -9,6 +9,10 @@
 #ifndef SUSHI_MIDI_DECODER_H
 #define SUSHI_MIDI_DECODER_H
 
+#include <cassert>
+
+#include "types.h"
+
 namespace sushi {
 namespace midi {
 
@@ -23,7 +27,23 @@ constexpr int MAX_CONTROLLER_NO = 119;
 /* Modulation wheel controller number */
 constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
 
-
+/**
+ * @brief Convert midi data passed in C-array style to internal representation
+ * @param data pointer to array of midi bytes
+ * @param size number of bytes to process
+ * @return A MidiDataByte object encapsulating the midi data
+ */
+inline MidiDataByte to_midi_data_byte(const uint8_t* data, int size)
+{
+    assert(size < MidiDataByte.size());
+    MidiDataByte data_byte;
+    data_byte.fill(0u);
+    for (int i = 0; i < size; ++i)
+    {
+        data_byte[i] = data[i];
+    }
+    return data_byte;
+}
 
 /**
  * @brief Enum to enable OMNI (all channels) as an option.

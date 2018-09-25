@@ -53,19 +53,19 @@ MessageType decode_common_messages(uint8_t data, size_t size)
             return MessageType::SYSTEM_EXCLUSIVE;
 
         case TIME_CODE:
-            if (size == 2) return MessageType::TIME_CODE;
+            if (size >= 2) return MessageType::TIME_CODE;
             break;
 
         case SONG_POS_CODE:
-            if (size == 3) return MessageType::SONG_POSITION;
+            if (size >= 3) return MessageType::SONG_POSITION;
             break;
 
         case SONG_SEL_CODE:
-            if (size == 2) return MessageType::SONG_SELECT;
+            if (size >= 2) return MessageType::SONG_SELECT;
             break;
 
         case TUNE_REQ_CODE:
-            if (size == 1) return MessageType::TUNE_REQUEST;
+            if (size >= 1) return MessageType::TUNE_REQUEST;
             break;
 
         case END_SYSEX_CODE:
@@ -173,31 +173,31 @@ MessageType decode_message_type(const uint8_t* data, size_t size)
     switch (first_4_bits)
     {
         case NOTE_OFF_PREFIX:
-            if (size == 3) return MessageType::NOTE_OFF;
+            if (size >= 3) return MessageType::NOTE_OFF;
             break;
 
         case NOTE_ON_PREFIX:
-            if (size == 3) return MessageType::NOTE_ON;
+            if (size >= 3) return MessageType::NOTE_ON;
             break;
 
         case POLY_PRES_PREFIX:
-            if (size == 3) return MessageType::POLY_KEY_PRESSURE;
+            if (size >= 3) return MessageType::POLY_KEY_PRESSURE;
             break;
 
         case CTRL_CH_PREFIX:
-            if (size == 3) return decode_control_change_type(data);
+            if (size >= 3) return decode_control_change_type(data);
             break;
 
         case PROG_CH_PREFIX:
-            if (size == 2) return MessageType::PROGRAM_CHANGE;
+            if (size >= 2) return MessageType::PROGRAM_CHANGE;
             break;
 
         case CHAN_PRES_PREFIX:
-            if (size == 2) return MessageType::CHANNEL_PRESSURE;
+            if (size >= 2) return MessageType::CHANNEL_PRESSURE;
             break;
 
         case PITCH_B_PREFIX:
-            if (size == 3) return MessageType::PITCH_BEND;
+            if (size >= 3) return MessageType::PITCH_BEND;
             break;
 
         case SYSTEM_PREFIX:

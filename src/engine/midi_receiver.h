@@ -14,7 +14,7 @@ namespace midi_receiver {
 class MidiReceiver
 {
 public:
-    virtual void send_midi(int port, const uint8_t* data, size_t size, Time timestamp) = 0;
+    virtual void send_midi(int port, MidiDataByte data, Time timestamp) = 0;
 };
 
 
