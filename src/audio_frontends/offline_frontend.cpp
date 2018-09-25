@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstring>
+#include <random>
 
 #include "logging.h"
 #include "offline_frontend.h"
@@ -9,6 +10,22 @@ namespace sushi {
 namespace audio_frontend {
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("offline audio");
+
+constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise
+constexpr int   NOISE_SEED = 5; // Using a constant seed makes potential errors reproducible
+
+template<class random_device, class random_dist>
+void fill_buffer_with_noise(ChunkSampleBuffer& buffer, random_device& dev, random_dist& dist)
+{
+    for (int c = 0; c < buffer.channel_count(); ++c)
+    {
+        float* channel = buffer.channel(c);
+        for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+        {
+            channel[i] = dist(dev);
+        }
+    }
+}
 
 AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -126,6 +143,10 @@ void OfflineFrontend::_process_dummy()
     double usec_time = 0.0f;
     Time start_time = std::chrono::microseconds(0);
 
+    std::ranlux24 rand_gen;
+    rand_gen.seed(NOISE_SEED);
+    std::normal_distribution<float> normal_dist(0.0f, INPUT_NOISE_LEVEL);
+
     while (_running)
     {
         // Update time and sample counter
@@ -137,7 +158,7 @@ void OfflineFrontend::_process_dummy()
         Time chunk_end_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
         _process_events(chunk_end_time);
 
-        _buffer.clear();
+        fill_buffer_with_noise(_buffer, rand_gen, normal_dist);
         _engine->process_chunk(&_buffer, &_buffer);
     }
 }
