@@ -39,34 +39,35 @@ constexpr uint8_t OMNI_ON_CTRL      = 125;
 constexpr uint8_t MONO_MODE_CTRL    = 126;
 constexpr uint8_t POLY_MODE_CTRL    = 127;
 
-inline bool realtime_msg(uint8_t byte)
+constexpr uint8_t STRIP_MSG_BIT     = 0x7Fu;
+constexpr uint8_t STRIP_4_MSG_BITS  = 0x0Fu;
+constexpr uint8_t STRIP_4_LSG_BITS  = 0xF7u;
+constexpr uint8_t STRIP_5_MSG_BITS  = 0x07u;
+
+inline bool realtime_msg(MidiDataByte data)
 {
-    return byte & 0b00001000;
+    return (data[0] & 0b00001000u) > 0;
 }
 
-MessageType decode_common_messages(uint8_t data, size_t size)
+MessageType decode_common_messages(MidiDataByte data)
 {
-    uint8_t last_3_bits = data & 0x07;
+    uint8_t last_3_bits = data[0] & STRIP_5_MSG_BITS;
     switch (last_3_bits)
     {
         case SYSTEM_EX_CODE:
             return MessageType::SYSTEM_EXCLUSIVE;
 
         case TIME_CODE:
-            if (size >= 2) return MessageType::TIME_CODE;
-            break;
+            return MessageType::TIME_CODE;
 
         case SONG_POS_CODE:
-            if (size >= 3) return MessageType::SONG_POSITION;
-            break;
+            return MessageType::SONG_POSITION;
 
         case SONG_SEL_CODE:
-            if (size >= 2) return MessageType::SONG_SELECT;
-            break;
+            return MessageType::SONG_SELECT;
 
         case TUNE_REQ_CODE:
-            if (size >= 1) return MessageType::TUNE_REQUEST;
-            break;
+            return MessageType::TUNE_REQUEST;
 
         case END_SYSEX_CODE:
             return MessageType::END_OF_EXCLUSIVE;
@@ -78,13 +79,9 @@ MessageType decode_common_messages(uint8_t data, size_t size)
 }
 
 
-MessageType decode_realtime_message(uint8_t data, size_t size)
+MessageType decode_realtime_message(MidiDataByte data)
 {
-    if (size != 1)
-    {
-        return MessageType::UNKNOWN;
-    }
-    uint8_t last_3_bits = data & 0x07;
+    uint8_t last_3_bits = data[0] & STRIP_5_MSG_BITS;
     switch(last_3_bits)
     {
         case TIMING_CLOCK_CODE:
@@ -111,10 +108,10 @@ MessageType decode_realtime_message(uint8_t data, size_t size)
 }
 
 
-MessageType decode_control_change_type(const uint8_t* data)
+MessageType decode_control_change_type(MidiDataByte data)
 {
-    uint8_t controller_no = data[1] & 0x7F;
-    if (controller_no < 120)
+    uint8_t controller_no = data[1] & STRIP_MSG_BIT;
+    if (controller_no <= MAX_CONTROLLER_NO)
     {
         return MessageType::CONTROL_CHANGE;
     }
@@ -128,7 +125,7 @@ MessageType decode_control_change_type(const uint8_t* data)
 
         case LOCAL_CTRL:
         {
-            uint8_t value = data[2] & 0x7F;
+            uint8_t value = data[2] & STRIP_MSG_BIT;
             switch(value)
             {
                 case 0:
@@ -163,139 +160,127 @@ MessageType decode_control_change_type(const uint8_t* data)
 }
 
 
-MessageType decode_message_type(const uint8_t* data, size_t size)
+MessageType decode_message_type(MidiDataByte data)
 {
-    if (size == 0)
-    {
-        return MessageType::UNKNOWN;
-    }
-    uint8_t first_4_bits = data[0] >> 4;
+    uint8_t first_4_bits = data[0] >> 4u;
     switch (first_4_bits)
     {
         case NOTE_OFF_PREFIX:
-            if (size >= 3) return MessageType::NOTE_OFF;
-            break;
+            return MessageType::NOTE_OFF;
 
         case NOTE_ON_PREFIX:
-            if (size >= 3) return MessageType::NOTE_ON;
-            break;
+            return MessageType::NOTE_ON;
 
         case POLY_PRES_PREFIX:
-            if (size >= 3) return MessageType::POLY_KEY_PRESSURE;
-            break;
+            return MessageType::POLY_KEY_PRESSURE;
 
         case CTRL_CH_PREFIX:
-            if (size >= 3) return decode_control_change_type(data);
-            break;
+            return decode_control_change_type(data);
 
         case PROG_CH_PREFIX:
-            if (size >= 2) return MessageType::PROGRAM_CHANGE;
-            break;
+            return MessageType::PROGRAM_CHANGE;
 
         case CHAN_PRES_PREFIX:
-            if (size >= 2) return MessageType::CHANNEL_PRESSURE;
-            break;
+            return MessageType::CHANNEL_PRESSURE;
 
         case PITCH_B_PREFIX:
-            if (size >= 3) return MessageType::PITCH_BEND;
-            break;
+            return MessageType::PITCH_BEND;
 
         case SYSTEM_PREFIX:
-            if (realtime_msg(data[0]))
+            if (realtime_msg(data))
             {
-                return decode_realtime_message(data[0], size);
+                return decode_realtime_message(data);
             }
             else
             {
-                return decode_common_messages(data[0], size);
+                return decode_common_messages(data);
             }
 
         default:
             return MessageType::UNKNOWN;
     }
-    return MessageType::UNKNOWN;
 }
 
 
-NoteOffMessage decode_note_off(const uint8_t* data)
+NoteOffMessage decode_note_off(MidiDataByte data)
 {
     NoteOffMessage message;
-    message.channel = decode_channel(data[0]);
-    message.note = data[1] & 0x7F;
-    message.velocity = data[2] & 0x7F;
+    message.channel = decode_channel(data);
+    message.note = data[1] & STRIP_MSG_BIT;
+    message.velocity = data[2] & STRIP_MSG_BIT;
     return message;
 }
 
-NoteOnMessage decode_note_on(const uint8_t* data)
+NoteOnMessage decode_note_on(MidiDataByte data)
 {
     NoteOnMessage message;
-    message.channel = decode_channel(data[0]);
-    message.note = data[1] & 0x7F;
-    message.velocity = data[2] & 0x7F;
+    message.channel = decode_channel(data);
+    message.note = data[1] & STRIP_MSG_BIT;
+    message.velocity = data[2] & STRIP_MSG_BIT;
     return message;
 }
 
-PolyKeyPressureMessage decode_poly_key_pressure(const uint8_t* data)
+PolyKeyPressureMessage decode_poly_key_pressure(MidiDataByte data)
 {
     PolyKeyPressureMessage message;
-    message.channel = decode_channel(data[0]);
-    message.note = data[1] & 0x7F;
-    message.pressure = data[2] & 0x7F;
+    message.channel = decode_channel(data);
+    message.note = data[1] & STRIP_MSG_BIT;
+    message.pressure = data[2] & STRIP_MSG_BIT;
     return message;
 }
 
-ControlChangeMessage decode_control_change(const uint8_t* data)
+ControlChangeMessage decode_control_change(MidiDataByte data)
 {
     ControlChangeMessage message;
-    message.channel = decode_channel(data[0]);
-    message.controller = data[1] & 0x7F;
-    message.value = data[2] & 0x7F;
+    message.channel = decode_channel(data);
+    message.controller = data[1] & STRIP_MSG_BIT;
+    message.value = data[2] & STRIP_MSG_BIT;
     return message;
 }
 
-ProgramChangeMessage decode_program_change(const uint8_t* data)
+ProgramChangeMessage decode_program_change(MidiDataByte data)
 {
     ProgramChangeMessage message;
-    message.channel = decode_channel(data[0]);
-    message.program = data[1] & 0x7F;
+    message.channel = decode_channel(data);
+    message.program = data[1] & STRIP_MSG_BIT;
     return message;
 }
 
-ChannelPressureMessage decode_channel_pressure(const uint8_t* data)
+ChannelPressureMessage decode_channel_pressure(MidiDataByte data)
 {
     ChannelPressureMessage message;
-    message.channel = decode_channel(data[0]);
-    message.pressure = data[1] & 0x7F;
+    message.channel = decode_channel(data);
+    message.pressure = data[1] & STRIP_MSG_BIT;
     return message;
 }
 
-PitchBendMessage decode_pitch_bend(const uint8_t* data)
+PitchBendMessage decode_pitch_bend(MidiDataByte data)
 {
     PitchBendMessage message;
-    message.channel = decode_channel(data[0]);
-    message.value = (data[1] & 0x7F) + ((data[2] & 0x7F) << 7);
+    message.channel = decode_channel(data);
+    message.value = (data[1] & STRIP_MSG_BIT) + ((data[2] & STRIP_MSG_BIT) << 7);
     return message;
 }
 
-TimeCodeMessage decode_time_code(const uint8_t* data)
+TimeCodeMessage decode_time_code(MidiDataByte data)
 {
     TimeCodeMessage message;
-    message.message_type = (data[1] & 0x70) >> 4;
-    message.value = data[1] & 0x0F;
+    message.message_type = (data[1] & (STRIP_MSG_BIT & STRIP_4_LSG_BITS)) >> 4;
+    message.value = data[1] & STRIP_4_MSG_BITS;
     return message;
 }
 
-SongPositionMessage decode_song_position(const uint8_t* data)
+SongPositionMessage decode_song_position(MidiDataByte data)
 {
     SongPositionMessage message;
-    message.beats = (data[1] & 0x7F) + ((data[2] & 0x7F) << 7);
+    message.beats = (data[1] & STRIP_MSG_BIT) + ((data[2] & STRIP_MSG_BIT) << 7);
     return message;
 }
 
-SongSelectMessage decode_song_select(const uint8_t* data)
+SongSelectMessage decode_song_select(MidiDataByte data)
 {
     SongSelectMessage message;
-    message.index = data[1] & 0x7F;
+    message.index = data[1] & STRIP_MSG_BIT;
     return message;
 }
 

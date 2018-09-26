@@ -6,52 +6,54 @@
 using namespace sushi;
 using namespace midi;
 
-const uint8_t TEST_NOTE_OFF_MSG[]  = {0x81, 60, 45};
-const uint8_t TEST_NOTE_ON_MSG[]   = {0x92, 62, 55};
-const uint8_t TEST_POLY_PRES_MSG[] = {0xA3, 70, 65};
-const uint8_t TEST_CTRL_CH_MSG[]   = {0xB4, 67, 75};
-const uint8_t TEST_PROG_CH_MSG[]   = {0xC5, 18};
-const uint8_t TEST_CHAN_PRES_MSG[] = {0xD6, 16};
-const uint8_t TEST_PITCH_B_MSG[]   = {0xE7, 8, 1};
-const uint8_t TEST_TIME_CODE_MSG[] = {0xF1, 0x35};
-const uint8_t TEST_SONG_POS_MSG[]  = {0xF2, 0x05, 0x02};
-const uint8_t TEST_SONG_SEL_MSG[]  = {0xF3, 35};
-const uint8_t TEST_CLOCK_MSG[]     = {0xF8};
-const uint8_t TEST_START_MSG[]     = {0xFA};
-const uint8_t TEST_CONTINUE_MSG[]  = {0xFB};
-const uint8_t TEST_STOP_MSG[]      = {0xFC};
-const uint8_t TEST_ACTIVE_SNS_MSG[]= {0xFE};
-const uint8_t TEST_RESET_MSG[]     = {0xFF};
+const MidiDataByte TEST_NOTE_OFF_MSG  = {0x81, 60, 45, 0};
+const MidiDataByte TEST_NOTE_ON_MSG   = {0x92, 62, 55, 0};
+const MidiDataByte TEST_POLY_PRES_MSG = {0xA3, 70, 65, 0};
+const MidiDataByte TEST_CTRL_CH_MSG   = {0xB4, 67, 75, 0};
+const MidiDataByte TEST_PROG_CH_MSG   = {0xC5, 18, 0, 0};
+const MidiDataByte TEST_CHAN_PRES_MSG = {0xD6, 16, 0, 0};
+const MidiDataByte TEST_PITCH_B_MSG   = {0xE7, 8, 1, 0};
+const MidiDataByte TEST_TIME_CODE_MSG = {0xF1, 0x35, 0, 0};
+const MidiDataByte TEST_SONG_POS_MSG  = {0xF2, 0x05, 0x02, 0};
+const MidiDataByte TEST_SONG_SEL_MSG  = {0xF3, 35, 0, 0};
+const MidiDataByte TEST_CLOCK_MSG     = {0xF8, 0, 0, 0};
+const MidiDataByte TEST_START_MSG     = {0xFA, 0, 0, 0};
+const MidiDataByte TEST_CONTINUE_MSG  = {0xFB, 0, 0, 0};
+const MidiDataByte TEST_STOP_MSG      = {0xFC, 0, 0, 0};
+const MidiDataByte TEST_ACTIVE_SNS_MSG= {0xFE, 0, 0, 0};
+const MidiDataByte TEST_RESET_MSG     = {0xFF, 0, 0, 0};
+const MidiDataByte TEST_UNKNOWN_MSG   = {0, 0, 0, 0};
+
 
 
 
 TEST (MidiDecoderTest, TestDecodeMessageType) {
-    EXPECT_EQ(MessageType::NOTE_OFF, decode_message_type(TEST_NOTE_OFF_MSG, sizeof(TEST_NOTE_OFF_MSG)));
-    EXPECT_EQ(MessageType::NOTE_ON, decode_message_type(TEST_NOTE_ON_MSG, sizeof(TEST_NOTE_ON_MSG)));
-    EXPECT_EQ(MessageType::POLY_KEY_PRESSURE, decode_message_type(TEST_POLY_PRES_MSG, sizeof(TEST_POLY_PRES_MSG)));
-    EXPECT_EQ(MessageType::CONTROL_CHANGE, decode_message_type(TEST_CTRL_CH_MSG, sizeof(TEST_CTRL_CH_MSG)));
-    EXPECT_EQ(MessageType::PROGRAM_CHANGE, decode_message_type(TEST_PROG_CH_MSG, sizeof(TEST_PROG_CH_MSG)));
-    EXPECT_EQ(MessageType::CHANNEL_PRESSURE, decode_message_type(TEST_CHAN_PRES_MSG, sizeof(TEST_CHAN_PRES_MSG)));
-    EXPECT_EQ(MessageType::PITCH_BEND, decode_message_type(TEST_PITCH_B_MSG, sizeof(TEST_PITCH_B_MSG)));
-    EXPECT_EQ(MessageType::TIME_CODE, decode_message_type(TEST_TIME_CODE_MSG, sizeof(TEST_TIME_CODE_MSG)));
-    EXPECT_EQ(MessageType::SONG_POSITION, decode_message_type(TEST_SONG_POS_MSG, sizeof(TEST_SONG_POS_MSG)));
-    EXPECT_EQ(MessageType::SONG_SELECT, decode_message_type(TEST_SONG_SEL_MSG, sizeof(TEST_SONG_SEL_MSG)));
+    EXPECT_EQ(MessageType::NOTE_OFF, decode_message_type(TEST_NOTE_OFF_MSG));
+    EXPECT_EQ(MessageType::NOTE_ON, decode_message_type(TEST_NOTE_ON_MSG));
+    EXPECT_EQ(MessageType::POLY_KEY_PRESSURE, decode_message_type(TEST_POLY_PRES_MSG));
+    EXPECT_EQ(MessageType::CONTROL_CHANGE, decode_message_type(TEST_CTRL_CH_MSG));
+    EXPECT_EQ(MessageType::PROGRAM_CHANGE, decode_message_type(TEST_PROG_CH_MSG));
+    EXPECT_EQ(MessageType::CHANNEL_PRESSURE, decode_message_type(TEST_CHAN_PRES_MSG));
+    EXPECT_EQ(MessageType::PITCH_BEND, decode_message_type(TEST_PITCH_B_MSG));
+    EXPECT_EQ(MessageType::TIME_CODE, decode_message_type(TEST_TIME_CODE_MSG));
+    EXPECT_EQ(MessageType::SONG_POSITION, decode_message_type(TEST_SONG_POS_MSG));
+    EXPECT_EQ(MessageType::SONG_SELECT, decode_message_type(TEST_SONG_SEL_MSG));
 
     // Realtime messages that only consist of 1 byte:
-    EXPECT_EQ(MessageType::TIMING_CLOCK, decode_message_type(TEST_CLOCK_MSG, sizeof(TEST_CLOCK_MSG)));
-    EXPECT_EQ(MessageType::START, decode_message_type(TEST_START_MSG, sizeof(TEST_START_MSG)));
-    EXPECT_EQ(MessageType::CONTINUE, decode_message_type(TEST_CONTINUE_MSG, sizeof(TEST_CONTINUE_MSG)));
-    EXPECT_EQ(MessageType::STOP, decode_message_type(TEST_STOP_MSG, sizeof(TEST_STOP_MSG)));
-    EXPECT_EQ(MessageType::ACTIVE_SENSING, decode_message_type(TEST_ACTIVE_SNS_MSG, sizeof(TEST_ACTIVE_SNS_MSG)));
-    EXPECT_EQ(MessageType::RESET, decode_message_type(TEST_RESET_MSG, sizeof(TEST_RESET_MSG)));
+    EXPECT_EQ(MessageType::TIMING_CLOCK, decode_message_type(TEST_CLOCK_MSG));
+    EXPECT_EQ(MessageType::START, decode_message_type(TEST_START_MSG));
+    EXPECT_EQ(MessageType::CONTINUE, decode_message_type(TEST_CONTINUE_MSG));
+    EXPECT_EQ(MessageType::STOP, decode_message_type(TEST_STOP_MSG));
+    EXPECT_EQ(MessageType::ACTIVE_SENSING, decode_message_type(TEST_ACTIVE_SNS_MSG));
+    EXPECT_EQ(MessageType::RESET, decode_message_type(TEST_RESET_MSG));
 
     // If message is incomplete it should not be recognized.
-    EXPECT_EQ(MessageType::UNKNOWN, decode_message_type(TEST_NOTE_OFF_MSG, 2));
+    EXPECT_EQ(MessageType::UNKNOWN, decode_message_type(TEST_UNKNOWN_MSG));
 }
 
 TEST (MidiDecoderTest, TestDecodeChannel)
 {
-    EXPECT_EQ(5, decode_channel(0x35));
+    EXPECT_EQ(5, decode_channel({0x35, 0, 0, 0}));
 }
 
 TEST (MidiDecoderTest, TestDecodeNoteOff)
