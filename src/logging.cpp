@@ -1,8 +1,11 @@
-#include "logging.h"
-#ifndef MIND_DISABLE_LOGGING
-
 #include <map>
 #include <algorithm>
+#include <iostream>
+
+#include "logging.h"
+#ifndef MIND_DISABLE_LOGGING
+#include "spdlog/sinks/rotating_file_sink.h"
+#include "spdlog/async.h"
 
 namespace mind {
 
@@ -42,6 +45,7 @@ MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
     {
         ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
 
     Logger::_logger_file_name.assign(file_name);
     Logger::_logger_name.assign(logger_name);
@@ -81,13 +85,11 @@ std::shared_ptr<spdlog::logger> setup_logging()
      * Note, configuration parameters are defined here to guarantee
      * that they are defined before calling get_logger()
      */
-    const size_t LOGGER_QUEUE_SIZE  = 4096;                 // Should be power of 2
     const int  MAX_LOG_FILE_SIZE    = 10'000'000;           // In bytes
     const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
 
     spdlog::set_level(Logger::min_log_level());
-    spdlog::set_async_mode(LOGGER_QUEUE_SIZE);
-    auto async_file_logger = spdlog::rotating_logger_mt(Logger::logger_name(),
+    auto async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(Logger::logger_name(),
                                                         Logger::logger_file_name(),
                                                         MAX_LOG_FILE_SIZE,
                                                         1);

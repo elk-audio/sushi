@@ -58,7 +58,8 @@ protected:
     TrackTest() {}
 
     HostControlMockup _host_control;
-    Track _module_under_test{_host_control.make_host_control_mockup(), 2};
+    performance::PerformanceTimer _timer;
+    Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
 };
 
 
@@ -68,7 +69,7 @@ TEST_F(TrackTest, TestChannelManagement)
     test_processor.set_input_channels(2);
     /* Add the test processor to a mono track and verify
      * it is configured in mono config */
-    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1);
+    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1, &_timer);
     _module_under_test_mono.set_input_channels(1);
     _module_under_test_mono.add(&test_processor);
     EXPECT_EQ(1, test_processor.input_channels());
@@ -98,7 +99,7 @@ TEST_F(TrackTest, TestChannelManagement)
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
-    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2);
+    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
     EXPECT_EQ(4, module_under_test.parameter_count());
@@ -169,7 +170,7 @@ TEST_F(TrackTest, TestPanAndGain)
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
 
-    /* Exact values will be tested by the pan function, just test that it had an effect */
+    /* Exact values will be tested by the pan function, just verify that it had an effect */
     EXPECT_EQ(0.0f, out.channel(LEFT_CHANNEL_INDEX)[0]);
     EXPECT_LT(2.0f, out.channel(RIGHT_CHANNEL_INDEX)[0]);
 }
@@ -192,6 +193,19 @@ TEST_F(TrackTest, TestEventProcessing)
     _module_under_test.process_event(event);
     _module_under_test.render();
     ASSERT_FALSE(event_queue.empty());
+    RtEvent e;
+    event_queue.pop(e);
+
+    /* Test with internal event buffering */
+    _module_under_test.set_event_output_internal();
+    auto& output_event_buffer = _module_under_test.output_event_buffer();
+    ASSERT_TRUE(output_event_buffer.empty());
+
+    _module_under_test.process_event(event);
+    _module_under_test.render();
+    ASSERT_FALSE(output_event_buffer.empty());
+    ASSERT_TRUE(event_queue.empty());
+
 }
 
 TEST_F(TrackTest, TestEventForwarding)

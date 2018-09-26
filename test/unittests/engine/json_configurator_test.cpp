@@ -3,7 +3,8 @@
 
 #define private public
 #define protected public
-#include "engine/engine.h"
+
+#include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
 #include "engine/json_configurator.cpp"
 #include "test_utils/test_utils.h"
@@ -96,7 +97,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
     auto status = _module_under_test->load_tracks(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    _midi_dispatcher->set_midi_input_ports(1);
+    _midi_dispatcher->set_midi_inputs(1);
 
     status = _module_under_test->load_midi(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
@@ -299,4 +300,14 @@ TEST_F(TestJsonConfigurator, TestMidiSchema)
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
     track_connections["channel"] = 16;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+}
+
+TEST_F(TestJsonConfigurator, TestLoadEventList)
+{
+    // Load the tracks first so we can find the processors
+    ASSERT_EQ(JsonConfigReturnStatus::OK, _module_under_test->load_tracks(_path));
+
+    auto [status, events] = _module_under_test->load_event_list(_path);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+    ASSERT_EQ(4u, events.size());
 }

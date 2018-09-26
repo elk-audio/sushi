@@ -10,7 +10,7 @@ Common use cases are:
 
   * Test in offline mode with I/O from audio file:
 
-    sushi -c config_file.json input_file.wav
+    sushi -o -i input_file.wav -c config_file.json
 
   * Use JACK for realtime audio:
 
@@ -30,7 +30,7 @@ Sushi listens on port 24024 for the following OSC commands:
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
 /parameter/plugin_id/parameter_name    |  f       | parameter value
-/keyboard/track_name                   |  sif     | event type, note index, norm. value
+/keyboard_event/track_name             |  sif     | event type, note index, norm. value
 /engine/add_track                      |  si      | name, n. of channels
 /engine/delete_track                   |  s       | name
 /engine/add_processor                  |  sssss   | track, id, name, file path, type

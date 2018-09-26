@@ -1,9 +1,11 @@
 #include "gtest/gtest.h"
 
+#define private public
+
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
-#define private public
+#include "test_utils/engine_mockup.h"
 #include "library/vst2x_wrapper.cpp"
 
 using namespace sushi;

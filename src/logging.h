@@ -7,7 +7,9 @@
  * disappears without a trace. Useful for testing and outside releases.
  *
  * Usage:
- * Call MIND_GET_LOGGER before any code in each file.
+ * Call MIND_GET_LOGGER before any code in each file or preferably call
+ * MIND_GET_LOGGER_WITH_MODULE_NAME() to set a module name that will be
+ * used by all log entries from that file.
  *
  * Write to the logger using the MIND_LOG_XXX macros with cppformat style
  * ie: MIND_LOG_INFO("Setting x to {} and y to {}", x, y);
@@ -19,7 +21,7 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <iostream>
+#include <string>
 
 /* Prevent name collisions with Xenomai that for some inexplicable reason
  * defines 'debug' as a macro */
@@ -27,17 +29,29 @@
 #undef debug
 #endif
 
+/** Error codes returned by set_logger_params
+ */
+enum MIND_LOG_ERROR_CODE
+{
+    MIND_LOG_ERROR_CODE_OK = 0,
+    MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL = 1,
+};
+
 #define SPDLOG_DEBUG_ON
 
 /* log macros */
 #ifndef MIND_DISABLE_LOGGING
 #include "spdlog/spdlog.h"
 
-/* Add file and line numbers to debug prints */
-#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
+/* Add file and line numbers to debug prints, disabled by default */
+//#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 
 /* Use this macro  at the top of a source file to declare a local logger */
-#define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger()
+#define MIND_GET_LOGGER_WITH_MODULE_NAME(prefix) static auto spdlog_instance = mind::Logger::get_logger(); \
+            constexpr char local_log_prefix[] = "[" prefix "] " ;
+
+#define MIND_GET_LOGGER static auto spdlog_instance = mind::Logger::get_logger(); \
+            constexpr char local_log_prefix[] = "";
 
 /*
  * Use these macros to log messages. Use cppformat style, ie:
@@ -47,32 +61,24 @@
  * -DDISABLE_MACROS unfortunately
  */
 #ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
-#define MIND_LOG_DEBUG(msg, ...) spdlog_instance->debug(msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#define MIND_LOG_DEBUG(msg, ...) spdlog_instance->debug("{}" msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
 #else
-#define MIND_LOG_DEBUG(...)    spdlog_instance->debug(__VA_ARGS__)
+#define MIND_LOG_DEBUG(msg, ...)         spdlog_instance->debug("{}" msg, local_log_prefix, ##__VA_ARGS__)
 #endif
-#define MIND_LOG_INFO(...)     spdlog_instance->info(__VA_ARGS__)
-#define MIND_LOG_WARNING(...)  spdlog_instance->warn(__VA_ARGS__)
-#define MIND_LOG_ERROR(...)    spdlog_instance->error(__VA_ARGS__)
-#define MIND_LOG_CRITICAL(...) spdlog_instance->critical(__VA_ARGS__)
+#define MIND_LOG_INFO(msg, ...)          spdlog_instance->info("{}" msg, local_log_prefix, ##__VA_ARGS__)
+#define MIND_LOG_WARNING(msg, ...)       spdlog_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__)
+#define MIND_LOG_ERROR(msg, ...)         spdlog_instance->error("{}" msg, local_log_prefix, ##__VA_ARGS__)
+#define MIND_LOG_CRITICAL(msg, ...)      spdlog_instance->critical("{}" msg, local_log_prefix, ##__VA_ARGS__)
 
 #ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
-#define MIND_LOG_DEBUG_IF(condition, msg, ...) spdlog_instance->debug_if(condition, msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__)
+#define MIND_LOG_DEBUG_IF(condition, msg, ...) if (condition) { spdlog_instance->debug_if(condition, "{}" msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__); }
 #else
-#define MIND_LOG_DEBUG_IF(condition, ...)    spdlog_instance->debug_if(condition, __VA_ARGS__)
+#define MIND_LOG_DEBUG_IF(condition, msg, ...)    if (condition) { spdlog_instance->debug(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__);}
 #endif
-#define MIND_LOG_INFO_IF(condition, ...)     spdlog_instance->info_if(condition, __VA_ARGS__)
-#define MIND_LOG_WARNING_IF(condition, ...)  spdlog_instance->warn_if(condition, __VA_ARGS__)
-#define MIND_LOG_ERROR_IF(condition, ...)    spdlog_instance->error_if(condition, __VA_ARGS__)
-#define MIND_LOG_CRITICAL_IF(condition, ...) spdlog_instance->critical_if(condition, __VA_ARGS__)
-
-/** Error codes returned by set_logger_params
- */
-enum MIND_LOG_ERROR_CODE
-{
-    MIND_LOG_ERROR_CODE_OK = 0,
-    MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL = 1,
-};
+#define MIND_LOG_INFO_IF(condition, msg, ...)     if (condition) { spdlog_instance->info("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_WARNING_IF(condition, msg, ...)  if (condition) { spdlog_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_ERROR_IF(condition, msg, ...)    if (condition) { spdlog_instance->error("{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define MIND_LOG_CRITICAL_IF(condition, msg, ...) if (condition) { spdlog_instance->critical"{}" msg, local_log_prefix, ##__VA_ARGS__); }
 
 /*
  * Call this _before_ instantiating any object that use MIND_GET_LOGGER
@@ -149,6 +155,7 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #else
 /* Define empty macros */
 #define MIND_GET_LOGGER
+#define MIND_GET_LOGGER_WITH_MODULE_NAME(...)
 #define MIND_LOG_DEBUG(...)
 #define MIND_LOG_INFO(...)
 #define MIND_LOG_WARNING(...)
@@ -160,7 +167,8 @@ std::shared_ptr<spdlog::logger> setup_logging();
 #define MIND_LOG_ERROR_IF(...)
 #define MIND_LOG_CRITICAL_IF(...)
 
-#define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL)
+#define MIND_LOG_SET_PARAMS(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL) 0
+#define MIND_LOG_GET_ERROR_MESSAGE(retcode) ""
 
 #endif
 

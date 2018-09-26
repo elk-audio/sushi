@@ -1,7 +1,9 @@
-#include "engine.h"
+#include <fstream>
+#include <iomanip>
 
-#include <iostream>
+#include "twine/src/twine_internal.h"
 
+#include "audio_engine.h"
 #include "logging.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
@@ -12,23 +14,36 @@
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
-
 namespace sushi {
 namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
+constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
+constexpr char TIMING_FILE_NAME[] = "timings.txt";
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
 
-AudioEngine::AudioEngine(float sample_rate) : BaseEngine::BaseEngine(sample_rate),
-                                              _transport(sample_rate)
+AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
+                                                                _multicore_processing(rt_cpu_cores > 1),
+                                                                _rt_cores(rt_cpu_cores),
+                                                                _transport(sample_rate)
 {
+    this->set_sample_rate(sample_rate);
     _event_dispatcher.run();
+    if (_multicore_processing)
+    {
+        _worker_pool = twine::WorkerPool::create_worker_pool(_rt_cores);
+    }
 }
 
 AudioEngine::~AudioEngine()
 {
     _event_dispatcher.stop();
+    if (_timings_enabled)
+    {
+        _process_timer.enable(false);
+        print_timings_to_file(TIMING_FILE_NAME);
+    }
 }
 
 void AudioEngine::set_sample_rate(float sample_rate)
@@ -39,6 +54,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
         node.second->configure(sample_rate);
     }
     _transport.set_sample_rate(sample_rate);
+    _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
@@ -243,6 +259,15 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
 {
+    /* Signal that this is a realtime audio processing thread */
+    twine::ThreadRtFlag rt_flag;
+
+    if (_multicore_processing)
+    {
+        _worker_pool->wait_for_workers_idle();
+    }
+    auto engine_timestamp = _process_timer.start_timer();
+
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
     {
@@ -256,29 +281,26 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
 
-    for (const auto& c : _in_audio_connections)
-    {
-        auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*in_buffer, c.engine_channel, 1);
-        auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
-        track_in = engine_in;
-    }
+    _copy_audio_to_tracks(in_buffer);
 
-    for (auto& track : _audio_graph)
+    if (_multicore_processing)
     {
-        track->render();
+        _worker_pool->wakeup_workers();
+        _retrieve_events_from_tracks();
+    }
+    else
+    {
+        for (auto& track : _audio_graph)
+        {
+            track->render();
+        }
     }
 
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
-
-    out_buffer->clear();
-    for (const auto& c : _out_audio_connections)
-    {
-        auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
-        auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, c.engine_channel, 1);
-        engine_out.add(track_out);
-    }
-
+    _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
+
+    _process_timer.stop_timer(engine_timestamp, ENGINE_TIMING_ID);
 }
 
 void AudioEngine::set_tempo(float tempo)
@@ -423,7 +445,7 @@ EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, i
         MIND_LOG_ERROR("Invalid number of busses for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(_host_control, input_busses, output_busses);
+    Track* track = new Track(_host_control, input_busses, output_busses, &_process_timer);
     return _register_new_track(name, track);
 }
 
@@ -434,7 +456,7 @@ EngineReturnStatus AudioEngine::create_track(const std::string &name, int channe
         MIND_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
-    Track* track = new Track(_host_control, channel_count);
+    Track* track = new Track(_host_control, channel_count, &_process_timer);
     return _register_new_track(name, track);
 }
 
@@ -604,7 +626,15 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
         delete track;
         return status;
     }
-    track->set_event_output(&_main_out_queue);
+    if (_multicore_processing)
+    {
+        // Have tracks buffer their events internally as outputting directly might not be thread safe
+        track->set_event_output_internal();
+    }
+    else
+    {
+        track->set_event_output(&_main_out_queue);
+    }
     if (realtime())
     {
         auto insert_event = RtEvent::make_insert_processor_event(track);
@@ -622,6 +652,10 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
     {
         _insert_processor_in_realtime_part(track);
         _audio_graph.push_back(track);
+    }
+    if (_multicore_processing)
+    {
+        _worker_pool->add_worker(Track::ext_render_function, track);
     }
     MIND_LOG_INFO("Track {} successfully added to engine", name);
     return EngineReturnStatus::OK;
@@ -755,6 +789,115 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     }
     _control_queue_out.push(event); // Send event back to non-rt domain
     return true;
+}
+
+void AudioEngine::_retrieve_events_from_tracks()
+{
+    for (auto& track : _audio_graph)
+    {
+        auto& event_buffer = track->output_event_buffer();
+        RtEvent event;
+        while (event_buffer.pop(event))
+        {
+            _main_out_queue.push(event);
+        }
+    }
+}
+
+void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
+{
+    for (const auto& c : _in_audio_connections)
+    {
+        auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*input, c.engine_channel, 1);
+        auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
+        track_in = engine_in;
+    }
+}
+
+void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
+{
+    output->clear();
+    for (const auto& c : _out_audio_connections)
+    {
+        auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
+        auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*output, c.engine_channel, 1);
+        engine_out.add(track_out);
+    }
+}
+
+void AudioEngine::enable_timing_statistics(bool enabled)
+{
+    _timings_enabled = enabled;
+    _process_timer.enable(enabled);
+}
+
+void AudioEngine::print_timings_to_log()
+{
+    if (_timings_enabled == false)
+    {
+        return;
+    }
+    for (const auto& processor : _processors)
+    {
+        auto id = processor.second->id();
+        auto timings = _process_timer.timings_for_node(id);
+        if (timings.has_value())
+        {
+            MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                          timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+        }
+    }
+    auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
+    if (timings.has_value())
+    {
+        MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
+                      timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+    }
+}
+
+
+void print_single_timings_for_node(std::fstream& f, performance::PerformanceTimer& timer, int id)
+{
+    auto timings = timer.timings_for_node(id);
+    if (timings.has_value())
+    {
+        f << std::setw(16) << timings.value().avg_case * 100.0
+          << std::setw(16) << timings.value().min_case * 100.0
+          << std::setw(16) << timings.value().max_case * 100.0 <<"\n";
+    }
+}
+
+void AudioEngine::print_timings_to_file(const std::string& filename)
+{
+    std::fstream file;
+    file.open(filename, std::ios_base::out);
+    if (!file.is_open())
+    {
+        MIND_LOG_WARNING("Couldn't write timings to file");
+        return;
+    }
+    file.setf(std::ios::left);
+    file << "Performance timings for all processors in percentages of audio buffer (100% = "<< 1000000.0 / _sample_rate * AUDIO_CHUNK_SIZE
+         << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average(%)" << std::setw(16) << "minimum(%)"
+         << std::setw(16) << "maximum(%)" << std::endl;
+
+    for (const auto& track : _audio_graph)
+    {
+        file << std::setw(0) << "Track: " << track->name() << "\n";
+        auto processors = track->process_chain();
+        for (auto& p : processors)
+        {
+            file << std::setw(8) << "" << std::setw(16) << p->name();
+            print_single_timings_for_node(file, _process_timer, p->id());
+        }
+        file << std::setw(8) << "" << std::setw(16) << "Track total";
+        print_single_timings_for_node(file, _process_timer, track->id());
+        file << "\n";
+    }
+
+    file << std::setw(24) << "Engine total";
+    print_single_timings_for_node(file, _process_timer, ENGINE_TIMING_ID);
+    file.close();
 }
 
 RealtimeState update_state(RealtimeState current_state)

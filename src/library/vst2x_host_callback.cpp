@@ -1,12 +1,13 @@
+#include "twine.h"
+
 #include "vst2x_host_callback.h"
 #include "vst2x_wrapper.h"
-
 #include "logging.h"
 
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // Disable unused variable warnings as the host callback just print debug info atm
 #pragma GCC diagnostic push
@@ -21,6 +22,22 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
 
     switch (opcode)
     {
+    case audioMasterAutomate:
+    {
+        auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+        if (twine::is_current_thread_realtime())
+        {
+            wrapper_instance->notify_parameter_change_rt(index, opt);
+        }
+        else
+        {
+            wrapper_instance->notify_parameter_change(index, opt);
+            MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                           wrapper_instance->name(), index, opt);
+        }
+
+        break;
+    }
     case audioMasterVersion :
         result = kVstVersion;
         break;

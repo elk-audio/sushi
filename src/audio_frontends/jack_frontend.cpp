@@ -1,20 +1,15 @@
 #ifdef SUSHI_BUILD_WITH_JACK
-#include <thread>
-#include <deque>
-#include <unistd.h>
-#include <cmath>
-
 #include <jack/midiport.h>
 
 #include "logging.h"
 #include "jack_frontend.h"
 #include "audio_frontend_internals.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER;
-
+MIND_GET_LOGGER_WITH_MODULE_NAME("jack audio");
 
 AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 {

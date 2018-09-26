@@ -8,16 +8,9 @@
 
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
-#include <string>
-#include <tuple>
-#include <vector>
-#include <thread>
-
 #include "base_audio_frontend.h"
-#include "library/rt_event.h"
-#include "library/rt_event_fifo.h"
 #include "control_frontends/osc_frontend.h"
-#include "control_frontends/alsa_midi_frontend.h"
+#include "control_frontends/base_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {

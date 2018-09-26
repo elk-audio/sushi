@@ -19,8 +19,8 @@
 #include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
-#include "engine/engine.h"
-#include "engine/event_dispatcher.h"
+#include "base_engine.h"
+#include "base_event_dispatcher.h"
 #include "midi_receiver.h"
 #include "library/event_interface.h"
 
@@ -72,21 +72,21 @@ public:
         _frontend = frontend;
     }
 /**
- * @brief Sets the number of midi input channels.
- * @param channels number of input channels.
+ * @brief Sets the number of midi input ports.
+ * @param ports number of input ports.
  */
-    void set_midi_input_ports(int channels)
+    void set_midi_inputs(int no_inputs)
     {
-        _midi_inputs = channels;
+        _midi_inputs = no_inputs;
     }
 
     /**
-     * @brief Sets the number of midi output channels.
-     * @param channels number of output channels.
+     * @brief Sets the number of midi output ports.
+     * @param ports number of output ports.
      */
-    void set_midi_output_ports(int channels)
+    void set_midi_outputs(int no_outputs)
     {
-        _midi_outputs = channels;
+        _midi_outputs = no_outputs;
     }
 
     /**

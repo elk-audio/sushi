@@ -14,7 +14,7 @@
 namespace sushi {
 namespace control_frontend {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 namespace {
 
@@ -50,7 +50,7 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
     connection->instance->send_string_parameter_change_event(connection->processor, connection->parameter, value);
-    MIND_LOG_DEBUG("Sending string parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    MIND_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
 
@@ -468,7 +468,7 @@ int OSCFrontend::process(Event* event)
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    MIND_LOG_INFO("EngineEvent {} completed with status {}({})", event->id(), return_status == 0? "ok" : "failure", return_status);
+    MIND_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0? "ok" : "failure", return_status);
 }
 
 std::string spaces_to_underscore(const std::string &s)

@@ -12,7 +12,7 @@
 
 #include "rapidjson/document.h"
 
-#include "engine/engine.h"
+#include "base_engine.h"
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {
@@ -73,18 +73,25 @@ public:
     JsonConfigReturnStatus load_midi(const std::string& path_to_file);
 
     /**
-     * @brief reads a json config file, searches for a valid "events" definition and parses it
-     *        into the rapidjson document.
+     * @brief reads a json config file, searches for a valid "events" definition and
+     *        queues them to the engines internal queue.
      * @param path_to_file String which denotes the path of the file.
-     * @param config rapidjson document which contains the events definitions
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus parse_events_from_file(const std::string& path_to_file, rapidjson::Document& config);
+    JsonConfigReturnStatus load_events(const std::string& path_to_file);
+
+    /**
+     * @brief Reads a json config file, searches for a valid "events" definition and
+     *        returns all parsed events as a list
+     * @param path_to_file String which denotes the path of the file.
+     * @return An std::vector with the parsed events which is only valid if the status
+     *         returned is JsonConfigReturnStatus::OK
+     */
+    std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list(const std::string& path_to_file);
 
 private:
     /**
-     * @brief Helper function to parse the json file using the JSONCPP library.
-     *        Used by load_tracks and load_midi.
+     * @brief Helper function to parse the json file using the rapidjson library.
      * @param path_to_file String which denotes the path of the file.
      * @param config rapidjson document object where the json data is stored after reading from the file.
      * @param section Jsonsection to denote which section is to be validated.
@@ -106,6 +113,21 @@ private:
      * @return The number of MIDI channels.
      */
     int _get_midi_channel(const rapidjson::Value& channels);
+
+    /* Helper enum for more expressive code */
+    enum EventParseMode : bool
+    {
+        IGNORE_TIMESTAMP = false,
+        USE_TIMESTAMP = true,
+    };
+    /**
+     * @brief Helper function to parse a single event
+     * @param json_event A json value representing an event
+     * @param with_timestamp If set to true, the timestamp from the json definition will be used
+     *        if set to false, the event timestamp will be set for immediate processing
+     * @return A pointer to an Event if successful, nullptr otherwise
+     */
+    Event* _parse_event(const rapidjson::Value& json_event, bool with_timestamp);
 
     /**
      * @brief function which validates the json data against the respective schema.

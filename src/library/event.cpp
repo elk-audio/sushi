@@ -1,5 +1,5 @@
 #include "library/event.h"
-#include "engine/engine.h"
+#include "engine/base_engine.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
 #pragma GCC diagnostic ignored "-Wreturn-type"

@@ -7,8 +7,8 @@
 #ifndef SUSHI_TRACK_H
 #define SUSHI_TRACK_H
 
+#include <string>
 #include <memory>
-#include <cassert>
 #include <array>
 #include <vector>
 
@@ -16,7 +16,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 #include "library/constants.h"
-
+#include "library/performance_timer.h"
 
 namespace sushi {
 namespace engine {
@@ -24,8 +24,6 @@ namespace engine {
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int TRACK_MAX_CHANNELS = 8;
 constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
-constexpr int TRACK_MAX_PROCESSORS = 32;
-constexpr float PAN_GAIN_3_DB = 1.412537f;
 
 class Track : public InternalPlugin, public RtEventPipe
 {
@@ -37,7 +35,7 @@ public:
      * @param channels The number of channels in the track.
      *                 Note that even mono tracks have a stereo output bus
      */
-    Track(HostControl host_control, int channels);
+    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer);
 
     /**
      * @brief Create a track with a given number of stereo input and output busses
@@ -45,7 +43,7 @@ public:
      * @param input_buffers The number of input busses
      * @param output_buffers The number of output busses
      */
-    Track(HostControl host_control, int input_busses, int output_busses);
+    Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer);
 
     ~Track() = default;
 
@@ -82,6 +80,30 @@ public:
     {
         assert(bus < _output_busses);
         return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
+    }
+
+    /**
+     * @brief Return a reference to an RtEventFifo containing RtEvents outputed from the
+     *        processors on the track. set_event_output_internal() must be called first
+     *        to direct outputed event to the internal buffer.
+     *
+     * @return A reference to an RtEventFifo containing buffered events
+     */
+    RtEventFifo& output_event_buffer()
+    {
+        return _output_event_buffer;
+    }
+
+    /**
+     * @brief If called, events from processors will be buffered internally in a queue
+     *        instead of being passed on to the set event output. Events can then be
+     *        retrieved by calling output_event_buffer() to access the buffer.
+     *        This is useful in multithreaded processing where multiple tracks might
+     *        otherwise output to the same event output.
+     */
+    void set_event_output_internal()
+    {
+        set_event_output(&_output_event_buffer);
     }
 
     /**
@@ -130,6 +152,15 @@ public:
      */
     void render();
 
+    /**
+     * @brief Static render function for passing to a thread manager
+     * @param arg Void* pointing to an instance of a Track.
+     */
+    static void ext_render_function(void* arg)
+    {
+        reinterpret_cast<Track*>(arg)->render();
+    }
+
     /* Inherited from Processor */
     void process_event(RtEvent event) override;
 
@@ -149,6 +180,11 @@ public:
         _update_channel_config();
     }
 
+    const std::vector<Processor*> process_chain()
+    {
+        return _processors;
+    }
+
     /* Inherited from RtEventPipe */
     void send_event(RtEvent event) override;
 
@@ -161,14 +197,17 @@ private:
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    RtEventFifo _kb_event_buffer;
-
     int _input_busses;
     int _output_busses;
     bool _multibus;
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
+
+    performance::PerformanceTimer* _timer;
+
+    RtEventFifo _kb_event_buffer;
+    RtEventFifo _output_event_buffer;
 };
 
 void apply_pan_and_gain(ChunkSampleBuffer& buffer, float gain, float pan);

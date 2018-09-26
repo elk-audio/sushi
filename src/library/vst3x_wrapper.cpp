@@ -17,7 +17,7 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext
                                                   Steinberg::Vst::ProcessContext::kTempoValid &
                                                   Steinberg::Vst::ProcessContext::kTimeSigValid;
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
 void Vst3xWrapper::_cleanup()
 {

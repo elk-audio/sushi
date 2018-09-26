@@ -9,6 +9,7 @@
 #define SUSHI_PROCESSOR_H
 
 #include <map>
+#include <vector>
 
 #include "library/sample_buffer.h"
 #include "library/rt_event.h"

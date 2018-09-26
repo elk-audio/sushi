@@ -6,7 +6,7 @@
 namespace sushi {
 namespace midi_dispatcher {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
 inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,
@@ -122,7 +122,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.min_range = min_range;
     connection.max_range = max_range;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    MIND_LOG_DEBUG("Connected parameter \"{}\" "
+    MIND_LOG_INFO("Connected parameter \"{}\" "
                            "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
     return MidiDispatcherStatus::OK;
 }
@@ -148,7 +148,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    MIND_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -173,7 +173,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _raw_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    MIND_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;}
 
 MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &track_name, int channel)
@@ -200,7 +200,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     connection.max_range = 4.5678f;
     connection.cc_number = 123;
     _kb_routes_out[id].push_back(connection);
-    MIND_LOG_DEBUG("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
+    MIND_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -213,21 +213,23 @@ void MidiDispatcher::clear_connections()
 void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time timestamp)
 {
     int channel = midi::decode_channel(data[0]);
-    const auto& cons = _raw_routes_in.find(input);
-    if (cons != _raw_routes_in.end())
+    /* Dispatch raw midi messages */
     {
-        for (auto c : cons->second[midi::MidiChannel::OMNI])
+        const auto& cons = _raw_routes_in.find(input);
+        if (cons != _raw_routes_in.end())
         {
-            auto event = make_wrapped_midi_event(c, data, size, timestamp);
-            _event_dispatcher->post_event(event);
-        }
-        for (auto c : cons->second[channel])
-        {
-            auto event = make_wrapped_midi_event(c, data, size, timestamp);
-            _event_dispatcher->post_event(event);
+            for (auto c : cons->second[midi::MidiChannel::OMNI])
+            {
+                _event_dispatcher->post_event(make_wrapped_midi_event(c, data, size, timestamp));
+            }
+            for (auto c : cons->second[channel])
+            {
+                _event_dispatcher->post_event(make_wrapped_midi_event(c, data, size, timestamp));
+            }
         }
     }
 
+    /* Dispatch decoded midi messages */
     midi::MessageType type = midi::decode_message_type(data, size);
     switch (type)
     {
@@ -239,13 +241,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
-                    auto event = make_param_change_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
             }
             if (decoded_msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
@@ -255,13 +255,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
                 {
                     for (auto c : cons->second[midi::MidiChannel::OMNI])
                     {
-                        auto event = make_modulation_event(c, decoded_msg, timestamp);
-                        _event_dispatcher->post_event(event);
+                        _event_dispatcher->post_event(make_modulation_event(c, decoded_msg, timestamp));
                     }
                     for (auto c : cons->second[decoded_msg.channel])
                     {
-                        auto event = make_modulation_event(c, decoded_msg, timestamp);
-                        _event_dispatcher->post_event(event);
+                        _event_dispatcher->post_event(make_modulation_event(c, decoded_msg, timestamp));
                     }
                 }
             }
@@ -276,13 +274,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_on_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_on_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_on_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -296,13 +292,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_off_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_off_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_off_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -316,20 +310,17 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_pitch_bend_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_pitch_bend_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_pitch_bend_event(c, decoded_msg, timestamp));
                 }
             }
             break;
         }
 
         case midi::MessageType::POLY_KEY_PRESSURE:
-
         {
             midi::PolyKeyPressureMessage decoded_msg = midi::decode_poly_key_pressure(data);
             const auto& cons = _kb_routes_in.find(input);
@@ -337,13 +328,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_aftertouch_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_note_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_note_aftertouch_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -357,13 +346,11 @@ void MidiDispatcher::send_midi(int input, const uint8_t* data, size_t size, Time
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
                 {
-                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event(make_aftertouch_event(c, decoded_msg, timestamp));
                 }
                 for (auto c : cons->second[decoded_msg.channel])
                 {
-                    auto event = make_aftertouch_event(c, decoded_msg, timestamp);
-                    _event_dispatcher->post_event(event);
+                    _event_dispatcher->post_event( make_aftertouch_event(c, decoded_msg, timestamp));
                 }
             }
             break;
@@ -408,7 +395,7 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::WRAPPED_MIDI:
                         midi_data = typed_event->midi_data();
                 }
-                MIND_LOG_INFO("Alsa midi: Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
+                MIND_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
                               midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
                 _frontend->send_midi(c.output, midi_data.data(), event->time());
             }

@@ -81,13 +81,18 @@ enum OptionIndex
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_CONFIG_FILE,
+    OPT_IDX_USE_OFFLINE,
+    OPT_IDX_INPUT_FILE,
     OPT_IDX_OUTPUT_FILE,
+    OPT_IDX_USE_DUMMY,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER,
     OPT_IDX_USE_XENOMAI_RASPA,
-    OPT_IDX_XENOMAI_DEBUG_MODE_SW
+    OPT_IDX_XENOMAI_DEBUG_MODE_SW,
+    OPT_IDX_MULTICORE_PROCESSING,
+    OPT_IDX_TIMINGS_STATISTICS
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -150,12 +155,36 @@ const optionparser::Descriptor usage[] =
         "\t\t-c <filename>, --config-file=<filename> \tSpecify configuration JSON file [default=" SUSHI_JSON_FILENAME_DEFAULT "]."
     },
     {
+        OPT_IDX_USE_OFFLINE,
+        OPT_TYPE_DISABLED,
+        "o",
+        "offline",
+        SushiArg::Optional,
+        "\t\t-o --offline \tUse offline file audio frontend."
+    },
+    {
+        OPT_IDX_INPUT_FILE,
+        OPT_TYPE_UNUSED,
+        "i",
+        "input",
+        SushiArg::NonEmpty,
+        "\t\t-i <filename>, --input=<filename> \tSpecify input file, required for --offline option."
+    },
+    {
         OPT_IDX_OUTPUT_FILE,
         OPT_TYPE_UNUSED,
-        "o",
+        "O",
         "output",
         SushiArg::NonEmpty,
-        "\t\t-o <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+        "\t\t-O <filename>, --output=<filename> \tSpecify output file [default= (input_file).proc.wav]."
+    },
+    {
+        OPT_IDX_USE_DUMMY,
+        OPT_TYPE_DISABLED,
+        "d",
+        "dummy",
+        SushiArg::Optional,
+        "\t\t-d --dummy \tUse dummy audio frontend. Useful for debugging."
     },
     {
         OPT_IDX_USE_JACK,
@@ -179,7 +208,7 @@ const optionparser::Descriptor usage[] =
         "",
         "client-name",
         SushiArg::NonEmpty,
-        "\t\t --client-name=<jack client name> \tSpecify name of Jack client [default=sushi]."
+        "\t\t--client-name=<jack client name> \tSpecify name of Jack client [default=sushi]."
     },
     {
         OPT_IDX_JACK_SERVER,
@@ -187,7 +216,7 @@ const optionparser::Descriptor usage[] =
         "",
         "server-name",
         SushiArg::NonEmpty,
-        "\t\t --server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
+        "\t\t--server-name=<jack server name> \tSpecify name of Jack server to connect to [determined by jack if empty]."
     },
     {
         OPT_IDX_USE_XENOMAI_RASPA,
@@ -204,6 +233,22 @@ const optionparser::Descriptor usage[] =
         "debug-mode-sw",
         SushiArg::Optional,
         "\t\t--debug-mode-sw \tBreak to debugger if a mode switch is detected (Xenomai only)."
+    },
+    {
+        OPT_IDX_MULTICORE_PROCESSING,
+        OPT_TYPE_UNUSED,
+        "m",
+        "multicore-processing",
+        SushiArg::Numeric,
+        "\t\t-m <n>, --multicore-processing=<n> \tProcess audio multithreaded with n cores [default n=1 (off)]."
+    },
+    {
+        OPT_IDX_TIMINGS_STATISTICS,
+        OPT_TYPE_DISABLED,
+        "",
+        "timing-statistics",
+        SushiArg::Optional,
+        "\t\t--timing-statistics \tEnable performance timings on all audio processors."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

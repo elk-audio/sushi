@@ -26,6 +26,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
+#include <cstdlib>
 
 #include "library/vst2x_plugin_loader.h"
 #include "library/vst2x_host_callback.h"
@@ -35,7 +36,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.

@@ -1,22 +1,22 @@
 /**
- * @Brief Main event handler in Sushi and responsible for convertion between
- *        regular and rt events.
+ * @Brief Implementation of Event Dispatcher
+ *
  * @copyright MIND Music Labs AB, Stockholm
  */
 
 #ifndef SUSHI_EVENT_DISPATCHER_H
 #define SUSHI_EVENT_DISPATCHER_H
 
-#include <mutex>
+#include <deque>
+#include <vector>
 #include <thread>
 
-#include "logging.h"
+#include "engine/base_event_dispatcher.h"
+#include "engine/base_engine.h"
 #include "engine/event_timer.h"
-#include "library/rt_event.h"
 #include "library/synchronised_fifo.h"
-#include "library/event.h"
-#include "library/event_interface.h"
 #include "library/rt_event_fifo.h"
+#include "library/event_interface.h"
 
 namespace sushi {
 namespace engine {class BaseEngine;}
@@ -27,13 +27,6 @@ class BaseEventDispatcher;
 constexpr int AUDIO_ENGINE_ID = 0;
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
 constexpr auto WORKER_THREAD_PERIODICITY = std::chrono::milliseconds(1);
-
-enum class EventDispatcherStatus
-{
-    OK,
-    ALREADY_SUBSCRIBED,
-    UNKNOWN_POSTER
-};
 
 /**
  * @brief Low priority worker for handling possibly time consuming tasks like
@@ -63,31 +56,6 @@ private:
     std::atomic<bool>           _running;
 
     SynchronizedQueue<Event*>   _queue;
-};
-
-
-
-/* Abstract base class is solely for test mockups */
-class BaseEventDispatcher : public EventPoster
-{
-public:
-    virtual ~BaseEventDispatcher() = default;
-
-    virtual void run() {}
-    virtual void stop() {}
-
-    virtual void post_event(Event* event) = 0;
-
-    virtual EventDispatcherStatus register_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-
-    virtual EventDispatcherStatus deregister_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-
-    virtual void set_sample_rate(float /*sample_rate*/) {}
-    virtual void set_time(Time /*timestamp*/) {}
 };
 
 class EventDispatcher : public BaseEventDispatcher

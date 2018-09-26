@@ -4,7 +4,7 @@
 #ifndef SUSHI_BASE_AUDIO_FRONTEND_H
 #define SUSHI_BASE_AUDIO_FRONTEND_H
 
-#include "engine/engine.h"
+#include "engine/base_engine.h"
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {

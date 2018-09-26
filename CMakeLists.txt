@@ -20,8 +20,6 @@ configure_file(
     ${CMAKE_BINARY_DIR}/generated/version.h
 )
 
-include_directories(${CMAKE_BINARY_DIR}/generated)
-
 ##################################
 #  Build and link configuration  #
 ##################################
@@ -31,8 +29,14 @@ set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
 set(WITH_JACK true CACHE BOOL "Enable Jack support")
 set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
 set(WITH_LINK true CACHE BOOL "Enable Ableton Link support")
+
+set(BUILD_TWINE true CACHE BOOL "Build included Twine library")
+
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
+set(XENOMAI_SAMPLING_RATE_HZ 48000 CACHE STRING "Set the sampling rate in Raspa")
+
+set(WITH_UNIT_TESTS true CACHE BOOL "Enable unit testing after compilation")
 
 if (${WITH_XENOMAI})
     add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
@@ -112,7 +116,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
-                      src/engine/engine.cpp
+                      src/engine/audio_engine.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
@@ -125,6 +129,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
+                      src/library/performance_timer.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst2x_host_callback.cpp
                       src/library/vst2x_plugin_loader.cpp
@@ -163,9 +168,11 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/midi_encoder.h
                         src/library/rt_event.h
                         src/library/processor.h
+                        src/library/performance_timer.h
                         src/library/internal_plugin.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
+                        src/library/spinlock.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
@@ -173,11 +180,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_host_callback.h
                         src/library/vst2x_plugin_loader.h
                         src/library/vst3x_wrapper.h
-                        src/engine/engine.h
+                        src/engine/base_engine.h
+                        src/engine/audio_engine.h
                         src/engine/track.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
                         src/engine/event_dispatcher.h
+                        src/engine/base_event_dispatcher.h
                         src/engine/event_timer.h
                         src/engine/json_configurator.h
                         src/engine/midi_receiver.h
@@ -218,7 +227,10 @@ set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
+                 "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}/raspalib/include"
+                 "${PROJECT_SOURCE_DIR}/twine/include"
+                 "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
@@ -235,7 +247,35 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
+#############################################
+#  Subdirectory projects                    #
+#############################################
+if (${WITH_XENOMAI})
+    set(WITH_RASPA_APPS false)
+    set(WITH_RASPA_TESTS false)
+    set(WITH_TWINE_XENOMAI true)
+    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
+    add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
+    add_definitions(-DRASPA_SAMPLING_FREQ_HZ=${XENOMAI_SAMPLING_RATE_HZ})
+    add_subdirectory(raspalib)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
+endif()
+
+if (${BUILD_TWINE})
+    set(WITH_TWINE_TESTS false)
+    add_subdirectory(twine)
+    set(TWINE_LIB twine)
+else()
+    find_library(TWINE_LIB
+        NAMES twine
+        PATHS /usr/lib /usr/local/lib
+    )
+endif()
+
 include(third-party/link/AbletonLinkConfig.cmake)
+add_subdirectory(third-party EXCLUDE_FROM_ALL)
+
 
 #################################
 #  Linked libraries             #
@@ -243,12 +283,13 @@ include(third-party/link/AbletonLinkConfig.cmake)
 
 # Common libraries between all builds, and safe to be included in test targets
 set(COMMON_LIBRARIES
-    "${PROJECT_SOURCE_DIR}/third-party/install/liblo/lib/liblo.a"
     EASTL
     sndfile
+    lo
     pthread
     dl
     Ableton::Link
+    ${TWINE_LIB}
 )
 
 if (${WITH_VST3})
@@ -285,21 +326,6 @@ set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unu
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 add_dependencies(vst3_host sdk)
 
-#############################################
-#  Subdirectory projects                    #
-#############################################
-if (${WITH_XENOMAI})
-    set(WITH_RASPA_APPS false)
-    set(WITH_RASPA_TESTS false)
-    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
-    add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
-    add_subdirectory(raspalib)
-
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
-endif()
-
-add_subdirectory(third-party EXCLUDE_FROM_ALL)
-add_subdirectory(test)
 
 ####################
 #  Target Objects  #
@@ -309,9 +335,16 @@ target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
-add_dependencies(sushi liblo)
 if (${WITH_VST3})
     add_dependencies(sushi vst3_host sdk base)
+endif()
+
+######################
+#  Tests subproject  #
+######################
+
+if (${WITH_UNIT_TESTS})
+    add_subdirectory(test)
 endif()
 
 ####################

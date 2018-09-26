@@ -15,7 +15,7 @@ namespace vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
@@ -165,11 +165,11 @@ bool Vst2xWrapper::_register_parameters()
         param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
-            MIND_LOG_DEBUG("VsT wrapper, plugin: {}, registered param: {}", name(), param_name);
+            MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            MIND_LOG_ERROR("VsT wrapper, plugin: {}, Error while registering param: {}", name(), param_name);
+            MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -190,12 +190,12 @@ void Vst2xWrapper::process_event(RtEvent event)
     {
         if (_vst_midi_events_fifo.push(event) == false)
         {
-            MIND_LOG_WARNING("Vst wrapper, plugin: {}, MIDI queue Overflow!", name());
+            MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else
     {
-        MIND_LOG_INFO("Vst wrapper, plugin: {}, received unhandled event", name());
+        MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 
 }
@@ -213,6 +213,29 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
     }
+}
+
+void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float value)
+{
+    /* The default Vst2.4 implementation calls set_parameter() in set_parameter_automated()
+     * so the plugin is already aware of the change, we just need to send a notification
+     * to the non-rt part */
+    if (parameter_index > this->parameter_count())
+    {
+        return;
+    }
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
+    output_event(e);
+}
+
+void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
+{
+    auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
+                                                  this->id(),
+                                                  static_cast<ObjectId>(parameter_index),
+                                                  value,
+                                                  IMMEDIATE_PROCESS);
+    _host_control.post_event(e);
 }
 
 bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
@@ -286,6 +309,7 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
         _double_mono_input = true;
     }
 }
+
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)
 {

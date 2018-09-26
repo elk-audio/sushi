@@ -1,3 +1,7 @@
+0.6.1 :
+  * Fix: handling of track pan for multichannel plugins
+  * Fix: erroneous channel handling for offline frontend 
+
 0.6 : 
 
   * Multichannel track/buses architecture and support for VST multichannel plugins

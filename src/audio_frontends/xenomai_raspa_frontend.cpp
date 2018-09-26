@@ -4,19 +4,19 @@
  */
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
-#include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 
 #include "raspa.h"
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
+#include "control_frontends/alsa_midi_frontend.h"
 #include "logging.h"
 
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
 int global_init()
 {
@@ -83,6 +83,7 @@ void XenomaiRaspaFrontend::cleanup()
 
 void XenomaiRaspaFrontend::run()
 {
+    raspa_start_realtime();
     _osc_control->run();
     _osc_control->connect_all();
     _midi_frontend->run();

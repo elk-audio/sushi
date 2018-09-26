@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+
 #include "test_utils/test_utils.h"
 
 #define private public

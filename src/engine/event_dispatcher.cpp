@@ -1,12 +1,13 @@
-
 #include "event_dispatcher.h"
-#include "engine/engine.h"
+#include "engine/base_engine.h"
 #include "logging.h"
 
 namespace sushi {
 namespace dispatcher {
 
-MIND_GET_LOGGER;
+constexpr auto PRINT_TIMING_INTERVAL = std::chrono::seconds(5);
+
+MIND_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtEventFifo* in_rt_queue,
@@ -269,6 +270,7 @@ int Worker::process(Event*event)
 
 void Worker::_worker()
 {
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> print_timing_counter;
     do
     {
         auto start_time = std::chrono::system_clock::now();
@@ -298,6 +300,12 @@ void Worker::_worker()
             }
             delete (event);
         }
+        if (start_time > print_timing_counter + PRINT_TIMING_INTERVAL)
+        {
+            print_timing_counter = start_time;
+            _engine->print_timings_to_log();
+        }
+
         std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);
     }
     while (_running);
