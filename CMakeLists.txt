@@ -263,7 +263,7 @@ if (${WITH_XENOMAI})
 endif()
 
 if (${BUILD_TWINE})
-    set(WITH_TWINE_TESTS false)
+    set(TWINE_WITH_TESTS false)
     add_subdirectory(twine)
     set(TWINE_LIB twine)
 else()

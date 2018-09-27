@@ -78,9 +78,9 @@ void Transport::set_time(Time timestamp, int64_t samples)
     }
     _new_tempo = false;
     _new_playmode = false;
-    static int logg = 0;
-    logg = ++logg % 1000;
-    MIND_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
+    //static int logg = 0;
+    //logg = ++logg % 1000;
+    //MIND_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
 }
 
 void Transport::set_time_signature(TimeSignature signature)
@@ -123,11 +123,11 @@ void Transport::_update_internals()
 void Transport::_update_internal_sync(int64_t samples)
 {
     /* Assume that if there are missed callbacks, the numbers of samples
-     * will still be an multiple of AUDIO_CHUNK_SIZE */
+     * will still be a multiple of AUDIO_CHUNK_SIZE */
     auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
     if (chunks_passed < 1)
     {
-        chunks_passed = 1;
+        //chunks_passed = 1;
         MIND_LOG_INFO("First time {}", chunks_passed);
     }
 

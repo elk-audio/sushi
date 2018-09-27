@@ -165,8 +165,8 @@ private:
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
-    float           _beats_per_bar;
-    float           _samplerate{};
+    double          _beats_per_bar;
+    float           _samplerate;
     PlayingMode     _playmode{PlayingMode::PLAYING};
     PlayingMode     _set_playmode{PlayingMode::PLAYING};
     bool            _new_tempo{false};
