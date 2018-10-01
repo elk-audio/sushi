@@ -50,10 +50,10 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
     _engine->set_audio_output_channels(RASPA_N_CHANNELS);
     _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
-    if (_engine->sample_rate() != RASPA_SAMPLING_FREQ_HZ)
+    if (_engine->sample_rate() != RASPA_AUDIO_SAMPLE_RATE)
     {
-        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_SAMPLING_FREQ_HZ);
-        _engine->set_sample_rate(RASPA_SAMPLING_FREQ_HZ);
+        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_AUDIO_SAMPLE_RATE);
+        _engine->set_sample_rate(RASPA_AUDIO_SAMPLE_RATE);
     }
     unsigned int debug_flags = 0;
     if (raspa_config->break_on_mode_sw)
