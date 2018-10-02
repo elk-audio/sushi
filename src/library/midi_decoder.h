@@ -9,6 +9,10 @@
 #ifndef SUSHI_MIDI_DECODER_H
 #define SUSHI_MIDI_DECODER_H
 
+#include <cassert>
+
+#include "types.h"
+
 namespace sushi {
 namespace midi {
 
@@ -23,7 +27,22 @@ constexpr int MAX_CONTROLLER_NO = 119;
 /* Modulation wheel controller number */
 constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
 
-
+/**
+ * @brief Convert midi data passed in C-array style to internal representation
+ * @param data pointer to array of midi bytes
+ * @param size number of bytes to process
+ * @return A MidiDataByte object encapsulating the midi data
+ */
+inline MidiDataByte to_midi_data_byte(const uint8_t* data, int size)
+{
+    MidiDataByte data_byte{0};
+    assert(size < static_cast<int>(data_byte.size()));
+    for (int i = 0; i < size; ++i)
+    {
+        data_byte[i] = data[i];
+    }
+    return data_byte;
+}
 
 /**
  * @brief Enum to enable OMNI (all channels) as an option.
@@ -158,7 +177,7 @@ struct SongSelectMessage
  * @param size Length of midi data.
  * @return The decoded type of data.
  */
-MessageType decode_message_type(const uint8_t* data, size_t size);
+MessageType decode_message_type(MidiDataByte data);
 
 /**
  * @brief Decode the channel number of a channel mode message.
@@ -167,9 +186,9 @@ MessageType decode_message_type(const uint8_t* data, size_t size);
  * @param data First byte of the midi message.
  * @return The decoded channel number (0-15) from the given message
  */
-inline uint8_t decode_channel(uint8_t byte)
+inline uint8_t decode_channel(MidiDataByte data)
 {
-    return byte & 0x0F;
+    return static_cast<uint8_t>(data[0] & 0x0Fu);
 }
 
 /**
@@ -177,70 +196,70 @@ inline uint8_t decode_channel(uint8_t byte)
  * @param data Message data.
  * @return Decoded message.
  */
-NoteOffMessage decode_note_off(const uint8_t* data);
+NoteOffMessage decode_note_off(MidiDataByte data);
 
 /**
  * @brief Decode a midi note on message.
  * @param data Message data.
  * @return Decoded message.
  */
-NoteOnMessage decode_note_on(const uint8_t* data);
+NoteOnMessage decode_note_on(MidiDataByte data);
 
 /**
  * @brief Decode a midi control change message.
  * @param data Message data.
  * @return Decoded message.
  */
-ControlChangeMessage decode_control_change(const uint8_t* data);
+ControlChangeMessage decode_control_change(MidiDataByte data);
 
 /**
  * @brief Decode a midi polyphonic key pressure (aftertouch) message.
  * @param data Message data.
  * @return Decoded message.
  */
-PolyKeyPressureMessage decode_poly_key_pressure(const uint8_t* data);
+PolyKeyPressureMessage decode_poly_key_pressure(MidiDataByte data);
 
 /**
  * @brief Decode a midi program change message.
  * @param data Message data.
  * @return Decoded message.
  */
-ProgramChangeMessage decode_program_change(const uint8_t* data);
+ProgramChangeMessage decode_program_change(MidiDataByte data);
 
 /**
  * @brief Decode a midi channel pressure (non-polyphonic aftertouch) message.
  * @param data Message data.
  * @return Decoded message.
  */
-ChannelPressureMessage decode_channel_pressure(const uint8_t* data);
+ChannelPressureMessage decode_channel_pressure(MidiDataByte data);
 
 /**
  * @brief Decode a midi pitch bend message.
  * @param data Message data.
  * @return Decoded message.
  */
-PitchBendMessage decode_pitch_bend(const uint8_t* data);
+PitchBendMessage decode_pitch_bend(MidiDataByte data);
 
 /**
  * @brief Decode a Midi time code quarter frame message.
  * @param data  Message data.
  * @return Decoded message.
  */
-TimeCodeMessage decode_time_code(const uint8_t* data);
+TimeCodeMessage decode_time_code(MidiDataByte data);
 
 /**
  * @brief Decode a Midi song position message.
  * @param data  Message data.
  * @return Decoded message.
  */
-SongPositionMessage decode_song_position(const uint8_t* data);
+SongPositionMessage decode_song_position(MidiDataByte data);
 
 /**
  * @brief Decode a Midi song select message.
  * @param data  Message data.
  * @return Decoded message.
  */
-SongSelectMessage decode_song_select(const uint8_t* data);
+SongSelectMessage decode_song_select(MidiDataByte data);
 
 
 } // end namespace midi
