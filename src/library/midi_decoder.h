@@ -35,9 +35,8 @@ constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
  */
 inline MidiDataByte to_midi_data_byte(const uint8_t* data, int size)
 {
-    MidiDataByte data_byte;
+    MidiDataByte data_byte{0};
     assert(size < static_cast<int>(data_byte.size()));
-    data_byte.fill(0u);
     for (int i = 0; i < size; ++i)
     {
         data_byte[i] = data[i];
