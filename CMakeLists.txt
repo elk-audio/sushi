@@ -279,6 +279,7 @@ set(COMMON_LIBRARIES
     lo
     pthread
     dl
+    fifo
     ${TWINE_LIB}
 )
 
