@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.8)
 project(sushi)
 
 ##################################
@@ -213,6 +213,13 @@ if (${WITH_VST3})
     set(SOURCE_FILES "${SOURCE_FILES}" "${ADDITIONAL_VST3_SOURCES}")
 endif()
 
+####################
+#  Main Target     #
+####################
+
+add_executable(sushi ${SOURCE_FILES})
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+
 #########################
 #  Include Directories  #
 #########################
@@ -223,17 +230,14 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}/raspalib/include"
-                 "${PROJECT_SOURCE_DIR}/twine/include"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
                  "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"
-                 "${PROJECT_SOURCE_DIR}/third-party/install/liblo/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
-                 "${PROJECT_SOURCE_DIR}/third-party")
+                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -243,27 +247,32 @@ endif()
 #############################################
 #  Subdirectory projects                    #
 #############################################
+
 if (${WITH_XENOMAI})
     set(WITH_RASPA_APPS false)
     set(WITH_RASPA_TESTS false)
-    set(WITH_TWINE_XENOMAI true)
+    set(TWINE_WITH_XENOMAI ON)
     add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
     add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
     add_definitions(-DRASPA_SAMPLING_FREQ_HZ=${XENOMAI_SAMPLING_RATE_HZ})
     add_subdirectory(raspalib)
 
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
+else()
+    set(TWINE_WITH_XENOMAI OFF)
 endif()
 
 if (${BUILD_TWINE})
-    set(WITH_TWINE_TESTS false)
+    set(TWINE_WITH_TESTS OFF)
     add_subdirectory(twine)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
     set(TWINE_LIB twine)
 else()
     find_library(TWINE_LIB
         NAMES twine
         PATHS /usr/lib /usr/local/lib
     )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
@@ -291,9 +300,8 @@ if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
 endif()
 
-if (${WITH_XENOMAI})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} raspa asound)
-endif()
+target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
 #############
 # Vst3 Host #
@@ -316,19 +324,6 @@ set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
 set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 add_dependencies(vst3_host sdk)
-
-
-####################
-#  Target Objects  #
-####################
-add_executable(sushi ${SOURCE_FILES})
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
-target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
-
-if (${WITH_VST3})
-    add_dependencies(sushi vst3_host sdk base)
-endif()
 
 ######################
 #  Tests subproject  #
