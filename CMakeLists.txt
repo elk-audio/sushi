@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(sushi)
 
 ##################################
-#  Build  information            #
+#  Generate build information    #
 ##################################
 
 # Get the latest commit hash of the working branch
@@ -20,87 +20,57 @@ configure_file(
     ${CMAKE_BINARY_DIR}/generated/version.h
 )
 
-##################################
-#  Build and link configuration  #
-##################################
+###########################
+#  Build and link options #
+###########################
 
-#  Default behaviour is to build and link with everything, using Mercury backend for Xenomai
-set(WITH_XENOMAI true CACHE BOOL "Enable Xenomai support")
-set(WITH_JACK true CACHE BOOL "Enable Jack support")
-set(WITH_VST3 true CACHE BOOL "Enable Vst 3 support")
-
-set(BUILD_TWINE true CACHE BOOL "Build included Twine library")
+# Default behaviour is to build and link with everything
+option(WITH_XENOMAI "Enable Xenomai support" ON)
+option(WITH_JACK "Enable Jack support" ON)
+option(WITH_VST3 "Enable Vst 3 support" ON)
+option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
+option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
 set(XENOMAI_SAMPLING_RATE_HZ 48000 CACHE STRING "Set the sampling rate in Raspa")
 
-set(WITH_UNIT_TESTS true CACHE BOOL "Enable unit testing after compilation")
-
 if (${WITH_XENOMAI})
-    add_definitions(-DSUSHI_BUILD_WITH_XENOMAI)
-    message("Building with Xenomai ${XENOMAI_FLAVOUR}")
+    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels @ ${XENOMAI_SAMPLING_RATE_HZ}Hz")
 endif()
-
 if (${WITH_JACK})
-    add_definitions(-DSUSHI_BUILD_WITH_JACK)
     message("Building with Jack support.")
 endif()
-
 if (${WITH_VST3})
-    add_definitions(-DSUSHI_BUILD_WITH_VST3)
     message("Building with Vst 3 support.")
 endif()
+message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 
-#############################
-#  Preprocessor definitions #
-#############################
+#############
+# Vst3 Host #
+#############
 
-# API fix for POSIX builds
-add_definitions( -D__cdecl= )
+# Build the given Vst3 host implementation into a separate library to
+# Avoid littering our own code with ugly defines
+
+set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+set(VST3_HOST_SOURCES
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp")
+
+add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
+set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
+target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+add_dependencies(vst3_host sdk)
 
 ####################
-#  Compiler Flags  #
+#  Main Target     #
 ####################
-
-## Global project flags.
-# Change these instead than the CMAKE_*_FLAGS directly, and avoid
-# putting target-specific definitions here.
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Preprocessor
-set(PROJECT_CXX_FLAGS "-Wall -Wextra -Wno-psabi -fno-rtti")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        set(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS} -faligned-new")
-    endif()
-endif()
-
-# Build optimization flags
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
-if (${WITH_XENOMAI})
-    # Additional optimizations for the Joule
-    set(CMAKE_C_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}}
-            "-ftree-vectorize -ffast-math -m64 -march=corei7 -mtune=corei7 -mfpmath=sse -msse4.2")
-endif()
-set(CMAKE_CXX_FLAGS_DEBUG   "-DDEBUG -O0 -g")
-
-# Linker flags
-if (APPLE)
-    set(LINK_DIRS ${LINK_DIRS} "/usr/local/lib")
-    link_directories(${LINK_DIRS})
-endif()
-
-# Combine the results into CMake's flags.
-# You shouldn't need to touch this.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_LINK_FLAGS}")
-
-##################
-#  Source Files  #
-##################
 
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
@@ -139,7 +109,6 @@ set(COMPILATION_UNITS src/main.cpp
         )
 
 # Enumerate all the headers separately so that CLion can index them
-
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
                         include/plugin_interface.h
@@ -197,28 +166,24 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/offline_frontend.h
         )
 
-set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
-                            src/library/vst3x_utils.cpp
-                            src/library/vst3x_host_app.h
-                            src/library/vst3x_utils.h)
-
-set(SOURCE_FILES "${COMPILATION_UNITS}" "${PLATFORM_SPECIFIC_SOURCES}" "${EXTRA_CLION_SOURCES}")
+set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 if (${WITH_XENOMAI} OR ${WITH_JACK})
-    set(SOURCE_FILES "${SOURCE_FILES}" src/control_frontends/alsa_midi_frontend.h
-                                       src/control_frontends/alsa_midi_frontend.cpp)
+    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h
+                                src/control_frontends/alsa_midi_frontend.cpp)
 endif()
 
 if (${WITH_VST3})
-    set(SOURCE_FILES "${SOURCE_FILES}" "${ADDITIONAL_VST3_SOURCES}")
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
+                                src/library/vst3x_utils.cpp
+                                src/library/vst3x_host_app.h
+                                src/library/vst3x_utils.h)
 endif()
 
-####################
-#  Main Target     #
-####################
-
-add_executable(sushi ${SOURCE_FILES})
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+add_executable(sushi "${COMPILATION_UNITS}"
+                     "${EXTRA_CLION_SOURCES}"
+                     "${ADDITIONAL_VST3_SOURCES}"
+                     "${ADDITIONAL_ALSA_SOURCES}")
 
 #########################
 #  Include Directories  #
@@ -229,7 +194,6 @@ set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${CMAKE_BINARY_DIR}" # for generated version.h
-                 "${PROJECT_SOURCE_DIR}/raspalib/include"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
@@ -244,17 +208,17 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
-#############################################
-#  Subdirectory projects                    #
-#############################################
+###########################
+#  Subdirectory projects  #
+###########################
 
 if (${WITH_XENOMAI})
-    set(WITH_RASPA_APPS false)
-    set(WITH_RASPA_TESTS false)
+    set(RASPA_WITH_APPS OFF)
+    set(RASPA_WITH_TESTS OFF)
     set(TWINE_WITH_XENOMAI ON)
-    add_definitions(-DRASPA_N_FRAMES_PER_BUFFER=${AUDIO_BUFFER_SIZE})
-    add_definitions(-DRASPA_N_CHANNELS=${XENOMAI_AUDIO_CHANNELS})
-    add_definitions(-DRASPA_SAMPLING_FREQ_HZ=${XENOMAI_SAMPLING_RATE_HZ})
+    set(RASPA_N_FRAMES_PER_BUFFER ${AUDIO_BUFFER_SIZE})
+    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS})
+    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_SAMPLING_RATE_HZ})
     add_subdirectory(raspalib)
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
@@ -269,8 +233,8 @@ if (${BUILD_TWINE})
     set(TWINE_LIB twine)
 else()
     find_library(TWINE_LIB
-        NAMES twine
-        PATHS /usr/lib /usr/local/lib
+            NAMES twine
+            PATHS /usr/lib /usr/local/lib
     )
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
@@ -303,27 +267,33 @@ endif()
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
-#############
-# Vst3 Host #
-#############
+####################################
+#  Compiler Flags and definitions  #
+####################################
 
-# Build the given Vst3 host implementation into a separate library to
-# Avoid littering our own code with ugly defines
+target_compile_features(sushi PRIVATE cxx_std_17)
+target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math -mfpmath=sse)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
+        target_compile_options(sushi PRIVATE -faligned-new)
+    endif()
+endif()
 
-set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
-set(VST3_HOST_SOURCES
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp")
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+# Added for Vst2.x interface, really a MSVC specific thing
+target_compile_definitions(sushi PRIVATE -D__cdecl= )
 
-add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
-set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
-set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
-target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
-add_dependencies(vst3_host sdk)
+if (${WITH_XENOMAI})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_XENOMAI)
+endif()
+
+if (${WITH_JACK})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_VST3})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
 
 ######################
 #  Tests subproject  #
