@@ -106,6 +106,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif()
 endif()
 
+if (${WITH_JACK})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_VST3})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
 ##########################################
 #  Include directories relative to test  #
 ##########################################
