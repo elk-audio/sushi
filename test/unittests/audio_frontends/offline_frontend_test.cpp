@@ -137,3 +137,28 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     }
 
 }
+
+TEST_F(TestOfflineFrontend, TestNoiseGeneration)
+{
+    ChunkSampleBuffer buffer(2);
+    std::ranlux24 rand_gen;
+    rand_gen.seed(NOISE_SEED);
+    std::normal_distribution<float> normal_dist(0, INPUT_NOISE_LEVEL);
+    fill_buffer_with_noise(buffer, rand_gen, normal_dist);
+
+    float mean = 0.0f;
+    for (int c = 0; c < buffer.channel_count(); ++c)
+    {
+        for (float* s = buffer.channel(c); s < buffer.channel(c) + AUDIO_CHUNK_SIZE; ++s)
+        {
+            mean += *s * *s;
+        }
+    }
+    mean /= AUDIO_CHUNK_SIZE * buffer.channel_count();
+    float rms = std::sqrt(mean);
+    ASSERT_NEAR(INPUT_NOISE_LEVEL, rms, 0.002f);
+
+
+
+
+}

@@ -50,3 +50,6 @@ third-party/install/
 # Python pyc
 *.pyc
 
+# CMake's compile_commnads used by clang-tools
+compile_commands.json
+

@@ -32,8 +32,8 @@ option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
-set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
-set(XENOMAI_SAMPLING_RATE_HZ 48000 CACHE STRING "Set the sampling rate in Raspa")
+set(XENOMAI_N_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
+set(XENOMAI_AUDIO_SAMPLE_RATE 48000 CACHE STRING "Set the sampling rate in Raspa")
 
 if (${WITH_XENOMAI})
     message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels @ ${XENOMAI_SAMPLING_RATE_HZ}Hz")
