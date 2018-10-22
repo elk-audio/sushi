@@ -6,7 +6,7 @@
 
 #include <cerrno>
 
-#include "raspa.h"
+#include "raspa/raspa.h"
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
