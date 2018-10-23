@@ -89,7 +89,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/event_timer.cpp
                       src/engine/transport.cpp
                       src/library/event.cpp
-                      src/library/mind_allocator.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
@@ -126,7 +125,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/event.h
                         src/library/event_interface.h
                         src/library/sample_buffer.h
-                        src/library/mind_allocator.h
                         src/library/midi_decoder.h
                         src/library/midi_encoder.h
                         src/library/rt_event.h
@@ -197,8 +195,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/EASTL/include/"
-                 "${PROJECT_SOURCE_DIR}/third-party/EASTL/test/packages/EABase/include/Common/"
                  "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
@@ -247,7 +243,6 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
 # Common libraries between all builds, and safe to be included in test targets
 set(COMMON_LIBRARIES
-    EASTL
     sndfile
     lo
     pthread
