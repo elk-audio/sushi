@@ -9,7 +9,7 @@
 #include <mutex>
 
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
-#include "twine.h"
+#include "twine/twine.h"
 
 #include "constants.h"
 #include "spinlock.h"

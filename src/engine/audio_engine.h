@@ -13,7 +13,7 @@
 #include <utility>
 #include <mutex>
 
-#include "twine.h"
+#include "twine/twine.h"
 
 #include "engine/event_dispatcher.h"
 #include "engine/base_engine.h"

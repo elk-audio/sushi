@@ -157,7 +157,7 @@ public:
      * @param size Length of data in bytes.
      * @param timestamp timestamp of the midi event
      */
-    void send_midi(int port, const uint8_t* data, size_t size, Time timestamp) override;
+    void send_midi(int port, MidiDataByte data, Time timestamp) override;
 
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;

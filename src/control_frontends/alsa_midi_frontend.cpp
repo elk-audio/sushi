@@ -3,6 +3,7 @@
 #include <alsa/seq_event.h>
 
 #include "alsa_midi_frontend.h"
+#include "library/midi_decoder.h"
 #include "logging.h"
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
@@ -130,7 +131,7 @@ void AlsaMidiFrontend::_poll_function()
                     {
                         bool timestamped = (ev->flags | (SND_SEQ_TIME_STAMP_REAL & SND_SEQ_TIME_MODE_ABS)) == 1;
                         Time timestamp = timestamped? _to_sushi_time(&ev->time.time) : IMMEDIATE_PROCESS;
-                        _receiver->send_midi(0, data_buffer, byte_count, timestamp);
+                        _receiver->send_midi(0, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
 
                         MIND_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}] timestamp: {}",
                                        data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], timestamp.count());
@@ -144,11 +145,11 @@ void AlsaMidiFrontend::_poll_function()
     }
 }
 
-void AlsaMidiFrontend::send_midi(int /*output*/, const uint8_t* data, Time timestamp)
+void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timestamp)
 {
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);
-    auto bytes = snd_midi_event_encode(_output_parser, data, 3, &ev);
+    auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
     if (bytes <= 0 )
     {
         MIND_LOG_INFO("Failed to encode event: {} {}", strerror(-bytes), ev.type);

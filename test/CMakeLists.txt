@@ -1,10 +1,9 @@
-#####################################
-#  Again Plugin                     #
-#####################################
+######################
+#  Vst test plugins  #
+######################
 
 # Build Again example plugin from VsT SDK, needed for dynamic library loading tests
 # Adapted from https://github.com/gmoe/vst-cmake
-
 
 set(VST2_SDK_PLUGIN_SOURCES
         "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
@@ -27,19 +26,21 @@ set(VSTXSYNTH_SOURCES
         "${VST2_SDK_PLUGIN_SOURCES}"
         )
 
-include_directories(${VST_SDK_PATH})
-
 add_library(again MODULE ${AGAIN_SOURCES})
 # Suppress VST SDK warnings
 set_target_properties(again PROPERTIES
         COMPILE_FLAGS "-Wno-unused -Wno-multichar -Wno-write-strings -Wno-narrowing"
     )
+target_include_directories(again PRIVATE ${VST_SDK_PATH})
+target_compile_definitions(again PRIVATE -D__cdecl= )
 
 add_library(vstxsynth MODULE ${VSTXSYNTH_SOURCES})
 # Suppress VST SDK warnings
 set_target_properties(vstxsynth PROPERTIES
         COMPILE_FLAGS "-Wno-unused -Wno-sequence-point -Wno-multichar -Wno-write-strings -Wno-narrowing"
         )
+target_include_directories(vstxsynth PRIVATE ${VST_SDK_PATH})
+target_compile_definitions(vstxsynth PRIVATE -D__cdecl= )
 
 #####################################
 #  Unit Tests Targets               #
@@ -48,18 +49,6 @@ set_target_properties(vstxsynth PROPERTIES
 # build gtest framework
 add_subdirectory(gtest_1_7_0)
 enable_testing()
-
-#####################################
-#  Build Flags                      #
-#####################################
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMIND_DISABLE_LOGGING")
-
-# Disable Link in tests as this slows down the testing a lot due to network activity etc
-remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
-
-# Overwrite parent definition to avoid issues with Xenomai wrappers
-set(CMAKE_EXE_LINKER_FLAGS "")
 
 #####################
 #  Unit Test Files  #
@@ -102,13 +91,27 @@ if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
-#################################################
-#  Additional compilation units needed by tests #
-#################################################
-
 set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
 if (NOT ${WITH_VST3})
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
+endif()
+
+add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
+
+target_compile_definitions(unit_tests PRIVATE -DMIND_DISABLE_LOGGING -D__cdecl= )
+target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math -mfpmath=sse)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
+        target_compile_options(unit_tests PRIVATE -faligned-new)
+    endif()
+endif()
+
+if (${WITH_JACK})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_VST3})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST3)
 endif()
 
 ##########################################
@@ -119,7 +122,7 @@ set(INCLUDE_DIRS "${INCLUDE_DIRS}"
                  ${PROJECT_SOURCE_DIR}/test/unittests
                  ${PROJECT_SOURCE_DIR}/test/gtest_1_7_0/include)
 
-include_directories(${INCLUDE_DIRS})
+target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
 
 #################################
 #  Statically linked libraries  #
@@ -144,7 +147,8 @@ if (${WITH_JACK})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
 endif()
 
-    add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
+# Disable Link in tests as this slows down the testing a lot due to network activity etc
+remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
