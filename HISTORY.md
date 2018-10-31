@@ -1,8 +1,20 @@
-0.6.1 :
-  * Fix: handling of track pan for multichannel plugins
-  * Fix: erroneous channel handling for offline frontend 
+0.7.0 :
 
-0.6 : 
+  * Multicore track rendering through Twine library
+  * Processor performance timings statistics
+  * Dummy frontend for investigating RT safety issues in plugins
+
+0.6.2 :
+
+  * Fix RASPA plugin initialization issue
+  * Fix parameter output from VST 2.x plugins
+
+0.6.1 :
+
+  * Fix: handling of track pan for multichannel plugins
+  * Fix: erroneous channel handling for offline frontend
+
+0.6 :
 
   * Multichannel track/buses architecture and support for VST multichannel plugins
   * Handling of events and MIDI outputs from plugins
