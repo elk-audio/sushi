@@ -125,8 +125,7 @@ void AlsaMidiFrontend::_poll_function()
                     || (ev->type == SND_SEQ_EVENT_PGMCHANGE)
                     || (ev->type == SND_SEQ_EVENT_PITCHBEND))
                 {
-                    const long byte_count = snd_midi_event_decode(_input_parser, data_buffer,
-                                                                  sizeof(data_buffer), ev);
+                    auto byte_count = snd_midi_event_decode(_input_parser, data_buffer, sizeof(data_buffer), ev);
                     if (byte_count > 0)
                     {
                         bool timestamped = (ev->flags | (SND_SEQ_TIME_STAMP_REAL & SND_SEQ_TIME_MODE_ABS)) == 1;
