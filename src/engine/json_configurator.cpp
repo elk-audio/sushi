@@ -28,14 +28,14 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
     MIND_LOG_INFO("Setting engine sample rate to {}", sample_rate);
     _engine->set_sample_rate(sample_rate);
 
-    if (config.HasMember("tempo"))
+    if (host_config.HasMember("tempo"))
     {
         float tempo = host_config["tempo"].GetFloat();
         MIND_LOG_INFO("Setting engine tempo to {}", sample_rate);
         _engine->set_tempo(tempo);
     }
 
-    if (config.HasMember("time_signature"))
+    if (host_config.HasMember("time_signature"))
     {
         const auto& sig = host_config["time_signature"].GetObject();
         int numerator = sig["numerator"].GetInt();
@@ -45,7 +45,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
         _engine->set_time_signature({numerator, denominator});
     }
 
-    if (config.HasMember("playing_mode"))
+    if (host_config.HasMember("playing_mode"))
     {
         PlayingMode mode;
         if (host_config["playing_mode"] == "stopped")
@@ -60,7 +60,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
         _engine->set_transport_mode(mode);
     }
 
-    if (config.HasMember("tempo_sync"))
+    if (host_config.HasMember("tempo_sync"))
     {
         SyncMode mode;
         if (host_config["tempo_sync"] == "ableton link")
