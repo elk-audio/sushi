@@ -25,7 +25,7 @@ constexpr Time IMMEDIATE_PROCESS = std::chrono::microseconds(0);
 inline Time get_current_time()
 {
     timespec tp;
-    int res = clock_gettime(CLOCK_REALTIME, &tp);
+    int res = clock_gettime(CLOCK_MONOTONIC, &tp);
     if (res != 0)
     {
         return IMMEDIATE_PROCESS;
