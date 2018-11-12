@@ -15,7 +15,7 @@
 namespace sushi {
 namespace engine {
 
-MIND_GET_LOGGER;
+MIND_GET_LOGGER_WITH_MODULE_NAME("transport");
 
 void peer_callback(size_t peers)
 {
@@ -55,10 +55,6 @@ void Transport::set_time(Time timestamp, int64_t samples)
     _sample_count = samples;
 
     _update_internals();
-
-#ifndef SUSHI_BUILD_WITH_ABLETON_LINK
-    if (_sync_mode == SyncMode::ABLETON_LINK) _sync_mode = SyncMode::INTERNAL;
-#endif
 
     switch (_sync_mode)
     {
@@ -170,7 +166,7 @@ void Transport::_update_link_sync(Time timestamp)
     {
         session.setTempo(_set_tempo, timestamp);
     }
-    _tempo = session.tempo();
+    _tempo = static_cast<float>(session.tempo());
     _link_controller->commitAudioSessionState(session);
     //if (this->playing())
     //{
@@ -178,6 +174,19 @@ void Transport::_update_link_sync(Time timestamp)
         _current_bar_beat_count = session.phaseAtTime(timestamp, _beats_per_bar);
         _bar_start_beat_count = _beat_count - _current_bar_beat_count;
     //}
+}
+
+void Transport::set_sync_mode(SyncMode mode)
+{
+#ifndef SUSHI_BUILD_WITH_ABLETON_LINK
+    if (mode == SyncMode::ABLETON_LINK)
+    {
+        MIND_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+        return;
+    }
+#endif
+    _sync_mode = mode;
+    _new_playmode = true;
 }
 
 

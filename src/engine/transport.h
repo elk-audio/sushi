@@ -71,7 +71,7 @@ public:
      * @brief Set the current mode of synchronising tempo and beats
      * @param mode The mode of synchronisation to use
      */
-    void set_sync_mode(SyncMode mode) {_sync_mode = mode; _new_playmode = true;}
+    void set_sync_mode(SyncMode mode);
 
     /**
      * @return Set the sample rate.
