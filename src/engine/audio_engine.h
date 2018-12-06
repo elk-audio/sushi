@@ -21,6 +21,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/controller.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
@@ -301,6 +302,10 @@ public:
         return &_event_dispatcher;
     }
 
+    sushi::ext::SushiControl* controller() override
+    {
+        return &_controller;
+    }
     /**
      * @brief Enable timings of all audio processors
      * @param enabled Enable if true, disable if false
@@ -420,6 +425,7 @@ private:
     Transport _transport;
 
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+    Controller _controller{this};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;

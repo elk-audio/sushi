@@ -21,6 +21,10 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
 
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#include "sushi_rpc/grpc_server.h"
+#endif
+
 enum class FrontendType
 {
     OFFLINE,
@@ -60,6 +64,9 @@ void print_version_and_build_info()
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     build_opts.push_back("xenomai");
+#endif
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    build_opts.push_back("rpc control");
 #endif
     std::ostringstream opts_joined;
     for (const auto& o : build_opts)
@@ -337,6 +344,12 @@ int main(int argc, char* argv[])
 
     frontend->connect_control_frontends();
     frontend->run();
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    sushi_rpc::GrpcServer rpc_server(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine.controller());
+    rpc_server.start();
+#endif
+
 
     if (frontend_type != FrontendType::OFFLINE)
     {

@@ -19,12 +19,16 @@ namespace grpc {
 
 namespace sushi_rpc {
 
+static const char* DEFAULT_LISTENING_ADDRESS = "localhost:51051";
+
+class SushiControlService;
+
 class GrpcServer
 {
 public:
-    GrpcServer(const std::string listenAddress,
-               const std::vector<std::string>& notificationAddresses,
-                sushi::ext::SushiControl* controller);
+    GrpcServer(const std::string& listenAddress, sushi::ext::SushiControl* controller);
+
+    ~GrpcServer();
 
     void start();
 
@@ -35,6 +39,7 @@ public:
 private:
 
     std::string _listenAddress;
+    std::unique_ptr<SushiControlService> _service;
     std::unique_ptr<grpc::ServerBuilder> _server_builder;
     std::unique_ptr<grpc::Server>        _server;
     sushi::ext::SushiControl* _controller;

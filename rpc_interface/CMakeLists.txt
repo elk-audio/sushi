@@ -7,14 +7,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/rpc_interface/cmake)
 find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
 
-###################
-#  Public Header  #
-###################
-
-set(PUBLIC_HEADER_FILES src/grpc_server.h
-                        src/control_service.h
-        )
-
 ################################
 #  gRPC / Protobuf generation  #
 ################################
@@ -48,6 +40,8 @@ add_library(sushi_rpc STATIC
                       )
 
 #set_target_properties(sushi_rpc POSITION_INDEPENDENT_CODE ON)
+
+target_include_directories(sushi_rpc PUBLIC include)
 target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )

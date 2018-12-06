@@ -17,6 +17,7 @@
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/types.h"
+#include "control_interface.h"
 
 
 namespace sushi {
@@ -205,6 +206,11 @@ public:
     }
 
     virtual sushi::dispatcher::BaseEventDispatcher* event_dispatcher()
+    {
+        return nullptr;
+    }
+
+    virtual sushi::ext::SushiControl* controller()
     {
         return nullptr;
     }
