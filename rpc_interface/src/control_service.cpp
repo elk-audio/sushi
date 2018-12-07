@@ -3,7 +3,7 @@
 
 namespace sushi_rpc {
 
-::grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
+inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
     switch (status)
     {
@@ -28,7 +28,7 @@ namespace sushi_rpc {
 }
 
 grpc::Status
-SushiControlService::GetSamplerate(::grpc::ServerContext* /*context*/, const ::sushi_rpc::GenericVoidValue*request,
+SushiControlService::GetSamplerate(::grpc::ServerContext* /*context*/, const sushi_rpc::GenericVoidValue*request,
                                    sushi_rpc::GenericFloatValue* response)
 {
     response->set_value(_controller->get_samplerate());
@@ -36,8 +36,8 @@ SushiControlService::GetSamplerate(::grpc::ServerContext* /*context*/, const ::s
 }
 
 ::grpc::Status
-SushiControlService::GetPlayingMode(::grpc::ServerContext* /*context*/, const ::sushi_rpc::GenericVoidValue*request,
-                                    ::sushi_rpc::PlayingMode* response)
+SushiControlService::GetPlayingMode(::grpc::ServerContext* /*context*/, const sushi_rpc::GenericVoidValue*request,
+                                    sushi_rpc::PlayingMode* response)
 {
     auto mode = _controller->get_playing_mode();
     switch (mode)
@@ -58,7 +58,7 @@ SushiControlService::GetPlayingMode(::grpc::ServerContext* /*context*/, const ::
 }
 
 grpc::Status SushiControlService::SetPlayingMode(grpc::ServerContext* /*context*/,
-                                                 const ::sushi_rpc::PlayingMode* request,
+                                                 const sushi_rpc::PlayingMode* request,
                                                  sushi_rpc::GenericVoidValue* /*response*/)
 {
     switch (request->mode())
@@ -82,7 +82,7 @@ grpc::Status SushiControlService::SetPlayingMode(grpc::ServerContext* /*context*
 }
 
 grpc::Status SushiControlService::GetSyncMode(grpc::ServerContext* /*context*/,
-                                              const ::sushi_rpc::GenericVoidValue*request,
+                                              const sushi_rpc::GenericVoidValue*request,
                                               sushi_rpc::SyncMode* response)
 {
     auto mode = _controller->get_sync_mode();
@@ -104,7 +104,7 @@ grpc::Status SushiControlService::GetSyncMode(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::SetSyncMode(grpc::ServerContext* /*context*/,
-                                              const ::sushi_rpc::SyncMode*request,
+                                              const sushi_rpc::SyncMode*request,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
     switch (request->mode())
@@ -128,7 +128,7 @@ grpc::Status SushiControlService::SetSyncMode(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::GetTempo(grpc::ServerContext* /*context*/,
-                                           const ::sushi_rpc::GenericVoidValue* /*request*/,
+                                           const sushi_rpc::GenericVoidValue* /*request*/,
                                            sushi_rpc::GenericFloatValue* response)
 {
     response->set_value(_controller->get_tempo());
@@ -136,7 +136,7 @@ grpc::Status SushiControlService::GetTempo(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::SetTempo(grpc::ServerContext* /*context*/,
-                                           const ::sushi_rpc::GenericFloatValue* request,
+                                           const sushi_rpc::GenericFloatValue* request,
                                            sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_tempo(request->value());
@@ -144,7 +144,7 @@ grpc::Status SushiControlService::SetTempo(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*context*/,
-                                                   const ::sushi_rpc::GenericVoidValue* /*request*/,
+                                                   const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::TimeSignature* response)
 {
     auto ts = _controller->get_time_signature();
@@ -154,7 +154,7 @@ grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*contex
 }
 
 grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*context*/,
-                                                   const ::sushi_rpc::TimeSignature* request,
+                                                   const sushi_rpc::TimeSignature* request,
                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
     sushi::ext::TimeSignature ts;
@@ -165,7 +165,7 @@ grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*contex
 }
 
 grpc::Status SushiControlService::SendNoteOn(grpc::ServerContext* /*context*/,
-                                             const ::sushi_rpc::NoteOnRequest*request,
+                                             const sushi_rpc::NoteOnRequest*request,
                                              sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_note_on(request->track().id(), request->note(), request->velocity());
@@ -173,7 +173,7 @@ grpc::Status SushiControlService::SendNoteOn(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::SendNoteOff(grpc::ServerContext* /*context*/,
-                                              const ::sushi_rpc::NoteOffRequest* request,
+                                              const sushi_rpc::NoteOffRequest* request,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_note_off(request->track().id(), request->note(), request->velocity());
@@ -181,7 +181,7 @@ grpc::Status SushiControlService::SendNoteOff(grpc::ServerContext* /*context*/,
 }
 
 grpc::Status SushiControlService::SendNoteAftertouch(grpc::ServerContext* /*context*/,
-                                                     const ::sushi_rpc::NoteAftertouchRequest* request,
+                                                     const sushi_rpc::NoteAftertouchRequest* request,
                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_note_aftertouch(request->track().id(), request->note(), request->value());
@@ -189,7 +189,7 @@ grpc::Status SushiControlService::SendNoteAftertouch(grpc::ServerContext* /*cont
 }
 
 grpc::Status SushiControlService::SendAftertouch(grpc::ServerContext* /*context*/,
-                                                 const ::sushi_rpc::NoteModulationRequest* request,
+                                                 const sushi_rpc::NoteModulationRequest* request,
                                                  sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_aftertouch(request->track().id(), request->value());
@@ -197,7 +197,7 @@ grpc::Status SushiControlService::SendAftertouch(grpc::ServerContext* /*context*
 }
 
 grpc::Status SushiControlService::SendPitchBend(grpc::ServerContext* /*context*/,
-                                                const ::sushi_rpc::NoteModulationRequest* request,
+                                                const sushi_rpc::NoteModulationRequest* request,
                                                 sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_pitch_bend(request->track().id(), request->value());
@@ -205,7 +205,7 @@ grpc::Status SushiControlService::SendPitchBend(grpc::ServerContext* /*context*/
 }
 
 grpc::Status SushiControlService::SendModulation(grpc::ServerContext* /*context*/,
-                                                 const ::sushi_rpc::NoteModulationRequest* request,
+                                                 const sushi_rpc::NoteModulationRequest* request,
                                                  sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->send_modulation(request->track().id(), request->value());
@@ -213,7 +213,7 @@ grpc::Status SushiControlService::SendModulation(grpc::ServerContext* /*context*
 }
 
 grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*context*/,
-                                                   const ::sushi_rpc::GenericVoidValue* /*request*/,
+                                                   const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::CpuTimings* response)
 {
     auto timings = _controller->get_engine_timings();
@@ -224,7 +224,7 @@ grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*contex
 }
 
 grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context*/,
-                                                  const ::sushi_rpc::TrackIdentifier* request,
+                                                  const sushi_rpc::TrackIdentifier* request,
                                                   sushi_rpc::CpuTimings* response)
 {
     auto timings = _controller->get_track_timings(request->id());
@@ -240,7 +240,7 @@ grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context
 }
 
 grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*context*/,
-                                                      const ::sushi_rpc::ProcessorIdentifier* request,
+                                                      const sushi_rpc::ProcessorIdentifier* request,
                                                       sushi_rpc::CpuTimings* response)
 {
     auto timings = _controller->get_processor_timings(request->id());
@@ -256,150 +256,282 @@ grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*con
 }
 
 grpc::Status SushiControlService::ResetAllTimings(grpc::ServerContext* /*context*/,
-                                                  const ::sushi_rpc::GenericVoidValue* /*request*/,
+                                                  const sushi_rpc::GenericVoidValue* /*request*/,
                                                   sushi_rpc::GenericVoidValue* /*response*/)
 {
     _controller->reset_all_timings();
     return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::ResetTrackTimings(::grpc::ServerContext* /*context*/, const ::sushi_rpc::TrackIdentifier*request,
-                                       ::sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status SushiControlService::ResetTrackTimings(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::TrackIdentifier* request,
+                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
+    auto status = _controller->reset_track_timings(request->id());
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::ResetProcessorTimings(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::ProcessorIdentifier* request,
+                                                        sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->reset_processor_timings(request->id());
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::GetTrackId(grpc::ServerContext* /*context*/,
+                                             const sushi_rpc::GenericStringValue* request,
+                                             sushi_rpc::TrackIdentifier* response)
+{
+    auto id = _controller->get_track_id(request->value());
+    if (!id.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No track with that name");
+    }
+    response->set_id(id.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetTrackLabel(grpc::ServerContext* /*context*/,
+                                                const sushi_rpc::TrackIdentifier* request,
+                                                sushi_rpc::GenericStringValue* response)
+{
+    auto label = _controller->get_track_label(request->id());
+    if (!label.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(label.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetTrackName(grpc::ServerContext* /*context*/,
+                                               const sushi_rpc::TrackIdentifier* request,
+                                               sushi_rpc::GenericStringValue* response)
+{
+    auto name = _controller->get_track_name(request->id());
+    if (!name.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(name.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
+                                               const sushi_rpc::TrackIdentifier* request,
+                                               sushi_rpc::TrackInfo* response)
+{
+    auto info = _controller->get_track_info(request->id());
+    if (!info.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    const auto& v = info.value();
+    response->set_id(v.id);
+    response->set_label(v.label);
+    response->set_name((v.name));
+    response->set_output_channels(v.output_channels);
+    response->set_output_busses(v.output_busses);
+    response->set_input_channels(v.input_channels);
+    response->set_input_busses(v.input_busses);
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorId(grpc::ServerContext* /*context*/,
+                                                 const sushi_rpc::GenericStringValue* request,
+                                                 sushi_rpc::ProcessorIdentifier* response)
+{
+    auto id = _controller->get_processor_id(request->value());
+    if (!id.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No processor with that name");
+    }
+    response->set_id(id.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorLabel(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::ProcessorIdentifier* request,
+                                                    sushi_rpc::GenericStringValue* response)
+{
+    auto label = _controller->get_processor_label(request->id());
+    if (!label.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(label.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorName(::grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::ProcessorIdentifier* request,
+                                                   sushi_rpc::GenericStringValue* response)
+{
+    auto name = _controller->get_processor_name(request->id());
+    if (!name.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(name.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorInfo(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::ProcessorIdentifier* request,
+                                                   sushi_rpc::ProcessorInfo* response)
+{
+    auto info = _controller->get_processor_info(request->id());
+    if (!info.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    const auto& v = info.value();
+    response->set_id(v.id);
+    response->set_label(v.label);
+    response->set_name((v.name));
+    response->set_parameter_count(v.parameter_count);
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorBypassState(grpc::ServerContext* /*context*/,
+                                                          const sushi_rpc::ProcessorIdentifier* request,
+                                                          sushi_rpc::GenericBoolValue* response)
+{
+    auto state = _controller->get_processor_bypass_state(request->id());
+    if (!state.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(state.value());
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::SetProcessorBypassState(grpc::ServerContext* /*context*/,
+                                                          const sushi_rpc::ProcessorBypassStateSetRequest* request,
+                                                          sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->set_processor_bypass_state(request->processor().id(), true);
     return grpc::Status();
 }
 
-::grpc::Status SushiControlService::ResetProcessorTimings(::grpc::ServerContext* /*context*/,
-                                                          const ::sushi_rpc::ProcessorIdentifier*request,
-                                                          ::sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*/,
+                                                 const sushi_rpc::ParameterIdRequest* request,
+                                                 sushi_rpc::ParameterIdentifier* response)
 {
-    return grpc::Status();
+    auto id = _controller->get_parameter_id(100, request->parametername());
+    if (!id.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No processor with that name");
+    }
+    // TODO - fix return and request types
+    response->set_parameter_id(id.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetTrackId(::grpc::ServerContext* /*context*/, const ::sushi_rpc::GenericStringValue*request,
-                                ::sushi_rpc::TrackIdentifier* response)
+grpc::Status SushiControlService::GetParameterLabel(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::ParameterIdentifier* request,
+                                                    sushi_rpc::GenericStringValue* response)
 {
-    return grpc::Status();
+    auto label = _controller->get_parameter_label(request->processor_id(), request->parameter_id());
+    if (!label.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(label.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetTrackLabel(::grpc::ServerContext* /*context*/, const ::sushi_rpc::TrackIdentifier*request,
-                                   ::sushi_rpc::GenericStringValue* response)
+grpc::Status SushiControlService::GetParameterName(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::ParameterIdentifier* request,
+                                                   sushi_rpc::GenericStringValue* response)
 {
-    return grpc::Status();
+    auto name = _controller->get_parameter_name(request->processor_id(), request->parameter_id());
+    if (!name.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(name.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetTrackName(::grpc::ServerContext* /*context*/, const ::sushi_rpc::TrackIdentifier*request,
-                                  ::sushi_rpc::GenericStringValue* response)
+grpc::Status SushiControlService::GetParameterInfo(::grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::ParameterIdentifier* request,
+                                                   sushi_rpc::ParameterInfo* response)
 {
-    return grpc::Status();
+    auto info = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
+    if (!info.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    const auto& v = info.value();
+    response->set_id(v.id);
+    response->set_label(v.label);
+    response->set_name(v.name);
+    //response->set_allocated_type(&v.type); // TODO - fix why I cant set this
+    response->set_min_range(v.min_range);
+    response->set_max_range(v.max_range);
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetTrackInfo(::grpc::ServerContext* /*context*/, const ::sushi_rpc::TrackIdentifier*request,
-                                  ::sushi_rpc::TrackInfo* response)
+
+
+grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::ParameterIdentifier* request,
+                                                    sushi_rpc::GenericFloatValue* response)
 {
-    return grpc::Status();
+    auto value = _controller->get_parameter_value(request->parameter_id(), request->processor_id());
+    if (!value.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(value.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetProcessorId(::grpc::ServerContext* /*context*/, const ::sushi_rpc::GenericStringValue*request,
-                                    ::sushi_rpc::ProcessorIdentifier* response)
+grpc::Status SushiControlService::GetParameterValueAsString(grpc::ServerContext* /*context*/,
+                                                            const sushi_rpc::ParameterIdentifier* request,
+                                                            sushi_rpc::GenericStringValue* response)
 {
-    return grpc::Status();
+    auto value = _controller->get_parameter_value_as_string(request->parameter_id(), request->processor_id());
+    if (!value.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(value.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetProcessorLabel(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ProcessorIdentifier*request,
-                                       ::sushi_rpc::GenericStringValue* response)
+grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::ParameterIdentifier* request,
+                                                         sushi_rpc::GenericStringValue* response)
 {
-    return grpc::Status();
+    auto value = _controller->get_string_property_value(request->parameter_id(), request->processor_id());
+    if (!value.has_value())
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+    }
+    response->set_value(value.value());
+    return grpc::Status::OK;
 }
 
-::grpc::Status
-SushiControlService::GetProcessorName(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ProcessorIdentifier*request,
-                                      ::sushi_rpc::GenericStringValue* response)
+grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext*context,
+                                                    const sushi_rpc::ParameterSetRequest* request,
+                                                    sushi_rpc::GenericVoidValue* response)
 {
-    return grpc::Status();
+    auto status = _controller->set_parameter_value(request->parameter().processor_id(),
+                                                   request->parameter().parameter_id(),
+                                                   request->value());
+    return to_grpc_status(status);
 }
 
-::grpc::Status
-SushiControlService::GetProcessorInfo(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ProcessorIdentifier*request,
-                                      ::sushi_rpc::TrackInfo* response)
+grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::StringPropertySetRequest* request,
+                                                         sushi_rpc::GenericVoidValue* response)
 {
-    return grpc::Status();
-}
-
-::grpc::Status SushiControlService::GetProcessorBypassState(::grpc::ServerContext* /*context*/,
-                                                            const ::sushi_rpc::ProcessorIdentifier*request,
-                                                            ::sushi_rpc::GenericBoolValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status SushiControlService::SetProcessorBypassState(::grpc::ServerContext* /*context*/,
-                                                            const ::sushi_rpc::ProcessorIdentifier*request,
-                                                            ::sushi_rpc::GenericVoidValue* /*response*/)
-{
-    return grpc::Status();
-}
-
-::grpc::Status
-SushiControlService::GetParameterId(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ParameterIdRequest*request,
-                                    ::sushi_rpc::ParameterIdentifier* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status
-SushiControlService::GetParameterLabel(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ParameterIdentifier*request,
-                                       ::sushi_rpc::GenericStringValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status
-SushiControlService::GetParameterName(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ParameterIdentifier*request,
-                                      ::sushi_rpc::GenericStringValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status
-SushiControlService::GetParameterInfo(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ParameterIdentifier*request,
-                                      ::sushi_rpc::ParameterInfo* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status
-SushiControlService::GetParameterValue(::grpc::ServerContext* /*context*/, const ::sushi_rpc::ParameterIdentifier*request,
-                                       ::sushi_rpc::GenericFloatValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status SushiControlService::GetParameterValueAsString(::grpc::ServerContext* /*context*/,
-                                                              const ::sushi_rpc::ParameterIdentifier*request,
-                                                              ::sushi_rpc::GenericStringValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status SushiControlService::GetStringPropertyValue(::grpc::ServerContext* /*context*/,
-                                                           const ::sushi_rpc::ParameterIdentifier*request,
-                                                           ::sushi_rpc::GenericStringValue* response)
-{
-    return grpc::Status();
-}
-
-::grpc::Status SushiControlService::SetStringPropertyValue(::grpc::ServerContext* /*context*/,
-                                                           const ::sushi_rpc::ParameterIdentifier*request,
-                                                           ::sushi_rpc::GenericFloatValue* response)
-{
-    return grpc::Status();
+    auto status = _controller->set_string_property_value(request->property().processor_id(),
+                                                         request->property().parameter_id(),
+                                                         request->value());
+    return to_grpc_status(status);
 }
 } // sushi_rpc

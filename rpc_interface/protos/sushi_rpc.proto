@@ -51,9 +51,9 @@ service SushiController {
     rpc GetProcessorId(GenericStringValue) returns (ProcessorIdentifier) {}
     rpc GetProcessorLabel(ProcessorIdentifier) returns (GenericStringValue) {}
     rpc GetProcessorName(ProcessorIdentifier) returns (GenericStringValue) {}
-    rpc GetProcessorInfo(ProcessorIdentifier) returns (TrackInfo) {}
+    rpc GetProcessorInfo(ProcessorIdentifier) returns (ProcessorInfo) {}
     rpc GetProcessorBypassState(ProcessorIdentifier) returns (GenericBoolValue) {}
-    rpc SetProcessorBypassState(ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc SetProcessorBypassState(ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
     // list requests left out
 
     // Parameter control
@@ -64,7 +64,8 @@ service SushiController {
     rpc GetParameterValue(ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString(ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetStringPropertyValue(ParameterIdentifier) returns (GenericStringValue) {}
-    rpc SetStringPropertyValue(ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
 }
 
 
@@ -198,6 +199,11 @@ message ProcessorInfo {
     int32  parameter_count = 4;
 }
 
+message ProcessorBypassStateSetRequest {
+    ProcessorIdentifier processor = 1;
+    bool value = 2;
+}
+
 message ParameterInfo {
     int32  id = 1;
     ParameterType  type = 2;
@@ -208,7 +214,7 @@ message ParameterInfo {
 }
 
 message ParameterIdRequest {
-    string ProcessorName = 1;
+    ProcessorIdentifier processor  = 1;
     string ParameterName = 2;
 }
 

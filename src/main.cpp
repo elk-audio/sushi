@@ -11,7 +11,6 @@
 
 #include "twine/src/twine_internal.h"
 
-
 #include "logging.h"
 #include "options.h"
 #include "generated/version.h"
