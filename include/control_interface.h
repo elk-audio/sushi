@@ -106,6 +106,7 @@ public:
     virtual ControlStatus                   set_time_signature(TimeSignature signature) = 0;
     virtual bool                            get_timing_statistics_enabled() = 0;
     virtual void                            set_timing_statistics_enabled(bool enabled) const = 0;
+    virtual std::vector<TrackInfo>          get_tracks() const = 0;
 
     // Keyboard control
     virtual ControlStatus                   send_note_on(int track_id, int note, float velocity) = 0;

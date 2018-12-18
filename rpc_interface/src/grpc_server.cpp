@@ -5,7 +5,7 @@ namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listenAddress,
                        sushi::ext::SushiControl*controller) : _listenAddress{listenAddress},
-                                                              _service{new SushiControlService(_controller)},
+                                                              _service{new SushiControlService(controller)},
                                                               _server_builder{new grpc::ServerBuilder()},
                                                               _controller{controller}
 {

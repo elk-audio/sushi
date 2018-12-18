@@ -23,6 +23,7 @@ service SushiController {
     rpc SetTempo (GenericFloatValue) returns (GenericVoidValue) {}
     rpc GetTimeSignature (GenericVoidValue) returns (TimeSignature) {}
     rpc SetTimeSignature (TimeSignature) returns (GenericVoidValue) {}
+    rpc GetTracks(GenericVoidValue) returns (TrackInfoList) {}
 
     // Keyboard control
     rpc SendNoteOn(NoteOnRequest) returns (GenericVoidValue) {}
@@ -45,6 +46,8 @@ service SushiController {
     rpc GetTrackLabel(TrackIdentifier) returns (GenericStringValue) {}
     rpc GetTrackName(TrackIdentifier) returns (GenericStringValue) {}
     rpc GetTrackInfo(TrackIdentifier) returns (TrackInfo) {}
+    rpc GetTrackProcessors(TrackIdentifier) returns (ProcessorInfoList) {}
+    rpc GetTrackParameters(TrackIdentifier) returns (ParameterInfoList) {}
     // list requests left out for now
 
     // Processor control
@@ -54,6 +57,9 @@ service SushiController {
     rpc GetProcessorInfo(ProcessorIdentifier) returns (ProcessorInfo) {}
     rpc GetProcessorBypassState(ProcessorIdentifier) returns (GenericBoolValue) {}
     rpc SetProcessorBypassState(ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorProgram(ProcessorIdentifier) returns (ProcessorProgram) {}
+    rpc SetProcessorProgram(ProcessorProgramSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorParameters(ProcessorIdentifier) returns (ParameterInfoList) {}
     // list requests left out
 
     // Parameter control
@@ -192,11 +198,28 @@ message TrackInfo {
     int32  processor_count = 8;
 }
 
+message TrackInfoList {
+    repeated TrackInfo tracks = 1;
+}
+
 message ProcessorInfo {
     int32  id = 1;
     string label = 2;
     string name = 3;
     int32  parameter_count = 4;
+}
+
+message ProcessorInfoList {
+    repeated ProcessorInfo processors = 1;
+}
+
+message ProcessorProgram {
+    int32 program = 1;
+}
+
+message ProcessorProgramSetRequest {
+    ProcessorIdentifier processor = 1;
+    ProcessorProgram program = 2;
 }
 
 message ProcessorBypassStateSetRequest {
@@ -211,6 +234,10 @@ message ParameterInfo {
     string name = 4;
     float  min_range = 5;
     float  max_range = 6;
+}
+
+message ParameterInfoList {
+    repeated ParameterInfo parameters = 1;
 }
 
 message ParameterIdRequest {
