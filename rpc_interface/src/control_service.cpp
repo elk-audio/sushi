@@ -246,15 +246,14 @@ grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context
                                                   const sushi_rpc::TrackIdentifier* request,
                                                   sushi_rpc::CpuTimings* response)
 {
-    auto timings = _controller->get_track_timings(request->id());
-    if (!timings.has_value())
+    auto [status, timings] = _controller->get_track_timings(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "Invalid Track Id");
+        return to_grpc_status(status, "Invalid Track Id");
     }
-    auto t = timings.value();
-    response->set_average(t.avg);
-    response->set_min(t.min);
-    response->set_max(t.max);
+    response->set_average(timings.avg);
+    response->set_min(timings.min);
+    response->set_max(timings.max);
     return grpc::Status::OK;
 }
 
@@ -262,15 +261,14 @@ grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*con
                                                       const sushi_rpc::ProcessorIdentifier* request,
                                                       sushi_rpc::CpuTimings* response)
 {
-    auto timings = _controller->get_processor_timings(request->id());
-    if (!timings.has_value())
+    auto [status, timings] = _controller->get_processor_timings(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "Invalid Processor Id");
+        return to_grpc_status(status, "Invalid Processor Id");
     }
-    auto t = timings.value();
-    response->set_average(t.avg);
-    response->set_min(t.min);
-    response->set_max(t.max);
+    response->set_average(timings.avg);
+    response->set_min(timings.min);
+    response->set_max(timings.max);
     return grpc::Status::OK;
 }
 
@@ -302,12 +300,12 @@ grpc::Status SushiControlService::GetTrackId(grpc::ServerContext* /*context*/,
                                              const sushi_rpc::GenericStringValue* request,
                                              sushi_rpc::TrackIdentifier* response)
 {
-    auto id = _controller->get_track_id(request->value());
-    if (!id.has_value())
+    auto [status, id] = _controller->get_track_id(request->value());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No track with that name");
+        return to_grpc_status(status, "No track with that name");
     }
-    response->set_id(id.value());
+    response->set_id(id);
     return grpc::Status::OK;
 }
 
@@ -315,12 +313,12 @@ grpc::Status SushiControlService::GetTrackLabel(grpc::ServerContext* /*context*/
                                                 const sushi_rpc::TrackIdentifier* request,
                                                 sushi_rpc::GenericStringValue* response)
 {
-    auto label = _controller->get_track_label(request->id());
-    if (!label.has_value())
+    auto [status, label] =_controller->get_track_label(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status, nullptr);
     }
-    response->set_value(label.value());
+    response->set_value(label);
     return grpc::Status::OK;
 }
 
@@ -328,12 +326,12 @@ grpc::Status SushiControlService::GetTrackName(grpc::ServerContext* /*context*/,
                                                const sushi_rpc::TrackIdentifier* request,
                                                sushi_rpc::GenericStringValue* response)
 {
-    auto name = _controller->get_track_name(request->id());
-    if (!name.has_value())
+    auto [status, name] = _controller->get_track_name(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status, nullptr);
     }
-    response->set_value(name.value());
+    response->set_value(name);
     return grpc::Status::OK;
 }
 
@@ -341,19 +339,18 @@ grpc::Status SushiControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
                                                const sushi_rpc::TrackIdentifier* request,
                                                sushi_rpc::TrackInfo* response)
 {
-    auto info = _controller->get_track_info(request->id());
-    if (!info.has_value())
+    auto [status, info] = _controller->get_track_info(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status, nullptr);
     }
-    const auto& v = info.value();
-    response->set_id(v.id);
-    response->set_label(v.label);
-    response->set_name((v.name));
-    response->set_output_channels(v.output_channels);
-    response->set_output_busses(v.output_busses);
-    response->set_input_channels(v.input_channels);
-    response->set_input_busses(v.input_busses);
+    response->set_id(info.id);
+    response->set_label(info.label);
+    response->set_name((info.name));
+    response->set_output_channels(info.output_channels);
+    response->set_output_busses(info.output_busses);
+    response->set_input_channels(info.input_channels);
+    response->set_input_busses(info.input_busses);
     return grpc::Status::OK;
 }
 
@@ -361,12 +358,8 @@ grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*cont
                                                      const sushi_rpc::TrackIdentifier* request,
                                                      sushi_rpc::ProcessorInfoList* response)
 {
-    auto processors = _controller->get_track_processors(request->id());
-    if (!processors.has_value())
-    {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
-    }
-    for (const auto& processor : processors.value())
+    auto [status, processors]= _controller->get_track_processors(request->id());
+    for (const auto& processor : processors)
     {
         auto info = response->add_processors();
         info->set_id(processor.id);
@@ -374,19 +367,15 @@ grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*cont
         info->set_name((processor.name));
         info->set_parameter_count(processor.parameter_count);
     }
-    return grpc::Status::OK;
+    return to_grpc_status(status, nullptr);
 }
 
 grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*context*/,
                                                      const sushi_rpc::TrackIdentifier* request,
                                                      sushi_rpc::ParameterInfoList* response)
 {
-    auto parameters = _controller->get_track_parameters(request->id());
-    if (!parameters.has_value())
-    {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
-    }
-    for (const auto& parameter : parameters.value())
+    auto [status, parameters] = _controller->get_track_parameters(request->id());
+    for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
         info->set_id(parameter.id);
@@ -396,19 +385,19 @@ grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*cont
         info->set_min_range(parameter.min_range);
         info->set_max_range(parameter.max_range);
     }
-    return grpc::Status::OK;
+    return to_grpc_status(status, nullptr);
 }
 
 grpc::Status SushiControlService::GetProcessorId(grpc::ServerContext* /*context*/,
                                                  const sushi_rpc::GenericStringValue* request,
                                                  sushi_rpc::ProcessorIdentifier* response)
 {
-    auto id = _controller->get_processor_id(request->value());
-    if (!id.has_value())
+    auto [status, id] = _controller->get_processor_id(request->value());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No processor with that name");
+        return to_grpc_status(status, "No processor with that name");
     }
-    response->set_id(id.value());
+    response->set_id(id);
     return grpc::Status::OK;
 }
 
@@ -416,12 +405,12 @@ grpc::Status SushiControlService::GetProcessorLabel(grpc::ServerContext* /*conte
                                                     const sushi_rpc::ProcessorIdentifier* request,
                                                     sushi_rpc::GenericStringValue* response)
 {
-    auto label = _controller->get_processor_label(request->id());
-    if (!label.has_value())
+    auto [status, label] = _controller->get_processor_label(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(label.value());
+    response->set_value(label);
     return grpc::Status::OK;
 }
 
@@ -429,12 +418,12 @@ grpc::Status SushiControlService::GetProcessorName(::grpc::ServerContext* /*cont
                                                    const sushi_rpc::ProcessorIdentifier* request,
                                                    sushi_rpc::GenericStringValue* response)
 {
-    auto name = _controller->get_processor_name(request->id());
-    if (!name.has_value())
+    auto [status, name] = _controller->get_processor_name(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(name.value());
+    response->set_value(name);
     return grpc::Status::OK;
 }
 
@@ -442,16 +431,15 @@ grpc::Status SushiControlService::GetProcessorInfo(grpc::ServerContext* /*contex
                                                    const sushi_rpc::ProcessorIdentifier* request,
                                                    sushi_rpc::ProcessorInfo* response)
 {
-    auto info = _controller->get_processor_info(request->id());
-    if (!info.has_value())
+    auto [status, info] = _controller->get_processor_info(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    const auto& v = info.value();
-    response->set_id(v.id);
-    response->set_label(v.label);
-    response->set_name((v.name));
-    response->set_parameter_count(v.parameter_count);
+    response->set_id(info.id);
+    response->set_label(info.label);
+    response->set_name((info.name));
+    response->set_parameter_count(info.parameter_count);
     return grpc::Status::OK;
 }
 
@@ -459,12 +447,12 @@ grpc::Status SushiControlService::GetProcessorBypassState(grpc::ServerContext* /
                                                           const sushi_rpc::ProcessorIdentifier* request,
                                                           sushi_rpc::GenericBoolValue* response)
 {
-    auto state = _controller->get_processor_bypass_state(request->id());
-    if (!state.has_value())
+    auto [status, state] = _controller->get_processor_bypass_state(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(state.value());
+    response->set_value(state);
     return grpc::Status::OK;
 }
 
@@ -480,12 +468,12 @@ grpc::Status SushiControlService::GetProcessorProgram(grpc::ServerContext* /*con
                                                       const sushi_rpc::ProcessorIdentifier* request,
                                                       sushi_rpc::ProcessorProgram* response)
 {
-    auto program = _controller->get_processor_program(request->id());
-    if (!program.has_value())
+    auto [status, program] = _controller->get_processor_program(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_program(program.value());
+    response->set_program(program);
     return grpc::Status::OK;
 }
 
@@ -501,12 +489,8 @@ grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext*con
                                                          const sushi_rpc::ProcessorIdentifier* request,
                                                          sushi_rpc::ParameterInfoList* response)
 {
-    auto parameters = _controller->get_processor_parameters(request->id());
-    if (!parameters.has_value())
-    {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
-    }
-    for (const auto& parameter : parameters.value())
+    auto [status, parameters] = _controller->get_processor_parameters(request->id());
+    for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
         info->set_id(parameter.id);
@@ -516,20 +500,20 @@ grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext*con
         info->set_min_range(parameter.min_range);
         info->set_max_range(parameter.max_range);
     }
-    return grpc::Status::OK;
+    return to_grpc_status(status);
 }
 
 grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*/,
                                                  const sushi_rpc::ParameterIdRequest* request,
                                                  sushi_rpc::ParameterIdentifier* response)
 {
-    auto id = _controller->get_parameter_id(100, request->parametername());
-    if (!id.has_value())
+    auto [status, id] = _controller->get_parameter_id(100, request->parametername());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "No processor with that name");
+        return to_grpc_status(status,  "No processor with that name");
     }
     // TODO - fix return and request types
-    response->set_parameter_id(id.value());
+    response->set_parameter_id(id);
     return grpc::Status::OK;
 }
 
@@ -537,12 +521,12 @@ grpc::Status SushiControlService::GetParameterLabel(grpc::ServerContext* /*conte
                                                     const sushi_rpc::ParameterIdentifier* request,
                                                     sushi_rpc::GenericStringValue* response)
 {
-    auto label = _controller->get_parameter_label(request->processor_id(), request->parameter_id());
-    if (!label.has_value())
+    auto [status, label] = _controller->get_parameter_label(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(label.value());
+    response->set_value(label);
     return grpc::Status::OK;
 }
 
@@ -550,12 +534,12 @@ grpc::Status SushiControlService::GetParameterName(grpc::ServerContext* /*contex
                                                    const sushi_rpc::ParameterIdentifier* request,
                                                    sushi_rpc::GenericStringValue* response)
 {
-    auto name = _controller->get_parameter_name(request->processor_id(), request->parameter_id());
-    if (!name.has_value())
+    auto [status, name] = _controller->get_parameter_name(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(name.value());
+    response->set_value(name);
     return grpc::Status::OK;
 }
 
@@ -563,18 +547,17 @@ grpc::Status SushiControlService::GetParameterInfo(::grpc::ServerContext* /*cont
                                                    const sushi_rpc::ParameterIdentifier* request,
                                                    sushi_rpc::ParameterInfo* response)
 {
-    auto info = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
-    if (!info.has_value())
+    auto [status, info] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    const auto& v = info.value();
-    response->set_id(v.id);
-    response->set_label(v.label);
-    response->set_name(v.name);
-    //response->set_allocated_type(&v.type); // TODO - fix why I cant set this
-    response->set_min_range(v.min_range);
-    response->set_max_range(v.max_range);
+    response->set_id(info.id);
+    response->set_label(info.label);
+    response->set_name(info.name);
+    //response->set_allocated_type(&info.type); // TODO - fix why I cant set this
+    response->set_min_range(info.min_range);
+    response->set_max_range(info.max_range);
     return grpc::Status::OK;
 }
 
@@ -584,12 +567,12 @@ grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*conte
                                                     const sushi_rpc::ParameterIdentifier* request,
                                                     sushi_rpc::GenericFloatValue* response)
 {
-    auto value = _controller->get_parameter_value(request->parameter_id(), request->processor_id());
-    if (!value.has_value())
+    auto [status, value] = _controller->get_parameter_value(request->parameter_id(), request->processor_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(value.value());
+    response->set_value(value);
     return grpc::Status::OK;
 }
 
@@ -597,12 +580,12 @@ grpc::Status SushiControlService::GetParameterValueAsString(grpc::ServerContext*
                                                             const sushi_rpc::ParameterIdentifier* request,
                                                             sushi_rpc::GenericStringValue* response)
 {
-    auto value = _controller->get_parameter_value_as_string(request->parameter_id(), request->processor_id());
-    if (!value.has_value())
+    auto [status, value] = _controller->get_parameter_value_as_string(request->parameter_id(), request->processor_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(value.value());
+    response->set_value(value);
     return grpc::Status::OK;
 }
 
@@ -610,12 +593,12 @@ grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*
                                                          const sushi_rpc::ParameterIdentifier* request,
                                                          sushi_rpc::GenericStringValue* response)
 {
-    auto value = _controller->get_string_property_value(request->parameter_id(), request->processor_id());
-    if (!value.has_value())
+    auto [status, value] = _controller->get_string_property_value(request->parameter_id(), request->processor_id());
+    if (status != sushi::ext::ControlStatus::OK)
     {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, nullptr);
+        return to_grpc_status(status);
     }
-    response->set_value(value.value());
+    response->set_value(value);
     return grpc::Status::OK;
 }
 
