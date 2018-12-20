@@ -464,17 +464,57 @@ grpc::Status SushiControlService::SetProcessorBypassState(grpc::ServerContext* /
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetProcessorProgram(grpc::ServerContext* /*context*/,
-                                                      const sushi_rpc::ProcessorIdentifier* request,
-                                                      sushi_rpc::ProcessorProgram* response)
+grpc::Status SushiControlService::GetProcessorCurrentProgram(grpc::ServerContext* /*context*/,
+                                                             const sushi_rpc::ProcessorIdentifier* request,
+                                                             sushi_rpc::ProgramIdentifier* response)
 {
-    auto [status, program] = _controller->get_processor_program(request->id());
+    auto [status, program] = _controller->get_processor_current_program(request->id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
     response->set_program(program);
     return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorCurrentProgramName(grpc::ServerContext* /*context*/,
+                                                                 const sushi_rpc::ProcessorIdentifier* request,
+                                                                 sushi_rpc::GenericStringValue* response)
+{
+    auto [status, program] = _controller->get_processor_current_program_name(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(program);
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorProgramName(grpc::ServerContext* /*context*/,
+                                                          const sushi_rpc::ProcessorProgramIdentifier* request,
+                                                          sushi_rpc::GenericStringValue* response)
+{
+    auto [status, program] = _controller->get_processor_program_name(request->processor().id(), request->program());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(program);
+    return grpc::Status::OK;
+}
+
+grpc::Status SushiControlService::GetProcessorPrograms(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::ProcessorIdentifier* request,
+                                                       sushi_rpc::ProgramInfoList* response)
+{
+    auto [status, programs] = _controller->get_processor_programs(request->id());
+    for (auto& program : programs)
+    {
+        auto info = response->add_programs();
+        info->mutable_id()->set_program(program.id);
+        info->set_name(program.name);
+    }
+    return to_grpc_status(status);
 }
 
 grpc::Status SushiControlService::SetProcessorProgram(grpc::ServerContext* /*context*/,

@@ -51,26 +51,32 @@ service SushiController {
     // list requests left out for now
 
     // Processor control
-    rpc GetProcessorId(GenericStringValue) returns (ProcessorIdentifier) {}
-    rpc GetProcessorLabel(ProcessorIdentifier) returns (GenericStringValue) {}
-    rpc GetProcessorName(ProcessorIdentifier) returns (GenericStringValue) {}
-    rpc GetProcessorInfo(ProcessorIdentifier) returns (ProcessorInfo) {}
-    rpc GetProcessorBypassState(ProcessorIdentifier) returns (GenericBoolValue) {}
-    rpc SetProcessorBypassState(ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
-    rpc GetProcessorProgram(ProcessorIdentifier) returns (ProcessorProgram) {}
-    rpc SetProcessorProgram(ProcessorProgramSetRequest) returns (GenericVoidValue) {}
-    rpc GetProcessorParameters(ProcessorIdentifier) returns (ParameterInfoList) {}
+    rpc GetProcessorId (GenericStringValue) returns (ProcessorIdentifier) {}
+    rpc GetProcessorLabel (ProcessorIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorName (ProcessorIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorInfo (ProcessorIdentifier) returns (ProcessorInfo) {}
+    rpc GetProcessorBypassState (ProcessorIdentifier) returns (GenericBoolValue) {}
+    rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorCurrentProgram (ProcessorIdentifier) returns (ProgramIdentifier) {}
+    rpc GetProcessorCurrentProgramName (ProcessorIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorProgramName (ProcessorProgramIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorPrograms (ProcessorIdentifier) returns (ProgramInfoList) {}
+    rpc SetProcessorProgram (ProcessorProgramSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorParameters (ProcessorIdentifier) returns (ParameterInfoList) {}
     // list requests left out
 
     // Parameter control
-    rpc GetParameterId(ParameterIdRequest) returns (ParameterIdentifier) {}
-    rpc GetParameterLabel(ParameterIdentifier) returns (GenericStringValue) {}
-    rpc GetParameterName(ParameterIdentifier) returns (GenericStringValue) {}
-    rpc GetParameterInfo(ParameterIdentifier) returns (ParameterInfo) {}
+    rpc GetParameterId (ParameterIdRequest) returns (ParameterIdentifier) {}
+    rpc GetParameterLabel (ParameterIdentifier) returns (GenericStringValue) {}
+    rpc GetParameterName (ParameterIdentifier) returns (GenericStringValue) {}
+    rpc GetParameterUnit (ParameterIdentifier) returns (GenericStringValue) {}
+    rpc GetParameterInfo (ParameterIdentifier) returns (ParameterInfo) {}
     rpc GetParameterValue(ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueNormalised(ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString(ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetStringPropertyValue(ParameterIdentifier) returns (GenericStringValue) {}
     rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetParameterValueNormalised(ParameterSetRequest) returns (GenericVoidValue) {}
     rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
 }
 
@@ -131,7 +137,6 @@ message ParameterType {
     }
     Type type = 1;
 }
-
 
 /* Messages */
 
@@ -207,19 +212,34 @@ message ProcessorInfo {
     string label = 2;
     string name = 3;
     int32  parameter_count = 4;
+    int32  program_count = 5;
 }
 
 message ProcessorInfoList {
     repeated ProcessorInfo processors = 1;
 }
 
-message ProcessorProgram {
+message ProgramIdentifier {
     int32 program = 1;
+}
+
+message ProcessorProgramIdentifier {
+    ProcessorIdentifier processor = 1;
+    int32 program = 2;
+}
+
+message ProgramInfo {
+    ProgramIdentifier id = 1;
+    string name = 2;
+}
+
+message ProgramInfoList {
+    repeated ProgramInfo programs = 1;
 }
 
 message ProcessorProgramSetRequest {
     ProcessorIdentifier processor = 1;
-    ProcessorProgram program = 2;
+    ProgramIdentifier program = 2;
 }
 
 message ProcessorBypassStateSetRequest {
@@ -232,8 +252,10 @@ message ParameterInfo {
     ParameterType  type = 2;
     string label = 3;
     string name = 4;
-    float  min_range = 5;
-    float  max_range = 6;
+    string unit = 5;
+    bool   automatable = 6;
+    float  min_range = 7;
+    float  max_range = 8;
 }
 
 message ParameterInfoList {
