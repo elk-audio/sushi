@@ -6,6 +6,7 @@
 
 #include "control_interface.h"
 #include "base_event_dispatcher.h"
+#include "transport.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -64,7 +65,7 @@ public:
     std::pair<ext::ControlStatus, int>                  get_processor_current_program(int processor_id) const override;
     std::pair<ext::ControlStatus, std::string>          get_processor_current_program_name(int processor_id) const override;
     std::pair<ext::ControlStatus, std::string>          get_processor_program_name(int processor_id, int program_id) const override;
-    std::pair<ext::ControlStatus, std::vector<ext::ProgramInfo>> get_processor_programs(int processor_id) const override ;
+    std::pair<ext::ControlStatus, std::vector<std::string>> get_processor_programs(int processor_id) const override ;
     ext::ControlStatus                                  set_processor_program(int processor_id, int program_id) override;
     std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_processor_parameters(int processor_id) const override;
 
@@ -86,6 +87,7 @@ protected:
 
     engine::BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
+    engine::Transport* _transport;
 };
 
 } //namespace sushi

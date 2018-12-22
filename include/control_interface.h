@@ -151,7 +151,7 @@ public:
     virtual std::pair<ControlStatus, int>              get_processor_current_program(int processor_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_processor_current_program_name(int processor_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_processor_program_name(int processor_id, int program_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<ProgramInfo>>   get_processor_programs(int processor_id) const = 0;
+    virtual std::pair<ControlStatus, std::vector<std::string>>   get_processor_programs(int processor_id) const = 0;
     virtual ControlStatus                              set_processor_program(int processor_id, int program_id)= 0;
     virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_processor_parameters(int processor_id) const = 0;
 

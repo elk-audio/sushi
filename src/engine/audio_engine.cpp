@@ -618,6 +618,16 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
     return _deregister_processor(processor->name());
 }
 
+const Processor*AudioEngine::processor(ObjectId processor_id) const
+{
+    /* TODO - use a better way of storing processors and return a shared pointer*/
+    if (processor_id >= _realtime_processors.size())
+    {
+        return nullptr;
+    }
+    return _realtime_processors[processor_id];
+}
+
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
 {
     auto status = _register_processor(track, name);

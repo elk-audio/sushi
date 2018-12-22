@@ -193,6 +193,8 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual const Processor* processor(ObjectId /*processor_id*/) const {return nullptr;}
+
     virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
     {
         static std::map<std::string, std::unique_ptr<Processor>> tmp;
@@ -211,6 +213,11 @@ public:
     }
 
     virtual sushi::ext::SushiControl* controller()
+    {
+        return nullptr;
+    }
+
+    virtual sushi::engine::Transport* transport()
     {
         return nullptr;
     }

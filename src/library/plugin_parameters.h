@@ -17,6 +17,9 @@
 #include "library/id_generator.h"
 #include "library/types.h"
 
+
+namespace sushi {
+
 enum class ParameterType
 {
     FLOAT,
@@ -26,9 +29,6 @@ enum class ParameterType
     STRING,
     DATA,
 };
-
-namespace sushi {
-
 
 /**
  * @brief Base class for describing plugin parameters

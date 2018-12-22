@@ -508,11 +508,12 @@ grpc::Status SushiControlService::GetProcessorPrograms(grpc::ServerContext* /*co
                                                        sushi_rpc::ProgramInfoList* response)
 {
     auto [status, programs] = _controller->get_processor_programs(request->id());
+    int id = 0;
     for (auto& program : programs)
     {
         auto info = response->add_programs();
-        info->mutable_id()->set_program(program.id);
-        info->set_name(program.name);
+        info->set_name(program);
+        info->mutable_id()->set_program(id++);
     }
     return to_grpc_status(status);
 }
@@ -552,7 +553,6 @@ grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*
     {
         return to_grpc_status(status,  "No processor with that name");
     }
-    // TODO - fix return and request types
     response->set_parameter_id(id);
     return grpc::Status::OK;
 }
