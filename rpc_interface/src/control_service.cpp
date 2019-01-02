@@ -525,7 +525,7 @@ grpc::Status SushiControlService::SetProcessorProgram(grpc::ServerContext* /*con
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext*context,
+grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext* /*context*/,
                                                          const sushi_rpc::ProcessorIdentifier* request,
                                                          sushi_rpc::ParameterInfoList* response)
 {

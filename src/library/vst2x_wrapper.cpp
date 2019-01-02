@@ -58,6 +58,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     // Get plugin can do:s
     int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
     _can_do_soft_bypass = (bypass == 1);
+    _number_of_programs = _plugin_handle->numPrograms;
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -136,6 +137,80 @@ void Vst2xWrapper::set_bypassed(bool bypassed)
         _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, NULL, 0.0f);
     }
 }
+
+std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId parameter_id) const
+{
+    if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
+    {
+        float value  = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(parameter_id));
+        return {ProcessorReturnCode::OK, value};
+    }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+}
+
+std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value_normalised(ObjectId parameter_id) const
+{
+    return this->parameter_value(parameter_id);
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::parameter_value_formatted(ObjectId parameter_id) const
+{
+    if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
+    {
+        char buffer[kVstMaxParamStrLen] = "";
+        _vst_dispatcher(effGetParamDisplay, 0, static_cast<VstInt32>(parameter_id), buffer, 0);
+        return {ProcessorReturnCode::OK, buffer};
+    }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+}
+
+int Vst2xWrapper::current_program() const
+{
+    if (this->supports_programs())
+    {
+        return _vst_dispatcher(effGetProgram, 0, 0, nullptr, 0);
+    }
+    return 0;
+}
+
+std::string Vst2xWrapper::current_program_name() const
+{
+    if (this->supports_programs())
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
+        return std::string(buffer);
+    }
+    return "";
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int program) const
+{
+    if (this->supports_programs())
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
+        return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
+    }
+    return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
+}
+
+std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_program_names() const
+{
+    if (!this->supports_programs())
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
+    }
+    std::vector<std::string> programs;
+    for (int i = 0; i < _number_of_programs; ++i)
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        _vst_dispatcher(effGetProgramNameIndexed, 0, i, buffer, 0);
+        programs.push_back(buffer);
+    }
+    return {ProcessorReturnCode::OK, programs};
+}
+
 
 void Vst2xWrapper::_cleanup()
 {
@@ -257,7 +332,7 @@ VstTimeInfo* Vst2xWrapper::time_info()
 
     _time_info.samplePos          = transport->current_samples();
     _time_info.sampleRate         = _sample_rate;
-    _time_info.nanoSeconds        = std::chrono::nanoseconds(transport->current_process_time()).count();
+    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
     _time_info.ppqPos             = transport->current_beats();
     _time_info.tempo              = transport->current_tempo();
     _time_info.barStartPos        = transport->current_bar_start_beats();
