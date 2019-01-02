@@ -3,6 +3,64 @@
 
 namespace sushi_rpc {
 
+/* Convenience conversion functions between sushi enums and their respective grpc implementations */
+inline sushi_rpc::ParameterType::Type to_grpc(const sushi::ext::ParameterType type)
+{
+    switch (type)
+    {
+        case sushi::ext::ParameterType::FLOAT:            return sushi_rpc::ParameterType::FLOAT;
+        case sushi::ext::ParameterType::INT:              return sushi_rpc::ParameterType::INT;
+        case sushi::ext::ParameterType::BOOL:             return sushi_rpc::ParameterType::BOOL;
+        case sushi::ext::ParameterType::STRING_PROPERTY:  return sushi_rpc::ParameterType::STRING_PROPERTY;;
+        case sushi::ext::ParameterType::DATA_PROPERTY:    return sushi_rpc::ParameterType::DATA_PROPERTY;;
+        default:                                          return sushi_rpc::ParameterType::FLOAT;
+    }
+}
+
+inline sushi_rpc::PlayingMode::Mode to_grpc(const sushi::ext::PlayingMode mode)
+{
+    switch (mode)
+    {
+        case sushi::ext::PlayingMode::STOPPED:      return sushi_rpc::PlayingMode::STOPPED;
+        case sushi::ext::PlayingMode::PLAYING:      return sushi_rpc::PlayingMode::PLAYING;
+        case sushi::ext::PlayingMode::RECORDING:    return sushi_rpc::PlayingMode::RECORDING;
+        default:                                    return sushi_rpc::PlayingMode::PLAYING;
+    }
+}
+
+inline sushi::ext::PlayingMode to_sushi_ext(const sushi_rpc::PlayingMode::Mode mode)
+{
+    switch (mode)
+    {
+        case sushi_rpc::PlayingMode::STOPPED:   return sushi::ext::PlayingMode::STOPPED;
+        case sushi_rpc::PlayingMode::PLAYING:   return sushi::ext::PlayingMode::PLAYING;
+        case sushi_rpc::PlayingMode::RECORDING: return sushi::ext::PlayingMode::RECORDING;
+        default:                                return sushi::ext::PlayingMode::PLAYING;
+    }
+}
+
+inline sushi_rpc::SyncMode::Mode to_grpc(const sushi::ext::SyncMode mode)
+{
+    switch (mode)
+    {
+        case sushi::ext::SyncMode::INTERNAL: return sushi_rpc::SyncMode::INTERNAL;
+        case sushi::ext::SyncMode::MIDI:     return sushi_rpc::SyncMode::MIDI;
+        case sushi::ext::SyncMode::LINK:     return sushi_rpc::SyncMode::LINK;
+        default:                             return sushi_rpc::SyncMode::INTERNAL;
+    }
+}
+
+inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
+{
+    switch (mode)
+    {
+        case sushi_rpc::SyncMode::INTERNAL: return sushi::ext::SyncMode::INTERNAL;
+        case sushi_rpc::SyncMode::MIDI:     return sushi::ext::SyncMode::MIDI;
+        case sushi_rpc::SyncMode::LINK:     return sushi::ext::SyncMode::LINK;
+        default:                            return sushi::ext::SyncMode::INTERNAL;
+    }
+}
+
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
     switch (status)
@@ -39,21 +97,7 @@ grpc::Status SushiControlService::GetPlayingMode(grpc::ServerContext* /*context*
                                                  const sushi_rpc::GenericVoidValue* /*request*/,
                                                  sushi_rpc::PlayingMode* response)
 {
-    auto mode = _controller->get_playing_mode();
-    switch (mode)
-    {
-        case sushi::ext::PlayingMode::STOPPED:
-            response->set_mode(PlayingMode_Mode_STOPPED);
-            break;
-
-        case sushi::ext::PlayingMode::PLAYING:
-            response->set_mode(PlayingMode_Mode_PLAYING);
-            break;
-
-        case sushi::ext::PlayingMode::RECORDING:
-            response->set_mode(PlayingMode_Mode_RECORDING);
-            break;
-    }
+    response->set_mode(to_grpc(_controller->get_playing_mode()));
     return grpc::Status::OK;
 }
 
@@ -61,23 +105,7 @@ grpc::Status SushiControlService::SetPlayingMode(grpc::ServerContext* /*context*
                                                  const sushi_rpc::PlayingMode* request,
                                                  sushi_rpc::GenericVoidValue* /*response*/)
 {
-    switch (request->mode())
-    {
-        case sushi_rpc::PlayingMode::STOPPED:
-            _controller->set_playing_mode(sushi::ext::PlayingMode::STOPPED);
-            break;
-
-        case sushi_rpc::PlayingMode::PLAYING:
-            _controller->set_playing_mode(sushi::ext::PlayingMode::PLAYING);
-            break;
-
-        case sushi_rpc::PlayingMode::RECORDING:
-            _controller->set_playing_mode(sushi::ext::PlayingMode::RECORDING);
-            break;
-
-        default:
-            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, nullptr);
-    }
+    _controller->set_playing_mode(to_sushi_ext(request->mode()));
     return grpc::Status();
 }
 
@@ -85,21 +113,7 @@ grpc::Status SushiControlService::GetSyncMode(grpc::ServerContext* /*context*/,
                                               const sushi_rpc::GenericVoidValue* /*request*/,
                                               sushi_rpc::SyncMode* response)
 {
-    auto mode = _controller->get_sync_mode();
-    switch (mode)
-    {
-        case sushi::ext::SyncMode::INTERNAL:
-            response->set_mode(SyncMode_Mode_INTERNAL);
-            break;
-
-        case sushi::ext::SyncMode::MIDI:
-            response->set_mode(SyncMode_Mode_MIDI);
-            break;
-
-        case sushi::ext::SyncMode::LINK:
-            response->set_mode(SyncMode_Mode_LINK);
-            break;
-    }
+    response->set_mode(to_grpc(_controller->get_sync_mode()));
     return grpc::Status::OK;
 }
 
@@ -107,24 +121,9 @@ grpc::Status SushiControlService::SetSyncMode(grpc::ServerContext* /*context*/,
                                               const sushi_rpc::SyncMode*request,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
-    switch (request->mode())
-    {
-        case sushi_rpc::SyncMode::INTERNAL:
-            _controller->set_sync_mode(sushi::ext::SyncMode::INTERNAL);
-            break;
-
-        case sushi_rpc::SyncMode::MIDI:
-            _controller->set_sync_mode(sushi::ext::SyncMode::MIDI);
-            break;
-
-        case sushi_rpc::SyncMode::LINK:
-            _controller->set_sync_mode(sushi::ext::SyncMode::LINK);
-            break;
-
-        default:
-            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, nullptr);
-    }
-    return grpc::Status();
+    _controller->set_sync_mode(to_sushi_ext(request->mode()));
+    // TODO - set_sync_mode should return a status, not void
+    return grpc::Status::OK;
 }
 
 grpc::Status SushiControlService::GetTempo(grpc::ServerContext* /*context*/,
@@ -381,7 +380,7 @@ grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*cont
         info->set_id(parameter.id);
         info->set_label(parameter.label);
         info->set_name(parameter.name);
-        //info->set_allocated_type(&v.type); // TODO - fix why I cant set this
+        info->mutable_type()->set_type(to_grpc(parameter.type));
         info->set_min_range(parameter.min_range);
         info->set_max_range(parameter.max_range);
     }
@@ -537,7 +536,7 @@ grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext*con
         info->set_id(parameter.id);
         info->set_label(parameter.label);
         info->set_name(parameter.name);
-        //info->set_allocated_type(&v.type); // TODO - fix why I cant set this
+        info->mutable_type()->set_type(to_grpc(parameter.type));
         info->set_min_range(parameter.min_range);
         info->set_max_range(parameter.max_range);
     }
@@ -595,7 +594,7 @@ grpc::Status SushiControlService::GetParameterInfo(::grpc::ServerContext* /*cont
     response->set_id(info.id);
     response->set_label(info.label);
     response->set_name(info.name);
-    //response->set_allocated_type(&info.type); // TODO - fix why I cant set this
+    response->mutable_type()->set_type(to_grpc(info.type));
     response->set_min_range(info.min_range);
     response->set_max_range(info.max_range);
     return grpc::Status::OK;
@@ -607,7 +606,7 @@ grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*conte
                                                     const sushi_rpc::ParameterIdentifier* request,
                                                     sushi_rpc::GenericFloatValue* response)
 {
-    auto [status, value] = _controller->get_parameter_value(request->parameter_id(), request->processor_id());
+    auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
@@ -620,7 +619,7 @@ grpc::Status SushiControlService::GetParameterValueAsString(grpc::ServerContext*
                                                             const sushi_rpc::ParameterIdentifier* request,
                                                             sushi_rpc::GenericStringValue* response)
 {
-    auto [status, value] = _controller->get_parameter_value_as_string(request->parameter_id(), request->processor_id());
+    auto [status, value] = _controller->get_parameter_value_as_string(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
@@ -633,7 +632,7 @@ grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*
                                                          const sushi_rpc::ParameterIdentifier* request,
                                                          sushi_rpc::GenericStringValue* response)
 {
-    auto [status, value] = _controller->get_string_property_value(request->parameter_id(), request->processor_id());
+    auto [status, value] = _controller->get_string_property_value(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);

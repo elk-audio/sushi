@@ -11,7 +11,7 @@ namespace sushi {
 
 /* Convenience conversion functions between external and internal
  * enums and data structs */
-inline ext::ParameterType to_ext(const sushi::ParameterType type)
+inline ext::ParameterType to_external(const sushi::ParameterType type)
 {
     switch (type)
     {
@@ -25,7 +25,7 @@ inline ext::ParameterType to_ext(const sushi::ParameterType type)
     }
 }
 
-inline ext::PlayingMode to_ext(const sushi::PlayingMode mode)
+inline ext::PlayingMode to_external(const sushi::PlayingMode mode)
 {
     switch (mode)
     {
@@ -36,7 +36,7 @@ inline ext::PlayingMode to_ext(const sushi::PlayingMode mode)
     }
 }
 
-inline sushi::PlayingMode to_int(const ext::PlayingMode mode)
+inline sushi::PlayingMode to_internal(const ext::PlayingMode mode)
 {
     switch (mode)
     {
@@ -47,7 +47,7 @@ inline sushi::PlayingMode to_int(const ext::PlayingMode mode)
     }
 }
 
-inline ext::SyncMode to_ext(const sushi::SyncMode mode)
+inline ext::SyncMode to_external(const sushi::SyncMode mode)
 {
     switch (mode)
     {
@@ -58,7 +58,7 @@ inline ext::SyncMode to_ext(const sushi::SyncMode mode)
     }
 }
 
-inline sushi::SyncMode to_int(const ext::SyncMode mode)
+inline sushi::SyncMode to_internal(const ext::SyncMode mode)
 {
     switch (mode)
     {
@@ -69,22 +69,22 @@ inline sushi::SyncMode to_int(const ext::SyncMode mode)
     }
 }
 
-inline ext::TimeSignature to_ext(sushi::TimeSignature internal)
+inline ext::TimeSignature to_external(sushi::TimeSignature internal)
 {
     return {internal.numerator, internal.denominator};
 }
 
-inline sushi::TimeSignature to_int(ext::TimeSignature ext)
+inline sushi::TimeSignature to_internal(ext::TimeSignature ext)
 {
     return {ext.numerator, ext.denominator};
 }
 
-/*inline ext::CpuTimings to_ext(sushi::performance::ProcessTimings& internal)
+/*inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 {
     return {internal.avg_case, internal.min_case, internal.max_case};
 }
 
-inline sushi::performance::ProcessTimings to_int(ext::CpuTimings& ext)
+inline sushi::performance::ProcessTimings to_internal(ext::CpuTimings& ext)
 {
     return {ext.avg, ext.min, ext.min};
 }*/
@@ -108,25 +108,25 @@ float Controller::get_samplerate() const
 ext::PlayingMode Controller::get_playing_mode() const
 {
     MIND_LOG_INFO("get_playing_mode called");
-    return to_ext(_transport->playing_mode());
+    return to_external(_transport->playing_mode());
 }
 
 void Controller::set_playing_mode(ext::PlayingMode playing_mode)
 {
     MIND_LOG_INFO("set_playing_mode called");
-    auto event = new SetEnginePlayingModeStateEvent(to_int(playing_mode), IMMEDIATE_PROCESS);
+    auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
 
 ext::SyncMode Controller::get_sync_mode() const
 {
     MIND_LOG_INFO("get_sync_mode called");
-    return to_ext(_transport->sync_mode());
+    return to_external(_transport->sync_mode());
 }
 
 void Controller::set_sync_mode(ext::SyncMode sync_mode)
 {
-    auto event = new SetEngineSyncModeEvent(to_int(sync_mode), IMMEDIATE_PROCESS);
+    auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
 
@@ -147,13 +147,13 @@ ext::ControlStatus Controller::set_tempo(float tempo)
 ext::TimeSignature Controller::get_time_signature() const
 {
     MIND_LOG_INFO("get_time_signature called");
-    return to_ext(_transport->current_time_signature());
+    return to_external(_transport->current_time_signature());
 }
 
 ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
 {
     MIND_LOG_INFO("set_time_signature called");
-    auto event = new SetEngineTimeSignatureEvent(to_int(signature), IMMEDIATE_PROCESS);
+    auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
@@ -305,7 +305,6 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
     {
         if (track->id() == track_id)
         {
-
             info.label = track->label();
             info.name = track->name();
             info.id = track->id();
@@ -603,7 +602,7 @@ std::pair<ext::ControlStatus, ext::ParameterType> Controller::get_parameter_type
     auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
     if (descr != nullptr)
     {
-        return {ext::ControlStatus::OK, to_ext(descr->type())};
+        return {ext::ControlStatus::OK, to_external(descr->type())};
     }
     return {ext::ControlStatus::NOT_FOUND, ext::ParameterType::FLOAT};
 }
@@ -622,7 +621,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.label = descr->label();
             info.name = descr->name();
             info.unit = ""; // TODO - implement
-            info.type = to_ext(descr->type());
+            info.type = to_external(descr->type());
             info.min_range = 0; // TODO - implement range
             info.max_range = 1;
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
@@ -633,7 +632,6 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
         }
     }
     return {ext::ControlStatus::NOT_FOUND, info};
-
 }
 
 std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int processor_id, int parameter_id) const
