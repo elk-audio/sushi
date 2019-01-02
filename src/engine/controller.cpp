@@ -303,7 +303,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
     {
-        if (track->id() == track_id)
+        if (static_cast<int>(track->id()) == track_id)
         {
             info.label = track->label();
             info.name = track->name();
@@ -326,7 +326,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_t
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
     {
-        if (track->id() == track_id)
+        if (static_cast<int>(track->id()) == track_id)
         {
             std::vector<ext::ProcessorInfo> infos;
             const auto& procs = track->process_chain();
@@ -350,7 +350,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
     {
-        if (track->id() == track_id)
+        if (static_cast<int>(track->id()) == track_id)
         {
             std::vector<ext::ParameterInfo> infos;
             const auto& params = track->all_parameters();
@@ -505,7 +505,7 @@ Controller::get_processor_parameters(int processor_id) const
     const auto& procs = _engine->all_processors();
     for (const auto& proc : procs)
     {
-        if (proc.second->id() == processor_id)
+        if (static_cast<int>(proc.second->id()) == processor_id)
         {
             std::vector<ext::ParameterInfo> infos;
             const auto& params = proc.second->all_parameters();
