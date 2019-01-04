@@ -362,8 +362,8 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
                 info.name = param->name();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
-                info.min_range = 0;
-                info.max_range = 1;
+                info.min_range = param->min_range();
+                info.max_range = param->max_range();
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -518,8 +518,8 @@ Controller::get_processor_parameters(int processor_id) const
                 info.name = param->name();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
-                info.min_range = 0;
-                info.max_range = 1;
+                info.min_range = param->min_range();
+                info.max_range = param->max_range();
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -624,8 +624,8 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.name = descr->name();
             info.unit = ""; // TODO - implement
             info.type = to_external(descr->type());
-            info.min_range = 0; // TODO - implement range
-            info.max_range = 1;
+            info.min_range = descr->min_range();
+            info.max_range = descr->max_range();
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
                                 descr->type() == ParameterType::INT   ||
                                 descr->type() == ParameterType::BOOL  ||

@@ -73,6 +73,18 @@ public:
      */
     virtual bool automatable() const {return true;}
 
+    /**
+     * @brief Returns the maximum value of the parameter
+     * @return A float with the maximum representation of the parameter
+     */
+    virtual float min_range() const {return 0;};
+
+    /**
+     * @brief Returns the minimum value of the parameter
+     * @return A float with the minimum representation of the parameter
+     */
+    virtual float max_range() const {return 1;};
+
 protected:
     std::string _label;
     std::string _name;
@@ -153,6 +165,9 @@ public:
                                         _max(range_max) {}
 
     ~TypedParameterDescriptor() {};
+
+    float min_range() const override {return static_cast<float>(_min);}
+    float max_range() const override {return static_cast<float>(_max);}
 
     T min_value() const {return _min;}
     T max_value() const {return _max;}
@@ -310,9 +325,27 @@ public:
         return &_float_value;
     }
 
-    ParameterType type() {return _float_value.type();}
+    const BoolParameterValue* bool_parameter_value() const
+    {
+        assert(_bool_value.type() == ParameterType::BOOL);
+        return &_bool_value;
+    }
 
-    ObjectId id() {return _bool_value.descriptor()->id();}
+    const IntParameterValue* int_parameter_value() const
+    {
+        assert(_int_value.type() == ParameterType::INT);
+        return &_int_value;
+    }
+
+    const FloatParameterValue* float_parameter_value() const
+    {
+        assert(_float_value.type() == ParameterType::FLOAT);
+        return &_float_value;
+    }
+
+    ParameterType type() const {return _float_value.type();}
+
+    ObjectId id() const {return _bool_value.descriptor()->id();}
 
     /* Factory functions for construction */
     static ParameterStorage make_bool_parameter_storage(ParameterDescriptor* descriptor,
