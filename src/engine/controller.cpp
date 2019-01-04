@@ -101,26 +101,26 @@ Controller::~Controller() = default;
 
 float Controller::get_samplerate() const
 {
-    MIND_LOG_INFO("get_samplerate called");
+    MIND_LOG_DEBUG("get_samplerate called");
     return _engine->sample_rate();
 }
 
 ext::PlayingMode Controller::get_playing_mode() const
 {
-    MIND_LOG_INFO("get_playing_mode called");
+    MIND_LOG_DEBUG("get_playing_mode called");
     return to_external(_transport->playing_mode());
 }
 
 void Controller::set_playing_mode(ext::PlayingMode playing_mode)
 {
-    MIND_LOG_INFO("set_playing_mode called");
+    MIND_LOG_DEBUG("set_playing_mode called");
     auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
 
 ext::SyncMode Controller::get_sync_mode() const
 {
-    MIND_LOG_INFO("get_sync_mode called");
+    MIND_LOG_DEBUG("get_sync_mode called");
     return to_external(_transport->sync_mode());
 }
 
@@ -132,13 +132,13 @@ void Controller::set_sync_mode(ext::SyncMode sync_mode)
 
 float Controller::get_tempo() const
 {
-    MIND_LOG_INFO("get_tempo called");
+    MIND_LOG_DEBUG("get_tempo called");
     return _transport->current_tempo();
 }
 
 ext::ControlStatus Controller::set_tempo(float tempo)
 {
-    MIND_LOG_INFO("set_tempo called, returning ");
+    MIND_LOG_DEBUG("set_tempo called with tempo {}", tempo);
     auto event = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
@@ -146,13 +146,13 @@ ext::ControlStatus Controller::set_tempo(float tempo)
 
 ext::TimeSignature Controller::get_time_signature() const
 {
-    MIND_LOG_INFO("get_time_signature called");
+    MIND_LOG_DEBUG("get_time_signature called");
     return to_external(_transport->current_time_signature());
 }
 
 ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
 {
-    MIND_LOG_INFO("set_time_signature called");
+    MIND_LOG_DEBUG("set_time_signature called with signature {}/{}", signature.numerator, signature.denominator);
     auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
@@ -160,18 +160,19 @@ ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
 
 bool Controller::get_timing_statistics_enabled()
 {
-    MIND_LOG_INFO("get_timing_statistics_enabled called");
+    MIND_LOG_DEBUG("get_timing_statistics_enabled called");
     return true;
 }
 
 void Controller::set_timing_statistics_enabled(bool enabled) const
 {
-    MIND_LOG_INFO("set_timing_statistics_enabled called");
+    MIND_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
     _engine->enable_timing_statistics(enabled);
 }
 
 std::vector<ext::TrackInfo> Controller::get_tracks() const
 {
+    MIND_LOG_DEBUG("get_tracks called");
     auto& tracks = _engine->all_tracks();
     std::vector<ext::TrackInfo> returns;
     for (const auto& t : tracks)
@@ -192,7 +193,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
 
 ext::ControlStatus Controller::send_note_on(int track_id, int note, float velocity)
 {
-    MIND_LOG_INFO("send_note_on called");
+    MIND_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
                                    note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -201,7 +202,7 @@ ext::ControlStatus Controller::send_note_on(int track_id, int note, float veloci
 
 ext::ControlStatus Controller::send_note_off(int track_id, int note, float velocity)
 {
-    MIND_LOG_INFO("send_note_off called, ");
+    MIND_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
                                    note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -209,7 +210,7 @@ ext::ControlStatus Controller::send_note_off(int track_id, int note, float veloc
 
 ext::ControlStatus Controller::send_note_aftertouch(int track_id, int note, float value)
 {
-    MIND_LOG_INFO("send_note_aftertouch called,");
+    MIND_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -217,7 +218,7 @@ ext::ControlStatus Controller::send_note_aftertouch(int track_id, int note, floa
 
 ext::ControlStatus Controller::send_aftertouch(int track_id, float value)
 {
-    MIND_LOG_INFO("send_aftertouch called");
+    MIND_LOG_DEBUG("send_aftertouch called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -226,7 +227,7 @@ ext::ControlStatus Controller::send_aftertouch(int track_id, float value)
 
 ext::ControlStatus Controller::send_pitch_bend(int track_id, float value)
 {
-    MIND_LOG_INFO("send_pitch_bend called");
+    MIND_LOG_DEBUG("send_pitch_bend called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, static_cast<ObjectId>(track_id),
                                    value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -235,7 +236,7 @@ ext::ControlStatus Controller::send_pitch_bend(int track_id, float value)
 
 ext::ControlStatus Controller::send_modulation(int track_id, float value)
 {
-    MIND_LOG_INFO("send_modulation called");
+    MIND_LOG_DEBUG("send_modulation called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, static_cast<ObjectId>(track_id),
                                    value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -244,61 +245,61 @@ ext::ControlStatus Controller::send_modulation(int track_id, float value)
 
 ext::CpuTimings Controller::get_engine_timings() const
 {
-    MIND_LOG_INFO("get_engine_timings called, returning ");
+    MIND_LOG_DEBUG("get_engine_timings called, returning ");
     return {0.1, 0.2, 05};
 }
 
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_track_timings(int /*track_id*/) const
 {
-    MIND_LOG_INFO("get_track_timings called, returning ");
+    MIND_LOG_DEBUG("get_track_timings called, returning ");
     return {ext::ControlStatus::OK, ext::CpuTimings{0.05, 0.1, 0.02}};
 }
 
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_processor_timings(int /*processor_id*/) const
 {
-    MIND_LOG_INFO("get_processor_timings called, returning ");
+    MIND_LOG_DEBUG("get_processor_timings called, returning ");
     return {ext::ControlStatus::OK, ext::CpuTimings{0.05, 0.1, 0.02}};
 }
 
 ext::ControlStatus Controller::reset_all_timings()
 {
-    MIND_LOG_INFO("reset_all_timings called, returning ");
+    MIND_LOG_DEBUG("reset_all_timings called, returning ");
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::reset_track_timings(int /*track_id*/)
 {
-    MIND_LOG_INFO("reset_track_timings called, returning ");
+    MIND_LOG_DEBUG("reset_track_timings called, returning ");
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::reset_processor_timings(int /*processor_id*/)
 {
-    MIND_LOG_INFO("reset_processor_timings called, returning ");
+    MIND_LOG_DEBUG("reset_processor_timings called, returning ");
     return ext::ControlStatus::OK;
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_track_id(const std::string& track_name) const
 {
-    MIND_LOG_INFO("get_track_id called, returning ");
+    MIND_LOG_DEBUG("get_track_id called with track {}", track_name);
     return this->get_processor_id(track_name);
 }
 
 std::pair<ext::ControlStatus, std::string> Controller::get_track_label(int track_id) const
 {
-    MIND_LOG_INFO("get_track_label called, returning ");
+    MIND_LOG_DEBUG("get_track_label called with track {}", track_id);
     return this->get_processor_label(track_id);
 }
 
 std::pair<ext::ControlStatus, std::string> Controller::get_track_name(int track_id) const
 {
-    MIND_LOG_INFO("get_track_name called");
+    MIND_LOG_DEBUG("get_track_name called with track {}", track_id);
     return this->get_processor_name(track_id);
 }
 
 std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int track_id) const
 {
-    MIND_LOG_INFO("get_track_info called");
+    MIND_LOG_DEBUG("get_track_info called with track {}", track_id);
     ext::TrackInfo info;
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
@@ -321,8 +322,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
 
 std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_track_processors(int track_id) const
 {
-    MIND_LOG_INFO("get_track_processors called for track: {}", track_id);
-
+    MIND_LOG_DEBUG("get_track_processors called for track: {}", track_id);
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
     {
@@ -347,6 +347,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_t
 
 std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_track_parameters(int track_id) const
 {
+    MIND_LOG_DEBUG("get_track_parameters called for track: {}", track_id);
     const auto& tracks = _engine->all_tracks();
     for (const auto& track : tracks)
     {
@@ -373,7 +374,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
 
 std::pair<ext::ControlStatus, int> Controller::get_processor_id(const std::string& processor_name) const
 {
-    MIND_LOG_INFO("get_processor_id called");
+    MIND_LOG_DEBUG("get_processor_id called with processor {}", processor_name);
     auto [status, id] = _engine->processor_id_from_name(processor_name);
     if (status == engine::EngineReturnStatus::OK)
     {
@@ -384,7 +385,7 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_id(const std::strin
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_label(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_label called");
+    MIND_LOG_DEBUG("get_processor_label called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -395,7 +396,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_label(int p
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_name(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_name called, returning ");
+    MIND_LOG_DEBUG("get_processor_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -406,7 +407,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_name(int pr
 
 std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_info called");
+    MIND_LOG_DEBUG("get_processor_info called with processor {}", processor_id);
     ext::ProcessorInfo info;
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
@@ -423,7 +424,7 @@ std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info
 
 std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_bypass_state, returning ");
+    MIND_LOG_DEBUG("get_processor_bypass_state called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -434,13 +435,13 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
 
 ext::ControlStatus Controller::set_processor_bypass_state(int /*processor_id*/, bool /*bypass_enabled*/)
 {
-    MIND_LOG_INFO("set_processor_bypass_state called, returning ");
+    MIND_LOG_DEBUG("set_processor_bypass_state called, returning ");
     return {ext::ControlStatus::OK};
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_current_program called");
+    MIND_LOG_DEBUG("get_processor_current_program called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -451,7 +452,7 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_program_name(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_current_program_name called");
+    MIND_LOG_DEBUG("get_processor_current_program_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -462,7 +463,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_pro
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_program_name(int processor_id, int program_id) const
 {
-    MIND_LOG_INFO("get_processor_program_name called");
+    MIND_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr || processor->supports_programs() == false)
     {
@@ -478,7 +479,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_program_nam
 
 std::pair<ext::ControlStatus, std::vector<std::string>> Controller::get_processor_programs(int processor_id) const
 {
-    MIND_LOG_INFO("get_processor_program_name called");
+    MIND_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr || processor->supports_programs() == false)
     {
@@ -494,7 +495,7 @@ std::pair<ext::ControlStatus, std::vector<std::string>> Controller::get_processo
 
 ext::ControlStatus Controller::set_processor_program(int /*processor_id*/, int /*program_id*/)
 {
-    MIND_LOG_INFO("set_processor_program called, returning ");
+    MIND_LOG_DEBUG("set_processor_program called, returning ");
     // TODO - send an event here if program change is to happen in the rt thread
     return ext::ControlStatus::OK;
 }
@@ -502,6 +503,7 @@ ext::ControlStatus Controller::set_processor_program(int /*processor_id*/, int /
 std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>>
 Controller::get_processor_parameters(int processor_id) const
 {
+    MIND_LOG_DEBUG("get_processor_parameters called with processor {}", processor_id);
     const auto& procs = _engine->all_processors();
     for (const auto& proc : procs)
     {
@@ -526,15 +528,15 @@ Controller::get_processor_parameters(int processor_id) const
     return {ext::ControlStatus::NOT_FOUND, std::vector<ext::ParameterInfo>()};
 }
 
-std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id, const std::string& parameter) const
+std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id, const std::string& parameter_name) const
 {
-    MIND_LOG_INFO("get_parameter_id called, returning ");
+    MIND_LOG_DEBUG("get_parameter_id called with processor {} and parameter {}", processor_id, parameter_name);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, 0};
     }
-    auto descr = processor->parameter_from_name(parameter);
+    auto descr = processor->parameter_from_name(parameter_name);
     if (descr != nullptr)
     {
         return {ext::ControlStatus::OK, descr->id()};
@@ -544,7 +546,7 @@ std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id
 
 std::pair<ext::ControlStatus, std::string> Controller::get_parameter_label(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_label called, returning ");
+    MIND_LOG_DEBUG("get_parameter_label called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -560,7 +562,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_label(int p
 
 std::pair<ext::ControlStatus, std::string> Controller::get_parameter_name(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_name called, returning ");
+    MIND_LOG_DEBUG("get_parameter_name called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -576,7 +578,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_name(int pr
 
 std::pair<ext::ControlStatus, std::string> Controller::get_parameter_unit(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_label called, returning ");
+    MIND_LOG_DEBUG("get_parameter_label called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -593,7 +595,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_unit(int pr
 
 std::pair<ext::ControlStatus, ext::ParameterType> Controller::get_parameter_type(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_type called");
+    MIND_LOG_DEBUG("get_parameter_type called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -609,7 +611,7 @@ std::pair<ext::ControlStatus, ext::ParameterType> Controller::get_parameter_type
 
 std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_info called");
+    MIND_LOG_DEBUG("get_parameter_info called with processor {} and parameter {}", processor_id, parameter_id);
     ext::ParameterInfo info;
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
@@ -636,7 +638,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
 
 std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_value called");
+    MIND_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -651,7 +653,7 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int process
 
 std::pair<ext::ControlStatus, float> Controller::get_parameter_value_normalised(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_value_normalised called");
+    MIND_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -666,7 +668,7 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value_normalised(
 
 std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_string(int processor_id, int parameter_id) const
 {
-    MIND_LOG_INFO("get_parameter_value_as_string called");
+    MIND_LOG_DEBUG("get_parameter_value_as_string called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -681,13 +683,13 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_st
 
 std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
 {
-    MIND_LOG_INFO("get_string_property_value called, returning ");
+    MIND_LOG_DEBUG("get_string_property_value called, returning ");
     return {ext::ControlStatus::OK, "helloworld"};
 }
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    MIND_LOG_INFO("set_parameter_value called");
+    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
@@ -699,7 +701,7 @@ ext::ControlStatus Controller::set_parameter_value(int processor_id, int paramet
 ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, int parameter_id, float value)
 {
     // TODO -  this is exactly the same as set_parameter_value
-    MIND_LOG_INFO("set_parameter_value called");
+    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
@@ -710,7 +712,7 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
 
 ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, std::string /*value*/)
 {
-    MIND_LOG_INFO("set_string_property_value called, returning ");
+    MIND_LOG_DEBUG("set_string_property_value called, returning ");
     return ext::ControlStatus::OK;
 }
 
