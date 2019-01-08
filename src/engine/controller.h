@@ -66,7 +66,6 @@ public:
     std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_processor_parameters(int processor_id) const override;
 
     std::pair<ext::ControlStatus, int>                  get_parameter_id(int processor_id, const std::string& parameter) const override;
-    std::pair<ext::ControlStatus, ext::ParameterType>   get_parameter_type(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, ext::ParameterInfo>   get_parameter_info(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, float>                get_parameter_value(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, float>                get_parameter_value_normalised(int processor_id, int parameter_id) const override;

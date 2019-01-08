@@ -7,6 +7,7 @@
 #undef private
 
 #include "test_utils/host_control_mockup.h"
+#include "test_utils/test_utils.h"
 
 
 using namespace sushi;
@@ -99,8 +100,7 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
-    // Supress unused varnings
-    [[maybe_unused]] auto unused = unused_value;
+    DECLARE_UNUSED(unused_value);
 }
 
 TEST_F(InternalPluginTest, TestIntParameterHandling)
@@ -124,8 +124,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
-    // Supress unused varnings
-    [[maybe_unused]] auto unused = unused_value;
+    DECLARE_UNUSED(unused_value);
 }
 
 TEST_F(InternalPluginTest, TestFloatParameterHandling)
@@ -149,6 +148,5 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
-    // Supress unused varnings
-    [[maybe_unused]] auto unused = unused_value;
+    DECLARE_UNUSED(unused_value);
 }

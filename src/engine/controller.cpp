@@ -183,7 +183,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
         info.label = t->label();
         info.input_busses = t->input_busses();
         info.input_channels = t->input_channels();
-        info.output_busses = t->output_channels();
+        info.output_busses = t->output_busses();
         info.output_channels = t->output_channels();
         info.processor_count = t->process_chain().size();
         returns.push_back(info);
@@ -325,6 +325,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_t
                 info.name = processor->name();
                 info.id = processor->id();
                 info.parameter_count = processor->parameter_count();
+                info.program_count = processor->supports_programs()? processor->program_count() : 0;
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -524,22 +525,6 @@ std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id
         return {ext::ControlStatus::OK, descr->id()};
     }
     return {ext::ControlStatus::NOT_FOUND, 0};
-}
-
-std::pair<ext::ControlStatus, ext::ParameterType> Controller::get_parameter_type(int processor_id, int parameter_id) const
-{
-    MIND_LOG_DEBUG("get_parameter_type called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ext::ParameterType::FLOAT};
-    }
-    auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
-    if (descr != nullptr)
-    {
-        return {ext::ControlStatus::OK, to_external(descr->type())};
-    }
-    return {ext::ControlStatus::NOT_FOUND, ext::ParameterType::FLOAT};
 }
 
 std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info(int processor_id, int parameter_id) const

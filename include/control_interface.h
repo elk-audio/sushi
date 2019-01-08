@@ -154,7 +154,6 @@ public:
 
     // Parameter control
     virtual std::pair<ControlStatus, int>              get_parameter_id(int processor_id, const std::string& parameter) const = 0;
-    virtual std::pair<ControlStatus, ParameterType>    get_parameter_type(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, ParameterInfo>    get_parameter_info(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, float>            get_parameter_value(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, float>            get_parameter_value_normalised(int processor_id, int parameter_id) const = 0;
