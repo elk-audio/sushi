@@ -7,10 +7,6 @@ syntax = "proto3";
 
 import "google/protobuf/descriptor.proto";
 
-extend google.protobuf.MethodOptions {
-    bool disable_notify = 59999;
-}
-
 package sushi_rpc;
 
 service SushiController {
@@ -43,8 +39,6 @@ service SushiController {
 
     // Track control
     rpc GetTrackId(GenericStringValue) returns (TrackIdentifier) {}
-    rpc GetTrackLabel(TrackIdentifier) returns (GenericStringValue) {}
-    rpc GetTrackName(TrackIdentifier) returns (GenericStringValue) {}
     rpc GetTrackInfo(TrackIdentifier) returns (TrackInfo) {}
     rpc GetTrackProcessors(TrackIdentifier) returns (ProcessorInfoList) {}
     rpc GetTrackParameters(TrackIdentifier) returns (ParameterInfoList) {}
@@ -52,8 +46,6 @@ service SushiController {
 
     // Processor control
     rpc GetProcessorId (GenericStringValue) returns (ProcessorIdentifier) {}
-    rpc GetProcessorLabel (ProcessorIdentifier) returns (GenericStringValue) {}
-    rpc GetProcessorName (ProcessorIdentifier) returns (GenericStringValue) {}
     rpc GetProcessorInfo (ProcessorIdentifier) returns (ProcessorInfo) {}
     rpc GetProcessorBypassState (ProcessorIdentifier) returns (GenericBoolValue) {}
     rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
@@ -67,9 +59,6 @@ service SushiController {
 
     // Parameter control
     rpc GetParameterId (ParameterIdRequest) returns (ParameterIdentifier) {}
-    rpc GetParameterLabel (ParameterIdentifier) returns (GenericStringValue) {}
-    rpc GetParameterName (ParameterIdentifier) returns (GenericStringValue) {}
-    rpc GetParameterUnit (ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetParameterInfo (ParameterIdentifier) returns (ParameterInfo) {}
     rpc GetParameterValue(ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueNormalised(ParameterIdentifier) returns (GenericFloatValue) {}

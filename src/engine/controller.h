@@ -50,15 +50,11 @@ public:
     ext::ControlStatus                                  reset_processor_timings(int processor_id) override;
 
     std::pair<ext::ControlStatus, int>                  get_track_id(const std::string& track_name) const override;
-    std::pair<ext::ControlStatus, std::string>          get_track_label(int track_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_track_name(int track_id) const override;
     std::pair<ext::ControlStatus, ext::TrackInfo>       get_track_info(int track_id) const override;
     std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> get_track_processors(int track_id) const override;
     std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_track_parameters(int processor_id) const override;
 
     std::pair<ext::ControlStatus, int>                  get_processor_id(const std::string& processor_name) const override;
-    std::pair<ext::ControlStatus, std::string>          get_processor_label(int processor_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_processor_name(int processor_id) const override;
     std::pair<ext::ControlStatus, ext::ProcessorInfo>   get_processor_info(int processor_id) const override;
     std::pair<ext::ControlStatus, bool>                 get_processor_bypass_state(int processor_id) const override;
     ext::ControlStatus                                  set_processor_bypass_state(int processor_id, bool bypass_enabled) override;
@@ -70,9 +66,6 @@ public:
     std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_processor_parameters(int processor_id) const override;
 
     std::pair<ext::ControlStatus, int>                  get_parameter_id(int processor_id, const std::string& parameter) const override;
-    std::pair<ext::ControlStatus, std::string>          get_parameter_label(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_parameter_name(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_parameter_unit(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, ext::ParameterType>   get_parameter_type(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, ext::ParameterInfo>   get_parameter_info(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, float>                get_parameter_value(int processor_id, int parameter_id) const override;

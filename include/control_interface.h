@@ -135,16 +135,12 @@ public:
 
     // Track control
     virtual std::pair<ControlStatus, int>           get_track_id(const std::string& track_name) const = 0;
-    virtual std::pair<ControlStatus, std::string>   get_track_label(int track_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>   get_track_name(int track_id) const = 0;
     virtual std::pair<ControlStatus, TrackInfo>     get_track_info(int track_id) const = 0;
     virtual std::pair<ControlStatus, std::vector<ProcessorInfo>> get_track_processors(int track_id) const = 0;
     virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_track_parameters(int processor_id) const = 0;
 
     // Processor control
     virtual std::pair<ControlStatus, int>              get_processor_id(const std::string& processor_name) const = 0;
-    virtual std::pair<ControlStatus, std::string>      get_processor_label(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>      get_processor_name(int processor_id) const = 0;
     virtual std::pair<ControlStatus, ProcessorInfo>    get_processor_info(int processor_id) const = 0;
     virtual std::pair<ControlStatus, bool>             get_processor_bypass_state(int processor_id)const = 0;
     virtual ControlStatus                              set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
@@ -157,9 +153,6 @@ public:
 
     // Parameter control
     virtual std::pair<ControlStatus, int>              get_parameter_id(int processor_id, const std::string& parameter) const = 0;
-    virtual std::pair<ControlStatus, std::string>      get_parameter_label(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>      get_parameter_name(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>      get_parameter_unit(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, ParameterType>    get_parameter_type(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, ParameterInfo>    get_parameter_info(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, float>            get_parameter_value(int processor_id, int parameter_id) const = 0;

@@ -285,18 +285,6 @@ std::pair<ext::ControlStatus, int> Controller::get_track_id(const std::string& t
     return this->get_processor_id(track_name);
 }
 
-std::pair<ext::ControlStatus, std::string> Controller::get_track_label(int track_id) const
-{
-    MIND_LOG_DEBUG("get_track_label called with track {}", track_id);
-    return this->get_processor_label(track_id);
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_track_name(int track_id) const
-{
-    MIND_LOG_DEBUG("get_track_name called with track {}", track_id);
-    return this->get_processor_name(track_id);
-}
-
 std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int track_id) const
 {
     MIND_LOG_DEBUG("get_track_info called with track {}", track_id);
@@ -381,28 +369,6 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_id(const std::strin
         return {ext::ControlStatus::OK, id};
     }
     return {ext::ControlStatus::OK, 0};
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_processor_label(int processor_id) const
-{
-    MIND_LOG_DEBUG("get_processor_label called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ""};
-    }
-    return {ext::ControlStatus::OK, processor->label()};
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_processor_name(int processor_id) const
-{
-    MIND_LOG_DEBUG("get_processor_name called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ""};
-    }
-    return {ext::ControlStatus::OK, processor->name()};
 }
 
 std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info(int processor_id) const
@@ -542,55 +508,6 @@ std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id
         return {ext::ControlStatus::OK, descr->id()};
     }
     return {ext::ControlStatus::NOT_FOUND, 0};
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_parameter_label(int processor_id, int parameter_id) const
-{
-    MIND_LOG_DEBUG("get_parameter_label called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ""};
-    }
-    auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
-    if (descr != nullptr)
-    {
-        return {ext::ControlStatus::OK, descr->label()};
-    }
-    return {ext::ControlStatus::NOT_FOUND, ""};
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_parameter_name(int processor_id, int parameter_id) const
-{
-    MIND_LOG_DEBUG("get_parameter_name called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ""};
-    }
-    auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
-    if (descr != nullptr)
-    {
-        return {ext::ControlStatus::OK, descr->name()};
-    }
-    return {ext::ControlStatus::NOT_FOUND, ""};
-}
-
-std::pair<ext::ControlStatus, std::string> Controller::get_parameter_unit(int processor_id, int parameter_id) const
-{
-    MIND_LOG_DEBUG("get_parameter_label called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr)
-    {
-        return {ext::ControlStatus::NOT_FOUND, ""};
-    }
-    auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
-    if (descr != nullptr)
-    {
-        // TODO -  parameter unit not implemented yet
-        return {ext::ControlStatus::OK, ""};
-    }
-    return {ext::ControlStatus::NOT_FOUND, ""};
 }
 
 std::pair<ext::ControlStatus, ext::ParameterType> Controller::get_parameter_type(int processor_id, int parameter_id) const
