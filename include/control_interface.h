@@ -18,6 +18,7 @@ enum class ControlStatus
 {
     OK,
     ERROR,
+    UNSUPPORTED_OPERATION,
     NOT_FOUND,
     OUT_OF_RANGE,
     INVALID_ARGUMENTS

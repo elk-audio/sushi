@@ -368,7 +368,7 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_id(const std::strin
     {
         return {ext::ControlStatus::OK, id};
     }
-    return {ext::ControlStatus::OK, 0};
+    return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
 std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info(int processor_id) const
@@ -413,7 +413,11 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int
     {
         return {ext::ControlStatus::NOT_FOUND, 0};
     }
-    return {ext::ControlStatus::OK, processor->current_program()};
+    if (processor->supports_programs())
+    {
+        return {ext::ControlStatus::OK, processor->current_program()};
+    }
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, 0};
 }
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_program_name(int processor_id) const
@@ -424,16 +428,24 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_pro
     {
         return {ext::ControlStatus::NOT_FOUND, ""};
     }
-    return {ext::ControlStatus::OK, std::move(processor->current_program_name())};
+    if (processor->supports_programs())
+    {
+        return {ext::ControlStatus::OK, processor->current_program_name()};
+    }
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
 }
 
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_program_name(int processor_id, int program_id) const
 {
     MIND_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr || processor->supports_programs() == false)
+    if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, ""};
+    }
+    else if (processor->supports_programs() == false)
+    {
+        return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
     }
     auto [status, name] = processor->program_name(program_id);
     if (status == ProcessorReturnCode::OK)
@@ -447,9 +459,13 @@ std::pair<ext::ControlStatus, std::vector<std::string>> Controller::get_processo
 {
     MIND_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
-    if (processor == nullptr || processor->supports_programs() == false)
+    if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, std::vector<std::string>()};
+    }
+    else if (processor->supports_programs() == false)
+    {
+        return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
     auto [status, names] = processor->all_program_names();
     if (status == ProcessorReturnCode::OK)

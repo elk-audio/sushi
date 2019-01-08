@@ -71,6 +71,9 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
         case sushi::ext::ControlStatus::ERROR:
             return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
 
+        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
+            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
+
         case sushi::ext::ControlStatus::NOT_FOUND:
             return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
 
