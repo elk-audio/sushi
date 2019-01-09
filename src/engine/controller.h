@@ -7,6 +7,7 @@
 #include "control_interface.h"
 #include "base_event_dispatcher.h"
 #include "transport.h"
+#include "library/base_performance_timer.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -42,7 +43,7 @@ public:
     ext::ControlStatus                                  send_pitch_bend(int track_id, float value) override;
     ext::ControlStatus                                  send_modulation(int track_id, float value) override;
 
-    ext::CpuTimings get_engine_timings() const override;
+    std::pair<ext::ControlStatus, ext::CpuTimings>      get_engine_timings() const override;
     std::pair<ext::ControlStatus, ext::CpuTimings>      get_track_timings(int track_id) const override;
     std::pair<ext::ControlStatus, ext::CpuTimings>      get_processor_timings(int processor_id) const override;
     ext::ControlStatus                                  reset_all_timings() override;
@@ -76,10 +77,12 @@ public:
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, std::string value) override;
 
 protected:
+    std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
-    engine::BaseEngine* _engine;
-    dispatcher::BaseEventDispatcher* _event_dispatcher;
-    engine::Transport* _transport;
+    engine::BaseEngine*                 _engine;
+    dispatcher::BaseEventDispatcher*    _event_dispatcher;
+    engine::Transport*                  _transport;
+    performance::BasePerformanceTimer*  _performance_timer;
 };
 
 } //namespace sushi

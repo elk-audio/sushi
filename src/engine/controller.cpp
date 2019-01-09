@@ -18,7 +18,6 @@ inline ext::ParameterType to_external(const sushi::ParameterType type)
         case ParameterType::FLOAT:      return ext::ParameterType::FLOAT;
         case ParameterType::INT:        return ext::ParameterType::INT;
         case ParameterType::BOOL:       return ext::ParameterType::BOOL;
-        case ParameterType::SELECTION:  return ext::ParameterType::INT;
         case ParameterType::STRING:     return ext::ParameterType::STRING_PROPERTY;
         case ParameterType::DATA:       return ext::ParameterType::DATA_PROPERTY;
         default:                        return ext::ParameterType::FLOAT;
@@ -79,22 +78,16 @@ inline sushi::TimeSignature to_internal(ext::TimeSignature ext)
     return {ext.numerator, ext.denominator};
 }
 
-/*inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
+inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 {
     return {internal.avg_case, internal.min_case, internal.max_case};
 }
-
-inline sushi::performance::ProcessTimings to_internal(ext::CpuTimings& ext)
-{
-    return {ext.avg, ext.min, ext.min};
-}*/
-
-
 
 Controller::Controller(engine::BaseEngine* engine) : _engine{engine}
 {
     _event_dispatcher = _engine->event_dispatcher();
     _transport = _engine->transport();
+    _performance_timer = engine->performance_timer();
 }
 
 Controller::~Controller() = default;
@@ -161,13 +154,14 @@ ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
 bool Controller::get_timing_statistics_enabled()
 {
     MIND_LOG_DEBUG("get_timing_statistics_enabled called");
-    return true;
+    return _performance_timer->enabled();
 }
 
 void Controller::set_timing_statistics_enabled(bool enabled) const
 {
     MIND_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
-    _engine->enable_timing_statistics(enabled);
+    // TODO - do this by events instead.
+    _engine->performance_timer()->enable(enabled);
 }
 
 std::vector<ext::TrackInfo> Controller::get_tracks() const
@@ -185,7 +179,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
         info.input_channels = t->input_channels();
         info.output_busses = t->output_busses();
         info.output_channels = t->output_channels();
-        info.processor_count = t->process_chain().size();
+        info.processor_count = static_cast<int>(t->process_chain().size());
         returns.push_back(info);
     }
     return returns;
@@ -243,40 +237,42 @@ ext::ControlStatus Controller::send_modulation(int track_id, float value)
     return ext::ControlStatus::OK;
 }
 
-ext::CpuTimings Controller::get_engine_timings() const
+std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_engine_timings() const
 {
     MIND_LOG_DEBUG("get_engine_timings called, returning ");
-    return {0.1, 0.2, 05};
+    return _get_timings(engine::ENGINE_TIMING_ID);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_track_timings(int /*track_id*/) const
+std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_track_timings(int track_id) const
 {
     MIND_LOG_DEBUG("get_track_timings called, returning ");
-    return {ext::ControlStatus::OK, ext::CpuTimings{0.05, 0.1, 0.02}};
+    return _get_timings(track_id);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_processor_timings(int /*processor_id*/) const
+std::pair<ext::ControlStatus, ext::CpuTimings> Controller::get_processor_timings(int processor_id) const
 {
     MIND_LOG_DEBUG("get_processor_timings called, returning ");
-    return {ext::ControlStatus::OK, ext::CpuTimings{0.05, 0.1, 0.02}};
+    return _get_timings(processor_id);
 }
 
 ext::ControlStatus Controller::reset_all_timings()
 {
     MIND_LOG_DEBUG("reset_all_timings called, returning ");
+    _performance_timer->clear_all_timings();
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::reset_track_timings(int /*track_id*/)
+ext::ControlStatus Controller::reset_track_timings(int track_id)
 {
     MIND_LOG_DEBUG("reset_track_timings called, returning ");
-    return ext::ControlStatus::OK;
+    auto success =_performance_timer->clear_timings_for_node(track_id);
+    return success? ext::ControlStatus::OK : ext::ControlStatus::NOT_FOUND;
 }
 
-ext::ControlStatus Controller::reset_processor_timings(int /*processor_id*/)
+ext::ControlStatus Controller::reset_processor_timings(int processor_id)
 {
     MIND_LOG_DEBUG("reset_processor_timings called, returning ");
-    return ext::ControlStatus::OK;
+    return reset_track_timings(processor_id);
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_track_id(const std::string& track_name) const
@@ -297,11 +293,11 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
             info.label = track->label();
             info.name = track->name();
             info.id = track->id();
-            info.processor_count = track->process_chain().size();
             info.input_channels = track->input_channels();
             info.input_busses = track->input_busses();
             info.output_channels = track->output_channels();
             info.output_busses = track->output_busses();
+            info.processor_count = static_cast<int>(track->process_chain().size());
             return {ext::ControlStatus::OK, info};
         }
     }
@@ -546,8 +542,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.max_range = descr->max_range();
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
                                 descr->type() == ParameterType::INT   ||
-                                descr->type() == ParameterType::BOOL  ||
-                                descr->type() == ParameterType::SELECTION;
+                                descr->type() == ParameterType::BOOL;
             return {ext::ControlStatus::OK, info};
         }
     }
@@ -618,7 +613,7 @@ ext::ControlStatus Controller::set_parameter_value(int processor_id, int paramet
 
 ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, int parameter_id, float value)
 {
-    // TODO -  this is exactly the same as set_parameter_value
+    // TODO - this is exactly the same as set_parameter_value_now
     MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
@@ -632,6 +627,20 @@ ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, i
 {
     MIND_LOG_DEBUG("set_string_property_value called, returning ");
     return ext::ControlStatus::OK;
+}
+
+std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const
+{
+    if (_performance_timer->enabled())
+    {
+        auto timings = _performance_timer->timings_for_node(node);
+        if (timings.has_value())
+        {
+            return {ext::ControlStatus::OK, to_external(timings.value())};
+        }
+        return {ext::ControlStatus::NOT_FOUND, {0,0,0}};
+    }
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
 }
 
 }// namespace sushi

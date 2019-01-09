@@ -25,7 +25,6 @@ enum class ParameterType
     FLOAT,
     INT,
     BOOL,
-    SELECTION,
     STRING,
     DATA,
 };

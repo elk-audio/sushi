@@ -18,7 +18,6 @@ namespace sushi {
 namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
-constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
@@ -39,7 +38,7 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
 AudioEngine::~AudioEngine()
 {
     _event_dispatcher.stop();
-    if (_timings_enabled)
+    if (_process_timer.enabled())
     {
         _process_timer.enable(false);
         print_timings_to_file(TIMING_FILE_NAME);
@@ -835,33 +834,26 @@ void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
     }
 }
 
-void AudioEngine::enable_timing_statistics(bool enabled)
-{
-    _timings_enabled = enabled;
-    _process_timer.enable(enabled);
-}
-
 void AudioEngine::print_timings_to_log()
 {
-    if (_timings_enabled == false)
+    if (_process_timer.enabled())
     {
-        return;
-    }
-    for (const auto& processor : _processors)
-    {
-        auto id = processor.second->id();
-        auto timings = _process_timer.timings_for_node(id);
+        for (const auto& processor : _processors)
+        {
+            auto id = processor.second->id();
+            auto timings = _process_timer.timings_for_node(id);
+            if (timings.has_value())
+            {
+                MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                              timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+            }
+        }
+        auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
         if (timings.has_value())
         {
-            MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+            MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
                           timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
         }
-    }
-    auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
-    if (timings.has_value())
-    {
-        MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
-                      timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
     }
 }
 

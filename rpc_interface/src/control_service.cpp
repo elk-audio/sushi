@@ -237,7 +237,11 @@ grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*contex
                                                    const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::CpuTimings* response)
 {
-    auto timings = _controller->get_engine_timings();
+    auto [status, timings] = _controller->get_engine_timings();
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
     response->set_average(timings.avg);
     response->set_min(timings.min);
     response->set_max(timings.max);
@@ -251,7 +255,7 @@ grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context
     auto [status, timings] = _controller->get_track_timings(request->id());
     if (status != sushi::ext::ControlStatus::OK)
     {
-        return to_grpc_status(status, "Invalid Track Id");
+        return to_grpc_status(status);
     }
     response->set_average(timings.avg);
     response->set_min(timings.min);
@@ -266,7 +270,7 @@ grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*con
     auto [status, timings] = _controller->get_processor_timings(request->id());
     if (status != sushi::ext::ControlStatus::OK)
     {
-        return to_grpc_status(status, "Invalid Processor Id");
+        return to_grpc_status(status);
     }
     response->set_average(timings.avg);
     response->set_min(timings.min);

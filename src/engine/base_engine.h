@@ -14,6 +14,7 @@
 
 #include "base_event_dispatcher.h"
 #include "engine/track.h"
+#include "library/base_performance_timer.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/types.h"
@@ -53,6 +54,8 @@ enum class RealtimeState
     STOPPING,
     STOPPED
 };
+
+constexpr int ENGINE_TIMING_ID = -1;
 
 class BaseEngine
 {
@@ -207,22 +210,25 @@ public:
         return tmp;
     }
 
-    virtual sushi::dispatcher::BaseEventDispatcher* event_dispatcher()
+    virtual dispatcher::BaseEventDispatcher* event_dispatcher()
     {
         return nullptr;
     }
 
-    virtual sushi::ext::SushiControl* controller()
+    virtual ext::SushiControl* controller()
     {
         return nullptr;
     }
 
-    virtual sushi::engine::Transport* transport()
+    virtual engine::Transport* transport()
     {
         return nullptr;
     }
 
-    virtual void enable_timing_statistics(bool /*enabled*/) {}
+    virtual performance::BasePerformanceTimer* performance_timer()
+    {
+        return nullptr;
+    }
 
     virtual void print_timings_to_log() {}
 

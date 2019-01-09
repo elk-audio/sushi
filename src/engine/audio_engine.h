@@ -320,11 +320,10 @@ public:
         return &_transport;
     }
 
-    /**
-     * @brief Enable timings of all audio processors
-     * @param enabled Enable if true, disable if false
-     */
-    void enable_timing_statistics(bool enabled) override;
+    performance::BasePerformanceTimer* performance_timer() override
+    {
+        return &_process_timer;
+    }
 
     /**
      * @brief Print the current processor timings (in enabled) in the log
@@ -443,7 +442,6 @@ private:
 
     HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
-    bool _timings_enabled{false};
 };
 
 /**
