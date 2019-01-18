@@ -5,8 +5,6 @@
 
 syntax = "proto3";
 
-import "google/protobuf/descriptor.proto";
-
 package sushi_rpc;
 
 service SushiController {
