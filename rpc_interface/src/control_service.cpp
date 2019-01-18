@@ -414,7 +414,7 @@ grpc::Status SushiControlService::SetProcessorBypassState(grpc::ServerContext* /
                                                           const sushi_rpc::ProcessorBypassStateSetRequest* request,
                                                           sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->set_processor_bypass_state(request->processor().id(), true);
+    auto status = _controller->set_processor_bypass_state(request->processor().id(), request->value());
     return to_grpc_status(status);
 }
 
