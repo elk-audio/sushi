@@ -280,6 +280,13 @@ public:
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
 
+    /**
+     * @brief Set a new program to the processor. Called from a non-rt thread
+     * @param program The id of the new program to use
+     * @return OK if the operation was succesfull, error code otherwise
+     */
+    virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
+
 protected:
 
     /**

@@ -87,6 +87,8 @@ public:
 
     std::pair<ProcessorReturnCode, std::vector<std::string>> all_program_names() const override;
 
+    ProcessorReturnCode set_program(int program) override;
+
     /**
      * @brief Notify the host of a parameter change from inside the plugin
      *        This must be called from the realtime thread

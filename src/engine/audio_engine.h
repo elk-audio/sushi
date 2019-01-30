@@ -278,11 +278,19 @@ public:
                                                 const std::string &plugin_name) override;
 
     /**
-     * @brief Access a particular processor by its unique id
+     * @brief Access a particular processor by its unique id for querying
      * @param processor_id The id of the processor
      * @return A const pointer to the processor instance if found, nullptr otherwise
      */
     const Processor* processor(ObjectId processor_id) const override;
+
+    /**
+     * @brief Access a particular processor by its unique id for editing,
+     *        use with care and not from several threads at once
+     * @param processor_id The id of the processor
+     * @return A mutable pointer to the processor instance if found, nullptr otherwise
+     */
+    Processor* mutable_processor(ObjectId processor_id) override;
 
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually

@@ -205,12 +205,24 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_progr
     for (int i = 0; i < _number_of_programs; ++i)
     {
         char buffer[kVstMaxProgNameLen] = "";
-        _vst_dispatcher(effGetProgramNameIndexed, 0, i, buffer, 0);
+        _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
         programs.push_back(buffer);
     }
     return {ProcessorReturnCode::OK, programs};
 }
 
+ProcessorReturnCode Vst2xWrapper::set_program(int program)
+{
+    if (this->supports_programs() && program < _number_of_programs)
+    {
+        _vst_dispatcher(effBeginSetProgram, 0, 0, nullptr, 0);
+        /* Vst2 lacks a mechanism for signaling that the program change was successful */
+        _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
+        _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
+        return ProcessorReturnCode::OK;
+    }
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+}
 
 void Vst2xWrapper::_cleanup()
 {
@@ -384,7 +396,6 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
         _double_mono_input = true;
     }
 }
-
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)
 {
