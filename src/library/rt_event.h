@@ -102,18 +102,22 @@ protected:
 class KeyboardRtEvent : public BaseRtEvent
 {
 public:
-    KeyboardRtEvent(RtEventType type, ObjectId target, int offset, int note, float velocity) : BaseRtEvent(type, target, offset),
-                                                                                             _note(note),
-                                                                                             _velocity(velocity)
+    KeyboardRtEvent(RtEventType type, ObjectId target, int offset, int channel, int note, float velocity) :
+        BaseRtEvent(type, target, offset),
+        _channel(channel),
+        _note(note),
+        _velocity(velocity)
     {
         assert(type == RtEventType::NOTE_ON ||
                type == RtEventType::NOTE_OFF ||
                type == RtEventType::NOTE_AFTERTOUCH);
     }
+    int channel() const {return _channel;}
     int note() const {return _note;}
     float velocity() const {return _velocity;}
 
 protected:
+    int _channel;
     int _note;
     float _velocity;
 };
@@ -121,16 +125,20 @@ protected:
 class KeyboardCommonRtEvent : public BaseRtEvent
 {
 public:
-    KeyboardCommonRtEvent(RtEventType type, ObjectId target, int offset, float value) : BaseRtEvent(type, target, offset),
-                                                                                         _value(value)
+    KeyboardCommonRtEvent(RtEventType type, ObjectId target, int offset, int channel, float value) :
+        BaseRtEvent(type, target, offset),
+        _channel(channel),
+        _value(value)
     {
         assert(type == RtEventType::AFTERTOUCH ||
                type == RtEventType::PITCH_BEND ||
                type == RtEventType::MODULATION);
     }
+    int channel() const {return _channel;}
     float value() const {return _value;}
 
 protected:
+    int _channel;
     float _value;
 };
 
@@ -558,45 +566,45 @@ public:
 
 
     /* Factory functions for constructing events */
-    static RtEvent make_note_on_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_on_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_note_off_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_off_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int channel, int note, float velocity)
     {
-        KeyboardRtEvent typed_event(type, target, offset, note, velocity);
+        KeyboardRtEvent typed_event(type, target, offset, channel, note, velocity);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_aftertouch_event(ObjectId target, int offset, float value)
+    static RtEvent make_aftertouch_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, value);
+        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, channel, value);
     }
 
-    static RtEvent make_pitch_bend_event(ObjectId target, int offset, float value)
+    static RtEvent make_pitch_bend_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, value);
+        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, channel, value);
     }
 
-    static RtEvent make_kb_modulation_event(ObjectId target, int offset, float value)
+    static RtEvent make_kb_modulation_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, value);
+        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, channel, value);
     }
 
-    static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, float value)
+    static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, int channel, float value)
     {
-        KeyboardCommonRtEvent typed_event(type, target, offset, value);
+        KeyboardCommonRtEvent typed_event(type, target, offset, channel, value);
         return RtEvent(typed_event);
     }
 

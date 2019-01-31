@@ -143,7 +143,7 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
 {
-    RtEvent rt_event = RtEvent::make_note_on_event(10, 0, 50, 10.f);
+    RtEvent rt_event = RtEvent::make_note_on_event(10, 0, 0, 50, 10.f);
     _in_rt_queue.push(rt_event);
 
     _module_under_test->subscribe_to_keyboard_events(&_poster);

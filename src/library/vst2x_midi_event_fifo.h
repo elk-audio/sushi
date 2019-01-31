@@ -133,13 +133,13 @@ private:
             case RtEventType::NOTE_ON:
             {
                 auto typed_event = event.keyboard_event();
-                midi_data = midi::encode_note_on(0, typed_event->note(), typed_event->velocity());
+                midi_data = midi::encode_note_on(typed_event->channel(), typed_event->note(), typed_event->velocity());
                 break;
             }
             case RtEventType::NOTE_OFF:
             {
                 auto typed_event = event.keyboard_event();
-                midi_data = midi::encode_note_off(0, typed_event->note(), typed_event->velocity());
+                midi_data = midi::encode_note_off(typed_event->channel(), typed_event->note(), typed_event->velocity());
                 // For some reason, VstMidiEvent has an additional explicit field noteOffVelocity
                 midi_ev_p->noteOffVelocity = midi_data[2];
                 break;
@@ -147,25 +147,25 @@ private:
             case RtEventType::NOTE_AFTERTOUCH:
             {
                 auto typed_event = event.keyboard_event();
-                midi_data = midi::encode_poly_key_pressure(0, typed_event->note(), typed_event->velocity());
+                midi_data = midi::encode_poly_key_pressure(typed_event->channel(), typed_event->note(), typed_event->velocity());
                 break;
             }
             case RtEventType::PITCH_BEND:
             {
                 auto typed_event = event.keyboard_common_event();
-                midi_data = midi::encode_pitch_bend(0, typed_event->value());
+                midi_data = midi::encode_pitch_bend(typed_event->channel(), typed_event->value());
                 break;
             }
             case RtEventType::AFTERTOUCH:
             {
                 auto typed_event = event.keyboard_common_event();
-                midi_data = midi::encode_channel_pressure(0, typed_event->value());
+                midi_data = midi::encode_channel_pressure(typed_event->channel(), typed_event->value());
                 break;
             }
             case RtEventType::MODULATION:
             {
                 auto typed_event = event.keyboard_common_event();
-                midi_data = midi::encode_control_change(0, midi::MOD_WHEEL_CONTROLLER_NO, typed_event->value());
+                midi_data = midi::encode_control_change(typed_event->channel(), midi::MOD_WHEEL_CONTROLLER_NO, typed_event->value());
                 break;
             }
             case RtEventType::WRAPPED_MIDI_EVENT:

@@ -184,7 +184,7 @@ TEST_F(TrackTest, TestEventProcessing)
     _module_under_test.set_event_output(&event_queue);
     _module_under_test.add(&plugin);
 
-    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0);
+    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0, 0);
 
     _module_under_test.process_event(event);
     _module_under_test.render();
@@ -216,7 +216,7 @@ TEST_F(TrackTest, TestEventForwarding)
     _module_under_test.set_event_output(&event_queue);
     _module_under_test.add(&plugin);
 
-    RtEvent event = RtEvent::make_note_on_event(125, 13, 48, 0.0f);
+    RtEvent event = RtEvent::make_note_on_event(125, 13, 0, 48, 0.0f);
 
     _module_under_test.process_event(event);
     _module_under_test.process_audio(buffer, buffer);

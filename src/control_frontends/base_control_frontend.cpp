@@ -2,6 +2,7 @@
 
 #include "logging.h"
 
+#include "library/midi_encoder.h"
 #include "control_frontends/base_control_frontend.h"
 
 namespace sushi {
@@ -33,27 +34,28 @@ void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
 
 void BaseControlFrontend::send_keyboard_event(ObjectId processor,
                                               KeyboardEvent::Subtype type,
+                                              int channel,
                                               int note,
                                               float velocity)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new KeyboardEvent(type, processor, note, velocity, timestamp);
+    auto e = new KeyboardEvent(type, processor, channel, note, velocity, timestamp);
     _event_dispatcher->post_event(e);
 }
 
-void BaseControlFrontend::send_note_on_event(ObjectId processor, int note, float velocity)
+void BaseControlFrontend::send_note_on_event(ObjectId processor, int channel, int note, float velocity)
 {
-    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_ON, note, velocity);
+    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_ON, channel, note, velocity);
 }
 
-void BaseControlFrontend::send_note_off_event(ObjectId processor, int note, float velocity)
+void BaseControlFrontend::send_note_off_event(ObjectId processor, int channel, int note, float velocity)
 {
-    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, note, velocity);
+    send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, channel, note, velocity);
 }
 
-void BaseControlFrontend::send_program_change_event(ObjectId processor, int program)
+void BaseControlFrontend::send_program_change_event(ObjectId processor, int channel, int program)
 {
-    MidiDataByte midi_msg = {192u, static_cast<uint8_t>(program), 0, 0};
+    MidiDataByte midi_msg = midi::encode_program_change(channel, program);
     Time timestamp = IMMEDIATE_PROCESS;
     auto e = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, processor, midi_msg, timestamp);
     _event_dispatcher->post_event(e);

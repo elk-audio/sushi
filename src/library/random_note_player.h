@@ -27,7 +27,7 @@ static int random_note_player(EventFifo* queue, bool* loop)
         {
             int note = std::rand() % 127;
             int vel = std::rand() % 127;
-            auto event = new KeyboardEvent(EventType::NOTE_ON, "sampler_0_r", i, note, static_cast<float>(vel) / 127.0f);
+            auto event = new KeyboardEvent(EventType::NOTE_ON, "sampler_0_r", i, 0, note, static_cast<float>(vel) / 127.0f);
             queue->push(event);
             notes.push_front(note);
         }
