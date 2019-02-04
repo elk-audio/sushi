@@ -61,5 +61,13 @@ TEST(TestMidiEncoder, EncodePitchBend)
     pb = midi_msg[1] + (midi_msg[2] << 7) - PITCH_BEND_MIDDLE;
     EXPECT_EQ(0xE7, midi_msg[0]);
     EXPECT_EQ(0, pb);
+}
 
+TEST(TestMidiEncoder, EncodeProgramChange)
+{
+    auto midi_msg = encode_program_change(7, 53);
+    EXPECT_EQ(0xC7, midi_msg[0]);
+    EXPECT_EQ(53u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
 }
