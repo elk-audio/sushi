@@ -156,7 +156,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 {
-    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 0.5f, IMMEDIATE_PROCESS);
+    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 48, 0.5f, IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event);
