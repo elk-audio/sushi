@@ -16,7 +16,7 @@
             "plugins" : [
                 {
                     "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
-                    "name" : "gain",
+                    "name" : "synth",
                     "type"   : "vst2x"
                 }
             ]
@@ -29,6 +29,13 @@
                 "channel": "all",
                 "track": "main",
                 "raw_midi": true
+            }
+        ],
+        "program_change_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "plugin": "synth"
             }
         ],
         "cc_mappings": [
