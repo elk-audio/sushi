@@ -74,6 +74,13 @@ inline Event* make_param_change_event(const InputConnection &c,
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
+inline Event* make_program_change_event(const InputConnection &c,
+                                        const midi::ProgramChangeMessage &msg,
+                                        Time timestamp)
+{
+    return new ProgramChangeEvent(c.target, msg.program, timestamp);
+}
+
 
 MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
                                                              _frontend(nullptr)
@@ -125,6 +132,29 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     return MidiDispatcherStatus::OK;
 }
 
+MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
+                                                             const std::string& processor_name,
+                                                             int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+    auto [status, id] = _engine->processor_id_from_name(processor_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
+    }
+    InputConnection connection;
+    connection.target = id;
+    connection.parameter = 0;
+    connection.min_range = 0;
+    connection.max_range = 0;
+    _pc_routes[midi_input][channel].push_back(connection);
+    MIND_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor \"{}\"", midi_input, processor_name);
+    return MidiDispatcherStatus::OK;
+}
+
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
                                                          const std::string &track_name,
                                                          int channel)
@@ -156,7 +186,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto[status, id] = _engine->processor_id_from_name(track_name);
+    auto [status, id] = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -345,6 +375,24 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
                 for (auto c : cons->second[decoded_msg.channel])
                 {
                     _event_dispatcher->post_event( make_aftertouch_event(c, decoded_msg, timestamp));
+                }
+            }
+            break;
+        }
+
+        case midi::MessageType::PROGRAM_CHANGE:
+        {
+            midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(data);
+            const auto& cons = _pc_routes.find(input);
+            if (cons != _pc_routes.end())
+            {
+                for (auto c : cons->second[midi::MidiChannel::OMNI])
+                {
+                    _event_dispatcher->post_event(make_program_change_event(c, decoded_msg, timestamp));
+                }
+                for (auto c : cons->second[decoded_msg.channel])
+                {
+                    _event_dispatcher->post_event(make_program_change_event(c, decoded_msg, timestamp));
                 }
             }
             break;
