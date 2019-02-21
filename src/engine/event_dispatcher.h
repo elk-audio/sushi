@@ -73,9 +73,11 @@ public:
     EventDispatcherStatus register_poster(EventPoster* poster) override;
     EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver) override;
     EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
+    EventDispatcherStatus subscribe_to_engine_notifications(EventPoster* receiver) override;
     EventDispatcherStatus deregister_poster(EventPoster* poster) override;
     EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* receiver) override;
     EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* receiver) override;
+    EventDispatcherStatus unsubscribe_from_engine_notifications(EventPoster* receiver) override;
 
     void set_sample_rate(float sample_rate) override {_event_timer.set_sample_rate(sample_rate);}
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}
@@ -93,6 +95,7 @@ private:
 
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
+    void _publish_engine_notification_events(Event* event);
 
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
@@ -110,6 +113,7 @@ private:
     std::array<EventPoster*, EventPosterId::MAX_POSTERS> _posters;
     std::vector<EventPoster*> _keyboard_event_listeners;
     std::vector<EventPoster*> _parameter_change_listeners;
+    std::vector<EventPoster*> _engine_notification_listeners;
 };
 
 } // end namespace dispatcher

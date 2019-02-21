@@ -22,6 +22,9 @@ namespace sushi {
 #define MIND_EVENT_CACHE_ALIGNMENT 32
 #endif
 
+/**
+ * List of realtime message types
+ */
 enum class RtEventType
 {
     NOTE_ON,
@@ -59,7 +62,9 @@ enum class RtEventType
     BLOB_DELETE,
     VOID_DELETE,
     /* Synchronisation events */
-    SYNC
+    SYNC,
+    /* Engine notification events */
+    CLIP_NOTIFICATION,
 };
 
 class BaseRtEvent
@@ -157,7 +162,7 @@ public:
     WrappedMidiRtEvent(int offset,
                        ObjectId target,
                        MidiDataByte data) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
-                                           _midi_data{data} {}
+                                            _midi_data{data} {}
 
     MidiDataByte midi_data() const {return _midi_data;}
 
@@ -274,7 +279,7 @@ public:
     ProcessorCommandRtEvent(RtEventType type,
                             ObjectId processor,
                             int value) : BaseRtEvent(type, processor, 0),
-                                          _value(value)
+                                         _value(value)
     {
         assert(type == RtEventType::SET_BYPASS ||
                type == RtEventType::ASYNC_WORK_NOTIFICATION );
@@ -444,6 +449,30 @@ public:
 protected:
     SyncMode _mode;
 };
+
+/* RtEvent for notifing the engine of audio clipping in the realtime */
+class ClipNotificationRtEvent : public BaseRtEvent
+{
+public:
+    enum class ClipChannelType
+    {
+        INPUT,
+        OUTPUT,
+    };
+    ClipNotificationRtEvent(int offset, int channel, ClipChannelType channel_type) : BaseRtEvent(RtEventType::CLIP_NOTIFICATION,
+                                                                                                 0,
+                                                                                                 offset),
+                                                                                     _channel(channel),
+                                                                                     _channel_type(channel_type) {}
+
+    int channel() {return _channel;}
+    ClipChannelType channel_type() {return _channel_type;}
+
+private:
+    int _channel;
+    ClipChannelType _channel_type;
+};
+
 /**
  * @brief Container class for rt events. Functionally this take the role of a
  *        baseclass for events, from which you can access the derived event
@@ -578,6 +607,12 @@ public:
     {
         assert(_sync_mode_event.type() == RtEventType::SYNC_MODE);
         return &_sync_mode_event;
+    }
+
+    ClipNotificationRtEvent* clip_notification_event()
+    {
+        assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
+        return &_clip_notification_event;
     }
 
 
@@ -756,8 +791,15 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_clip_notification_event(int offset, int channel, ClipNotificationRtEvent::ClipChannelType type)
+    {
+        ClipNotificationRtEvent typed_event(offset, channel, type);
+        return typed_event;
+    }
+
 
 private:
+    /* Private constructors that are invoked automatically when using the make_xxx_event functions */
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
     RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
@@ -776,6 +818,8 @@ private:
     RtEvent(const TimeSignatureRtEvent& e) : _time_signature_event(e) {}
     RtEvent(const PlayingModeRtEvent& e) : _playing_mode_event(e) {}
     RtEvent(const SyncModeRtEvent& e) : _sync_mode_event(e) {}
+    RtEvent(const ClipNotificationRtEvent& e) : _clip_notification_event(e) {}
+    /* Data storage */
     union
     {
         BaseRtEvent                   _base_event;
@@ -797,6 +841,7 @@ private:
         TimeSignatureRtEvent          _time_signature_event;
         PlayingModeRtEvent            _playing_mode_event;
         SyncModeRtEvent               _sync_mode_event;
+        ClipNotificationRtEvent       _clip_notification_event;
     };
 };
 

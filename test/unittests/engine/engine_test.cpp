@@ -19,6 +19,63 @@ using namespace sushi::engine;
 /*
 * Engine tests
 */
+class TestClipDetector : public ::testing::Test
+{
+protected:
+    TestClipDetector()
+    {}
+
+    void SetUp()
+    {
+        _module_under_test.set_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test.set_output_channels(TEST_CHANNEL_COUNT);
+    }
+
+    ClipDetector _module_under_test{SAMPLE_RATE};
+};
+
+TEST_F(TestClipDetector, TestClipping)
+{
+    RtEventFifo queue;
+    ChunkSampleBuffer buffer(TEST_CHANNEL_COUNT);
+    test_utils::fill_sample_buffer(buffer, 0.5f);
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    /* No samples outside (-1.0, 1.0) so this should result in no notifications */
+    ASSERT_TRUE(queue.empty());
+
+    /* Set 2 samples to clipped, we should now have 2 clip notifications */
+    buffer.channel(1)[10] = 1.5f;
+    buffer.channel(3)[6] = -1.3f;
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    ASSERT_FALSE(queue.empty());
+    RtEvent notification;
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(1, notification.clip_notification_event()->channel());
+    ASSERT_EQ(10, notification.clip_notification_event()->sample_offset());
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(3, notification.clip_notification_event()->channel());
+    ASSERT_EQ(6, notification.clip_notification_event()->sample_offset());
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
+
+    /* But calling again immediately should not trigger due to the rate limiting */
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    ASSERT_TRUE(queue.empty());
+
+    /* But calling with audio_inout set to true should trigger 2 new */
+    _module_under_test.detect_clipped_samples(buffer, queue, true);
+    ASSERT_FALSE(queue.empty());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::INPUT, notification.clip_notification_event()->channel_type());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_FALSE(queue.pop(notification));
+
+}
+
+
+/*
+* Engine tests
+*/
 class TestEngine : public ::testing::Test
 {
 protected:

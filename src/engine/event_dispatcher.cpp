@@ -75,6 +75,16 @@ EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notificatio
     return EventDispatcherStatus::OK;
 }
 
+EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
+{
+    for (auto r : _engine_notification_listeners)
+    {
+        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+    }
+    _engine_notification_listeners.push_back(receiver);
+    return EventDispatcherStatus::OK;
+}
+
 int EventDispatcher::process(Event* event)
 {
     if (event->process_asynchronously())
@@ -170,6 +180,10 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     {
         _publish_parameter_events(event);
     }
+    if (event->is_engine_notification())
+    {
+        _publish_engine_notification_events(event);
+    }
     if (event->process_asynchronously())
     {
         return _worker.process(event);
@@ -200,12 +214,19 @@ void EventDispatcher::_publish_keyboard_events(Event* event)
     {
         listener->process(event);
     }
-
 }
 
 void EventDispatcher::_publish_parameter_events(Event* event)
 {
     for (auto& listener : _parameter_change_listeners)
+    {
+        listener->process(event);
+    }
+}
+
+void EventDispatcher::_publish_engine_notification_events(sushi::Event*event)
+{
+    for (auto& listener : _engine_notification_listeners)
     {
         listener->process(event);
     }
@@ -241,6 +262,19 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
         if (*i == receiver)
         {
             _parameter_change_listeners.erase(i);
+            return EventDispatcherStatus::OK;
+        }
+    }
+    return EventDispatcherStatus::UNKNOWN_POSTER;
+}
+
+EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster*receiver)
+{
+    for (auto i = _engine_notification_listeners.begin(); i != _engine_notification_listeners.end(); ++i)
+    {
+        if (*i == receiver)
+        {
+            _engine_notification_listeners.erase(i);
             return EventDispatcherStatus::OK;
         }
     }

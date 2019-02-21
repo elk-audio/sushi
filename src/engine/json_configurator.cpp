@@ -80,6 +80,21 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
         _engine->set_tempo_sync_mode(mode);
     }
 
+    if (host_config.HasMember("audio_clip_detection"))
+    {
+        const auto& clip_det = host_config["audio_clip_detection"].GetObject();
+        if (clip_det.HasMember("inputs"))
+        {
+            _engine->enable_input_clip_detection(clip_det["inputs"].GetBool());
+            MIND_LOG_INFO("Setting engine input clip detection {}", clip_det["inputs"].GetBool()? "enabled" : "disabled");
+        }
+        if (clip_det.HasMember("outputs"))
+        {
+            _engine->enable_output_clip_detection(clip_det["outputs"].GetBool());
+            MIND_LOG_INFO("Setting engine output clip detection {}", clip_det["outputs"].GetBool()? "enabled" : "disabled");
+        }
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 

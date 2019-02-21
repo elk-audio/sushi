@@ -33,6 +33,35 @@
 namespace sushi {
 namespace engine {
 
+class ClipDetector
+{
+public:
+    ClipDetector(float sample_rate)
+    {
+        this->set_sample_rate(sample_rate);
+    }
+
+    void set_sample_rate(float samplerate);
+
+    void set_input_channels(int channels);
+
+    void set_output_channels(int channels);
+    /**
+     * @brief Find clipped samples in a buffer and send notifications
+     * @param buffer The audio buffer to process
+     * @param queue Endpoint for clipping notifications
+     * @param audio_input Set to true if the audio buffer comes directly from the an audio inout (i.e. before any processing)
+     */
+    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input);
+
+private:
+
+    unsigned int _interval;
+    std::vector<unsigned int> _input_clip_count;
+    std::vector<unsigned int> _output_clip_count;
+};
+
+
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
 
 class AudioEngine : public BaseEngine
@@ -57,6 +86,18 @@ public:
      * @param sample_rate The new sample rate in Hz
      */
     void set_sample_rate(float sample_rate) override;
+
+    /**
+     * @brief Set the number of input audio channels, set by the audio frontend before starting processing
+     * @param channels The number of audio channels to use
+     */
+    void set_audio_input_channels(int channels) override;
+
+    /**
+     * @brief Set the number of output audio channels, set by the audio frontend before starting processing
+     * @param channels The number of audio channels to use
+     */
+    void set_audio_output_channels(int channels) override;
 
     /**
      * @brief Connect an engine input channel to an input channel of a given track.
@@ -291,7 +332,7 @@ public:
      *        from outside the engine.
      * @return An std::vector of containing all Tracks
      */
-    const std::vector<Track*>& all_tracks()
+    const std::vector<Track*>& all_tracks() override
     {
         return _audio_graph;
     }
@@ -306,6 +347,24 @@ public:
      * @param enabled Enable if true, disable if false
      */
     void enable_timing_statistics(bool enabled) override;
+
+    /**
+     * @brief Enable audio clip detection on engine inputs
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_input_clip_detection(bool enabled) override
+    {
+        _input_clip_detection_enabled = enabled;
+    }
+
+    /**
+     * @brief Enable audio clip detection on engine outputs
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_output_clip_detection(bool enabled) override
+    {
+        _output_clip_detection_enabled = enabled;
+    }
 
     /**
      * @brief Print the current processor timings (in enabled) in the log
@@ -383,7 +442,7 @@ private:
     inline void _copy_audio_to_tracks(ChunkSampleBuffer* input);
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
-
+    
     void print_timings_to_file(const std::string& filename);
 
     struct Connection
@@ -424,6 +483,10 @@ private:
     HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
     bool _timings_enabled{false};
+
+    bool _input_clip_detection_enabled{false};
+    bool _output_clip_detection_enabled{false};
+    ClipDetector _clip_detector;
 };
 
 /**

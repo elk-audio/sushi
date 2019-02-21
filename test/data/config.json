@@ -8,7 +8,12 @@
             "denominator": 4
         },
         "playing_mode" : "playing",
-        "tempo_sync" : "internal"
+        "tempo_sync" : "internal",
+        "audio_clip_detection" :
+        {
+            "inputs" : false,
+            "outputs" : true
+        }
     },
     "tracks" : [
         {

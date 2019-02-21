@@ -211,6 +211,10 @@ public:
 
     virtual void enable_timing_statistics(bool /*enabled*/) {}
 
+    virtual void enable_input_clip_detection(bool /*enabled*/) {}
+
+    virtual void enable_output_clip_detection(bool /*enabled*/) {}
+
     virtual void print_timings_to_log() {}
 
 protected:

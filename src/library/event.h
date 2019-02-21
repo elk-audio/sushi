@@ -75,6 +75,9 @@ public:
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() {return false;}
 
+    /* Convertible to EngineNotification */
+    virtual bool is_engine_notification() {return false;}
+
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() {return false;}
 
@@ -406,6 +409,35 @@ public:
 private:
     std::string _name;
     std::string _track;
+};
+
+/* Dont instantiate this event directly */
+class EngineNotificationEvent : public Event
+{
+public:
+     bool is_engine_notification() override {return true;}
+
+protected:
+    explicit EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
+};
+
+class ClippingNotificationEvent : public EngineNotificationEvent
+{
+public:
+    enum class ClipChannelType
+    {
+        INPUT,
+        OUTPUT,
+    };
+    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                                           _channel(channel),
+                                                                                           _channel_type(channel_type) {}
+    int channel() {return _channel;}
+    ClipChannelType channel_type() {return _channel_type;}
+
+private:
+    int _channel;
+    ClipChannelType _channel_type;
 };
 
 class AsynchronousWorkEvent : public Event

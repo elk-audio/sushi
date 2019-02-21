@@ -41,6 +41,21 @@ R"(
         "tempo_sync":
         {
           "enum": ["internal", "midi", "ableton link"]
+        },
+        "audio_clip_detection" :
+        {
+          "type": "object",
+          "properties":
+          {
+            "inputs":
+            {
+              "type": "boolean"
+            },
+            "outputs":
+            {
+              "type": "boolean"
+            }
+          }
         }
       },
       "required": ["samplerate"]

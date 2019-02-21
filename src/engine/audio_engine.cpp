@@ -21,13 +21,53 @@ namespace engine {
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
+constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
+
+
+void ClipDetector::set_sample_rate(float samplerate)
+{
+    _interval = samplerate * CLIPPING_DETECTION_INTERVAL.count() / 1000 - AUDIO_CHUNK_SIZE;
+}
+
+void ClipDetector::set_input_channels(int channels)
+{
+    _input_clip_count = std::vector<unsigned int>(channels, _interval);
+}
+
+void ClipDetector::set_output_channels(int channels)
+{
+    _output_clip_count = std::vector<unsigned int>(channels, _interval);
+}
+
+void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input)
+{
+    auto& counter = audio_input? _input_clip_count : _output_clip_count;
+    for (int i = 0; i < buffer.channel_count(); ++i)
+    {
+        for (int j = 0; j < AUDIO_CHUNK_SIZE; ++j)
+        {
+            if (buffer.channel(i)[j] >= 1.0f || buffer.channel(i)[j] <= -1.0f)
+            {
+                if (counter[i] >= _interval)
+                {
+                    queue.push(RtEvent::make_clip_notification_event(j, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
+                                                                           ClipNotificationRtEvent::ClipChannelType::OUTPUT));
+                    counter[i] = 0;
+                    break;
+                }
+            }
+        }
+        counter[i] += AUDIO_CHUNK_SIZE;
+    }
+}
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
                                                                 _multicore_processing(rt_cpu_cores > 1),
                                                                 _rt_cores(rt_cpu_cores),
-                                                                _transport(sample_rate)
+                                                                _transport(sample_rate),
+                                                                _clip_detector(sample_rate)
 {
     this->set_sample_rate(sample_rate);
     _event_dispatcher.run();
@@ -56,6 +96,19 @@ void AudioEngine::set_sample_rate(float sample_rate)
     }
     _transport.set_sample_rate(sample_rate);
     _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
+    _clip_detector.set_sample_rate(sample_rate);
+}
+
+void AudioEngine::set_audio_input_channels(int channels)
+{
+    _clip_detector.set_input_channels(channels);
+    BaseEngine::set_audio_input_channels(channels);
+}
+
+void AudioEngine::set_audio_output_channels(int channels)
+{
+    _clip_detector.set_output_channels(channels);
+    BaseEngine::set_audio_output_channels(channels);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
@@ -282,6 +335,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
 
+    if (_input_clip_detection_enabled)
+    {
+        _clip_detector.detect_clipped_samples(*in_buffer, _main_out_queue, true);
+    }
     _copy_audio_to_tracks(in_buffer);
 
     if (_multicore_processing)
@@ -301,6 +358,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
+    if (_output_clip_detection_enabled)
+    {
+        _clip_detector.detect_clipped_samples(*out_buffer, _main_out_queue, false);
+    }
     _process_timer.stop_timer(engine_timestamp, ENGINE_TIMING_ID);
 }
 

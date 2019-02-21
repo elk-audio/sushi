@@ -33,12 +33,14 @@ public:
     virtual void post_event(Event* event) = 0;
 
     virtual EventDispatcherStatus register_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus subscribe_to_engine_notifications(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
 
     virtual EventDispatcherStatus deregister_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
+    virtual EventDispatcherStatus unsubscribe_from_engine_notifications(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
 
     virtual void set_sample_rate(float /*sample_rate*/) {}
     virtual void set_time(Time /*timestamp*/) {}
