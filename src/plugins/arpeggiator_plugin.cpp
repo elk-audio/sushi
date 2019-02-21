@@ -91,9 +91,9 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
             offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)), AUDIO_CHUNK_SIZE -1);
         }
 
-        RtEvent note_off = RtEvent::make_note_off_event(this->id(), offset, _current_note, 1.0f);
+        RtEvent note_off = RtEvent::make_note_off_event(this->id(), offset, 0, _current_note, 1.0f);
         _current_note = _arp.next_note();
-        RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, _current_note, 1.0f);
+        RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, 0, _current_note, 1.0f);
         output_event(note_off);
         output_event(note_on);
 

@@ -31,7 +31,7 @@ Steinberg::Vst::Event convert_note_on_event(const KeyboardRtEvent* event)
     vst_event.noteOn.velocity = event->velocity();
     vst_event.noteOn.tuning = 0.0f;
     vst_event.noteOn.noteId = -1;
-    vst_event.noteOn.channel = 0;
+    vst_event.noteOn.channel = event->channel();
     return vst_event;
 }
 
@@ -45,7 +45,7 @@ Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event)
     vst_event.noteOff.velocity = event->velocity();
     vst_event.noteOff.tuning = 0.0f;
     vst_event.noteOff.noteId = -1;
-    vst_event.noteOff.channel = 0;
+    vst_event.noteOff.channel = event->channel();
     return vst_event;
 }
 

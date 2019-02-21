@@ -63,6 +63,14 @@ MidiDataByte encode_channel_pressure(int channel, float value);
  */
 MidiDataByte encode_pitch_bend(int channel, float value);
 
+/**
+ * @brief Encode a program change message
+ * @param channel Midi channel to use (0-15)
+ * @param program MIDI program change from 0 to 127
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_program_change(int channel, int program);
+
 } // end namespace midi
 } // end namespace sushi
 

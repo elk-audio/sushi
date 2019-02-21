@@ -11,6 +11,7 @@
 #include "plugins/arpeggiator_plugin.h"
 #include "plugins/sample_player_plugin.h"
 #include "plugins/peak_meter_plugin.h"
+#include "plugins/transposer_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -170,13 +171,13 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     {
         instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
     }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
-    }
     else if (uid == "sushi.testing.peakmeter")
     {
         instance = new peak_meter_plugin::PeakMeterPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.transposer")
+    {
+        instance = new transposer_plugin::TransposerPlugin(_host_control);
     }
     return instance;
 }

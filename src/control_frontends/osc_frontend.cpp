@@ -67,15 +67,15 @@ static int osc_send_keyboard_event(const char* /*path*/,
 
     if (event == "note_on")
     {
-        connection->instance->send_note_on_event(connection->processor, note, value);
+        connection->instance->send_note_on_event(connection->processor, 0, note, value);
     }
     else if (event == "note_off")
     {
-        connection->instance->send_note_off_event(connection->processor, note, value);
+        connection->instance->send_note_off_event(connection->processor, 0, note, value);
     }
     else if (event == "program_change")
     {
-        connection->instance->send_program_change_event(connection->processor, note);
+        connection->instance->send_program_change_event(connection->processor, 0, note);
     }
     else
     {

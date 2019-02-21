@@ -398,18 +398,21 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             {
                 case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
                     output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
+                                                           vst_event.noteOn.channel,
                                                            vst_event.noteOn.pitch,
                                                            vst_event.noteOn.velocity));
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
                     output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
+                                                            vst_event.noteOff.channel,
                                                             vst_event.noteOff.pitch,
                                                             vst_event.noteOff.velocity));
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kPolyPressureEvent:
                     output_event(RtEvent::make_note_aftertouch_event(0, vst_event.sampleOffset,
+                                                            vst_event.polyPressure.channel,
                                                             vst_event.polyPressure.pitch,
                                                             vst_event.polyPressure.pressure));
                     break;
