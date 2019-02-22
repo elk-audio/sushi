@@ -120,16 +120,9 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
         case RtEventType::CLIP_NOTIFICATION:
         {
             auto typed_ev = rt_event.clip_notification_event();
-            ClippingNotificationEvent::ClipChannelType channel_type;
-            switch (typed_ev->channel_type())
-            {
-                case ClipNotificationRtEvent::ClipChannelType::INPUT:
-                    channel_type = ClippingNotificationEvent::ClipChannelType::INPUT;
-                    break;
-                case ClipNotificationRtEvent::ClipChannelType::OUTPUT:
-                    channel_type = ClippingNotificationEvent::ClipChannelType::OUTPUT;
-                    break;
-            }
+            auto channel_type = typed_ev->channel_type() == ClipNotificationRtEvent::ClipChannelType::INPUT?
+                                                            ClippingNotificationEvent::ClipChannelType::INPUT :
+                                                            ClippingNotificationEvent::ClipChannelType::OUTPUT;
             return new ClippingNotificationEvent(typed_ev->channel(), channel_type, timestamp);
         }
         default:
