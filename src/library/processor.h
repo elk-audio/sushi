@@ -220,11 +220,11 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter, ObjectId id)
     {
-        bool inserted = true;
         for (auto& p : _parameters_by_index)
         {
             if (p->id() == id) return false; // Don't allow duplicate parameter id:s
         }
+        bool inserted = true;
         std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
         if (!inserted)
         {

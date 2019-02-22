@@ -28,13 +28,13 @@ void Vst3xWrapper::_cleanup()
 ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
-    bool loaded;
-    std::tie(loaded, _instance) = _loader.load_plugin();
+    auto [loaded, instance] = _loader.load_plugin();
     if (!loaded)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_LOAD_ERROR;
     }
+    _instance = instance;
     set_name(_instance.name());
     set_label(_instance.name());
 
