@@ -472,7 +472,7 @@ public:
         {
             /* std::abs() is more efficient than testing for upper and lower bound separately
                And GCC can compile this to vectorised, branchless code */
-            clipcount += std::abs(data[i]) > 1.0f;
+            clipcount += std::abs(data[i]) >= 1.0f;
         }
         return clipcount;
     }
