@@ -51,11 +51,9 @@ TEST_F(TestClipDetector, TestClipping)
     RtEvent notification;
     ASSERT_TRUE(queue.pop(notification));
     ASSERT_EQ(1, notification.clip_notification_event()->channel());
-    ASSERT_EQ(10, notification.clip_notification_event()->sample_offset());
     ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
     ASSERT_TRUE(queue.pop(notification));
     ASSERT_EQ(3, notification.clip_notification_event()->channel());
-    ASSERT_EQ(6, notification.clip_notification_event()->sample_offset());
     ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
 
     /* But calling again immediately should not trigger due to the rate limiting */

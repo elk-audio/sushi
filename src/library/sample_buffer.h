@@ -456,6 +456,35 @@ public:
         this->ramp(1.0f, 0.0f);
     }
 
+    /**
+     * @brief Count the number of samples outside of [-1.0, 1.0]
+     *        in a range of channels in the buffer
+     * @param start_channel The first channel to analyse
+     * @param number_of_channels The number of channels to analyse
+     * @return The number of samples in the buffer whose absolute value is > 1.0
+     */
+    int count_clipped_samples(int start_channel, int number_of_channels) const
+    {
+        assert(number_of_channels + start_channel <= _channel_count);
+        int clipcount = 0;
+        const float* data = _buffer + size * start_channel;
+        for (int i = 0 ; i < size * number_of_channels; ++i)
+        {
+            /* std::abs() is more efficient than testing for upper and lower bound separately
+               And GCC can compile this to vectorised, branchless code */
+            clipcount += std::abs(data[i]) > 1.0f;
+        }
+        return clipcount;
+    }
+
+    /**
+     * @brief Count the number of samples outside of [-1.0, 1.0] in the buffer
+     * @return The number of samples whose absolute value is > 1.0
+     */
+    int count_clipped_samples() const
+    {
+        return count_clipped_samples(0, _channel_count);
+    }
 
 private:
     int _channel_count;

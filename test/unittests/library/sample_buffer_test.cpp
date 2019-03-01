@@ -327,3 +327,17 @@ TEST (TestSampleBuffer, TestRamping)
     ASSERT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
     ASSERT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
 }
+
+TEST (TestSampleBuffer, TestCountClippedSamples)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    ASSERT_EQ(0, buffer.count_clipped_samples());
+
+    buffer.channel(0)[4] = 1.7f;
+    buffer.channel(1)[3] = 1.1f;
+    buffer.channel(1)[2] = -1.05f;
+    ASSERT_EQ(3, buffer.count_clipped_samples());
+    ASSERT_EQ(3, buffer.count_clipped_samples(0,2));
+    ASSERT_EQ(2, buffer.count_clipped_samples(1,1));
+    ASSERT_EQ(1, buffer.count_clipped_samples(0,1));
+}

@@ -46,20 +46,16 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEve
     auto& counter = audio_input? _input_clip_count : _output_clip_count;
     for (int i = 0; i < buffer.channel_count(); ++i)
     {
-        for (int j = 0; j < AUDIO_CHUNK_SIZE; ++j)
+        if (buffer.count_clipped_samples(i, 1) > 0 && counter[i] >= _interval)
         {
-            if (buffer.channel(i)[j] >= 1.0f || buffer.channel(i)[j] <= -1.0f)
-            {
-                if (counter[i] >= _interval)
-                {
-                    queue.push(RtEvent::make_clip_notification_event(j, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
-                                                                           ClipNotificationRtEvent::ClipChannelType::OUTPUT));
-                    counter[i] = 0;
-                    break;
-                }
-            }
+            queue.push(RtEvent::make_clip_notification_event(0, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
+                                                                   ClipNotificationRtEvent::ClipChannelType::OUTPUT));
+            counter[i] = 0;
         }
-        counter[i] += AUDIO_CHUNK_SIZE;
+        else
+        {
+            counter[i] += AUDIO_CHUNK_SIZE;
+        }
     }
 }
 
