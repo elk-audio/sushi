@@ -22,7 +22,7 @@ namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
-constexpr int TRACK_MAX_CHANNELS = 8;
+constexpr int TRACK_MAX_CHANNELS = 10;
 constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
 
 class Track : public InternalPlugin, public RtEventPipe
