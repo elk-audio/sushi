@@ -94,9 +94,7 @@ int EventDispatcher::process(Event* event)
     }
     if (event->maps_to_rt_event())
     {
-        bool send_now;
-        int sample_offset;
-        std::tie(send_now, sample_offset) = _event_timer.sample_offset_from_realtime(event->time());
+        auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
         if (send_now)
         {
             if (_out_rt_queue->push(event->to_rt_event(sample_offset)))

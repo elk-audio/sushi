@@ -293,16 +293,13 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
                                        const std::string &parameter_name)
 {
     std::string osc_path = "/parameter/";
-    engine::EngineReturnStatus status;
-    ObjectId processor_id;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
+    if (processor_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
-    ObjectId parameter_id;
-    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (parameter_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
@@ -321,16 +318,13 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
                                               const std::string &parameter_name)
 {
     std::string osc_path = "/parameter/";
-    engine::EngineReturnStatus status;
-    ObjectId processor_id;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
+    if (processor_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
-    ObjectId parameter_id;
-    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (parameter_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
@@ -347,16 +341,13 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
 
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
-    engine::EngineReturnStatus status;
-    ObjectId processor_id;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
+    if (processor_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
-    ObjectId parameter_id;
-    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (parameter_status != engine::EngineReturnStatus::OK)
     {
         return false;
     }
@@ -370,9 +361,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
 bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
 {
     std::string osc_path = "/keyboard_event/";
-    engine::EngineReturnStatus status;
-    ObjectId processor_id;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(track_name);
+    auto [status, processor_id] = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return false;
