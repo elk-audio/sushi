@@ -347,7 +347,7 @@ grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*cont
         info->set_name((processor.name));
         info->set_parameter_count(processor.parameter_count);
     }
-    return to_grpc_status(status, nullptr);
+    return to_grpc_status(status);
 }
 
 grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*context*/,
@@ -365,7 +365,7 @@ grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*cont
         info->set_min_range(parameter.min_range);
         info->set_max_range(parameter.max_range);
     }
-    return to_grpc_status(status, nullptr);
+    return to_grpc_status(status);
 }
 
 grpc::Status SushiControlService::GetProcessorId(grpc::ServerContext* /*context*/,

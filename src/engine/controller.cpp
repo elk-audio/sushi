@@ -624,7 +624,7 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, std::string /*value*/)
+ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
 {
     MIND_LOG_DEBUG("set_string_property_value called, returning ");
     return ext::ControlStatus::OK;

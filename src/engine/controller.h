@@ -74,7 +74,7 @@ public:
     std::pair<ext::ControlStatus, std::string>          get_string_property_value(int processor_id, int parameter_id) const override;
     ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_parameter_value_normalised(int processor_id, int parameter_id, float value) override;
-    ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, std::string value) override;
+    ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
 protected:
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
