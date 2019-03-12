@@ -143,7 +143,7 @@ public:
     // Processor control
     virtual std::pair<ControlStatus, int>              get_processor_id(const std::string& processor_name) const = 0;
     virtual std::pair<ControlStatus, ProcessorInfo>    get_processor_info(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, bool>             get_processor_bypass_state(int processor_id)const = 0;
+    virtual std::pair<ControlStatus, bool>             get_processor_bypass_state(int processor_id) const = 0;
     virtual ControlStatus                              set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
     virtual std::pair<ControlStatus, int>              get_processor_current_program(int processor_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_processor_current_program_name(int processor_id) const = 0;
@@ -161,7 +161,7 @@ public:
     virtual std::pair<ControlStatus, std::string>      get_string_property_value(int processor_id, int parameter_id) const = 0;
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) = 0;
     virtual ControlStatus                              set_parameter_value_normalised(int processor_id, int parameter_id, float value) = 0;
-    virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, std::string value) = 0;
+    virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
 
 protected:

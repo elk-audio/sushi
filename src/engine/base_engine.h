@@ -198,6 +198,8 @@ public:
 
     virtual const Processor* processor(ObjectId /*processor_id*/) const {return nullptr;}
 
+    virtual Processor* mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
+
     virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
     {
         static std::map<std::string, std::unique_ptr<Processor>> tmp;

@@ -617,7 +617,12 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
     return _deregister_processor(processor->name());
 }
 
-const Processor*AudioEngine::processor(ObjectId processor_id) const
+const Processor* AudioEngine::processor(ObjectId processor_id) const
+{
+    return const_cast<AudioEngine*>(this)->mutable_processor(processor_id);
+}
+
+Processor* AudioEngine::mutable_processor(ObjectId processor_id)
 {
     /* TODO - use a better way of storing processors and return a shared pointer*/
     if (processor_id >= _realtime_processors.size())

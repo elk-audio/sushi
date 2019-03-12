@@ -472,10 +472,11 @@ std::pair<ext::ControlStatus, std::vector<std::string>> Controller::get_processo
     return {ext::ControlStatus::OUT_OF_RANGE, std::vector<std::string>()};
 }
 
-ext::ControlStatus Controller::set_processor_program(int /*processor_id*/, int /*program_id*/)
+ext::ControlStatus Controller::set_processor_program(int processor_id, int program_id)
 {
-    MIND_LOG_DEBUG("set_processor_program called, returning ");
-    // TODO - send an event here if program change is to happen in the rt thread
+    MIND_LOG_DEBUG("set_processor_program called with processor {} and program {}", processor_id, program_id);
+    auto event = new ProgramChangeEvent(static_cast<ObjectId>(processor_id), program_id, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
@@ -623,7 +624,7 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, std::string /*value*/)
+ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
 {
     MIND_LOG_DEBUG("set_string_property_value called, returning ");
     return ext::ControlStatus::OK;
