@@ -69,6 +69,26 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
+
+    bool supports_programs() const override {return _number_of_programs > 0;}
+
+    int program_count() const override {return _number_of_programs;}
+
+    int current_program() const override;
+
+    std::string current_program_name() const override;
+
+    std::pair<ProcessorReturnCode, std::string> program_name(int program) const override;
+
+    std::pair<ProcessorReturnCode, std::vector<std::string>> all_program_names() const override;
+
+    ProcessorReturnCode set_program(int program) override;
+
     /**
      * @brief Notify the host of a parameter change from inside the plugin
      *        This must be called from the realtime thread
@@ -102,7 +122,7 @@ private:
     /**
      * @brief Commodity function to access VsT internals
      */
-    int _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
+    int _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt) const
     {
         return static_cast<int>(_plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt));
     }
@@ -135,6 +155,7 @@ private:
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _double_mono_input;
+    int _number_of_programs{0};
 
     std::string _plugin_path;
     LibraryHandle _library_handle;

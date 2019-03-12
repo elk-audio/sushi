@@ -31,6 +31,13 @@
                 "track": "main",
 		        "raw_midi" : true
             }
+        ],
+        "program_change_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "plugin": "jx10"
+            }
         ]
     }
 }

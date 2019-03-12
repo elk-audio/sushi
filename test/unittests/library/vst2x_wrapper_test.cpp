@@ -159,9 +159,15 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
+    // Verify that a parameter change affects the sound
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.123f, out_buffer);
+
+    // Verify that we can retrive the new value
+    auto [status, value] = _module_under_test->parameter_value(0);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    ASSERT_FLOAT_EQ(0.123f, value);
 }
 
 TEST_F(TestVst2xWrapper, TestBypassProcessing)
@@ -245,3 +251,24 @@ TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
     ASSERT_TRUE(received);
     ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
 }
+
+TEST_F(TestVst2xWrapper, TestProgramManagement)
+{
+    SetUp("libvstxsynth.so");
+    ASSERT_TRUE(_module_under_test->supports_programs());
+    ASSERT_EQ(128, _module_under_test->program_count());
+    ASSERT_EQ(0, _module_under_test->current_program());
+    ASSERT_EQ("Basic", _module_under_test->current_program_name());
+    auto [status, program_name] = _module_under_test->program_name(2);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    ASSERT_EQ("Basic", program_name);
+    // Access with an invalid program number
+    std::tie(status, program_name) = _module_under_test->program_name(2000);
+    ASSERT_NE(ProcessorReturnCode::OK, status);
+    // Get all programs, all programs are named "Basic" in VstXSynth
+    auto [res, programs] = _module_under_test->all_program_names();
+    ASSERT_EQ(ProcessorReturnCode::OK, res);
+    ASSERT_EQ("Basic", programs[50]);
+    ASSERT_EQ(128u, programs.size());
+}
+

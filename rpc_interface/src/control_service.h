@@ -51,15 +51,11 @@ public:
      grpc::Status ResetProcessorTimings(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
      // Track control
      grpc::Status GetTrackId(grpc::ServerContext* context, const sushi_rpc::GenericStringValue* request, sushi_rpc::TrackIdentifier* response) override;
-     grpc::Status GetTrackLabel(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericStringValue* response) override;
-     grpc::Status GetTrackName(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetTrackInfo(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::TrackInfo* response) override;
      grpc::Status GetTrackProcessors(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::ProcessorInfoList* response) override;
      grpc::Status GetTrackParameters(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::ParameterInfoList* response) override;
      // Processor control
      grpc::Status GetProcessorId(grpc::ServerContext* context, const sushi_rpc::GenericStringValue* request, sushi_rpc::ProcessorIdentifier* response) override;
-     grpc::Status GetProcessorLabel(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::GenericStringValue* response) override;
-     grpc::Status GetProcessorName(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetProcessorInfo(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::ProcessorInfo* response) override;
      grpc::Status GetProcessorBypassState(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::GenericBoolValue* response) override;
      grpc::Status SetProcessorBypassState(grpc::ServerContext* context, const sushi_rpc::ProcessorBypassStateSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
@@ -71,8 +67,6 @@ public:
      grpc::Status GetProcessorParameters(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::ParameterInfoList* response) override;
      // Parameter control
      grpc::Status GetParameterId(grpc::ServerContext* context, const sushi_rpc::ParameterIdRequest* request, sushi_rpc::ParameterIdentifier* response) override;
-     grpc::Status GetParameterLabel(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
-     grpc::Status GetParameterName(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetParameterInfo(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::ParameterInfo* response) override;
      grpc::Status GetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
      grpc::Status GetParameterValueAsString(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;

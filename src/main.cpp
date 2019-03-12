@@ -338,7 +338,7 @@ int main(int argc, char* argv[])
 
     if (enable_timings)
     {
-        engine.enable_timing_statistics(true);
+        engine.performance_timer()->enable(true);
     }
 
     frontend->connect_control_frontends();
