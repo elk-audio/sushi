@@ -44,13 +44,13 @@ public:
 
     void send_string_parameter_change_event(ObjectId processor, ObjectId parameter, const std::string& value);
 
-    void send_keyboard_event(ObjectId processor, KeyboardEvent::Subtype type, int note, float value);
+    void send_keyboard_event(ObjectId processor, KeyboardEvent::Subtype type, int channel, int note, float value);
 
-    void send_note_on_event(ObjectId processor, int note, float value);
+    void send_note_on_event(ObjectId processor, int channel, int note, float value);
 
-    void send_note_off_event(ObjectId processor, int note, float value);
+    void send_note_off_event(ObjectId processor, int channel, int note, float value);
 
-    void send_program_change_event(ObjectId processor, int program);
+    void send_program_change_event(ObjectId processor, int channel, int program);
 
     void send_add_track_event(const std::string &name, int channels);
 

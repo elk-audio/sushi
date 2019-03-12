@@ -128,10 +128,12 @@ public:
     };
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
+                  int channel,
                   float value,
                   Time timestamp) : Event(timestamp),
                                     _subtype(subtype),
                                     _processor_id(processor_id),
+                                    _channel(channel),
                                     _note(0),
                                     _velocity(value)
     {
@@ -142,11 +144,13 @@ public:
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
+                  int channel,
                   int note,
                   float velocity,
                   Time timestamp) : Event(timestamp),
                                     _subtype(subtype),
                                     _processor_id(processor_id),
+                                    _channel(channel),
                                     _note(note),
                                     _velocity(velocity) {}
 
@@ -166,6 +170,7 @@ public:
 
     Subtype         subtype() {return _subtype;}
     ObjectId        processor_id() {return _processor_id;}
+    int             channel() {return _channel;}
     int             note() {return _note;}
     float           velocity() {return _velocity;}
     float           value() {return _velocity;}
@@ -174,6 +179,7 @@ public:
 protected:
     Subtype         _subtype;
     ObjectId        _processor_id;
+    int             _channel;
     int             _note;
     float           _velocity;
     MidiDataByte    _midi_data;

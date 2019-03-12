@@ -481,6 +481,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
                                  processor_id,
+                                 0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);
@@ -489,6 +490,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
                                  processor_id,
+                                 0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);

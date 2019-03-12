@@ -56,6 +56,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(1, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
     delete event;
@@ -64,13 +65,14 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
-    NoteOffMessage message = {1, 46, 64};
+    NoteOffMessage message = {2, 46, 64};
     Event* event = make_note_off_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(2, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
     delete event;
@@ -79,14 +81,14 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
-    uint8_t message[] = {1, 46, 64};
+    uint8_t message[] = {3, 46, 64};
     Event* event = make_wrapped_midi_event(connection, message, sizeof(message), IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::WRAPPED_MIDI, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
-    EXPECT_EQ(1u, typed_event->midi_data()[0]);
+    EXPECT_EQ(3u, typed_event->midi_data()[0]);
     EXPECT_EQ(46u, typed_event->midi_data()[1]);
     EXPECT_EQ(64u, typed_event->midi_data()[2]);
     EXPECT_EQ(0u, typed_event->midi_data()[3]);
@@ -168,7 +170,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 {
-    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 0.5f, IMMEDIATE_PROCESS);
+    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 48, 0.5f, IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event);

@@ -29,9 +29,7 @@ TEST(TestVst3xPluginLoader, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
     PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
-    bool success;
-    PluginInstance instance;
-    std::tie(success, instance) = module_under_test.load_plugin();
+    auto [success, instance] = module_under_test.load_plugin();
     ASSERT_TRUE(success);
     ASSERT_TRUE(instance.processor());
     ASSERT_TRUE(instance.component());

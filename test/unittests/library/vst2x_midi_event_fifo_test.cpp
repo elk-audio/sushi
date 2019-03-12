@@ -22,7 +22,7 @@ protected:
         // Pre-fill queue
         for (int i=0; i<TEST_DATA_SIZE; i++)
         {
-            auto ev = RtEvent::make_note_on_event(0, i, 0, 1.0f);
+            auto ev = RtEvent::make_note_on_event(0, i, 0, 0, 1.0f);
             ASSERT_EQ(true, _module_under_test.push(ev));
         }
     }
@@ -59,12 +59,12 @@ TEST_F(TestVst2xMidiEventFIFO, TestOverflow)
 
     for (int i=TEST_DATA_SIZE; i<TEST_FIFO_CAPACITY; i++)
     {
-        auto ev = RtEvent::make_note_on_event(0, i, 0, 1.0f);
+        auto ev = RtEvent::make_note_on_event(0, i, 0, 0, 1.0f);
         ASSERT_TRUE(_module_under_test.push(ev));
     }
     for (int i=0; i<TEST_DATA_SIZE; i++)
     {
-        auto ev = RtEvent::make_note_on_event(0, overflow_offset+i, 0, 1.0f);
+        auto ev = RtEvent::make_note_on_event(0, overflow_offset+i, 0, 0, 1.0f);
         ASSERT_FALSE(_module_under_test.push(ev));
     }
     auto vst_events = _module_under_test.flush();
@@ -81,7 +81,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestFlushAfterOverflow)
     // Let the queue overflow...
     for (int i=0; i<(2*TEST_FIFO_CAPACITY); i++)
     {
-        auto ev = RtEvent::make_note_on_event(0, i, 0, 1.0f);
+        auto ev = RtEvent::make_note_on_event(0, i, 0, 0, 1.0f);
         _module_under_test.push(ev);
     }
     _module_under_test.flush();
@@ -89,7 +89,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestFlushAfterOverflow)
     // ... and check that after flushing is working again in normal, non-overflowed conditions
     for (int i=0; i<TEST_DATA_SIZE; i++)
     {
-        auto ev = RtEvent::make_note_on_event(0, i, 0, 1.0f);
+        auto ev = RtEvent::make_note_on_event(0, i, 0, 0, 1.0f);
         ASSERT_EQ(true, _module_under_test.push(ev));
     }
     auto vst_events = _module_under_test.flush();
@@ -104,7 +104,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestFlushAfterOverflow)
 TEST_F(TestVst2xMidiEventFIFO, TestNoteOnCreation)
 {
     _module_under_test.flush();
-    auto ev = RtEvent::make_note_on_event(0, 0, 60, 1.0f);
+    auto ev = RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f);
     _module_under_test.push(ev);
     auto vst_events = _module_under_test.flush();
     auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
@@ -117,7 +117,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestNoteOnCreation)
 TEST_F(TestVst2xMidiEventFIFO, TestNoteOffCreation)
 {
     _module_under_test.flush();
-    auto ev = RtEvent::make_note_off_event(0, 0, 72, 0.5f);
+    auto ev = RtEvent::make_note_off_event(0, 0, 0, 72, 0.5f);
     _module_under_test.push(ev);
     auto vst_events = _module_under_test.flush();
     auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);
@@ -130,7 +130,7 @@ TEST_F(TestVst2xMidiEventFIFO, TestNoteOffCreation)
 TEST_F(TestVst2xMidiEventFIFO, TestNoteAftertouchCreation)
 {
     _module_under_test.flush();
-    auto ev = RtEvent::make_note_aftertouch_event(0, 0, 127, 0.0f);
+    auto ev = RtEvent::make_note_aftertouch_event(0, 0, 0, 127, 0.0f);
     _module_under_test.push(ev);
     auto vst_events = _module_under_test.flush();
     auto midi_ev = reinterpret_cast<VstMidiEvent*>(vst_events->events[0]);

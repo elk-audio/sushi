@@ -206,7 +206,7 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
-    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     for (int i=0; i<2; i++)
     {
@@ -217,7 +217,7 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
     }
 
     // Send NoteOFF, VstXsynth immediately silence everything
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
@@ -271,4 +271,3 @@ TEST_F(TestVst2xWrapper, TestProgramManagement)
     ASSERT_EQ("Basic", programs[50]);
     ASSERT_EQ(128u, programs.size());
 }
-

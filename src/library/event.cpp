@@ -15,6 +15,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -24,6 +25,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -33,6 +35,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -42,6 +45,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -50,6 +54,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -58,6 +63,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -122,22 +128,22 @@ RtEvent KeyboardEvent::to_rt_event(int sample_offset)
     switch (_subtype)
     {
         case KeyboardEvent::Subtype::NOTE_ON:
-            return RtEvent::make_note_on_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_on_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::NOTE_OFF:
-            return RtEvent::make_note_off_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_off_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::NOTE_AFTERTOUCH:
-            return RtEvent::make_note_aftertouch_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_aftertouch_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::AFTERTOUCH:
-            return RtEvent::make_aftertouch_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_aftertouch_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::PITCH_BEND:
-            return RtEvent::make_pitch_bend_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_pitch_bend_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::MODULATION:
-            return RtEvent::make_kb_modulation_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_kb_modulation_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::WRAPPED_MIDI:
             return RtEvent::make_wrapped_midi_event(_processor_id, sample_offset, _midi_data);
