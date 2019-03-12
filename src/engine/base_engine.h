@@ -14,9 +14,11 @@
 
 #include "base_event_dispatcher.h"
 #include "engine/track.h"
+#include "library/base_performance_timer.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/types.h"
+#include "control_interface.h"
 
 
 namespace sushi {
@@ -52,6 +54,8 @@ enum class RealtimeState
     STOPPING,
     STOPPED
 };
+
+constexpr int ENGINE_TIMING_ID = -1;
 
 class BaseEngine
 {
@@ -192,6 +196,10 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual const Processor* processor(ObjectId /*processor_id*/) const {return nullptr;}
+
+    virtual Processor* mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
+
     virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
     {
         static std::map<std::string, std::unique_ptr<Processor>> tmp;
@@ -204,12 +212,25 @@ public:
         return tmp;
     }
 
-    virtual sushi::dispatcher::BaseEventDispatcher* event_dispatcher()
+    virtual dispatcher::BaseEventDispatcher* event_dispatcher()
     {
         return nullptr;
     }
 
-    virtual void enable_timing_statistics(bool /*enabled*/) {}
+    virtual ext::SushiControl* controller()
+    {
+        return nullptr;
+    }
+
+    virtual engine::Transport* transport()
+    {
+        return nullptr;
+    }
+
+    virtual performance::BasePerformanceTimer* performance_timer()
+    {
+        return nullptr;
+    }
 
     virtual void enable_input_clip_detection(bool /*enabled*/) {}
 

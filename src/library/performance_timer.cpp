@@ -11,6 +11,7 @@ namespace performance {
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
 constexpr float AVERAGEING_FACTOR = 0.3f;
+
 PerformanceTimer::~PerformanceTimer()
 {
     if (_enabled.load() == true)
@@ -57,6 +58,11 @@ void PerformanceTimer::enable(bool enabled)
         // Run once to clear all records
         _update_timings();
     }
+}
+
+bool PerformanceTimer::enabled()
+{
+    return _enabled;
 }
 
 void PerformanceTimer::_worker()

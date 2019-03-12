@@ -30,6 +30,7 @@ option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
+option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
@@ -42,7 +43,10 @@ if (${WITH_JACK})
     message("Building with Jack support.")
 endif()
 if (${WITH_VST3})
-    message("Building with Vst 3 support.")
+    message("Building with Vst3 support.")
+endif()
+if (${WITH_RPC_INTERFACE})
+    message("Building with RPC support.")
 endif()
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 
@@ -81,6 +85,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
+                      src/engine/controller.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
@@ -111,7 +116,6 @@ set(COMPILATION_UNITS src/main.cpp
 # Enumerate all the headers separately so that CLion can index them
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
-                        include/plugin_interface.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h
@@ -123,6 +127,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
+                        src/library/base_performance_timer.h
                         src/library/event.h
                         src/library/event_interface.h
                         src/library/sample_buffer.h
@@ -144,6 +149,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst3x_wrapper.h
                         src/engine/base_engine.h
                         src/engine/audio_engine.h
+                        src/engine/controller.h
                         src/engine/track.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
@@ -237,6 +243,10 @@ else()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 
+if (${WITH_RPC_INTERFACE})
+    add_subdirectory(rpc_interface)
+endif()
+
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
 #################################
@@ -259,6 +269,10 @@ endif()
 
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+endif()
+
+if (${WITH_RPC_INTERFACE})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sushi_rpc)
 endif()
 
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
@@ -290,6 +304,10 @@ endif()
 
 if (${WITH_VST3})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
+if (${WITH_RPC_INTERFACE})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_RPC_INTERFACE)
 endif()
 
 ######################

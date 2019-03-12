@@ -152,6 +152,13 @@
                 "raw_midi": true
             }
         ],
+        "program_change_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "plugin": "gain_0_r"
+            }
+        ],
         "cc_mappings": [
             {
                 "port": 0,

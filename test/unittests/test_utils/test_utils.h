@@ -61,6 +61,9 @@ inline std::string get_data_dir_path()
     return test_config_file;
 };
 
+// Macro to hide unused variable warnings when using structured bindings
+#define DECLARE_UNUSED(var) [[maybe_unused]] auto unused_##var = var
+
 } // namespace test_utils
 
 
