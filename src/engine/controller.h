@@ -36,12 +36,12 @@ public:
     void                                                set_timing_statistics_enabled(bool enabled) const override;
     std::vector<ext::TrackInfo>                         get_tracks() const override;
 
-    ext::ControlStatus                                  send_note_on(int track_id, int note, float velocity) override;
-    ext::ControlStatus                                  send_note_off(int track_id, int note, float velocity) override;
-    ext::ControlStatus                                  send_note_aftertouch(int track_id, int note, float value) override;
-    ext::ControlStatus                                  send_aftertouch(int track_id, float value) override;
-    ext::ControlStatus                                  send_pitch_bend(int track_id, float value) override;
-    ext::ControlStatus                                  send_modulation(int track_id, float value) override;
+    ext::ControlStatus                                  send_note_on(int track_id, int note, int channel, float velocity) override;
+    ext::ControlStatus                                  send_note_off(int track_id, int note, int channel, float velocity) override;
+    ext::ControlStatus                                  send_note_aftertouch(int track_id, int note, int channel, float value) override;
+    ext::ControlStatus                                  send_aftertouch(int track_id, int channel, float value) override;
+    ext::ControlStatus                                  send_pitch_bend(int track_id, int channel, float value) override;
+    ext::ControlStatus                                  send_modulation(int track_id, int channel, float value) override;
 
     std::pair<ext::ControlStatus, ext::CpuTimings>      get_engine_timings() const override;
     std::pair<ext::ControlStatus, ext::CpuTimings>      get_track_timings(int track_id) const override;

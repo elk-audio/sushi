@@ -88,12 +88,12 @@ TEST_F(ControllerTest, TestKeyboardControls)
     SetUp(TEST_FILE);
 
     /* No sanity checks on track ids is currently done, so these are just called to excercise the code */
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_on(0, 40, 1.0));
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_off(0, 40, 1.0));
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_aftertouch(0, 40, 1.0));
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_pitch_bend(0, 1.0));
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_aftertouch(0, 1.0));
-    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_modulation(0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_on(0, 40, 0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_off(0, 40, 0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_aftertouch(0, 40, 0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_pitch_bend(0, 0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_aftertouch(0, 0, 1.0));
+    EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_modulation(0, 0, 1.0));
 }
 
 TEST_F(ControllerTest, TestTrackControls)

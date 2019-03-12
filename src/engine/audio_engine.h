@@ -354,17 +354,6 @@ public:
         return _audio_graph;
     }
 
-    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
-    {
-        return &_event_dispatcher;
-    }
-
-    /**
-     * @brief Enable timings of all audio processors
-     * @param enabled Enable if true, disable if false
-     */
-    void enable_timing_statistics(bool enabled) override;
-
     /**
      * @brief Enable audio clip detection on engine inputs
      * @param enabled Enable if true, disable if false
@@ -381,6 +370,11 @@ public:
     void enable_output_clip_detection(bool enabled) override
     {
         _output_clip_detection_enabled = enabled;
+    }
+
+    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
+    {
+        return &_event_dispatcher;
     }
 
     sushi::ext::SushiControl* controller() override

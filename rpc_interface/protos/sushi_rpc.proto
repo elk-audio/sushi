@@ -159,24 +159,28 @@ message CpuTimings {
 message NoteOnRequest {
     TrackIdentifier track = 1;
     int32 note = 2;
-    float velocity = 3;
+    int32 channel = 3;
+    float velocity = 4;
 }
 
 message NoteOffRequest {
     TrackIdentifier track = 1;
     int32 note = 2;
-    float velocity = 3;
+    int32 channel = 3;
+    float velocity = 4;
 }
 
 message NoteAftertouchRequest {
     TrackIdentifier track = 1;
     int32 note = 2;
-    float value = 3;
+    int32 channel = 3;
+    float value = 4;
 }
 
 message NoteModulationRequest {
     TrackIdentifier track = 1;
-    float value = 2;
+    int32 channel = 2;
+    float value = 3;
 }
 
 message TrackInfo {
