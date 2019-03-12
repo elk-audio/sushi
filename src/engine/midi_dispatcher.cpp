@@ -210,13 +210,13 @@ void MidiDispatcher::clear_connections()
     _kb_routes_in.clear();
 }
 
-void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
+void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 {
     int channel = midi::decode_channel(data);
     int size = data.size();
     /* Dispatch raw midi messages */
     {
-        const auto& cons = _raw_routes_in.find(input);
+        const auto& cons = _raw_routes_in.find(port);
         if (cons != _raw_routes_in.end())
         {
             for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -237,7 +237,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::CONTROL_CHANGE:
         {
             midi::ControlChangeMessage decoded_msg = midi::decode_control_change(data);
-            const auto& cons = _cc_routes.find(input);
+            const auto& cons = _cc_routes.find(port);
             if (cons != _cc_routes.end())
             {
                 for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
@@ -251,7 +251,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
             }
             if (decoded_msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
             {
-                const auto& cons = _kb_routes_in.find(input);
+                const auto& cons = _kb_routes_in.find(port);
                 if (cons != _kb_routes_in.end())
                 {
                     for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -270,7 +270,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::NOTE_ON:
         {
             midi::NoteOnMessage decoded_msg = midi::decode_note_on(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -288,7 +288,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::NOTE_OFF:
         {
             midi::NoteOffMessage decoded_msg = midi::decode_note_off(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -306,7 +306,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::PITCH_BEND:
         {
             midi::PitchBendMessage decoded_msg = midi::decode_pitch_bend(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -324,7 +324,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::POLY_KEY_PRESSURE:
         {
             midi::PolyKeyPressureMessage decoded_msg = midi::decode_poly_key_pressure(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -342,7 +342,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::CHANNEL_PRESSURE:
         {
             midi::ChannelPressureMessage decoded_msg = midi::decode_channel_pressure(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])

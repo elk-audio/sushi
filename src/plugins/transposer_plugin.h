@@ -18,7 +18,7 @@ class TransposerPlugin : public InternalPlugin
 public:
     TransposerPlugin(HostControl host_control);
 
-    ~TransposerPlugin() {}
+    ~TransposerPlugin() = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 

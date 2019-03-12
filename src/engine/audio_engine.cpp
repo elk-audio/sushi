@@ -260,9 +260,9 @@ EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
     return EngineReturnStatus::OK;
 }
 
-bool AudioEngine::_processor_exists(const std::string& name)
+bool AudioEngine::_processor_exists(const std::string& processor_name)
 {
-    auto processor_node = _processors.find(name);
+    auto processor_node = _processors.find(processor_name);
     if(processor_node == _processors.end())
     {
         return false;

@@ -456,7 +456,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                         data["value"].GetFloat(),
                                         timestamp);
     }
-    else if (json_event["type"] == "property_change")
+    if (json_event["type"] == "property_change")
     {
         auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
                                                                       data["property_name"].GetString());
@@ -470,7 +470,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                              data["value"].GetString(),
                                              timestamp);
     }
-    else if (json_event["type"] == "note_on")
+    if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
                                  processor_id,
@@ -479,7 +479,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                  data["velocity"].GetFloat(),
                                  timestamp);
     }
-    else if (json_event["type"] == "note_off")
+    if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
                                  processor_id,
@@ -532,7 +532,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, Jso
         rapidjson::StringBuffer string_buffer;
         invalid_config_pointer.Stringify(string_buffer);
         std::string error_node = string_buffer.GetString();
-        if(error_node == "")
+        if(error_node.empty())
         {
             MIND_LOG_ERROR("Invalid Json Config File: missing definitions in the root of the document");
         }
