@@ -315,7 +315,7 @@ public:
 
     virtual bool is_engine_event() override {return true;}
 
-    virtual int execute(engine::BaseEngine*engine) = 0;
+    virtual int execute(engine::BaseEngine* engine) = 0;
 
 protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
@@ -331,7 +331,7 @@ public:
     AddTrackEvent(const std::string& name, int channels, Time timestamp) : EngineEvent(timestamp),
                                                                               _name(name),
                                                                               _channels(channels){}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
@@ -347,7 +347,7 @@ public:
     };
     RemoveTrackEvent(const std::string& name, Time timestamp) : EngineEvent(timestamp),
                                                                    _name(name) {}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
@@ -377,7 +377,7 @@ public:
                                                                       _name(name),
                                                                       _file(file),
                                                                       _processor_type(processor_type) {}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string     _track;
@@ -401,12 +401,33 @@ public:
                                            _name(name),
                                            _track(track) {}
 
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
     std::string _track;
 };
+
+class ProgramChangeEvent : public EngineEvent
+{
+public:
+
+    ProgramChangeEvent(ObjectId processor_id,
+                       int program_no,
+                       Time timestamp) : EngineEvent(timestamp),
+                                         _processor_id(processor_id),
+                                         _program_no(program_no) {}
+
+    int execute(engine::BaseEngine* engine) override;
+
+    ObjectId            processor_id() {return _processor_id;}
+    int                 program_no() {return _program_no;}
+
+protected:
+    ObjectId            _processor_id;
+    int                 _program_no;
+};
+
 
 class AsynchronousWorkEvent : public Event
 {

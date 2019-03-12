@@ -21,6 +21,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/controller.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
@@ -275,6 +276,22 @@ public:
      */
     EngineReturnStatus remove_plugin_from_track(const std::string &track_name,
                                                 const std::string &plugin_name) override;
+
+    /**
+     * @brief Access a particular processor by its unique id for querying
+     * @param processor_id The id of the processor
+     * @return A const pointer to the processor instance if found, nullptr otherwise
+     */
+    const Processor* processor(ObjectId processor_id) const override;
+
+    /**
+     * @brief Access a particular processor by its unique id for editing,
+     *        use with care and not from several threads at once
+     * @param processor_id The id of the processor
+     * @return A mutable pointer to the processor instance if found, nullptr otherwise
+     */
+    Processor* mutable_processor(ObjectId processor_id) override;
+
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually
      *        there should be better and safer ways of accessing processors.
@@ -301,11 +318,20 @@ public:
         return &_event_dispatcher;
     }
 
-    /**
-     * @brief Enable timings of all audio processors
-     * @param enabled Enable if true, disable if false
-     */
-    void enable_timing_statistics(bool enabled) override;
+    sushi::ext::SushiControl* controller() override
+    {
+        return &_controller;
+    }
+
+    sushi::engine::Transport* transport() override
+    {
+        return &_transport;
+    }
+
+    performance::BasePerformanceTimer* performance_timer() override
+    {
+        return &_process_timer;
+    }
 
     /**
      * @brief Print the current processor timings (in enabled) in the log
@@ -420,10 +446,10 @@ private:
     Transport _transport;
 
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+    Controller _controller{this};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
-    bool _timings_enabled{false};
 };
 
 /**

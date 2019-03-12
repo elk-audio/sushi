@@ -288,6 +288,19 @@ Event*AsynchronousBlobDeleteEvent::execute()
     return nullptr;
 }
 
-#pragma GCC diagnostic pop
+int ProgramChangeEvent::execute(engine::BaseEngine* engine)
+{
+    auto processor = engine->mutable_processor(_processor_id);
+    if (processor != nullptr)
+    {
+        auto status = processor->set_program(_program_no);
+        if (status == ProcessorReturnCode::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+    }
+    return EventStatus::NOT_HANDLED;
+}
 
+#pragma GCC diagnostic pop
 } // end namespace sushi

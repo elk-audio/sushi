@@ -170,6 +170,28 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
         }
     }
 
+    if(midi.HasMember("program_change_connections"))
+    {
+        for (const auto& con : midi["program_change_connections"].GetArray())
+        {
+            auto res = _midi_dispatcher->connect_pc_to_processor(con["port"].GetInt(),
+                                                                 con["plugin"].GetString(),
+                                                                 _get_midi_channel(con["channel"]));
+            if (res != MidiDispatcherStatus::OK)
+            {
+                if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+                {
+                    MIND_LOG_ERROR("Invalid port \"{}\" specified specified for MIDI program change "
+                                   "channel connections in Json Config file.", con["port"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
+                MIND_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                               "connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+        }
+    }
+
     if(config["midi"].HasMember("cc_mappings"))
     {
         for (const auto& cc_map : midi["cc_mappings"].GetArray())
