@@ -56,13 +56,13 @@ void print_version_and_build_info()
                                 << SUSHI__VERSION_REV << std::endl;
     std::vector<std::string> build_opts;
 #ifdef SUSHI_BUILD_WITH_VST3
-    build_opts.push_back("vst3");
+    build_opts.emplace_back("vst3");
 #endif
 #ifdef SUSHI_BUILD_WITH_JACK
-    build_opts.push_back("jack");
+    build_opts.emplace_back("jack");
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    build_opts.push_back("xenomai");
+    build_opts.emplace_back("xenomai");
 #endif
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     build_opts.push_back("rpc control");

@@ -19,7 +19,7 @@ class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
 public:
     SushiHostApplication() : Steinberg::Vst::HostApplication() {}
-    virtual Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
+    Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
 };
 
 /**
@@ -46,7 +46,7 @@ class PluginLoader
 {
 public:
     PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name);
-    ~PluginLoader ();
+    ~PluginLoader() = default;
 
     std::pair<bool, PluginInstance> load_plugin();
 

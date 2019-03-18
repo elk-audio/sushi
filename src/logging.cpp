@@ -21,9 +21,9 @@ std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
 
 
-MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
-                                              const std::string logger_name,
-                                              const std::string min_log_level)
+MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string& file_name,
+                                              const std::string& logger_name,
+                                              const std::string& min_log_level)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 

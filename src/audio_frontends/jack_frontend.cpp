@@ -56,8 +56,8 @@ void JackFrontend::run()
 }
 
 
-AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
-                                               const std::string server_name)
+AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
+                                               const std::string& server_name)
 {
     jack_status_t jack_status;
     jack_options_t options = JackNullOption;
@@ -67,7 +67,7 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         options = JackServerName;
     }
     _client = jack_client_open(client_name.c_str(), options, &jack_status, server_name.c_str());
-    if (!_client)
+    if (_client == nullptr)
     {
         MIND_LOG_ERROR("Failed to open Jack server, error: {}.", jack_status);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -135,7 +135,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    JACK_DEFAULT_AUDIO_TYPE,
                                    JackPortIsOutput,
                                    0);
-        if (!port)
+        if (port == nullptr)
         {
             MIND_LOG_ERROR("Failed to open Jack output port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -149,7 +149,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    JACK_DEFAULT_AUDIO_TYPE,
                                    JackPortIsInput,
                                    0);
-        if (!port)
+        if (port == nullptr)
         {
             MIND_LOG_ERROR("Failed to open Jack input port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -164,7 +164,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
 AudioFrontendStatus JackFrontend::connect_ports()
 {
     const char** out_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsInput);
-    if (!out_ports)
+    if (out_ports == nullptr)
     {
         MIND_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -184,7 +184,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
 
     /* Same for input ports */
     const char** in_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsOutput);
-    if (!in_ports)
+    if (in_ports == nullptr)
     {
         MIND_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -206,10 +206,10 @@ AudioFrontendStatus JackFrontend::connect_ports()
 }
 
 
-int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
+int JackFrontend::internal_process_callback(jack_nframes_t framecount)
 {
     set_flush_denormals_to_zero();
-    if (no_frames < 64 || no_frames % 64)
+    if (framecount < 64 || framecount % 64)
     {
         MIND_LOG_CRITICAL("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
@@ -224,7 +224,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     Time start_time = std::chrono::microseconds(current_usecs);
-    for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
+    for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         _engine->update_time(start_time + delta_time, current_frames + frame);

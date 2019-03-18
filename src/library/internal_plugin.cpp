@@ -19,7 +19,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
                                                               float max_value,
                                                               FloatParameterPreProcessor* pre_proc)
 {
-    if (!pre_proc)
+    if (pre_proc == nullptr)
     {
         pre_proc = new FloatParameterPreProcessor(min_value, max_value);
     }
@@ -42,7 +42,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           int max_value,
                                                           IntParameterPreProcessor* pre_proc)
 {
-    if (! pre_proc)
+    if (pre_proc == nullptr)
     {
          pre_proc = new IntParameterPreProcessor(min_value, max_value);
     }
