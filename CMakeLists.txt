@@ -283,7 +283,7 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 ####################################
 
 target_compile_features(sushi PRIVATE cxx_std_17)
-target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math -mfpmath=sse)
+target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
         target_compile_options(sushi PRIVATE -faligned-new)
