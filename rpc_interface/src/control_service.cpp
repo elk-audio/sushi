@@ -88,6 +88,46 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
     }
 }
 
+inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
+{
+    dest.set_id(src.id);
+    dest.mutable_type()->set_type(to_grpc(src.type));
+    dest.set_label(src.label);
+    dest.set_name(src.name);
+    dest.set_unit(src.unit);
+    dest.set_automatable(src.automatable);
+    dest.set_min_range(src.min_range);
+    dest.set_max_range(src.max_range);
+}
+
+inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::ext::ProcessorInfo& src)
+{
+    dest.set_id(src.id);
+    dest.set_label(src.label);
+    dest.set_name(src.name);
+    dest.set_parameter_count(src.parameter_count);
+    dest.set_program_count(src.program_count);
+}
+
+inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src)
+{
+    dest.set_id(src.id);
+    dest.set_label(src.label);
+    dest.set_name(src.name);
+    dest.set_input_channels(src.input_channels);
+    dest.set_input_busses(src.input_busses);
+    dest.set_output_channels(src.output_channels);
+    dest.set_output_busses(src.output_busses);
+    dest.set_processor_count(src.processor_count);
+}
+
+inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& src)
+{
+    dest.set_average(src.avg);
+    dest.set_min(src.min);
+    dest.set_max(src.max);
+}
+
 grpc::Status SushiControlService::GetSamplerate(grpc::ServerContext* /*context*/,
                                                 const sushi_rpc::GenericVoidValue* /*request*/,
                                                 sushi_rpc::GenericFloatValue* response)
@@ -174,14 +214,7 @@ grpc::Status SushiControlService::GetTracks(grpc::ServerContext* /*context*/,
     for (const auto& track : tracks)
     {
         auto info = response->add_tracks();
-        info->set_id(track.id);
-        info->set_label(track.label);
-        info->set_name((track.name));
-        info->set_output_channels(track.output_channels);
-        info->set_output_busses(track.output_busses);
-        info->set_input_channels(track.input_channels);
-        info->set_input_busses(track.input_busses);
-        info->set_processor_count(track.processor_count);
+        to_grpc(*info, track);
     }
     return grpc::Status::OK;
 }
@@ -243,9 +276,7 @@ grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*contex
     {
         return to_grpc_status(status);
     }
-    response->set_average(timings.avg);
-    response->set_min(timings.min);
-    response->set_max(timings.max);
+    to_grpc(*response, timings);
     return grpc::Status::OK;
 }
 
@@ -258,9 +289,7 @@ grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context
     {
         return to_grpc_status(status);
     }
-    response->set_average(timings.avg);
-    response->set_min(timings.min);
-    response->set_max(timings.max);
+    to_grpc(*response, timings);
     return grpc::Status::OK;
 }
 
@@ -273,9 +302,7 @@ grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*con
     {
         return to_grpc_status(status);
     }
-    response->set_average(timings.avg);
-    response->set_min(timings.min);
-    response->set_max(timings.max);
+    to_grpc(*response, timings);
     return grpc::Status::OK;
 }
 
@@ -320,19 +347,12 @@ grpc::Status SushiControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
                                                const sushi_rpc::TrackIdentifier* request,
                                                sushi_rpc::TrackInfo* response)
 {
-    auto [status, info] = _controller->get_track_info(request->id());
+    auto [status, track] = _controller->get_track_info(request->id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status, nullptr);
     }
-    response->set_id(info.id);
-    response->set_label(info.label);
-    response->set_name((info.name));
-    response->set_output_channels(info.output_channels);
-    response->set_output_busses(info.output_busses);
-    response->set_input_channels(info.input_channels);
-    response->set_input_busses(info.input_busses);
-    response->set_processor_count(info.processor_count);
+    to_grpc(*response, track);
     return grpc::Status::OK;
 }
 
@@ -344,10 +364,7 @@ grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*cont
     for (const auto& processor : processors)
     {
         auto info = response->add_processors();
-        info->set_id(processor.id);
-        info->set_label(processor.label);
-        info->set_name((processor.name));
-        info->set_parameter_count(processor.parameter_count);
+        to_grpc(*info, processor);
     }
     return to_grpc_status(status);
 }
@@ -360,12 +377,7 @@ grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*cont
     for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
-        info->set_id(parameter.id);
-        info->set_label(parameter.label);
-        info->set_name(parameter.name);
-        info->mutable_type()->set_type(to_grpc(parameter.type));
-        info->set_min_range(parameter.min_range);
-        info->set_max_range(parameter.max_range);
+        to_grpc(*info, parameter);
     }
     return to_grpc_status(status);
 }
@@ -387,15 +399,12 @@ grpc::Status SushiControlService::GetProcessorInfo(grpc::ServerContext* /*contex
                                                    const sushi_rpc::ProcessorIdentifier* request,
                                                    sushi_rpc::ProcessorInfo* response)
 {
-    auto [status, info] = _controller->get_processor_info(request->id());
+    auto [status, processor] = _controller->get_processor_info(request->id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
-    response->set_id(info.id);
-    response->set_label(info.label);
-    response->set_name((info.name));
-    response->set_parameter_count(info.parameter_count);
+    to_grpc(*response, processor);
     return grpc::Status::OK;
 }
 
@@ -490,12 +499,7 @@ grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext* /*
     for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
-        info->set_id(parameter.id);
-        info->set_label(parameter.label);
-        info->set_name(parameter.name);
-        info->mutable_type()->set_type(to_grpc(parameter.type));
-        info->set_min_range(parameter.min_range);
-        info->set_max_range(parameter.max_range);
+        to_grpc(*info, parameter);
     }
     return to_grpc_status(status);
 }
@@ -517,17 +521,12 @@ grpc::Status SushiControlService::GetParameterInfo(::grpc::ServerContext* /*cont
                                                    const sushi_rpc::ParameterIdentifier* request,
                                                    sushi_rpc::ParameterInfo* response)
 {
-    auto [status, info] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
+    auto [status, parameter] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
-    response->set_id(info.id);
-    response->set_label(info.label);
-    response->set_name(info.name);
-    response->mutable_type()->set_type(to_grpc(info.type));
-    response->set_min_range(info.min_range);
-    response->set_max_range(info.max_range);
+    to_grpc(*response, parameter);
     return grpc::Status::OK;
 }
 
