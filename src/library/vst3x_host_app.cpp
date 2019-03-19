@@ -151,14 +151,18 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
         return controller;
     }
     /* Else try to instatiate the controller as a separate object */
-    Steinberg::FUID controllerID;
-    if (component->getControllerClassId(controllerID) == Steinberg::kResultTrue && controllerID.isValid())
+    Steinberg::TUID controllerTUID;
+    if (component->getControllerClassId(controllerTUID) == Steinberg::kResultTrue)
     {
-        res = factory->createInstance(controllerID, Steinberg::Vst::IEditController::iid,
-                                       reinterpret_cast<void**>(&controller));
-        if (res == Steinberg::kResultOk)
+        Steinberg::FUID controllerID(controllerTUID);
+        if (controllerID.isValid())
         {
-            return controller;
+            res = factory->createInstance(controllerID, Steinberg::Vst::IEditController::iid,
+                                          reinterpret_cast<void**>(&controller));
+            if (res == Steinberg::kResultOk)
+            {
+                return controller;
+            }
         }
         MIND_LOG_ERROR("Failed to create controller with error code: {}", res);
     }

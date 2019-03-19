@@ -64,7 +64,8 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp")
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp")
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
