@@ -383,7 +383,7 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
         case midi::MessageType::PROGRAM_CHANGE:
         {
             midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(data);
-            const auto& cons = _pc_routes.find(input);
+            const auto& cons = _pc_routes.find(port);
             if (cons != _pc_routes.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
