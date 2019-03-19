@@ -184,3 +184,57 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     EXPECT_EQ(3, context->timeSigNumerator);
     EXPECT_EQ(4, context->timeSigDenominator);
 }
+
+class TestVst3xUtils : public ::testing::Test
+{
+protected:
+    TestVst3xUtils() {}
+};
+
+TEST_F(TestVst3xUtils, TestNoteOnConversion)
+{
+    auto event = RtEvent::make_note_on_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_on_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOnEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOn.channel);
+    EXPECT_EQ(45, vst_event.noteOn.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOn.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOn.velocity);
+    EXPECT_EQ(0, vst_event.noteOn.length);
+    EXPECT_EQ(-1, vst_event.noteOn.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestNoteOffConversion)
+{
+    auto event = RtEvent::make_note_off_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_off_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOffEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOff.channel);
+    EXPECT_EQ(45, vst_event.noteOff.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOff.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOff.velocity);
+    EXPECT_EQ(-1, vst_event.noteOff.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestAftertouchConversion)
+{
+    auto event = RtEvent::make_note_aftertouch_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_aftertouch_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kPolyPressureEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.polyPressure.channel);
+    EXPECT_EQ(45, vst_event.polyPressure.pitch);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.polyPressure.pressure);
+    EXPECT_EQ(-1, vst_event.polyPressure.noteId);
+}
