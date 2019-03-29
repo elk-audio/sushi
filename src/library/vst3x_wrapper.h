@@ -13,10 +13,8 @@
 #include <utility>
 
 #include "pluginterfaces/base/ipluginbase.h"
-#define DEVELOPMENT
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
-#undef DEVELOPMENT
 
 #include "library/vst3x_host_app.h"
 #include "library/processor.h"

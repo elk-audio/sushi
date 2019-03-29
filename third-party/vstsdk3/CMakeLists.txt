@@ -24,14 +24,7 @@ include(PlatformToolset)
 # Custom tweaking for MIND
 #-------------------------------------------------------------------------------
 
-option(SMTG_CREATE_VST2_VERSION "Use VST2" OFF)
-
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    add_definitions(-DRELEASE)
-else()
-    add_definitions(-DDEVELOPMENT)
-endif()
-
+option(SMTG_LINUX "Linux is assumed" ON)
 set(WARNINGS_DISABLED "-w")
 
 #-------------------------------------------------------------------------------
@@ -47,12 +40,6 @@ set(ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(SDK_ROOT "${ROOT}")
 set(public_sdk_SOURCE_DIR ${SDK_ROOT}/public.sdk)
 set(pluginterfaces_SOURCE_DIR ${SDK_ROOT}/pluginterfaces)
-
-# Here you can define where the VSTGUI is located
-if(SMTG_ADD_VSTGUI)
-    set(VSTGUI_ROOT "${ROOT}")
-    setupVstGuiSupport()
-endif()
 
 include_directories(${ROOT} ${SDK_ROOT})
 
@@ -74,6 +61,7 @@ add_subdirectory(public.sdk/source/vst/interappaudio)
 #---Add VST3 examples (plug-ins and hosting)-----
 set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 add_subdirectory(public.sdk/samples/vst/adelay)
+add_subdirectory(public.sdk/samples/vst/mda-vst3)
 
 # Add hosting examples, it includes the validator
 set(SDK_IDE_HOSTING_EXAMPLES_FOLDER FOLDER "HostingExamples")

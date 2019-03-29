@@ -13,10 +13,8 @@
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstevents.h"
-#define DEVELOPMENT
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
-#undef DEVELOPMENT
 
 #include "library/sample_buffer.h"
 #include "library/rt_event.h"

@@ -1,10 +1,8 @@
 #include <cstring>
 
-#define DEVELOPMENT true
 
 #include "pluginterfaces/base/ustring.h"
 #include "public.sdk/source/vst/hosting/stringconvert.h"
-#undef DEVELOPMENT
 
 #include "vst3x_host_app.h"
 #include "logging.h"

@@ -1,15 +1,12 @@
 #ifndef SUSHI_VST3X_HOST_CONTEXT_H
 #define SUSHI_VST3X_HOST_CONTEXT_H
 
-#define DEVELOPMENT true
-
 #include <pluginterfaces/vst/ivsteditcontroller.h>
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
-#undef DEVELOPMENT
 #pragma GCC diagnostic pop
 
 namespace sushi {
