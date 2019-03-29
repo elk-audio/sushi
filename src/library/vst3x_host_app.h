@@ -4,13 +4,16 @@
 #include <pluginterfaces/vst/ivsteditcontroller.h>
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
+#define RELEASE = 1
 #include "public.sdk/source/vst/hosting/module.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
-
+#undef RELEASE
 namespace sushi {
 namespace vst3 {
+
+class ConnectionProxy;
 
 class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
@@ -25,6 +28,14 @@ public:
 class PluginInstance
 {
 public:
+    PluginInstance();
+    ~PluginInstance();
+
+    PluginInstance(const PluginInstance& o);
+    PluginInstance(PluginInstance&& o);
+    PluginInstance& operator = (const PluginInstance& o);
+    PluginInstance& operator = (PluginInstance&& o);
+
     friend class PluginLoader;
 
     const std::string& name() {return _name;};
@@ -37,6 +48,9 @@ private:
     Steinberg::IPtr<Steinberg::Vst::IComponent> _component{nullptr};
     Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor{nullptr};
     Steinberg::IPtr<Steinberg::Vst::IEditController> _controller{nullptr};
+
+    Steinberg::OPtr<ConnectionProxy> _componentProxy;
+    Steinberg::OPtr<ConnectionProxy> _controllerProxy;
 };
 
 class PluginLoader
@@ -48,6 +62,7 @@ public:
     std::pair<bool, PluginInstance> load_plugin();
 
 private:
+    bool _connect_components(PluginInstance& instance);
     std::string _path;
     std::string _name;
 
@@ -58,6 +73,8 @@ private:
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
+
+
 
 } // end namespace vst
 } // end namespace sushi
