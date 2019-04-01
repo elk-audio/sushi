@@ -25,33 +25,30 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 
 
 /* Quick test to test plugin loading */
-TEST(TestVst3xPluginLoader, TestLoadPlugin)
+TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
-    auto [success, instance] = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
     ASSERT_TRUE(success);
-    ASSERT_TRUE(instance.processor());
-    ASSERT_TRUE(instance.component());
-    ASSERT_TRUE(instance.controller());
+    ASSERT_TRUE(module_under_test.processor());
+    ASSERT_TRUE(module_under_test.component());
+    ASSERT_TRUE(module_under_test.controller());
 
     free(full_test_plugin_path);
 }
 
 /* Test that nothing breaks if the plugin is not found */
-TEST(TestVst3xPluginLoader, TestLoadPluginFromErroneousFilename)
+TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
     /* Non existing library */
-    PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
-    bool success;
-    PluginInstance instance;
-    std::tie(success, instance) = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     ASSERT_FALSE(success);
 
     /* Existing library but non-existing plugin */
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    module_under_test = PluginLoader(full_test_plugin_path, "NoPluginWithThisName");
-    std::tie(success, instance) = module_under_test.load_plugin();
+    success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
     free(full_test_plugin_path);
 }

@@ -23,210 +23,193 @@ Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
     return Steinberg::kResultOk;
 }
 
-// Ripped straight out of Steinberg example code (plugprovider.cpp)
+/* ConnectionProxy is more or less ripped straight out of Steinberg example code.
+ * But edited to follow Mind coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
 {
 public:
-    ConnectionProxy (Steinberg::Vst::IConnectionPoint* srcConnection);
-    virtual ~ConnectionProxy ();
+    explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* srcConnection) : _source_connection (srcConnection) {}
+    virtual ~ConnectionProxy() = default;
 
-    //--- from IConnectionPoint
-    Steinberg::tresult PLUGIN_API connect (Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API disconnect (Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API notify (Steinberg::Vst::IMessage* message) override;
+    Steinberg::tresult PLUGIN_API connect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult PLUGIN_API disconnect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage* message) override;
 
-    bool disconnect ();
+    bool disconnect();
 
-    OBJ_METHODS (ConnectionProxy, FObject)
-    REFCOUNT_METHODS (FObject)
-    DEF_INTERFACES_1 (IConnectionPoint, FObject)
+    OBJ_METHODS(ConnectionProxy, FObject)
+    REFCOUNT_METHODS(FObject)
+    DEF_INTERFACES_1(IConnectionPoint, FObject)
 
 protected:
-    Steinberg::IPtr<IConnectionPoint> srcConnection;
-    Steinberg::IPtr<IConnectionPoint> dstConnection;
+    Steinberg::IPtr<IConnectionPoint> _source_connection;
+    Steinberg::IPtr<IConnectionPoint> _dest_connection;
 };
 
-ConnectionProxy::ConnectionProxy (IConnectionPoint* srcConnection)
-        : srcConnection (srcConnection) // share it
-{}
-// Use compiler generated version of the "big 5" but they are defined here, otherwise
-// the definition of ConnectionProxy would leak out through the include file
-ConnectionProxy::~ConnectionProxy() = default;
-PluginInstance::PluginInstance(const PluginInstance& o) = default;
-PluginInstance::PluginInstance(PluginInstance&& o) = default;
-PluginInstance& PluginInstance::operator=(const PluginInstance& o) = default;
-PluginInstance& PluginInstance::operator=(PluginInstance&& o) = default;
-
-
-Steinberg::tresult PLUGIN_API ConnectionProxy::connect (IConnectionPoint* other)
+Steinberg::tresult PLUGIN_API ConnectionProxy::connect(IConnectionPoint* other)
 {
     if (other == nullptr)
+    {
         return Steinberg::kInvalidArgument;
-    if (dstConnection)
-        return Steinberg::kResultFalse;
+    }
 
-    dstConnection = other; // share it
-    Steinberg::tresult res = srcConnection->connect (this);
+    if (_dest_connection)
+    {
+        return Steinberg::kResultFalse;
+    }
+
+    _dest_connection = other;
+    Steinberg::tresult res = _source_connection->connect(this);
     if (res != Steinberg::kResultTrue)
-        dstConnection = nullptr;
+    {
+        _dest_connection = nullptr;
+    }
     return res;
 }
 
-//------------------------------------------------------------------------
-Steinberg::tresult PLUGIN_API ConnectionProxy::disconnect (IConnectionPoint* other)
+Steinberg::tresult PLUGIN_API ConnectionProxy::disconnect(IConnectionPoint* other)
 {
-    if (!other)
-        return Steinberg::kInvalidArgument;
-
-    if (other == dstConnection)
+    if (other == nullptr)
     {
-        if (srcConnection)
-            srcConnection->disconnect (this);
-        dstConnection = nullptr;
-        return Steinberg::kResultTrue;
+        return Steinberg::kInvalidArgument;
     }
 
+    if (other == _dest_connection)
+    {
+        if (_source_connection)
+        {
+            _source_connection->disconnect(this);
+        }
+        _dest_connection = nullptr;
+        return Steinberg::kResultTrue;
+    }
     return Steinberg::kInvalidArgument;
 }
 
-Steinberg::tresult PLUGIN_API ConnectionProxy::notify (Steinberg::Vst::IMessage* message)
+Steinberg::tresult PLUGIN_API ConnectionProxy::notify(Steinberg::Vst::IMessage* message)
 {
-    if (dstConnection)
+    if (_dest_connection)
     {
         // TODO we should test if we are in UI main thread else postpone the message
-        return dstConnection->notify (message);
+        // Steinberg comment, maybe we should add a check here
+        return _dest_connection->notify(message);
     }
     return Steinberg::kResultFalse;
 }
 
-bool ConnectionProxy::disconnect ()
+bool ConnectionProxy::disconnect()
 {
-    return disconnect (dstConnection) == Steinberg::kResultTrue;
+    auto status =  disconnect(_dest_connection);
+    return  status == Steinberg::kResultTrue;
 }
 
 PluginInstance::PluginInstance()
 {
-    // Constructor and destructor defined here and not in header, otherwise we
+    // Constructor defined here and not in header file, otherwise we
     // would need to put the definition of ConnectionProxy here too
 }
 
 PluginInstance::~PluginInstance()
 {
-    if(_componentProxy)
+    if(_component_connection)
     {
-        _componentProxy->disconnect();
+        _component_connection->disconnect();
     }
-    if(_controllerProxy)
+    if(_controller_connection)
     {
-        _controllerProxy->disconnect();
+        _controller_connection->disconnect();
     }
 }
 
-
-PluginLoader::PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name) :
-                                                                               _path(plugin_absolute_path),
-                                                                               _name(plugin_name)
-{
-    _host_app.release();
-}
-
-
-std::pair<bool, PluginInstance> PluginLoader::load_plugin()
+bool PluginInstance::load_plugin(const std::string& plugin_path, const std::string& plugin_name)
 {
     std::string error_msg;
-    PluginInstance instance;
-    _module = VST3::Hosting::Module::create(_path, error_msg);
+    _module = VST3::Hosting::Module::create(plugin_path, error_msg);
     if (!_module)
     {
         MIND_LOG_ERROR("Failed to load VST3 Module: {}", error_msg);
-        return std::make_pair(false, instance);
+        return false;
     }
     auto factory = _module->getFactory().get();
     if (!factory)
     {
         MIND_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
-        return std::make_pair(false, instance);
+        return false;
     }
 
-    auto component = load_component(factory, _name);
+    auto component = load_component(factory, plugin_name);
     if (!component)
     {
-        return std::make_pair(false, instance);
+        return false;
     }
     auto res = component->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
         MIND_LOG_ERROR("Failed to initialize component with error code: {}", res);
-        return std::make_pair(false, instance);
+        return false;
     }
 
     auto processor = load_processor(component);
     if (!processor)
     {
         MIND_LOG_ERROR("Failed to get processor from component");
-        return std::make_pair(false, instance);
+        return false;
     }
 
     auto controller = load_controller(factory, component);
     if (!controller)
     {
         MIND_LOG_ERROR("Failed to load controller");
-        return std::make_pair(false, instance);
+        return false;
     }
     res = controller->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
         MIND_LOG_ERROR("Failed to initialize component with error code: {}", res);
-        return std::make_pair(false, instance);
+        return false;
     }
 
-    instance._component = component;
-    instance._processor = processor;
-    instance._controller = controller;
-    instance._name = _name;
-    if (_connect_components(instance) == false)
+    _component = component;
+    _processor = processor;
+    _controller = controller;
+    _name = plugin_name;
+    if (_connect_components() == false)
     {
         MIND_LOG_ERROR("Failed to connect component to editor");
         // Might still be ok? Plugin might not have an editor.
     }
-    return {true, instance};
+    return true;
 }
 
-bool PluginLoader::_connect_components(PluginInstance& instance)
+bool PluginInstance::_connect_components()
 {
-    if (!instance._component || !instance._controller)
-    {
-        MIND_LOG_ERROR("No controller");
-        return false;
-    }
-
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> compICP(instance._component);
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> contrICP(instance._controller);
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> compICP(_component);
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> contrICP(_controller);
     if (!compICP || !contrICP)
     {
         MIND_LOG_ERROR("Failed to create connection points");
         return false;
     }
 
-    bool res = false;
+    _component_connection = NEW ConnectionProxy(compICP);
+    _controller_connection = NEW ConnectionProxy(contrICP);
 
-    instance._componentProxy = NEW ConnectionProxy(compICP);
-    instance._controllerProxy = NEW ConnectionProxy(contrICP);
-
-    if (instance._componentProxy->connect(contrICP) != Steinberg::kResultTrue)
+    if (_component_connection->connect(contrICP) != Steinberg::kResultTrue)
     {
-        MIND_LOG_ERROR("Failed to connnect component");
+        MIND_LOG_ERROR("Failed to connect component");
     }
     else
     {
-        if (instance._controllerProxy->connect(compICP) != Steinberg::kResultTrue)
+        if (_controller_connection->connect(compICP) != Steinberg::kResultTrue)
         {
-            MIND_LOG_ERROR("Failed to connnect controller");
+            MIND_LOG_ERROR("Failed to connect controller");
         }
         else
-            res = true;
+        {
+            return true;
+        }
     }
-    return res;
+    return false;
 }
 
 

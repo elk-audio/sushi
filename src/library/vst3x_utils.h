@@ -39,8 +39,6 @@ public:
                                     _in_parameters(in_parameter_changes),
                                     _out_parameters(out_parameter_changes)
     {
-        Steinberg::Vst::ProcessData();
-
         _input_buffers.channelBuffers32 = _process_inputs;
         _output_buffers.channelBuffers32 = _process_outputs;
         inputs = &_input_buffers;

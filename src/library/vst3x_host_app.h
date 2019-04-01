@@ -31,49 +31,30 @@ public:
     PluginInstance();
     ~PluginInstance();
 
-    PluginInstance(const PluginInstance& o);
-    PluginInstance(PluginInstance&& o);
-    PluginInstance& operator = (const PluginInstance& o);
-    PluginInstance& operator = (PluginInstance&& o);
-
-    friend class PluginLoader;
-
+    bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
     const std::string& name() {return _name;};
     Steinberg::Vst::IComponent* component() {return _component.get();}
     Steinberg::Vst::IAudioProcessor* processor() {return _processor.get();}
     Steinberg::Vst::IEditController* controller() {return _controller.get();}
 
 private:
+    bool _connect_components();
+
     std::string _name;
-    Steinberg::IPtr<Steinberg::Vst::IComponent> _component{nullptr};
-    Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor{nullptr};
-    Steinberg::IPtr<Steinberg::Vst::IEditController> _controller{nullptr};
-
-    Steinberg::OPtr<ConnectionProxy> _componentProxy;
-    Steinberg::OPtr<ConnectionProxy> _controllerProxy;
-};
-
-class PluginLoader
-{
-public:
-    PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name);
-    ~PluginLoader() = default;
-
-    std::pair<bool, PluginInstance> load_plugin();
-
-private:
-    bool _connect_components(PluginInstance& instance);
-    std::string _path;
-    std::string _name;
-
-    std::shared_ptr<VST3::Hosting::Module> _module{nullptr};
     SushiHostApplication _host_app;
+    std::shared_ptr<VST3::Hosting::Module> _module;
+
+    Steinberg::IPtr<Steinberg::Vst::IComponent>      _component;
+    Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor;
+    Steinberg::IPtr<Steinberg::Vst::IEditController> _controller;
+
+    Steinberg::OPtr<ConnectionProxy> _controller_connection;
+    Steinberg::OPtr<ConnectionProxy> _component_connection;
 };
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
-
 
 
 } // end namespace vst
