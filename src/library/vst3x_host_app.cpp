@@ -4,6 +4,7 @@
 #include "public.sdk/source/vst/hosting/stringconvert.h"
 
 #include "vst3x_host_app.h"
+#include "vst3x_wrapper.h"
 #include "logging.h"
 
 namespace sushi {
@@ -23,11 +24,23 @@ Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
     return Steinberg::kResultOk;
 }
 
+ComponentHandler::ComponentHandler(Vst3xWrapper* wrapper_instance) : _wrapper_instance(wrapper_instance)
+{}
+
+Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID parameter_id,
+                                                 Steinberg::Vst::ParamValue normalized_value)
+{
+    _wrapper_instance->set_parameter_change(ObjectId(parameter_id), static_cast<float>(normalized_value));
+    return Steinberg::kResultOk;
+}
+
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
  * But edited to follow Mind coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
 {
 public:
+    MIND_DECLARE_NON_COPYABLE(ConnectionProxy);
+
     explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* srcConnection) : _source_connection (srcConnection) {}
     virtual ~ConnectionProxy() = default;
 
@@ -283,7 +296,6 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
     }
     return nullptr;
 }
-
 
 } // end namespace vst3
 } // end namespace sushi

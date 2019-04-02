@@ -4,6 +4,7 @@
 #include <pluginterfaces/vst/ivstmidicontrollers.h>
 
 #include "vst3x_wrapper.h"
+#include "library/event.h"
 #include "logging.h"
 
 namespace sushi {
@@ -453,6 +454,12 @@ inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, floa
     {
         param_queue->addPoint(sample_offset, value, index);
     }
+}
+
+void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
+{
+    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, this->id(), param_id, value, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
