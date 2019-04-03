@@ -104,15 +104,15 @@ public:
 
 private:
     /* Set up the jack client and associated ports */
-    AudioFrontendStatus setup_client(const std::string client_name, const std::string server_name);
+    AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);
     AudioFrontendStatus setup_sample_rate();
     AudioFrontendStatus setup_ports();
     /* Call after activation to connect the frontend ports to system ports */
     AudioFrontendStatus connect_ports();
 
     /* Internal process callback function */
-    int internal_process_callback(jack_nframes_t nframes);
-    int internal_samplerate_callback(jack_nframes_t nframes);
+    int internal_process_callback(jack_nframes_t framecount);
+    int internal_samplerate_callback(jack_nframes_t sample_rate);
     void internal_latency_callback(jack_latency_callback_mode_t mode);
 
     void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);

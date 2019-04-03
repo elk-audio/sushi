@@ -15,6 +15,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -24,6 +25,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -33,6 +35,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->note(),
                                      typed_ev->velocity(),
                                      timestamp);
@@ -42,6 +45,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -50,6 +54,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -58,6 +63,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.keyboard_common_event();
             return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH,
                                      typed_ev->processor_id(),
+                                     typed_ev->channel(),
                                      typed_ev->value(),
                                      timestamp);
         }
@@ -111,6 +117,14 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.data_payload_event();
             return new AsynchronousBlobDeleteEvent(typed_ev->value(), timestamp);
         }
+        case RtEventType::CLIP_NOTIFICATION:
+        {
+            auto typed_ev = rt_event.clip_notification_event();
+            auto channel_type = typed_ev->channel_type() == ClipNotificationRtEvent::ClipChannelType::INPUT?
+                                                            ClippingNotificationEvent::ClipChannelType::INPUT :
+                                                            ClippingNotificationEvent::ClipChannelType::OUTPUT;
+            return new ClippingNotificationEvent(typed_ev->channel(), channel_type, timestamp);
+        }
         default:
             return nullptr;
 
@@ -122,22 +136,22 @@ RtEvent KeyboardEvent::to_rt_event(int sample_offset)
     switch (_subtype)
     {
         case KeyboardEvent::Subtype::NOTE_ON:
-            return RtEvent::make_note_on_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_on_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::NOTE_OFF:
-            return RtEvent::make_note_off_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_off_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::NOTE_AFTERTOUCH:
-            return RtEvent::make_note_aftertouch_event(_processor_id, sample_offset, _note, _velocity);
+            return RtEvent::make_note_aftertouch_event(_processor_id, sample_offset, _channel, _note, _velocity);
 
         case KeyboardEvent::Subtype::AFTERTOUCH:
-            return RtEvent::make_aftertouch_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_aftertouch_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::PITCH_BEND:
-            return RtEvent::make_pitch_bend_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_pitch_bend_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::MODULATION:
-            return RtEvent::make_kb_modulation_event(_processor_id, sample_offset, _velocity);
+            return RtEvent::make_kb_modulation_event(_processor_id, sample_offset, _channel, _velocity);
 
         case KeyboardEvent::Subtype::WRAPPED_MIDI:
             return RtEvent::make_wrapped_midi_event(_processor_id, sample_offset, _midi_data);
@@ -282,6 +296,19 @@ Event*AsynchronousBlobDeleteEvent::execute()
     return nullptr;
 }
 
-#pragma GCC diagnostic pop
+int ProgramChangeEvent::execute(engine::BaseEngine* engine)
+{
+    auto processor = engine->mutable_processor(_processor_id);
+    if (processor != nullptr)
+    {
+        auto status = processor->set_program(_program_no);
+        if (status == ProcessorReturnCode::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+    }
+    return EventStatus::NOT_HANDLED;
+}
 
+#pragma GCC diagnostic pop
 } // end namespace sushi

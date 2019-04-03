@@ -66,6 +66,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/event_dispatcher_test.cpp
                unittests/engine/event_timer_test.cpp
                unittests/engine/transport_test.cpp
+               unittests/engine/controller_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
@@ -91,7 +92,8 @@ if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
-set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp
+                      ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
 if (NOT ${WITH_VST3})
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
 endif()

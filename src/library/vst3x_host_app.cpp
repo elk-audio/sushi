@@ -41,9 +41,6 @@ PluginLoader::PluginLoader(const std::string& plugin_absolute_path, const std::s
 }
 
 
-PluginLoader::~PluginLoader()
-{}
-
 std::pair<bool, PluginInstance> PluginLoader::load_plugin()
 {
     std::string error_msg;

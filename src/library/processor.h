@@ -27,6 +27,7 @@ enum class ProcessorReturnCode
     PARAMETER_ERROR,
     PARAMETER_NOT_FOUND,
     MEMORY_ERROR,
+    UNSUPPORTED_OPERATION,
     SHARED_LIBRARY_OPENING_ERROR,
     PLUGIN_ENTRY_POINT_NOT_FOUND,
     PLUGIN_LOAD_ERROR,
@@ -76,7 +77,7 @@ public:
      * @brief Returns a unique name for this processor
      * @return A string that uniquely identifies this processor
      */
-    const std::string& name() {return _unique_name;}
+    const std::string& name() const {return _unique_name;}
 
     /**
      * @brief Sets the unique name of the processor.
@@ -88,7 +89,7 @@ public:
      * @brief Returns display name for this processor
      * @return Display name as a string
      */
-    const std::string& label() {return _label;}
+    const std::string& label() const {return _label;}
 
     /**
      * @brief Sets the display name for this processor
@@ -123,7 +124,7 @@ public:
      * @return A pointer to the parameter descriptor or a null pointer
      *         if there is no processor with that name
      */
-    const ParameterDescriptor* parameter_from_name(const std::string& name)
+    const ParameterDescriptor* parameter_from_name(const std::string& name) const
     {
         auto p = _parameters.find(name);
         return (p != _parameters.end()) ? p->second.get() : nullptr;
@@ -135,7 +136,7 @@ public:
      * @return A pointer to the parameter descriptor or a null pointer
      *         if there is no processor with that id
      */
-    const ParameterDescriptor* parameter_from_id(ObjectId id)
+    const ParameterDescriptor* parameter_from_id(ObjectId id) const
     {
         return (id < _parameters_by_index.size()) ? _parameters_by_index[id] : nullptr;
     }
@@ -190,7 +191,7 @@ public:
      */
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
 
-    bool bypassed() {return _bypassed;}
+    bool bypassed() const {return _bypassed;}
 
     /**
      * @brief Set the bypass state of the processor. If process_audio() is called
@@ -199,6 +200,92 @@ public:
      * @param bypassed New bypass state
      */
     virtual void set_bypassed(bool bypassed) {_bypassed = bypassed;}
+
+    /**
+     * @brief Get the value of the  parameter with parameter_id, safe to call from
+     *        a non rt-thread
+     * @param parameter_id The Id of the requested parameter
+     * @return The current value of the parameter if the return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, float> parameter_value(ObjectId /*parameter_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+    };
+
+    /**
+     * @brief Get the value of the  parameter with parameter_id, safe to call from
+     *        a non rt-thread
+     * @param parameter_id The Id of the requested parameter
+     * @return The current value normalised to a 0 to 1 range, if the return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId /*parameter_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+    };
+
+    /**
+     * @brief Get the value of the parameter with parameter_id formatted as a string,
+     *        safe to call from a non rt-thread
+     * @param parameter_id The Id of the requested parameter
+     * @return The current value formatted as a string, if the return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId /*parameter_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    };
+
+    /**
+     * @brief Whether or not the processor supports programs/presets
+     * @return True if the processor supports programs, false otherwise
+     */
+    virtual bool supports_programs() const {return false;}
+
+    /**
+     * @brief Get the number of stored programs in the processor
+     * @return The number of programs
+     */
+    virtual int program_count() const {return 0;}
+
+    /**
+     * @brief Get the currently active program
+     * @return The index of the current program
+     */
+    virtual int current_program() const {return 0;}
+
+    /**
+     * @brief Get the name of the currently active program
+     * @return The name of the current program
+     */
+    virtual std::string current_program_name() const {return "";}
+
+    /**
+     * @brief Get the name of a stored program
+     * @param program The index (starting from 0) of the requested program
+     * @return The name of the string if return is OK, otherwise the first member of the
+     *         pair contains an error code
+     */
+    virtual std::pair<ProcessorReturnCode, std::string> program_name(int /*program*/) const
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
+    }
+
+    /**
+     * @brief Get all stored programs
+     * @return An std::vector with all program names and where the index in the vector
+     *         represents the program index, if the return is OK, otherwise the first
+     *         member of the pair contains an error code
+     */
+    virtual std::pair<ProcessorReturnCode, std::vector<std::string>> all_program_names() const
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
+    }
+
+    /**
+     * @brief Set a new program to the processor. Called from a non-rt thread
+     * @param program The id of the new program to use
+     * @return OK if the operation was succesfull, error code otherwise
+     */
+    virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
 
 protected:
 
@@ -220,11 +307,11 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter, ObjectId id)
     {
-        bool inserted = true;
         for (auto& p : _parameters_by_index)
         {
             if (p->id() == id) return false; // Don't allow duplicate parameter id:s
         }
+        bool inserted = true;
         std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
         if (!inserted)
         {

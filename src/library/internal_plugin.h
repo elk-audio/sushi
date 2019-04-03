@@ -32,6 +32,12 @@ public:
 
     void process_event(RtEvent event) override;
 
+    std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
+
     /**
      * @brief Register a float typed parameter and return a pointer to a value
      *        storage object that will hold the value and set automaticaly when
@@ -101,6 +107,7 @@ public:
      */
     bool register_data_property(const std::string& name,
                                 const std::string& label);
+
 
 protected:
     /**

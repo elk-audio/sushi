@@ -42,6 +42,8 @@ const MidiDataByte TEST_NOTE_OFF_MSG  = {0x83, 60, 45, 0}; /* Channel 3 */
 const MidiDataByte TEST_CTRL_CH_MSG   = {0xB4, 67, 75, 0}; /* Channel 4, cc 67 */
 const MidiDataByte TEST_CTRL_CH_MSG_2 = {0xB5, 40, 75, 0}; /* Channel 5, cc 40 */
 const MidiDataByte TEST_CTRL_CH_MSG_3 = {0xB5, 39, 75, 0}; /* Channel 5, cc 39 */
+const MidiDataByte TEST_PRG_CH_MSG   =  {0xC5, 40, 0, 0};  /* Channel 5, prg 40 */
+const MidiDataByte TEST_PRG_CH_MSG_2  = {0xC4, 45, 0, 0};  /* Channel 4, prg 45 */
 
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
@@ -54,6 +56,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(1, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
     delete event;
@@ -62,13 +65,14 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
-    NoteOffMessage message = {1, 46, 64};
+    NoteOffMessage message = {2, 46, 64};
     Event* event = make_note_off_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(2, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
     delete event;
@@ -77,14 +81,14 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
-    uint8_t message[] = {1, 46, 64};
+    uint8_t message[] = {3, 46, 64};
     Event* event = make_wrapped_midi_event(connection, message, sizeof(message), IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto typed_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::WRAPPED_MIDI, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
-    EXPECT_EQ(1u, typed_event->midi_data()[0]);
+    EXPECT_EQ(3u, typed_event->midi_data()[0]);
     EXPECT_EQ(46u, typed_event->midi_data()[1]);
     EXPECT_EQ(64u, typed_event->midi_data()[2]);
     EXPECT_EQ(0u, typed_event->midi_data()[3]);
@@ -102,6 +106,18 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(26u, typed_event->parameter_id());
     EXPECT_NEAR(0.25, typed_event->float_value(), 0.01);
+    delete event;
+}
+
+TEST(TestMidiDispatcherEventCreation, TestMakeProgramChangeEvent)
+{
+    InputConnection connection = {25, 0, 0, 0};
+    ProgramChangeMessage message = {1, 32};
+    Event* event = make_program_change_event(connection, message, IMMEDIATE_PROCESS);
+    EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
+    auto typed_event = static_cast<ProgramChangeEvent*>(event);
+    EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(32, typed_event->program_no());
     delete event;
 }
 
@@ -154,7 +170,7 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 {
-    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 0.5f, IMMEDIATE_PROCESS);
+    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 48, 0.5f, IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event);
@@ -166,7 +182,6 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 }
-
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)
 {
@@ -226,16 +241,28 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 }
 
-/*TEST_F(TestMidiDispatcher, TestRtAndNonRtDispatch)
+TEST_F(TestMidiDispatcher, TestProgramChangeConnection)
 {
-    _module_under_test.set_midi_inputs(1);
-    _module_under_test.connect_cc_to_parameter(0, "processor", "parameter", 40, 0, 100, 5);
-    _module_under_test.send_midi(0, 0, TEST_CTRL_CH_MSG_2, sizeof(TEST_CTRL_CH_MSG_2), false);
-    EXPECT_TRUE(_test_engine.got_event);
-    EXPECT_FALSE(_test_engine.got_rt_event);
+    /* Send midi message without connections */
+    _module_under_test.send_midi(1, TEST_PRG_CH_MSG, IMMEDIATE_PROCESS);
+    _module_under_test.send_midi(0, TEST_PRG_CH_MSG, IMMEDIATE_PROCESS);
+    EXPECT_FALSE(_test_dispatcher->got_event());
 
-    _test_engine.got_event = false;
-    _module_under_test.send_midi(0, 0, TEST_CTRL_CH_MSG_2, sizeof(TEST_CTRL_CH_MSG_2), true);
-    EXPECT_FALSE(_test_engine.got_event);
-    EXPECT_TRUE(_test_engine.got_rt_event);
-}*/
+    /* Connect all midi channels (OMNI) */
+    _module_under_test.set_midi_inputs(5);
+    _module_under_test.connect_pc_to_processor(1, "processor");
+    _module_under_test.send_midi(1, TEST_PRG_CH_MSG, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(_test_dispatcher->got_event());
+
+    _module_under_test.send_midi(0, TEST_NOTE_OFF_MSG, IMMEDIATE_PROCESS);
+    EXPECT_FALSE(_test_dispatcher->got_event());
+    _module_under_test.clear_connections();
+
+    /* Connect with a specific midi channel (4) */
+    _module_under_test.connect_raw_midi_to_track(2, "processor_2", 4);
+    _module_under_test.send_midi(2, TEST_PRG_CH_MSG_2, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(_test_dispatcher->got_event());
+
+    _module_under_test.send_midi(2, TEST_PRG_CH_MSG, IMMEDIATE_PROCESS);
+    EXPECT_FALSE(_test_dispatcher->got_event());
+}

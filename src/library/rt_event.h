@@ -23,7 +23,7 @@ namespace sushi {
 #endif
 
 /**
- * TODO - Very incomplete list of message types we might need.
+ * List of realtime message types
  */
 enum class RtEventType
 {
@@ -62,7 +62,9 @@ enum class RtEventType
     BLOB_DELETE,
     VOID_DELETE,
     /* Synchronisation events */
-    SYNC
+    SYNC,
+    /* Engine notification events */
+    CLIP_NOTIFICATION,
 };
 
 class BaseRtEvent
@@ -102,18 +104,26 @@ protected:
 class KeyboardRtEvent : public BaseRtEvent
 {
 public:
-    KeyboardRtEvent(RtEventType type, ObjectId target, int offset, int note, float velocity) : BaseRtEvent(type, target, offset),
-                                                                                             _note(note),
-                                                                                             _velocity(velocity)
+    KeyboardRtEvent(RtEventType type,
+                    ObjectId target,
+                    int offset,
+                    int channel,
+                    int note,
+                    float velocity) : BaseRtEvent(type, target, offset),
+                                      _channel(channel),
+                                      _note(note),
+                                      _velocity(velocity)
     {
         assert(type == RtEventType::NOTE_ON ||
                type == RtEventType::NOTE_OFF ||
                type == RtEventType::NOTE_AFTERTOUCH);
     }
+    int channel() const {return _channel;}
     int note() const {return _note;}
     float velocity() const {return _velocity;}
 
 protected:
+    int _channel;
     int _note;
     float _velocity;
 };
@@ -121,16 +131,23 @@ protected:
 class KeyboardCommonRtEvent : public BaseRtEvent
 {
 public:
-    KeyboardCommonRtEvent(RtEventType type, ObjectId target, int offset, float value) : BaseRtEvent(type, target, offset),
-                                                                                         _value(value)
+    KeyboardCommonRtEvent(RtEventType type,
+                          ObjectId target,
+                          int offset,
+                          int channel,
+                          float value) : BaseRtEvent(type, target, offset),
+                                         _channel(channel),
+                                         _value(value)
     {
         assert(type == RtEventType::AFTERTOUCH ||
                type == RtEventType::PITCH_BEND ||
                type == RtEventType::MODULATION);
     }
+    int channel() const {return _channel;}
     float value() const {return _value;}
 
 protected:
+    int _channel;
     float _value;
 };
 
@@ -142,8 +159,10 @@ protected:
 class WrappedMidiRtEvent : public BaseRtEvent
 {
 public:
-    WrappedMidiRtEvent(int offset, ObjectId target, MidiDataByte data) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
-                                                                         _midi_data{data} {}
+    WrappedMidiRtEvent(int offset,
+                       ObjectId target,
+                       MidiDataByte data) : BaseRtEvent(RtEventType::WRAPPED_MIDI_EVENT, target, offset),
+                                            _midi_data{data} {}
 
     MidiDataByte midi_data() const {return _midi_data;}
 
@@ -156,9 +175,13 @@ protected:
 class ParameterChangeRtEvent : public BaseRtEvent
 {
 public:
-    ParameterChangeRtEvent(RtEventType type, ObjectId target, int offset, ObjectId param_id, float value) : BaseRtEvent(type, target, offset),
-                                                                                                           _param_id(param_id),
-                                                                                                           _value(value)
+    ParameterChangeRtEvent(RtEventType type,
+                           ObjectId target,
+                           int offset,
+                           ObjectId param_id,
+                           float value) : BaseRtEvent(type, target, offset),
+                                          _param_id(param_id),
+                                          _value(value)
     {
         assert(type == RtEventType::FLOAT_PARAMETER_CHANGE ||
                type == RtEventType::INT_PARAMETER_CHANGE ||
@@ -180,9 +203,12 @@ protected:
 class DataPayloadRtEvent : public BaseRtEvent
 {
 public:
-    DataPayloadRtEvent(RtEventType type, ObjectId processor, int offset, BlobData data) : BaseRtEvent(type, processor, offset),
-                                                                                          _data_size(data.size),
-                                                                                          _data(data.data) {}
+    DataPayloadRtEvent(RtEventType type,
+                       ObjectId processor,
+                       int offset,
+                       BlobData data) : BaseRtEvent(type, processor, offset),
+                                        _data_size(data.size),
+                                        _data(data.data) {}
 
     BlobData value() const
     {
@@ -253,7 +279,7 @@ public:
     ProcessorCommandRtEvent(RtEventType type,
                             ObjectId processor,
                             int value) : BaseRtEvent(type, processor, 0),
-                                          _value(value)
+                                         _value(value)
     {
         assert(type == RtEventType::SET_BYPASS ||
                type == RtEventType::ASYNC_WORK_NOTIFICATION );
@@ -318,7 +344,8 @@ typedef int (*AsyncWorkCallback)(void* data, EventId id);
 class AsyncWorkRtEvent: public ReturnableRtEvent
 {
 public:
-    AsyncWorkRtEvent(AsyncWorkCallback callback, ObjectId processor, void* data) : ReturnableRtEvent(RtEventType::ASYNC_WORK, processor),
+    AsyncWorkRtEvent(AsyncWorkCallback callback, ObjectId processor, void* data) : ReturnableRtEvent(RtEventType::ASYNC_WORK,
+                                                                                                     processor),
                                                                                    _callback{callback},
                                                                                    _data{data} {}
     AsyncWorkCallback callback() const {return _callback;}
@@ -333,7 +360,9 @@ class AsyncWorkRtCompletionEvent : public ProcessorCommandRtEvent
 public:
     AsyncWorkRtCompletionEvent(ObjectId processor,
                                uint16_t event_id,
-                               int return_status) : ProcessorCommandRtEvent(RtEventType::ASYNC_WORK_NOTIFICATION, processor, return_status),
+                               int return_status) : ProcessorCommandRtEvent(RtEventType::ASYNC_WORK_NOTIFICATION,
+                                                                            processor,
+                                                                            return_status),
                                                     _event_id{event_id} {}
 
     uint16_t    sending_event_id() const {return _event_id;}
@@ -420,6 +449,30 @@ public:
 protected:
     SyncMode _mode;
 };
+
+/* RtEvent for notifing the engine of audio clipping in the realtime */
+class ClipNotificationRtEvent : public BaseRtEvent
+{
+public:
+    enum class ClipChannelType
+    {
+        INPUT,
+        OUTPUT,
+    };
+    ClipNotificationRtEvent(int offset, int channel, ClipChannelType channel_type) : BaseRtEvent(RtEventType::CLIP_NOTIFICATION,
+                                                                                                 0,
+                                                                                                 offset),
+                                                                                     _channel(channel),
+                                                                                     _channel_type(channel_type) {}
+
+    int channel() {return _channel;}
+    ClipChannelType channel_type() {return _channel_type;}
+
+private:
+    int _channel;
+    ClipChannelType _channel_type;
+};
+
 /**
  * @brief Container class for rt events. Functionally this take the role of a
  *        baseclass for events, from which you can access the derived event
@@ -556,47 +609,53 @@ public:
         return &_sync_mode_event;
     }
 
+    ClipNotificationRtEvent* clip_notification_event()
+    {
+        assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
+        return &_clip_notification_event;
+    }
+
 
     /* Factory functions for constructing events */
-    static RtEvent make_note_on_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_on_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_note_off_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_off_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
-        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, note, velocity);
+        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, channel, note, velocity);
     }
 
-    static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int note, float velocity)
+    static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int channel, int note, float velocity)
     {
-        KeyboardRtEvent typed_event(type, target, offset, note, velocity);
+        KeyboardRtEvent typed_event(type, target, offset, channel, note, velocity);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_aftertouch_event(ObjectId target, int offset, float value)
+    static RtEvent make_aftertouch_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, value);
+        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, channel, value);
     }
 
-    static RtEvent make_pitch_bend_event(ObjectId target, int offset, float value)
+    static RtEvent make_pitch_bend_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, value);
+        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, channel, value);
     }
 
-    static RtEvent make_kb_modulation_event(ObjectId target, int offset, float value)
+    static RtEvent make_kb_modulation_event(ObjectId target, int offset, int channel, float value)
     {
-        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, value);
+        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, channel, value);
     }
 
-    static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, float value)
+    static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, int channel, float value)
     {
-        KeyboardCommonRtEvent typed_event(type, target, offset, value);
+        KeyboardCommonRtEvent typed_event(type, target, offset, channel, value);
         return RtEvent(typed_event);
     }
 
@@ -732,8 +791,15 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_clip_notification_event(int offset, int channel, ClipNotificationRtEvent::ClipChannelType type)
+    {
+        ClipNotificationRtEvent typed_event(offset, channel, type);
+        return typed_event;
+    }
+
 
 private:
+    /* Private constructors that are invoked automatically when using the make_xxx_event functions */
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
     RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
@@ -752,6 +818,8 @@ private:
     RtEvent(const TimeSignatureRtEvent& e) : _time_signature_event(e) {}
     RtEvent(const PlayingModeRtEvent& e) : _playing_mode_event(e) {}
     RtEvent(const SyncModeRtEvent& e) : _sync_mode_event(e) {}
+    RtEvent(const ClipNotificationRtEvent& e) : _clip_notification_event(e) {}
+    /* Data storage */
     union
     {
         BaseRtEvent                   _base_event;
@@ -773,6 +841,7 @@ private:
         TimeSignatureRtEvent          _time_signature_event;
         PlayingModeRtEvent            _playing_mode_event;
         SyncModeRtEvent               _sync_mode_event;
+        ClipNotificationRtEvent       _clip_notification_event;
     };
 };
 

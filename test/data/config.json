@@ -8,7 +8,12 @@
             "denominator": 4
         },
         "playing_mode" : "playing",
-        "tempo_sync" : "internal"
+        "tempo_sync" : "internal",
+        "audio_clip_detection" :
+        {
+            "inputs" : false,
+            "outputs" : true
+        }
     },
     "tracks" : [
         {
@@ -145,6 +150,13 @@
                 "channel": 10,
                 "track": "monotrack",
                 "raw_midi": true
+            }
+        ],
+        "program_change_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "plugin": "gain_0_r"
             }
         ],
         "cc_mappings": [

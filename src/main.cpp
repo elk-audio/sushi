@@ -11,7 +11,6 @@
 
 #include "twine/src/twine_internal.h"
 
-
 #include "logging.h"
 #include "options.h"
 #include "generated/version.h"
@@ -20,6 +19,10 @@
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#include "sushi_rpc/grpc_server.h"
+#endif
 
 enum class FrontendType
 {
@@ -53,13 +56,16 @@ void print_version_and_build_info()
                                 << SUSHI__VERSION_REV << std::endl;
     std::vector<std::string> build_opts;
 #ifdef SUSHI_BUILD_WITH_VST3
-    build_opts.push_back("vst3");
+    build_opts.emplace_back("vst3");
 #endif
 #ifdef SUSHI_BUILD_WITH_JACK
-    build_opts.push_back("jack");
+    build_opts.emplace_back("jack");
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    build_opts.push_back("xenomai");
+    build_opts.emplace_back("xenomai");
+#endif
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    build_opts.push_back("rpc control");
 #endif
     std::ostringstream opts_joined;
     for (const auto& o : build_opts)
@@ -332,11 +338,17 @@ int main(int argc, char* argv[])
 
     if (enable_timings)
     {
-        engine.enable_timing_statistics(true);
+        engine.performance_timer()->enable(true);
     }
 
     frontend->connect_control_frontends();
     frontend->run();
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    sushi_rpc::GrpcServer rpc_server(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine.controller());
+    rpc_server.start();
+#endif
+
 
     if (frontend_type != FrontendType::OFFLINE)
     {

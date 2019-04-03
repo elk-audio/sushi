@@ -223,29 +223,35 @@ void Track::_process_output_events()
             {
                 case RtEventType::NOTE_ON:
                     output_event(RtEvent::make_note_on_event(id(), event.sample_offset(),
+                                                             event.keyboard_event()->channel(),
                                                              event.keyboard_event()->note(),
                                                              event.keyboard_event()->velocity()));
                     break;
                 case RtEventType::NOTE_OFF:
                     output_event(RtEvent::make_note_off_event(id(), event.sample_offset(),
+                                                              event.keyboard_event()->channel(),
                                                               event.keyboard_event()->note(),
                                                               event.keyboard_event()->velocity()));
                     break;
                 case RtEventType::NOTE_AFTERTOUCH:
                     output_event(RtEvent::make_note_aftertouch_event(id(), event.sample_offset(),
+                                                                     event.keyboard_event()->channel(),
                                                                      event.keyboard_event()->note(),
                                                                      event.keyboard_event()->velocity()));
                     break;
                 case RtEventType::AFTERTOUCH:
                     output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
+                                                                event.keyboard_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::PITCH_BEND:
                     output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
+                                                                event.keyboard_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::MODULATION:
                     output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
+                                                                   event.keyboard_event()->channel(),
                                                                    event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::WRAPPED_MIDI_EVENT:

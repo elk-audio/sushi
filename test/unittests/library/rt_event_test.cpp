@@ -7,7 +7,7 @@ using namespace sushi;
 
 TEST (TestRealtimeEvents, TestFactoryFunction)
 {
-    auto event = RtEvent::make_note_on_event(123, 1, 46, 0.5);
+    auto event = RtEvent::make_note_on_event(123, 1, 0, 46, 0.5);
     EXPECT_EQ(RtEventType::NOTE_ON, event.type());
     auto note_on_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(123), note_on_event->processor_id());
@@ -15,7 +15,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(46, note_on_event->note());
     EXPECT_FLOAT_EQ(0.5, note_on_event->velocity());
 
-    event = RtEvent::make_note_off_event(122, 2, 47, 0.5);
+    event = RtEvent::make_note_off_event(122, 2, 0, 47, 0.5);
     EXPECT_EQ(RtEventType::NOTE_OFF, event.type());
     auto note_off_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(122), note_off_event->processor_id());
@@ -23,7 +23,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(47, note_off_event->note());
     EXPECT_FLOAT_EQ(0.5, note_off_event->velocity());
 
-    event = RtEvent::make_note_aftertouch_event(124, 3, 48, 0.5);
+    event = RtEvent::make_note_aftertouch_event(124, 3, 0, 48, 0.5);
     EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, event.type());
     auto note_at_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(124), note_at_event->processor_id());
@@ -31,21 +31,21 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(48, note_at_event->note());
     EXPECT_FLOAT_EQ(0.5, note_at_event->velocity());
 
-    event = RtEvent::make_aftertouch_event(111, 3, 0.6);
+    event = RtEvent::make_aftertouch_event(111, 3, 0, 0.6);
     EXPECT_EQ(RtEventType::AFTERTOUCH, event.type());
     auto at_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(111), at_event->processor_id());
     EXPECT_EQ(3, at_event->sample_offset());
     EXPECT_FLOAT_EQ(0.6, at_event->value());
 
-    event = RtEvent::make_pitch_bend_event(112, 4, 0.7);
+    event = RtEvent::make_pitch_bend_event(112, 4, 0, 0.7);
     EXPECT_EQ(RtEventType::PITCH_BEND, event.type());
     auto pb_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(112), pb_event->processor_id());
     EXPECT_EQ(4, pb_event->sample_offset());
     EXPECT_FLOAT_EQ(0.7, pb_event->value());
 
-    event = RtEvent::make_kb_modulation_event(113, 5, 0.8);
+    event = RtEvent::make_kb_modulation_event(113, 5, 0, 0.8);
     EXPECT_EQ(RtEventType::MODULATION, event.type());
     auto mod_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(113), mod_event->processor_id());
@@ -156,7 +156,7 @@ TEST(TestRealtimeEvents, TestIsKeyboardEvent)
 {
     auto event = RtEvent::make_parameter_change_event(1, 2, 3, 1.0f);
     EXPECT_FALSE(is_keyboard_event(event));
-    event = RtEvent::make_note_off_event(1, 2, 3, 1.0f);
+    event = RtEvent::make_note_off_event(1, 2, 0, 3, 1.0f);
     EXPECT_TRUE(is_keyboard_event(event));
     event = RtEvent::make_wrapped_midi_event(1, 2, {0, 0 ,0, 0});
     EXPECT_TRUE(is_keyboard_event(event));
