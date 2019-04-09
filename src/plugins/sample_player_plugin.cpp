@@ -186,7 +186,7 @@ BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
         MIND_LOG_ERROR("Failed to open sample file: {}", file_name);
-        return {0,0};
+        return {0, nullptr};
     }
     assert(soundfile_info.channels == 1);
     float* sample_buffer = new float[soundfile_info.frames];

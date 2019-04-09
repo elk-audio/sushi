@@ -55,11 +55,11 @@ MidiDataByte encode_control_change(int channel, int controller, float value)
     return data;
 }
 
-MidiDataByte encode_channel_pressure(int channel, float pressure)
+MidiDataByte encode_channel_pressure(int channel, float value)
 {
     MidiDataByte data;
     data[0] = CHAN_PRES_PREFIX | static_cast<uint8_t>(channel);
-    data[1] = static_cast<uint8_t>(std::round(pressure * MAX_VALUE));
+    data[1] = static_cast<uint8_t>(std::round(value * MAX_VALUE));
     data[2] = 0;
     data[3] = 0;
     return data;

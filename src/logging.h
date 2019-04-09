@@ -115,9 +115,9 @@ public:
      * @todo add other logging options, like e.g. logger type, max file size, etc.
      * @todo Check arguments and e.g. return errors
      */
-    static MIND_LOG_ERROR_CODE set_logger_params(const std::string file_name,
-                                                 const std::string logger_name,
-                                                 const std::string min_log_level);
+    static MIND_LOG_ERROR_CODE set_logger_params(const std::string& file_name,
+                                                 const std::string& logger_name,
+                                                 const std::string& min_log_level);
 
 
     /**

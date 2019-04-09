@@ -52,8 +52,7 @@ public:
 
     BiquadFilter(const Coefficients &coefficients);
 
-    ~BiquadFilter()
-    {};
+    ~BiquadFilter() = default;
 
     /*
      * Resets the processing state
