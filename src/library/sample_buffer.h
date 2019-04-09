@@ -430,12 +430,10 @@ public:
         float inc = (end - start) / (size - 1);
         for (int channel = 0; channel < _channel_count; ++channel)
         {
-            float vol = start;
             float* data = _buffer + size * channel;
             for (int i = 0; i < size; ++i)
             {
-                data[i] *= vol;
-                vol += inc;
+                data[i] *= start + i * inc;
             }
         }
     }
