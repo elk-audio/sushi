@@ -10,6 +10,26 @@ namespace engine {
 
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
+constexpr float DEFAULT_TRACK_GAIN = 1.0f;
+
+constexpr auto PAN_GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
+
+/* Map pan and gain to left and right gain with a 3 dB pan law */
+inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
+{
+    float left_gain, right_gain;
+    if (pan < 0.0f) // Audio panned left
+    {
+        left_gain = gain * (1.0f + pan - PAN_GAIN_3_DB * pan);
+        right_gain = gain * (1.0f + pan);
+    }
+    else            // Audio panned right
+    {
+        left_gain = gain * (1.0f - pan);
+        right_gain = gain * (1.0f - pan + PAN_GAIN_3_DB * pan);
+    }
+    return {left_gain, right_gain};
+}
 
 Track::Track(HostControl host_control, int channels,
              performance::PerformanceTimer* timer) : InternalPlugin(host_control),
@@ -44,6 +64,23 @@ Track::Track(HostControl host_control, int input_busses, int output_busses,
     _common_init();
 }
 
+ProcessorReturnCode Track::init(float sample_rate)
+{
+    this->configure(sample_rate);
+    return ProcessorReturnCode::OK;
+}
+
+void Track::configure(float sample_rate)
+{
+    for (auto& i : _pan_gain_smoothers_right)
+    {
+        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    }
+    for (auto& i : _pan_gain_smoothers_left)
+    {
+        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    }
+}
 
 bool Track::add(Processor* processor)
 {
@@ -79,7 +116,7 @@ void Track::render()
     for (int bus = 0; bus < _output_busses; ++bus)
     {
         auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
-        apply_pan_and_gain(buffer, _gain_parameters[bus]->value(), _pan_parameters[bus]->value());
+        _apply_pan_and_gain(buffer, bus);
     }
 }
 
@@ -169,6 +206,14 @@ void Track::_common_init()
     {
         _gain_parameters.at(bus)  = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
         _pan_parameters.at(bus)  = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", 0.0f, -1.0f, 1.0f, new FloatParameterPreProcessor(-1.0f, 1.0f));
+    }
+    for (auto& i : _pan_gain_smoothers_right)
+    {
+        i.set_direct(DEFAULT_TRACK_GAIN);
+    }
+    for (auto& i : _pan_gain_smoothers_left)
+    {
+        i.set_direct(DEFAULT_TRACK_GAIN);
     }
 }
 
@@ -266,25 +311,28 @@ void Track::_process_output_events()
     }
 }
 
-void apply_pan_and_gain(ChunkSampleBuffer& buffer, float gain, float pan)
+void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus)
 {
-    float left_gain, right_gain;
+    float gain = _gain_parameters[bus]->value();
+    float pan = _pan_parameters[bus]->value();
+    auto [left_gain, right_gain] = calc_l_r_gain(gain, pan);
+    _pan_gain_smoothers_left[bus].set(left_gain);
+    _pan_gain_smoothers_right[bus].set(right_gain);
+
     ChunkSampleBuffer left = ChunkSampleBuffer::create_non_owning_buffer(buffer, LEFT_CHANNEL_INDEX, 1);
     ChunkSampleBuffer right = ChunkSampleBuffer::create_non_owning_buffer(buffer, RIGHT_CHANNEL_INDEX, 1);
-    if (pan < 0.0f) // Audio panned left
-    {
-        left_gain = gain * (1.0f + pan - PAN_GAIN_3_DB * pan);
-        right_gain = gain * (1.0f + pan);
-    }
-    else            // Audio panned right
-    {
-        left_gain = gain * (1.0f - pan);
-        right_gain = gain * (1.0f - pan + PAN_GAIN_3_DB * pan);
-    }
-    left.apply_gain(left_gain);
-    right.apply_gain(right_gain);
-}
 
+    if (_pan_gain_smoothers_left[bus].stationary() && _pan_gain_smoothers_right[bus].stationary())
+    {
+        left.apply_gain(left_gain);
+        right.apply_gain(right_gain);
+    }
+    else // value needs smoothing
+    {
+        left.ramp(_pan_gain_smoothers_left[bus].value(), _pan_gain_smoothers_left[bus].next_value());
+        right.ramp(_pan_gain_smoothers_right[bus].value(), _pan_gain_smoothers_right[bus].next_value());
+    }
+}
 
 } // namespace engine
 } // namespace sushi

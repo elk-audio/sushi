@@ -127,6 +127,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
+                        src/dsp_library/value_smoother.h
                         src/library/base_performance_timer.h
                         src/library/event.h
                         src/library/event_interface.h

@@ -692,6 +692,7 @@ Processor* AudioEngine::mutable_processor(ObjectId processor_id)
 
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
 {
+    track->init(_sample_rate);
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {
