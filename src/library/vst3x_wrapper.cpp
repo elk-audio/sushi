@@ -245,30 +245,26 @@ bool Vst3xWrapper::_register_parameters()
      * 'special' parameters so we can map PB and Mod events to them.
      * Currently we dont hide these parameters, unlike the bypass parameter, so they can
      * still be controlled via OSC or other controllers. */
-    Steinberg::Vst::IMidiMapping *midi_mapper;
-    auto res = _instance.controller()->queryInterface(Steinberg::Vst::IMidiMapping::iid, reinterpret_cast<void**>(&midi_mapper));
-    if (res != Steinberg::kResultOk)
+    if (_instance.midi_mapper())
     {
-        MIND_LOG_INFO("No midi mapping interface in plugin");
-        return true;
-    }
-    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kCtrlModWheel,
-                                                 _mod_wheel_parameter.id) == Steinberg::kResultOk)
-    {
-        MIND_LOG_INFO("Plugin supports mod wheel parameter mapping");
-        _mod_wheel_parameter.supported = true;
-    }
-    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kPitchBend,
-                                                 _pitch_bend_parameter.id) == Steinberg::kResultOk)
-    {
-        MIND_LOG_INFO("Plugin supports pitch bend parameter mapping");
-        _pitch_bend_parameter.supported = true;
-    }
-    if (midi_mapper->getMidiControllerAssignment(0, 0, Steinberg::Vst::kAfterTouch,
-                                                 _aftertouch_parameter.id) == Steinberg::kResultOk)
-    {
-        MIND_LOG_INFO("Plugin supports aftertouch parameter mapping");
-        _aftertouch_parameter.supported = true;
+        if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kCtrlModWheel,
+                                                     _mod_wheel_parameter.id) == Steinberg::kResultOk)
+        {
+            MIND_LOG_INFO("Plugin supports mod wheel parameter mapping");
+            _mod_wheel_parameter.supported = true;
+        }
+        if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kPitchBend,
+                                                     _pitch_bend_parameter.id) == Steinberg::kResultOk)
+        {
+            MIND_LOG_INFO("Plugin supports pitch bend parameter mapping");
+            _pitch_bend_parameter.supported = true;
+        }
+        if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kAfterTouch,
+                                                     _aftertouch_parameter.id) == Steinberg::kResultOk)
+        {
+            MIND_LOG_INFO("Plugin supports aftertouch parameter mapping");
+            _aftertouch_parameter.supported = true;
+        }
     }
     return true;
 }

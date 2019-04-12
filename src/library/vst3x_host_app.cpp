@@ -175,6 +175,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
         MIND_LOG_ERROR("Failed to load controller");
         return false;
     }
+
     res = controller->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
@@ -186,12 +187,33 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     _processor = processor;
     _controller = controller;
     _name = plugin_name;
+
+    _query_extension_interfaces();
+
     if (_connect_components() == false)
     {
         MIND_LOG_ERROR("Failed to connect component to editor");
         // Might still be ok? Plugin might not have an editor.
     }
     return true;
+}
+
+void PluginInstance::_query_extension_interfaces()
+{
+    Steinberg::Vst::IMidiMapping* midi_mapper;
+    auto res = _controller->queryInterface(Steinberg::Vst::IMidiMapping::iid, reinterpret_cast<void**>(&midi_mapper));
+    if (res == Steinberg::kResultOk)
+    {
+        _midi_mapper = midi_mapper;
+        MIND_LOG_INFO("Plugin supports midi mapping interface");
+    }
+    Steinberg::Vst::IUnitInfo* unit_info;
+    res = _controller->queryInterface(Steinberg::Vst::IUnitInfo::iid, reinterpret_cast<void**>(&unit_info));
+    if (res == Steinberg::kResultOk)
+    {
+        _midi_mapper = midi_mapper;
+        MIND_LOG_INFO("Plugin supports IUnitInfo interface for programs");
+    }
 }
 
 bool PluginInstance::_connect_components()
@@ -224,7 +246,6 @@ bool PluginInstance::_connect_components()
     }
     return false;
 }
-
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
                                            const std::string& plugin_name)

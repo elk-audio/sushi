@@ -5,6 +5,7 @@
 #include "library/constants.h"
 
 #include <pluginterfaces/vst/ivsteditcontroller.h>
+#include <third-party/vstsdk3/pluginterfaces/vst/ivstunits.h>
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
@@ -62,17 +63,25 @@ public:
     Steinberg::Vst::IComponent* component() {return _component.get();}
     Steinberg::Vst::IAudioProcessor* processor() {return _processor.get();}
     Steinberg::Vst::IEditController* controller() {return _controller.get();}
+    Steinberg::Vst::IUnitInfo* unit_info() {return _unit_info;}
+    Steinberg::Vst::IMidiMapping* midi_mapper() {return _midi_mapper;}
 
 private:
+    void _query_extension_interfaces();
     bool _connect_components();
 
     std::string _name;
     SushiHostApplication _host_app;
     std::shared_ptr<VST3::Hosting::Module> _module;
 
+    // Reference counted pointers to plugin objects
     Steinberg::IPtr<Steinberg::Vst::IComponent>      _component;
     Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor;
     Steinberg::IPtr<Steinberg::Vst::IEditController> _controller;
+
+    // Abstract optional interfaces implemented by one of the objects above:
+    Steinberg::Vst::IMidiMapping*                    _midi_mapper{nullptr};
+    Steinberg::Vst::IUnitInfo*                       _unit_info{nullptr};
 
     Steinberg::OPtr<ConnectionProxy> _controller_connection;
     Steinberg::OPtr<ConnectionProxy> _component_connection;
