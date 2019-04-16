@@ -1,19 +1,24 @@
 #ifndef SUSHI_VST3X_HOST_CONTEXT_H
 #define SUSHI_VST3X_HOST_CONTEXT_H
 
-#define DEVELOPMENT true
+#include "library/id_generator.h"
+#include "library/constants.h"
 
 #include <pluginterfaces/vst/ivsteditcontroller.h>
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
+#include "pluginterfaces/vst/ivstcomponent.h"
+#define RELEASE = 1
 #include "public.sdk/source/vst/hosting/module.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
-#undef DEVELOPMENT
 #pragma GCC diagnostic pop
-
+#undef RELEASE
 namespace sushi {
 namespace vst3 {
+
+class ConnectionProxy;
+class Vst3xWrapper;
 
 class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
@@ -22,45 +27,61 @@ public:
     Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
 };
 
+class ComponentHandler : public Steinberg::Vst::IComponentHandler
+{
+public:
+    MIND_DECLARE_NON_COPYABLE(ComponentHandler);
+
+    explicit ComponentHandler(Vst3xWrapper* wrapper_instance);
+    Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
+    Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value);
+    Steinberg::tresult PLUGIN_API endEdit (Steinberg::Vst::ParamID /*parameter_id*/) override {return Steinberg::kNotImplemented;}
+    Steinberg::tresult PLUGIN_API restartComponent (Steinberg::int32 /*flags*/) override {return Steinberg::kNotImplemented;}
+
+    Steinberg::tresult PLUGIN_API queryInterface (const Steinberg::TUID /*_iid*/, void** /*obj*/) override {return Steinberg::kNoInterface;}
+    Steinberg::uint32 PLUGIN_API addRef () override { return 1000; }
+    Steinberg::uint32 PLUGIN_API release () override { return 1000; }
+private:
+    Vst3xWrapper* _wrapper_instance;
+};
+
+
 /**
  * @brief Container to hold plugin modules and manage their lifetimes
  */
 class PluginInstance
 {
 public:
-    friend class PluginLoader;
+    MIND_DECLARE_NON_COPYABLE(PluginInstance);
 
+    PluginInstance();
+    ~PluginInstance();
+
+    bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
     const std::string& name() {return _name;};
     Steinberg::Vst::IComponent* component() {return _component.get();}
     Steinberg::Vst::IAudioProcessor* processor() {return _processor.get();}
     Steinberg::Vst::IEditController* controller() {return _controller.get();}
 
 private:
+    bool _connect_components();
+
     std::string _name;
-    Steinberg::IPtr<Steinberg::Vst::IComponent> _component{nullptr};
-    Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor{nullptr};
-    Steinberg::IPtr<Steinberg::Vst::IEditController> _controller{nullptr};
-};
-
-class PluginLoader
-{
-public:
-    PluginLoader(const std::string& plugin_absolute_path, const std::string& plugin_name);
-    ~PluginLoader() = default;
-
-    std::pair<bool, PluginInstance> load_plugin();
-
-private:
-    std::string _path;
-    std::string _name;
-
-    std::shared_ptr<VST3::Hosting::Module> _module{nullptr};
     SushiHostApplication _host_app;
+    std::shared_ptr<VST3::Hosting::Module> _module;
+
+    Steinberg::IPtr<Steinberg::Vst::IComponent>      _component;
+    Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor;
+    Steinberg::IPtr<Steinberg::Vst::IEditController> _controller;
+
+    Steinberg::OPtr<ConnectionProxy> _controller_connection;
+    Steinberg::OPtr<ConnectionProxy> _component_connection;
 };
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
+
 
 } // end namespace vst
 } // end namespace sushi

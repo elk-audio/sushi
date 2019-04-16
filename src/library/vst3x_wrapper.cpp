@@ -4,6 +4,7 @@
 #include <pluginterfaces/vst/ivstmidicontrollers.h>
 
 #include "vst3x_wrapper.h"
+#include "library/event.h"
 #include "logging.h"
 
 namespace sushi {
@@ -22,19 +23,20 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
 void Vst3xWrapper::_cleanup()
 {
     if (_instance.component())
+    {
         set_enabled(false);
+    }
 }
 
 ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
-    auto [loaded, instance] = _loader.load_plugin();
+    bool loaded = _instance.load_plugin(_plugin_load_path, _plugin_load_name);
     if (!loaded)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_LOAD_ERROR;
     }
-    _instance = instance;
     set_name(_instance.name());
     set_label(_instance.name());
 
@@ -429,6 +431,7 @@ void Vst3xWrapper::_fill_processing_context()
 {
     auto transport = _host_control.transport();
     auto context = _process_data.processContext;
+    *context = {};
     auto ts = transport->current_time_signature();
 
     context->state = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0;
@@ -451,6 +454,12 @@ inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, floa
     {
         param_queue->addPoint(sample_offset, value, index);
     }
+}
+
+void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
+{
+    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, this->id(), param_id, value, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)

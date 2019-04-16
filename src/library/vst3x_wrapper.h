@@ -13,10 +13,8 @@
 #include <utility>
 
 #include "pluginterfaces/base/ipluginbase.h"
-#define DEVELOPMENT
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
-#undef DEVELOPMENT
 
 #include "library/vst3x_host_app.h"
 #include "library/processor.h"
@@ -28,7 +26,7 @@ namespace vst3 {
 constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 
 /**
- * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
+ * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
 class Vst3xWrapper : public Processor
 {
@@ -39,7 +37,8 @@ public:
      */
     Vst3xWrapper(HostControl host_control, const std::string& vst_plugin_path, const std::string& plugin_name) :
             Processor(host_control),
-            _loader{vst_plugin_path, plugin_name}
+            _plugin_load_name(plugin_name),
+            _plugin_load_path(vst_plugin_path)
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -50,6 +49,13 @@ public:
     {
         _cleanup();
     }
+
+    /**
+     * @brief Entry point for parameter changes from the plugin editor.
+     * @param param_id Id of the parameter to change
+     * @param value New value for parameter
+     */
+    void set_parameter_change(ObjectId param_id, float value);
 
     /* Inherited from Processor */
     ProcessorReturnCode init(float sample_rate) override;
@@ -108,8 +114,10 @@ private:
     };
 
     float _sample_rate;
-    PluginLoader _loader;
+    std::string _plugin_load_name;
+    std::string _plugin_load_path;
     PluginInstance _instance;
+    ComponentHandler _component_handler{this};
 
     Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};

@@ -23,42 +23,52 @@ void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampl
 
 Steinberg::Vst::Event convert_note_on_event(const KeyboardRtEvent* event)
 {
+    assert(event->type() == RtEventType::NOTE_ON);
     Steinberg::Vst::Event vst_event;
+    vst_event.busIndex = 0;
     vst_event.sampleOffset = event->sample_offset();
+    vst_event.ppqPosition = 0;
     vst_event.flags = 0;
     vst_event.type = Steinberg::Vst::Event::kNoteOnEvent;
+    vst_event.noteOn.channel = static_cast<Steinberg::int16>(event->channel());
     vst_event.noteOn.pitch = static_cast<Steinberg::int16>(event->note());
-    vst_event.noteOn.velocity = event->velocity();
     vst_event.noteOn.tuning = 0.0f;
+    vst_event.noteOn.velocity = event->velocity();
+    vst_event.noteOn.length = 0;
     vst_event.noteOn.noteId = -1;
-    vst_event.noteOn.channel = event->channel();
     return vst_event;
 }
 
 Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event)
 {
+    assert(event->type() == RtEventType::NOTE_OFF);
     Steinberg::Vst::Event vst_event;
+    vst_event.busIndex = 0;
     vst_event.sampleOffset = event->sample_offset();
+    vst_event.ppqPosition = 0;
     vst_event.flags = 0;
     vst_event.type = Steinberg::Vst::Event::kNoteOffEvent;
+    vst_event.noteOff.channel = static_cast<Steinberg::int16>(event->channel());
     vst_event.noteOff.pitch = static_cast<Steinberg::int16>(event->note());
     vst_event.noteOff.velocity = event->velocity();
-    vst_event.noteOff.tuning = 0.0f;
     vst_event.noteOff.noteId = -1;
-    vst_event.noteOff.channel = event->channel();
+    vst_event.noteOff.tuning = 0.0f;
     return vst_event;
 }
 
 Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event)
 {
+    assert(event->type() == RtEventType::NOTE_AFTERTOUCH);
     Steinberg::Vst::Event vst_event;
+    vst_event.busIndex = 0;
     vst_event.sampleOffset = event->sample_offset();
+    vst_event.ppqPosition = 0;
     vst_event.flags = 0;
     vst_event.type = Steinberg::Vst::Event::kPolyPressureEvent;
+    vst_event.polyPressure.channel = static_cast<Steinberg::int16>(event->channel());
     vst_event.polyPressure.pitch = static_cast<Steinberg::int16>(event->note());
     vst_event.polyPressure.pressure = event->velocity();
     vst_event.polyPressure.noteId = -1;
-    vst_event.polyPressure.channel = 0;
     return vst_event;
 }
 

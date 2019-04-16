@@ -2,13 +2,13 @@
 
 #include "test_utils/test_utils.h"
 #include "library/rt_event_fifo.h"
-#include "library/vst3x_host_app.cpp"
 #include "library/vst3x_utils.cpp"
 
 #define private public
 
 #include "test_utils/host_control_mockup.h"
 #include "library/vst3x_wrapper.cpp"
+#include "library/vst3x_host_app.cpp"
 
 using namespace sushi;
 using namespace sushi::vst3;
@@ -25,33 +25,30 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 
 
 /* Quick test to test plugin loading */
-TEST(TestVst3xPluginLoader, TestLoadPlugin)
+TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
-    auto [success, instance] = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
     ASSERT_TRUE(success);
-    ASSERT_TRUE(instance.processor());
-    ASSERT_TRUE(instance.component());
-    ASSERT_TRUE(instance.controller());
+    ASSERT_TRUE(module_under_test.processor());
+    ASSERT_TRUE(module_under_test.component());
+    ASSERT_TRUE(module_under_test.controller());
 
     free(full_test_plugin_path);
 }
 
 /* Test that nothing breaks if the plugin is not found */
-TEST(TestVst3xPluginLoader, TestLoadPluginFromErroneousFilename)
+TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
     /* Non existing library */
-    PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
-    bool success;
-    PluginInstance instance;
-    std::tie(success, instance) = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     ASSERT_FALSE(success);
 
     /* Existing library but non-existing plugin */
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    module_under_test = PluginLoader(full_test_plugin_path, "NoPluginWithThisName");
-    std::tie(success, instance) = module_under_test.load_plugin();
+    success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
     free(full_test_plugin_path);
 }
@@ -183,4 +180,58 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     EXPECT_FLOAT_EQ(120.0f, context->tempo);
     EXPECT_EQ(3, context->timeSigNumerator);
     EXPECT_EQ(4, context->timeSigDenominator);
+}
+
+class TestVst3xUtils : public ::testing::Test
+{
+protected:
+    TestVst3xUtils() {}
+};
+
+TEST_F(TestVst3xUtils, TestNoteOnConversion)
+{
+    auto event = RtEvent::make_note_on_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_on_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOnEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOn.channel);
+    EXPECT_EQ(45, vst_event.noteOn.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOn.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOn.velocity);
+    EXPECT_EQ(0, vst_event.noteOn.length);
+    EXPECT_EQ(-1, vst_event.noteOn.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestNoteOffConversion)
+{
+    auto event = RtEvent::make_note_off_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_off_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOffEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOff.channel);
+    EXPECT_EQ(45, vst_event.noteOff.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOff.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOff.velocity);
+    EXPECT_EQ(-1, vst_event.noteOff.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestAftertouchConversion)
+{
+    auto event = RtEvent::make_note_aftertouch_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_aftertouch_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kPolyPressureEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.polyPressure.channel);
+    EXPECT_EQ(45, vst_event.polyPressure.pitch);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.polyPressure.pressure);
+    EXPECT_EQ(-1, vst_event.polyPressure.noteId);
 }
