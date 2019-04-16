@@ -74,6 +74,30 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
+
+    bool supports_programs() const override {return _supports_programs;}
+
+    int program_count() const override {return _program_count;}
+
+    int current_program() const override;
+
+    std::string current_program_name() const override;
+
+    std::pair<ProcessorReturnCode, std::string> program_name(int program) const override;
+
+    std::pair<ProcessorReturnCode, std::vector<std::string>> all_program_names() const override;
+
+    ProcessorReturnCode set_program(int program) override;
+
+    static void program_change_callback(void* arg, Event* event, int status)
+    {
+        reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);
+    }
 private:
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -96,6 +120,8 @@ private:
 
     bool _setup_processing();
 
+    bool _setup_program_handling();
+
     /**
      * @brief Read output events from the plugin, convert to internal events
      *        and forward to next plugin.
@@ -107,6 +133,8 @@ private:
 
     inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);
 
+    void _program_change_callback(Event* event, int status);
+
     struct SpecialParameter
     {
         bool supported{false};
@@ -114,6 +142,11 @@ private:
     };
 
     float _sample_rate;
+    bool  _supports_programs{false};
+    int _main_program_list_id;
+    int _program_count{0};
+    int _current_program{0};
+
     std::string _plugin_load_name;
     std::string _plugin_load_path;
     PluginInstance _instance;
@@ -130,6 +163,7 @@ private:
                                    &_out_parameter_changes};
 
     SpecialParameter _bypass_parameter;
+    SpecialParameter _program_change_parameter;
     SpecialParameter _pitch_bend_parameter;
     SpecialParameter _mod_wheel_parameter;
     SpecialParameter _aftertouch_parameter;

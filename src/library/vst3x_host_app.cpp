@@ -205,14 +205,14 @@ void PluginInstance::_query_extension_interfaces()
     if (res == Steinberg::kResultOk)
     {
         _midi_mapper = midi_mapper;
-        MIND_LOG_INFO("Plugin supports midi mapping interface");
+        MIND_LOG_INFO("Plugin supports Midi Mapping interface");
     }
     Steinberg::Vst::IUnitInfo* unit_info;
     res = _controller->queryInterface(Steinberg::Vst::IUnitInfo::iid, reinterpret_cast<void**>(&unit_info));
     if (res == Steinberg::kResultOk)
     {
-        _midi_mapper = midi_mapper;
-        MIND_LOG_INFO("Plugin supports IUnitInfo interface for programs");
+        _unit_info = unit_info;
+        MIND_LOG_INFO("Plugin supports Unit Info interface for programs");
     }
 }
 

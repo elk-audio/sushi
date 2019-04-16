@@ -182,6 +182,28 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     EXPECT_EQ(4, context->timeSigDenominator);
 }
 
+TEST_F(TestVst3xWrapper, TestParameterHandling)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    /* Currently the wrapper only updates the processor when there are incoming
+     * parameter changes, so we quety the default value, which is 1 */
+
+    _module_under_test->set_enabled(true);
+
+    auto [status, value] = _module_under_test->parameter_value_normalised(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(1.0f, value);
+
+    std::tie(status, value) = _module_under_test->parameter_value(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(1.0f, value);
+
+    std::string string_repr;
+    std::tie(status, string_repr) = _module_under_test->parameter_value_formatted(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ("1.0000", string_repr);
+}
+
 class TestVst3xUtils : public ::testing::Test
 {
 protected:

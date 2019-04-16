@@ -20,6 +20,16 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
+/* Convert a Steinberg 128 char unicode string to 8 bit ascii std::string */
+std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
+{
+    char char_buf[128] = {};
+    Steinberg::UString128 str(wchar_buffer, 128);
+    str.toAscii(char_buf, VST_NAME_BUFFER_SIZE);
+    return std::string(char_buf);
+}
+
+
 void Vst3xWrapper::_cleanup()
 {
     if (_instance.component())
@@ -63,6 +73,7 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
+    _setup_program_handling();
     return ProcessorReturnCode::OK;
 }
 
@@ -200,13 +211,120 @@ void Vst3xWrapper::set_bypassed(bool bypassed)
     }
 }
 
+std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value(ObjectId parameter_id) const
+{
+    /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
+    auto controller = const_cast<PluginInstance*>(&_instance)->controller();
+    auto value = controller->normalizedParamToPlain(parameter_id, controller->getParamNormalized(parameter_id));
+    return {ProcessorReturnCode::OK, static_cast<float>(value)};
+}
+
+std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_normalised(ObjectId parameter_id) const
+{
+    /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
+    auto controller = const_cast<PluginInstance*>(&_instance)->controller();
+    auto value = controller->getParamNormalized(parameter_id);
+    return {ProcessorReturnCode::OK, static_cast<float>(value)};
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::parameter_value_formatted(ObjectId parameter_id) const
+{
+    auto controller = const_cast<PluginInstance*>(&_instance)->controller();
+    auto value = controller->getParamNormalized(parameter_id);
+    Steinberg::Vst::String128 buffer = {};
+    auto res = controller->getParamStringByValue(parameter_id, value, buffer);
+    if (res == Steinberg::kResultOk)
+    {
+        return {ProcessorReturnCode::OK, to_ascii_str(buffer)};
+    }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+}
+
+int Vst3xWrapper::current_program() const
+{
+    if (_supports_programs)
+    {
+        return _current_program;
+    }
+    return 0;
+}
+
+std::string Vst3xWrapper::current_program_name() const
+{
+    return program_name(_current_program).second;
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int program) const
+{
+    if (_supports_programs)
+    {
+        MIND_LOG_INFO("Program name {}", program);
+        auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
+        Steinberg::Vst::String128 buffer;
+        auto res = mutable_unit->getProgramName(_main_program_list_id, program, buffer);
+        if (res == Steinberg::kResultOk)
+        {
+            MIND_LOG_INFO("Program name returned error {}", res);
+            return {ProcessorReturnCode::OK, to_ascii_str(buffer)};
+        }
+    }
+    MIND_LOG_INFO("Set program name failed");
+    return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
+}
+
+std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_program_names() const
+{
+    if (_supports_programs)
+    {
+        MIND_LOG_INFO("all Program names");
+        std::vector<std::string> programs;
+        auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
+        for (int i = 0; i < _program_count; ++i)
+        {
+            Steinberg::Vst::String128 buffer;
+            auto res = mutable_unit->getProgramName(_main_program_list_id, i, buffer);
+            if (res == Steinberg::kResultOk)
+            {
+                programs.emplace_back(to_ascii_str(buffer));
+            } else
+            {
+                MIND_LOG_INFO("Program name returned error {} on {}", res, i);
+                break;
+            }
+        }
+        MIND_LOG_INFO("Return list with {} programs", programs.size());
+        return {ProcessorReturnCode::OK, programs};
+    }
+    MIND_LOG_INFO("All program names failed");
+    return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
+}
+
+ProcessorReturnCode Vst3xWrapper::set_program(int program)
+{
+    if (_supports_programs && _program_count > 0)
+    {
+        float normalised_program_id = static_cast<float>(program) / static_cast<float>(_program_count);
+        auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                              this->id(),
+                                              _program_change_parameter.id,
+                                              normalised_program_id,
+                                              IMMEDIATE_PROCESS);
+        event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
+        _host_control.post_event(event);
+        MIND_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
+        //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
+        return ProcessorReturnCode::OK;
+    }
+    MIND_LOG_INFO("Set program failed");
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+}
+
 bool Vst3xWrapper::_register_parameters()
 {
     int param_count = _instance.controller()->getParameterCount();
     _in_parameter_changes.setMaxParameters(param_count);
     _out_parameter_changes.setMaxParameters(param_count);
 
-    char name_c_str[128];
     for (int i = 0; i < param_count; ++i)
     {
         Steinberg::Vst::ParameterInfo info;
@@ -221,19 +339,27 @@ bool Vst3xWrapper::_register_parameters()
              * arbitrary id and not the index. Hence the id in the registered ParameterDescriptors
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
-            Steinberg::UString128 str(info.title, VST_NAME_BUFFER_SIZE);
-            str.toAscii(name_c_str, VST_NAME_BUFFER_SIZE);
+            auto title = to_ascii_str(info.title);
             if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
             }
-            else if (register_parameter(new FloatParameterDescriptor(name_c_str, name_c_str, 0, 1, nullptr), info.id))
+            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange && _program_change_parameter.supported == false)
             {
-                MIND_LOG_INFO("Registered parameter {}.", name_c_str);
+                /* For now we only support 1 program change parameter and we're counting on the
+                 * first one to be the "major" one. Multitimbral instruments can have multiple
+                 * program change parameter, but we'll have to look into how to support that. */
+                _program_change_parameter.id = info.id;
+                _program_change_parameter.supported = true;
+                MIND_LOG_INFO("We have a program change parameter at {}, unit {}", info.id,  info.unitId);
+            }
+            else if (register_parameter(new FloatParameterDescriptor(title, title, 0, 1, nullptr), info.id))
+            {
+                MIND_LOG_INFO("Registered parameter {}, id {}, unit {}.", title, info.id, info.unitId);
             } else
             {
-                MIND_LOG_INFO("Error registering parameter {}.", name_c_str);
+                MIND_LOG_INFO("Error registering parameter {}.", title);
             }
         }
     }
@@ -384,6 +510,38 @@ bool Vst3xWrapper::_setup_processing()
     return true;
 }
 
+bool Vst3xWrapper::_setup_program_handling()
+{
+    if (_instance.unit_info() == nullptr)// || _program_change_parameter.supported == false)
+    {
+        MIND_LOG_INFO("NO unit info or pc parameter");
+        return false;
+    }
+    MIND_LOG_INFO("Unit count {}", _instance.unit_info()->getUnitCount());
+    MIND_LOG_INFO("programlist count {}", _instance.unit_info()->getProgramListCount());
+    _main_program_list_id = 0;
+    Steinberg::Vst::UnitInfo info = {0};
+    auto res = _instance.unit_info()->getUnitInfo(Steinberg::Vst::kRootUnitId, info);
+    if (res == Steinberg::kResultOk) //|| info.programListId == Steinberg::Vst::kNoProgramListId)
+    {
+        MIND_LOG_INFO("Program list id {}", info.programListId);
+        _main_program_list_id = info.programListId;
+    }
+    /* This is most likely 0, but query and store for good measure as we might want
+     * to support multiple program lists in the future */
+    Steinberg::Vst::ProgramListInfo list_info;
+    res = _instance.unit_info()->getProgramListInfo(Steinberg::Vst::kRootUnitId, list_info);
+    if (res == Steinberg::kResultOk)
+    {
+        _supports_programs = true;
+        _program_count = list_info.programCount;
+        MIND_LOG_INFO("Plugin supports programs, program count: {}", _program_count);
+        return true;
+    }
+    MIND_LOG_INFO("No program list info, returned {}", res);
+    return false;
+}
+
 void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
 {
     int event_count = data.outputEvents->getEventCount();
@@ -456,6 +614,20 @@ void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
 {
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, this->id(), param_id, value, IMMEDIATE_PROCESS);
     _host_control.post_event(event);
+}
+
+
+void Vst3xWrapper::_program_change_callback(Event* event, int status)
+{
+    if (status == EventStatus::HANDLED_OK)
+    {
+        auto typed_event = static_cast<ParameterChangeEvent*>(event);
+        _current_program = static_cast<int>(typed_event->float_value() * _program_count);
+        MIND_LOG_INFO("Set program to {} completed, {}", _current_program, typed_event->parameter_id());
+        //_instance.controller()->setParamNormalized(_program_change_parameter.id, typed_event->float_value());
+        return;
+    }
+    MIND_LOG_INFO("Set program failed with status: {}", status);
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
