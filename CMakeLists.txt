@@ -2,6 +2,20 @@ cmake_minimum_required(VERSION 3.8)
 project(sushi)
 
 ##################################
+#  Perform Cross Compile setup   #
+##################################
+
+# Procedure is performed only if cross compile is detected, i.e CMAKE_SYSROOT
+# has been explicitly defined
+if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+    set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+endif()
+
+##################################
 #  Generate build information    #
 ##################################
 
