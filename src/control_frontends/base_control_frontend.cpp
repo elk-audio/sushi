@@ -53,11 +53,10 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int channel, i
     send_keyboard_event(processor, KeyboardEvent::Subtype::NOTE_OFF, channel, note, velocity);
 }
 
-void BaseControlFrontend::send_program_change_event(ObjectId processor, int channel, int program)
+void BaseControlFrontend::send_program_change_event(ObjectId processor, int program)
 {
-    MidiDataByte midi_msg = midi::encode_program_change(channel, program);
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, processor, midi_msg, timestamp);
+    auto e = new ProgramChangeEvent(processor, program, timestamp);
     _event_dispatcher->post_event(e);
 }
 
