@@ -59,7 +59,8 @@ public:
     ~PluginInstance();
 
     bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
-    const std::string& name() {return _name;};
+    const std::string& name() const {return _name;}
+    const std::string& vendor() const {return _vendor;}
     Steinberg::Vst::IComponent* component() {return _component.get();}
     Steinberg::Vst::IAudioProcessor* processor() {return _processor.get();}
     Steinberg::Vst::IEditController* controller() {return _controller.get();}
@@ -71,6 +72,7 @@ private:
     bool _connect_components();
 
     std::string _name;
+    std::string _vendor;
     SushiHostApplication _host_app;
     std::shared_ptr<VST3::Hosting::Module> _module;
 

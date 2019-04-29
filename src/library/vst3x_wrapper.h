@@ -120,7 +120,9 @@ private:
 
     bool _setup_processing();
 
-    bool _setup_program_handling();
+    bool _setup_internal_program_handling();
+
+    bool _setup_file_program_handling();
 
     /**
      * @brief Read output events from the plugin, convert to internal events
@@ -143,9 +145,12 @@ private:
 
     float _sample_rate;
     bool  _supports_programs{false};
+    bool  _internal_programs{false};
+    bool  _file_based_programs{false};
     int _main_program_list_id;
     int _program_count{0};
     int _current_program{0};
+    std::vector<std::string> _program_files;
 
     std::string _plugin_load_name;
     std::string _plugin_load_path;

@@ -1,7 +1,13 @@
 #ifdef SUSHI_BUILD_WITH_VST3
 
+#include <fstream>
+
+#include <dirent.h>
+
 #include <pluginterfaces/base/ustring.h>
 #include <pluginterfaces/vst/ivstmidicontrollers.h>
+#include <public.sdk/source/vst/vstpresetfile.h>
+#include <public.sdk/source/common/memorystream.h>
 
 #include "vst3x_wrapper.h"
 #include "library/event.h"
@@ -11,6 +17,12 @@ namespace sushi {
 namespace vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
+constexpr std::array<char*, 4>  PRESET_BASE_PATHS = {"$HOME/.vst3/presets/",
+                                                      "/usr/share/vst3/presets/",
+                                                      "/usr/local/share/vst3/presets/",
+                                                      "./vst3/presets/"};
+constexpr char VST_PRESET_SUFFIX[] = ".vstpreset";
+constexpr int VST_PRESET_SUFFIX_LENGTH = 10;
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
                                                   Steinberg::Vst::ProcessContext::kContTimeValid &
@@ -29,6 +41,53 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     return std::string(char_buf);
 }
 
+std::string extract_preset_name(const std::string& path)
+{
+    auto fname_pos = path.find_last_of("/") + 1;
+    return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
+}
+
+/* Recursively search subdirs for preset files */
+void add_patches(const std::string& path, std::vector<std::string>& patches)
+{
+    MIND_LOG_INFO("Looking for presets in: {}", path);
+    DIR* dir = opendir(path.c_str());
+    if (dir == nullptr)
+    {
+        return;
+    }
+    dirent* entry;
+    while((entry = readdir(dir)) != nullptr)
+    {
+        if (entry->d_type == DT_REG)
+        {
+            std::string patch_name(entry->d_name);
+            auto suffix_pos = patch_name.rfind(VST_PRESET_SUFFIX);
+            if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
+            {
+                MIND_LOG_INFO("Reading vst preset patch: {}", patch_name);
+                patches.emplace_back(std::move(path + "/" + patch_name));
+            }
+        }
+        else if (entry->d_type == DT_DIR && entry->d_name[0] != '.') /* Dirty way to ignore ./,../ and hidden files */
+        {
+            add_patches(path + "/" +  entry->d_name, patches);
+        }
+    }
+    closedir(dir);
+}
+
+std::vector<std::string> enumerate_patches(const std::string plugin_name, const std::string& company)
+{
+    /* VST3 standard says you should put preset files in specific locations, So we recursively
+     * scan these folders for all files that match, just like we do with Re plugins*/
+    std::vector<std::string> patches;
+    for (auto path: PRESET_BASE_PATHS)
+    {
+        add_patches(std::string(path) + company + "/" + plugin_name, patches);
+    }
+    return patches;
+}
 
 void Vst3xWrapper::_cleanup()
 {
@@ -73,7 +132,10 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
-    _setup_program_handling();
+    if (!_setup_internal_program_handling())
+    {
+        _setup_file_program_handling();
+    }
     return ProcessorReturnCode::OK;
 }
 
@@ -256,7 +318,7 @@ std::string Vst3xWrapper::current_program_name() const
 
 std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int program) const
 {
-    if (_supports_programs)
+    if (_supports_programs && _internal_programs)
     {
         MIND_LOG_INFO("Program name {}", program);
         auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
@@ -267,6 +329,10 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
             MIND_LOG_INFO("Program name returned error {}", res);
             return {ProcessorReturnCode::OK, to_ascii_str(buffer)};
         }
+    }
+    else if (_supports_programs && _file_based_programs && program < _program_files.size())
+    {
+        return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program])};
     }
     MIND_LOG_INFO("Set program name failed");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -281,15 +347,22 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
         auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
         for (int i = 0; i < _program_count; ++i)
         {
-            Steinberg::Vst::String128 buffer;
-            auto res = mutable_unit->getProgramName(_main_program_list_id, i, buffer);
-            if (res == Steinberg::kResultOk)
+            if (_internal_programs)
             {
-                programs.emplace_back(to_ascii_str(buffer));
-            } else
+                Steinberg::Vst::String128 buffer;
+                auto res = mutable_unit->getProgramName(_main_program_list_id, i, buffer);
+                if (res == Steinberg::kResultOk)
+                {
+                    programs.emplace_back(to_ascii_str(buffer));
+                } else
+                {
+                    MIND_LOG_INFO("Program name returned error {} on {}", res, i);
+                    break;
+                }
+            }
+            else if (_file_based_programs)
             {
-                MIND_LOG_INFO("Program name returned error {} on {}", res, i);
-                break;
+                programs.emplace_back(extract_preset_name(_program_files[i]));
             }
         }
         MIND_LOG_INFO("Return list with {} programs", programs.size());
@@ -301,7 +374,11 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
 
 ProcessorReturnCode Vst3xWrapper::set_program(int program)
 {
-    if (_supports_programs && _program_count > 0)
+    if (!_supports_programs || _program_count == 0)
+    {
+        return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    }
+    if (_internal_programs)
     {
         float normalised_program_id = static_cast<float>(program) / static_cast<float>(_program_count);
         auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
@@ -315,8 +392,28 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
         return ProcessorReturnCode::OK;
     }
-    MIND_LOG_INFO("Set program failed");
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    else if (_file_based_programs && program < _program_files.size())
+    {
+        auto stream = Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb");
+
+        if (stream == nullptr)
+        {
+            MIND_LOG_INFO("Failed to load file {]", _program_files[program]);
+            return ProcessorReturnCode::ERROR;
+        }
+        Steinberg::Vst::PresetFile preset_file(stream);
+        preset_file.readChunkList();
+
+        bool res = preset_file.restoreControllerState(_instance.controller());
+        res &= preset_file.restoreComponentState(_instance.component());
+        if (res)
+        {
+            _current_program = program;
+            return ProcessorReturnCode::OK;
+        }
+    }
+    MIND_LOG_INFO("Error in program change");
+    return ProcessorReturnCode::ERROR;
 }
 
 bool Vst3xWrapper::_register_parameters()
@@ -510,15 +607,18 @@ bool Vst3xWrapper::_setup_processing()
     return true;
 }
 
-bool Vst3xWrapper::_setup_program_handling()
+bool Vst3xWrapper::_setup_internal_program_handling()
 {
     if (_instance.unit_info() == nullptr)// || _program_change_parameter.supported == false)
     {
         MIND_LOG_INFO("NO unit info or pc parameter");
         return false;
     }
-    MIND_LOG_INFO("Unit count {}", _instance.unit_info()->getUnitCount());
-    MIND_LOG_INFO("programlist count {}", _instance.unit_info()->getProgramListCount());
+    if (_instance.unit_info()->getProgramListCount() == 0)
+    {
+        MIND_LOG_INFO("ProgramListCount is 0");
+        return false;
+    }
     _main_program_list_id = 0;
     Steinberg::Vst::UnitInfo info = {0};
     auto res = _instance.unit_info()->getUnitInfo(Steinberg::Vst::kRootUnitId, info);
@@ -535,10 +635,25 @@ bool Vst3xWrapper::_setup_program_handling()
     {
         _supports_programs = true;
         _program_count = list_info.programCount;
-        MIND_LOG_INFO("Plugin supports programs, program count: {}", _program_count);
+        MIND_LOG_INFO("Plugin supports internal programs, program count: {}", _program_count);
+        _internal_programs = true;
         return true;
     }
     MIND_LOG_INFO("No program list info, returned {}", res);
+    return false;
+}
+
+bool Vst3xWrapper::_setup_file_program_handling()
+{
+    _program_files = enumerate_patches(_instance.name(), _instance.vendor());
+    if (_program_files.size() > 0)
+    {
+        _supports_programs = true;
+        _file_based_programs = true;
+        _program_count = static_cast<int>(_program_files.size());
+        MIND_LOG_INFO("Using external file programs, {} program files found", _program_files.size());
+        return true;
+    }
     return false;
 }
 

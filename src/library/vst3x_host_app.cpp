@@ -149,6 +149,13 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
         MIND_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
         return false;
     }
+    Steinberg::PFactoryInfo info;
+    if (factory->getFactoryInfo(&info) != Steinberg::kResultOk)
+    {
+        return false;
+    }
+    // In the future we might want to check for more things than just vendor name here
+    _vendor = info.vendor;
 
     auto component = load_component(factory, plugin_name);
     if (!component)
