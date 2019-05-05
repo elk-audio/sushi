@@ -394,11 +394,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     }
     else if (_file_based_programs && program < _program_files.size())
     {
-        auto stream = Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb");
-
+        Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb"));
         if (stream == nullptr)
         {
-            MIND_LOG_INFO("Failed to load file {]", _program_files[program]);
+            MIND_LOG_INFO("Failed to load file {}", _program_files[program]);
             return ProcessorReturnCode::ERROR;
         }
         Steinberg::Vst::PresetFile preset_file(stream);
