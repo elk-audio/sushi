@@ -204,22 +204,30 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
-###########################
-#  Subdirectory projects  #
-###########################
+################################
+#  Subdirectory configuration  #
+################################
 
 if (${WITH_XENOMAI})
-    set(RASPA_WITH_APPS OFF CACHE BOOL "")
-    set(RASPA_WITH_TESTS OFF CACHE BOOL "")
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "")
-    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "")
-    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "")
-    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "")
+    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
+    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
+    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
     add_subdirectory(raspalib)
-
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
 else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "")
+    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
+endif()
+
+if (${AUDIO_BUFFER_SIZE})
+    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "" FORCE)
+endif()
+
+if (${XENOMAI_AUDIO_CHANNELS})
+    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
+endif()
+
+if (${XENOMAI_AUDIO_SAMPLE_RATE})
+    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "" FORCE)
 endif()
 
 if (${BUILD_TWINE})
