@@ -41,12 +41,12 @@ class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConne
 public:
     MIND_DECLARE_NON_COPYABLE(ConnectionProxy);
 
-    explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* srcConnection) : _source_connection (srcConnection) {}
+    explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* src_connection) : _source_connection(src_connection) {}
     virtual ~ConnectionProxy() = default;
 
-    Steinberg::tresult PLUGIN_API connect(Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API disconnect(Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage* message) override;
+    Steinberg::tresult connect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult disconnect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult notify(Steinberg::Vst::IMessage* message) override;
 
     bool disconnect();
 
@@ -103,8 +103,6 @@ Steinberg::tresult PLUGIN_API ConnectionProxy::notify(Steinberg::Vst::IMessage* 
 {
     if (_dest_connection)
     {
-        // TODO we should test if we are in UI main thread else postpone the message
-        // Steinberg comment, maybe we should add a check here
         return _dest_connection->notify(message);
     }
     return Steinberg::kResultFalse;
@@ -116,21 +114,17 @@ bool ConnectionProxy::disconnect()
     return  status == Steinberg::kResultTrue;
 }
 
-PluginInstance::PluginInstance()
-{
-    // Constructor defined here and not in header file, otherwise we
-    // would need to put the definition of ConnectionProxy here too
-}
+PluginInstance::PluginInstance() = default;
 
 PluginInstance::~PluginInstance()
 {
-    if(_component_connection_point)
+    if (_component_connection)
     {
-        _component_connection_point->disconnect(_controller_connection_point);
+        _component_connection->disconnect();
     }
-    if(_controller_connection_point)
+    if (_controller_connection)
     {
-        _controller_connection_point->disconnect(_component_connection_point);
+        _controller_connection->disconnect();
     }
 }
 
@@ -225,23 +219,25 @@ void PluginInstance::_query_extension_interfaces()
 
 bool PluginInstance::_connect_components()
 {
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> compICP(_component);
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> contrICP(_controller);
-    if (!compICP || !contrICP)
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> component_connection(_component);
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> controller_connection(_controller);
+
+    if (!component_connection || !controller_connection)
     {
         MIND_LOG_ERROR("Failed to create connection points");
         return false;
     }
-    _component_connection_point = compICP.get();
-    _controller_connection_point = contrICP.get();
 
-    if (_component_connection_point->connect(_controller_connection_point) != Steinberg::kResultTrue)
+    _component_connection = NEW ConnectionProxy(component_connection);
+    _controller_connection = NEW ConnectionProxy(controller_connection);
+
+    if (_component_connection->connect(controller_connection) != Steinberg::kResultTrue)
     {
         MIND_LOG_ERROR("Failed to connect component");
     }
     else
     {
-        if (_controller_connection_point->connect(_component_connection_point) != Steinberg::kResultTrue)
+        if (_controller_connection->connect(component_connection) != Steinberg::kResultTrue)
         {
             MIND_LOG_ERROR("Failed to connect controller");
         }
@@ -255,26 +251,22 @@ bool PluginInstance::_connect_components()
 
 bool PluginInstance::notify_controller(Steinberg::Vst::IMessage*message)
 {
-    if (_controller_connection_point)
+    // This calls notify() on the component connection proxy, which is has the controller
+    // connected as its destination. So it is the controller being notified
+    auto res = _component_connection->notify(message);
+    if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
     {
-        auto res = _controller_connection_point->notify(message);
-        if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
-        {
-            return true;
-        }
+        return true;
     }
     return false;
 }
 
 bool PluginInstance::notify_processor(Steinberg::Vst::IMessage*message)
 {
-    if (_component_connection_point)
+    auto res = _controller_connection->notify(message);
+    if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
     {
-        auto res = _controller_connection_point->notify(message);
-        if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
-        {
-            return true;
-        }
+        return true;
     }
     return false;
 }

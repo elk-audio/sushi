@@ -87,8 +87,8 @@ private:
     Steinberg::Vst::IMidiMapping*                    _midi_mapper{nullptr};
     Steinberg::Vst::IUnitInfo*                       _unit_info{nullptr};
 
-    Steinberg::Vst::IConnectionPoint* _controller_connection_point{nullptr};
-    Steinberg::Vst::IConnectionPoint* _component_connection_point{nullptr};
+    Steinberg::OPtr<ConnectionProxy> _controller_connection;
+    Steinberg::OPtr<ConnectionProxy> _component_connection;
 };
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);

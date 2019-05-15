@@ -440,7 +440,8 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
 
         bool res = preset_file.restoreControllerState(_instance.controller());
         res &= preset_file.restoreComponentState(_instance.component());
-        // Notify the processor of the update with an idle message
+        // Notify the processor of the update with an idle message. This was specific
+        // to Retrologue and not part of the Vst3 documentation so we might remove it eventually
         Steinberg::Vst::HostMessage message;
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
@@ -474,10 +475,10 @@ bool Vst3xWrapper::_register_parameters()
         {
             /* Vst3 uses a confusing model where parameters are indexed by an integer from 0
              * to getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
-             * also has a 32 bit integer id which is arbitrarily assigned. For ADelay these are
-             * 100 and 101.
+             * also has a 32 bit integer id which is arbitrarily assigned.
+             *
              * When doing real time parameter updates, the parameters must be accessed using this
-             * arbitrary id and not the index. Hence the id in the registered ParameterDescriptors
+             * id and not its index. Hence the id in the registered ParameterDescriptors
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto title = to_ascii_str(info.title);
@@ -486,18 +487,19 @@ bool Vst3xWrapper::_register_parameters()
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
             }
-            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange && _program_change_parameter.supported == false)
+            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
+                    _program_change_parameter.supported == false)
             {
                 /* For now we only support 1 program change parameter and we're counting on the
                  * first one to be the "major" one. Multitimbral instruments can have multiple
-                 * program change parameter, but we'll have to look into how to support that. */
+                 * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
-                MIND_LOG_INFO("We have a program change parameter at {}, unit {}", info.id,  info.unitId);
+                MIND_LOG_INFO("We have a program change parameter at {}", info.id);
             }
             else if (register_parameter(new FloatParameterDescriptor(title, title, 0, 1, nullptr), info.id))
             {
-                MIND_LOG_INFO("Registered parameter {}, id {}, unit {}.", title, info.id, info.unitId);
+                MIND_LOG_INFO("Registered parameter {}, id {}", title, info.id);
             } else
             {
                 MIND_LOG_INFO("Error registering parameter {}.", title);
@@ -653,7 +655,7 @@ bool Vst3xWrapper::_setup_processing()
 
 bool Vst3xWrapper::_setup_internal_program_handling()
 {
-    if (_instance.unit_info() == nullptr)// || _program_change_parameter.supported == false)
+    if (_instance.unit_info() == nullptr || _program_change_parameter.supported == false)
     {
         MIND_LOG_INFO("NO unit info or pc parameter");
         return false;
@@ -690,7 +692,7 @@ bool Vst3xWrapper::_setup_internal_program_handling()
 bool Vst3xWrapper::_setup_file_program_handling()
 {
     _program_files = enumerate_patches(_instance.name(), _instance.vendor());
-    if (_program_files.size() > 0)
+    if (!_program_files.empty())
     {
         _supports_programs = true;
         _file_based_programs = true;
