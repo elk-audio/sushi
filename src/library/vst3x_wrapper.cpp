@@ -1,8 +1,11 @@
 #ifdef SUSHI_BUILD_WITH_VST3
 
 #include <fstream>
+#include <string>
+#include <climits>
 
 #include <dirent.h>
+#include <cstdlib>
 
 #include <pluginterfaces/base/ustring.h>
 #include <pluginterfaces/vst/ivstmidicontrollers.h>
@@ -17,11 +20,9 @@ namespace sushi {
 namespace vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
-constexpr std::array<char*, 4>  PRESET_BASE_PATHS = {"$HOME/.vst3/presets/",
-                                                      "/usr/share/vst3/presets/",
-                                                      "/usr/local/share/vst3/presets/",
-                                                      "./vst3/presets/"};
+
 constexpr char VST_PRESET_SUFFIX[] = ".vstpreset";
+constexpr char VST_PRESET_BASE_PATH[] = ".vstpreset";
 constexpr int VST_PRESET_SUFFIX_LENGTH = 10;
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
@@ -32,7 +33,7 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
-/* Convert a Steinberg 128 char unicode string to 8 bit ascii std::string */
+// Convert a Steinberg 128 char unicode string to 8 bit ascii std::string
 std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
 {
     char char_buf[128] = {};
@@ -41,13 +42,45 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     return std::string(char_buf);
 }
 
+// Get all vst3 preset locations in the right priority order
+// See Steinberg documentation of "Preset locations".
+std::vector<std::string> get_preset_locations()
+{
+    std::vector<std::string> locations;
+    char* home_dir = getenv("HOME");
+    if (home_dir != nullptr)
+    {
+        locations.emplace_back(std::string(home_dir) + "/.vst3/presets/");
+    }
+    MIND_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
+    locations.emplace_back("/usr/share/vst3/presets/");
+    locations.emplace_back("/usr/local/share/vst3/presets/");
+    char buffer[_POSIX_SYMLINK_MAX + 1] = {};
+    auto path_length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (path_length > 0)
+    {
+        std::string path(buffer);
+        auto pos = path.find_last_of('/');
+        if (pos != std::string::npos)
+        {
+            locations.emplace_back(path.substr(0, pos) + "/vst3/presets/");
+        }
+        else
+        {
+            path_length = 0;
+        }
+    }
+    MIND_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory");
+    return locations;
+}
+
 std::string extract_preset_name(const std::string& path)
 {
     auto fname_pos = path.find_last_of("/") + 1;
     return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
 }
 
-/* Recursively search subdirs for preset files */
+// Recursively search subdirs for preset files
 void add_patches(const std::string& path, std::vector<std::string>& patches)
 {
     MIND_LOG_INFO("Looking for presets in: {}", path);
@@ -65,7 +98,7 @@ void add_patches(const std::string& path, std::vector<std::string>& patches)
             auto suffix_pos = patch_name.rfind(VST_PRESET_SUFFIX);
             if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
             {
-                MIND_LOG_INFO("Reading vst preset patch: {}", patch_name);
+                MIND_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
                 patches.emplace_back(std::move(path + "/" + patch_name));
             }
         }
@@ -82,7 +115,8 @@ std::vector<std::string> enumerate_patches(const std::string plugin_name, const 
     /* VST3 standard says you should put preset files in specific locations, So we recursively
      * scan these folders for all files that match, just like we do with Re plugins*/
     std::vector<std::string> patches;
-    for (auto path: PRESET_BASE_PATHS)
+    std::vector<std::string> paths = get_preset_locations();
+    for (auto path : paths)
     {
         add_patches(std::string(path) + company + "/" + plugin_name, patches);
     }
@@ -330,7 +364,7 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
             return {ProcessorReturnCode::OK, to_ascii_str(buffer)};
         }
     }
-    else if (_supports_programs && _file_based_programs && program < _program_files.size())
+    else if (_supports_programs && _file_based_programs && program < static_cast<int>(_program_files.size()))
     {
         return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program])};
     }
@@ -392,8 +426,9 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
         return ProcessorReturnCode::OK;
     }
-    else if (_file_based_programs && program < _program_files.size())
+    else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
     {
+        MIND_LOG_INFO("Loading file based preset");
         Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb"));
         if (stream == nullptr)
         {
@@ -405,10 +440,20 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
 
         bool res = preset_file.restoreControllerState(_instance.controller());
         res &= preset_file.restoreComponentState(_instance.component());
+        // Notify the processor of the update with an idle message
+        Steinberg::Vst::HostMessage message;
+        message.setMessageID("idle");
+        if (_instance.notify_processor(&message) == false)
+        {
+            MIND_LOG_ERROR("Idle message returned error");
+        }
         if (res)
         {
             _current_program = program;
             return ProcessorReturnCode::OK;
+        } else
+        {
+            MIND_LOG_INFO("restore state returned error");
         }
     }
     MIND_LOG_INFO("Error in program change");
@@ -619,9 +664,9 @@ bool Vst3xWrapper::_setup_internal_program_handling()
         return false;
     }
     _main_program_list_id = 0;
-    Steinberg::Vst::UnitInfo info = {0};
+    Steinberg::Vst::UnitInfo info;
     auto res = _instance.unit_info()->getUnitInfo(Steinberg::Vst::kRootUnitId, info);
-    if (res == Steinberg::kResultOk) //|| info.programListId == Steinberg::Vst::kNoProgramListId)
+    if (res == Steinberg::kResultOk && info.programListId != Steinberg::Vst::kNoProgramListId)
     {
         MIND_LOG_INFO("Program list id {}", info.programListId);
         _main_program_list_id = info.programListId;

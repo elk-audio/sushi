@@ -124,13 +124,13 @@ PluginInstance::PluginInstance()
 
 PluginInstance::~PluginInstance()
 {
-    if(_component_connection)
+    if(_component_connection_point)
     {
-        _component_connection->disconnect();
+        _component_connection_point->disconnect(_controller_connection_point);
     }
-    if(_controller_connection)
+    if(_controller_connection_point)
     {
-        _controller_connection->disconnect();
+        _controller_connection_point->disconnect(_component_connection_point);
     }
 }
 
@@ -232,21 +232,46 @@ bool PluginInstance::_connect_components()
         MIND_LOG_ERROR("Failed to create connection points");
         return false;
     }
+    _component_connection_point = compICP.get();
+    _controller_connection_point = contrICP.get();
 
-    _component_connection = NEW ConnectionProxy(compICP);
-    _controller_connection = NEW ConnectionProxy(contrICP);
-
-    if (_component_connection->connect(contrICP) != Steinberg::kResultTrue)
+    if (_component_connection_point->connect(_controller_connection_point) != Steinberg::kResultTrue)
     {
         MIND_LOG_ERROR("Failed to connect component");
     }
     else
     {
-        if (_controller_connection->connect(compICP) != Steinberg::kResultTrue)
+        if (_controller_connection_point->connect(_component_connection_point) != Steinberg::kResultTrue)
         {
             MIND_LOG_ERROR("Failed to connect controller");
         }
         else
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PluginInstance::notify_controller(Steinberg::Vst::IMessage*message)
+{
+    if (_controller_connection_point)
+    {
+        auto res = _controller_connection_point->notify(message);
+        if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PluginInstance::notify_processor(Steinberg::Vst::IMessage*message)
+{
+    if (_component_connection_point)
+    {
+        auto res = _controller_connection_point->notify(message);
+        if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
         {
             return true;
         }

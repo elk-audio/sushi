@@ -24,7 +24,7 @@
 namespace sushi {
 namespace control_frontend {
 
-constexpr int DEFAULT_SERVER_PORT = 24026;
+constexpr int DEFAULT_SERVER_PORT = 24024;
 constexpr int DEFAULT_SEND_PORT = 24025;
 
 

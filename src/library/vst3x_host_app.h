@@ -18,8 +18,8 @@
 namespace sushi {
 namespace vst3 {
 
-class ConnectionProxy;
 class Vst3xWrapper;
+class ConnectionProxy;
 
 class SushiHostApplication : public Steinberg::Vst::HostApplication
 {
@@ -66,6 +66,8 @@ public:
     Steinberg::Vst::IEditController* controller() {return _controller.get();}
     Steinberg::Vst::IUnitInfo* unit_info() {return _unit_info;}
     Steinberg::Vst::IMidiMapping* midi_mapper() {return _midi_mapper;}
+    bool notify_controller(Steinberg::Vst::IMessage* message);
+    bool notify_processor(Steinberg::Vst::IMessage* message);
 
 private:
     void _query_extension_interfaces();
@@ -85,8 +87,8 @@ private:
     Steinberg::Vst::IMidiMapping*                    _midi_mapper{nullptr};
     Steinberg::Vst::IUnitInfo*                       _unit_info{nullptr};
 
-    Steinberg::OPtr<ConnectionProxy> _controller_connection;
-    Steinberg::OPtr<ConnectionProxy> _component_connection;
+    Steinberg::Vst::IConnectionPoint* _controller_connection_point{nullptr};
+    Steinberg::Vst::IConnectionPoint* _component_connection_point{nullptr};
 };
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, const std::string& plugin_name);
