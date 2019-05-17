@@ -119,6 +119,7 @@ ext::SyncMode Controller::get_sync_mode() const
 
 void Controller::set_sync_mode(ext::SyncMode sync_mode)
 {
+    MIND_LOG_DEBUG("set_sync_mode called");
     auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
@@ -597,8 +598,8 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_st
 
 std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
 {
-    MIND_LOG_DEBUG("get_string_property_value called, returning ");
-    return {ext::ControlStatus::OK, "helloworld"};
+    MIND_LOG_DEBUG("get_string_property_value called");
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
 }
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
@@ -626,8 +627,8 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
 
 ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
 {
-    MIND_LOG_DEBUG("set_string_property_value called, returning ");
-    return ext::ControlStatus::OK;
+    MIND_LOG_DEBUG("set_string_property_value called");
+    return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const
