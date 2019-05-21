@@ -26,6 +26,7 @@ namespace EventStatus {
 enum EventStatus : int
 {
     HANDLED_OK,
+    ERROR,
     NOT_HANDLED,
     QUEUED_HANDLING,
     UNRECOGNIZED_RECEIVER,

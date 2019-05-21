@@ -211,6 +211,7 @@ void Vst3xWrapper::process_event(RtEvent event)
         {
             auto typed_event = event.parameter_change_event();
             _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
+            _parameter_update_queue.push({typed_event->param_id(), typed_event->value()});
             break;
         }
         case RtEventType::NOTE_ON:
@@ -271,6 +272,11 @@ void Vst3xWrapper::process_event(RtEvent event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
+    if (_process_data.inputParameterChanges->getParameterCount() > 0)
+    {
+        auto e = RtEvent::make_async_work_event(&Vst3xWrapper::parameter_update_callback, this->id(), this);
+        output_event(e);
+    }
     if(_bypassed && _bypass_parameter.supported == false)
     {
         bypass_process(in_buffer, out_buffer);
@@ -820,11 +826,29 @@ void Vst3xWrapper::_program_change_callback(Event* event, int status)
         auto typed_event = static_cast<ParameterChangeEvent*>(event);
         _current_program = static_cast<int>(typed_event->float_value() * _program_count);
         MIND_LOG_INFO("Set program to {} completed, {}", _current_program, typed_event->parameter_id());
-        //_instance.controller()->setParamNormalized(_program_change_parameter.id, typed_event->float_value());
+        _instance.controller()->setParamNormalized(_program_change_parameter.id, typed_event->float_value());
+        Steinberg::Vst::HostMessage message;
+        message.setMessageID("idle");
+        if (_instance.notify_processor(&message) == false)
+        {
+            MIND_LOG_ERROR("Idle message returned error");
+        }
         return;
     }
     MIND_LOG_INFO("Set program failed with status: {}", status);
 }
+
+int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
+{
+    ParameterUpdate update;
+    int res = 0;
+    while (_parameter_update_queue.pop(update))
+    {
+        res |= _instance.controller()->setParamNormalized(update.id, update.value);
+    }
+    return res == Steinberg::kResultOk? EventStatus::HANDLED_OK : EventStatus::ERROR;
+}
+
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
 {

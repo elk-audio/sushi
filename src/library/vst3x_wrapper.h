@@ -16,6 +16,8 @@
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
+
 #include "library/vst3x_host_app.h"
 #include "library/processor.h"
 #include "library/vst3x_utils.h"
@@ -98,6 +100,12 @@ public:
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);
     }
+
+    static int parameter_update_callback(void* data, EventId id)
+    {
+        return reinterpret_cast<Vst3xWrapper*>(data)->_parameter_update_callback(id);
+    }
+
 private:
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -141,10 +149,18 @@ private:
 
     void _program_change_callback(Event* event, int status);
 
+    int _parameter_update_callback(EventId id);
+
     struct SpecialParameter
     {
         bool supported{false};
         Steinberg::Vst::ParamID id{0};
+    };
+
+    struct ParameterUpdate
+    {
+        Steinberg::Vst::ParamID id;
+        float value;
     };
 
     float _sample_rate;
@@ -177,6 +193,7 @@ private:
     SpecialParameter _mod_wheel_parameter;
     SpecialParameter _aftertouch_parameter;
 
+    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, 100> _parameter_update_queue;
     friend class ComponentHandler;
 };
 
