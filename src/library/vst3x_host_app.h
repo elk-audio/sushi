@@ -37,8 +37,7 @@ public:
     Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
     Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value);
     Steinberg::tresult PLUGIN_API endEdit (Steinberg::Vst::ParamID /*parameter_id*/) override {return Steinberg::kNotImplemented;}
-    Steinberg::tresult PLUGIN_API restartComponent (Steinberg::int32 /*flags*/) override {return Steinberg::kNotImplemented;}
-
+    Steinberg::tresult PLUGIN_API restartComponent (Steinberg::int32 flags) override;
     Steinberg::tresult PLUGIN_API queryInterface (const Steinberg::TUID /*_iid*/, void** /*obj*/) override {return Steinberg::kNoInterface;}
     Steinberg::uint32 PLUGIN_API addRef () override { return 1000; }
     Steinberg::uint32 PLUGIN_API release () override { return 1000; }

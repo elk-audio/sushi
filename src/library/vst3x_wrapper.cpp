@@ -55,7 +55,7 @@ std::vector<std::string> get_preset_locations()
     MIND_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
     locations.emplace_back("/usr/share/vst3/presets/");
     locations.emplace_back("/usr/local/share/vst3/presets/");
-    char buffer[_POSIX_SYMLINK_MAX + 1] = {};
+    char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
     auto path_length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
     if (path_length > 0)
     {
@@ -152,6 +152,16 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         MIND_LOG_ERROR("Failed to activate component with error code: {}", res);
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+    res = _instance.controller()->setComponentHandler(&_component_handler);
+    if (res != Steinberg::kResultOk)
+    {
+        MIND_LOG_ERROR("Failed to set component handler with error code: {}", res);
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+    if (!_sync_processor_to_controller())
+    {
+        MIND_LOG_WARNING("failed to sync controller");
     }
 
     if (!_setup_channels())
@@ -441,7 +451,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         bool res = preset_file.restoreControllerState(_instance.controller());
         res &= preset_file.restoreComponentState(_instance.component());
         // Notify the processor of the update with an idle message. This was specific
-        // to Retrologue and not part of the Vst3 documentation so we might remove it eventually
+        // to Retrologue and not part of the Vst3 standard so we might remove it eventually
         Steinberg::Vst::HostMessage message;
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
@@ -777,6 +787,31 @@ void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
     _host_control.post_event(event);
 }
 
+bool Vst3xWrapper::_sync_controller_to_processor()
+{
+    Steinberg::MemoryStream stream;
+    if (_instance.controller()->getState (&stream) == Steinberg::kResultTrue)
+    {
+        stream.seek(0, Steinberg::MemoryStream::kIBSeekCur, nullptr);
+        auto res = _instance.component()->setState (&stream);
+        return res == Steinberg::kResultTrue? true : false;
+    }
+    MIND_LOG_WARNING("Failed to get state from controller");
+    return false;
+}
+
+bool Vst3xWrapper::_sync_processor_to_controller()
+{
+    Steinberg::MemoryStream stream;
+    if (_instance.component()->getState (&stream) == Steinberg::kResultTrue)
+    {
+        stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
+        auto res = _instance.controller()->setComponentState (&stream);
+        return res == Steinberg::kResultTrue? true : false;
+    }
+    MIND_LOG_WARNING("Failed to get state from processor");
+    return false;
+}
 
 void Vst3xWrapper::_program_change_callback(Event* event, int status)
 {

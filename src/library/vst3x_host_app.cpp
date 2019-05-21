@@ -34,6 +34,18 @@ Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID paramet
     return Steinberg::kResultOk;
 }
 
+Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
+{
+    if (flags | Steinberg::Vst::kParamValuesChanged)
+    {
+        if (_wrapper_instance->_sync_controller_to_processor() == true)
+        {
+            return Steinberg::kResultOk;
+        }
+    }
+    return Steinberg::kResultFalse;
+}
+
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
  * But edited to follow Mind coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
