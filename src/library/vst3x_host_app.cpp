@@ -328,7 +328,6 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
     /* The controller can be implemented both as a part of the component or
      * as a separate object, Steinberg recommends the latter though */
     Steinberg::Vst::IEditController* controller;
-
     auto res = component->queryInterface(Steinberg::Vst::IEditController::iid,
                                          reinterpret_cast<void**>(&controller));
     if (res == Steinberg::kResultOk)

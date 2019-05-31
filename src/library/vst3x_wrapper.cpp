@@ -22,7 +22,6 @@ namespace vst3 {
 constexpr int VST_NAME_BUFFER_SIZE = 128;
 
 constexpr char VST_PRESET_SUFFIX[] = ".vstpreset";
-constexpr char VST_PRESET_BASE_PATH[] = ".vstpreset";
 constexpr int VST_PRESET_SUFFIX_LENGTH = 10;
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
@@ -673,7 +672,7 @@ bool Vst3xWrapper::_setup_internal_program_handling()
 {
     if (_instance.unit_info() == nullptr || _program_change_parameter.supported == false)
     {
-        MIND_LOG_INFO("NO unit info or pc parameter");
+        MIND_LOG_INFO("No unit info or program change parameter");
         return false;
     }
     if (_instance.unit_info()->getProgramListCount() == 0)
