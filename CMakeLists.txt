@@ -224,14 +224,14 @@ add_executable(sushi "${COMPILATION_UNITS}"
 #########################
 
 if (${WITH_VST2})
-    if (VST_BASE_DIR)
-        set(VST_SDK_PATH ${VST2_BASE_DIR})
+    if (VST_2_SDK_BASE_DIR)
+        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
     else()
-        find_file(VST_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
-                                                              $ENV{HOME}/workspace/VST_SDK
-                                                              $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
+        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
+                                                               $ENV{HOME}/workspace/VST_SDK
+                                                               $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
     endif()
-    if (${VST_SDK_PATH} STREQUAL "VST_SDK_PATH-NOTFOUND")
+    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
         message("Warning! Could not find Steinberg SDK for VST 2.4")
     endif()
 endif()
@@ -314,7 +314,7 @@ if (${WITH_VST3})
 endif()
 
 if (WITH_VST2)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST_SDK_PATH}/pluginterfaces/vst2.x)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
 endif()
 
 if (${WITH_JACK})

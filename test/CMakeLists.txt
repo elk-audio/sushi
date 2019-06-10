@@ -7,10 +7,10 @@
 
 if (${WITH_VST2})
     set(VST2_SDK_PLUGIN_SOURCES
-            "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
-            "${VST_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
-            "${VST_SDK_PATH}/public.sdk/source/vst2.x/vstplugmain.cpp"
-            "${VST_SDK_PATH}/pluginterfaces/vst2.x/aeffectx.h"
+            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
+            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
+            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/vstplugmain.cpp"
+            "${VST2_SDK_PATH}/pluginterfaces/vst2.x/aeffectx.h"
         )
 
     set(VST2_TEST_PLUGIN_SOURCES
@@ -24,7 +24,7 @@ if (${WITH_VST2})
     set_target_properties(vst2_test_plugin PROPERTIES
             COMPILE_FLAGS "-Wno-unused -Wno-multichar -Wno-write-strings -Wno-narrowing"
         )
-    target_include_directories(vst2_test_plugin PRIVATE ${VST_SDK_PATH})
+    target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
 endif()
 
