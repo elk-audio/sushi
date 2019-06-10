@@ -142,7 +142,6 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);
 
 #endif //SUSHI_BUILD_WITH_VST3
 #ifndef SUSHI_BUILD_WITH_VST3
-
 #include "library/processor.h"
 
 namespace sushi {
