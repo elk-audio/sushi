@@ -26,3 +26,6 @@
 [submodule "twine"]
 	path = twine
 	url = git@bitbucket.org:mindswteam/twine.git
+[submodule "third-party/lv2"]
+	path = third-party/lv2
+	url = https://github.com/drobilla/lv2.git
