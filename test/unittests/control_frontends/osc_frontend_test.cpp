@@ -13,7 +13,8 @@ using namespace sushi;
 using namespace sushi::control_frontend;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
-constexpr int OSC_TEST_PORT = 24024;
+constexpr int OSC_TEST_SERVER_PORT = 24024;
+constexpr int OSC_TEST_SEND_PORT = 24023;
 
 class TestOSCFrontend : public ::testing::Test
 {
@@ -43,9 +44,9 @@ protected:
         lo_address_free(_address);
     }
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
-    int _server_port{OSC_TEST_PORT};
+    int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
-    OSCFrontend _module_under_test{&_test_engine};
+    OSCFrontend _module_under_test{&_test_engine, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
     EventDispatcherMockup* _test_dispatcher;
 };
 
