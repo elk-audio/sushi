@@ -266,10 +266,18 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                                           _osc_server(nullptr),
                                           _server_port(server_port),
                                           _send_port(send_port)
+{}
+
+ControlFrontendStatus OSCFrontend::init()
 {
     std::stringstream port_stream;
     port_stream << _server_port;
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
+    if (_osc_server == nullptr)
+    {
+        MIND_LOG_ERROR("Failed to set up OSC server, Port likely in use");
+        return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
+    }
 
     std::stringstream send_port_stream;
     send_port_stream << _send_port;
@@ -277,6 +285,7 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
     setup_engine_control();
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
+    return ControlFrontendStatus::OK;
 }
 
 OSCFrontend::~OSCFrontend()

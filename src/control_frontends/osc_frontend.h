@@ -84,6 +84,8 @@ public:
 
     void stop() override {_stop_server();}
 
+    ControlFrontendStatus init() override;
+
     /* Inherited from EventPoster */
     int process(Event* event) override;
 

@@ -13,8 +13,6 @@
 #include <jack/jack.h>
 
 #include "base_audio_frontend.h"
-#include "control_frontends/osc_frontend.h"
-#include "control_frontends/base_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {

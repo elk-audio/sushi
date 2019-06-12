@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
 #endif
 
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>         midi_frontend;
-    std::unique_ptr<sushi::control_frontend::OSCFrontend>           osc_control;
+    std::unique_ptr<sushi::control_frontend::OSCFrontend>           osc_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
 
@@ -374,8 +374,13 @@ int main(int argc, char* argv[])
         }
         midi_dispatcher->set_frontend(midi_frontend.get());
 
-        osc_control = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), osc_server_port, osc_send_port);
-        osc_control->connect_all();
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), osc_server_port, osc_send_port);
+        auto osc_status = osc_frontend->init();
+        if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
+        {
+            error_exit("Failed to setup OSC frontend");
+        }
+        osc_frontend->connect_all();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +392,7 @@ int main(int argc, char* argv[])
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
         midi_frontend->run();
-        osc_control->run();
+        osc_frontend->run();
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
@@ -407,7 +412,7 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
-        osc_control->stop();
+        osc_frontend->stop();
         midi_frontend->stop();
     }
 

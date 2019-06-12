@@ -5,6 +5,7 @@
 #include "test_utils/engine_mockup.h"
 #include "audio_frontends/jack_frontend.cpp"
 #include "control_frontends/alsa_midi_frontend.cpp"
+#include "engine/midi_dispatcher.h"
 
 
 using ::testing::internal::posix::GetEnv;

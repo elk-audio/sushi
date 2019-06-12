@@ -258,18 +258,18 @@ const optionparser::Descriptor usage[] =
     },
     {
         OPT_IDX_OSC_RECEIVE_PORT,
-        OPT_TYPE_DISABLED,
+        OPT_TYPE_UNUSED,
         "p",
         "osc-rcv-port",
-        SushiArg::Optional,
+        SushiArg::NonEmpty,
         "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_QUOTE(SUSHI_OSC_SERVER_PORT) "]."
     },
     {
-        OPT_IDX_OSC_RECEIVE_PORT,
-        OPT_TYPE_DISABLED,
+        OPT_IDX_OSC_SEND_PORT,
+        OPT_TYPE_UNUSED,
         "",
         "osc-send-port",
-        SushiArg::Optional,
+        SushiArg::NonEmpty,
         "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_QUOTE(SUSHI_OSC_SEND_PORT) "]."
     },
     // Don't touch this one (set default values for optionparse library)

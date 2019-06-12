@@ -16,6 +16,14 @@
 namespace sushi {
 namespace control_frontend {
 
+
+enum class ControlFrontendStatus
+{
+    OK,
+    ERROR,
+    INTERFACE_UNAVAILABLE
+};
+
 class BaseControlFrontend : public EventPoster
 {
 public:
@@ -35,6 +43,8 @@ public:
     {
         static_cast<BaseControlFrontend*>(arg)->_completion_callback(event, return_status);
     }
+
+    virtual ControlFrontendStatus init() = 0;
 
     virtual void run() = 0;
 
