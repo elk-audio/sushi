@@ -52,6 +52,12 @@ void print_sushi_headline()
     std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
 }
 
+void error_exit(const std::string& message)
+{
+    std::cerr << message << std::endl;
+    std::exit(1);
+}
+
 void print_version_and_build_info()
 {
     std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
@@ -95,8 +101,7 @@ int main(int argc, char* argv[])
     auto ret = sushi::audio_frontend::global_init();
     if (ret < 0)
     {
-        std::cerr << "Failed to initialize Xenomai process, err. code: " << ret << std::endl;
-        exit(ret);
+        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
     }
 #endif
 
@@ -318,29 +323,25 @@ int main(int argc, char* argv[])
         }
 
         default:
-            std::cerr << "No audio frontend selected." << std::endl;
-            std::exit(1);
+            error_exit("No audio frontend selected.");
     }
 
     auto audio_frontend_status = audio_frontend->init(frontend_config.get());
     if (audio_frontend_status != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
-        std::cerr << "Error initializing frontend, check logs for details." << std::endl;
-        std::exit(1);
+        error_exit("Error initializing frontend, check logs for details.");
     }
 
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
     auto status = configurator->load_host_config(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
-        std::exit(1);
+        error_exit("Failed to load host configuration from config file");
     }
     status = configurator->load_tracks(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
-        std::exit(1);
+        error_exit("Failed to load tracks from Json config file");
     }
     configurator->load_midi(config_filename);
 
@@ -369,8 +370,7 @@ int main(int argc, char* argv[])
         auto midi_ok = midi_frontend->init();
         if (!midi_ok)
         {
-            MIND_LOG_ERROR("Failed to setup Alsa midi frontend");
-            std::exit(1);
+            error_exit("Failed to setup Alsa midi frontend");
         }
         midi_dispatcher->set_frontend(midi_frontend.get());
 
