@@ -260,10 +260,12 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
 
 }; // anonymous namespace
 
-OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
-                                                       _osc_server(nullptr),
-                                                       _server_port(DEFAULT_SERVER_PORT),
-                                                       _send_port(DEFAULT_SEND_PORT)
+OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
+                         int server_port,
+                         int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                                          _osc_server(nullptr),
+                                          _server_port(server_port),
+                                          _send_port(send_port)
 {
     std::stringstream port_stream;
     port_stream << _server_port;

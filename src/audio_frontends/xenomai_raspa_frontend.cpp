@@ -32,15 +32,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     }
     auto raspa_config = static_cast<XenomaiRaspaFrontendConfiguration*>(_config);
 
-    // Control
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
-    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        return AudioFrontendStatus::MIDI_PORT_ERROR;
-    }
-
     // RASPA
     if (RASPA_N_FRAMES_PER_BUFFER != AUDIO_CHUNK_SIZE)
     {
@@ -71,24 +62,16 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     return AudioFrontendStatus::OK;
 }
 
-
 void XenomaiRaspaFrontend::cleanup()
 {
-    _osc_control->stop();
-    _midi_frontend->stop();
     MIND_LOG_INFO("Closing Raspa driver.");
     raspa_close();
 }
 
-
 void XenomaiRaspaFrontend::run()
 {
     raspa_start_realtime();
-    _osc_control->run();
-    _osc_control->connect_all();
-    _midi_frontend->run();
 }
-
 
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
@@ -115,8 +98,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine,
-                                midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
+XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
