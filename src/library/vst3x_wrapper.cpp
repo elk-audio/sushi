@@ -500,6 +500,6 @@ ProcessorReturnCode Vst3xWrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Vst 3 support!");
-    return ProcessorReturnCode::ERROR;
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }}}
 #endif

@@ -1,3 +1,5 @@
+#ifdef SUSHI_BUILD_WITH_VST2
+
 #include "library/vst2x_wrapper.h"
 
 #include "logging.h"
@@ -420,8 +422,23 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         default:
             return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
-    return kNumSpeakerArr;
 }
 
 } // namespace vst2
 } // namespace sushi
+
+#endif //SUSHI_BUILD_WITH_VST2
+#ifndef SUSHI_BUILD_WITH_VST2
+#include "library/vst2x_wrapper.h"
+#include "logging.h"
+namespace sushi {
+namespace vst2 {
+MIND_GET_LOGGER;
+ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+}}}
+#endif
+

@@ -233,29 +233,27 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     status = _module_under_test->add_plugin_to_track("left",
                                                      "sushi.testing.gain",
-                                                     "gain_0_r",
+                                                     "gain",
                                                      "   ",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    char* full_plugin_path = realpath("libvstxsynth.so", NULL);
     status = _module_under_test->add_plugin_to_track("left",
+                                                     "sushi.testing.sampleplayer",
+                                                     "synth",
                                                      "",
-                                                     "vst_synth",
-                                                     full_plugin_path,
-                                                     PluginType::VST2X);
-    delete full_plugin_path;
+                                                     PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("gain"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("synth"));
     ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_processors.size());
-    ASSERT_EQ("gain_0_r", _module_under_test->_audio_graph[0]->_processors[0]->name());
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[1]->name());
+    ASSERT_EQ("gain", _module_under_test->_audio_graph[0]->_processors[0]->name());
+    ASSERT_EQ("synth", _module_under_test->_audio_graph[0]->_processors[1]->name());
 
     /* Test removal of plugin */
-    status = _module_under_test->remove_plugin_from_track("left", "gain_0_r");
+    status = _module_under_test->remove_plugin_from_track("left", "gain");
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
+    ASSERT_FALSE(_module_under_test->_processor_exists("gain"));
+    ASSERT_EQ("synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
 
     /* Negative tests */
     status = _module_under_test->add_plugin_to_track("not_found",

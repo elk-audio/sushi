@@ -39,7 +39,7 @@ class Processor
 public:
     explicit Processor(HostControl host_control) : _host_control(host_control) {}
 
-    virtual ~Processor() {};
+    virtual ~Processor() = default;
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
@@ -378,7 +378,6 @@ private:
     std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
     std::vector<ParameterDescriptor*> _parameters_by_index;
 };
-
 
 } // end namespace sushi
 #endif //SUSHI_PROCESSOR_H

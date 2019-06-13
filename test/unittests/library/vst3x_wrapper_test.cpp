@@ -13,7 +13,11 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-char PLUGIN_FILE[] = "../VST3/adelay.vst3";
+#ifdef NDEBUG
+char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
+#else
+char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
+#endif
 char PLUGIN_NAME[] = "ADelay";
 
 char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
