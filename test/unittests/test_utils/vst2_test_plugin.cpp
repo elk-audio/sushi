@@ -32,7 +32,7 @@ Vst2TestPlugin::Vst2TestPlugin(audioMasterCallback audioMaster) : AudioEffectX(a
 {
     setNumInputs(2);
     setNumOutputs(2);
-    setUniqueID('Test');
+    setUniqueID(1234);
     canProcessReplacing();
     canDoubleReplacing();
     isSynth(true);
@@ -147,7 +147,7 @@ void Vst2TestPlugin::processReplacing(float**inputs, float**outputs, VstInt32 sa
 
 void Vst2TestPlugin::setProgram(VstInt32 program)
 {
-    if (program < PROGRAM_NAMES.size() && program >= 0)
+    if (program < static_cast<int>(PROGRAM_NAMES.size()) && program >= 0)
     {
         _program_no = program;
     }
@@ -165,10 +165,12 @@ void Vst2TestPlugin::getProgramName(char* name)
 
 bool Vst2TestPlugin::getProgramNameIndexed(VstInt32 /*category*/, VstInt32 index, char* text)
 {
-    if (index < PROGRAM_NAMES.size() && index >= 0)
+    if (index < static_cast<int>(PROGRAM_NAMES.size()) && index >= 0)
     {
         vst_strncpy(text, PROGRAM_NAMES[index], kVstMaxProgNameLen);
+        return true;
     }
+    return false;
 }
 
 VstInt32 Vst2TestPlugin::processEvents(VstEvents* events)
@@ -191,6 +193,7 @@ VstInt32 Vst2TestPlugin::processEvents(VstEvents* events)
 
         }
     }
+    return 0;
 }
 
 }

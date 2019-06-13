@@ -422,7 +422,6 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         default:
             return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
-    return kNumSpeakerArr;
 }
 
 } // namespace vst2
