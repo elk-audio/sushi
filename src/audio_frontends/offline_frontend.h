@@ -33,8 +33,7 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
             dummy_mode(dummy_mode)
     {}
 
-    virtual ~OfflineFrontendConfiguration()
-    {}
+    virtual ~OfflineFrontendConfiguration() = default;
     std::string input_filename;
     std::string output_filename;
     bool dummy_mode;
@@ -43,11 +42,10 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
-            BaseAudioFrontend(engine, midi_dispatcher),
-            _input_file(nullptr),
-            _output_file(nullptr),
-            _running{true}
+    OfflineFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine),
+                                                  _input_file(nullptr),
+                                                  _output_file(nullptr),
+                                                  _running{true}
     {
         _buffer.clear();
     }

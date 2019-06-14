@@ -24,10 +24,6 @@
 namespace sushi {
 namespace control_frontend {
 
-constexpr int DEFAULT_SERVER_PORT = 24024;
-constexpr int DEFAULT_SEND_PORT = 24025;
-
-
 class OSCFrontend;
 struct OscConnection
 {
@@ -39,7 +35,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine);
+    OSCFrontend(engine::BaseEngine* engine, int server_port, int send_port);
 
     ~OSCFrontend();
 
@@ -87,6 +83,8 @@ public:
     void run() override {_start_server();}
 
     void stop() override {_stop_server();}
+
+    ControlFrontendStatus init() override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;

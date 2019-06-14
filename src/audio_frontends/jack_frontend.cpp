@@ -18,7 +18,6 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
@@ -34,8 +33,6 @@ void JackFrontend::cleanup()
         jack_client_close(_client);
         _client = nullptr;
     }
-    _midi_frontend->stop();
-    _osc_control->stop();
 }
 
 
@@ -51,8 +48,6 @@ void JackFrontend::run()
     {
         connect_ports();
     }
-    _midi_frontend->run();
-    _osc_control->run();
 }
 
 
@@ -97,14 +92,6 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
         MIND_LOG_ERROR("Failed to setup ports");
         return status;
     }
-    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        MIND_LOG_ERROR("Failed to setup Alsa midi frontend");
-        return AudioFrontendStatus::MIDI_PORT_ERROR;
-    }
-    _midi_dispatcher->set_frontend(_midi_frontend.get());
     return AudioFrontendStatus::OK;
 }
 
@@ -296,8 +283,7 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-JackFrontend::JackFrontend(engine::BaseEngine* engine,
-                           midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
+JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Jack support!");
