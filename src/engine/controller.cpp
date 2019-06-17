@@ -397,10 +397,16 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
     return {ext::ControlStatus::OK, processor->bypassed()};
 }
 
-ext::ControlStatus Controller::set_processor_bypass_state(int /*processor_id*/, bool /*bypass_enabled*/)
+ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
     MIND_LOG_DEBUG("set_processor_bypass_state called, returning ");
-    return {ext::ControlStatus::OK};
+    auto processor = _engine->mutable_processor(static_cast<ObjectId>(processor_id));
+    if (processor == nullptr)
+    {
+        return ext::ControlStatus::NOT_FOUND;
+    }
+    processor->set_bypassed(bypass_enabled);
+    return ext::ControlStatus::OK;
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int processor_id) const
