@@ -60,6 +60,7 @@ public:
     {
         return;
     }
+
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.

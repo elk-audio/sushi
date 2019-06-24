@@ -416,6 +416,11 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_type = PluginType::VST2X;
             plugin_path = def["path"].GetString();
         }
+        else if(type == "lv2")
+        {
+            plugin_type = PluginType::LV2;
+            plugin_path = def["uri"].GetString();
+        }
         else
         {
             plugin_uid = def["uid"].GetString();

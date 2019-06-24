@@ -88,14 +88,24 @@ SET(TEST_FILES unittests/sample_test.cpp
 if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
+
 if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
 set(TEST_HELPER_FILES ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp
                       ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
+
 if (NOT ${WITH_VST3})
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
+endif()
+
+if (${WITH_LV2})
+    set(TEST_FILES ${TEST_FILES} unittests/library/lv2_plugin_loader_test.cpp)
+    set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
+
+    # ILIAS TODO: doesn't exist yet, and might never exist.
+    #set(TEST_FILES ${TEST_FILES} unittests/library/lv2_midi_event_fifo_test.cpp)
 endif()
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
@@ -114,6 +124,10 @@ endif()
 
 if (${WITH_VST3})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
+if (${WITH_LV2})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2)
 endif()
 
 ##########################################
@@ -149,6 +163,11 @@ if (${WITH_JACK})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
 endif()
 
+if (${WITH_LV2})
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0)
+    set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} lv2)
+endif()
+
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
 add_dependencies(unit_tests ${TEST_DEPENDENCIES})
@@ -162,4 +181,3 @@ add_custom_target(run_tests ALL
                   -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
                   "./unit_tests")
 add_dependencies(run_tests unit_tests)
-

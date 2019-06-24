@@ -13,10 +13,10 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-char PLUGIN_FILE[] = "../VST3/adelay.vst3";
+char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 char PLUGIN_NAME[] = "ADelay";
 
-char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
+char SYNTH_PLUGIN_FILE[] = "../VST3/Debug/mda-vst3.vst3";
 char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;

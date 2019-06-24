@@ -44,7 +44,8 @@ enum class PluginType
 {
     INTERNAL,
     VST2X,
-    VST3X
+    VST3X,
+    LV2
 };
 
 enum class RealtimeState

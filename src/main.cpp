@@ -84,6 +84,9 @@ void print_version_and_build_info()
 #endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
+#ifdef SUSHI_BUILD_WITH_LV2
+    build_opts.emplace_back("lv2");
+#endif
 }
 
 int main(int argc, char* argv[])

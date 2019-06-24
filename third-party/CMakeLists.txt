@@ -8,6 +8,25 @@ add_subdirectory(fifo EXCLUDE_FROM_ALL)
 #  External Projects definitions (non-Cmake based)  #
 #####################################################
 
+include(ExternalProject)
+
+ExternalProject_Add(lv2
+        SOURCE_DIR ${PROJECT_SOURCE_DIR}/third-party/lv2
+        BUILD_IN_SOURCE 1
+        CONFIGURE_COMMAND ./waf configure --prefix=${CMAKE_BINARY_DIR}/lv2
+        BUILD_COMMAND ./waf
+        INSTALL_COMMAND ./waf install
+        )
+
+# linking dynamically instead.
+#[[ExternalProject_Add(lilv
+        SOURCE_DIR ${PROJECT_SOURCE_DIR}/third-party/lilv
+        BUILD_IN_SOURCE 1
+        CONFIGURE_COMMAND ./waf configure
+        BUILD_COMMAND ./waf
+        INSTALL_COMMAND ""
+        )]]
+
 # Add here custom build steps for third-party libraries
 # that need to be linked statically,
 # example:

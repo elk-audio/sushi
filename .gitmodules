@@ -29,3 +29,6 @@
 [submodule "third-party/lv2"]
 	path = third-party/lv2
 	url = https://github.com/drobilla/lv2.git
+[submodule "third-party/lilv"]
+	path = third-party/lilv
+	url = https://github.com/drobilla/lilv.git

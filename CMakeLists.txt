@@ -42,6 +42,7 @@ configure_file(
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
+option(WITH_LV2 "Enable LV 2 support" OFF)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
@@ -58,6 +59,9 @@ if (${WITH_JACK})
 endif()
 if (${WITH_VST3})
     message("Building with Vst3 support.")
+endif()
+if (${WITH_LV2})
+    message("Building with LV2 support.")
 endif()
 if (${WITH_RPC_INTERFACE})
     message("Building with RPC support.")
@@ -205,9 +209,16 @@ if (${WITH_VST3})
                                 src/library/vst3x_utils.h)
 endif()
 
+if (${WITH_LV2})
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2_wrapper.cpp
+                               src/library/lv2_host_callback.cpp
+                               src/library/lv2_plugin_loader.cpp)
+endif()
+
 add_executable(sushi "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
+                     "${ADDITIONAL_LV2_SOURCES}"
                      "${ADDITIONAL_ALSA_SOURCES}")
 
 #########################
@@ -294,6 +305,10 @@ if (${WITH_VST3})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
 endif()
 
+if (${WITH_LV2})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} lilv-0)
+endif()
+
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
 endif()
@@ -333,6 +348,10 @@ if (${WITH_VST3})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
 endif()
 
+if (${WITH_LV2})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
+endif()
+
 if (${WITH_RPC_INTERFACE})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_RPC_INTERFACE)
 endif()
@@ -369,4 +388,3 @@ endforeach()
 foreach(ITEM ${EXAMPLE_CONFIGS_INSTALL})
     install(FILES ${ITEM} DESTINATION example_configs)
 endforeach()
-
