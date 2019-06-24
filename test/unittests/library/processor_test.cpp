@@ -72,3 +72,76 @@ TEST_F(TestProcessor, TestParameterHandling)
     auto param_list = _module_under_test->all_parameters();
     EXPECT_EQ(1u, param_list.size());
 }
+
+TEST(TestProcessorUtils, TestSetBypassRampTime)
+{
+    int chunks_in_10ms = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+    EXPECT_EQ(chunks_in_10ms, chunks_to_ramp(TEST_SAMPLE_RATE));
+}
+
+class TestBypassManager : public ::testing::Test
+{
+protected:
+    TestBypassManager() {}
+
+    BypassManager _module_under_test{false};
+};
+
+TEST_F(TestBypassManager, TestOperation)
+{
+    EXPECT_FALSE(_module_under_test.bypassed());
+    EXPECT_TRUE(_module_under_test.should_process());
+    EXPECT_FALSE(_module_under_test.should_ramp());
+
+    // Set the same condition, nothing should change
+    _module_under_test.set_bypass(false, TEST_SAMPLE_RATE);
+    EXPECT_FALSE(_module_under_test.bypassed());
+    EXPECT_TRUE(_module_under_test.should_process());
+    EXPECT_FALSE(_module_under_test.should_ramp());
+
+    // Set bypass on
+    _module_under_test.set_bypass(true, TEST_SAMPLE_RATE);
+    EXPECT_TRUE(_module_under_test.bypassed());
+    EXPECT_TRUE(_module_under_test.should_process());
+    EXPECT_TRUE(_module_under_test.should_ramp());
+}
+
+TEST_F(TestBypassManager, TestRamping)
+{
+    int chunks_in_ramp = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+    ChunkSampleBuffer buffer(2);
+    _module_under_test.set_bypass(true, TEST_SAMPLE_RATE);
+    EXPECT_TRUE(_module_under_test.should_ramp());
+
+    for (int i = 0; i < chunks_in_ramp ; ++i)
+    {
+        test_utils::fill_sample_buffer(buffer, 1.0f);
+        _module_under_test.ramp(buffer);
+    }
+
+    // We should now have ramped down to 0
+    EXPECT_FLOAT_EQ(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_FLOAT_EQ(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(1)[0]);
+
+    EXPECT_FALSE(_module_under_test.should_ramp());
+
+    // Turn it on again (bypass = false)
+    _module_under_test.set_bypass(false, TEST_SAMPLE_RATE);
+    EXPECT_TRUE(_module_under_test.should_ramp());
+
+    for (int i = 0; i < chunks_in_ramp ; ++i)
+    {
+        test_utils::fill_sample_buffer(buffer, 1.0f);
+        _module_under_test.ramp(buffer);
+    }
+
+    // We should have ramped up to full volume again
+    EXPECT_FLOAT_EQ(1.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_FLOAT_EQ(1.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_FLOAT_EQ((chunks_in_ramp - 1.0f) / chunks_in_ramp, buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ((chunks_in_ramp - 1.0f) / chunks_in_ramp, buffer.channel(1)[0]);
+
+    EXPECT_FALSE(_module_under_test.should_ramp());
+}
