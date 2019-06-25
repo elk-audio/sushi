@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
+
 #include "engine/transport.h"
+
+#include "test_utils/test_utils.h"
 
 #define private public
 #define protected public
@@ -8,6 +11,8 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
+
+constexpr float TEST_SAMPLE_RATE = 44100;
 
 /* Implement dummies of virtual methods to we can instantiate a test class */
 class ProcessorTest : public Processor
@@ -116,7 +121,7 @@ TEST_F(TestBypassManager, TestRamping)
     for (int i = 0; i < chunks_in_ramp ; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 1.0f);
-        _module_under_test.ramp(buffer);
+        _module_under_test.ramp_output(buffer);
     }
 
     // We should now have ramped down to 0
@@ -134,7 +139,7 @@ TEST_F(TestBypassManager, TestRamping)
     for (int i = 0; i < chunks_in_ramp ; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 1.0f);
-        _module_under_test.ramp(buffer);
+        _module_under_test.ramp_output(buffer);
     }
 
     // We should have ramped up to full volume again
@@ -145,3 +150,30 @@ TEST_F(TestBypassManager, TestRamping)
 
     EXPECT_FALSE(_module_under_test.should_ramp());
 }
+
+TEST_F(TestBypassManager, TestCrossfade)
+{
+    int chunks_in_ramp = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+    ChunkSampleBuffer buffer(2);
+    ChunkSampleBuffer bypass_buffer(2);
+    test_utils::fill_sample_buffer(buffer, 2.0f);
+    test_utils::fill_sample_buffer(bypass_buffer, 1);
+    _module_under_test.set_bypass(true, TEST_SAMPLE_RATE);
+    EXPECT_TRUE(_module_under_test.should_ramp());
+
+    _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2);
+
+    EXPECT_LT(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 2.0f);
+    EXPECT_GT(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 1.0f);
+
+    for (int i = 0; i < chunks_in_ramp - 1; ++i)
+    {
+        test_utils::fill_sample_buffer(buffer, 2.0f);
+        _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2)    ;
+    }
+
+    // We should now have ramped down to 1 (value of bypass buffer)
+    EXPECT_FLOAT_EQ(1.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_FLOAT_EQ(1.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+}
+

@@ -103,33 +103,40 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(9u, rt_event.async_work_completion_event()->processor_id());
     EXPECT_EQ(53u, rt_event.async_work_completion_event()->sending_event_id());
 
+    auto bypass_event = SetProcessorBypassEvent(10, true, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(bypass_event.bypass_enabled());
+    rt_event = bypass_event.to_rt_event(12);
+    EXPECT_EQ(RtEventType::SET_BYPASS, rt_event.type());
+    EXPECT_TRUE(rt_event.processor_command_event()->value());
+    EXPECT_EQ(10u, rt_event.processor_command_event()->processor_id());
+
     auto tempo_event = SetEngineTempoEvent(135, IMMEDIATE_PROCESS);
     EXPECT_TRUE(tempo_event.maps_to_rt_event());
-    rt_event = tempo_event.to_rt_event(12);
+    rt_event = tempo_event.to_rt_event(13);
     EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
-    EXPECT_EQ(12, rt_event.sample_offset());
+    EXPECT_EQ(13, rt_event.sample_offset());
     EXPECT_FLOAT_EQ(135.0f, rt_event.tempo_event()->tempo());
 
     auto time_sig_event = SetEngineTimeSignatureEvent({3, 4}, IMMEDIATE_PROCESS);
     EXPECT_TRUE(time_sig_event.maps_to_rt_event());
-    rt_event = time_sig_event.to_rt_event(13);
+    rt_event = time_sig_event.to_rt_event(14);
     EXPECT_EQ(RtEventType::TIME_SIGNATURE, rt_event.type());
-    EXPECT_EQ(13, rt_event.sample_offset());
+    EXPECT_EQ(14, rt_event.sample_offset());
     EXPECT_EQ(3, rt_event.time_signature_event()->time_signature().numerator);
     EXPECT_EQ(4, rt_event.time_signature_event()->time_signature().denominator);
 
     auto trans_state_event = SetEnginePlayingModeStateEvent(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
     EXPECT_TRUE(trans_state_event.maps_to_rt_event());
-    rt_event = trans_state_event.to_rt_event(14);
+    rt_event = trans_state_event.to_rt_event(15);
     EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
-    EXPECT_EQ(14, rt_event.sample_offset());
+    EXPECT_EQ(15, rt_event.sample_offset());
     EXPECT_EQ(PlayingMode::RECORDING, rt_event.playing_mode_event()->mode());
 
     auto sync_mode_event = SetEngineSyncModeEvent(SyncMode::ABLETON_LINK, IMMEDIATE_PROCESS);
     EXPECT_TRUE(sync_mode_event.maps_to_rt_event());
-    rt_event = sync_mode_event.to_rt_event(15);
+    rt_event = sync_mode_event.to_rt_event(16);
     EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
-    EXPECT_EQ(15, rt_event.sample_offset());
+    EXPECT_EQ(16, rt_event.sample_offset());
     EXPECT_EQ(SyncMode::ABLETON_LINK, rt_event.sync_mode_event()->mode());
 }
 

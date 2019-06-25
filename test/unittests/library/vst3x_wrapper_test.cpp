@@ -14,14 +14,14 @@ using namespace sushi;
 using namespace sushi::vst3;
 
 #ifdef NDEBUG
-char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
+const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
 #else
-char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
+const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 #endif
-char PLUGIN_NAME[] = "ADelay";
+const char PLUGIN_NAME[] = "ADelay";
 
-char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
-char SYNTH_PLUGIN_NAME[] = "mda JX10";
+const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
+const char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
@@ -64,7 +64,7 @@ protected:
     {
     }
 
-    void SetUp(char* plugin_file, char* plugin_name)
+    void SetUp(const char* plugin_file, const char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
         _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, plugin_name);
@@ -73,6 +73,7 @@ protected:
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
+        _module_under_test->set_event_output(&_event_queue);
     }
 
     void TearDown()
@@ -81,6 +82,7 @@ protected:
     }
     HostControlMockup _host_control;
     Vst3xWrapper* _module_under_test;
+    RtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
@@ -115,6 +117,31 @@ TEST_F(TestVst3xWrapper, TestProcessing)
     EXPECT_FLOAT_EQ(0.0f, out_buffer.channel(1)[0]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(0)[1]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(1)[1]);
+}
+
+TEST_F(TestVst3xWrapper, TestBypassProcessing)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    // The adelay example supports soft bypass.
+    EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
+    EXPECT_EQ(BYPASS_PARAM_ID, _module_under_test->_bypass_parameter.id);
+
+    // Set bypass and manually feed the generated RtEvent back to the
+    // wrapper processor as event dispatcher is not running
+    _module_under_test->set_bypassed(true);
+    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
+    EXPECT_TRUE(bypass_event.get());
+    _module_under_test->process_event(bypass_event->to_rt_event(0));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    // Manually call the event callback to send the update back to the controller, as eventloop is not running
+    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Don't test actual bypass processing because the ADelay example doesn't implement that...
 }
 
 TEST_F(TestVst3xWrapper, TestEventForwarding)

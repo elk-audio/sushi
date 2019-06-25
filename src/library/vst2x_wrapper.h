@@ -71,6 +71,8 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    bool bypassed() const override {return _bypass_manager.bypassed();}
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
@@ -158,6 +160,8 @@ private:
     bool _can_do_soft_bypass;
     bool _double_mono_input;
     int _number_of_programs{0};
+
+    BypassManager _bypass_manager{_bypassed};
 
     std::string _plugin_path;
     LibraryHandle _library_handle;

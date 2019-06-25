@@ -12,6 +12,8 @@
 #include <public.sdk/source/vst/vstpresetfile.h>
 #include <public.sdk/source/common/memorystream.h>
 
+#include <twine/twine.h>
+
 #include "vst3x_wrapper.h"
 #include "library/event.h"
 #include "logging.h"
@@ -264,6 +266,12 @@ void Vst3xWrapper::process_event(RtEvent event)
             // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
             // Or do nothing, no reason to send raw midi to at VST3 plugin
         }
+        case RtEventType::SET_BYPASS:
+        {
+            bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+            _bypass_manager.set_bypass(bypassed, _sample_rate);
+            break;
+        }
         default:
             break;
     }
@@ -276,7 +284,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         auto e = RtEvent::make_async_work_event(&Vst3xWrapper::parameter_update_callback, this->id(), this);
         output_event(e);
     }
-    if(_bypassed && _bypass_parameter.supported == false)
+    if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
     }
@@ -285,6 +293,10 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _fill_processing_context();
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
+        if(_bypass_parameter.supported == false && _bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        }
         _forward_events(_process_data);
     }
     _process_data.clear();
@@ -314,11 +326,15 @@ void Vst3xWrapper::set_enabled(bool enabled)
 
 void Vst3xWrapper::set_bypassed(bool bypassed)
 {
-    Processor::set_bypassed(bypassed);
+    assert(twine::is_current_thread_realtime() == false);
     if(_bypass_parameter.supported)
     {
-        RtEvent e = RtEvent::make_parameter_change_event(0, 0, _bypass_parameter.id, bypassed? 1.0f : 0.0f);
-        this->process_event(e);
+        _host_control.post_event(new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                          this->id(), _bypass_parameter.id, bypassed? 1.0f : 0, IMMEDIATE_PROCESS));
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+    } else
+    {
+        _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
     }
 }
 
@@ -501,6 +517,7 @@ bool Vst3xWrapper::_register_parameters()
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
+                MIND_LOG_INFO("Plugin supports soft bypass");
             }
             else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
                     _program_change_parameter.supported == false)
@@ -846,6 +863,16 @@ int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
         res |= _instance.controller()->setParamNormalized(update.id, update.value);
     }
     return res == Steinberg::kResultOk? EventStatus::HANDLED_OK : EventStatus::ERROR;
+}
+
+bool Vst3xWrapper::bypassed() const
+{
+    if (_bypass_parameter.supported)
+    {
+        auto[unused, value] = this->parameter_value_normalised(_bypass_parameter.id);
+        return value > 0.5;
+    }
+    return _bypass_manager.bypassed();
 }
 
 

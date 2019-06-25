@@ -76,6 +76,8 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    bool bypassed() const override;
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
@@ -170,6 +172,9 @@ private:
     int _main_program_list_id;
     int _program_count{0};
     int _current_program{0};
+
+    BypassManager _bypass_manager{_bypassed};
+
     std::vector<std::string> _program_files;
 
     std::string _plugin_load_name;
