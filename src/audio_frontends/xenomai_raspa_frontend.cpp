@@ -10,7 +10,6 @@
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
-#include "control_frontends/alsa_midi_frontend.h"
 #include "logging.h"
 
 namespace sushi {

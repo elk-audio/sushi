@@ -137,11 +137,13 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
     _module_under_test->process_event(bypass_event->to_rt_event(0));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    // Manually call the event callback to send the update back to the controller, as eventloop is not running
+    // Manually call the event callback to send the update back to the
+    // controller, as eventloop is not running
     _module_under_test->parameter_update_callback(_module_under_test, 0);
     EXPECT_TRUE(_module_under_test->bypassed());
 
-    // Don't test actual bypass processing because the ADelay example doesn't implement that...
+    // Don't test actual bypass processing because the ADelay example
+    // doesn't implement that...
 }
 
 TEST_F(TestVst3xWrapper, TestEventForwarding)
