@@ -254,16 +254,6 @@ endif()
 #  Subdirectory configuration  #
 ################################
 
-if (${WITH_XENOMAI})
-    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
-    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    add_subdirectory(raspalib)
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
-else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
-endif()
-
 if (${AUDIO_BUFFER_SIZE})
     set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "" FORCE)
 endif()
@@ -274,6 +264,16 @@ endif()
 
 if (${XENOMAI_AUDIO_SAMPLE_RATE})
     set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "" FORCE)
+endif()
+
+if (${WITH_XENOMAI})
+    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
+    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
+    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+    add_subdirectory(raspalib)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
+else()
+    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
 
 if (${BUILD_TWINE})
