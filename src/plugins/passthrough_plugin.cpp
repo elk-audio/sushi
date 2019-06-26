@@ -18,7 +18,7 @@ PassthroughPlugin::~PassthroughPlugin()
 void
 PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    bypass_process(in_buffer, out_buffer);
+    bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
 
     /* Pass keyboard data/midi through */
     while (!_event_queue.empty())

@@ -286,7 +286,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
-        bypass_process(in_buffer, out_buffer);
+        bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
     }
     else
     {
@@ -869,7 +869,8 @@ bool Vst3xWrapper::bypassed() const
 {
     if (_bypass_parameter.supported)
     {
-        auto[unused, value] = this->parameter_value_normalised(_bypass_parameter.id);
+        float value;
+        std::tie(std::ignore, value) = this->parameter_value_normalised(_bypass_parameter.id);
         return value > 0.5;
     }
     return _bypass_manager.bypassed();

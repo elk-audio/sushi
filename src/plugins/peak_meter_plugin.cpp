@@ -30,7 +30,7 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
 
 void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    bypass_process(in_buffer, out_buffer);
+    bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
 
     for (int ch = 0; ch < std::min(MAX_METERED_CHANNELS, in_buffer.channel_count()); ++ch)
     {
