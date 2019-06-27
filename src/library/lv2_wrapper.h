@@ -16,12 +16,29 @@
 //#include "library/lv2_midi_event_fifo.h"
 #include "../engine/base_event_dispatcher.h"
 
+#include "lv2/atom/atom.h"
+#include "lv2/buf-size/buf-size.h"
+#include "lv2/data-access/data-access.h"
+#include "lv2/options/options.h"
+#include "lv2/parameters/parameters.h"
+#include "lv2/patch/patch.h"
+#include "lv2/port-groups/port-groups.h"
+#include "lv2/port-props/port-props.h"
+#include "lv2/presets/presets.h"
+#include "lv2/state/state.h"
+#include "lv2/time/time.h"
+#include "lv2/ui/ui.h"
+#include "lv2/urid/urid.h"
+#include "lv2/worker/worker.h"
+
 namespace sushi {
 namespace lv2 {
 
 /* Should match the maximum reasonable number of channels of a vst */
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
 constexpr int LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
+
+//void populate_nodes(Jalv& jalv, LilvWorld* world);
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
@@ -34,15 +51,14 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Lv2Wrapper(HostControl host_control, const std::string &vst_plugin_path) :
+    Lv2Wrapper(HostControl host_control, const std::string &lv2_plugin_uri) :
             Processor(host_control),
             _sample_rate{0},
             _process_inputs{},
             _process_outputs{},
             _can_do_soft_bypass{false},
             _double_mono_input{false},
-            _plugin_path{vst_plugin_path},
-            _library_handle{nullptr},
+            _plugin_path{lv2_plugin_uri},
             _plugin_handle{nullptr}
     {
         _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
@@ -115,6 +131,9 @@ public:
 //    VstTimeInfo* time_info();
 
 private:
+    void create_ports(const LilvPlugin *plugin, const JalvNodes& nodes);
+    void create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value, const JalvNodes& nodes);
+
     /**
      * @brief Tell the plugin that we're done with it and release all resources
      * we allocated during initialization.
@@ -161,10 +180,17 @@ private:
     int _number_of_programs{0};
 
     std::string _plugin_path;
-    LibraryHandle _library_handle;
-    //AEffect*_plugin_handle;
-    void*_plugin_handle;
 
+    // Ilias TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
+    // TODO: Currently, this is instantiated in wrapper.
+    // But if there's more than one plugin, there should not be two instances of _loader, right?
+    PluginLoader _loader;
+
+    LilvInstance*_plugin_handle;
+    Jalv _jalv;
+    bool show_hidden = true;
+
+    uint32_t _buffer_size; ///< Plugin <= >UI communication buffer size
 
 //    VstTimeInfo _time_info;
 };

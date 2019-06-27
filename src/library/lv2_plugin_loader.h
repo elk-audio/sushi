@@ -56,6 +56,10 @@
 #include "lv2/urid/urid.h"
 #include "lv2/worker/worker.h"
 
+#include "library/lv2_data_structures.h"
+
+#include "constants.h"
+
 #pragma GCC diagnostic pop
 
 #include <dlfcn.h>
@@ -63,13 +67,11 @@
 namespace sushi {
 namespace lv2 {
 
-typedef void* LibraryHandle;
-
-// ILIAS TODO: Declare non-copyable
-
 class PluginLoader
 {
 public:
+    MIND_DECLARE_NON_COPYABLE(PluginLoader)
+
     PluginLoader();
     ~PluginLoader();
 
@@ -82,13 +84,19 @@ public:
 
     void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
 
-    void close_plugin_handle(const LilvPlugin* plugin_handle);
+    void close_plugin_instance(LilvInstance *plugin_instance);
 
     LilvInstance* getPluginInstance();
+
+    JalvNodes getNodes()
+    {
+        return _nodes;
+    }
 
 private:
     LilvWorld* _world;
     LilvInstance* _plugin_instance;
+    JalvNodes _nodes; ///< Nodes
 
 };
 

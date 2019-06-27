@@ -1,5 +1,7 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include <math.h>
+
 #include "library/lv2_wrapper.h"
 
 #include "logging.h"
@@ -21,70 +23,188 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 {
-    /*// TODO: sanity checks on sample_rate,
+    // TODO: sanity checks on sample_rate,
     //       but these can probably better be handled on Processor::init()
     _sample_rate = sample_rate;
 
-    // Load shared library and VsT struct
-    _library_handle = PluginLoader::get_library_handle_for_plugin(_plugin_path);
-    if (_library_handle == nullptr)
+    auto library_handle = _loader.get_plugin_handle_from_URI(_plugin_path.c_str());
+
+    if (library_handle == nullptr)
     {
         _cleanup();
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
-    _plugin_handle = PluginLoader::load_plugin(_library_handle);
+
+    // Ilias TODO: populate feature_list.
+    // It CAN be nullptr, for hosts which support no additional features.
+    const LV2_Feature** feature_list = nullptr;
+
+    _loader.load_plugin(library_handle, _sample_rate, feature_list);
+
+    _plugin_handle = _loader.getPluginInstance();
+
     if (_plugin_handle == nullptr)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
 
-    // Check plugin's magic number
-    // If incorrect, then the file either was not loaded properly, is not a
-    // real VST2 plugin, or is otherwise corrupt.
-    *//*if(_plugin_handle->magic != kEffectMagic)
-    {
-        _cleanup();
-        return ProcessorReturnCode::PLUGIN_LOAD_ERROR;
-    }*//*
+// Ilias TODO: Re-introduce if equivalent is found for LV2.
+// Set Processor's name and label (using VST's ProductString)
+//    char effect_name[VST_STRING_BUFFER_SIZE] = {0};
+//    char product_string[VST_STRING_BUFFER_SIZE] = {0};
 
-    // Set Processor's name and label (using VST's ProductString)
-    char effect_name[LV2_STRING_BUFFER_SIZE] = {0};
-    char product_string[LV2_STRING_BUFFER_SIZE] = {0};
+//    _vst_dispatcher(effGetEffectName, 0, 0, effect_name, 0);
+//    _vst_dispatcher(effGetProductString, 0, 0, product_string, 0);
+//    set_name(std::string(&effect_name[0]));
+//    set_label(std::string(&product_string[0]));
 
-    _vst_dispatcher(effGetEffectName, 0, 0, effect_name, 0);
-    _vst_dispatcher(effGetProductString, 0, 0, product_string, 0);
-    set_name(std::string(&effect_name[0]));
-    set_label(std::string(&product_string[0]));
+// Get plugin can do:s
+//    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
+//    _can_do_soft_bypass = (bypass == 1);
+//    _number_of_programs = _plugin_handle->numPrograms;
 
-    // Get plugin can do:s
-    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
-    _can_do_soft_bypass = (bypass == 1);
-    *//*_number_of_programs = _plugin_handle->numPrograms;*//*
+    create_ports(library_handle, _loader.getNodes());
+
+    // In LV2 inputs and outputs are audio ports.
 
     // Channel setup
-*//*    _max_input_channels = _plugin_handle->numInputs;*//*
+//    _max_input_channels = _plugin_handle->numInputs;
     _current_input_channels = _max_input_channels;
-*//*  _max_output_channels = _plugin_handle->numOutputs;*//*
+//    _max_output_channels = _plugin_handle->numOutputs;
     _current_output_channels = _max_output_channels;
 
     // Initialize internal plugin
-    _vst_dispatcher(effOpen, 0, 0, 0, 0);
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
-    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);
+//    _vst_dispatcher(effOpen, 0, 0, 0, 0);
+//    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
+//    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);*/
 
     // Register internal parameters
     if (!_register_parameters())
     {
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
-    }*/
+    }
 
+    // Ilias TODO: Re-introduce if equivalent is found for LV2.
     // Register yourself
-    /*_plugin_handle->user = this;*/
+//    _plugin_handle->user = this;
+
     return ProcessorReturnCode::OK;
 }
 
+void Lv2Wrapper::create_ports(const LilvPlugin *plugin, const JalvNodes& nodes)
+{
+    _jalv.num_ports = lilv_plugin_get_num_ports(plugin);
+    _jalv.ports = (struct Port*)calloc(_jalv.num_ports, sizeof(struct Port));
+
+    float* default_values = (float*)calloc(
+            lilv_plugin_get_num_ports(plugin), sizeof(float));
+
+    lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values);
+
+    for (uint32_t i = 0; i < _jalv.num_ports; ++i)
+    {
+        create_port(plugin, i, default_values[i], nodes);
+    }
+
+    const LilvPort* control_input = lilv_plugin_get_port_by_designation(
+            plugin, nodes.lv2_InputPort, nodes.lv2_control);
+
+    if (control_input)
+    {
+        _jalv.control_in = lilv_port_get_index(plugin, control_input);
+    }
+
+    free(default_values);
+}
+
+/**
+   Create a port structure from data description. This is called before plugin
+   and Jack instantiation. The remaining instance-specific setup
+   (e.g. buffers) is done later in activate_port().
+*/
+void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value, const JalvNodes& nodes)
+{
+    struct Port* const port = &_jalv.ports[port_index];
+
+    port->lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
+    port->sys_port = NULL;
+// Ilias TODO: Re-Introduce!
+//  port->evbuf = NULL;
+    port->buf_size = 0;
+    port->index = port_index;
+    port->control = 0.0f;
+    port->flow = FLOW_UNKNOWN;
+
+    const bool optional = lilv_port_has_property(
+            plugin, port->lilv_port, nodes.lv2_connectionOptional);
+
+    /* Set the port flow (input or output) */
+    if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_InputPort))
+    {
+        port->flow = FLOW_INPUT;
+    }
+    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_OutputPort))
+    {
+        port->flow = FLOW_OUTPUT;
+    }
+    else if (!optional)
+    {
+// Ilias TODO: Handle error the sushi way.
+        assert(false);
+//      die("Mandatory port has unknown type (neither input nor output)");
+    }
+
+    const bool hidden = !show_hidden &&
+                        lilv_port_has_property(plugin, port->lilv_port, nodes.pprops_notOnGUI);
+
+    /* Set control values */
+    if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_ControlPort))
+    {
+        port->type = TYPE_CONTROL;
+        port->control = isnan(default_value) ? 0.0f : default_value;
+        if (!hidden)
+        {
+// Ilias TODO: Re-Introduce
+//          add_control(&_jalv.controls, new_port_control(_jalv, port->index));
+        }
+    }
+    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_AudioPort))
+    {
+        port->type = TYPE_AUDIO;
+// Ilias TODO: Understand, maybe re-introduce.
+#ifdef HAVE_JACK_METADATA
+        } else if (lilv_port_is_a(jalv->plugin, port->lilv_port,
+                      jalv->nodes.lv2_CVPort)) {
+port->type = TYPE_CV;
+#endif
+
+    }
+    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.atom_AtomPort))
+    {
+        port->type = TYPE_EVENT;
+    }
+    else if (!optional)
+    {
+// Ilias TODO: Handle error the sushi way.
+        assert(false);
+//      die("Mandatory port has unknown data type");
+    }
+
+    // Todo: This is always returned NULL for amp output, should it?
+    LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, nodes.rsz_minimumSize);
+
+    if (min_size && lilv_node_is_int(min_size))
+    {
+        port->buf_size = lilv_node_as_int(min_size);
+        _buffer_size = MAX(_buffer_size, port->buf_size * N_BUFFER_CYCLES);
+    }
+
+    lilv_node_free(min_size);
+}
+
+//
 void Lv2Wrapper::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
@@ -227,17 +347,17 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    /*if (_plugin_handle != nullptr)
+    if (_plugin_handle != nullptr)
     {
         // Tell plugin to stop and shutdown
         set_enabled(false);
-        _vst_dispatcher(effClose, 0, 0, 0, 0);
+
+        _loader.close_plugin_instance(_plugin_handle);
+
+// Ilias TODO: Use equivalent for LV2:
+//        _vst_dispatcher(effClose, 0, 0, 0, 0);
+
         _plugin_handle = nullptr;
-    }*/
-    if (_library_handle != nullptr)
-    {
-// ILIAS TODO: RE-INSTATE:
-//        PluginLoader::close_plugin_handle(_library_handle);
     }
 }
 
