@@ -18,10 +18,7 @@ namespace audio_frontend {
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
-int global_init()
-{
-    return raspa_init();
-}
+bool XenomaiRaspaFrontend::_raspa_initialised = false;
 
 AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -64,13 +61,24 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
 void XenomaiRaspaFrontend::cleanup()
 {
-    MIND_LOG_INFO("Closing Raspa driver.");
-    raspa_close();
+    if (_raspa_initialised)
+    {
+        MIND_LOG_INFO("Closing Raspa driver.");
+        raspa_close();
+    }
+    _raspa_initialised = false;
 }
 
 void XenomaiRaspaFrontend::run()
 {
     raspa_start_realtime();
+}
+
+int XenomaiRaspaFrontend::global_init()
+{
+    auto status = raspa_init();
+    _raspa_initialised = status == 0;
+    return status;
 }
 
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
@@ -85,7 +93,6 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     out_buffer.clear();
     _engine->process_chunk(&in_buffer, &out_buffer);
 }
-
 
 }; // end namespace audio_frontend
 }; // end namespace sushi

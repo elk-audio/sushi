@@ -98,7 +98,7 @@ void print_version_and_build_info()
 int main(int argc, char* argv[])
 {
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto ret = sushi::audio_frontend::global_init();
+    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (ret < 0)
     {
         error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));

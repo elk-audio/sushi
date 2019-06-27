@@ -13,15 +13,6 @@
 namespace sushi {
 namespace audio_frontend {
 
-
-/**
- * @brief Workaround for Xenomai process initialization, which should happen
- *        as the _first_ thing in main() before everything else.
- *
- * @return 0 if successful, raspa_init() error code otherwise
- */
-int global_init();
-
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw) : break_on_mode_sw(break_on_mode_sw) {}
@@ -67,10 +58,20 @@ public:
      * @brief Activate the realtime frontend, currently blocking.
      */
     void run() override;
+    
+    /**
+     * @brief Workaround for Xenomai process initialization, which should happen
+     *        as the _first_ thing in main() before everything else.
+     *
+     * @return 0 if successful, raspa_init() error code otherwise
+     */
+    static int global_init();
 
 private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
+
+    static bool _raspa_initialised;
 };
 
 }; // end namespace audio_frontend
