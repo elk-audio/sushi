@@ -186,6 +186,33 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     EXPECT_EQ(4, context->timeSigDenominator);
 }
 
+TEST_F(TestVst3xWrapper, TestParameterHandling)
+{
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    _module_under_test->set_enabled(true);
+
+    auto [status, value] = _module_under_test->parameter_value_normalised(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(1.0f, value);
+
+    auto event = RtEvent::make_parameter_change_event(_module_under_test->id(), 0, DELAY_PARAM_ID, 0.5f);
+    _module_under_test->process_event(event);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    // Manually call the event callback to send the update back to the controller, as eventloop is not running
+    _module_under_test->parameter_update_callback(_module_under_test, 0);
+
+    std::tie(status, value) = _module_under_test->parameter_value(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(0.5f, value);
+
+    std::string string_repr;
+    std::tie(status, string_repr) = _module_under_test->parameter_value_formatted(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ("0.5000", string_repr);
+}
+
 class TestVst3xUtils : public ::testing::Test
 {
 protected:

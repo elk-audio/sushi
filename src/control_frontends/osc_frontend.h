@@ -54,6 +54,15 @@ public:
                                      const std::string &parameter_name);
 
     /**
+     * @brief Connect program change messages to a specific processor.
+     *        The resulting osc path will be;
+     *        "/program/processor i (program_id)"
+     * @param processor_name Name of the processor
+     * @return
+     */
+    bool connect_to_program_change(const std::string & processor_name);
+
+    /**
      * @brief Output changes from the given parameter of the given
      *        processor to osc messages. The output will be on the form:
      *        "/parameter/processor_name/parameter_name,f(value)"
