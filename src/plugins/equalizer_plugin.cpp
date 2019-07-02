@@ -76,7 +76,7 @@ void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     }
     else
     {
-        bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        bypass_process(in_buffer, out_buffer);
     }
 }
 

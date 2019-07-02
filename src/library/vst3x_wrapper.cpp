@@ -286,7 +286,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
-        bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        bypass_process(in_buffer, out_buffer);
     }
     else
     {

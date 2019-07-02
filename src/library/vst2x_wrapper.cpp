@@ -302,7 +302,7 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     if (_can_do_soft_bypass == false && _bypass_manager.should_process() == false)
     {
-        bypass_process(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        bypass_process(in_buffer, out_buffer);
         _vst_midi_events_fifo.flush();
     }
     else

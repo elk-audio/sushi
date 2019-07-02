@@ -78,6 +78,31 @@ TEST_F(TestProcessor, TestParameterHandling)
     EXPECT_EQ(1u, param_list.size());
 }
 
+TEST_F(TestProcessor, TestBypassProcessing)
+{
+    ChunkSampleBuffer buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    ChunkSampleBuffer mono_buffer(1);
+    test_utils::fill_sample_buffer(buffer, 1.0f);
+    test_utils::fill_sample_buffer(mono_buffer, 2.0f);
+
+    _module_under_test->set_input_channels(2);
+    _module_under_test->set_output_channels(2);
+    // Stereo into stereo
+    _module_under_test->bypass_process(buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Mono into stereo
+    _module_under_test->set_input_channels(1);
+    _module_under_test->bypass_process(mono_buffer, out_buffer);
+    test_utils::assert_buffer_value(2.0f, out_buffer);
+
+    // No input should clear output
+    _module_under_test->set_input_channels(0);
+    _module_under_test->bypass_process(buffer, out_buffer);
+    test_utils::assert_buffer_value(0.0f, out_buffer);
+}
+
 TEST(TestProcessorUtils, TestSetBypassRampTime)
 {
     int chunks_in_10ms = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
@@ -175,25 +200,4 @@ TEST_F(TestBypassManager, TestCrossfade)
     // We should now have ramped down to 1 (value of bypass buffer)
     EXPECT_FLOAT_EQ(1.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
     EXPECT_FLOAT_EQ(1.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
-}
-
-TEST(TestUtilityFunctions, TestBypassProcessing)
-{
-    ChunkSampleBuffer buffer(2);
-    ChunkSampleBuffer out_buffer(2);
-    ChunkSampleBuffer mono_buffer(1);
-    test_utils::fill_sample_buffer(buffer, 1.0f);
-    test_utils::fill_sample_buffer(mono_buffer, 2.0f);
-
-    // Stereo into stereo
-    bypass_process(buffer, out_buffer, buffer.channel_count(), out_buffer.channel_count());
-    test_utils::assert_buffer_value(1.0f, out_buffer);
-
-    // Mono into stereo
-    bypass_process(mono_buffer, out_buffer, mono_buffer.channel_count(), out_buffer.channel_count());
-    test_utils::assert_buffer_value(2.0f, out_buffer);
-
-    // No input should clear output
-    bypass_process(buffer, out_buffer, 0, out_buffer.channel_count());
-    test_utils::assert_buffer_value(0.0f, out_buffer);
 }
