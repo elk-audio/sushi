@@ -399,7 +399,7 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
 
 ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
-    MIND_LOG_DEBUG("set_processor_bypass_state called, returning ");
+    MIND_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
     auto processor = _engine->mutable_processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {

@@ -177,6 +177,11 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset)
     }
 }
 
+RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/)
+{
+    return RtEvent::make_bypass_processor_event(this->processor_id(), this->bypass_enabled());
+}
+
 RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset)
 {
     /* String in RtEvent must be passed as a pointer allocated outside of the event */

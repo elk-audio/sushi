@@ -821,16 +821,6 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
                 typed_event->set_handled(false);
             break;
         }
-        case RtEventType::SET_BYPASS:
-        {
-            auto typed_event = event.processor_command_event();
-            auto processor = static_cast<Track*>(_realtime_processors[typed_event->processor_id()]);
-            if (processor)
-            {
-                processor->set_bypassed(typed_event->value());
-            }
-            return true;
-        }
         case RtEventType::TEMPO:
         {
             /* Eventually we might want to do sample accurate tempo changes */

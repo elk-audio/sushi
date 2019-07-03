@@ -7,7 +7,7 @@
 
 /**
  * @brief Vst 2.4 plugin for testing the wrapper implementation. It can work as both as
- * a simple gain controll, and as a crude synthesizer, outputing a sine wave on the left
+ * a simple gain control, and as a crude synthesizer, outputting a sine wave on the left
  * channel and a square wave on the right.
  */
 
