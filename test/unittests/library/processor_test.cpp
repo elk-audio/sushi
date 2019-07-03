@@ -18,7 +18,11 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 class ProcessorTest : public Processor
 {
 public:
-    ProcessorTest(HostControl host_control) : Processor(host_control) {}
+    ProcessorTest(HostControl host_control) : Processor(host_control)
+    {
+        _max_input_channels = 2;
+        _max_output_channels = 2;
+    }
     virtual ~ProcessorTest() {}
     virtual void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
                                ChunkSampleBuffer& /*out_buffer*/) override {}
