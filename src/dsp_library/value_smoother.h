@@ -126,7 +126,7 @@ public:
      * @param lag_time The approximate time to reach the target value
      * @param sample_rate The rate at which the smoother is updated
      */
-    void set_lag_time(std::chrono::microseconds lag_time, float sample_rate)
+    void set_lag_time(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)
     {
         _update_internals(lag_time, sample_rate);
     }
@@ -147,15 +147,15 @@ private:
     static constexpr T STATIONARY_LIMIT = 0.001;
     static_assert(mode == Mode::RAMP || mode == Mode::FILTER);
 
-    void _update_internals(std::chrono::microseconds lag_time, float sample_rate)
+    void _update_internals(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)
     {
         if constexpr (mode == Mode::FILTER)
         {
-            _spec.coeff = std::exp(-1.0 * TIMECONSTANTS_RISE_TIME / (lag_time.count() * sample_rate / 1'000'000));
+            _spec.coeff = std::exp(-1.0 * TIMECONSTANTS_RISE_TIME / (lag_time.count() * sample_rate));
         }
         else
         {
-            _spec.steps = static_cast<int>(std::round(lag_time.count() * sample_rate / 1'000'000));
+            _spec.steps = static_cast<int>(std::round(lag_time.count() * sample_rate));
         }
     }
 

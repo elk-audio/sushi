@@ -296,16 +296,36 @@ public:
                                                                             timestamp),
                                                        _subtype(subtype) {}
 
-    virtual bool is_parameter_change_notification() override {return true;}
+    bool is_parameter_change_notification() override {return true;}
 
-    virtual bool is_parameter_change_event() override {return false;}
+    bool is_parameter_change_event() override {return false;}
 
-    virtual bool maps_to_rt_event() override {return false;}
+    bool maps_to_rt_event() override {return false;}
 
     Subtype             subtype() {return _subtype;}
 
 private:
     Subtype     _subtype;
+};
+
+class SetProcessorBypassEvent : public Event
+{
+public:
+    SetProcessorBypassEvent(ObjectId processor_id, bool bypass_enabled, Time timestamp) : Event(timestamp),
+                                                                                          _processor_id(processor_id),
+                                                                                          _bypass_enabled(bypass_enabled)
+    {}
+
+    bool maps_to_rt_event() override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) override;
+
+    ObjectId processor_id() {return _processor_id;}
+    bool bypass_enabled() {return _bypass_enabled;}
+
+private:
+    ObjectId _processor_id;
+    bool     _bypass_enabled;
 };
 
 // TODO how to handle strings and blobs here?
