@@ -13,6 +13,7 @@
 
 #include "library/processor.h"
 //#include "library/lv2_midi_event_fifo.h"
+#include "library/lv2_evbuf.h"
 #include "../engine/base_event_dispatcher.h"
 
 // Temporary - just to check that it finds them.
@@ -67,8 +68,7 @@ struct Port {
     enum PortType   type;       ///< Data type
     enum PortFlow   flow;       ///< Data flow direction
     void*           sys_port;   ///< For audio/MIDI ports, otherwise NULL
-// Ilias TODO: Re-Instate.
-//  LV2_Evbuf*      evbuf;      ///< For MIDI ports, otherwise NULL
+    LV2_Evbuf*      evbuf;      ///< For MIDI ports, otherwise NULL
     void*           widget;     ///< Control widget, if applicable
     size_t          buf_size;   ///< Custom buffer size, or 0
     uint32_t        index;      ///< Port index
@@ -107,13 +107,11 @@ typedef struct {
     LV2_URID ui_updateRate;
 } JalvURIDs;
 
-struct Jalv
+class Jalv
 {
-//  Ilias : I will not re-introduce this.
-//  JalvOptions        opts;           ///< Command-line options
-
+public:
     JalvURIDs          urids;          ///< URIDs
-    //JalvNodes          nodes;          ///< Nodes
+    //JalvNodes        nodes;          ///< Nodes
 
     LV2_Atom_Forge     forge;          ///< Atom forge
     const char*        prog_name;      ///< Program name (argv[0])
@@ -123,6 +121,7 @@ struct Jalv
 
     LV2_URID_Map       map;            ///< URI => Int map
     LV2_URID_Unmap     unmap;          ///< Int => URI map
+
 /*  SerdEnv*           env;            ///< Environment for RDF printing
     Sratom*            sratom;         ///< Atom serialiser
     Sratom*            ui_sratom;      ///< Atom serialiser for UI thread
@@ -131,45 +130,71 @@ struct Jalv
     JalvBackend*       backend;        ///< Audio system backend
     ZixRing*           ui_events;      ///< Port events from UI
     ZixRing*           plugin_events;  ///< Port events from plugin*/
+
     void*              ui_event_buf;   ///< Buffer for reading UI port events
+
 /*  JalvWorker         worker;         ///< Worker thread implementation
     JalvWorker         state_worker;   ///< Synchronous worker for state restore
     ZixSem             work_lock;      ///< Lock for plugin work() method
     ZixSem             done;           ///< Exit semaphore
     ZixSem             paused;         ///< Paused signal from process thread
     JalvPlayState      play_state;     ///< Current play state*/
+
+/*
     char*              temp_dir;       ///< Temporary plugin state directory
     char*              save_dir;       ///< Plugin save directory
+*/
     const LilvPlugin*  plugin;         ///< Plugin class (RDF data)
     LilvState*         preset;         ///< Current preset
+
+/*
     LilvUIs*           uis;            ///< All plugin UIs (RDF data)LilvInstance
     const LilvUI*      ui;             ///< Plugin UI (RDF data)
     const LilvNode*    ui_type;        ///< Plugin UI type (unwrapped)
-    LilvInstance*      instance;       ///< Plugin instance (shared library)
+*/
+    LilvInstance*      instance{nullptr};       ///< Plugin instance (shared library)
+
 #ifdef HAVE_SUIL
     SuilHost*          ui_host;        ///< Plugin UI host support
     SuilInstance*      ui_instance;    ///< Plugin UI instance (shared library)
 #endif
+
     void*              window;         ///< Window (if applicable)
     struct Port*       ports;          ///< Port array of size num_ports
-    /*Controls           controls;       ///< Available plugin controls*/
-    uint32_t           block_length;   ///< Audio buffer size (block length)
-    size_t             midi_buf_size;  ///< Size of MIDI port buffers
+
+// TODO: ILIAS This needs re-introducing for control no?
+/*  Controls           controls;       ///< Available plugin controls*/
+
+/*  uint32_t           block_length;   ///< Audio buffer size (block length)*/
+/*  size_t             midi_buf_size;  ///< Size of MIDI port buffers*/
+
     uint32_t           control_in;     ///< Index of control input port
+
     uint32_t           num_ports;      ///< Size of the two following arrays:
-    uint32_t           plugin_latency; ///< Latency reported by plugin (if any)
-    float              ui_update_hz;   ///< Frequency of UI updates
+
+/*  uint32_t           plugin_latency; ///< Latency reported by plugin (if any)*/
+/*  float              ui_update_hz;   ///< Frequency of UI updates*/
+
     float              sample_rate;    ///< Sample rate
-    uint32_t           event_delta_t;  ///< Frames since last update sent to UI
-    uint32_t           position;       ///< Transport position in frames
-    float              bpm;            ///< Transport tempo in beats per minute
+
+/*  uint32_t           event_delta_t;  ///< Frames since last update sent to UI*/
+
+//  uint32_t           position;       ///< Transport position in frames
+
+/*  float              bpm;            ///< Transport tempo in beats per minute
     bool               rolling;        ///< Transport speed (0=stop, 1=play)
     bool               buf_size_set;   ///< True iff buffer size callback fired
+    */
+
     bool               exit;           ///< True iff execution is finished
-    bool               has_ui;         ///< True iff a control UI is present
+
+/*  bool               has_ui;         ///< True iff a control UI is present
     bool               request_update; ///< True iff a plugin update is needed
-    bool               safe_restore;   ///< Plugin restore() is thread-safe
+    bool               safe_restore;   ///< Plugin restore() is thread-safe*/
+
+// TODO Ilias: May need re-introducing.
 /*  JalvFeatures       features;*/
+
     const LV2_Feature** feature_list;
 };
 
@@ -179,11 +204,13 @@ struct Jalv
 
 
 typedef struct {
+    // Do I even use these?
     LilvNode* atom_AtomPort;
     LilvNode* atom_Chunk;
     LilvNode* atom_Float;
     LilvNode* atom_Path;
     LilvNode* atom_Sequence;
+
     LilvNode* lv2_AudioPort;
     LilvNode* lv2_CVPort;
     LilvNode* lv2_ControlPort;

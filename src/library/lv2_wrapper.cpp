@@ -2,6 +2,13 @@
 
 #include <math.h>
 
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <csignal>
+
+
 #include "library/lv2_wrapper.h"
 
 #include "logging.h"
@@ -41,9 +48,9 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _loader.load_plugin(library_handle, _sample_rate, feature_list);
 
-    _plugin_handle = _loader.getPluginInstance();
+    _jalv.instance = _loader.getPluginInstance();
 
-    if (_plugin_handle == nullptr)
+    if (_jalv.instance == nullptr)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
@@ -64,20 +71,15 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 //    _can_do_soft_bypass = (bypass == 1);
 //    _number_of_programs = _plugin_handle->numPrograms;
 
+    // These are currently modified in the create_ports call below:
+    _max_input_channels = 0;
+    _max_output_channels = 0;
+
     create_ports(library_handle, _loader.getNodes());
 
-    // In LV2 inputs and outputs are audio ports.
-
-    // Channel setup
-//    _max_input_channels = _plugin_handle->numInputs;
+    // Channel setup:
     _current_input_channels = _max_input_channels;
-//    _max_output_channels = _plugin_handle->numOutputs;
     _current_output_channels = _max_output_channels;
-
-    // Initialize internal plugin
-//    _vst_dispatcher(effOpen, 0, 0, 0, 0);
-//    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
-//    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);*/
 
     // Register internal parameters
     if (!_register_parameters())
@@ -85,10 +87,6 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
-
-    // Ilias TODO: Re-introduce if equivalent is found for LV2.
-    // Register yourself
-//    _plugin_handle->user = this;
 
     return ProcessorReturnCode::OK;
 }
@@ -98,8 +96,7 @@ void Lv2Wrapper::create_ports(const LilvPlugin *plugin, const JalvNodes& nodes)
     _jalv.num_ports = lilv_plugin_get_num_ports(plugin);
     _jalv.ports = (struct Port*)calloc(_jalv.num_ports, sizeof(struct Port));
 
-    float* default_values = (float*)calloc(
-            lilv_plugin_get_num_ports(plugin), sizeof(float));
+    float* default_values = (float*)calloc(lilv_plugin_get_num_ports(plugin), sizeof(float));
 
     lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values);
 
@@ -108,9 +105,10 @@ void Lv2Wrapper::create_ports(const LilvPlugin *plugin, const JalvNodes& nodes)
         create_port(plugin, i, default_values[i], nodes);
     }
 
+    // The following is not done in LV2Apply.
+    // And for AMP at least, it is always null.
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
             plugin, nodes.lv2_InputPort, nodes.lv2_control);
-
     if (control_input)
     {
         _jalv.control_in = lilv_port_get_index(plugin, control_input);
@@ -129,16 +127,16 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
     struct Port* const port = &_jalv.ports[port_index];
 
     port->lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
-    port->sys_port = NULL;
-// Ilias TODO: Re-Introduce!
-//  port->evbuf = NULL;
-    port->buf_size = 0;
     port->index = port_index;
     port->control = 0.0f;
     port->flow = FLOW_UNKNOWN;
 
-    const bool optional = lilv_port_has_property(
-            plugin, port->lilv_port, nodes.lv2_connectionOptional);
+    // The below are not used in lv2apply example.
+    port->sys_port = NULL; // For audio/MIDI ports, otherwise NULL
+    port->evbuf = NULL; // For MIDI ports, otherwise NULL
+    port->buf_size = 0; // Custom buffer size, or 0
+
+    const bool optional = lilv_port_has_property(plugin, port->lilv_port, nodes.lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
     if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_InputPort))
@@ -192,6 +190,15 @@ port->type = TYPE_CV;
 //      die("Mandatory port has unknown data type");
     }
 
+    if(port->type == TYPE_AUDIO) {
+        if(port->flow == FLOW_INPUT)
+            _max_input_channels++;
+        else if(port->flow == FLOW_OUTPUT)
+            _max_output_channels++;
+    }
+
+// The below min_size code is not even present in lv2apply example.
+
     // Todo: This is always returned NULL for amp output, should it?
     LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, nodes.rsz_minimumSize);
 
@@ -238,16 +245,16 @@ void Lv2Wrapper::set_output_channels(int channels)
 void Lv2Wrapper::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
-    /*if (enabled)
+    if (enabled)
     {
-        _vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
-        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);
+        /*_vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
+        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);*/
     }
     else
     {
-        _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
-        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
-    }*/
+        /*_vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);*/
+    }
 }
 
 void Lv2Wrapper::set_bypassed(bool bypassed)
@@ -347,17 +354,17 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    if (_plugin_handle != nullptr)
+    if (_jalv.instance != nullptr)
     {
         // Tell plugin to stop and shutdown
         set_enabled(false);
 
-        _loader.close_plugin_instance(_plugin_handle);
+        _loader.close_plugin_instance(_jalv.instance);
 
 // Ilias TODO: Use equivalent for LV2:
 //        _vst_dispatcher(effClose, 0, 0, 0, 0);
 
-        _plugin_handle = nullptr;
+        _jalv.instance = nullptr;
     }
 }
 
@@ -416,13 +423,41 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     if (_bypassed && !_can_do_soft_bypass)
     {
         bypass_process(in_buffer, out_buffer);
-// TODO: Re-instate
-        //        _vst_midi_events_fifo.flush();
+// TODO Ilias: Re-instate
+//      _vst_midi_events_fifo.flush();
     }
     else
     {
         /*_vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);*/
+
         _map_audio_buffers(in_buffer, out_buffer);
+
+        for (_p = 0, _i = 0, _o = 0; _p < _jalv.num_ports; ++_p)
+        {
+            if (_jalv.ports[_p].type == TYPE_CONTROL)
+            {
+                lilv_instance_connect_port(_jalv.instance, _p, &_jalv.ports[_p].control);
+            }
+            else if (_jalv.ports[_p].type == TYPE_AUDIO)
+            {
+                if (_jalv.ports[_p].flow == FLOW_INPUT)
+                {
+                    lilv_instance_connect_port(_jalv.instance, _p, _process_inputs[_i++]);
+                }
+                else
+                {
+                    lilv_instance_connect_port(_jalv.instance, _p, _process_outputs[_o++]);
+                }
+            }
+            else
+            {
+                lilv_instance_connect_port(_jalv.instance, _p, NULL);
+            }
+        }
+
+        lilv_instance_run(_jalv.instance, AUDIO_CHUNK_SIZE);
+
+        // Old VST code
 /*        _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);*/
     }
 }

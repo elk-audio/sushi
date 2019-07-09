@@ -41,7 +41,7 @@ constexpr int LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 //void populate_nodes(Jalv& jalv, LilvWorld* world);
 
 /**
- * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
+ * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
 
 class Lv2Wrapper : public Processor
@@ -58,8 +58,7 @@ public:
             _process_outputs{},
             _can_do_soft_bypass{false},
             _double_mono_input{false},
-            _plugin_path{lv2_plugin_uri},
-            _plugin_handle{nullptr}
+            _plugin_path{lv2_plugin_uri}
     {
         _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
@@ -107,29 +106,6 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
-    /**
-     * @brief Notify the host of a parameter change from inside the plugin
-     *        This must be called from the realtime thread
-     * @param parameter_index The index of the parameter that has changed
-     * @param value The new value of the parameter
-     *//*
-    void notify_parameter_change_rt(VstInt32 parameter_index, float value);
-
-    *//**
-      * @brief Notify the host of a parameter change from inside the plugin
-      *        This must be called from a non-rt thread and not from the
-      *        audio thread
-      * @param parameter_index The index of the parameter that has changed
-      * @param value The new value of the parameter
-      *//*
-    void notify_parameter_change(VstInt32 parameter_index, float value);*/
-
-    /**
-     * @brief Get the vst time information
-     * @return A populated VstTimeInfo struct
-     */
-//    VstTimeInfo* time_info();
-
 private:
     void create_ports(const LilvPlugin *plugin, const JalvNodes& nodes);
     void create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value, const JalvNodes& nodes);
@@ -139,15 +115,6 @@ private:
      * we allocated during initialization.
      */
     void _cleanup();
-
-    /**
-     * @brief Commodity function to access VsT internals
-     */
-    /*int _vst_dispatcher(VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt) const
-    {
-        //return static_cast<int>(_plugin_handle->dispatcher(_plugin_handle, opcode, index, value, ptr, opt));
-        return 0;
-    }*/
 
     /**
      * @brief Iterate over VsT parameters and register internal FloatParameterDescriptor
@@ -174,7 +141,7 @@ private:
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
     ChunkSampleBuffer _dummy_input{1};
     ChunkSampleBuffer _dummy_output{1};
-//    Lv2MidiEventFIFO<LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
+//  Lv2MidiEventFIFO<LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _double_mono_input;
     int _number_of_programs{0};
@@ -185,12 +152,15 @@ private:
     // TODO: Currently, this is instantiated in wrapper.
     // But if there's more than one plugin, there should not be two instances of _loader, right?
     PluginLoader _loader;
-
-    LilvInstance*_plugin_handle;
     Jalv _jalv;
-    bool show_hidden = true;
+
+    bool show_hidden{true};
 
     uint32_t _buffer_size; ///< Plugin <= >UI communication buffer size
+
+
+    // For iterating over buffers in process_audio
+    uint32_t _p = 0, _i = 0, _o = 0;
 
 //    VstTimeInfo _time_info;
 };
