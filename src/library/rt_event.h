@@ -34,6 +34,8 @@ enum class RtEventType
     AFTERTOUCH,
     MODULATION,
     WRAPPED_MIDI_EVENT,
+    GATE_EVENT,
+    CV_EVENT,
     INT_PARAMETER_CHANGE,
     FLOAT_PARAMETER_CHANGE,
     BOOL_PARAMETER_CHANGE,
@@ -169,6 +171,44 @@ public:
 protected:
     MidiDataByte _midi_data;
 };
+
+class GateRtEvent : public BaseRtEvent
+{
+public:
+    GateRtEvent(ObjectId target,
+                int offset,
+                int gate_id,
+                bool value) : BaseRtEvent(RtEventType::GATE_EVENT, target, offset),
+                                          _gate_id(gate_id),
+                                          _value(value) {}
+
+    int gate_no() const {return _gate_id;}
+    bool value() const {return _value;}
+
+protected:
+    int _gate_id;
+    bool _value;
+};
+
+class CvRtEvent : public BaseRtEvent
+{
+public:
+    CvRtEvent(ObjectId target,
+                int offset,
+                int cv_id,
+                float value) : BaseRtEvent(RtEventType::CV_EVENT, target, offset),
+                               _cv_id(cv_id),
+                               _value(value) {}
+
+    int cv_id() const {return _cv_id;}
+    float value() const {return _value;}
+
+protected:
+    int _cv_id;
+    float _value;
+};
+
+
 /**
  * @brief Baseclass for simple parameter changes
  */
@@ -434,6 +474,7 @@ enum class SyncMode
 {
     INTERNAL,
     MIDI_SLAVE,
+    GATE_INPUT,
     ABLETON_LINK
 };
 
@@ -511,6 +552,18 @@ public:
     {
         assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
         return &_wrapped_midi_event;
+    }
+
+    const GateRtEvent* gate_event() const
+    {
+        assert(_gate_event.type() == RtEventType::GATE_EVENT);
+        return &_gate_event;
+    }
+
+    const CvRtEvent* cv_event() const
+    {
+        assert(_cv_event.type() == RtEventType::CV_EVENT);
+        return &_cv_event;
     }
 
     const ParameterChangeRtEvent* parameter_change_event() const
@@ -659,6 +712,18 @@ public:
         return RtEvent(typed_event);
     }
 
+    static RtEvent make_gate_event(ObjectId target, int offset, int gate_id, bool value)
+    {
+        GateRtEvent typed_event(target, offset, gate_id, value);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_cv_event(ObjectId target, int offset, int cv_id, float value)
+    {
+        CvRtEvent typed_event(target, offset, cv_id, value);
+        return RtEvent(typed_event);
+    }
+
     static RtEvent make_parameter_change_event(ObjectId target, int offset, ObjectId param_id, float value)
     {
         ParameterChangeRtEvent typed_event(RtEventType::FLOAT_PARAMETER_CHANGE, target, offset, param_id, value);
@@ -802,8 +867,10 @@ private:
     /* Private constructors that are invoked automatically when using the make_xxx_event functions */
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
     RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
-    RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
     RtEvent(const WrappedMidiRtEvent& e) : _wrapped_midi_event(e) {}
+    RtEvent(const GateRtEvent& e) : _gate_event(e) {}
+    RtEvent(const CvRtEvent& e) : _cv_event(e) {}
+    RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
     RtEvent(const StringParameterChangeRtEvent& e) : _string_parameter_change_event(e) {}
     RtEvent(const DataParameterChangeRtEvent& e) : _data_parameter_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e) : _processor_command_event(e) {}
@@ -826,6 +893,8 @@ private:
         KeyboardRtEvent               _keyboard_event;
         KeyboardCommonRtEvent         _keyboard_common_event;
         WrappedMidiRtEvent            _wrapped_midi_event;
+        GateRtEvent                   _gate_event;
+        CvRtEvent                     _cv_event;
         ParameterChangeRtEvent        _parameter_change_event;
         StringParameterChangeRtEvent  _string_parameter_change_event;
         DataParameterChangeRtEvent    _data_parameter_change_event;
@@ -847,8 +916,8 @@ private:
 
 /* Compile time check that the event container fits withing given memory constraints and
  * they can be safely copied without side effects. Important for real-time performance*/
-static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
-static_assert(std::is_trivially_copyable<RtEvent>::value, "");
+static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT);
+static_assert(std::is_trivially_copyable<RtEvent>::value);
 
 /**
  * @brief Convenience function to encapsulate the logic to determine if it is a keyboard event

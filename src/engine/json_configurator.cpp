@@ -15,6 +15,28 @@ using namespace midi_dispatcher;
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
+std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_config(const std::string& path_to_file)
+{
+    AudioConfig audio_config;
+    rapidjson::Document config;
+    auto status = _parse_file(path_to_file, config, JsonSection::HOST_CONFIG);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return {status, audio_config};
+    }
+    const auto& host_config = config["host_config"].GetObject();
+    if (host_config.HasMember("cv_inputs"))
+    {
+        audio_config.cv_inputs = host_config["cv_inputs"].GetInt();
+    }
+    if (host_config.HasMember("cv_outputs"))
+    {
+        audio_config.cv_outputs = host_config["cv_outputs"].GetInt();
+    }
+
+    return {JsonConfigReturnStatus::OK, audio_config};
+}
+
 JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& path_to_file)
 {
     rapidjson::Document config;
@@ -71,12 +93,17 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
         {
             mode = SyncMode::MIDI_SLAVE;
         }
+        else if (host_config["tempo_sync"] == "gate")
+        {
+            mode = SyncMode::GATE_INPUT;
+        }
         else
         {
             mode = SyncMode::INTERNAL;
         }
         MIND_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
-                                                              mode == SyncMode::MIDI_SLAVE? "external Midi" : "internal"));
+                                                              mode == SyncMode::MIDI_SLAVE? "external Midi" : (
+                                                              mode == SyncMode::GATE_INPUT? "Gate input" : "internal")));
         _engine->set_tempo_sync_mode(mode);
     }
 
@@ -243,6 +270,102 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
     return JsonConfigReturnStatus::OK;
 }
 
+
+JsonConfigReturnStatus JsonConfigurator::load_cv_gate(const std::string& path_to_file)
+{
+    rapidjson::Document config;
+    auto status = _parse_file(path_to_file, config, JsonSection::CV_GATE);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    const rapidjson::Value& cv_config = config["cv_control"];
+    if(cv_config.HasMember("cv_inputs"))
+    {
+        for (const auto& cv_in : cv_config["cv_inputs"].GetArray())
+        {
+            auto res = _engine->connect_cv_to_parameter(cv_in["processor"].GetString(),
+                                                        cv_in["parameter"].GetString(),
+                                                        cv_in["cv"].GetInt());
+            if (res != EngineReturnStatus::OK)
+            {
+                MIND_LOG_ERROR("Failed to connect cv input {} to parameter {} on processor {}",
+                               cv_in["cv"].GetInt(),
+                               cv_in["parameter"].GetString(),
+                               cv_in["processor"].GetString());
+            }
+        }
+    }
+    if(cv_config.HasMember("cv_outputs"))
+    {
+        for (const auto& cv_out : cv_config["cv_outputs"].GetArray())
+        {
+            auto res = _engine->connect_cv_from_parameter(cv_out["processor"].GetString(),
+                                                          cv_out["parameter"].GetString(),
+                                                          cv_out["cv"].GetInt());
+            MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
+                              "Failed to connect cv input {} to parameter {} on processor {}",
+                              cv_out["cv"].GetInt(),
+                              cv_out["parameter"].GetString(),
+                              cv_out["processor"].GetString());
+        }
+    }
+    if(cv_config.HasMember("gate_inputs"))
+    {
+        for (const auto& gate_in : cv_config["gate_inputs"].GetArray())
+        {
+            if (gate_in["mode"] == "sync")
+            {
+                auto res = _engine->connect_gate_to_sync(gate_in["gate"].GetInt(),
+                                                         gate_in["ppq_ticks"].GetInt());
+
+                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
+                                  "Failed to set gate {} as sync input", gate_in["gate"].GetInt());
+
+            } else if (gate_in["mode"] == "note_event")
+            {
+                auto res = _engine->connect_gate_to_processor(gate_in["processor"].GetString(),
+                                                              gate_in["gate"].GetInt(),
+                                                              gate_in["note_no"].GetInt(),
+                                                              gate_in["channel"].GetInt());
+
+                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
+                                  "Failed to connect gate {} to processor {}",
+                                  gate_in["gate"].GetInt(),
+                                  gate_in["processor"].GetInt());
+            }
+        }
+    }
+    if(cv_config.HasMember("gate_outputs"))
+    {
+        for (const auto& gate_out : cv_config["gate_outputs"].GetArray())
+        {
+            if (gate_out["mode"] == "sync")
+            {
+                auto res = _engine->connect_sync_to_gate(gate_out["gate"].GetInt(),
+                                                         gate_out["ppq_ticks"].GetInt());
+
+                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
+                                  "Failed to set gate {} as sync output", gate_out["gate"].GetInt());
+
+            } else if (gate_out["mode"] == "note_event")
+            {
+                auto res = _engine->connect_gate_from_processor(gate_out["processor"].GetString(),
+                                                                gate_out["gate"].GetInt(),
+                                                                gate_out["note_no"].GetInt(),
+                                                                gate_out["channel"].GetInt());
+
+                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
+                                  "Failed to connect gate {} from processor {}",
+                                  gate_out["gate"].GetInt(),
+                                  gate_out["processor"].GetInt());
+            }
+        }
+    }
+    return JsonConfigReturnStatus::OK;
+}
+
+
 JsonConfigReturnStatus JsonConfigurator::load_events(const std::string& path_to_file)
 {
     rapidjson::Document events;
@@ -305,6 +428,14 @@ JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_
             {
                 MIND_LOG_DEBUG("Config file does not have MIDI definitions");
                 return JsonConfigReturnStatus::NO_MIDI_DEFINITIONS;
+            }
+            break;
+
+        case JsonSection::CV_GATE:
+            if(!config.HasMember("cv_control"))
+            {
+                MIND_LOG_DEBUG("Config file does not have cv/gate definitions");
+                return JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS;
             }
             break;
 
@@ -527,13 +658,19 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, Jso
         case JsonSection::TRACKS:
             schema_char_array =
                 #include "json_schemas/tracks_schema.json"
-                                                                ;
+                                                        ;
             break;
 
         case JsonSection::MIDI:
             schema_char_array =
                 #include "json_schemas/midi_schema.json"
                                                        ;
+            break;
+
+        case JsonSection::CV_GATE:
+            schema_char_array =
+                #include "json_schemas/cv_gate_schema.json"
+                                                         ;
             break;
 
         case JsonSection::EVENTS:

@@ -270,6 +270,8 @@ int main(int argc, char* argv[])
     }
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine.get());
+    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
+
     midi_dispatcher->set_midi_inputs(1);
     midi_dispatcher->set_midi_outputs(1);
 
@@ -282,6 +284,14 @@ int main(int argc, char* argv[])
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
 
+    auto [audio_config_status, audio_config] = configurator->load_audio_config(config_filename);
+    if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        error_exit("Error reading audio or host config, check logs for details.");
+    }
+    int cv_inputs = audio_config.cv_inputs.value_or(0);
+    int cv_outputs = audio_config.cv_outputs.value_or(0);
+
     switch (frontend_type)
     {
         case FrontendType::JACK:
@@ -289,7 +299,9 @@ int main(int argc, char* argv[])
             MIND_LOG_INFO("Setting up Jack audio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
                                                                                                  jack_server_name,
-                                                                                                 connect_ports);
+                                                                                                 connect_ports,
+                                                                                                 cv_inputs,
+                                                                                                 cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
             break;
         }
@@ -297,7 +309,9 @@ int main(int argc, char* argv[])
         case FrontendType::XENOMAI_RASPA:
         {
             MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches);
+            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches,
+                                                                                                         cv_inputs,
+                                                                                                         cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
             break;
         }
@@ -317,7 +331,9 @@ int main(int argc, char* argv[])
             }
             frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
                                                                                                     output_filename,
-                                                                                                    dummy);
+                                                                                                    dummy,
+                                                                                                    cv_inputs,
+                                                                                                    cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(engine.get());
             break;
         }
@@ -332,7 +348,6 @@ int main(int argc, char* argv[])
         error_exit("Error initializing frontend, check logs for details.");
     }
 
-    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
     auto status = configurator->load_host_config(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
@@ -344,6 +359,7 @@ int main(int argc, char* argv[])
         error_exit("Failed to load tracks from Json config file");
     }
     configurator->load_midi(config_filename);
+    configurator->load_cv_gate(config_filename);
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {

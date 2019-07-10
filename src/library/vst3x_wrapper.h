@@ -141,6 +141,8 @@ private:
      */
     void _forward_events(Steinberg::Vst::ProcessData& data);
 
+    void _forward_params(Steinberg::Vst::ProcessData& data);
+
     void _fill_processing_context();
 
     inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);

@@ -19,9 +19,12 @@ namespace audio_frontend {
 
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    JackFrontendConfiguration(const std::string client_name,
-                              const std::string server_name,
-                              bool autoconnect_ports) :
+    JackFrontendConfiguration(const std::string& client_name,
+                              const std::string& server_name,
+                              bool autoconnect_ports,
+                              int cv_inputs,
+                              int cv_outputs) :
+            BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
             client_name(client_name),
             server_name(server_name),
             autoconnect_ports(autoconnect_ports)
@@ -94,6 +97,7 @@ private:
     AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);
     AudioFrontendStatus setup_sample_rate();
     AudioFrontendStatus setup_ports();
+    AudioFrontendStatus setup_cv_ports();
     /* Call after activation to connect the frontend ports to system ports */
     AudioFrontendStatus connect_ports();
 
@@ -104,14 +108,22 @@ private:
 
     void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
 
-    std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
+    std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
+    std::array<jack_port_t*, MAX_ENGINE_CV_IO_PORTS> _cv_input_ports;
+    std::array<jack_port_t*, MAX_ENGINE_CV_IO_PORTS> _cv_output_ports;
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_hist{0};
+    int _no_cv_input_ports;
+    int _no_cv_output_ports;
+
     jack_client_t* _client{nullptr};
     jack_nframes_t _sample_rate;
     bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
+    engine::ControlBuffer          _in_controls;
+    engine::ControlBuffer          _out_controls;
 };
 
 }; // end namespace jack_frontend
@@ -128,9 +140,9 @@ namespace sushi {
 namespace audio_frontend {
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    JackFrontendConfiguration(const std::string,
-                              const std::string,
-                              bool ) {}
+    JackFrontendConfiguration(const& std::string,
+                              const& std::string,
+                              bool, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class JackFrontend : public BaseAudioFrontend

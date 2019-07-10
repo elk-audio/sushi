@@ -326,8 +326,11 @@ void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float va
     {
         return;
     }
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
-    output_event(e);
+    if (maybe_output_cv_value(parameter_index, value) == false)
+    {
+        auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
+        output_event(e);
+    }
 }
 
 void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)

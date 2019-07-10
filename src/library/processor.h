@@ -43,7 +43,7 @@ public:
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
-     * all of the initialization that can fail, should be done here. See also deinit() for deallocating
+     * all of the initialization that can fail, should be done here.
      * any resources reserved here.
      * @param sample_rate Host sample rate
      */
@@ -60,6 +60,7 @@ public:
     {
         return;
     }
+
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
@@ -101,7 +102,7 @@ public:
      * @brief Returns a unique 32 bit identifier for this processor
      * @return A unique 32 bit identifier
      */
-    ObjectId id() {return _id;}
+    ObjectId id() const {return _id;}
 
     /**
      * @brief Set an output pipe for events.
@@ -283,9 +284,36 @@ public:
     /**
      * @brief Set a new program to the processor. Called from a non-rt thread
      * @param program The id of the new program to use
-     * @return OK if the operation was succesfull, error code otherwise
+     * @return OK if the operation was successful, error code otherwise
      */
     virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
+
+    /**
+     * @brief Connect a cv input to a parameter of the processor
+     * @param parameter_id The id of the parameter to connect to
+     * @param cv_input_id The id of the cv input
+     * @return ProcessorReturnCode::OK on success, error code on failure
+     */
+     // TODO - Handled by the engine for now
+    virtual ProcessorReturnCode connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id);
+
+    /**
+     * @brief Connect a parameter of the processor to a cv out so that rt updates of
+     *        the parameter will be sent to the cv output
+     * @param parameter_id The id of the parameter to connect from
+     * @param cv_input_id The id of the cv output
+     * @return ProcessorReturnCode::OK on success, error code on failure
+     */
+    virtual ProcessorReturnCode connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id);
+    /**
+     * @brief Connect note on and off events with a particular channel and note number
+     *        from this processor to a gate output.
+     * @param gate_output_id The gate output to output to.
+     * @param channel Only events with this channel will be routed.
+     * @param note_no The note number that will be used for this gate output.
+     * @return ProcessorReturnCode::OK on success, error code on failure
+     */
+    virtual ProcessorReturnCode connect_gate_from_processor(int gate_output_id, int channel, int note_no);
 
 protected:
 
@@ -305,22 +333,7 @@ protected:
      * @param id The unique id to give to the parameter
      * @return true if the parameter was successfully registered, false otherwise
      */
-    bool register_parameter(ParameterDescriptor* parameter, ObjectId id)
-    {
-        for (auto& p : _parameters_by_index)
-        {
-            if (p->id() == id) return false; // Don't allow duplicate parameter id:s
-        }
-        bool inserted = true;
-        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
-        if (!inserted)
-        {
-            return false;
-        }
-        parameter->set_id(id);
-        _parameters_by_index.push_back(parameter);
-        return true;
-    }
+    bool register_parameter(ParameterDescriptor* parameter, ObjectId id);
 
     void output_event(RtEvent event)
     {
@@ -329,29 +342,21 @@ protected:
     }
 
     /**
+     * @brief Handle parameter updates if connected to cv outputs and send cv output event if
+     *        the parameter is connected to a cv output
+     * @param parameter_id The id of the parameter
+     * @param value The new value of the parameter change
+     * @return true If there is an active outgoing connection from this parameter, false otherwise
+     */
+    bool maybe_output_cv_value(ObjectId parameter_id, float value);
+
+    /**
     * @brief Utility function do to general bypass/passthrough audio processing.
     *        Useful for processors that don't implement this on their own.
     * @param in_buffer Input SampleBuffer
     * @param out_buffer Output SampleBuffer
     */
-    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
-    {
-        if (_current_input_channels == 0)
-        {
-            out_buffer.clear();
-        }
-        else if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
-        {
-            out_buffer = in_buffer;
-        }
-        else
-        {
-            for (int c = 0; c < _current_output_channels; ++c)
-            {
-                out_buffer.replace(c, c % _current_input_channels, in_buffer);
-            }
-        }
-    }
+    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
@@ -365,6 +370,21 @@ protected:
     bool _bypassed{false};
 
     HostControl _host_control;
+
+    struct CvInConnection
+    {
+        ObjectId parameter_id;
+        bool enabled;
+    };
+    struct CvOutConnection
+    {
+        ObjectId parameter_id;
+        int cv_id;
+    };
+
+    std::array<CvInConnection, MAX_ENGINE_CV_IO_PORTS> _cv_in_connections;
+    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
+    int _outgoing_cv_connections{0};
 
 private:
     RtEventPipe* _output_pipe{nullptr};
@@ -456,19 +476,7 @@ public:
      * @param output_channels The current number of output channels of the processor
      */
     void crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,
-                          int input_channels, int output_channels)
-    {
-        auto [start, end] = get_ramp();
-        output_buffer.ramp(start, end);
-        if (input_channels > 0)
-        {
-            for (int c = 0; c < output_channels; ++c)
-            {
-                // Add the input with an inverse ramp to crossfade between input and output
-                output_buffer.add_with_ramp(c, c % input_channels, input_buffer, 1.0f - start, 1.0f - end);
-            }
-        }
-    }
+                          int input_channels, int output_channels);
 
 private:
     enum class BypassState
@@ -479,32 +487,7 @@ private:
         RAMPING_UP
     };
 
-    std::pair<float, float> get_ramp()
-    {
-        int prev_count = 0;
-        if (_state == BypassState::RAMPING_DOWN)
-        {
-            prev_count = _ramp_count--;
-            if (_ramp_count == 0)
-            {
-                _state = BypassState::BYPASSED;
-            }
-        }
-        else if (_state == BypassState::RAMPING_UP)
-        {
-            prev_count = _ramp_count++;
-            if (_ramp_count == _ramp_chunks)
-            {
-                _state = BypassState::NOT_BYPASSED;
-            }
-        }
-        else
-        {
-            return {1.0f, 1.0f};
-        }
-        return {static_cast<float>(prev_count) / _ramp_chunks,
-                static_cast<float>(_ramp_count) / _ramp_chunks};
-    }
+    std::pair<float, float> get_ramp();
 
     BypassState _state{BypassState::NOT_BYPASSED};
     int _ramp_chunks{0};

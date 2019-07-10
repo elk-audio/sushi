@@ -60,6 +60,16 @@ TEST_F(TestJsonConfigurator, TestInstantiation)
     EXPECT_TRUE(_module_under_test);
 }
 
+TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
+{
+    auto [status, audio_config] = _module_under_test->load_audio_config(_path);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+    ASSERT_TRUE(audio_config.cv_inputs.has_value());
+    ASSERT_EQ(0, audio_config.cv_inputs.value());
+    ASSERT_TRUE(audio_config.cv_outputs.has_value());
+    ASSERT_EQ(2, audio_config.cv_outputs.value());
+}
+
 TEST_F(TestJsonConfigurator, TestLoadHostConfig)
 {
     auto status = _module_under_test->load_host_config(_path);
@@ -105,6 +115,15 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
     ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
     ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
+}
+
+TEST_F(TestJsonConfigurator, TestLoadCvGateControl)
+{
+    auto status = _module_under_test->load_tracks(_path);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    status = _module_under_test->load_cv_gate(_path);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 }
 
 TEST_F(TestJsonConfigurator, TestParseFile)
@@ -180,6 +199,7 @@ TEST_F(TestJsonConfigurator, TestValidJsonSchema)
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::HOST_CONFIG));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::TRACKS));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::EVENTS));
 }
 
@@ -292,6 +312,27 @@ TEST_F(TestJsonConfigurator, TestMidiSchema)
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
     track_connections["channel"] = 16;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+}
+
+TEST_F(TestJsonConfigurator, TestCvGateSchema)
+{
+    rapidjson::Document test_cfg;
+    _module_under_test->_parse_file(_path, test_cfg, JsonSection::CV_GATE);
+    rapidjson::Value& cv_in = test_cfg["cv_control"]["cv_inputs"][0];
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
+    cv_in["parameter"] = "";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
+    cv_in["parameter"] = "pitch";
+    cv_in["processor"] = "";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
+    cv_in["processor"] = "synth";
+
+    rapidjson::Value& gate_out = test_cfg["cv_control"]["gate_outputs"][0];
+    gate_out["mode"] = "sync__";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
+    gate_out["mode"] = "note_event";
+    gate_out["channel"] = 1234;
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
 }
 
 TEST_F(TestJsonConfigurator, TestLoadEventList)

@@ -14,7 +14,8 @@ using namespace sushi;
 using namespace sushi::audio_frontend;
 using namespace sushi::midi_dispatcher;
 
-static constexpr unsigned int SAMPLE_RATE = 44000;
+constexpr float SAMPLE_RATE = 44000;
+constexpr int CV_CHANNELS = 0;
 
 class TestOfflineFrontend : public ::testing::Test
 {
@@ -50,7 +51,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
     std::string test_data_file(test_data_dir);
     test_data_file.append("/test_sndfile_05.wav");
     std::string output_file_name("./test_out.wav");
-    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false);
+    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false, CV_CHANNELS, CV_CHANNELS);
     auto ret_code = _module_under_test->init(&config);
     if (ret_code != AudioFrontendStatus::OK)
     {
@@ -85,7 +86,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
 
 TEST_F(TestOfflineFrontend, TestInvalidInputFile)
 {
-    OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav", false);
+    OfflineFrontendConfiguration config("this_is_not_a_valid_file.extension", "./test_out.wav", false, CV_CHANNELS, CV_CHANNELS);
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::INVALID_INPUT_FILE, ret_code);
 }
@@ -101,7 +102,7 @@ TEST_F(TestOfflineFrontend, TestMonoMode)
     std::string test_data_file(test_data_dir);
     test_data_file.append("/mono.wav");
     std::string output_file_name("./test_out.wav");
-    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false);
+    OfflineFrontendConfiguration config(test_data_file, "./test_out.wav", false, CV_CHANNELS, CV_CHANNELS);
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 
@@ -157,8 +158,17 @@ TEST_F(TestOfflineFrontend, TestNoiseGeneration)
     mean /= AUDIO_CHUNK_SIZE * buffer.channel_count();
     float rms = std::sqrt(mean);
     ASSERT_NEAR(INPUT_NOISE_LEVEL, rms, 0.002f);
+}
 
-
-
-
+TEST(TestAudioFrontendInternals, TestRampCvOutput)
+{
+    float data_buffer[AUDIO_CHUNK_SIZE];
+    auto target = ramp_cv_output(data_buffer, 1, 0.5);
+    EXPECT_EQ(0.5f, target);
+    float prev = 1.1f;
+    for (auto i : data_buffer)
+    {
+        EXPECT_GT(prev, i);
+        prev = i;
+    }
 }

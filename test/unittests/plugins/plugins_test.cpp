@@ -8,6 +8,7 @@
 #include "test_utils/host_control_mockup.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
+#include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
@@ -238,4 +239,58 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
     /*  The value should approach 0 dB eventually, but test that it is reasonably close */
     EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
+}
+
+
+class TestLfoPlugin : public ::testing::Test
+{
+protected:
+    TestLfoPlugin()
+    {
+    }
+
+    void SetUp()
+    {
+        _module_under_test = new lfo_plugin::LfoPlugin(_host_control.make_host_control_mockup());
+        ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
+        ASSERT_EQ(ProcessorReturnCode::OK, status);
+        _module_under_test->set_event_output(&_queue);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    lfo_plugin::LfoPlugin* _module_under_test;
+    RtEventFifo _queue;
+};
+
+TEST_F(TestLfoPlugin, TestInstantiation)
+{
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Lfo", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.lfo", _module_under_test->name());
+}
+
+TEST_F(TestLfoPlugin, TestProcess)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(0);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(0);
+    // Calling process should result in a parameter update event.
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    ASSERT_FALSE(_queue.empty());
+    RtEvent event;
+    _queue.pop(event);
+    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+
+    // Connect a cv output to it
+    auto param = _module_under_test->parameter_from_name("out");
+    _module_under_test->connect_cv_from_parameter(param->id(), 2);
+    // Calling process should now result in a cv event instead.
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    ASSERT_FALSE(_queue.empty());
+    _queue.pop(event);
+    ASSERT_EQ(RtEventType::CV_EVENT, event.type());
+    ASSERT_EQ(2, event.cv_event()->cv_id());
 }

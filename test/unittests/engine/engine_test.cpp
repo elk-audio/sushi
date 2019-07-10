@@ -115,10 +115,11 @@ TEST_F(TestEngine, TestProcess)
     /* Run tests */
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
+    ControlBuffer control_buffer;
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     test_utils::fill_sample_buffer(out_buffer, 0.5f);
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer,  &control_buffer, &control_buffer);
 
     /* Separate the first 2 channels, which should pass through unprocessed
      * and the 2 last, which should be set to 0 since they are not connected to anything */
@@ -132,7 +133,7 @@ TEST_F(TestEngine, TestProcess)
     res = _module_under_test->add_plugin_to_track("test_track", "sushi.testing.gain",
                                                   "gain", "", PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, res);
-    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
     main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
     test_utils::assert_buffer_value(1.0f, main_bus);
 }
@@ -148,9 +149,10 @@ TEST_F(TestEngine, TestOutputMixing)
 
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
+    ControlBuffer control_buffer;
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
 
     /* Both track's outputs are routed to bus 0, so they should sum to 2 */
     auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
@@ -314,8 +316,9 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     {
         SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
         SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+        ControlBuffer control_buffer;
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        e->process_chunk(&in_buffer, &out_buffer);
+        e->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
     };
     // Add a track, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
     _module_under_test->enable_realtime(true);
@@ -355,4 +358,53 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
     ASSERT_FALSE(_module_under_test->_realtime_processors[track_id]);
     ASSERT_FALSE(_module_under_test->_realtime_processors[processor_id]);
+}
+
+TEST_F(TestEngine, TestSetCvChannels)
+{
+    EXPECT_EQ(EngineReturnStatus::OK, _module_under_test->set_cv_input_channels(2));
+    EXPECT_EQ(EngineReturnStatus::OK, _module_under_test->set_cv_output_channels(2));
+    // Set too many or route to non-existing inputs/processors
+    EXPECT_NE(EngineReturnStatus::OK, _module_under_test->set_cv_input_channels(20));
+    EXPECT_NE(EngineReturnStatus::OK, _module_under_test->set_cv_output_channels(20));
+
+    EXPECT_NE(EngineReturnStatus::OK, _module_under_test->connect_cv_to_parameter("proc", "param", 1));
+    EXPECT_NE(EngineReturnStatus::OK, _module_under_test->connect_cv_from_parameter("proc", "param", 1));
+}
+
+TEST_F(TestEngine, TestCvRouting)
+{
+    /* Add a control plugin track and connect cv to its parameters */
+    _module_under_test->create_track("lfo_track", 0);
+    auto status = _module_under_test->add_plugin_to_track("lfo_track",
+                                                          "sushi.testing.lfo",
+                                                          "lfo",
+                                                          "   ",
+                                                          PluginType::INTERNAL);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    status = _module_under_test->set_cv_input_channels(2);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    status = _module_under_test->set_cv_output_channels(2);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    status = _module_under_test->connect_cv_to_parameter("lfo", "freq", 1);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    // First try with a too high cv input id
+    status = _module_under_test->connect_cv_from_parameter("lfo", "out", 10);
+    ASSERT_NE(EngineReturnStatus::OK, status);
+    status = _module_under_test->connect_cv_from_parameter("lfo", "out", 1);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
+    ControlBuffer in_controls;
+    ControlBuffer out_controls;
+
+    in_controls.cv_values[1] = 0.5;
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
+
+    // We should have a non-zero value in this slot
+    ASSERT_NE(0.0f, out_controls.cv_values[1]);
 }

@@ -16,6 +16,10 @@ static constexpr int AUDIO_CHUNK_SIZE = SUSHI_CUSTOM_AUDIO_CHUNK_SIZE;
 static constexpr int AUDIO_CHUNK_SIZE = 64;
 #endif
 
+constexpr int MAX_ENGINE_CV_IO_PORTS = 4;
+constexpr int MAX_ENGINE_GATE_PORTS = 8;
+constexpr int MAX_ENGINE_GATE_NOTE_NO = 127;
+
 /* Use in class declaration to disallow copying of this class.
  * Note that this marks copy constructor and assignment operator
  * as deleted and hence their r-value counterparts are not generated.

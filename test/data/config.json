@@ -9,6 +9,8 @@
         },
         "playing_mode" : "playing",
         "tempo_sync" : "internal",
+        "cv_inputs" : 0,
+        "cv_outputs" : 2,
         "audio_clip_detection" :
         {
             "inputs" : false,
@@ -168,6 +170,55 @@
                 "parameter_name": "gain",
                 "min_range": -24,
                 "max_range": 24
+            }
+        ]
+    },
+    "cv_control" : {
+        "cv_inputs" : [
+            {
+                "cv" : 0,
+                "processor" : "gain_0_l",
+                "parameter" : "gain"
+            },
+            {
+                "cv" : 1,
+                "processor" : "synth",
+                "parameter" : "cutoff"
+            }
+        ],
+        "cv_outputs" : [
+            {
+                "cv" : 0,
+                "processor" : "gain_0_r",
+                "parameter" : "gain"
+            },
+            {
+                "cv" : 1,
+                "processor" : "seq",
+                "parameter" : "pitch_out"
+            }
+        ],
+        "gate_inputs" : [
+            {
+                "gate" : 0,
+                "mode" : "note_event",
+                "note_no" : 20,
+                "processor" : "synth",
+                "channel" : 0
+            },
+            {
+                "gate" : 1,
+                "mode" : "sync",
+                "ppq_ticks" : 2
+            }
+        ],
+        "gate_outputs" : [
+            {
+                "gate" : 0,
+                "mode" : "note_event",
+                "note_no" : 0,
+                "processor" : "seq",
+                "channel" : 0
             }
         ]
     }

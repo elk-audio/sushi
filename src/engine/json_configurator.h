@@ -10,6 +10,8 @@
 #ifndef SUSHI_CONFIG_FROM_JSON_H
 #define SUSHI_CONFIG_FROM_JSON_H
 
+#include <optional>
+
 #include "rapidjson/document.h"
 
 #include "base_engine.h"
@@ -29,6 +31,7 @@ enum class JsonConfigReturnStatus
     INVALID_MIDI_PORT,
     INVALID_FILE,
     NO_MIDI_DEFINITIONS,
+    NO_CV_GATE_DEFINITIONS,
     NO_EVENTS_DEFINITIONS
 };
 
@@ -37,7 +40,14 @@ enum class JsonSection
     HOST_CONFIG,
     TRACKS,
     MIDI,
+    CV_GATE,
     EVENTS
+};
+
+struct AudioConfig
+{
+    std::optional<int> cv_inputs;
+    std::optional<int> cv_outputs;
 };
 
 class JsonConfigurator
@@ -48,6 +58,15 @@ public:
                                                                          _midi_dispatcher(midi_dispatcher) {}
 
     ~JsonConfigurator() {}
+
+    /**
+     * @brief Reads a json config file and retuns all audio frontend configuration options
+     *        that are not set on the audio engine directly
+     * @param path_to_file String which denotes the path of the file.
+     * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
+     *         JsonConfigReturnStatus::OK
+     */
+    std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config(const std::string& path_to_file);
 
     /**
      * @brief reads a json config file and set the given host configuration options
@@ -71,6 +90,14 @@ public:
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_midi(const std::string& path_to_file);
+
+    /**
+     * @brief reads a json config file, searches for valid control voltage and gate
+     *        connection definitions and configures the engine with the specified routing.
+     * @param path_to_file String which denotes the path of the file.
+     * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
+     */
+    JsonConfigReturnStatus load_cv_gate(const std::string& path_to_file);
 
     /**
      * @brief reads a json config file, searches for a valid "events" definition and

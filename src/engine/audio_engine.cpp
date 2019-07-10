@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iomanip>
+#include <functional>
 
 #include "twine/src/twine_internal.h"
 
@@ -7,6 +8,7 @@
 #include "logging.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
+#include "plugins/lfo_plugin.h"
 #include "plugins/equalizer_plugin.h"
 #include "plugins/arpeggiator_plugin.h"
 #include "plugins/sample_player_plugin.h"
@@ -23,7 +25,6 @@ constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
-
 
 void ClipDetector::set_sample_rate(float samplerate)
 {
@@ -56,6 +57,19 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEve
             counter[i] += AUDIO_CHUNK_SIZE;
         }
     }
+}
+
+
+inline uint32_t get_single_bit(uint32_t data, int bit)
+{
+    constexpr uint32_t INITIAL_BIT_MASK = 0x80000000;
+    return (data << bit) & INITIAL_BIT_MASK;
+}
+
+uint32_t set_single_bit(uint32_t value, uint32_t data, int bit)
+{
+    uint32_t mask = 1u << bit;
+    return value? data | mask : data &mask;
 }
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
@@ -106,6 +120,24 @@ void AudioEngine::set_audio_output_channels(int channels)
     BaseEngine::set_audio_output_channels(channels);
 }
 
+EngineReturnStatus AudioEngine::set_cv_input_channels(int channels)
+{
+    if (channels > MAX_ENGINE_CV_IO_PORTS)
+    {
+        return EngineReturnStatus::INVALID_N_CHANNELS;
+    }
+    return BaseEngine::set_cv_input_channels(channels);
+}
+
+EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
+{
+    if (channels > MAX_ENGINE_CV_IO_PORTS)
+    {
+        return EngineReturnStatus::INVALID_N_CHANNELS;
+    }
+    return BaseEngine::set_cv_output_channels(channels);
+}
+
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
 {
     auto processor_node = _processors.find(track_name);
@@ -118,7 +150,7 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
-    Connection con = {input_channel, track_channel, track->id()};
+    AudioConnection con = {input_channel, track_channel, track->id()};
     _in_audio_connections.push_back(con);
     MIND_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
     return EngineReturnStatus::OK;
@@ -137,7 +169,7 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
-    Connection con = {output_channel, track_channel, track->id()};
+    AudioConnection con = {output_channel, track_channel, track->id()};
     _out_audio_connections.push_back(con);
     MIND_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
     return EngineReturnStatus::OK;
@@ -161,6 +193,116 @@ EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int tra
         return status;
     }
     return connect_audio_output_channel(output_bus * 2 + 1, track_bus * 2 + 1, track_name);
+}
+
+EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& processor_name,
+                                                        const std::string& parameter_name,
+                                                        int cv_input_id)
+{
+    if (cv_input_id >= _cv_inputs)
+    {
+        return EngineReturnStatus::INVALID_CHANNEL;
+    }
+    auto processor_node = _processors.find(processor_name);
+    if(processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_PROCESSOR;
+    }
+    auto param = processor_node->second->parameter_from_name(parameter_name);
+    if (param == nullptr)
+    {
+        return EngineReturnStatus::INVALID_PARAMETER;
+    }
+    CvConnection con;
+    con.processor_id = processor_node->second->id();
+    con.parameter_id = param->id();
+    con.cv_id = cv_input_id;
+    _cv_in_routes.push_back(con);
+    MIND_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& processor_name,
+                                                          const std::string& parameter_name,
+                                                          int cv_output_id)
+{
+    if (cv_output_id >= _cv_inputs)
+    {
+        return EngineReturnStatus::ERROR;
+    }
+    auto processor_node = _processors.find(processor_name);
+    if (processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_PROCESSOR;
+    }
+    auto param = processor_node->second->parameter_from_name(parameter_name);
+    if (param == nullptr)
+    {
+        return EngineReturnStatus::INVALID_PARAMETER;
+    }
+    auto res = processor_node->second->connect_cv_from_parameter(param->id(), cv_output_id);
+    if (res != ProcessorReturnCode::OK)
+    {
+        return EngineReturnStatus::ERROR;
+    }
+    MIND_LOG_INFO("Connected parameter {} on {} to cv output {}", parameter_name, processor_name, cv_output_id);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& processor_name,
+                                                          int gate_input_id,
+                                                          int note_no,
+                                                          int channel)
+{
+    if (gate_input_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    {
+        return EngineReturnStatus::ERROR;
+    }
+    auto processor_node = _processors.find(processor_name);
+    if(processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_PROCESSOR;
+    }
+    GateConnection con;
+    con.processor_id = processor_node->second->id();
+    con.note_no = note_no;
+    con.channel = channel;
+    _gate_in_routes.push_back(con);
+    MIND_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& processor_name,
+                                                            int gate_output_id,
+                                                            int note_no,
+                                                            int channel)
+{
+    if (gate_output_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    {
+        return EngineReturnStatus::ERROR;
+    }
+    auto processor_node = _processors.find(processor_name);
+    if(processor_node == _processors.end())
+    {
+        return EngineReturnStatus::INVALID_PROCESSOR;
+    }
+    auto res = processor_node->second->connect_gate_from_processor(gate_output_id, channel, note_no);
+    if (res != ProcessorReturnCode::OK)
+    {
+        return EngineReturnStatus::ERROR;
+    }
+    MIND_LOG_INFO("Connected processor {} to gate output {} from channel {}", gate_output_id, processor_name, channel);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_gate_to_sync(int gate_input_id, int ppq_ticks)
+{
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::connect_sync_to_gate(int gate_output_id, int ppq_ticks)
+{
+    return EngineReturnStatus::OK;
 }
 
 bool AudioEngine::realtime()
@@ -206,6 +348,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     else if (uid == "sushi.testing.gain")
     {
         instance = new gain_plugin::GainPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.lfo")
+    {
+        instance = new lfo_plugin::LfoPlugin(_host_control);
     }
     else if (uid == "sushi.testing.equalizer")
     {
@@ -284,7 +430,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
     {
         /* TODO - When non-rt callbacks for events are ready we can have the
          * rt processor list re-allocated outside the rt domain
-         * In the meantime, put alilmit in the number of processors */
+         * In the meantime, put a limit on the number of processors */
         MIND_LOG_ERROR("Realtime processor list full");
         assert(false);
     }
@@ -306,7 +452,10 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
     return true;
 }
 
-void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer)
+void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                                SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                                ControlBuffer* in_controls,
+                                ControlBuffer* out_controls)
 {
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
@@ -327,6 +476,11 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         send_rt_event(in_event);
     }
 
+    if (_cv_inputs > 0)
+    {
+        _route_cv_gate_ins(*in_controls);
+    }
+
     _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
 
@@ -339,7 +493,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     if (_multicore_processing)
     {
         _worker_pool->wakeup_workers();
-        _retrieve_events_from_tracks();
+        _retrieve_events_from_tracks(*out_controls);
     }
     else
     {
@@ -347,8 +501,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         {
             track->render();
         }
+        _process_outgoing_events(*out_controls, _processor_out_queue);
     }
-
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
@@ -508,7 +662,7 @@ EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, i
 
 EngineReturnStatus AudioEngine::create_track(const std::string &name, int channel_count)
 {
-    if((channel_count != 1 && channel_count != 2))
+    if((channel_count < 0 || channel_count > 2))
     {
         MIND_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
@@ -706,7 +860,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
     }
     else
     {
-        track->set_event_output(&_main_out_queue);
+        track->set_event_output(&_processor_out_queue);
     }
     if (realtime())
     {
@@ -854,16 +1008,12 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
     return true;
 }
 
-void AudioEngine::_retrieve_events_from_tracks()
+void AudioEngine::_retrieve_events_from_tracks(ControlBuffer& buffer)
 {
     for (auto& track : _audio_graph)
     {
         auto& event_buffer = track->output_event_buffer();
-        RtEvent event;
-        while (event_buffer.pop(event))
-        {
-            _main_out_queue.push(event);
-        }
+        _process_outgoing_events(buffer, event_buffer);
     }
 }
 
@@ -954,6 +1104,66 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
     file << std::setw(24) << "Engine total";
     print_single_timings_for_node(file, _process_timer, ENGINE_TIMING_ID);
     file.close();
+}
+
+void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
+{
+    for (const auto& r : _cv_in_routes)
+    {
+        float value = buffer.cv_values[r.cv_id];
+        auto ev = RtEvent::make_parameter_change_event(r.processor_id, 0, r.parameter_id, value);
+        send_rt_event(ev);
+    }
+    // Get gate state changes by xor:ing with previous states
+    uint32_t gate_diffs = _prev_gate_states ^ buffer.gate_values;
+    if (gate_diffs > 0)
+    {
+        for (const auto& r : _gate_in_routes)
+        {
+            if (get_single_bit(gate_diffs, r.gate_id))
+            {
+                auto gate_high = get_single_bit(buffer.gate_values, r.gate_id);
+                if (gate_high)
+                {
+                    auto ev = RtEvent::make_note_on_event(r.processor_id, 0, r.channel, r.note_no, 1.0f);
+                    send_rt_event(ev);
+                }
+                else
+                {
+                    auto ev = RtEvent::make_note_off_event(r.processor_id, 0, r.channel, r.note_no, 1.0f);
+                    send_rt_event(ev);
+                }
+            }
+        }
+    }
+    _prev_gate_states = buffer.gate_values;
+}
+
+void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtEventFifo& source_queue)
+{
+    RtEvent event;
+    while (source_queue.pop(event))
+    {
+        switch (event.type())
+        {
+            case RtEventType::CV_EVENT:
+            {
+                auto typed_event = event.cv_event();
+                buffer.cv_values[typed_event->cv_id()] = typed_event->value();
+                break;
+            }
+
+            case RtEventType::GATE_EVENT:
+            {
+                auto typed_event = event.gate_event();
+                buffer.gate_values = set_single_bit(typed_event->value(), buffer.gate_values, typed_event->gate_no());
+                break;
+            }
+
+            default:
+                _main_out_queue.push(event);
+        }
+    }
 }
 
 RealtimeState update_state(RealtimeState current_state)

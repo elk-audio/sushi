@@ -14,7 +14,9 @@ using namespace sushi;
 using namespace sushi::audio_frontend;
 using namespace sushi::midi_dispatcher;
 
-static constexpr unsigned int SAMPLE_RATE = 44000;
+constexpr float SAMPLE_RATE = 44000;
+constexpr int CV_CHANNELS = 0;
+
 
 class TestJackFrontend : public ::testing::Test
 {
@@ -40,7 +42,7 @@ protected:
 
 TEST_F(TestJackFrontend, TestOperation)
 {
-    JackFrontendConfiguration config("Jack Client", "Jack Server", false);
+    JackFrontendConfiguration config("Jack Client", "Jack Server", false, CV_CHANNELS, CV_CHANNELS);
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 

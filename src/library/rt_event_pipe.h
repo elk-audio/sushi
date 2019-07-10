@@ -18,13 +18,7 @@ class RtEventPipe
 {
 public:
     virtual void send_event(RtEvent event) = 0;
-
 };
-
-
-
-
-
 
 } // end namespace sushi
 
