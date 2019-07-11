@@ -42,6 +42,8 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
+    _jalv.plugin = library_handle;
+
     // Ilias TODO: populate feature_list.
     // It CAN be nullptr, for hosts which support no additional features.
     const LV2_Feature** feature_list = nullptr;
@@ -370,25 +372,36 @@ void Lv2Wrapper::_cleanup()
 
 bool Lv2Wrapper::_register_parameters()
 {
-    char param_name[LV2_STRING_BUFFER_SIZE] = {0};
-
-    //VstInt32 idx = 0;
     bool param_inserted_ok = true;
-    /*while (param_inserted_ok && (idx < _plugin_handle->numParams) )
+
+    for (int _pi = 0; _pi < _jalv.num_ports; ++_pi)
     {
-        // TODO - query for some more properties here eventually
-        _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
-        if (param_inserted_ok)
+        if (_jalv.ports[_pi].type == TYPE_CONTROL)
         {
-            MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
+            // Here I need to get the name of the port.
+            auto nameNode = lilv_port_get_name(_jalv.plugin, _jalv.ports[_pi].lilv_port);
+
+            std::string nameAsString = lilv_node_as_string(nameNode);
+
+            param_inserted_ok = register_parameter(new FloatParameterDescriptor(nameAsString, // name
+                    nameAsString, // label
+                    0, // range min
+                    1, // range max
+                    nullptr), // ParameterPreProcessor
+                    static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
+
+            if (param_inserted_ok)
+            {
+                MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), nameAsString);
+            }
+            else
+            {
+                MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), nameAsString);
+            }
+
+            lilv_node_free(nameNode);
         }
-        else
-        {
-            MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
-        }
-        idx++;
-    }*/
+    }
 
     return param_inserted_ok;
 }
@@ -399,8 +412,13 @@ void Lv2Wrapper::process_event(RtEvent event)
     {
         auto typed_event = event.parameter_change_event();
         auto id = typed_event->param_id();
-        /*assert(static_cast<VstInt32>(id) < _plugin_handle->numParams);*/
-        /*_plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), typed_event->value());*/
+
+        std::cout << "Parameter, ID: " << id << ", value: " << typed_event->value() << std::endl;
+
+        int portIndex = static_cast<int>(id);
+        assert( portIndex < _jalv.num_ports);
+
+        _jalv.ports[portIndex].control = typed_event->value();
     }
     else if (is_keyboard_event(event))
     {
@@ -415,7 +433,6 @@ void Lv2Wrapper::process_event(RtEvent event)
     {
         MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
-
 }
 
 void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -428,6 +445,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
     else
     {
+// TODO Ilias: Re-instate
         /*_vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);*/
 
         _map_audio_buffers(in_buffer, out_buffer);
@@ -456,9 +474,6 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         }
 
         lilv_instance_run(_jalv.instance, AUDIO_CHUNK_SIZE);
-
-        // Old VST code
-/*        _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);*/
     }
 }
 

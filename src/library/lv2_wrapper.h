@@ -117,7 +117,7 @@ private:
     void _cleanup();
 
     /**
-     * @brief Iterate over VsT parameters and register internal FloatParameterDescriptor
+     * @brief Iterate over LV2 parameters and register internal FloatParameterDescriptor
      *        for each one of them.
      * @return True if all parameters were registered properly.
      */
