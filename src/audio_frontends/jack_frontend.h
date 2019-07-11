@@ -140,8 +140,8 @@ namespace sushi {
 namespace audio_frontend {
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    JackFrontendConfiguration(const& std::string,
-                              const& std::string,
+    JackFrontendConfiguration(const std::string&,
+                              const std::string&,
                               bool, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
