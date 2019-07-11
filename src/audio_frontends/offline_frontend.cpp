@@ -82,7 +82,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         MIND_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    status = _engine->set_cv_input_channels(off_config->cv_inputs);
+    status = _engine->set_cv_output_channels(off_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
         MIND_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);

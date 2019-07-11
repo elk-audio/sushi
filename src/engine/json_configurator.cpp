@@ -304,7 +304,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate(const std::string& path_to
                                                           cv_out["parameter"].GetString(),
                                                           cv_out["cv"].GetInt());
             MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                              "Failed to connect cv input {} to parameter {} on processor {}",
+                              "Failed to connect cv output {} to parameter {} on processor {}",
                               cv_out["cv"].GetInt(),
                               cv_out["parameter"].GetString(),
                               cv_out["processor"].GetString());

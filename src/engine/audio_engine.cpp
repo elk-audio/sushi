@@ -226,7 +226,7 @@ EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& pro
                                                           const std::string& parameter_name,
                                                           int cv_output_id)
 {
-    if (cv_output_id >= _cv_inputs)
+    if (cv_output_id >= _cv_outputs)
     {
         return EngineReturnStatus::ERROR;
     }
