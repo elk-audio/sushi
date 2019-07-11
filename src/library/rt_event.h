@@ -280,7 +280,6 @@ public:
                                                        _param_id(param_id) {}
 
     ObjectId param_id() const {return _param_id;}
-
     std::string* value() const {return _data;}
 
 protected:
@@ -361,7 +360,7 @@ public:
     ProcessorOperationRtEvent(RtEventType type,
                               Processor* instance) : ReturnableRtEvent(type, 0),
                                                      _instance{instance} {}
-    Processor* instance() {return _instance;}
+    Processor* instance() const {return _instance;}
 private:
     Processor* _instance;
 };
@@ -372,8 +371,8 @@ public:
     ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId track) : ReturnableRtEvent(type, 0),
                                                                                     _processor{processor},
                                                                                     _track{track} {}
-    ObjectId processor() {return _processor;}
-    ObjectId track() {return _track;}
+    ObjectId processor() const {return _processor;}
+    ObjectId track() const {return _track;}
 private:
     ObjectId _processor;
     ObjectId _track;
@@ -506,8 +505,8 @@ public:
                                                                                      _channel(channel),
                                                                                      _channel_type(channel_type) {}
 
-    int channel() {return _channel;}
-    ClipChannelType channel_type() {return _channel_type;}
+    int channel() const {return _channel;}
+    ClipChannelType channel_type() const {return _channel_type;}
 
 private:
     int _channel;
@@ -532,7 +531,7 @@ public:
     int sample_offset() const {return _base_event.sample_offset();}
 
     /* Access functions protected by asserts */
-    const KeyboardRtEvent* keyboard_event()
+    const KeyboardRtEvent* keyboard_event() const
     {
         assert(_keyboard_event.type() == RtEventType::NOTE_ON ||
                _keyboard_event.type() == RtEventType::NOTE_OFF ||
@@ -540,7 +539,7 @@ public:
         return &_keyboard_event;
     }
 
-    const KeyboardCommonRtEvent* keyboard_common_event()
+    const KeyboardCommonRtEvent* keyboard_common_event() const
     {
         assert(_keyboard_event.type() == RtEventType::AFTERTOUCH ||
                _keyboard_event.type() == RtEventType::PITCH_BEND ||
@@ -588,16 +587,42 @@ public:
         return &_processor_command_event;
     }
 
+    // ReturnableEvent and every event type that inherits from it
+    // needs a non-const accessor function as well
+
+    const ReturnableRtEvent* returnable_event() const
+    {
+        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        return &_returnable_event;
+    }
+
     ReturnableRtEvent* returnable_event()
     {
         assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
         return &_returnable_event;
     }
 
+    const ProcessorOperationRtEvent* processor_operation_event() const
+    {
+        assert(_processor_operation_event.type() == RtEventType::INSERT_PROCESSOR);
+        return &_processor_operation_event;
+    }
+
     ProcessorOperationRtEvent* processor_operation_event()
     {
         assert(_processor_operation_event.type() == RtEventType::INSERT_PROCESSOR);
         return &_processor_operation_event;
+    }
+
+    const ProcessorReorderRtEvent* processor_reorder_event() const
+    {
+        assert(_processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR ||
+               _processor_reorder_event.type() == RtEventType::ADD_PROCESSOR_TO_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR_FROM_TRACK ||
+               _processor_reorder_event.type() == RtEventType::ADD_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_TRACK);
+        ;
+        return &_processor_reorder_event;
     }
 
     ProcessorReorderRtEvent* processor_reorder_event()
@@ -611,19 +636,25 @@ public:
         return &_processor_reorder_event;
     }
 
+    const AsyncWorkRtEvent* async_work_event() const
+    {
+        assert(_async_work_event.type() == RtEventType::ASYNC_WORK);
+        return &_async_work_event;
+    }
+
     AsyncWorkRtEvent* async_work_event()
     {
         assert(_async_work_event.type() == RtEventType::ASYNC_WORK);
         return &_async_work_event;
     }
 
-    AsyncWorkRtCompletionEvent* async_work_completion_event()
+    const AsyncWorkRtCompletionEvent* async_work_completion_event() const
     {
         assert(_async_work_completion_event.type() == RtEventType::ASYNC_WORK_NOTIFICATION);
         return &_async_work_completion_event;
     }
 
-    DataPayloadRtEvent* data_payload_event()
+    const DataPayloadRtEvent* data_payload_event() const
     {
         assert(_data_payload_event.type() == RtEventType::STRING_DELETE ||
                _data_payload_event.type() == RtEventType::BLOB_DELETE ||
@@ -632,37 +663,37 @@ public:
 
     }
 
-    SynchronisationRtEvent* syncronisation_event()
+    const SynchronisationRtEvent* syncronisation_event() const
     {
         assert(_synchronisation_event.type() == RtEventType::SYNC);
         return &_synchronisation_event;
     }
 
-    TempoRtEvent* tempo_event()
+    const TempoRtEvent* tempo_event() const
     {
         assert(_tempo_event.type() == RtEventType::TEMPO);
         return &_tempo_event;
     }
 
-    TimeSignatureRtEvent* time_signature_event()
+    const TimeSignatureRtEvent* time_signature_event() const
     {
         assert(_time_signature_event.type() == RtEventType::TIME_SIGNATURE);
         return &_time_signature_event;
     }
 
-    PlayingModeRtEvent* playing_mode_event()
+    const PlayingModeRtEvent* playing_mode_event() const
     {
         assert(_playing_mode_event.type() == RtEventType::PLAYING_MODE);
         return &_playing_mode_event;
     }
 
-    SyncModeRtEvent* sync_mode_event()
+    const SyncModeRtEvent* sync_mode_event() const
     {
         assert(_sync_mode_event.type() == RtEventType::SYNC_MODE);
         return &_sync_mode_event;
     }
 
-    ClipNotificationRtEvent* clip_notification_event()
+    const ClipNotificationRtEvent* clip_notification_event() const
     {
         assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
         return &_clip_notification_event;

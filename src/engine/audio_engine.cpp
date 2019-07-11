@@ -888,7 +888,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
     return EngineReturnStatus::OK;
 }
 
-bool AudioEngine::_handle_internal_events(RtEvent &event)
+bool AudioEngine::_handle_internal_events(RtEvent& event)
 {
     switch (event.type())
     {

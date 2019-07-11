@@ -266,7 +266,7 @@ bool Vst2xWrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Vst2xWrapper::process_event(RtEvent event)
+void Vst2xWrapper::process_event(const RtEvent& event)
 {
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {

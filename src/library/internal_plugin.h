@@ -30,7 +30,7 @@ public:
 
     virtual ~InternalPlugin() {};
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 

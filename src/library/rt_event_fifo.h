@@ -18,7 +18,7 @@ class RtEventFifo : public RtEventPipe
 {
 public:
 
-    inline bool push(RtEvent event) {return _fifo.push(event);}
+    inline bool push(const RtEvent& event) {return _fifo.push(event);}
 
     inline bool pop(RtEvent& event)
     {
@@ -27,7 +27,7 @@ public:
 
     inline bool empty() {return _fifo.wasEmpty();}
 
-    virtual void send_event(RtEvent event) override {push(event);}
+    void send_event(const RtEvent &event) override {push(event);}
 
 private:
     memory_relaxed_aquire_release::CircularFifo<RtEvent, MAX_EVENTS_IN_QUEUE> _fifo;

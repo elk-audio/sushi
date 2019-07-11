@@ -59,7 +59,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

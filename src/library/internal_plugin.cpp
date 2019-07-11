@@ -105,7 +105,7 @@ bool InternalPlugin::register_data_property(const std::string &id,
 }
 
 
-void InternalPlugin::process_event(RtEvent event)
+void InternalPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

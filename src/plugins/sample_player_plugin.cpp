@@ -62,7 +62,7 @@ SamplePlayerPlugin::~SamplePlayerPlugin()
     delete _sample_file_property;
 }
 
-void SamplePlayerPlugin::process_event(RtEvent event)
+void SamplePlayerPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

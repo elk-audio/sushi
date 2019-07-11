@@ -168,7 +168,7 @@ public:
     }
 
     /* Inherited from Processor */
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out) override;
 
@@ -192,7 +192,7 @@ public:
     }
 
     /* Inherited from RtEventPipe */
-    void send_event(RtEvent event) override;
+    void send_event(const RtEvent& event) override;
 
 private:
     void _common_init();

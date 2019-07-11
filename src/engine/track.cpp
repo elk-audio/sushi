@@ -162,7 +162,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
     _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
-void Track::process_event(RtEvent event)
+void Track::process_event(const RtEvent& event)
 {
     if (is_keyboard_event(event))
     {
@@ -185,7 +185,7 @@ void Track::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void Track::send_event(RtEvent event)
+void Track::send_event(const RtEvent& event)
 {
     if (is_keyboard_event(event))
     {

@@ -204,7 +204,7 @@ void Vst3xWrapper::configure(float sample_rate)
 }
 
 
-void Vst3xWrapper::process_event(RtEvent event)
+void Vst3xWrapper::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

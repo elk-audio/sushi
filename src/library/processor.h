@@ -65,7 +65,7 @@ public:
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(RtEvent event) = 0;
+    virtual void process_event(const RtEvent& event) = 0;
 
     /**
      * @brief Process a chunk of audio.

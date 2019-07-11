@@ -281,8 +281,8 @@ TEST_F(TestLfoPlugin, TestProcess)
     _module_under_test->process_audio(in_buffer, out_buffer);
     ASSERT_FALSE(_queue.empty());
     RtEvent event;
-    _queue.pop(event);
-    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+    ASSERT_TRUE(_queue.pop(event));
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
 
     // Connect a cv output to it
     auto param = _module_under_test->parameter_from_name("out");
@@ -290,7 +290,7 @@ TEST_F(TestLfoPlugin, TestProcess)
     // Calling process should now result in a cv event instead.
     _module_under_test->process_audio(in_buffer, out_buffer);
     ASSERT_FALSE(_queue.empty());
-    _queue.pop(event);
-    ASSERT_EQ(RtEventType::CV_EVENT, event.type());
-    ASSERT_EQ(2, event.cv_event()->cv_id());
+    ASSERT_TRUE(_queue.pop(event));
+    EXPECT_EQ(RtEventType::CV_EVENT, event.type());
+    EXPECT_EQ(2, event.cv_event()->cv_id());
 }

@@ -31,7 +31,7 @@ public:
         return ProcessorReturnCode::OK;
     }
 
-    void process_event(RtEvent /*event*/) override {}
+    void process_event(const RtEvent& /*event*/) override {}
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
     {
         out_buffer = in_buffer;
