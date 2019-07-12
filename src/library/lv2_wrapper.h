@@ -11,25 +11,10 @@
 
 #include <map>
 
-#include "library/processor.h"
-#include "library/lv2_plugin_loader.h"
-//#include "library/lv2_midi_event_fifo.h"
+#include "processor.h"
+#include "lv2_plugin_loader.h"
+//#include "lv2_midi_event_fifo.h"
 #include "../engine/base_event_dispatcher.h"
-
-#include "lv2/atom/atom.h"
-#include "lv2/buf-size/buf-size.h"
-#include "lv2/data-access/data-access.h"
-#include "lv2/options/options.h"
-#include "lv2/parameters/parameters.h"
-#include "lv2/patch/patch.h"
-#include "lv2/port-groups/port-groups.h"
-#include "lv2/port-props/port-props.h"
-#include "lv2/presets/presets.h"
-#include "lv2/state/state.h"
-#include "lv2/time/time.h"
-#include "lv2/ui/ui.h"
-#include "lv2/urid/urid.h"
-#include "lv2/worker/worker.h"
 
 namespace sushi {
 namespace lv2 {
@@ -37,8 +22,6 @@ namespace lv2 {
 /* Should match the maximum reasonable number of channels of a vst */
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
 constexpr int LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
-
-//void populate_nodes(Jalv& jalv, LilvWorld* world);
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.

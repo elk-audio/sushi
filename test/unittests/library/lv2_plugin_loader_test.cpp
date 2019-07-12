@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "library/symap.cpp"
 #include "library/lv2_plugin_loader.cpp"
 
 using namespace sushi;

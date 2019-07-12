@@ -11,15 +11,14 @@
 
 #include <map>
 
-#include "library/processor.h"
-//#include "library/lv2_midi_event_fifo.h"
-#include "library/lv2_evbuf.h"
-#include "../engine/base_event_dispatcher.h"
-
 // Temporary - just to check that it finds them.
 #include <lilv-0/lilv/lilv.h>
 
+#include "lv2/resize-port/resize-port.h"
+#include "lv2/midi/midi.h"
+#include "lv2/log/log.h"
 #include "lv2/atom/atom.h"
+#include "lv2/atom/forge.h"
 #include "lv2/buf-size/buf-size.h"
 #include "lv2/data-access/data-access.h"
 #include "lv2/options/options.h"
@@ -33,6 +32,13 @@
 #include "lv2/ui/ui.h"
 #include "lv2/urid/urid.h"
 #include "lv2/worker/worker.h"
+
+#include "processor.h"
+//#include "lv2_midi_event_fifo.h"
+#include "lv2_evbuf.h"
+#include "symap.h"
+
+#include "../engine/base_event_dispatcher.h"
 
 namespace sushi {
 namespace lv2 {
@@ -158,6 +164,23 @@ typedef struct {
 } JalvNodes;
 
 
+typedef struct {
+    LV2_Feature                map_feature;
+    LV2_Feature                unmap_feature;
+    LV2_State_Make_Path        make_path;
+    LV2_Feature                make_path_feature;
+    LV2_Worker_Schedule        sched;
+    LV2_Feature                sched_feature;
+    LV2_Worker_Schedule        ssched;
+    LV2_Feature                state_sched_feature;
+    LV2_Log_Log                llog;
+    LV2_Feature                log_feature;
+    LV2_Options_Option         options[6];
+    LV2_Feature                options_feature;
+    LV2_Feature                safe_restore_feature;
+    LV2_Extension_Data_Feature ext_data;
+} JalvFeatures;
+
 class Jalv
 {
 public:
@@ -172,14 +195,18 @@ public:
     LV2_URID_Map       map;            ///< URI => Int map
     LV2_URID_Unmap     unmap;          ///< Int => URI map
 
-/*  SerdEnv*           env;            ///< Environment for RDF printing
+    /*SerdEnv*           env;            ///< Environment for RDF printing
     Sratom*            sratom;         ///< Atom serialiser
-    Sratom*            ui_sratom;      ///< Atom serialiser for UI thread
+    Sratom*            ui_sratom;      ///< Atom serialiser for UI thread*/
+
     Symap*             symap;          ///< URI map
-    ZixSem             symap_lock;     ///< Lock for URI map
-    JalvBackend*       backend;        ///< Audio system backend
-    ZixRing*           ui_events;      ///< Port events from UI
-    ZixRing*           plugin_events;  ///< Port events from plugin*/
+
+    //ZixSem             symap_lock;     ///< Lock for URI map
+
+    //JalvBackend*       backend;        ///< Audio system backend
+
+    //ZixRing*           ui_events;      ///< Port events from UI
+    //ZixRing*           plugin_events;  ///< Port events from plugin
 
 //  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
@@ -237,8 +264,7 @@ public:
     bool               request_update; ///< True iff a plugin update is needed
     bool               safe_restore;   ///< Plugin restore() is thread-safe*/
 
-// TODO Ilias:
-/*  JalvFeatures       features;*/
+    JalvFeatures       features;
     const LV2_Feature** feature_list;
 };
 

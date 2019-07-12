@@ -42,21 +42,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 //#define VST_FORCE_DEPRECATED 0
 
-// Temporary - just to check that it finds them.
-#include <lilv-0/lilv/lilv.h>
-
-#include "lv2/atom/atom.h"
-#include "lv2/atom/forge.h"
-#include "lv2/data-access/data-access.h"
-#include "lv2/log/log.h"
-#include "lv2/midi/midi.h"
-#include "lv2/options/options.h"
-#include "lv2/resize-port/resize-port.h"
-#include "lv2/state/state.h"
-#include "lv2/urid/urid.h"
-#include "lv2/worker/worker.h"
-
-#include "library/lv2_data_structures.h"
+#include "lv2_data_structures.h"
 
 #include "constants.h"
 

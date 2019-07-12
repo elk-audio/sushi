@@ -28,27 +28,11 @@
 */
 #include <cstdlib>
 
-#include "library/lv2_plugin_loader.h"
-#include "library/lv2_data_structures.h"
+#include "lv2_plugin_loader.h"
 
-#include "library/lv2_host_callback.h"
+#include "lv2_host_callback.h"
 
 #include "logging.h"
-
-#include "lv2/atom/atom.h"
-#include "lv2/buf-size/buf-size.h"
-#include "lv2/data-access/data-access.h"
-#include "lv2/options/options.h"
-#include "lv2/parameters/parameters.h"
-#include "lv2/patch/patch.h"
-#include "lv2/port-groups/port-groups.h"
-#include "lv2/port-props/port-props.h"
-#include "lv2/presets/presets.h"
-#include "lv2/state/state.h"
-#include "lv2/time/time.h"
-#include "lv2/ui/ui.h"
-#include "lv2/urid/urid.h"
-#include "lv2/worker/worker.h"
 
 namespace sushi {
 namespace lv2 {
@@ -138,6 +122,30 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
 
+static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
+{
+    Jalv* jalv = (Jalv*)handle;
+//    zix_sem_wait(&jalv->symap_lock);
+    const LV2_URID id = symap_map(jalv->symap, uri);
+//    zix_sem_post(&jalv->symap_lock);
+    return id;
+}
+
+static const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
+{
+    Jalv* jalv = (Jalv*)handle;
+//    zix_sem_wait(&jalv->symap_lock);
+    const char* uri = symap_unmap(jalv->symap, urid);
+//    zix_sem_post(&jalv->symap_lock);
+    return uri;
+}
+
+static void init_feature(LV2_Feature* const dest, const char* const URI, void* data)
+{
+    dest->URI = URI;
+    dest->data = data;
+}
+
 PluginLoader::PluginLoader()
 {
     _jalv.world = lilv_world_new();
@@ -146,9 +154,23 @@ PluginLoader::PluginLoader()
     // on the local machine.
     /* Find all installed plugins */
     lilv_world_load_all(_jalv.world);
-    //jalv->world = world;
 
     populate_nodes(_jalv.nodes, _jalv.world);
+
+    _jalv.symap = symap_new();
+    //zix_sem_init(&_jalv.symap_lock, 1);
+    //zix_sem_init(&jalv.work_lock, 1);
+
+    _jalv.map.handle  = &_jalv; // What is this for? I may be stupid here.
+    _jalv.map.map     = map_uri;
+    init_feature(&_jalv.features.map_feature, LV2_URID__map, &_jalv.map);
+
+    //_jalv.worker.jalv       = &_jalv;
+    //_jalv.state_worker.jalv = &_jalv;
+
+    _jalv.unmap.handle  = &_jalv; // What is this for? I may be stupid here.
+    _jalv.unmap.unmap   = unmap_uri;
+    init_feature(&_jalv.features.unmap_feature, LV2_URID__unmap, &_jalv.unmap);
 }
 
 PluginLoader::~PluginLoader()

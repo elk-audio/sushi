@@ -8,8 +8,7 @@
 #include <sstream>
 #include <csignal>
 
-
-#include "library/lv2_wrapper.h"
+#include "lv2_wrapper.h"
 
 #include "logging.h"
 
@@ -625,15 +624,15 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
 
 #endif //SUSHI_BUILD_WITH_LV2
 #ifndef SUSHI_BUILD_WITH_LV2
-#include "library/lv2_wrapper.h"
+#include "lv2_wrapper.h"
 #include "logging.h"
 namespace sushi {
 namespace lv2 {
 MIND_GET_LOGGER;
-ProcessorReturnCode Vst3xWrapper::init(float /*sample_rate*/)
+ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with LV 2 support!");
+    MIND_LOG_ERROR("Sushi was not built with LV2 support!");
     return ProcessorReturnCode::ERROR;
 }}}
 #endif
