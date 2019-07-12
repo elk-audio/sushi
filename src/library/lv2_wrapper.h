@@ -107,8 +107,8 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
-    void create_ports(const LilvPlugin *plugin, const JalvNodes& nodes);
-    void create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value, const JalvNodes& nodes);
+    void create_ports(const LilvPlugin *plugin);
+    void create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -152,7 +152,6 @@ private:
     // TODO: Currently, this is instantiated in wrapper.
     // But if there's more than one plugin, there should not be two instances of _loader, right?
     PluginLoader _loader;
-    Jalv _jalv;
 
     bool show_hidden{true};
 

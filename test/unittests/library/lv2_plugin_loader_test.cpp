@@ -42,11 +42,11 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     loader.load_plugin(plugin_handle, SAMPLE_RATE, feature_list);
 
-    auto instance = loader.getPluginInstance();
+    auto instance = loader.getJalvModel().instance;
 
     ASSERT_NE(nullptr, instance);
 
-    loader.close_plugin_instance(instance);
+    loader.close_plugin_instance();
 
-    ASSERT_EQ(nullptr, loader.getPluginInstance());
+    ASSERT_EQ(nullptr, loader.getJalvModel().instance);
 }

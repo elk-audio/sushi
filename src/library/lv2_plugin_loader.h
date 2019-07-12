@@ -84,20 +84,15 @@ public:
 
     void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
 
-    void close_plugin_instance(LilvInstance *plugin_instance);
+    void close_plugin_instance();
 
-    LilvInstance* getPluginInstance();
-
-    JalvNodes getNodes()
+    Jalv& getJalvModel()
     {
-        return _nodes;
+        return _jalv;
     }
 
 private:
-    LilvWorld* _world;
-    LilvInstance* _plugin_instance;
-    JalvNodes _nodes; ///< Nodes
-
+    Jalv _jalv;
 };
 
 } // namespace lv2

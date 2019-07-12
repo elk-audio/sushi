@@ -42,7 +42,9 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    _jalv.plugin = library_handle;
+    Jalv& model =_loader.getJalvModel();
+
+    model.plugin = library_handle;
 
     // Ilias TODO: populate feature_list.
     // It CAN be nullptr, for hosts which support no additional features.
@@ -50,9 +52,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _loader.load_plugin(library_handle, _sample_rate, feature_list);
 
-    _jalv.instance = _loader.getPluginInstance();
-
-    if (_jalv.instance == nullptr)
+    if (model.instance == nullptr)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
@@ -77,7 +77,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _max_input_channels = 0;
     _max_output_channels = 0;
 
-    create_ports(library_handle, _loader.getNodes());
+    create_ports(library_handle);
 
     // Channel setup:
     _current_input_channels = _max_input_channels;
@@ -93,27 +93,29 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
-void Lv2Wrapper::create_ports(const LilvPlugin *plugin, const JalvNodes& nodes)
+void Lv2Wrapper::create_ports(const LilvPlugin *plugin)
 {
-    _jalv.num_ports = lilv_plugin_get_num_ports(plugin);
-    _jalv.ports = (struct Port*)calloc(_jalv.num_ports, sizeof(struct Port));
+    Jalv& model = _loader.getJalvModel();
+
+    model.num_ports = lilv_plugin_get_num_ports(plugin);
+    model.ports = (struct Port*)calloc(model.num_ports, sizeof(struct Port));
 
     float* default_values = (float*)calloc(lilv_plugin_get_num_ports(plugin), sizeof(float));
 
     lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values);
 
-    for (uint32_t i = 0; i < _jalv.num_ports; ++i)
+    for (uint32_t i = 0; i < model.num_ports; ++i)
     {
-        create_port(plugin, i, default_values[i], nodes);
+        create_port(plugin, i, default_values[i]);
     }
 
     // The following is not done in LV2Apply.
     // And for AMP at least, it is always null.
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
-            plugin, nodes.lv2_InputPort, nodes.lv2_control);
+            plugin, model.nodes.lv2_InputPort, model.nodes.lv2_control);
     if (control_input)
     {
-        _jalv.control_in = lilv_port_get_index(plugin, control_input);
+        model.control_in = lilv_port_get_index(plugin, control_input);
     }
 
     free(default_values);
@@ -124,9 +126,10 @@ void Lv2Wrapper::create_ports(const LilvPlugin *plugin, const JalvNodes& nodes)
    and Jack instantiation. The remaining instance-specific setup
    (e.g. buffers) is done later in activate_port().
 */
-void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value, const JalvNodes& nodes)
+void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value)
 {
-    struct Port* const port = &_jalv.ports[port_index];
+    Jalv& model = _loader.getJalvModel();
+    struct Port* const port = &(model.ports[port_index]);
 
     port->lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
     port->index = port_index;
@@ -138,14 +141,14 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
     port->evbuf = NULL; // For MIDI ports, otherwise NULL
     port->buf_size = 0; // Custom buffer size, or 0
 
-    const bool optional = lilv_port_has_property(plugin, port->lilv_port, nodes.lv2_connectionOptional);
+    const bool optional = lilv_port_has_property(plugin, port->lilv_port, model.nodes.lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
-    if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_InputPort))
+    if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.lv2_InputPort))
     {
         port->flow = FLOW_INPUT;
     }
-    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_OutputPort))
+    else if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.lv2_OutputPort))
     {
         port->flow = FLOW_OUTPUT;
     }
@@ -157,10 +160,10 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
     }
 
     const bool hidden = !show_hidden &&
-                        lilv_port_has_property(plugin, port->lilv_port, nodes.pprops_notOnGUI);
+                        lilv_port_has_property(plugin, port->lilv_port, model.nodes.pprops_notOnGUI);
 
     /* Set control values */
-    if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_ControlPort))
+    if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.lv2_ControlPort))
     {
         port->type = TYPE_CONTROL;
         port->control = isnan(default_value) ? 0.0f : default_value;
@@ -170,7 +173,7 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
 //          add_control(&_jalv.controls, new_port_control(_jalv, port->index));
         }
     }
-    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.lv2_AudioPort))
+    else if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.lv2_AudioPort))
     {
         port->type = TYPE_AUDIO;
 // Ilias TODO: Understand, maybe re-introduce.
@@ -181,7 +184,7 @@ port->type = TYPE_CV;
 #endif
 
     }
-    else if (lilv_port_is_a(plugin, port->lilv_port, nodes.atom_AtomPort))
+    else if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.atom_AtomPort))
     {
         port->type = TYPE_EVENT;
     }
@@ -202,7 +205,7 @@ port->type = TYPE_CV;
 // The below min_size code is not even present in lv2apply example.
 
     // Todo: This is always returned NULL for amp output, should it?
-    LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, nodes.rsz_minimumSize);
+    LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, model.nodes.rsz_minimumSize);
 
     if (min_size && lilv_node_is_int(min_size))
     {
@@ -356,30 +359,24 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    if (_jalv.instance != nullptr)
-    {
-        // Tell plugin to stop and shutdown
-        set_enabled(false);
+    // Tell plugin to stop and shutdown
+    set_enabled(false);
 
-        _loader.close_plugin_instance(_jalv.instance);
-
-// Ilias TODO: Use equivalent for LV2:
-//        _vst_dispatcher(effClose, 0, 0, 0, 0);
-
-        _jalv.instance = nullptr;
-    }
+    _loader.close_plugin_instance();
 }
 
 bool Lv2Wrapper::_register_parameters()
 {
     bool param_inserted_ok = true;
 
-    for (int _pi = 0; _pi < _jalv.num_ports; ++_pi)
+    Jalv& model = _loader.getJalvModel();
+
+    for (int _pi = 0; _pi < model.num_ports; ++_pi)
     {
-        if (_jalv.ports[_pi].type == TYPE_CONTROL)
+        if (_loader.getJalvModel().ports[_pi].type == TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
-            auto nameNode = lilv_port_get_name(_jalv.plugin, _jalv.ports[_pi].lilv_port);
+            auto nameNode = lilv_port_get_name(model.plugin, model.ports[_pi].lilv_port);
 
             std::string nameAsString = lilv_node_as_string(nameNode);
 
@@ -416,9 +413,9 @@ void Lv2Wrapper::process_event(RtEvent event)
         std::cout << "Parameter, ID: " << id << ", value: " << typed_event->value() << std::endl;
 
         int portIndex = static_cast<int>(id);
-        assert( portIndex < _jalv.num_ports);
+        assert( portIndex < _loader.getJalvModel().num_ports);
 
-        _jalv.ports[portIndex].control = typed_event->value();
+        _loader.getJalvModel().ports[portIndex].control = typed_event->value();
     }
     else if (is_keyboard_event(event))
     {
@@ -450,30 +447,32 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
         _map_audio_buffers(in_buffer, out_buffer);
 
-        for (_p = 0, _i = 0, _o = 0; _p < _jalv.num_ports; ++_p)
+        Jalv& model = _loader.getJalvModel();
+
+        for (_p = 0, _i = 0, _o = 0; _p < _loader.getJalvModel().num_ports; ++_p)
         {
-            if (_jalv.ports[_p].type == TYPE_CONTROL)
+            if (model.ports[_p].type == TYPE_CONTROL)
             {
-                lilv_instance_connect_port(_jalv.instance, _p, &_jalv.ports[_p].control);
+                lilv_instance_connect_port(model.instance, _p, &model.ports[_p].control);
             }
-            else if (_jalv.ports[_p].type == TYPE_AUDIO)
+            else if (model.ports[_p].type == TYPE_AUDIO)
             {
-                if (_jalv.ports[_p].flow == FLOW_INPUT)
+                if (model.ports[_p].flow == FLOW_INPUT)
                 {
-                    lilv_instance_connect_port(_jalv.instance, _p, _process_inputs[_i++]);
+                    lilv_instance_connect_port(model.instance, _p, _process_inputs[_i++]);
                 }
                 else
                 {
-                    lilv_instance_connect_port(_jalv.instance, _p, _process_outputs[_o++]);
+                    lilv_instance_connect_port(model.instance, _p, _process_outputs[_o++]);
                 }
             }
             else
             {
-                lilv_instance_connect_port(_jalv.instance, _p, NULL);
+                lilv_instance_connect_port(model.instance, _p, NULL);
             }
         }
 
-        lilv_instance_run(_jalv.instance, AUDIO_CHUNK_SIZE);
+        lilv_instance_run(model.instance, AUDIO_CHUNK_SIZE);
     }
 }
 

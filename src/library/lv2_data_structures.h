@@ -107,17 +107,59 @@ typedef struct {
     LV2_URID ui_updateRate;
 } JalvURIDs;
 
+
+typedef struct {
+    // Do I even use these?
+    LilvNode* atom_AtomPort;
+    LilvNode* atom_Chunk;
+    LilvNode* atom_Float;
+    LilvNode* atom_Path;
+    LilvNode* atom_Sequence;
+
+    LilvNode* lv2_AudioPort;
+    LilvNode* lv2_CVPort;
+    LilvNode* lv2_ControlPort;
+    LilvNode* lv2_InputPort;
+    LilvNode* lv2_OutputPort;
+    LilvNode* lv2_connectionOptional;
+    LilvNode* lv2_control;
+    LilvNode* lv2_default;
+    LilvNode* lv2_enumeration;
+    LilvNode* lv2_integer;
+    LilvNode* lv2_maximum;
+    LilvNode* lv2_minimum;
+    LilvNode* lv2_name;
+    LilvNode* lv2_reportsLatency;
+    LilvNode* lv2_sampleRate;
+    LilvNode* lv2_symbol;
+    LilvNode* lv2_toggled;
+    LilvNode* midi_MidiEvent;
+    LilvNode* pg_group;
+    LilvNode* pprops_logarithmic;
+    LilvNode* pprops_notOnGUI;
+    LilvNode* pprops_rangeSteps;
+    LilvNode* pset_Preset;
+    LilvNode* pset_bank;
+    LilvNode* rdfs_comment;
+    LilvNode* rdfs_label;
+    LilvNode* rdfs_range;
+    LilvNode* rsz_minimumSize;
+    LilvNode* work_interface;
+    LilvNode* work_schedule;
+    LilvNode* end;  ///< NULL terminator for easy freeing of entire structure
+} JalvNodes;
+
+
 class Jalv
 {
 public:
     JalvURIDs          urids;          ///< URIDs
-    //JalvNodes        nodes;          ///< Nodes
+    JalvNodes          nodes;          ///< Nodes
 
     LV2_Atom_Forge     forge;          ///< Atom forge
     const char*        prog_name;      ///< Program name (argv[0])
 
-//  Currently World handle lives in plugin loader.
-//  LilvWorld*         world;          ///< Lilv World
+    LilvWorld*         world;          ///< Lilv World
 
     LV2_URID_Map       map;            ///< URI => Int map
     LV2_URID_Unmap     unmap;          ///< Int => URI map
@@ -131,7 +173,7 @@ public:
     ZixRing*           ui_events;      ///< Port events from UI
     ZixRing*           plugin_events;  ///< Port events from plugin*/
 
-    void*              ui_event_buf;   ///< Buffer for reading UI port events
+//  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
 /*  JalvWorker         worker;         ///< Worker thread implementation
     JalvWorker         state_worker;   ///< Synchronous worker for state restore
@@ -197,52 +239,6 @@ public:
 
     const LV2_Feature** feature_list;
 };
-
-//////////////////
-//////////////////
-//////////////////
-
-
-typedef struct {
-    // Do I even use these?
-    LilvNode* atom_AtomPort;
-    LilvNode* atom_Chunk;
-    LilvNode* atom_Float;
-    LilvNode* atom_Path;
-    LilvNode* atom_Sequence;
-
-    LilvNode* lv2_AudioPort;
-    LilvNode* lv2_CVPort;
-    LilvNode* lv2_ControlPort;
-    LilvNode* lv2_InputPort;
-    LilvNode* lv2_OutputPort;
-    LilvNode* lv2_connectionOptional;
-    LilvNode* lv2_control;
-    LilvNode* lv2_default;
-    LilvNode* lv2_enumeration;
-    LilvNode* lv2_integer;
-    LilvNode* lv2_maximum;
-    LilvNode* lv2_minimum;
-    LilvNode* lv2_name;
-    LilvNode* lv2_reportsLatency;
-    LilvNode* lv2_sampleRate;
-    LilvNode* lv2_symbol;
-    LilvNode* lv2_toggled;
-    LilvNode* midi_MidiEvent;
-    LilvNode* pg_group;
-    LilvNode* pprops_logarithmic;
-    LilvNode* pprops_notOnGUI;
-    LilvNode* pprops_rangeSteps;
-    LilvNode* pset_Preset;
-    LilvNode* pset_bank;
-    LilvNode* rdfs_comment;
-    LilvNode* rdfs_label;
-    LilvNode* rdfs_range;
-    LilvNode* rsz_minimumSize;
-    LilvNode* work_interface;
-    LilvNode* work_schedule;
-    LilvNode* end;  ///< NULL terminator for easy freeing of entire structure
-} JalvNodes;
 
 } // end namespace lv2
 } // end namespace sushi

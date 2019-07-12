@@ -140,26 +140,21 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 PluginLoader::PluginLoader()
 {
-    _world = lilv_world_new();
+    _jalv.world = lilv_world_new();
 
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
     /* Find all installed plugins */
-    lilv_world_load_all(_world);
+    lilv_world_load_all(_jalv.world);
     //jalv->world = world;
 
-    populate_nodes(_nodes, _world);
+    populate_nodes(_jalv.nodes, _jalv.world);
 }
 
 PluginLoader::~PluginLoader()
 {
-    free_nodes(_nodes);
-    lilv_world_free(_world);
-}
-
-LilvInstance* PluginLoader::getPluginInstance()
-{
-    return _plugin_instance;
+    free_nodes(_jalv.nodes);
+    lilv_world_free(_jalv.world);
 }
 
 const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &plugin_URI_string)
@@ -171,8 +166,8 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         // program, which can cause an infinite loop.
     }
 
-    auto plugins = lilv_world_get_all_plugins(_world);
-    auto plugin_uri = lilv_new_uri(_world, plugin_URI_string.c_str());
+    auto plugins = lilv_world_get_all_plugins(_jalv.world);
+    auto plugin_uri = lilv_new_uri(_jalv.world, plugin_URI_string.c_str());
 
     if (!plugin_uri)
     {
@@ -205,12 +200,12 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
     /* Instantiate the plugin */
-    _plugin_instance = lilv_plugin_instantiate(
+    _jalv.instance = lilv_plugin_instantiate(
             plugin_handle,
             sample_rate,
             feature_list);
 
-    if (_plugin_instance == nullptr)
+    if (_jalv.instance == nullptr)
     {
         fprintf(stderr, "Failed to instantiate plugin.\n");
         // Ilias TODO: Handle error
@@ -219,21 +214,21 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
     // Ilias TODO: Not sure this should be here.
     // Maybe it should be called after ports are "dealt with", whatever that means.
     /* Activate plugin */
-    lilv_instance_activate(_plugin_instance);
+    lilv_instance_activate(_jalv.instance);
 }
 
-void PluginLoader::close_plugin_instance(LilvInstance *plugin_instance)
+void PluginLoader::close_plugin_instance()
 {
-    if (plugin_instance != nullptr)
+    // TODO Ilias: Currently, as this builds on the JALV example, only a single plugin is supported.
+    // Refactor to allow multiple olugins!
+
+    if (_jalv.instance != nullptr)
     {
-        lilv_instance_deactivate(plugin_instance);
-        lilv_instance_free(plugin_instance);
+        lilv_instance_deactivate(_jalv.instance);
+        lilv_instance_free(_jalv.instance);
     }
 
-    // Ilias TODO: Eventually also free plugin controls one loaded/mapped.
-
-    // Ilias TODO: Terrible design. Either it is a parameter, or it is stored, not both. FIX.
-    _plugin_instance = nullptr;
+    _jalv.instance = nullptr;
 }
 
 } // namespace lv2
