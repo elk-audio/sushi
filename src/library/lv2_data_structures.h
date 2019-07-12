@@ -67,12 +67,20 @@ struct Port {
     const LilvPort* lilv_port;  ///< LV2 port
     enum PortType   type;       ///< Data type
     enum PortFlow   flow;       ///< Data flow direction
-    void*           sys_port;   ///< For audio/MIDI ports, otherwise NULL
+
+    // Seems in JALV to be to hold the Jack midi port. Won't need it.
+    //void*         sys_port;   ///< For audio/MIDI ports, otherwise NULL
+
     LV2_Evbuf*      evbuf;      ///< For MIDI ports, otherwise NULL
     void*           widget;     ///< Control widget, if applicable
     size_t          buf_size;   ///< Custom buffer size, or 0
     uint32_t        index;      ///< Port index
     float           control;    ///< For control ports, otherwise 0.0f
+
+    // Ilias. For ranges. Only for control ports.
+    float           def{1.0f};
+    float           max{1.0f};
+    float           min{0.0f};
 };
 
 typedef struct {
@@ -196,15 +204,10 @@ public:
 */
     LilvInstance*      instance{nullptr};       ///< Plugin instance (shared library)
 
-#ifdef HAVE_SUIL
-    SuilHost*          ui_host;        ///< Plugin UI host support
-    SuilInstance*      ui_instance;    ///< Plugin UI instance (shared library)
-#endif
-
     void*              window;         ///< Window (if applicable)
     struct Port*       ports;          ///< Port array of size num_ports
 
-// TODO: ILIAS This needs re-introducing for control no?
+// TODO: Ilias This needs re-introducing for control no?
 /*  Controls           controls;       ///< Available plugin controls*/
 
 /*  uint32_t           block_length;   ///< Audio buffer size (block length)*/
@@ -234,9 +237,8 @@ public:
     bool               request_update; ///< True iff a plugin update is needed
     bool               safe_restore;   ///< Plugin restore() is thread-safe*/
 
-// TODO Ilias: May need re-introducing.
+// TODO Ilias:
 /*  JalvFeatures       features;*/
-
     const LV2_Feature** feature_list;
 };
 

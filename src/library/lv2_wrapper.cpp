@@ -137,7 +137,7 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
     port->flow = FLOW_UNKNOWN;
 
     // The below are not used in lv2apply example.
-    port->sys_port = NULL; // For audio/MIDI ports, otherwise NULL
+    //port->sys_port = NULL; // For audio/MIDI ports, otherwise NULL
     port->evbuf = NULL; // For MIDI ports, otherwise NULL
     port->buf_size = 0; // Custom buffer size, or 0
 
@@ -166,7 +166,28 @@ void Lv2Wrapper::create_port(const LilvPlugin *plugin, uint32_t port_index, floa
     if (lilv_port_is_a(plugin, port->lilv_port, model.nodes.lv2_ControlPort))
     {
         port->type = TYPE_CONTROL;
-        port->control = isnan(default_value) ? 0.0f : default_value;
+
+        LilvNode* minNode;
+        LilvNode* maxNode;
+        LilvNode* defNode;
+
+        lilv_port_get_range(plugin, port->lilv_port, &defNode, &minNode, &maxNode);
+
+        if(defNode!=nullptr)
+            port->def = lilv_node_as_float(defNode);
+
+        if(maxNode!=nullptr)
+            port->max = lilv_node_as_float(maxNode);
+
+        if(minNode!=nullptr)
+            port->min = lilv_node_as_float(minNode);
+
+        port->control = isnan(default_value) ? port->def : default_value;
+
+        lilv_node_free(minNode);
+        lilv_node_free(maxNode);
+        lilv_node_free(defNode);
+
         if (!hidden)
         {
 // Ilias TODO: Re-Introduce
@@ -373,17 +394,19 @@ bool Lv2Wrapper::_register_parameters()
 
     for (int _pi = 0; _pi < model.num_ports; ++_pi)
     {
-        if (_loader.getJalvModel().ports[_pi].type == TYPE_CONTROL)
+        const Port& currentPort = model.ports[_pi];
+
+        if (currentPort.type == TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
-            auto nameNode = lilv_port_get_name(model.plugin, model.ports[_pi].lilv_port);
+            auto nameNode = lilv_port_get_name(model.plugin, currentPort.lilv_port);
 
             std::string nameAsString = lilv_node_as_string(nameNode);
 
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(nameAsString, // name
                     nameAsString, // label
-                    0, // range min
-                    1, // range max
+                    currentPort.min, // range min
+                    currentPort.max, // range max
                     nullptr), // ParameterPreProcessor
                     static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
 
