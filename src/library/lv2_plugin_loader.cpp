@@ -125,18 +125,16 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 {
     Jalv* jalv = (Jalv*)handle;
-//    zix_sem_wait(&jalv->symap_lock);
+    std::unique_lock<std::mutex> lock(jalv->symap_lock); // Added by Ilias, replacing ZixSem
     const LV2_URID id = symap_map(jalv->symap, uri);
-//    zix_sem_post(&jalv->symap_lock);
     return id;
 }
 
 static const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
 {
     Jalv* jalv = (Jalv*)handle;
-//    zix_sem_wait(&jalv->symap_lock);
+    std::unique_lock<std::mutex> lock(jalv->symap_lock);  // Added by Ilias, replacing ZixSem
     const char* uri = symap_unmap(jalv->symap, urid);
-//    zix_sem_post(&jalv->symap_lock);
     return uri;
 }
 
@@ -158,7 +156,6 @@ PluginLoader::PluginLoader()
     populate_nodes(_jalv.nodes, _jalv.world);
 
     _jalv.symap = symap_new();
-    //zix_sem_init(&_jalv.symap_lock, 1);
     //zix_sem_init(&jalv.work_lock, 1);
 
     _jalv.map.handle  = &_jalv; // What is this for? I may be stupid here.

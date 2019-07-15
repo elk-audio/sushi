@@ -12,15 +12,39 @@
 
 #include "logging.h"
 
-namespace {
+namespace // anonymous namespace
+{
 
 static constexpr int LV2_STRING_BUFFER_SIZE = 256;
 static char canDoBypass[] = "bypass";
+
+/** These features have no data */
+    static const LV2_Feature static_features[] = {
+            { LV2_STATE__loadDefaultState, NULL },
+            { LV2_BUF_SIZE__powerOf2BlockLength, NULL },
+            { LV2_BUF_SIZE__fixedBlockLength, NULL },
+            { LV2_BUF_SIZE__boundedBlockLength, NULL } };
 
 } // anonymous namespace
 
 namespace sushi {
 namespace lv2 {
+
+/** Return true iff Sushi supports the given feature. */
+static bool
+feature_is_supported(Jalv* jalv, const char* uri)
+{
+    if (!strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive")) {
+        return true;
+    }
+
+    for (const LV2_Feature*const* f = jalv->feature_list; *f; ++f) {
+        if (!strcmp(uri, (*f)->URI)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 //constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                  // kVstBarsValid | kVstTimeSigValid;
@@ -45,11 +69,49 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     model.plugin = library_handle;
 
-    // Ilias TODO: populate feature_list.
-    // It CAN be nullptr, for hosts which support no additional features.
-    const LV2_Feature** feature_list = nullptr;
+    /* Build feature list for passing to plugins */
+    const LV2_Feature* const features[] = {
+            &model.features.map_feature/*,
+            &model.features.unmap_feature*/
+// TODO Ilias: Re-introduce these or remove!
+            /*,
+            &model.features.sched_feature,
+            &model.features.log_feature,
+            &model.features.options_feature,
+            &static_features[0],
+            &static_features[1],
+            &static_features[2],
+            &static_features[3],
+            NULL*/
+    };
 
-    _loader.load_plugin(library_handle, _sample_rate, feature_list);
+    // TODO Ilias: Dynamic cast? I should just RAII it.
+    model.feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
+
+    if (!model.feature_list)
+    {
+        fprintf(stderr, "Failed to allocate feature list\n");
+        //jalv_close(jalv);
+        //return -7;
+        // TODO Ilias: Deal with failure!
+    }
+    memcpy(model.feature_list, features, sizeof(features));
+
+    /* Check that any required features are supported */
+    LilvNodes* req_feats = lilv_plugin_get_required_features(model.plugin);
+    LILV_FOREACH(nodes, f, req_feats) {
+        const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
+        if (!feature_is_supported(&model, uri)) {
+            fprintf(stderr, "Feature %s is not supported\n", uri);
+            /*jalv_close(jalv);
+            return -8;*/
+            // TODO Ilias: Deal with failure!
+        }
+    }
+    lilv_nodes_free(req_feats);
+
+
+    _loader.load_plugin(library_handle, _sample_rate, model.feature_list);
 
     if (model.instance == nullptr)
     {

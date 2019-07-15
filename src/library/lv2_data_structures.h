@@ -10,6 +10,7 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include <map>
+#include <mutex>
 
 // Temporary - just to check that it finds them.
 #include <lilv-0/lilv/lilv.h>
@@ -200,8 +201,7 @@ public:
     Sratom*            ui_sratom;      ///< Atom serialiser for UI thread*/
 
     Symap*             symap;          ///< URI map
-
-    //ZixSem             symap_lock;     ///< Lock for URI map
+    std::mutex         symap_lock;     ///< Lock for URI map
 
     //JalvBackend*       backend;        ///< Audio system backend
 
