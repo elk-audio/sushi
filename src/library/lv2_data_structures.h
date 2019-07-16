@@ -35,11 +35,13 @@
 #include "lv2/worker/worker.h"
 
 #include "processor.h"
+
 //#include "lv2_midi_event_fifo.h"
-#include "lv2_evbuf.h"
+
 #include "symap.h"
 
 #include "../engine/base_event_dispatcher.h"
+#include "lv2_evbuf.h"
 
 namespace sushi {
 namespace lv2 {
@@ -79,6 +81,7 @@ struct Port {
     //void*         sys_port;   ///< For audio/MIDI ports, otherwise NULL
 
     LV2_Evbuf*      evbuf;      ///< For MIDI ports, otherwise NULL
+
     void*           widget;     ///< Control widget, if applicable
     size_t          buf_size;   ///< Custom buffer size, or 0
     uint32_t        index;      ///< Port index
@@ -196,17 +199,17 @@ public:
     LV2_URID_Map       map;            ///< URI => Int map
     LV2_URID_Unmap     unmap;          ///< Int => URI map
 
-    /*SerdEnv*           env;            ///< Environment for RDF printing
+/*  SerdEnv*           env;            ///< Environment for RDF printing
     Sratom*            sratom;         ///< Atom serialiser
     Sratom*            ui_sratom;      ///< Atom serialiser for UI thread*/
 
     Symap*             symap;          ///< URI map
     std::mutex         symap_lock;     ///< Lock for URI map
 
-    //JalvBackend*       backend;        ///< Audio system backend
+//  JalvBackend*       backend;        ///< Audio system backend
 
-    //ZixRing*           ui_events;      ///< Port events from UI
-    //ZixRing*           plugin_events;  ///< Port events from plugin
+//  ZixRing*           ui_events;      ///< Port events from UI
+//  ZixRing*           plugin_events;  ///< Port events from plugin
 
 //  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
@@ -237,8 +240,10 @@ public:
 // TODO: Ilias This needs re-introducing for control no?
 /*  Controls           controls;       ///< Available plugin controls*/
 
+// In Sushi this is AUDIO_CHUNK_SIZE instead.
 /*  uint32_t           block_length;   ///< Audio buffer size (block length)*/
-/*  size_t             midi_buf_size;  ///< Size of MIDI port buffers*/
+
+    size_t             midi_buf_size{4096};  ///< Size of MIDI port buffers
 
     uint32_t           control_in;     ///< Index of control input port
 
@@ -255,14 +260,14 @@ public:
 
 /*  float              bpm;            ///< Transport tempo in beats per minute
     bool               rolling;        ///< Transport speed (0=stop, 1=play)
-    bool               buf_size_set;   ///< True iff buffer size callback fired
     */
+    bool               buf_size_set{false};   ///< True iff buffer size callback fired
 
     bool               exit;           ///< True iff execution is finished
 
-/*  bool               has_ui;         ///< True iff a control UI is present
-    bool               request_update; ///< True iff a plugin update is needed
-    bool               safe_restore;   ///< Plugin restore() is thread-safe*/
+//  bool               has_ui;         ///< True iff a control UI is present
+    bool               request_update{false}; ///< True iff a plugin update is needed
+//  bool               safe_restore;   ///< Plugin restore() is thread-safe
 
     JalvFeatures       features;
     const LV2_Feature** feature_list;

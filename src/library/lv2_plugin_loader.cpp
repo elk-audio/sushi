@@ -27,6 +27,7 @@
 * POSSIBILITY OF SUCH DAMAGE.
 */
 #include <cstdlib>
+#include <iostream>
 
 #include "lv2_plugin_loader.h"
 
@@ -77,45 +78,6 @@ void populate_nodes(JalvNodes& nodes, LilvWorld* world)
     nodes.work_interface         = lilv_new_uri(world, LV2_WORKER__interface);
     nodes.work_schedule          = lilv_new_uri(world, LV2_WORKER__schedule);
     nodes.end                    = NULL;
-}
-
-void free_nodes(JalvNodes& nodes)
-{
-    lilv_node_free(nodes.atom_AtomPort);
-    lilv_node_free(nodes.atom_Chunk);
-    lilv_node_free(nodes.atom_Float);
-    lilv_node_free(nodes.atom_Path);
-    lilv_node_free(nodes.atom_Sequence);
-    lilv_node_free(nodes.lv2_AudioPort);
-    lilv_node_free(nodes.lv2_CVPort);
-    lilv_node_free(nodes.lv2_ControlPort);
-    lilv_node_free(nodes.lv2_InputPort);
-    lilv_node_free(nodes.lv2_OutputPort);
-    lilv_node_free(nodes.lv2_connectionOptional);
-    lilv_node_free(nodes.lv2_control);
-    lilv_node_free(nodes.lv2_default);
-    lilv_node_free(nodes.lv2_enumeration);
-    lilv_node_free(nodes.lv2_integer);
-    lilv_node_free(nodes.lv2_maximum);
-    lilv_node_free(nodes.lv2_minimum);
-    lilv_node_free(nodes.lv2_name);
-    lilv_node_free(nodes.lv2_reportsLatency);
-    lilv_node_free(nodes.lv2_sampleRate);
-    lilv_node_free(nodes.lv2_symbol);
-    lilv_node_free(nodes.lv2_toggled);
-    lilv_node_free(nodes.midi_MidiEvent);
-    lilv_node_free(nodes.pg_group);
-    lilv_node_free(nodes.pprops_logarithmic);
-    lilv_node_free(nodes.pprops_notOnGUI);
-    lilv_node_free(nodes.pprops_rangeSteps);
-    lilv_node_free(nodes.pset_Preset);
-    lilv_node_free(nodes.pset_bank);
-    lilv_node_free(nodes.rdfs_comment);
-    lilv_node_free(nodes.rdfs_label);
-    lilv_node_free(nodes.rdfs_range);
-    lilv_node_free(nodes.rsz_minimumSize);
-    lilv_node_free(nodes.work_interface);
-    lilv_node_free(nodes.work_schedule);
 }
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
@@ -172,7 +134,7 @@ PluginLoader::PluginLoader()
 
 PluginLoader::~PluginLoader()
 {
-    free_nodes(_jalv.nodes);
+//    free_nodes(_jalv.nodes);
     lilv_world_free(_jalv.world);
 }
 
@@ -243,11 +205,44 @@ void PluginLoader::close_plugin_instance()
 
     if (_jalv.instance != nullptr)
     {
+        _jalv.exit = true;
+
+        // TODO: Ilias These too are already freed elsewhere it seems?
+/*        for (uint32_t i = 0; i < _jalv.num_ports; ++i) {
+            if (_jalv.ports[i].evbuf) {
+                lv2_evbuf_free(_jalv.ports[i].evbuf);
+            }
+        }
+*/
         lilv_instance_deactivate(_jalv.instance);
         lilv_instance_free(_jalv.instance);
-    }
 
-    _jalv.instance = nullptr;
+        // TODO: Ilias This gives a segfault... Understand why, is it freed elsewhere?
+        //free(_jalv.ports);
+
+
+        for (LilvNode** n = (LilvNode**)&_jalv.nodes; *n; ++n) {
+            lilv_node_free(*n);
+        }
+
+        /*for (unsigned i = 0; i < _jalv.controls.n_controls; ++i) {
+            ControlID* const control = _jalv.controls.controls[i];
+            lilv_node_free(control->node);
+            lilv_node_free(control->symbol);
+            lilv_node_free(control->label);
+            lilv_node_free(control->group);
+            lilv_node_free(control->min);
+            lilv_node_free(control->max);
+            lilv_node_free(control->def);
+            free(control);
+        }
+        free(jalv->controls.controls);*/
+
+        // TODO: Ilias This gives a segfault... Understand why, is it freed elsewhere?
+        //free(_jalv.feature_list);
+
+        _jalv.instance = nullptr;
+    }
 }
 
 } // namespace lv2

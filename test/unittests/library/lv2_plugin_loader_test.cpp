@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "library/symap.cpp"
+#include "library/lv2_evbuf.cpp"
 #include "library/lv2_plugin_loader.cpp"
 
 using namespace sushi;
@@ -43,11 +44,11 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     loader.load_plugin(plugin_handle, SAMPLE_RATE, feature_list);
 
-    auto instance = loader.getJalvModel().instance;
+    auto instance = loader.getJalvModel()->instance;
 
     ASSERT_NE(nullptr, instance);
 
     loader.close_plugin_instance();
 
-    ASSERT_EQ(nullptr, loader.getJalvModel().instance);
+    ASSERT_EQ(nullptr, loader.getJalvModel()->instance);
 }

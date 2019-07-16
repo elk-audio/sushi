@@ -13,8 +13,16 @@
 
 #include "processor.h"
 #include "lv2_plugin_loader.h"
-//#include "lv2_midi_event_fifo.h"
+
+#include "lv2_evbuf.h"
 #include "../engine/base_event_dispatcher.h"
+
+//#include "lv2_midi_event_fifo.h"
+//#include "library/vst2x_midi_event_fifo.h"
+#include "library/rt_event_fifo.h"
+
+#include "midi_encoder.h"
+#include "midi_decoder.h"
 
 namespace sushi {
 namespace lv2 {
@@ -90,8 +98,10 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
-    void create_ports(const LilvPlugin *plugin);
-    void create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value);
+    void _jalv_allocate_port_buffers(Jalv *jalv);
+
+    void _create_ports(const LilvPlugin *plugin);
+    void _create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -118,33 +128,52 @@ private:
 
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
-    float _sample_rate;
+    void _convert_event_to_midi_buffer(RtEvent& event);
+
+    void _flush_event_queue();
+    void _process_midi_input_for_current_port();
+
+    float _sample_rate{0};
+
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
     ChunkSampleBuffer _dummy_input{1};
     ChunkSampleBuffer _dummy_output{1};
-//  Lv2MidiEventFIFO<LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
-    bool _can_do_soft_bypass;
-    bool _double_mono_input;
+
+    bool _can_do_soft_bypass{false};
+    bool _double_mono_input{false};
     int _number_of_programs{0};
 
     std::string _plugin_path;
-
-    // Ilias TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
-    // TODO: Currently, this is instantiated in wrapper.
-    // But if there's more than one plugin, there should not be two instances of _loader, right?
-    PluginLoader _loader;
 
     bool show_hidden{true};
 
     uint32_t _buffer_size; ///< Plugin <= >UI communication buffer size
 
+    //  VstTimeInfo _time_info;
 
-    // For iterating over buffers in process_audio
+    // This queue holds incoming midi events.
+    // They are parsed and converted to evbuf content for LV2 in
+    // process_audio.
+    RtEventFifo _event_queue;
+
+    // TODO: Ilias Check, can this initialization ever fail? then, make it pointer, and move construction to init();
+    // TODO: Currently, this is instantiated in wrapper.
+    // But if there's more than one plugin, there should not be two instances of _loader, right?
+    PluginLoader _loader;
+
+    // The below are all fields used in process_audio:
     uint32_t _p = 0, _i = 0, _o = 0;
-
-//    VstTimeInfo _time_info;
+    const KeyboardRtEvent* _keyboard_event_ptr{nullptr};
+    const KeyboardCommonRtEvent* _keyboard_common_event_ptr{nullptr};
+    const WrappedMidiRtEvent* _wrapped_midi_event_ptr{nullptr};
+    RtEvent _rt_event;
+    MidiDataByte _midi_data;
+    LV2_Evbuf_Iterator _lv2_evbuf_iterator;
+    LV2_Atom_Object _get_ATOM;
+    Port* _current_port{nullptr};
+    Jalv* _model{nullptr};
 };
 
 //VstSpeakerArrangementType arrangement_from_channels(int channels);

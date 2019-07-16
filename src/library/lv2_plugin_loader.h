@@ -72,9 +72,9 @@ public:
 
     void close_plugin_instance();
 
-    Jalv& getJalvModel()
+    Jalv* getJalvModel()
     {
-        return _jalv;
+        return &_jalv;
     }
 
 private:

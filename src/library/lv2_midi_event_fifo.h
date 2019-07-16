@@ -51,7 +51,6 @@ public:
      */
     Lv2MidiEventFIFO()
     {
-/*
         _midi_data = new VstMidiEvent[capacity];
         _vst_events = new VstEventsExtended();
         _vst_events->numEvents = 0;
@@ -65,13 +64,12 @@ public:
             midi_ev_p->flags = kVstMidiEventIsRealtime;
             _vst_events->events[i] = reinterpret_cast<VstEvent*>(midi_ev_p);
         }
-*/
     }
 
     ~Lv2MidiEventFIFO()
     {
-        /*delete[] _midi_data;
-        delete[] _vst_events;*/
+        delete[] _midi_data;
+        delete[] _vst_events;
     }
 
     /**
@@ -81,7 +79,7 @@ public:
     bool push(RtEvent event)
     {
         bool res = !_limit_reached;
-        _fill_vst_event(_write_idx, event);
+        _fill_lv2_event(_write_idx, event);
 
         _write_idx++;
         if (!_limit_reached)
@@ -98,31 +96,24 @@ public:
         return res;
     }
 
-/*
-    */
 /**
      * @brief Return pointer to stored VstEvents*
      *        You should process _all_ the returned values before any subsequent
      *        call to push(), as the internal buffer is flushed after the call.
      * @return Pointer to be passed directly to processEvents() in the real-time thread
-     *//*
+     */
 
     VstEvents* flush()
     {
-*/
-/*
         _vst_events->numEvents = _size;
 
         // reset internal buffers
         _size = 0;
         _write_idx = 0;
         _limit_reached = false;
-*//*
-
 
         return reinterpret_cast<VstEvents*>(_vst_events);
     }
-*/
 
 private:
     /**
@@ -131,21 +122,21 @@ private:
      */
     struct VstEventsExtended
     {
-        /*VstInt32 numEvents;
+        int numEvents;
         VstIntPtr reserved;
-        VstEvent* events[capacity];*/
+        VstEvent* events[capacity];
     };
 
     /**
-    * @brief Helper to initialize VstMidiEvent inside the buffer from Event
+    * @brief Helper to initialize Lv2MidiEvent inside the buffer from Event
     *
     * @note TODO: Event messages do not have MIDI channel information,
     *             so at the moment just pass 0. We'll have to rewrite this
     *             when we'll have a MidiEncoder available.
     */
-    void _fill_vst_event(const int idx, RtEvent event)
+    void _fill_lv2_event(const int idx, RtEvent event)
     {
-        /*auto midi_ev_p = &_midi_data[idx];
+        auto midi_ev_p = &_midi_data[idx];
         midi_ev_p->deltaFrames = static_cast<VstInt32>(event.sample_offset());
         MidiDataByte midi_data;
 
@@ -161,6 +152,7 @@ private:
             {
                 auto typed_event = event.keyboard_event();
                 midi_data = midi::encode_note_off(typed_event->channel(), typed_event->note(), typed_event->velocity());
+
                 // For some reason, VstMidiEvent has an additional explicit field noteOffVelocity
                 midi_ev_p->noteOffVelocity = midi_data[2];
                 break;
@@ -198,15 +190,15 @@ private:
             default:
                 return;
         }
-        std::copy(midi_data.begin(), midi_data.end(), midi_ev_p->midiData);*/
+        std::copy(midi_data.begin(), midi_data.end(), midi_ev_p->midiData);
     }
 
     int _size{0};
     int _write_idx{0};
     bool _limit_reached{false};
 
-//    VstMidiEvent* _midi_data;
-//    VstEventsExtended* _vst_events;
+    VstMidiEvent* _midi_data;
+    VstEventsExtended* _vst_events;
 };
 
 } // namespace lv2
