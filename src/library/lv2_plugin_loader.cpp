@@ -38,6 +38,78 @@
 namespace sushi {
 namespace lv2 {
 
+static const bool TRACE_OPTION = false;
+
+static inline bool lv2_ansi_start(FILE *stream, int color)
+{
+    // TODO: What is this.
+#ifdef HAVE_ISATTY
+    if (isatty(fileno(stream))) {
+    return fprintf(stream, "\033[0;%dm", color);
+}
+#endif
+    return 0;
+}
+
+static inline void lv2_ansi_reset(FILE *stream)
+{
+#ifdef HAVE_ISATTY
+    if (isatty(fileno(stream))) {
+    fprintf(stream, "\033[0m");
+    fflush(stream);
+}
+#endif
+}
+
+int lv2_vprintf(LV2_Log_Handle handle,
+                LV2_URID type,
+                const char *fmt,
+                va_list ap)
+{
+    // TODO: Lock
+    Jalv* jalv  = (Jalv*)handle;
+    bool  fancy = true;
+    if (type == jalv->urids.log_Trace && TRACE_OPTION)
+    {
+        lv2_ansi_start(stderr, 32);
+        fprintf(stderr, "trace: ");
+    }
+    else if (type == jalv->urids.log_Error)
+    {
+        lv2_ansi_start(stderr, 31);
+        fprintf(stderr, "error: ");
+    }
+    else if (type == jalv->urids.log_Warning)
+    {
+        lv2_ansi_start(stderr, 33);
+        fprintf(stderr, "warning: ");
+    }
+    else
+    {
+        fancy = false;
+    }
+
+    const int st = vfprintf(stderr, fmt, ap);
+
+    if (fancy)
+    {
+        lv2_ansi_reset(stderr);
+    }
+
+    return st;
+}
+
+int lv2_printf(LV2_Log_Handle handle,
+               LV2_URID type,
+               const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    const int ret = lv2_vprintf(handle, type, fmt, args);
+    va_end(args);
+    return ret;
+}
+
 // Ilias TODO: Unsure if these are global, or per plugin, yet.
 void populate_nodes(JalvNodes& nodes, LilvWorld* world)
 {
@@ -89,6 +161,7 @@ static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
     Jalv* jalv = (Jalv*)handle;
     std::unique_lock<std::mutex> lock(jalv->symap_lock); // Added by Ilias, replacing ZixSem
     const LV2_URID id = symap_map(jalv->symap, uri);
+
     return id;
 }
 
@@ -130,6 +203,43 @@ PluginLoader::PluginLoader()
     _jalv.unmap.handle  = &_jalv; // What is this for? I may be stupid here.
     _jalv.unmap.unmap   = unmap_uri;
     init_feature(&_jalv.features.unmap_feature, LV2_URID__unmap, &_jalv.unmap);
+
+    lv2_atom_forge_init(&_jalv.forge, &_jalv.map);
+
+    _jalv.urids.atom_Float           = symap_map(_jalv.symap, LV2_ATOM__Float);
+    _jalv.urids.atom_Int             = symap_map(_jalv.symap, LV2_ATOM__Int);
+    _jalv.urids.atom_Object          = symap_map(_jalv.symap, LV2_ATOM__Object);
+    _jalv.urids.atom_Path            = symap_map(_jalv.symap, LV2_ATOM__Path);
+    _jalv.urids.atom_String          = symap_map(_jalv.symap, LV2_ATOM__String);
+    _jalv.urids.atom_eventTransfer   = symap_map(_jalv.symap, LV2_ATOM__eventTransfer);
+    _jalv.urids.bufsz_maxBlockLength = symap_map(_jalv.symap, LV2_BUF_SIZE__maxBlockLength);
+    _jalv.urids.bufsz_minBlockLength = symap_map(_jalv.symap, LV2_BUF_SIZE__minBlockLength);
+    _jalv.urids.bufsz_sequenceSize   = symap_map(_jalv.symap, LV2_BUF_SIZE__sequenceSize);
+    _jalv.urids.log_Error            = symap_map(_jalv.symap, LV2_LOG__Error);
+    _jalv.urids.log_Trace            = symap_map(_jalv.symap, LV2_LOG__Trace);
+    _jalv.urids.log_Warning          = symap_map(_jalv.symap, LV2_LOG__Warning);
+    _jalv.urids.midi_MidiEvent       = symap_map(_jalv.symap, LV2_MIDI__MidiEvent);
+    _jalv.urids.param_sampleRate     = symap_map(_jalv.symap, LV2_PARAMETERS__sampleRate);
+    _jalv.urids.patch_Get            = symap_map(_jalv.symap, LV2_PATCH__Get);
+    _jalv.urids.patch_Put            = symap_map(_jalv.symap, LV2_PATCH__Put);
+    _jalv.urids.patch_Set            = symap_map(_jalv.symap, LV2_PATCH__Set);
+    _jalv.urids.patch_body           = symap_map(_jalv.symap, LV2_PATCH__body);
+    _jalv.urids.patch_property       = symap_map(_jalv.symap, LV2_PATCH__property);
+    _jalv.urids.patch_value          = symap_map(_jalv.symap, LV2_PATCH__value);
+    _jalv.urids.time_Position        = symap_map(_jalv.symap, LV2_TIME__Position);
+    _jalv.urids.time_bar             = symap_map(_jalv.symap, LV2_TIME__bar);
+    _jalv.urids.time_barBeat         = symap_map(_jalv.symap, LV2_TIME__barBeat);
+    _jalv.urids.time_beatUnit        = symap_map(_jalv.symap, LV2_TIME__beatUnit);
+    _jalv.urids.time_beatsPerBar     = symap_map(_jalv.symap, LV2_TIME__beatsPerBar);
+    _jalv.urids.time_beatsPerMinute  = symap_map(_jalv.symap, LV2_TIME__beatsPerMinute);
+    _jalv.urids.time_frame           = symap_map(_jalv.symap, LV2_TIME__frame);
+    _jalv.urids.time_speed           = symap_map(_jalv.symap, LV2_TIME__speed);
+    _jalv.urids.ui_updateRate        = symap_map(_jalv.symap, LV2_UI__updateRate);
+
+    _jalv.features.llog.handle  = &_jalv;
+    _jalv.features.llog.printf  = lv2_printf;
+    _jalv.features.llog.vprintf = lv2_vprintf;
+    init_feature(&_jalv.features.log_feature, LV2_LOG__log, &_jalv.features.llog);
 }
 
 PluginLoader::~PluginLoader()

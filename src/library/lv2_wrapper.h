@@ -128,10 +128,13 @@ private:
 
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
-    void _convert_event_to_midi_buffer(RtEvent& event);
+    void _deliver_inputs_to_plugin();
+    void _deliver_outputs_from_plugin();
 
+    void _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();
     void _process_midi_input_for_current_port();
+    void _process_midi_output_for_current_port();
 
     float _sample_rate{0};
 
@@ -156,7 +159,7 @@ private:
     // This queue holds incoming midi events.
     // They are parsed and converted to evbuf content for LV2 in
     // process_audio.
-    RtEventFifo _event_queue;
+    RtEventFifo _incoming_event_queue;
 
     // TODO: Ilias Check, can this initialization ever fail? then, make it pointer, and move construction to init();
     // TODO: Currently, this is instantiated in wrapper.
@@ -174,6 +177,18 @@ private:
     LV2_Atom_Object _get_ATOM;
     Port* _current_port{nullptr};
     Jalv* _model{nullptr};
+
+    // In process_midi_output_for_current_port, called by process_audio:
+    uint32_t _midi_frames, _midi_subframes, _midi_type, _midi_size;
+    uint8_t *_midi_body;
+    MidiDataByte _outgoing_midi_data;
+    midi::MessageType _outgoing_midi_type;
+    midi::ControlChangeMessage _decoded_midi_cc_msg;
+    midi::NoteOnMessage _decoded_node_on_msg;
+    midi::NoteOffMessage _decoded_node_off_msg;
+    midi::PitchBendMessage _decoded_pitch_bend_msg;
+    midi::PolyKeyPressureMessage _decoded_poly_pressure_msg;
+    midi::ChannelPressureMessage _decoded_channel_pressure_msg;
 };
 
 //VstSpeakerArrangementType arrangement_from_channels(int channels);

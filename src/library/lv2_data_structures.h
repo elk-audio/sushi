@@ -192,26 +192,17 @@ public:
     JalvNodes          nodes;          ///< Nodes
 
     LV2_Atom_Forge     forge;          ///< Atom forge
-    const char*        prog_name;      ///< Program name (argv[0])
 
     LilvWorld*         world;          ///< Lilv World
 
     LV2_URID_Map       map;            ///< URI => Int map
     LV2_URID_Unmap     unmap;          ///< Int => URI map
 
-/*  SerdEnv*           env;            ///< Environment for RDF printing
-    Sratom*            sratom;         ///< Atom serialiser
-    Sratom*            ui_sratom;      ///< Atom serialiser for UI thread*/
-
     Symap*             symap;          ///< URI map
     std::mutex         symap_lock;     ///< Lock for URI map
 
 //  JalvBackend*       backend;        ///< Audio system backend
 
-//  ZixRing*           ui_events;      ///< Port events from UI
-//  ZixRing*           plugin_events;  ///< Port events from plugin
-
-//  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
 /*  JalvWorker         worker;         ///< Worker thread implementation
     JalvWorker         state_worker;   ///< Synchronous worker for state restore
@@ -227,21 +218,10 @@ public:
     const LilvPlugin*  plugin;         ///< Plugin class (RDF data)
     LilvState*         preset;         ///< Current preset
 
-/*
-    LilvUIs*           uis;            ///< All plugin UIs (RDF data)LilvInstance
-    const LilvUI*      ui;             ///< Plugin UI (RDF data)
-    const LilvNode*    ui_type;        ///< Plugin UI type (unwrapped)
-*/
     LilvInstance*      instance{nullptr};       ///< Plugin instance (shared library)
 
     void*              window;         ///< Window (if applicable)
     struct Port*       ports;          ///< Port array of size num_ports
-
-// TODO: Ilias This needs re-introducing for control no?
-/*  Controls           controls;       ///< Available plugin controls*/
-
-// In Sushi this is AUDIO_CHUNK_SIZE instead.
-/*  uint32_t           block_length;   ///< Audio buffer size (block length)*/
 
     size_t             midi_buf_size{4096};  ///< Size of MIDI port buffers
 
@@ -249,25 +229,38 @@ public:
 
     uint32_t           num_ports;      ///< Size of the two following arrays:
 
-/*  uint32_t           plugin_latency; ///< Latency reported by plugin (if any)*/
-/*  float              ui_update_hz;   ///< Frequency of UI updates*/
+    uint32_t           plugin_latency{0}; ///< Latency reported by plugin (if any)
 
     float              sample_rate;    ///< Sample rate
 
-/*  uint32_t           event_delta_t;  ///< Frames since last update sent to UI*/
-
 //  uint32_t           position;       ///< Transport position in frames
+//  float              bpm;            ///< Transport tempo in beats per minute
+//  bool               rolling;        ///< Transport speed (0=stop, 1=play)
 
-/*  float              bpm;            ///< Transport tempo in beats per minute
-    bool               rolling;        ///< Transport speed (0=stop, 1=play)
-    */
     bool               buf_size_set{false};   ///< True iff buffer size callback fired
 
     bool               exit;           ///< True iff execution is finished
 
-//  bool               has_ui;         ///< True iff a control UI is present
     bool               request_update{false}; ///< True iff a plugin update is needed
 //  bool               safe_restore;   ///< Plugin restore() is thread-safe
+
+// TODO: Ilias The below needs re-introducing for control no?
+//  bool               has_ui;         ///< True iff a control UI is present
+/*  Controls           controls;       ///< Available plugin controls*/
+/*  uint32_t           event_delta_t;  ///< Frames since last update sent to UI*/
+/*  float              ui_update_hz;   ///< Frequency of UI updates*/
+/*
+    LilvUIs*           uis;            ///< All plugin UIs (RDF data)LilvInstance
+    const LilvUI*      ui;             ///< Plugin UI (RDF data)
+    const LilvNode*    ui_type;        ///< Plugin UI type (unwrapped)
+*/
+/*  SerdEnv*           env;            ///< Environment for RDF printing
+    Sratom*            sratom;         ///< Atom serialiser
+    Sratom*            ui_sratom;      ///< Atom serialiser for UI thread*/
+//  ZixRing*           ui_events;      ///< Port events from UI
+//  ZixRing*           plugin_events;  ///< Port events from plugin
+
+//  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
     JalvFeatures       features;
     const LV2_Feature** feature_list;

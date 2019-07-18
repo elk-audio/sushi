@@ -56,6 +56,12 @@ void Lv2Wrapper::_jalv_allocate_port_buffers(Jalv *jalv)
     for (uint32_t i = 0; i < jalv->num_ports; ++i)
     {
         struct Port* const port = &jalv->ports[i];
+
+       /* if(port->flow == FLOW_INPUT)
+            std::cout << "Input." << std::endl;
+        else if(port->flow == FLOW_OUTPUT)
+            std::cout << "Output." << std::endl;
+*/
         switch (port->type)
         {
             case TYPE_EVENT: {
@@ -72,7 +78,8 @@ void Lv2Wrapper::_jalv_allocate_port_buffers(Jalv *jalv)
                 lilv_instance_connect_port(
                         jalv->instance, i, lv2_evbuf_get_buffer(port->evbuf));
             }
-            default: break;
+            default:
+                break;
         }
     }
 }
@@ -99,16 +106,16 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     const LV2_Feature* const features[] = {
             &_model->features.map_feature,
             &_model->features.unmap_feature,
+            &_model->features.log_feature,
 // TODO Ilias: Re-introduce these or remove!
             /*
             &model.features.sched_feature,
-            &model.features.log_feature,
             &model.features.options_feature,
+            */
             &static_features[0],
             &static_features[1],
             &static_features[2],
             &static_features[3],
-            */
             nullptr
     };
 
@@ -312,7 +319,7 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
     lilv_node_free(min_size);
 }
 
-//
+
 void Lv2Wrapper::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
@@ -520,7 +527,7 @@ void Lv2Wrapper::process_event(RtEvent event)
     else if (is_keyboard_event(event))
     {
         //if (_vst_midi_events_fifo.push(event) == false)
-        if (_event_queue.push(event) == false)
+        if (_incoming_event_queue.push(event) == false)
         {
             MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
@@ -542,49 +549,188 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     {
         _map_audio_buffers(in_buffer, out_buffer);
 
-        for (_p = 0, _i = 0, _o = 0; _p < _model->num_ports; ++_p)
-        {
-            _current_port = &(_model->ports[_p]);
-
-            switch(_current_port->type)
-            {
-                case TYPE_CONTROL:
-                    lilv_instance_connect_port(_model->instance, _p, &_current_port->control);
-                    break;
-                case TYPE_AUDIO:
-                    if (_current_port->flow == FLOW_INPUT)
-                        lilv_instance_connect_port(_model->instance, _p, _process_inputs[_i++]);
-                    else
-                        lilv_instance_connect_port(_model->instance, _p, _process_outputs[_o++]);
-                    break;
-                case TYPE_EVENT:
-                    if (_current_port->flow == FLOW_INPUT)
-                    {
-                        lv2_evbuf_reset(_current_port->evbuf, true);
-                        _process_midi_input_for_current_port();
-
-                    }
-                    else // Output.
-                    {
-                        /* Clear event output for plugin to write to */
-                        lv2_evbuf_reset(_current_port->evbuf, false);
-                        // TODO: Use the MIDI data from the plugin output...!
-                    }
-                    break;
-                case TYPE_CV:
-                    assert(false); // TODO Ilias: Implement also CV support.
-                    break;
-                default:
-                    lilv_instance_connect_port(_model->instance, _p, NULL);
-            }
-        }
-        _model->request_update = false;
+        _deliver_inputs_to_plugin();
 
         lilv_instance_run(_model->instance, AUDIO_CHUNK_SIZE);
+
+        _deliver_outputs_from_plugin();
     }
 }
 
-void Lv2Wrapper::_process_midi_input_for_current_port() {
+void Lv2Wrapper::_deliver_inputs_to_plugin()
+{
+    for (_p = 0, _i = 0, _o = 0; _p < _model->num_ports; ++_p)
+    {
+        _current_port = &(_model->ports[_p]);
+
+        switch(_current_port->type)
+        {
+            case TYPE_CONTROL:
+                lilv_instance_connect_port(_model->instance, _p, &_current_port->control);
+                break;
+            case TYPE_AUDIO:
+                if (_current_port->flow == FLOW_INPUT)
+                    lilv_instance_connect_port(_model->instance, _p, _process_inputs[_i++]);
+                else
+                    lilv_instance_connect_port(_model->instance, _p, _process_outputs[_o++]);
+                break;
+            case TYPE_EVENT:
+                if (_current_port->flow == FLOW_INPUT)
+                {
+                    lv2_evbuf_reset(_current_port->evbuf, true);
+                    _process_midi_input_for_current_port();
+
+                }
+                else if (_current_port->flow == FLOW_OUTPUT)// Clear event output for plugin to write to.
+                {
+                    lv2_evbuf_reset(_current_port->evbuf, false);
+                }
+                break;
+            case TYPE_CV: // TODO Ilias: Implement also CV support.
+            case TYPE_UNKNOWN:
+                assert(false);
+                break;
+            default:
+                lilv_instance_connect_port(_model->instance, _p, NULL);
+        }
+    }
+    _model->request_update = false;
+}
+
+void Lv2Wrapper::_deliver_outputs_from_plugin()
+{
+    /* Deliver MIDI output and UI events */
+    for (_p = 0; _p < _model->num_ports; ++_p)
+    {
+        _current_port = &(_model->ports[_p]);
+        if(_current_port->flow == FLOW_OUTPUT)
+        {
+            switch(_current_port->type)
+            {
+                case TYPE_CONTROL:
+                    if (lilv_port_has_property(_model->plugin,
+                                               _current_port->lilv_port,
+                                               _model->nodes.lv2_reportsLatency))
+                    {
+                        if (_model->plugin_latency != _current_port->control)
+                        {
+                            _model->plugin_latency = _current_port->control;
+                            // jack_recompute_total_latencies(client);
+                        }
+                    }
+                    break;
+                case TYPE_EVENT:
+                    _process_midi_output_for_current_port();
+                    break;
+            }
+        }
+    }
+}
+
+void Lv2Wrapper::_process_midi_output_for_current_port()
+{
+    for (LV2_Evbuf_Iterator buf_i = lv2_evbuf_begin(_current_port->evbuf);
+         lv2_evbuf_is_valid(buf_i);
+         buf_i = lv2_evbuf_next(buf_i))
+    {
+        // Get event from LV2 buffer
+
+        lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
+        _midi_size--; // TODO: WEIRD, WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3...
+        if (_midi_type == _model->urids.midi_MidiEvent)
+        {
+            _outgoing_midi_data = midi::to_midi_data_byte(_midi_body, _midi_size);
+            _outgoing_midi_type = midi::decode_message_type(_outgoing_midi_data);
+
+            switch (_outgoing_midi_type)
+            {
+                case midi::MessageType::CONTROL_CHANGE:
+                {
+                    _decoded_midi_cc_msg = midi::decode_control_change(_outgoing_midi_data);
+                    output_event(RtEvent::make_parameter_change_event(0, // Target 0 here - not sure why. Same as in VST3.
+                                                                      _decoded_midi_cc_msg.channel,
+                                                                      _decoded_midi_cc_msg.controller,
+                                                                      _decoded_midi_cc_msg.value));
+                    break;
+                }
+
+                case midi::MessageType::NOTE_ON:
+                {
+                    _decoded_node_on_msg = midi::decode_note_on(_outgoing_midi_data);
+                    output_event(RtEvent::make_note_on_event(0,
+                                                             0, // Sample offset 0?
+                                                             _decoded_node_on_msg.channel,
+                                                             _decoded_node_on_msg.note,
+                                                             _decoded_node_on_msg.velocity));
+                    break;
+                }
+
+                case midi::MessageType::NOTE_OFF:
+                {
+                    _decoded_node_off_msg = midi::decode_note_off(_outgoing_midi_data);
+                    output_event(RtEvent::make_note_off_event(0,
+                                                              0, // Sample offset 0?
+                                                              _decoded_node_off_msg.channel,
+                                                              _decoded_node_off_msg.note,
+                                                              _decoded_node_off_msg.velocity));
+                    break;
+                }
+
+                case midi::MessageType::PITCH_BEND:
+                {
+                    _decoded_pitch_bend_msg = midi::decode_pitch_bend(_outgoing_midi_data);
+                    output_event(RtEvent::make_pitch_bend_event(0,
+                                                                0, // Sample offset 0?
+                                                                _decoded_pitch_bend_msg.channel,
+                                                                _decoded_pitch_bend_msg.value));
+                    break;
+                }
+
+                case midi::MessageType::POLY_KEY_PRESSURE:
+                {
+                    _decoded_poly_pressure_msg = midi::decode_poly_key_pressure(_outgoing_midi_data);
+                    output_event(RtEvent::make_note_aftertouch_event(0,
+                                                                     0, // Sample offset 0?
+                                                                     _decoded_poly_pressure_msg.channel,
+                                                                     _decoded_poly_pressure_msg.note,
+                                                                     _decoded_poly_pressure_msg.pressure));
+                    break;
+                }
+
+                case midi::MessageType::CHANNEL_PRESSURE:
+                {
+                    _decoded_channel_pressure_msg = midi::decode_channel_pressure(_outgoing_midi_data);
+                    output_event(RtEvent::make_aftertouch_event(0,
+                                                                0, // Sample offset 0?
+                                                                _decoded_channel_pressure_msg.channel,
+                                                                _decoded_channel_pressure_msg.pressure));
+                    break;
+                }
+
+                case midi::MessageType::PROGRAM_CHANGE:
+                {
+                    //midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(_outgoing_midi_data);
+                    // TODO. I don't see any RtEvent equivalent for this.
+                    //break;
+                }
+
+                default:
+                    output_event(RtEvent::make_wrapped_midi_event(0,
+                                                                  0, // Sample offset 0?
+                                                                  _outgoing_midi_data));
+                    break;
+            }
+        }
+
+        /*if (jalv->has_ui) {
+            // Forward event to UI
+            jalv_send_to_ui(jalv, p, type, size, body);
+        }*/
+    }
+}
+
+void Lv2Wrapper::_process_midi_input_for_current_port()
+{
     _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->evbuf);
 
     // For now there's no transport support
@@ -597,26 +743,30 @@ void Lv2Wrapper::_process_midi_input_for_current_port() {
                         (const uint8_t*)LV2_ATOM_BODY(lv2_pos));
     }*/
 
-    // This will never run for now! Kept for consistency
-    // with Jalv example. request_update is never set to true.
-    if (_model->request_update) {
+    // TODO: This will never run for now! Kept for consistency
+    // with Jalv example. Request_update is never set to true.
+    if (_model->request_update)
+    {
         /* Plugin state has changed, request an update */
         _get_ATOM = {
                 {sizeof(LV2_Atom_Object_Body), _model->urids.atom_Object},
                 {0,                            _model->urids.patch_Get}};
+
         lv2_evbuf_write(&_lv2_evbuf_iterator, 0, 0,
                         _get_ATOM.atom.type, _get_ATOM.atom.size,
                         (const uint8_t *) LV2_ATOM_BODY(&_get_ATOM));
     }
 
     // MIDI output, from incoming RT event queue into LV2 event buffers:
-    while (!_event_queue.empty()) {
-        if (_event_queue.pop(_rt_event)) {
+    while (!_incoming_event_queue.empty())
+    {
+        if (_incoming_event_queue.pop(_rt_event))
+        {
             _convert_event_to_midi_buffer(_rt_event);
 
             lv2_evbuf_write(&_lv2_evbuf_iterator,
                             _rt_event.sample_offset(), // Is sample_offset the timestamp?
-                            0,
+                            0, // Subframes
                             _model->urids.midi_MidiEvent,
                             _midi_data.size(),
                             _midi_data.data());
@@ -626,9 +776,9 @@ void Lv2Wrapper::_process_midi_input_for_current_port() {
 
 void Lv2Wrapper::_flush_event_queue()
 {
-    while (!_event_queue.empty())
+    while (!_incoming_event_queue.empty())
     {
-        _event_queue.pop(_rt_event);
+        _incoming_event_queue.pop(_rt_event);
     }
 }
 

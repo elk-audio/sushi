@@ -13,7 +13,7 @@ using namespace sushi::lv2;
 
 // Reference output signal from VstXSynth
 // in response to NoteON C4 (60), vel=127, default parameters
-/*static constexpr float VSTXSYNTH_EXPECTED_OUT[2][64] = {
+static constexpr float LV2SYNTH_EXPECTED_OUT[2][64] = {
         {
                 -0.29699999f, -0.29380956f, -0.29061913f, -0.28742871f, -0.28409326f, -0.28090283f,
                 -0.27771240f, -0.27437696f, -0.27118653f, -0.26799610f, -0.26466063f, -0.26147023f,
@@ -40,7 +40,7 @@ using namespace sushi::lv2;
                 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f,
                 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f
         }
-};*/
+};
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 
@@ -210,7 +210,7 @@ protected:
     {
         for (int j=0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
         {
-            ASSERT_FLOAT_EQ(VSTXSYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j]);
+            ASSERT_FLOAT_EQ(LV2SYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j]);
         }
     }
 

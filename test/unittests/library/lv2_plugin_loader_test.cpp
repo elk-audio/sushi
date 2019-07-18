@@ -38,8 +38,8 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     ASSERT_NE(nullptr, plugin_handle);
 
-    // Ilias TODO: populate feature_list.
-    // It CAN be nullptr, for hosts which support no additional features.
+    // Feature list can be nullptr, for hosts which support no additional features.
+    // The eg-amp plugin depends on no extra features, so this is fine.
     const LV2_Feature** feature_list = nullptr;
 
     loader.load_plugin(plugin_handle, SAMPLE_RATE, feature_list);
