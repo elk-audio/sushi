@@ -51,11 +51,9 @@ protected:
     {
     }
 
-    void SetUp(const std::string& plugin_path)
+    void SetUp(const std::string& plugin_URI)
     {
-        char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
-        _module_under_test = new Lv2Wrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
-        free(full_plugin_path);
+        _module_under_test = new lv2::Lv2Wrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -66,8 +64,9 @@ protected:
     {
         delete _module_under_test;
     }
+
     HostControlMockup _host_control;
-    Lv2Wrapper* _module_under_test;
+    Lv2Wrapper* _module_under_test{nullptr};
 };
 
 // TODO: Re-Instate the test below one-by one as the LV2 plug-in support is fleshed out.
@@ -93,13 +92,13 @@ protected:
     EXPECT_EQ(1, _module_under_test->output_channels());
 }*/
 
-/*TEST_F(TestLv2Wrapper, TestParameterInitialization)
+TEST_F(TestLv2Wrapper, TestParameterInitialization)
 {
-    SetUp("libagain.so");
+    SetUp("http://lv2plug.in/plugins/eg-amp");
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
-}*/
+}
 
 /*TEST_F(TestLv2Wrapper, TestPluginCanDos)
 {
@@ -109,11 +108,11 @@ protected:
 
 /*TEST_F(TestLv2Wrapper, TestParameterSetViaEvent)
 {
-    SetUp("libagain.so");
+    SetUp("http://lv2plug.in/plugins/eg-amp");
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
-    auto handle = _module_under_test->_plugin_handle;
-    EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
+    auto value = _module_under_test->parameter_value(0);
+    EXPECT_EQ(0.123f, value.second);
 }*/
 
 /*TEST_F(TestLv2Wrapper, TestProcess)
