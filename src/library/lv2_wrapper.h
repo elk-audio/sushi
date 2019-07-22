@@ -47,7 +47,6 @@ public:
             _sample_rate{0},
             _process_inputs{},
             _process_outputs{},
-            _can_do_soft_bypass{false},
             _double_mono_input{false},
             _plugin_path{lv2_plugin_uri}
     {
@@ -68,14 +67,6 @@ public:
     void process_event(RtEvent event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
-
-    void set_input_channels(int channels) override;
-
-    void set_output_channels(int channels) override;
-
-    void set_enabled(bool enabled) override;
-
-    void set_bypassed(bool bypassed) override;
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
@@ -116,8 +107,6 @@ private:
      */
     bool _register_parameters();
 
-    bool _update_speaker_arrangements(int inputs, int outputs);
-
     /**
      * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
      *        we can provide the plugin with a dual mono input/output instead.
@@ -144,7 +133,6 @@ private:
     ChunkSampleBuffer _dummy_input{1};
     ChunkSampleBuffer _dummy_output{1};
 
-    bool _can_do_soft_bypass{false};
     bool _double_mono_input{false};
     int _number_of_programs{0};
 

@@ -347,44 +347,6 @@ void Lv2Wrapper::configure(float sample_rate)
     return;
 }
 
-void Lv2Wrapper::set_input_channels(int channels)
-{
-    Processor::set_input_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
-}
-
-void Lv2Wrapper::set_output_channels(int channels)
-{
-    Processor::set_output_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
-}
-
-void Lv2Wrapper::set_enabled(bool enabled)
-{
-    Processor::set_enabled(enabled);
-    if (enabled)
-    {
-        /*_vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
-        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);*/
-    }
-    else
-    {
-        /*_vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
-        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);*/
-    }
-}
-
-void Lv2Wrapper::set_bypassed(bool bypassed)
-{
-    Processor::set_bypassed(bypassed);
-    if (_can_do_soft_bypass)
-    {
-        /*_vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, NULL, 0.0f);*/
-    }
-}
-
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId parameter_id) const
 {
     float value = 0.0;
@@ -557,7 +519,7 @@ void Lv2Wrapper::process_event(RtEvent event)
 
 void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_bypassed && !_can_do_soft_bypass)
+    if (_bypassed)
     {
          bypass_process(in_buffer, out_buffer);
         _flush_event_queue();
@@ -879,19 +841,6 @@ void Lv2Wrapper::notify_parameter_change(VstInt32 parameter_index, float value)
                                                   IMMEDIATE_PROCESS);
     _host_control.post_event(e);*//*
 }*/
-
-bool Lv2Wrapper::_update_speaker_arrangements(int inputs, int outputs)
-{
-    /*VstSpeakerArrangement in_arr;
-    VstSpeakerArrangement out_arr;
-    in_arr.numChannels = inputs;
-    in_arr.type = arrangement_from_channels(inputs);
-    out_arr.numChannels = outputs;
-    out_arr.type = arrangement_from_channels(outputs);
-    int res = _vst_dispatcher(effSetSpeakerArrangement, 0, (VstIntPtr)&in_arr, &out_arr, 0);
-    return res == 1;*/
-    return false;
-}
 
 /*VstTimeInfo* Lv2Wrapper::time_info()
 {
