@@ -152,6 +152,15 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
 
+    const LilvNode* uri_node = lilv_plugin_get_uri(_model->plugin);
+    const std::string uri_as_string = lilv_node_as_string(uri_node);
+    set_name(uri_as_string);
+
+    LilvNode* label_node = lilv_plugin_get_name(_model->plugin);
+    const std::string label_as_string = lilv_node_as_string(label_node);
+    set_label(label_as_string);
+    lilv_free(label_node);
+
 // Ilias TODO: Re-introduce if equivalent is found for LV2.
 // Get plugin can do:s
 //    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);

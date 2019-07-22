@@ -72,12 +72,12 @@ protected:
 // TODO: Re-Instate the test below one-by one as the LV2 plug-in support is fleshed out.
 // Expand them beyond the VST2 functionality the below set is based on.
 
-/*TEST_F(TestLv2Wrapper, TestSetName)
+TEST_F(TestLv2Wrapper, TestSetName)
 {
-    SetUp("libagain.so");
-    EXPECT_EQ("Gain", _module_under_test->name());
-    EXPECT_EQ("Gain", _module_under_test->label());
-}*/
+    SetUp("http://lv2plug.in/plugins/eg-amp");
+    EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
+    EXPECT_EQ("Simple Amplifier", _module_under_test->label());
+}
 
 /*TEST_F(TestLv2Wrapper, TestSetChannels)
 {
