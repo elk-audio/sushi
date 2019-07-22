@@ -106,14 +106,14 @@ TEST_F(TestLv2Wrapper, TestParameterInitialization)
     EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
 }*/
 
-/*TEST_F(TestLv2Wrapper, TestParameterSetViaEvent)
+TEST_F(TestLv2Wrapper, TestParameterSetViaEvent)
 {
     SetUp("http://lv2plug.in/plugins/eg-amp");
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
     auto value = _module_under_test->parameter_value(0);
     EXPECT_EQ(0.123f, value.second);
-}*/
+}
 
 /*TEST_F(TestLv2Wrapper, TestProcess)
 {

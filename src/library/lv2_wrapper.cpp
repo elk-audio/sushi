@@ -261,13 +261,13 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
 
         lilv_port_get_range(plugin, port->lilv_port, &defNode, &minNode, &maxNode);
 
-        if(defNode!=nullptr)
+        if(defNode != nullptr)
             port->def = lilv_node_as_float(defNode);
 
-        if(maxNode!=nullptr)
+        if(maxNode != nullptr)
             port->max = lilv_node_as_float(maxNode);
 
-        if(minNode!=nullptr)
+        if(minNode != nullptr)
             port->min = lilv_node_as_float(minNode);
 
         port->control = isnan(default_value) ? port->def : default_value;
@@ -378,12 +378,20 @@ void Lv2Wrapper::set_bypassed(bool bypassed)
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId parameter_id) const
 {
-    /*if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
+    float value = 0.0;
+    const int index = static_cast<int>(parameter_id);
+    if (index < _model->num_ports)
     {
-        float value = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(parameter_id));
-        return {ProcessorReturnCode::OK, value};
-    }*/
-    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+        struct Port* port = &_model->ports[index];
+        const LilvNode* s = lilv_port_get_symbol(_model->plugin, port->lilv_port);
+
+        if (port)
+        {
+            value = port->control;
+            return {ProcessorReturnCode::OK, value};
+        }
+    }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
 }
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(ObjectId parameter_id) const
@@ -393,6 +401,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(Obj
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
+    // TODO:  Ilias - Populate
     /*if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
         char buffer[kVstMaxParamStrLen] = "";
@@ -526,7 +535,6 @@ void Lv2Wrapper::process_event(RtEvent event)
     }
     else if (is_keyboard_event(event))
     {
-        //if (_vst_midi_events_fifo.push(event) == false)
         if (_incoming_event_queue.push(event) == false)
         {
             MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
@@ -757,7 +765,7 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
                         (const uint8_t *) LV2_ATOM_BODY(&_get_ATOM));
     }
 
-    // MIDI output, from incoming RT event queue into LV2 event buffers:
+    // MIDI transfer, from incoming RT event queue into LV2 event buffers:
     while (!_incoming_event_queue.empty())
     {
         if (_incoming_event_queue.pop(_rt_event))
