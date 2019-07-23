@@ -51,15 +51,7 @@ static inline bool lv2_ansi_start(FILE *stream, int color)
     return 0;
 }
 
-static inline void lv2_ansi_reset(FILE *stream)
-{
-#ifdef HAVE_ISATTY
-    if (isatty(fileno(stream))) {
-    fprintf(stream, "\033[0m");
-    fflush(stream);
-}
-#endif
-}
+MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 int lv2_vprintf(LV2_Log_Handle handle,
                 LV2_URID type,
@@ -67,35 +59,20 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 va_list ap)
 {
     LV2Model* model  = (LV2Model*)handle;
-    bool  fancy = true;
     if (type == model->urids.log_Trace && TRACE_OPTION)
     {
-        lv2_ansi_start(stderr, 32);
-        fprintf(stderr, "trace: ");
+        MIND_LOG_WARNING("LV2 trace: {}", fmt);
     }
     else if (type == model->urids.log_Error)
     {
-        lv2_ansi_start(stderr, 31);
-        fprintf(stderr, "error: ");
+        MIND_LOG_ERROR("LV2 error: {}", fmt);
     }
     else if (type == model->urids.log_Warning)
     {
-        lv2_ansi_start(stderr, 33);
-        fprintf(stderr, "warning: ");
-    }
-    else
-    {
-        fancy = false;
+        MIND_LOG_WARNING("LV2 warning: {}", fmt);
     }
 
-    const int st = vfprintf(stderr, fmt, ap);
-
-    if (fancy)
-    {
-        lv2_ansi_reset(stderr);
-    }
-
-    return st;
+    return 0;
 }
 
 int lv2_printf(LV2_Log_Handle handle,
@@ -150,8 +127,6 @@ void populate_nodes(Lv2_Host_Nodes& nodes, LilvWorld* world)
     nodes.work_schedule          = lilv_new_uri(world, LV2_WORKER__schedule);
     nodes.end                    = NULL;
 }
-
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
 
