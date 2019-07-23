@@ -66,20 +66,19 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 const char *fmt,
                 va_list ap)
 {
-    // TODO: Lock
-    Jalv* jalv  = (Jalv*)handle;
+    LV2Model* model  = (LV2Model*)handle;
     bool  fancy = true;
-    if (type == jalv->urids.log_Trace && TRACE_OPTION)
+    if (type == model->urids.log_Trace && TRACE_OPTION)
     {
         lv2_ansi_start(stderr, 32);
         fprintf(stderr, "trace: ");
     }
-    else if (type == jalv->urids.log_Error)
+    else if (type == model->urids.log_Error)
     {
         lv2_ansi_start(stderr, 31);
         fprintf(stderr, "error: ");
     }
-    else if (type == jalv->urids.log_Warning)
+    else if (type == model->urids.log_Warning)
     {
         lv2_ansi_start(stderr, 33);
         fprintf(stderr, "warning: ");
@@ -111,7 +110,7 @@ int lv2_printf(LV2_Log_Handle handle,
 }
 
 // Ilias TODO: Unsure if these are global, or per plugin, yet.
-void populate_nodes(JalvNodes& nodes, LilvWorld* world)
+void populate_nodes(Lv2_Host_Nodes& nodes, LilvWorld* world)
 {
     /* Cache URIs for concepts we'll use */
     nodes.atom_AtomPort          = lilv_new_uri(world, LV2_ATOM__AtomPort);
@@ -158,18 +157,18 @@ MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 {
-    Jalv* jalv = (Jalv*)handle;
-    std::unique_lock<std::mutex> lock(jalv->symap_lock); // Added by Ilias, replacing ZixSem
-    const LV2_URID id = symap_map(jalv->symap, uri);
+    LV2Model* model = (LV2Model*)handle;
+    std::unique_lock<std::mutex> lock(model->symap_lock); // Added by Ilias, replacing ZixSem
+    const LV2_URID id = symap_map(model->symap, uri);
 
     return id;
 }
 
 static const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
 {
-    Jalv* jalv = (Jalv*)handle;
-    std::unique_lock<std::mutex> lock(jalv->symap_lock);  // Added by Ilias, replacing ZixSem
-    const char* uri = symap_unmap(jalv->symap, urid);
+    LV2Model* model = (LV2Model*)handle;
+    std::unique_lock<std::mutex> lock(model->symap_lock);  // Added by Ilias, replacing ZixSem
+    const char* uri = symap_unmap(model->symap, urid);
     return uri;
 }
 
@@ -181,71 +180,70 @@ static void init_feature(LV2_Feature* const dest, const char* const URI, void* d
 
 PluginLoader::PluginLoader()
 {
-    _jalv.world = lilv_world_new();
+    _model.world = lilv_world_new();
 
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
     /* Find all installed plugins */
-    lilv_world_load_all(_jalv.world);
+    lilv_world_load_all(_model.world);
 
-    populate_nodes(_jalv.nodes, _jalv.world);
+    populate_nodes(_model.nodes, _model.world);
 
-    _jalv.symap = symap_new();
-    //zix_sem_init(&jalv.work_lock, 1);
+    _model.symap = symap_new();
+    //zix_sem_init(&model.work_lock, 1);
 
-    _jalv.map.handle  = &_jalv; // What is this for? I may be stupid here.
-    _jalv.map.map     = map_uri;
-    init_feature(&_jalv.features.map_feature, LV2_URID__map, &_jalv.map);
+    _model.map.handle  = &_model; // What is this for? I may be stupid here.
+    _model.map.map     = map_uri;
+    init_feature(&_model.features.map_feature, LV2_URID__map, &_model.map);
 
-    //_jalv.worker.jalv       = &_jalv;
-    //_jalv.state_worker.jalv = &_jalv;
+    //_model.worker.model       = &_model;
+    //_model.state_worker.model = &_model;
 
-    _jalv.unmap.handle  = &_jalv; // What is this for? I may be stupid here.
-    _jalv.unmap.unmap   = unmap_uri;
-    init_feature(&_jalv.features.unmap_feature, LV2_URID__unmap, &_jalv.unmap);
+    _model.unmap.handle  = &_model; // What is this for? I may be stupid here.
+    _model.unmap.unmap   = unmap_uri;
+    init_feature(&_model.features.unmap_feature, LV2_URID__unmap, &_model.unmap);
 
-    lv2_atom_forge_init(&_jalv.forge, &_jalv.map);
+    lv2_atom_forge_init(&_model.forge, &_model.map);
 
-    _jalv.urids.atom_Float           = symap_map(_jalv.symap, LV2_ATOM__Float);
-    _jalv.urids.atom_Int             = symap_map(_jalv.symap, LV2_ATOM__Int);
-    _jalv.urids.atom_Object          = symap_map(_jalv.symap, LV2_ATOM__Object);
-    _jalv.urids.atom_Path            = symap_map(_jalv.symap, LV2_ATOM__Path);
-    _jalv.urids.atom_String          = symap_map(_jalv.symap, LV2_ATOM__String);
-    _jalv.urids.atom_eventTransfer   = symap_map(_jalv.symap, LV2_ATOM__eventTransfer);
-    _jalv.urids.bufsz_maxBlockLength = symap_map(_jalv.symap, LV2_BUF_SIZE__maxBlockLength);
-    _jalv.urids.bufsz_minBlockLength = symap_map(_jalv.symap, LV2_BUF_SIZE__minBlockLength);
-    _jalv.urids.bufsz_sequenceSize   = symap_map(_jalv.symap, LV2_BUF_SIZE__sequenceSize);
-    _jalv.urids.log_Error            = symap_map(_jalv.symap, LV2_LOG__Error);
-    _jalv.urids.log_Trace            = symap_map(_jalv.symap, LV2_LOG__Trace);
-    _jalv.urids.log_Warning          = symap_map(_jalv.symap, LV2_LOG__Warning);
-    _jalv.urids.midi_MidiEvent       = symap_map(_jalv.symap, LV2_MIDI__MidiEvent);
-    _jalv.urids.param_sampleRate     = symap_map(_jalv.symap, LV2_PARAMETERS__sampleRate);
-    _jalv.urids.patch_Get            = symap_map(_jalv.symap, LV2_PATCH__Get);
-    _jalv.urids.patch_Put            = symap_map(_jalv.symap, LV2_PATCH__Put);
-    _jalv.urids.patch_Set            = symap_map(_jalv.symap, LV2_PATCH__Set);
-    _jalv.urids.patch_body           = symap_map(_jalv.symap, LV2_PATCH__body);
-    _jalv.urids.patch_property       = symap_map(_jalv.symap, LV2_PATCH__property);
-    _jalv.urids.patch_value          = symap_map(_jalv.symap, LV2_PATCH__value);
-    _jalv.urids.time_Position        = symap_map(_jalv.symap, LV2_TIME__Position);
-    _jalv.urids.time_bar             = symap_map(_jalv.symap, LV2_TIME__bar);
-    _jalv.urids.time_barBeat         = symap_map(_jalv.symap, LV2_TIME__barBeat);
-    _jalv.urids.time_beatUnit        = symap_map(_jalv.symap, LV2_TIME__beatUnit);
-    _jalv.urids.time_beatsPerBar     = symap_map(_jalv.symap, LV2_TIME__beatsPerBar);
-    _jalv.urids.time_beatsPerMinute  = symap_map(_jalv.symap, LV2_TIME__beatsPerMinute);
-    _jalv.urids.time_frame           = symap_map(_jalv.symap, LV2_TIME__frame);
-    _jalv.urids.time_speed           = symap_map(_jalv.symap, LV2_TIME__speed);
-    _jalv.urids.ui_updateRate        = symap_map(_jalv.symap, LV2_UI__updateRate);
+    _model.urids.atom_Float           = symap_map(_model.symap, LV2_ATOM__Float);
+    _model.urids.atom_Int             = symap_map(_model.symap, LV2_ATOM__Int);
+    _model.urids.atom_Object          = symap_map(_model.symap, LV2_ATOM__Object);
+    _model.urids.atom_Path            = symap_map(_model.symap, LV2_ATOM__Path);
+    _model.urids.atom_String          = symap_map(_model.symap, LV2_ATOM__String);
+    _model.urids.atom_eventTransfer   = symap_map(_model.symap, LV2_ATOM__eventTransfer);
+    _model.urids.bufsz_maxBlockLength = symap_map(_model.symap, LV2_BUF_SIZE__maxBlockLength);
+    _model.urids.bufsz_minBlockLength = symap_map(_model.symap, LV2_BUF_SIZE__minBlockLength);
+    _model.urids.bufsz_sequenceSize   = symap_map(_model.symap, LV2_BUF_SIZE__sequenceSize);
+    _model.urids.log_Error            = symap_map(_model.symap, LV2_LOG__Error);
+    _model.urids.log_Trace            = symap_map(_model.symap, LV2_LOG__Trace);
+    _model.urids.log_Warning          = symap_map(_model.symap, LV2_LOG__Warning);
+    _model.urids.midi_MidiEvent       = symap_map(_model.symap, LV2_MIDI__MidiEvent);
+    _model.urids.param_sampleRate     = symap_map(_model.symap, LV2_PARAMETERS__sampleRate);
+    _model.urids.patch_Get            = symap_map(_model.symap, LV2_PATCH__Get);
+    _model.urids.patch_Put            = symap_map(_model.symap, LV2_PATCH__Put);
+    _model.urids.patch_Set            = symap_map(_model.symap, LV2_PATCH__Set);
+    _model.urids.patch_body           = symap_map(_model.symap, LV2_PATCH__body);
+    _model.urids.patch_property       = symap_map(_model.symap, LV2_PATCH__property);
+    _model.urids.patch_value          = symap_map(_model.symap, LV2_PATCH__value);
+    _model.urids.time_Position        = symap_map(_model.symap, LV2_TIME__Position);
+    _model.urids.time_bar             = symap_map(_model.symap, LV2_TIME__bar);
+    _model.urids.time_barBeat         = symap_map(_model.symap, LV2_TIME__barBeat);
+    _model.urids.time_beatUnit        = symap_map(_model.symap, LV2_TIME__beatUnit);
+    _model.urids.time_beatsPerBar     = symap_map(_model.symap, LV2_TIME__beatsPerBar);
+    _model.urids.time_beatsPerMinute  = symap_map(_model.symap, LV2_TIME__beatsPerMinute);
+    _model.urids.time_frame           = symap_map(_model.symap, LV2_TIME__frame);
+    _model.urids.time_speed           = symap_map(_model.symap, LV2_TIME__speed);
+    _model.urids.ui_updateRate        = symap_map(_model.symap, LV2_UI__updateRate);
 
-    _jalv.features.llog.handle  = &_jalv;
-    _jalv.features.llog.printf  = lv2_printf;
-    _jalv.features.llog.vprintf = lv2_vprintf;
-    init_feature(&_jalv.features.log_feature, LV2_LOG__log, &_jalv.features.llog);
+    _model.features.llog.handle  = &_model;
+    _model.features.llog.printf  = lv2_printf;
+    _model.features.llog.vprintf = lv2_vprintf;
+    init_feature(&_model.features.log_feature, LV2_LOG__log, &_model.features.llog);
 }
 
 PluginLoader::~PluginLoader()
 {
-//    free_nodes(_jalv.nodes);
-    lilv_world_free(_jalv.world);
+    lilv_world_free(_model.world);
 }
 
 const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &plugin_URI_string)
@@ -257,33 +255,29 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         // program, which can cause an infinite loop.
     }
 
-    auto plugins = lilv_world_get_all_plugins(_jalv.world);
-    auto plugin_uri = lilv_new_uri(_jalv.world, plugin_URI_string.c_str());
+    auto plugins = lilv_world_get_all_plugins(_model.world);
+    auto plugin_uri = lilv_new_uri(_model.world, plugin_URI_string.c_str());
 
     if (!plugin_uri)
     {
-        fprintf(stderr, "Missing plugin URI, try lv2ls to list plugins\n");
-        // Ilias TODO: Handle error
+        MIND_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
         return nullptr;
     }
 
     /* Find plugin */
-    printf("Plugin:       %s\n", lilv_node_as_string(plugin_uri));
+    MIND_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
     const LilvPlugin* plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
     if (!plugin)
     {
-        fprintf(stderr, "Failed to find plugin\n");
-
-        // Ilias TODO: Handle error
-
+        MIND_LOG_ERROR("Failed to find LV2 plugin.");
         return nullptr;
     }
 
     // Ilias TODO: Introduce state_threadSafeRestore later.
 
-    // Ilias TODO: UI code - may not need it - it goes here though.
+    // Ilias TODO: Introduce necessary UI code
 
     return plugin;
 }
@@ -291,21 +285,19 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
     /* Instantiate the plugin */
-    _jalv.instance = lilv_plugin_instantiate(
+    _model.instance = lilv_plugin_instantiate(
             plugin_handle,
             sample_rate,
             feature_list);
 
-    if (_jalv.instance == nullptr)
+    if (_model.instance == nullptr)
     {
-        fprintf(stderr, "Failed to instantiate plugin.\n");
-        // Ilias TODO: Handle error
+        MIND_LOG_ERROR("Failed instantiating LV2 plugin.");
+        return;
     }
 
-    // Ilias TODO: Not sure this should be here.
-    // Maybe it should be called after ports are "dealt with", whatever that means.
     /* Activate plugin */
-    lilv_instance_activate(_jalv.instance);
+    lilv_instance_activate(_model.instance);
 }
 
 void PluginLoader::close_plugin_instance()
@@ -313,30 +305,18 @@ void PluginLoader::close_plugin_instance()
     // TODO Ilias: Currently, as this builds on the JALV example, only a single plugin is supported.
     // Refactor to allow multiple olugins!
 
-    if (_jalv.instance != nullptr)
+    if (_model.instance != nullptr)
     {
-        _jalv.exit = true;
+        _model.exit = true;
+        lilv_instance_deactivate(_model.instance);
+        lilv_instance_free(_model.instance);
 
-        // TODO: Ilias These too are already freed elsewhere it seems?
-/*        for (uint32_t i = 0; i < _jalv.num_ports; ++i) {
-            if (_jalv.ports[i].evbuf) {
-                lv2_evbuf_free(_jalv.ports[i].evbuf);
-            }
-        }
-*/
-        lilv_instance_deactivate(_jalv.instance);
-        lilv_instance_free(_jalv.instance);
-
-        // TODO: Ilias This gives a segfault... Understand why, is it freed elsewhere?
-        //free(_jalv.ports);
-
-
-        for (LilvNode** n = (LilvNode**)&_jalv.nodes; *n; ++n) {
+        for (LilvNode** n = (LilvNode**)&_model.nodes; *n; ++n) {
             lilv_node_free(*n);
         }
 
-        /*for (unsigned i = 0; i < _jalv.controls.n_controls; ++i) {
-            ControlID* const control = _jalv.controls.controls[i];
+        /*for (unsigned i = 0; i < _model.controls.n_controls; ++i) {
+            ControlID* const control = _model.controls.controls[i];
             lilv_node_free(control->node);
             lilv_node_free(control->symbol);
             lilv_node_free(control->label);
@@ -346,12 +326,9 @@ void PluginLoader::close_plugin_instance()
             lilv_node_free(control->def);
             free(control);
         }
-        free(jalv->controls.controls);*/
+        free(model->controls.controls);*/
 
-        // TODO: Ilias This gives a segfault... Understand why, is it freed elsewhere?
-        //free(_jalv.feature_list);
-
-        _jalv.instance = nullptr;
+        _model.instance = nullptr;
     }
 }
 

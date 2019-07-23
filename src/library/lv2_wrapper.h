@@ -89,10 +89,13 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
-    void _jalv_allocate_port_buffers(Jalv *jalv);
+    /**
+    * @brief Allocates LV2 port buffers (only necessary for MIDI)
+    */
+    void _allocate_port_buffers(LV2Model *model);
 
     void _create_ports(const LilvPlugin *plugin);
-    void _create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value);
+    void _create_port(const LilvPlugin *plugin, int port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -164,7 +167,7 @@ private:
     LV2_Evbuf_Iterator _lv2_evbuf_iterator;
     LV2_Atom_Object _get_ATOM;
     Port* _current_port{nullptr};
-    Jalv* _model{nullptr};
+    LV2Model* _model{nullptr};
 
     // In process_midi_output_for_current_port, called by process_audio:
     uint32_t _midi_frames, _midi_subframes, _midi_type, _midi_size;
@@ -178,8 +181,6 @@ private:
     midi::PolyKeyPressureMessage _decoded_poly_pressure_msg;
     midi::ChannelPressureMessage _decoded_channel_pressure_msg;
 };
-
-//VstSpeakerArrangementType arrangement_from_channels(int channels);
 
 } // end namespace lv2
 } // end namespace sushi

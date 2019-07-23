@@ -36,8 +36,6 @@
 
 #include "processor.h"
 
-//#include "lv2_midi_event_fifo.h"
-
 #include "symap.h"
 
 #include "../engine/base_event_dispatcher.h"
@@ -46,10 +44,10 @@
 namespace sushi {
 namespace lv2 {
 
-    // From JALV
+// From LV2Model example:
 /* Size factor for UI ring buffers.  The ring size is a few times the size of
-   an event output to give the UI a chance to keep up.  Experiments with Ingen,
-   which can highly saturate its event output, led me to this value.  It
+   an event output to give the UI a chance to keep up. Experiments with Ingen,
+   which can highly saturate its event output, led me to this value. It
    really ought to be enough for anybody(TM).
 */
 #define N_BUFFER_CYCLES 16
@@ -77,17 +75,14 @@ struct Port {
     enum PortType   type;       ///< Data type
     enum PortFlow   flow;       ///< Data flow direction
 
-    // Seems in JALV to be to hold the Jack midi port. Won't need it.
-    //void*         sys_port;   ///< For audio/MIDI ports, otherwise NULL
-
     LV2_Evbuf*      evbuf;      ///< For MIDI ports, otherwise NULL
 
     void*           widget;     ///< Control widget, if applicable
-    size_t          buf_size;   ///< Custom buffer size, or 0
-    uint32_t        index;      ///< Port index
+    int             buf_size;   ///< Custom buffer size, or 0
+    int             index;      ///< Port index
     float           control;    ///< For control ports, otherwise 0.0f
 
-    // Ilias. For ranges. Only for control ports.
+    // For ranges. Only used in control ports.
     float           def{1.0f};
     float           max{1.0f};
     float           min{0.0f};
@@ -123,11 +118,10 @@ typedef struct {
     LV2_URID time_frame;
     LV2_URID time_speed;
     LV2_URID ui_updateRate;
-} JalvURIDs;
-
+} LV2_URIDs;
 
 typedef struct {
-    // Do I even use these?
+    // TODO: Do I even use these?
     LilvNode* atom_AtomPort;
     LilvNode* atom_Chunk;
     LilvNode* atom_Float;
@@ -165,7 +159,7 @@ typedef struct {
     LilvNode* work_interface;
     LilvNode* work_schedule;
     LilvNode* end;  ///< NULL terminator for easy freeing of entire structure
-} JalvNodes;
+} Lv2_Host_Nodes;
 
 
 typedef struct {
@@ -183,13 +177,13 @@ typedef struct {
     LV2_Feature                options_feature;
     LV2_Feature                safe_restore_feature;
     LV2_Extension_Data_Feature ext_data;
-} JalvFeatures;
+} Lv2_Host_Features;
 
-class Jalv
+class LV2Model
 {
 public:
-    JalvURIDs          urids;          ///< URIDs
-    JalvNodes          nodes;          ///< Nodes
+    LV2_URIDs          urids;          ///< URIDs
+    Lv2_Host_Nodes     nodes;          ///< Nodes
 
     LV2_Atom_Forge     forge;          ///< Atom forge
 
@@ -201,8 +195,29 @@ public:
     Symap*             symap;          ///< URI map
     std::mutex         symap_lock;     ///< Lock for URI map
 
-//  JalvBackend*       backend;        ///< Audio system backend
+    const LilvPlugin*  plugin;         ///< Plugin class (RDF data)
+    LilvState*         preset;         ///< Current preset
 
+    LilvInstance*      instance{nullptr};       ///< Plugin instance (shared library)
+
+    void*              window;         ///< Window (if applicable)
+    struct Port*       ports;          ///< Port array of size num_ports
+
+    int             midi_buf_size{4096};  ///< Size of MIDI port buffers
+
+    int                control_in;     ///< Index of control input port
+
+    int                num_ports;      ///< Size of the two following arrays:
+
+    int                plugin_latency{0}; ///< Latency reported by plugin (if any)
+
+    float              sample_rate;    ///< Sample rate
+
+    bool               buf_size_set{false};   ///< True iff buffer size callback fired
+
+    bool               exit;           ///< True iff execution is finished
+
+    bool               request_update{false}; ///< True iff a plugin update is needed
 
 /*  JalvWorker         worker;         ///< Worker thread implementation
     JalvWorker         state_worker;   ///< Synchronous worker for state restore
@@ -215,33 +230,6 @@ public:
     char*              temp_dir;       ///< Temporary plugin state directory
     char*              save_dir;       ///< Plugin save directory
 */
-    const LilvPlugin*  plugin;         ///< Plugin class (RDF data)
-    LilvState*         preset;         ///< Current preset
-
-    LilvInstance*      instance{nullptr};       ///< Plugin instance (shared library)
-
-    void*              window;         ///< Window (if applicable)
-    struct Port*       ports;          ///< Port array of size num_ports
-
-    size_t             midi_buf_size{4096};  ///< Size of MIDI port buffers
-
-    uint32_t           control_in;     ///< Index of control input port
-
-    uint32_t           num_ports;      ///< Size of the two following arrays:
-
-    uint32_t           plugin_latency{0}; ///< Latency reported by plugin (if any)
-
-    float              sample_rate;    ///< Sample rate
-
-//  uint32_t           position;       ///< Transport position in frames
-//  float              bpm;            ///< Transport tempo in beats per minute
-//  bool               rolling;        ///< Transport speed (0=stop, 1=play)
-
-    bool               buf_size_set{false};   ///< True iff buffer size callback fired
-
-    bool               exit;           ///< True iff execution is finished
-
-    bool               request_update{false}; ///< True iff a plugin update is needed
 //  bool               safe_restore;   ///< Plugin restore() is thread-safe
 
 // TODO: Ilias The below needs re-introducing for control no?
@@ -262,7 +250,11 @@ public:
 
 //  void*              ui_event_buf;   ///< Buffer for reading UI port events
 
-    JalvFeatures       features;
+//  uint32_t           position;       ///< Transport position in frames
+//  float              bpm;            ///< Transport tempo in beats per minute
+//  bool               rolling;        ///< Transport speed (0=stop, 1=play)
+
+    Lv2_Host_Features   features;
     const LV2_Feature** feature_list;
 };
 

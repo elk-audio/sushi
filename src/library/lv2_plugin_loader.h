@@ -72,13 +72,13 @@ public:
 
     void close_plugin_instance();
 
-    Jalv* getJalvModel()
+    LV2Model* getModel()
     {
-        return &_jalv;
+        return &_model;
     }
 
 private:
-    Jalv _jalv;
+    LV2Model _model;
 };
 
 } // namespace lv2

@@ -16,7 +16,6 @@ namespace
 {
 
 static constexpr int LV2_STRING_BUFFER_SIZE = 256;
-static char canDoBypass[] = "bypass";
 
 // TODO: Ilias - introduce these.
 /** These features have no data */
@@ -34,13 +33,13 @@ namespace lv2 {
 MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 /** Return true iff Sushi supports the given feature. */
-static bool feature_is_supported(Jalv* jalv, const char* uri)
+static bool feature_is_supported(LV2Model* model, const char* uri)
 {
     if (!strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive")) {
         return true;
     }
 
-    for (const LV2_Feature*const* f = jalv->feature_list; *f; ++f) {
+    for (const LV2_Feature*const* f = model->feature_list; *f; ++f) {
         if (!strcmp(uri, (*f)->URI)) {
             return true;
         }
@@ -48,35 +47,27 @@ static bool feature_is_supported(Jalv* jalv, const char* uri)
     return false;
 }
 
-/**
-   Allocate LV2 port buffers (only necessary for MIDI).
-*/
-void Lv2Wrapper::_jalv_allocate_port_buffers(Jalv *jalv)
+void Lv2Wrapper::_allocate_port_buffers(LV2Model *model)
 {
-    for (uint32_t i = 0; i < jalv->num_ports; ++i)
+    for (int i = 0; i < model->num_ports; ++i)
     {
-        struct Port* const port = &jalv->ports[i];
+        struct Port* const port = &model->ports[i];
 
-       /* if(port->flow == FLOW_INPUT)
-            std::cout << "Input." << std::endl;
-        else if(port->flow == FLOW_OUTPUT)
-            std::cout << "Output." << std::endl;
-*/
         switch (port->type)
         {
             case TYPE_EVENT: {
                 lv2_evbuf_free(port->evbuf);
                 const size_t buf_size = (port->buf_size > 0)
                                         ? port->buf_size
-                                        : jalv->midi_buf_size;
+                                        : model->midi_buf_size;
                 port->evbuf = lv2_evbuf_new(
                         buf_size,
-                        jalv->map.map(jalv->map.handle,
-                                      lilv_node_as_string(jalv->nodes.atom_Chunk)),
-                        jalv->map.map(jalv->map.handle,
-                                      lilv_node_as_string(jalv->nodes.atom_Sequence)));
+                        model->map.map(model->map.handle,
+                                      lilv_node_as_string(model->nodes.atom_Chunk)),
+                        model->map.map(model->map.handle,
+                                      lilv_node_as_string(model->nodes.atom_Sequence)));
                 lilv_instance_connect_port(
-                        jalv->instance, i, lv2_evbuf_get_buffer(port->evbuf));
+                        model->instance, i, lv2_evbuf_get_buffer(port->evbuf));
             }
             default:
                 break;
@@ -94,11 +85,12 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     if (library_handle == nullptr)
     {
+        MIND_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
         _cleanup();
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    _model =_loader.getJalvModel();
+    _model = _loader.getModel();
 
     _model->plugin = library_handle;
 
@@ -124,22 +116,22 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     if (!_model->feature_list)
     {
-        fprintf(stderr, "Failed to allocate feature list\n");
-        //jalv_close(jalv);
-        //return -7;
-        // TODO Ilias: Deal with failure!
+        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
+        _cleanup();
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
     memcpy(_model->feature_list, features, sizeof(features));
 
     /* Check that any required features are supported */
     LilvNodes* req_feats = lilv_plugin_get_required_features(_model->plugin);
-    LILV_FOREACH(nodes, f, req_feats) {
+    LILV_FOREACH(nodes, f, req_feats)
+    {
         const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
-        if (!feature_is_supported(_model, uri)) {
-            fprintf(stderr, "Feature %s is not supported\n", uri);
-            /*jalv_close(jalv);
-            return -8;*/
-            // TODO Ilias: Deal with failure!
+        if (!feature_is_supported(_model, uri))
+        {
+            MIND_LOG_ERROR("LV2 feature {} is not supported\n", uri);
+            _cleanup();
+            return ProcessorReturnCode::PLUGIN_INIT_ERROR;
         }
     }
     lilv_nodes_free(req_feats);
@@ -148,6 +140,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     if (_model->instance == nullptr)
     {
+        MIND_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
@@ -162,10 +155,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     lilv_free(label_node);
 
 // Ilias TODO: Re-introduce if equivalent is found for LV2.
-// Get plugin can do:s
-//    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
-//    _can_do_soft_bypass = (bypass == 1);
-//    _number_of_programs = _plugin_handle->numPrograms;
+//  _number_of_programs = _plugin_handle->numPrograms;
 
     // These are currently modified in the _create_ports call below:
     _max_input_channels = 0;
@@ -180,6 +170,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     // Register internal parameters
     if (!_register_parameters())
     {
+        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
@@ -196,7 +187,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 
     lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values);
 
-    for (uint32_t i = 0; i < _model->num_ports; ++i)
+    for (int i = 0; i < _model->num_ports; ++i)
     {
         _create_port(plugin, i, default_values[i]);
     }
@@ -213,7 +204,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 
 
     if (!_model->buf_size_set) {
-        _jalv_allocate_port_buffers(_model);
+        _allocate_port_buffers(_model);
     }
 }
 
@@ -222,7 +213,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
    and Jack instantiation. The remaining instance-specific setup
    (e.g. buffers) is done later in activate_port().
 */
-void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, float default_value)
+void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
     struct Port* const port = &(_model->ports[port_index]);
 
@@ -251,13 +242,14 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
     }
     else if (!optional)
     {
-// Ilias TODO: Handle error the sushi way.
         assert(false);
-//      die("Mandatory port has unknown type (neither input nor output)");
+        MIND_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
+        _cleanup();
     }
 
-    const bool hidden = !show_hidden &&
-                        lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);
+    // TODO: Re-introduce once 'GUI' is implemented.
+/*    const bool hidden = !show_hidden &&
+                        lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);*/
 
     /* Set control values */
     if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_ControlPort))
@@ -288,10 +280,11 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
     else if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_AudioPort))
     {
         port->type = TYPE_AUDIO;
+
 // Ilias TODO: CV port(s).
 //#ifdef HAVE_JACK_METADATA
-//        } else if (lilv_port_is_a(jalv->plugin, port->lilv_port,
-//                      jalv->nodes.lv2_CVPort)) {
+//        } else if (lilv_port_is_a(model->plugin, port->lilv_port,
+//                      model->nodes.lv2_CVPort)) {
 //port->type = TYPE_CV;
 //#endif
 
@@ -302,9 +295,11 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
     }
     else if (!optional)
     {
-// Ilias TODO: Handle error the sushi way.
         assert(false);
-//      die("Mandatory port has unknown data type");
+        _cleanup();
+        assert(false);
+        MIND_LOG_ERROR("Mandatory LV2 port has unknown data type");
+        _cleanup();
     }
 
     if(port->type == TYPE_AUDIO) {
@@ -313,8 +308,6 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, uint32_t port_index, flo
         else if(port->flow == FLOW_OUTPUT)
             _max_output_channels++;
     }
-
-// The below min_size code is not even present in lv2apply example.
 
     // Todo: This is always returned NULL for amp output, should it?
     LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, _model->nodes.rsz_minimumSize);
@@ -354,8 +347,6 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
     if (index < _model->num_ports)
     {
         struct Port* port = &_model->ports[index];
-        const LilvNode* s = lilv_port_get_symbol(_model->plugin, port->lilv_port);
-
         if (port)
         {
             value = port->control;
@@ -367,6 +358,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(ObjectId parameter_id) const
 {
+    // TODO:  Ilias - Implement normalization
     return this->parameter_value(parameter_id);
 }
 
@@ -495,10 +487,8 @@ void Lv2Wrapper::process_event(RtEvent event)
         auto typed_event = event.parameter_change_event();
         auto id = typed_event->param_id();
 
-        std::cout << "Parameter, ID: " << id << ", value: " << typed_event->value() << std::endl;
-
         const int portIndex = static_cast<int>(id);
-        assert( portIndex < _model->num_ports);
+        assert(portIndex < _model->num_ports);
 
         struct Port* port = &(_model->ports[portIndex]);
 
@@ -578,7 +568,6 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
 
 void Lv2Wrapper::_deliver_outputs_from_plugin()
 {
-    /* Deliver MIDI output and UI events */
     for (_p = 0; _p < _model->num_ports; ++_p)
     {
         _current_port = &(_model->ports[_p]);
@@ -594,7 +583,7 @@ void Lv2Wrapper::_deliver_outputs_from_plugin()
                         if (_model->plugin_latency != _current_port->control)
                         {
                             _model->plugin_latency = _current_port->control;
-                            // jack_recompute_total_latencies(client);
+                            // TODO: introduce latency compensation reporting to Sushi
                         }
                     }
                     break;
@@ -615,7 +604,10 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
         // Get event from LV2 buffer
 
         lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
-        _midi_size--; // TODO: WEIRD, WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3...
+
+        // TODO: WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
+        _midi_size--;
+
         if (_midi_type == _model->urids.midi_MidiEvent)
         {
             _outgoing_midi_data = midi::to_midi_data_byte(_midi_body, _midi_size);
@@ -632,7 +624,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                                       _decoded_midi_cc_msg.value));
                     break;
                 }
-
                 case midi::MessageType::NOTE_ON:
                 {
                     _decoded_node_on_msg = midi::decode_note_on(_outgoing_midi_data);
@@ -643,7 +634,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                              _decoded_node_on_msg.velocity));
                     break;
                 }
-
                 case midi::MessageType::NOTE_OFF:
                 {
                     _decoded_node_off_msg = midi::decode_note_off(_outgoing_midi_data);
@@ -654,7 +644,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                               _decoded_node_off_msg.velocity));
                     break;
                 }
-
                 case midi::MessageType::PITCH_BEND:
                 {
                     _decoded_pitch_bend_msg = midi::decode_pitch_bend(_outgoing_midi_data);
@@ -664,7 +653,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                                 _decoded_pitch_bend_msg.value));
                     break;
                 }
-
                 case midi::MessageType::POLY_KEY_PRESSURE:
                 {
                     _decoded_poly_pressure_msg = midi::decode_poly_key_pressure(_outgoing_midi_data);
@@ -675,7 +663,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                                      _decoded_poly_pressure_msg.pressure));
                     break;
                 }
-
                 case midi::MessageType::CHANNEL_PRESSURE:
                 {
                     _decoded_channel_pressure_msg = midi::decode_channel_pressure(_outgoing_midi_data);
@@ -685,14 +672,6 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                                                                 _decoded_channel_pressure_msg.pressure));
                     break;
                 }
-
-                case midi::MessageType::PROGRAM_CHANGE:
-                {
-                    //midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(_outgoing_midi_data);
-                    // TODO. I don't see any RtEvent equivalent for this.
-                    //break;
-                }
-
                 default:
                     output_event(RtEvent::make_wrapped_midi_event(0,
                                                                   0, // Sample offset 0?
@@ -701,9 +680,9 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
             }
         }
 
-        /*if (jalv->has_ui) {
+        /*if (model->has_ui) {
             // Forward event to UI
-            jalv_send_to_ui(jalv, p, type, size, body);
+            jalv_send_to_ui(model, p, type, size, body);
         }*/
     }
 }
@@ -712,7 +691,7 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
 {
     _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->evbuf);
 
-    // For now there's no transport support
+    // TODO: Re-introduce transport support.
     /* Write transport change event if applicable */
     /*
     if (xport_changed)
@@ -722,8 +701,8 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
                         (const uint8_t*)LV2_ATOM_BODY(lv2_pos));
     }*/
 
-    // TODO: This will never run for now! Kept for consistency
-    // with Jalv example. Request_update is never set to true.
+    // TODO: This will never run for now! will be used for having 'UI' support.
+    // with LV2Model example. Request_update is never set to true.
     if (_model->request_update)
     {
         /* Plugin state has changed, request an update */
@@ -763,7 +742,6 @@ void Lv2Wrapper::_flush_event_queue()
 
 void Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
 {
-    // All I need is to map a KeyboardEvent to the buffer LV2 expects:
     if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::NOTE_AFTERTOUCH)
     {
         _keyboard_event_ptr = event.keyboard_event();
@@ -771,20 +749,26 @@ void Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
         switch (_keyboard_event_ptr->type())
         {
             case RtEventType::NOTE_ON:
+            {
                 _midi_data = midi::encode_note_on(_keyboard_event_ptr->channel(),
-                                                 _keyboard_event_ptr->note(),
-                                                 _keyboard_event_ptr->velocity());
-                break;
-            case RtEventType::NOTE_OFF:
-                _midi_data = midi::encode_note_off(_keyboard_event_ptr->channel(),
                                                   _keyboard_event_ptr->note(),
                                                   _keyboard_event_ptr->velocity());
                 break;
-            case RtEventType::NOTE_AFTERTOUCH:
-                _midi_data = midi::encode_poly_key_pressure(_keyboard_event_ptr->channel(),
-                                                           _keyboard_event_ptr->note(),
-                                                           _keyboard_event_ptr->velocity());
+            }
+            case RtEventType::NOTE_OFF:
+            {
+                _midi_data = midi::encode_note_off(_keyboard_event_ptr->channel(),
+                                                   _keyboard_event_ptr->note(),
+                                                   _keyboard_event_ptr->velocity());
                 break;
+            }
+            case RtEventType::NOTE_AFTERTOUCH:
+            {
+                _midi_data = midi::encode_poly_key_pressure(_keyboard_event_ptr->channel(),
+                                                            _keyboard_event_ptr->note(),
+                                                            _keyboard_event_ptr->velocity());
+                break;
+            }
         }
     }
     else if (event.type() >= RtEventType::PITCH_BEND && event.type() <= RtEventType::MODULATION)
@@ -794,18 +778,24 @@ void Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
         switch (_keyboard_common_event_ptr->type())
         {
             case RtEventType::AFTERTOUCH:
+            {
                 _midi_data = midi::encode_channel_pressure(_keyboard_common_event_ptr->channel(),
-                                                          _keyboard_common_event_ptr->value());
+                                                           _keyboard_common_event_ptr->value());
                 break;
+            }
             case RtEventType::PITCH_BEND:
+            {
                 _midi_data = midi::encode_pitch_bend(_keyboard_common_event_ptr->channel(),
-                                                    _keyboard_common_event_ptr->value());
+                                                     _keyboard_common_event_ptr->value());
                 break;
+            }
             case RtEventType::MODULATION:
+            {
                 _midi_data = midi::encode_control_change(_keyboard_common_event_ptr->channel(),
-                                                        midi::MOD_WHEEL_CONTROLLER_NO,
-                                                        _keyboard_common_event_ptr->value());
+                                                         midi::MOD_WHEEL_CONTROLLER_NO,
+                                                         _keyboard_common_event_ptr->value());
                 break;
+            }
         }
     }
     else if (event.type() == RtEventType::WRAPPED_MIDI_EVENT)
@@ -818,46 +808,6 @@ void Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
         assert(false);
     }
 }
-
-/*void Lv2Wrapper::notify_parameter_change_rt(VstInt32 parameter_index, float value)
-{
-    *//* The default Vst2.4 implementation calls set_parameter() in set_parameter_automated()
-     * so the plugin is already aware of the change, we just need to send a notification
-     * to the non-rt part *//*
-    *//*if (parameter_index > this->parameter_count())
-    {
-        return;
-    }
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
-    output_event(e);*//*
-}
-
-void Lv2Wrapper::notify_parameter_change(VstInt32 parameter_index, float value)
-{
-    *//*auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                  this->id(),
-                                                  static_cast<ObjectId>(parameter_index),
-                                                  value,
-                                                  IMMEDIATE_PROCESS);
-    _host_control.post_event(e);*//*
-}*/
-
-/*VstTimeInfo* Lv2Wrapper::time_info()
-{
-    auto transport = _host_control.transport();
-    auto ts = transport->current_time_signature();
-
-    *//*_time_info.samplePos          = transport->current_samples();
-    _time_info.sampleRate         = _sample_rate;
-    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
-    _time_info.ppqPos             = transport->current_beats();
-    _time_info.tempo              = transport->current_tempo();
-    _time_info.barStartPos        = transport->current_bar_start_beats();
-    _time_info.timeSigNumerator   = ts.numerator;
-    _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;*//*
-    return &_time_info;
-}*/
 
 void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
@@ -901,30 +851,44 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     }
 }
 
-/*VstSpeakerArrangementType arrangement_from_channels(int channels)
+/*void Lv2Wrapper::notify_parameter_change_rt(VstInt32 parameter_index, float value)
 {
-    switch (channels)
+    *//* The default Vst2.4 implementation calls set_parameter() in set_parameter_automated()
+     * so the plugin is already aware of the change, we just need to send a notification
+     * to the non-rt part *//*
+    *//*if (parameter_index > this->parameter_count())
     {
-        case 0:
-            return kSpeakerArrEmpty;
-        case 1:
-            return kSpeakerArrMono;
-        case 2:
-            return kSpeakerArrStereo;
-        case 3:
-            return kSpeakerArr30Music;
-        case 4:
-            return kSpeakerArr40Music;
-        case 5:
-            return kSpeakerArr50;
-        case 6:
-            return kSpeakerArr60Music;
-        case 7:
-            return kSpeakerArr70Music;
-        default:
-            return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
+        return;
     }
-    return kNumSpeakerArr;
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
+    output_event(e);*//*
+}
+
+void Lv2Wrapper::notify_parameter_change(VstInt32 parameter_index, float value)
+{
+    *//*auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
+                                                  this->id(),
+                                                  static_cast<ObjectId>(parameter_index),
+                                                  value,
+                                                  IMMEDIATE_PROCESS);
+    _host_control.post_event(e);*//*
+}*/
+
+/*VstTimeInfo* Lv2Wrapper::time_info()
+{
+    auto transport = _host_control.transport();
+    auto ts = transport->current_time_signature();
+
+    *//*_time_info.samplePos          = transport->current_samples();
+    _time_info.sampleRate         = _sample_rate;
+    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
+    _time_info.ppqPos             = transport->current_beats();
+    _time_info.tempo              = transport->current_tempo();
+    _time_info.barStartPos        = transport->current_bar_start_beats();
+    _time_info.timeSigNumerator   = ts.numerator;
+    _time_info.timeSigDenominator = ts.denominator;
+    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;*//*
+    return &_time_info;
 }*/
 
 } // namespace lv2
