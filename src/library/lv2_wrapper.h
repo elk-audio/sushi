@@ -17,8 +17,6 @@
 #include "lv2_evbuf.h"
 #include "../engine/base_event_dispatcher.h"
 
-//#include "lv2_midi_event_fifo.h"
-//#include "library/vst2x_midi_event_fifo.h"
 #include "library/rt_event_fifo.h"
 
 #include "midi_encoder.h"
@@ -29,7 +27,6 @@ namespace lv2 {
 
 /* Should match the maximum reasonable number of channels of a vst */
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
-constexpr int LV2_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -158,7 +155,7 @@ private:
     PluginLoader _loader;
 
     // The below are all fields used in process_audio:
-    uint32_t _p = 0, _i = 0, _o = 0;
+    int _p = 0, _i = 0, _o = 0;
     const KeyboardRtEvent* _keyboard_event_ptr{nullptr};
     const KeyboardCommonRtEvent* _keyboard_common_event_ptr{nullptr};
     const WrappedMidiRtEvent* _wrapped_midi_event_ptr{nullptr};
@@ -171,7 +168,7 @@ private:
 
     // In process_midi_output_for_current_port, called by process_audio:
     uint32_t _midi_frames, _midi_subframes, _midi_type, _midi_size;
-    uint8_t *_midi_body;
+    uint8_t* _midi_body;
     MidiDataByte _outgoing_midi_data;
     midi::MessageType _outgoing_midi_type;
     midi::ControlChangeMessage _decoded_midi_cc_msg;

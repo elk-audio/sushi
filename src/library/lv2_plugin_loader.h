@@ -37,12 +37,14 @@
 #ifndef SUSHI_LV2_PLUGIN_LOADER_H
 #define SUSHI_LV2_PLUGIN_LOADER_H
 
+#ifdef SUSHI_BUILD_WITH_LV2
+
 #include <string>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 //#define VST_FORCE_DEPRECATED 0
 
-#include "lv2_data_structures.h"
+#include "lv2_model.h"
 
 #include "constants.h"
 
@@ -64,24 +66,23 @@ public:
     const LilvPlugin* get_plugin_handle_from_URI(const std::string &plugin_URI_string);
 
     // Not yet implemented - may never be.
-    // Lilv does not support absolute paths to plugins, but instead expects them to be in
-    // the global paths for plugins.
+    // The LV2 standard does not encourage absolute paths to plugins,
+    // but instead expects them to be in the global paths it defines.
     // static LibraryHandle get_library_handle_for_plugin_from_filepath(const std::string& plugin_absolute_path);
 
     void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
 
     void close_plugin_instance();
 
-    LV2Model* getModel()
-    {
-        return &_model;
-    }
+    LV2Model* getModel();
 
 private:
-    LV2Model _model;
+    LV2Model* _model;
 };
 
 } // namespace lv2
 } // namespace sushi
 
 #endif //SUSHI_LV2_PLUGIN_LOADER_H
+
+#endif //SUSHI_BUILD_WITH_LV2

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "library/symap.cpp"
+#include "library/lv2_symap.cpp"
 #include "library/lv2_evbuf.cpp"
 #include "library/lv2_plugin_loader.cpp"
 

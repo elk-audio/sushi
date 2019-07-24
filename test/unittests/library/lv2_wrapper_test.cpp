@@ -7,6 +7,7 @@
 
 #include "test_utils/engine_mockup.h"
 #include "library/lv2_wrapper.cpp"
+#include "library/lv2_model.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
