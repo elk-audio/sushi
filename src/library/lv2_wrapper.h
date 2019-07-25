@@ -196,11 +196,16 @@ namespace lv2 {
 class Lv2Wrapper : public Processor
 {
 public:
-    Lv2Wrapper(HostControl host_control, const std::string& /* vst_plugin_path */, const std::string& /* plugin_name */) :
+    Lv2Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
         Processor(host_control) {}
-    ProcessorReturnCode init(float sample_rate) override;
+
+    ProcessorReturnCode init(float sample_rate) override
+    {
+        return ProcessorReturnCode::ERROR;
+    }
+
     void process_event(RtEvent /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
+    void process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& /*out*/) override {}
 };
 
 }// end namespace lv2

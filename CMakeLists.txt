@@ -211,10 +211,10 @@ endif()
 
 if (${WITH_LV2})
     set(ADDITIONAL_LV2_SOURCES src/library/lv2_evbuf.cpp
-            src/library/lv2_symap.cpp
+                               src/library/lv2_symap.cpp
                                src/library/lv2_wrapper.cpp
                                src/library/lv2_model.cpp
-            src/library/lv2_plugin_loader.cpp)
+                               src/library/lv2_plugin_loader.cpp)
 endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"
