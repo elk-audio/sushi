@@ -16,7 +16,7 @@ namespace
 
 static constexpr int LV2_STRING_BUFFER_SIZE = 256;
 
-// TODO: Ilias - introduce these.
+// TODO: verify that these LV2 features work as intended:
 /** These features have no data */
     static const LV2_Feature static_features[] = {
             { LV2_STATE__loadDefaultState, NULL },
@@ -76,12 +76,11 @@ void Lv2Wrapper::_allocate_port_buffers(LV2Model *model)
 
 ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 {
-    // TODO: sanity checks on sample_rate,
+    // TODO - inherited from VST2 wrapper: sanity checks on sample_rate,
     //       but these can probably better be handled on Processor::init()
     _sample_rate = sample_rate;
 
     auto library_handle = _loader.get_plugin_handle_from_URI(_plugin_path.c_str());
-
     if (library_handle == nullptr)
     {
         MIND_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
@@ -89,51 +88,21 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
+    // TODO: Fix ownership of Model issue - once it is fully ported from Jalv.
     _model = _loader.getModel();
-
     _model->plugin = library_handle;
 
-    /* Build feature list for passing to plugins */
-    const LV2_Feature* const features[] = {
-            &_model->features.map_feature,
-            &_model->features.unmap_feature,
-            &_model->features.log_feature,
-// TODO Ilias: Re-introduce these or remove!
-            /*
-            &model.features.sched_feature,
-            &model.features.options_feature,
-            */
-            &static_features[0],
-            &static_features[1],
-            &static_features[2],
-            &static_features[3],
-            nullptr
-    };
-
-    // TODO Ilias: I should just RAII it.
-    _model->feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
-
-    if (!_model->feature_list)
+    if(!_initialize_host_feature_list())
     {
-        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
         _cleanup();
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
-    memcpy(_model->feature_list, features, sizeof(features));
 
-    /* Check that any required features are supported */
-    LilvNodes* req_feats = lilv_plugin_get_required_features(_model->plugin);
-    LILV_FOREACH(nodes, f, req_feats)
+    if(!_check_for_required_features(_model->plugin))
     {
-        const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
-        if (!feature_is_supported(_model, uri))
-        {
-            MIND_LOG_ERROR("LV2 feature {} is not supported\n", uri);
-            _cleanup();
-            return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-        }
+        _cleanup();
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
-    lilv_nodes_free(req_feats);
 
     _loader.load_plugin(library_handle, _sample_rate, _model->feature_list);
 
@@ -144,27 +113,12 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
 
-    const LilvNode* uri_node = lilv_plugin_get_uri(_model->plugin);
-    const std::string uri_as_string = lilv_node_as_string(uri_node);
-    set_name(uri_as_string);
+    _fetch_plugin_name_and_label();
 
-    LilvNode* label_node = lilv_plugin_get_name(_model->plugin);
-    const std::string label_as_string = lilv_node_as_string(label_node);
-    set_label(label_as_string);
-    lilv_free(label_node);
-
-// Ilias TODO: Re-introduce if equivalent is found for LV2.
+    // TODO: Re-introduce if equivalent is found for LV2.
 //  _number_of_programs = _plugin_handle->numPrograms;
 
-    // These are currently modified in the _create_ports call below:
-    _max_input_channels = 0;
-    _max_output_channels = 0;
-
     _create_ports(library_handle);
-
-    // Channel setup:
-    _current_input_channels = _max_input_channels;
-    _current_output_channels = _max_output_channels;
 
     // Register internal parameters
     if (!_register_parameters())
@@ -177,8 +131,73 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
+void Lv2Wrapper::_fetch_plugin_name_and_label()
+{
+    const LilvNode *uri_node = lilv_plugin_get_uri(_model->plugin);
+    const std::string uri_as_string = lilv_node_as_string(uri_node);
+    set_name(uri_as_string);
+
+    LilvNode *label_node = lilv_plugin_get_name(_model->plugin);
+    const std::string label_as_string = lilv_node_as_string(label_node);
+    set_label(label_as_string);
+    lilv_free(label_node);
+}
+
+bool Lv2Wrapper::_initialize_host_feature_list()
+{
+    /* Build feature list for passing to plugins */
+    const LV2_Feature* const features[] = {
+            &_model->features.map_feature,
+            &_model->features.unmap_feature,
+            &_model->features.log_feature,
+// TODO: Re-introduce these or remove!
+            /*
+            &model.features.sched_feature,
+            &model.features.options_feature,
+            */
+            &static_features[0],
+            &static_features[1],
+            &static_features[2],
+            &static_features[3],
+            nullptr
+    };
+
+    _model->feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
+
+    if (!_model->feature_list)
+    {
+        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
+        return false;
+    }
+
+// TODO: Isn't this leaking? It's from logic identical in Jalv.
+    memcpy(_model->feature_list, features, sizeof(features));
+
+    return true;
+}
+
+bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
+{
+    /* Check that any required features are supported */
+    LilvNodes* req_feats = lilv_plugin_get_required_features(plugin);
+    LILV_FOREACH(nodes, f, req_feats)
+    {
+        const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
+        if (!feature_is_supported(_model, uri))
+        {
+            MIND_LOG_ERROR("LV2 feature {} is not supported\n", uri);
+            return false;
+        }
+    }
+    lilv_nodes_free(req_feats);
+    return true;
+}
+
 void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 {
+    _max_input_channels = 0;
+    _max_output_channels = 0;
+
     _model->num_ports = lilv_plugin_get_num_ports(plugin);
     _model->ports = (struct Port*)calloc(_model->num_ports, sizeof(struct Port));
 
@@ -191,7 +210,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
         _create_port(plugin, i, default_values[i]);
     }
 
-    // TODO: Ilias - find a plugin where the control_input isn't null.
+    // TODO: find a plugin where the control_input isn't returned null.
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
             plugin, _model->nodes.lv2_InputPort, _model->nodes.lv2_control);
     if (control_input)
@@ -201,10 +220,13 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 
     free(default_values);
 
-
     if (!_model->buf_size_set) {
         _allocate_port_buffers(_model);
     }
+
+    // Channel setup derived from ports:
+    _current_input_channels = _max_input_channels;
+    _current_output_channels = _max_output_channels;
 }
 
 /**
@@ -280,7 +302,7 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
     {
         port->type = TYPE_AUDIO;
 
-// Ilias TODO: CV port(s).
+// TODO: CV port(s).
 //#ifdef HAVE_JACK_METADATA
 //        } else if (lilv_port_is_a(model->plugin, port->lilv_port,
 //                      model->nodes.lv2_CVPort)) {
@@ -357,13 +379,13 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(ObjectId parameter_id) const
 {
-    // TODO:  Ilias - Implement normalization
+    // TODO: Implement normalization
     return this->parameter_value(parameter_id);
 }
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-    // TODO:  Ilias - Populate
+    // TODO: Populate
     /*if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
         char buffer[kVstMaxParamStrLen] = "";
@@ -554,7 +576,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
                     lv2_evbuf_reset(_current_port->evbuf, false);
                 }
                 break;
-            case TYPE_CV: // TODO Ilias: Implement also CV support.
+            case TYPE_CV: // TODO: Implement also CV support.
             case TYPE_UNKNOWN:
                 assert(false);
                 break;

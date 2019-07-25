@@ -115,6 +115,10 @@ private:
      */
     void _update_mono_mode(bool speaker_arr_status);
 
+    bool _check_for_required_features(const LilvPlugin* plugin);
+    bool _initialize_host_feature_list();
+    void _fetch_plugin_name_and_label();
+
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     void _deliver_inputs_to_plugin();
@@ -149,9 +153,11 @@ private:
     // process_audio.
     RtEventFifo _incoming_event_queue;
 
-    // TODO: Ilias Check, can this initialization ever fail? then, make it pointer, and move construction to init();
-    // TODO: Currently, this is instantiated in wrapper.
-    // But if there's more than one plugin, there should not be two instances of _loader, right?
+    /* TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
+    *  Currently, this is instantiated in wrapper.
+    *  But if there's more than one plugin, there should not be two instances of _loader, right?
+    */
+
     PluginLoader _loader;
 
     // The below are all fields used in process_audio:
