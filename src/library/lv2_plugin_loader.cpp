@@ -65,9 +65,9 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         return nullptr;
     }
 
-    // Ilias TODO: Introduce state_threadSafeRestore later.
+    // TODO: Introduce state_threadSafeRestore later.
 
-    // Ilias TODO: Introduce necessary UI code
+    // TODO: Introduce necessary UI code
 
     return plugin;
 }
@@ -92,7 +92,7 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 
 void PluginLoader::close_plugin_instance()
 {
-    // TODO Ilias: Currently, as this builds on the JALV example, only a single plugin is supported.
+    // TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
     // Refactor to allow multiple olugins!
 
     if (_model->instance != nullptr)

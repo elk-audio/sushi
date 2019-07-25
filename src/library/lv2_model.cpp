@@ -7,11 +7,55 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include "lv2_model.h"
-
 #include "lv2_features.h"
 
+namespace {
+// TODO: verify that these LV2 features work as intended:
+/** These features have no data */
+static const LV2_Feature static_features[] = {
+        { LV2_STATE__loadDefaultState, NULL },
+        { LV2_BUF_SIZE__powerOf2BlockLength, NULL },
+        { LV2_BUF_SIZE__fixedBlockLength, NULL },
+        { LV2_BUF_SIZE__boundedBlockLength, NULL } };
+
+} // anonymous namespace
+
+
 namespace sushi {
-    namespace lv2 {
+namespace lv2 {
+
+bool LV2Model::initialize_host_feature_list()
+{
+    /* Build feature list for passing to plugins */
+    const LV2_Feature* const features[] = {
+            &_features.map_feature,
+            &_features.unmap_feature,
+            &_features.log_feature,
+// TODO: Re-introduce these or remove!
+            /*
+            &model.features.sched_feature,
+            &model.features.options_feature,
+            */
+            &static_features[0],
+            &static_features[1],
+            &static_features[2],
+            &static_features[3],
+            nullptr
+    };
+
+    feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
+
+    if (!feature_list)
+    {
+        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
+        return false;
+    }
+
+// TODO: Isn't this leaking? It's from logic identical in Jalv.
+    memcpy(feature_list, features, sizeof(features));
+
+    return true;
+}
 
 void LV2Model::_initialize_urid_symap()
 {
@@ -50,10 +94,10 @@ void LV2Model::_initialize_urid_symap()
 
 void LV2Model::_initialize_log_feature()
 {
-    this->features.llog.handle = this;
-    this->features.llog.printf = lv2_printf;
-    this->features.llog.vprintf = lv2_vprintf;
-    init_feature(&this->features.log_feature, LV2_LOG__log, &this->features.llog);
+    this->_features.llog.handle = this;
+    this->_features.llog.printf = lv2_printf;
+    this->_features.llog.vprintf = lv2_vprintf;
+    init_feature(&this->_features.log_feature, LV2_LOG__log, &this->_features.llog);
 }
 
 void LV2Model::_initialize_map_feature()
@@ -61,14 +105,14 @@ void LV2Model::_initialize_map_feature()
     this->symap = symap_new();
     this->map.handle = this;
     this->map.map = map_uri;
-    init_feature(&this->features.map_feature, LV2_URID__map, &this->map);
+    init_feature(&this->_features.map_feature, LV2_URID__map, &this->map);
 }
 
 void LV2Model::_initialize_unmap_feature()
 {
     this->unmap.handle = this;
     this->unmap.unmap = unmap_uri;
-    init_feature(&this->features.unmap_feature, LV2_URID__unmap, &this->unmap);
+    init_feature(&this->_features.unmap_feature, LV2_URID__unmap, &this->unmap);
 }
 
 }

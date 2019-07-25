@@ -362,10 +362,13 @@ public:
 //  float              bpm;            ///< Transport tempo in beats per minute
 //  bool               rolling;        ///< Transport speed (0=stop, 1=play)
 
-    Lv2_Host_Features   features;
+    Lv2_Host_Features   _features;
     const LV2_Feature** feature_list;
 
+    bool initialize_host_feature_list();
+
 private:
+
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();

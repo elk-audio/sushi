@@ -16,14 +16,6 @@ namespace
 
 static constexpr int LV2_STRING_BUFFER_SIZE = 256;
 
-// TODO: verify that these LV2 features work as intended:
-/** These features have no data */
-    static const LV2_Feature static_features[] = {
-            { LV2_STATE__loadDefaultState, NULL },
-            { LV2_BUF_SIZE__powerOf2BlockLength, NULL },
-            { LV2_BUF_SIZE__fixedBlockLength, NULL },
-            { LV2_BUF_SIZE__boundedBlockLength, NULL } };
-
 } // anonymous namespace
 
 namespace sushi {
@@ -92,7 +84,8 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _model = _loader.getModel();
     _model->plugin = library_handle;
 
-    if(!_initialize_host_feature_list())
+    // TODO: Move initialization to Model constructor, which throws if it fails.
+    if(!_model->initialize_host_feature_list())
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
@@ -143,38 +136,6 @@ void Lv2Wrapper::_fetch_plugin_name_and_label()
     lilv_free(label_node);
 }
 
-bool Lv2Wrapper::_initialize_host_feature_list()
-{
-    /* Build feature list for passing to plugins */
-    const LV2_Feature* const features[] = {
-            &_model->features.map_feature,
-            &_model->features.unmap_feature,
-            &_model->features.log_feature,
-// TODO: Re-introduce these or remove!
-            /*
-            &model.features.sched_feature,
-            &model.features.options_feature,
-            */
-            &static_features[0],
-            &static_features[1],
-            &static_features[2],
-            &static_features[3],
-            nullptr
-    };
-
-    _model->feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
-
-    if (!_model->feature_list)
-    {
-        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
-        return false;
-    }
-
-// TODO: Isn't this leaking? It's from logic identical in Jalv.
-    memcpy(_model->feature_list, features, sizeof(features));
-
-    return true;
-}
 
 bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {

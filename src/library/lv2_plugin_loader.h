@@ -3,7 +3,7 @@
  * @copyright 2017 MIND Music Labs AB, Stockholm
  *
  *
- // ILIAS TODO: Update.
+ // TODO: Update.
  // DOES THE BELOW STILL APPLY?
 
  * Parts taken and/or adapted from:

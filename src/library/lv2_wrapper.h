@@ -116,7 +116,6 @@ private:
     void _update_mono_mode(bool speaker_arr_status);
 
     bool _check_for_required_features(const LilvPlugin* plugin);
-    bool _initialize_host_feature_list();
     void _fetch_plugin_name_and_label();
 
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
