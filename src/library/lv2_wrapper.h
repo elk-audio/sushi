@@ -39,7 +39,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Lv2Wrapper(HostControl host_control, const std::string &lv2_plugin_uri) :
+    Lv2Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
             Processor(host_control),
             _sample_rate{0},
             _process_inputs{},
@@ -128,6 +128,9 @@ private:
     void _process_midi_input_for_current_port();
     void _process_midi_output_for_current_port();
 
+    void _notify_parameter_change_rt(int parameter_index, float value);
+    void _notify_parameter_change(int parameter_index, float value);
+
     float _sample_rate{0};
 
     /** Wrappers for preparing data to pass to processReplacing */
@@ -148,7 +151,7 @@ private:
     //  VstTimeInfo _time_info;
 
     // This queue holds incoming midi events.
-    // They are parsed and converted to evbuf content for LV2 in
+    // They are parsed and converted to lv2_evbuf content for LV2 in
     // process_audio.
     RtEventFifo _incoming_event_queue;
 
@@ -156,7 +159,6 @@ private:
     *  Currently, this is instantiated in wrapper.
     *  But if there's more than one plugin, there should not be two instances of _loader, right?
     */
-
     PluginLoader _loader;
 
     // The below are all fields used in process_audio:

@@ -38,7 +38,7 @@ static bool feature_is_supported(LV2Model* model, const char* uri)
     return false;
 }
 
-void Lv2Wrapper::_allocate_port_buffers(LV2Model *model)
+void Lv2Wrapper::_allocate_port_buffers(LV2Model* model)
 {
     for (int i = 0; i < model->num_ports; ++i)
     {
@@ -68,8 +68,8 @@ void Lv2Wrapper::_allocate_port_buffers(LV2Model *model)
 
 ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 {
-    // TODO - inherited from VST2 wrapper: sanity checks on sample_rate,
-    //       but these can probably better be handled on Processor::init()
+// TODO - inherited from VST2 wrapper: sanity checks on sample_rate,
+//       but these can probably better be handled on Processor::init()
     _sample_rate = sample_rate;
 
     auto library_handle = _loader.get_plugin_handle_from_URI(_plugin_path.c_str());
@@ -80,11 +80,11 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    // TODO: Fix ownership of Model issue - once it is fully ported from Jalv.
+// TODO: Fix ownership of Model issue - once it is fully ported from Jalv.
     _model = _loader.getModel();
     _model->plugin = library_handle;
 
-    // TODO: Move initialization to Model constructor, which throws if it fails.
+// TODO: Move initialization to Model constructor, which throws if it fails.
     if(!_model->initialize_host_feature_list())
     {
         _cleanup();
@@ -108,7 +108,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _fetch_plugin_name_and_label();
 
-    // TODO: Re-introduce if equivalent is found for LV2.
+// TODO: Re-introduce when program management is implemented for LV2.
 //  _number_of_programs = _plugin_handle->numPrograms;
 
     _create_ports(library_handle);
@@ -171,9 +171,12 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
         _create_port(plugin, i, default_values[i]);
     }
 
-    // TODO: find a plugin where the control_input isn't returned null.
+// TODO: find a plugin where the control_input isn't returned null.
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
-            plugin, _model->nodes.lv2_InputPort, _model->nodes.lv2_control);
+            plugin,
+            _model->nodes.
+            lv2_InputPort,
+            _model->nodes.lv2_control);
     if (control_input)
     {
         _model->control_in = lilv_port_get_index(plugin, control_input);
@@ -229,7 +232,7 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
         _cleanup();
     }
 
-    // TODO: Re-introduce once 'GUI' is implemented.
+// TODO: Re-introduce once 'GUI' is implemented.
 /*    const bool hidden = !show_hidden &&
                         lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);*/
 
@@ -291,7 +294,7 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
             _max_output_channels++;
     }
 
-    // Todo: This is always returned NULL for amp output, should it?
+// TODO: This is always returned NULL for eg-amp output, should it be?
     LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, _model->nodes.rsz_minimumSize);
 
     if (min_size && lilv_node_is_int(min_size))
@@ -340,13 +343,13 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(ObjectId parameter_id) const
 {
-    // TODO: Implement normalization
+// TODO: Implement parameter normalization
     return this->parameter_value(parameter_id);
 }
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-    // TODO: Populate
+// TODO: Populate
     /*if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
         char buffer[kVstMaxParamStrLen] = "";
@@ -537,7 +540,8 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
                     lv2_evbuf_reset(_current_port->evbuf, false);
                 }
                 break;
-            case TYPE_CV: // TODO: Implement also CV support.
+// TODO: Implement also CV support.
+            case TYPE_CV:
             case TYPE_UNKNOWN:
                 assert(false);
                 break;
@@ -565,7 +569,7 @@ void Lv2Wrapper::_deliver_outputs_from_plugin()
                         if (_model->plugin_latency != _current_port->control)
                         {
                             _model->plugin_latency = _current_port->control;
-                            // TODO: introduce latency compensation reporting to Sushi
+// TODO: Introduce latency compensation reporting to Sushi
                         }
                     }
                     break;
@@ -587,7 +591,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
 
         lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
 
-        // TODO: WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
+// TODO: WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
         _midi_size--;
 
         if (_midi_type == _model->urids.midi_MidiEvent)
@@ -662,10 +666,12 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
             }
         }
 
-        /*if (model->has_ui) {
+        if (_model->has_ui)
+        {
+// TODO: REINSTATE FOR UI!
             // Forward event to UI
-            jalv_send_to_ui(model, p, type, size, body);
-        }*/
+            //jalv_send_to_ui(_model, p, type, size, body);
+        }
     }
 }
 
@@ -673,7 +679,7 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
 {
     _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->evbuf);
 
-    // TODO: Re-introduce transport support.
+// TODO: Re-introduce transport support.
     /* Write transport change event if applicable */
     /*
     if (xport_changed)
@@ -683,11 +689,11 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
                         (const uint8_t*)LV2_ATOM_BODY(lv2_pos));
     }*/
 
-    // TODO: This will never run for now! will be used for having 'UI' support.
+// TODO: This will never run for now! will be used for having 'UI' support.
     // with LV2Model example. Request_update is never set to true.
     if (_model->request_update)
     {
-        /* Plugin state has changed, request an update */
+        // Plugin state has changed, request an update
         _get_ATOM = {
                 {sizeof(LV2_Atom_Object_Body), _model->urids.atom_Object},
                 {0,                            _model->urids.patch_Get}};
@@ -833,35 +839,32 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     }
 }
 
-/*void Lv2Wrapper::notify_parameter_change_rt(VstInt32 parameter_index, float value)
+void Lv2Wrapper::_notify_parameter_change_rt(int parameter_index, float value)
 {
-    *//* The default Vst2.4 implementation calls set_parameter() in set_parameter_automated()
-     * so the plugin is already aware of the change, we just need to send a notification
-     * to the non-rt part *//*
-    *//*if (parameter_index > this->parameter_count())
+    if (parameter_index > this->parameter_count())
     {
         return;
     }
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
-    output_event(e);*//*
+    output_event(e);
 }
 
-void Lv2Wrapper::notify_parameter_change(VstInt32 parameter_index, float value)
+void Lv2Wrapper::_notify_parameter_change(int parameter_index, float value)
 {
-    *//*auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
+    auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
                                                   this->id(),
                                                   static_cast<ObjectId>(parameter_index),
                                                   value,
                                                   IMMEDIATE_PROCESS);
-    _host_control.post_event(e);*//*
-}*/
+    _host_control.post_event(e);
+}
 
 /*VstTimeInfo* Lv2Wrapper::time_info()
 {
     auto transport = _host_control.transport();
     auto ts = transport->current_time_signature();
 
-    *//*_time_info.samplePos          = transport->current_samples();
+    _time_info.samplePos          = transport->current_samples();
     _time_info.sampleRate         = _sample_rate;
     _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
     _time_info.ppqPos             = transport->current_beats();
@@ -869,7 +872,7 @@ void Lv2Wrapper::notify_parameter_change(VstInt32 parameter_index, float value)
     _time_info.barStartPos        = transport->current_bar_start_beats();
     _time_info.timeSigNumerator   = ts.numerator;
     _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;*//*
+    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
     return &_time_info;
 }*/
 

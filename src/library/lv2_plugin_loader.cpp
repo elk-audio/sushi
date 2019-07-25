@@ -65,9 +65,9 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         return nullptr;
     }
 
-    // TODO: Introduce state_threadSafeRestore later.
+// TODO: Introduce state_threadSafeRestore later.
 
-    // TODO: Introduce necessary UI code
+// TODO: Introduce necessary UI code from Jalv.
 
     return plugin;
 }
@@ -92,7 +92,7 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 
 void PluginLoader::close_plugin_instance()
 {
-    // TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
+// TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
     // Refactor to allow multiple olugins!
 
     if (_model->instance != nullptr)
@@ -101,8 +101,9 @@ void PluginLoader::close_plugin_instance()
         lilv_instance_deactivate(_model->instance);
         lilv_instance_free(_model->instance);
 
-        /*for (unsigned i = 0; i < _model.controls.n_controls; ++i) {
-            ControlID* const control = _model.controls.controls[i];
+        for (unsigned i = 0; i < _model->controls.n_controls; ++i)
+        {
+            ControlID* const control = _model->controls.controls[i];
             lilv_node_free(control->node);
             lilv_node_free(control->symbol);
             lilv_node_free(control->label);
@@ -112,7 +113,9 @@ void PluginLoader::close_plugin_instance()
             lilv_node_free(control->def);
             free(control);
         }
-        free(model->controls.controls);*/
+
+        if(_model->controls.controls != nullptr)
+            free(_model->controls.controls);
 
         _model->instance = nullptr;
     }

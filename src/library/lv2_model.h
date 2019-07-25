@@ -56,13 +56,85 @@ namespace lv2 {
 #    define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-enum PortFlow {
+class LV2Model;
+
+/** Type of plugin control. */
+typedef enum
+{
+    PORT,     ///< Control port
+    PROPERTY  ///< Property (set via atom message)
+} ControlType;
+
+typedef struct
+{
+    float value;
+    char* label;
+} ScalePoint;
+
+/** Order scale points by value. */
+int scale_point_cmp(const ScalePoint* a, const ScalePoint* b);
+
+/** Plugin control. */
+typedef struct
+{
+    LV2Model* model; // TODO: Is this needed?
+    ControlType type;
+    LilvNode* node;
+    LilvNode* symbol; ///< Symbol
+    LilvNode* label; ///< Human readable label
+    LV2_URID property; ///< Iff type == PROPERTY
+    int index; ///< Iff type == PORT
+    LilvNode* group; ///< Port/control group, or NULL
+//  void* widget; ///< Control Widget
+    int n_points; ///< Number of scale points
+    ScalePoint* points; ///< Scale points
+    LV2_URID value_type; ///< Type of control value
+    LilvNode* min; ///< Minimum value
+    LilvNode* max; ///< Maximum value
+    LilvNode* def; ///< Default value
+    bool is_toggle; ///< Boolean (0 and 1 only)
+    bool is_integer; ///< Integer values only
+    bool is_enumeration; ///< Point values only
+    bool is_logarithmic; ///< Logarithmic scale
+    bool is_writable; ///< Writable (input)
+    bool is_readable; ///< Readable (output)
+} ControlID;
+
+ControlID* new_port_control(LV2Model* model, uint32_t index);
+
+ControlID* new_property_control(LV2Model* model, const LilvNode* property);
+
+typedef struct
+{
+    size_t n_controls{0};
+    ControlID** controls{nullptr};
+} Controls;
+
+void add_control(Controls* controls, ControlID* control);
+
+ControlID* get_property_control(const Controls* controls, LV2_URID property);
+
+/**
+Control change event, sent through ring buffers for UI updates.
+*/
+typedef struct
+{
+    uint32_t index;
+    uint32_t protocol;
+    uint32_t size;
+    uint8_t  body[];
+} ControlChange;
+
+
+enum PortFlow
+{
     FLOW_UNKNOWN,
     FLOW_INPUT,
     FLOW_OUTPUT
 };
 
-enum PortType {
+enum PortType
+{
     TYPE_UNKNOWN,
     TYPE_CONTROL,
     TYPE_AUDIO,
@@ -124,7 +196,8 @@ typedef struct
 } LV2_URIDs;
 
 // Ilias TODO: Unsure if these are global, or per plugin, yet.
-class Lv2_Host_Nodes {
+class Lv2_Host_Nodes
+{
 public:
     Lv2_Host_Nodes(LilvWorld* world)
     {
@@ -244,7 +317,8 @@ public:
     LilvNode* work_schedule;
 };
 
-typedef struct {
+typedef struct
+{
     LV2_Feature map_feature;
     LV2_Feature unmap_feature;
     LV2_State_Make_Path make_path;
@@ -338,10 +412,10 @@ public:
 //  bool               safe_restore;   ///< Plugin restore() is thread-safe
 
 // TODO: Ilias The below needs re-introducing for control no?
-//  bool               has_ui;         ///< True iff a control UI is present
-/*  Controls           controls;       ///< Available plugin controls*/
-/*  uint32_t           event_delta_t;  ///< Frames since last update sent to UI*/
-/*  float              ui_update_hz;   ///< Frequency of UI updates*/
+    bool               has_ui;         ///< True iff a control UI is present
+    Controls           controls;       ///< Available plugin controls
+//    uint32_t           event_delta_t;  ///< Frames since last update sent to UI*/
+//    float              ui_update_hz;   ///< Frequency of UI updates*/
 
 // void* window; ///< Window (if applicable)
 

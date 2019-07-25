@@ -214,6 +214,7 @@ if (${WITH_LV2})
                                src/library/lv2_symap.cpp
                                src/library/lv2_wrapper.cpp
                                src/library/lv2_model.cpp
+                               src/library/lv2_control.cpp
                                src/library/lv2_plugin_loader.cpp)
 endif()
 

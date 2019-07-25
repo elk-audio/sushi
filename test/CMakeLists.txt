@@ -103,9 +103,6 @@ endif()
 if (${WITH_LV2})
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_plugin_loader_test.cpp)
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
-
-    # ILIAS TODO: doesn't exist yet, and might never exist.
-    #set(TEST_FILES ${TEST_FILES} unittests/library/lv2_midi_event_fifo_test.cpp)
 endif()
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
