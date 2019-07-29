@@ -692,6 +692,7 @@ Processor* AudioEngine::mutable_processor(ObjectId processor_id)
 
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
 {
+    track->init(_sample_rate);
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {
@@ -819,16 +820,6 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
             else
                 typed_event->set_handled(false);
             break;
-        }
-        case RtEventType::SET_BYPASS:
-        {
-            auto typed_event = event.processor_command_event();
-            auto processor = static_cast<Track*>(_realtime_processors[typed_event->processor_id()]);
-            if (processor)
-            {
-                processor->set_bypassed(typed_event->value());
-            }
-            return true;
         }
         case RtEventType::TEMPO:
         {

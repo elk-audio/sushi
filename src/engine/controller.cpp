@@ -119,6 +119,7 @@ ext::SyncMode Controller::get_sync_mode() const
 
 void Controller::set_sync_mode(ext::SyncMode sync_mode)
 {
+    MIND_LOG_DEBUG("set_sync_mode called");
     auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
@@ -396,10 +397,16 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
     return {ext::ControlStatus::OK, processor->bypassed()};
 }
 
-ext::ControlStatus Controller::set_processor_bypass_state(int /*processor_id*/, bool /*bypass_enabled*/)
+ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
-    MIND_LOG_DEBUG("set_processor_bypass_state called, returning ");
-    return {ext::ControlStatus::OK};
+    MIND_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
+    auto processor = _engine->mutable_processor(static_cast<ObjectId>(processor_id));
+    if (processor == nullptr)
+    {
+        return ext::ControlStatus::NOT_FOUND;
+    }
+    processor->set_bypassed(bypass_enabled);
+    return ext::ControlStatus::OK;
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int processor_id) const
@@ -597,8 +604,8 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_st
 
 std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
 {
-    MIND_LOG_DEBUG("get_string_property_value called, returning ");
-    return {ext::ControlStatus::OK, "helloworld"};
+    MIND_LOG_DEBUG("get_string_property_value called");
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
 }
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
@@ -626,8 +633,8 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
 
 ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
 {
-    MIND_LOG_DEBUG("set_string_property_value called, returning ");
-    return ext::ControlStatus::OK;
+    MIND_LOG_DEBUG("set_string_property_value called");
+    return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const

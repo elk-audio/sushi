@@ -1,5 +1,8 @@
-#include "library/vst2x_wrapper.h"
+#ifdef SUSHI_BUILD_WITH_VST2
 
+#include "twine/twine.h"
+
+#include "library/vst2x_wrapper.h"
 #include "logging.h"
 
 namespace {
@@ -59,6 +62,8 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
     _can_do_soft_bypass = (bypass == 1);
     _number_of_programs = _plugin_handle->numPrograms;
+
+    MIND_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -131,11 +136,8 @@ void Vst2xWrapper::set_enabled(bool enabled)
 
 void Vst2xWrapper::set_bypassed(bool bypassed)
 {
-    Processor::set_bypassed(bypassed);
-    if (_can_do_soft_bypass)
-    {
-        _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, NULL, 0.0f);
-    }
+    assert(twine::is_current_thread_realtime() == false);
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId parameter_id) const
@@ -280,6 +282,15 @@ void Vst2xWrapper::process_event(RtEvent event)
             MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
+    else if(event.type() == RtEventType::SET_BYPASS)
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_can_do_soft_bypass)
+        {
+            _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
+        }
+    }
     else
     {
         MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
@@ -289,7 +300,7 @@ void Vst2xWrapper::process_event(RtEvent event)
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_bypassed && !_can_do_soft_bypass)
+    if (_can_do_soft_bypass == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
         _vst_midi_events_fifo.flush();
@@ -299,6 +310,10 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
+        if (_can_do_soft_bypass == false && _bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        }
     }
 }
 
@@ -420,8 +435,23 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         default:
             return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
-    return kNumSpeakerArr;
 }
 
 } // namespace vst2
 } // namespace sushi
+
+#endif //SUSHI_BUILD_WITH_VST2
+#ifndef SUSHI_BUILD_WITH_VST2
+#include "library/vst2x_wrapper.h"
+#include "logging.h"
+namespace sushi {
+namespace vst2 {
+MIND_GET_LOGGER;
+ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+}}}
+#endif
+

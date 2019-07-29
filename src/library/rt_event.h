@@ -482,7 +482,7 @@ private:
 class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
 {
 public:
-    RtEvent() {}
+    RtEvent() {};
 
     RtEventType type() const {return _base_event.type();}
 

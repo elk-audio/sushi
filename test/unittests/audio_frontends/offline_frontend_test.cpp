@@ -25,7 +25,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = new OfflineFrontend(&_engine, &_midi_dispatcher);
+        _module_under_test = new OfflineFrontend(&_engine);
     }
 
     void TearDown()

@@ -41,6 +41,7 @@ configure_file(
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
+option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
@@ -55,6 +56,9 @@ if (${WITH_XENOMAI})
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
+endif()
+if (${WITH_VST2})
+    message("Building with Vst2 support.")
 endif()
 if (${WITH_VST3})
     message("Building with Vst3 support.")
@@ -79,7 +83,8 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp")
+        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
@@ -118,8 +123,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/internal_plugin.cpp
                       src/library/performance_timer.cpp
                       src/library/vst2x_wrapper.cpp
-                      src/library/vst2x_host_callback.cpp
-                      src/library/vst2x_plugin_loader.cpp
                       src/library/vst3x_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/gain_plugin.cpp
@@ -146,6 +149,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
                         src/dsp_library/biquad_filter.h
+                        src/dsp_library/value_smoother.h
                         src/library/base_performance_timer.h
                         src/library/event.h
                         src/library/event_interface.h
@@ -162,9 +166,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
-                        src/library/vst2x_midi_event_fifo.h
-                        src/library/vst2x_host_callback.h
-                        src/library/vst2x_plugin_loader.h
                         src/library/vst3x_wrapper.h
                         src/engine/base_engine.h
                         src/engine/audio_engine.h
@@ -198,6 +199,14 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
                                 src/control_frontends/alsa_midi_frontend.cpp)
 endif()
 
+if (${WITH_VST2})
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x_host_callback.cpp
+                                src/library/vst2x_host_callback.h
+                                src/library/vst2x_plugin_loader.cpp
+                                src/library/vst2x_plugin_loader.h
+                                src/library/vst2x_midi_event_fifo.h)
+endif()
+
 if (${WITH_VST3})
     set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
                                 src/library/vst3x_utils.cpp
@@ -207,6 +216,7 @@ endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
+                     "${ADDITIONAL_VST2_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
                      "${ADDITIONAL_ALSA_SOURCES}")
 
@@ -214,7 +224,18 @@ add_executable(sushi "${COMPILATION_UNITS}"
 #  Include Directories  #
 #########################
 
-set(VST_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk2.4")
+if (${WITH_VST2})
+    if (VST_2_SDK_BASE_DIR)
+        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
+    else()
+        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
+                                                               $ENV{HOME}/workspace/VST_SDK
+                                                               $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
+    endif()
+    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
+        message("Warning! Could not find Steinberg SDK for VST 2.4")
+    endif()
+endif()
 
 set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
@@ -222,7 +243,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
-                 "${VST_SDK_PATH}/pluginterfaces/vst2.x"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
 
@@ -231,22 +251,30 @@ if (APPLE)
     set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
 endif()
 
-###########################
-#  Subdirectory projects  #
-###########################
+################################
+#  Subdirectory configuration  #
+################################
+
+if (${AUDIO_BUFFER_SIZE})
+    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "" FORCE)
+endif()
+
+if (${XENOMAI_AUDIO_CHANNELS})
+    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
+endif()
+
+if (${XENOMAI_AUDIO_SAMPLE_RATE})
+    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "" FORCE)
+endif()
 
 if (${WITH_XENOMAI})
-    set(RASPA_WITH_APPS OFF CACHE BOOL "")
-    set(RASPA_WITH_TESTS OFF CACHE BOOL "")
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "")
-    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "")
-    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "")
-    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "")
+    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
+    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
+    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
     add_subdirectory(raspalib)
-
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
 else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "")
+    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
 
 if (${BUILD_TWINE})
@@ -286,6 +314,10 @@ if (${WITH_VST3})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
 endif()
 
+if (WITH_VST2)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
+endif()
+
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
 endif()
@@ -310,8 +342,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
-# Added for Vst2.x interface, really a MSVC specific thing
-target_compile_definitions(sushi PRIVATE -D__cdecl= )
 
 if (${WITH_XENOMAI})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_XENOMAI)
@@ -323,6 +353,10 @@ endif()
 
 if (${WITH_VST3})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
+if (${WITH_VST2})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
 endif()
 
 if (${WITH_RPC_INTERFACE})

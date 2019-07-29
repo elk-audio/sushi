@@ -39,7 +39,7 @@ class Processor
 public:
     explicit Processor(HostControl host_control) : _host_control(host_control) {}
 
-    virtual ~Processor() {};
+    virtual ~Processor() = default;
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
@@ -179,7 +179,7 @@ public:
         _current_output_channels = channels;
     }
 
-    bool enabled() {return _enabled;}
+    virtual bool enabled() {return _enabled;}
 
     /* Override this for nested processors and set all sub processors to disabled */
     /**
@@ -191,7 +191,7 @@ public:
      */
     virtual void set_enabled(bool enabled) {_enabled = enabled;}
 
-    bool bypassed() const {return _bypassed;}
+    virtual bool bypassed() const {return _bypassed;}
 
     /**
      * @brief Set the bypass state of the processor. If process_audio() is called
@@ -329,11 +329,11 @@ protected:
     }
 
     /**
-     * @brief Utility function do to general bypass/passthrough audio processing.
-     *        Useful for processors that don't implement this on their own.
-     * @param in_buffer Input SampleBuffer
-     * @param out_buffer Output SampleBuffer
-     */
+    * @brief Utility function do to general bypass/passthrough audio processing.
+    *        Useful for processors that don't implement this on their own.
+    * @param in_buffer Input SampleBuffer
+    * @param out_buffer Output SampleBuffer
+    */
     void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
     {
         if (_current_input_channels == 0)
@@ -348,11 +348,10 @@ protected:
         {
             for (int c = 0; c < _current_output_channels; ++c)
             {
-                out_buffer.add(c, c % _current_input_channels, in_buffer);
+                out_buffer.replace(c, c % _current_input_channels, in_buffer);
             }
         }
     }
-
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     /* TODO - Is this a reasonable requirement? */
@@ -362,7 +361,7 @@ protected:
     int _current_input_channels{0};
     int _current_output_channels{0};
 
-    bool _enabled{true};
+    bool _enabled{false};
     bool _bypassed{false};
 
     HostControl _host_control;
@@ -379,6 +378,138 @@ private:
     std::vector<ParameterDescriptor*> _parameters_by_index;
 };
 
+constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);
 
-} // end namespace sushi
+static int chunks_to_ramp(float sample_rate)
+{
+    return static_cast<int>(std::floor(std::max(1.0f, (sample_rate * BYPASS_RAMP_TIME.count() / AUDIO_CHUNK_SIZE))));
+}
+
+/**
+ * @brief Convience class to encapsulate the bypass state logic and when to ramp audio up
+ *        or down in order to avoid audio clicks and artefacts.
+ */
+class BypassManager
+{
+public:
+    MIND_DECLARE_NON_COPYABLE(BypassManager);
+
+    BypassManager() = default;
+    explicit BypassManager(bool bypassed_by_default) :
+            _state(bypassed_by_default? BypassState::BYPASSED : BypassState::NOT_BYPASSED) {}
+
+    /**
+     * @brief Check whether or not bypass is enabled
+     * @return true if bypass is enabled
+     */
+    bool bypassed() const {return _state == BypassState::BYPASSED || _state == BypassState::RAMPING_DOWN;};
+
+    /**
+     * @brief Set the bypass state
+     * @param bypass_enabled If true sets bypass enabled, if false turns off bypass
+     * @param sample_rate The current sample rate, used for calculating ramp time
+     */
+    void set_bypass(bool bypass_enabled, float sample_rate)
+    {
+        if (bypass_enabled && this->bypassed() == false)
+        {
+            _state = BypassState::RAMPING_DOWN;
+            _ramp_chunks = chunks_to_ramp(sample_rate);
+            _ramp_count = _ramp_chunks;
+        }
+        if (bypass_enabled == false && this->bypassed())
+        {
+            _state = BypassState::RAMPING_UP;
+            _ramp_chunks = chunks_to_ramp(sample_rate);
+            _ramp_count = 0;
+        }
+    }
+
+    /**
+     * @return true if the processors processing functions needs to be called, false otherwise
+     */
+    bool should_process() const {return _state != BypassState::BYPASSED;}
+
+    /**
+     * @return true if the processor output should be ramped, false if it doesn't need volume ramping
+     */
+    bool should_ramp() const {return _state == BypassState::RAMPING_DOWN || _state == BypassState::RAMPING_UP;};
+
+    /**
+     * @brief Does volume ramping on the buffer passed to the function based on the current bypass state
+     * @param output_buffer The buffer to apply the volume ramp
+     */
+    void ramp_output(ChunkSampleBuffer& output_buffer)
+    {
+        auto [start, end] = get_ramp();
+        output_buffer.ramp(start, end);
+    }
+
+    /**
+     * @brief Does crossfade volume ramping between input and output buffer based in the
+     *        current bypass state.
+     * @param input_buffer The input buffer to the processor, what will be crossfaded to if
+     *                     bypass is enabled
+     * @param output_buffer A filled output buffer from the processor, what will be crossfaded
+     *                      to if bypass is disabled
+     * @param input_channels The current number of input channels of the processor
+     * @param output_channels The current number of output channels of the processor
+     */
+    void crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,
+                          int input_channels, int output_channels)
+    {
+        auto [start, end] = get_ramp();
+        output_buffer.ramp(start, end);
+        if (input_channels > 0)
+        {
+            for (int c = 0; c < output_channels; ++c)
+            {
+                // Add the input with an inverse ramp to crossfade between input and output
+                output_buffer.add_with_ramp(c, c % input_channels, input_buffer, 1.0f - start, 1.0f - end);
+            }
+        }
+    }
+
+private:
+    enum class BypassState
+    {
+        NOT_BYPASSED,
+        BYPASSED,
+        RAMPING_DOWN,
+        RAMPING_UP
+    };
+
+    std::pair<float, float> get_ramp()
+    {
+        int prev_count = 0;
+        if (_state == BypassState::RAMPING_DOWN)
+        {
+            prev_count = _ramp_count--;
+            if (_ramp_count == 0)
+            {
+                _state = BypassState::BYPASSED;
+            }
+        }
+        else if (_state == BypassState::RAMPING_UP)
+        {
+            prev_count = _ramp_count++;
+            if (_ramp_count == _ramp_chunks)
+            {
+                _state = BypassState::NOT_BYPASSED;
+            }
+        }
+        else
+        {
+            return {1.0f, 1.0f};
+        }
+        return {static_cast<float>(prev_count) / _ramp_chunks,
+                static_cast<float>(_ramp_count) / _ramp_chunks};
+    }
+
+    BypassState _state{BypassState::NOT_BYPASSED};
+    int _ramp_chunks{0};
+    int _ramp_count{0};
+};
+
+}; // end namespace sushi
 #endif //SUSHI_PROCESSOR_H

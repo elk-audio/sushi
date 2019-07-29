@@ -9,37 +9,22 @@
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
 #include "base_audio_frontend.h"
-#include "control_frontends/osc_frontend.h"
-#include "control_frontends/base_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
 
-
-/**
- * @brief Workaround for Xenomai process initialization, which should happen
- *        as the _first_ thing in main() before everything else.
- *
- * @return 0 if successful, raspa_init() error code otherwise
- */
-int global_init();
-
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw) :
-                                                break_on_mode_sw(break_on_mode_sw)
-    {}
+    XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw) : break_on_mode_sw(break_on_mode_sw) {}
 
-    virtual ~XenomaiRaspaFrontendConfiguration()
-    {}
+    virtual ~XenomaiRaspaFrontendConfiguration() = default;
     bool break_on_mode_sw;
 };
 
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
-    XenomaiRaspaFrontend(engine::BaseEngine* engine,
-                    midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher) {}
+    XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     virtual ~XenomaiRaspaFrontend()
     {
@@ -65,14 +50,6 @@ public:
     }
 
     /**
-     * @brief Connects the OSC frontend to all parameters and processors
-     */
-    void connect_control_frontends() override
-    {
-        _osc_control->connect_all();
-    }
-
-    /**
      * @brief Call to clean up resources and release ports
      */
     void cleanup() override;
@@ -81,13 +58,20 @@ public:
      * @brief Activate the realtime frontend, currently blocking.
      */
     void run() override;
+    
+    /**
+     * @brief Workaround for Xenomai process initialization, which should happen
+     *        as the _first_ thing in main() before everything else.
+     *
+     * @return 0 if successful, raspa_init() error code otherwise
+     */
+    static int global_init();
 
 private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
 
-    std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
-    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
+    static bool _raspa_initialised;
 };
 
 }; // end namespace audio_frontend
@@ -108,7 +92,7 @@ struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
-    XenomaiRaspaFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
+    XenomaiRaspaFrontend(engine::BaseEngine* engine);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override {return AudioFrontendStatus::OK;}
     void cleanup() override {}
     void run() override {}
