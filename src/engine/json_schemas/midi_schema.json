@@ -136,6 +136,10 @@ R"(
               "max_range":
               {
                 "type": "number"
+              },
+              "relative":
+              {
+                "type": "boolean"
               }
             },
             "required": ["port", "channel", "cc_number", "plugin_name", "parameter_name", "min_range", "max_range"]

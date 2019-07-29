@@ -48,7 +48,7 @@ const MidiDataByte TEST_PRG_CH_MSG_2  = {0xC4, 45, 0, 0};  /* Channel 4, prg 45 
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
-    InputConnection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOnMessage message = {1, 46, 64};
     Event* event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
@@ -64,7 +64,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
-    InputConnection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOffMessage message = {2, 46, 64};
     Event* event = make_note_off_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
@@ -80,7 +80,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
 {
-    InputConnection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1, false, 64};
     uint8_t message[] = {3, 46, 64};
     Event* event = make_wrapped_midi_event(connection, message, sizeof(message), IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
@@ -97,7 +97,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
-    InputConnection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1, false, 64};
     ControlChangeMessage message = {1, 50, 32};
     Event* event = make_param_change_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_parameter_change_event());
@@ -111,7 +111,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeProgramChangeEvent)
 {
-    InputConnection connection = {25, 0, 0, 0};
+    InputConnection connection = {25, 0, 0, 0, false, 64};
     ProgramChangeMessage message = {1, 32};
     Event* event = make_program_change_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
@@ -219,7 +219,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
 
     /* Connect all midi channels (OMNI) */
     _module_under_test.set_midi_inputs(5);
-    _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 67, 0, 100);
+    _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 67, 0, false, 100);
     _module_under_test.send_midi(1, TEST_CTRL_CH_MSG, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
@@ -231,7 +231,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     _module_under_test.clear_connections();
 
     /* Connect with a specific midi channel (5) */
-    _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 40, 0, 100, 5);
+    _module_under_test.connect_cc_to_parameter(1, "processor", "parameter", 40, 0, 100, false, 5);
     _module_under_test.send_midi(1, TEST_CTRL_CH_MSG_2, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
