@@ -62,6 +62,22 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
     delete event;
 }
 
+TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnWithZeroVelEvent)
+{
+    InputConnection connection = {25, 26, 0, 1};
+    NoteOnMessage message = {1, 60, 0};
+    Event* event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(event->is_keyboard_event());
+    EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
+    auto typed_event = static_cast<KeyboardEvent*>(event);
+    EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
+    EXPECT_EQ(25u, typed_event->processor_id());
+    EXPECT_EQ(1, typed_event->channel());
+    EXPECT_EQ(60, typed_event->note());
+    EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
+    delete event;
+}
+
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
     InputConnection connection = {25, 26, 0, 1};
