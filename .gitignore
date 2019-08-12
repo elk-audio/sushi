@@ -43,6 +43,7 @@ build/
 cmake-build-debug/
 cmake-build-release/
 third-party/install/
+third-party/rehost/
 
 # Windows folders
 *.ini
