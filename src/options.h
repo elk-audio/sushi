@@ -118,7 +118,7 @@ const optionparser::Descriptor usage[] =
         "",         // shortopt
         "",         // longopt
         SushiArg::Unknown, // check_arg
-        "\nUSAGE: sushi [options] [input_filename]\n\nOptions:" // help
+        "\nUSAGE: sushi -r|-j|-o|-d [options] \n\nOptions:" // help
     },
     {
         OPT_IDX_HELP,
