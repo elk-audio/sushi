@@ -14,6 +14,7 @@ namespace sushi {
 
 constexpr int MAX_EVENTS_IN_QUEUE = 100;
 
+// TODO rename to RtSafeEventFifo
 class RtEventFifo : public RtEventPipe
 {
 public:
@@ -32,6 +33,7 @@ public:
 private:
     memory_relaxed_aquire_release::CircularFifo<RtEvent, MAX_EVENTS_IN_QUEUE> _fifo;
 };
+
 
 } //end namespace sushi
 

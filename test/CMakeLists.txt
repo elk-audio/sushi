@@ -67,7 +67,8 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/rt_event_test.cpp
-               unittests/library/id_generator_test.cpp)
+               unittests/library/id_generator_test.cpp
+               unittests/library/simple_fifo_test.cpp)
 
 if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
