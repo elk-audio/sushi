@@ -33,7 +33,7 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    RtEventFifo _event_queue;
+    RtSafeRtEventFifo _event_queue;
 };
 
 }// namespace passthrough_plugin

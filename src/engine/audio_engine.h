@@ -53,7 +53,7 @@ public:
      * @param queue Endpoint for clipping notifications
      * @param audio_input Set to true if the audio buffer comes directly from the an audio inout (i.e. before any processing)
      */
-    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input);
+    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
 
@@ -566,7 +566,7 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
-    void _process_outgoing_events(ControlBuffer& buffer, RtEventFifo& source_queue);
+    void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
 
     const bool _multicore_processing;
     const int  _rt_cores;
@@ -612,11 +612,11 @@ private:
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    RtEventFifo _internal_control_queue;
-    RtEventFifo _main_in_queue;
-    RtEventFifo _processor_out_queue;
-    RtEventFifo _main_out_queue;
-    RtEventFifo _control_queue_out;
+    RtSafeRtEventFifo _internal_control_queue;
+    RtSafeRtEventFifo _main_in_queue;
+    RtSafeRtEventFifo _processor_out_queue;
+    RtSafeRtEventFifo _main_out_queue;
+    RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;

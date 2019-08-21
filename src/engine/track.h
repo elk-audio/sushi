@@ -95,7 +95,7 @@ public:
      *
      * @return A reference to an RtEventFifo containing buffered events
      */
-    RtEventFifo& output_event_buffer()
+    RtSafeRtEventFifo& output_event_buffer()
     {
         return _output_event_buffer;
     }
@@ -215,8 +215,8 @@ private:
 
     performance::PerformanceTimer* _timer;
 
-    RtEventFifo _kb_event_buffer;
-    RtEventFifo _output_event_buffer;
+    RtSafeRtEventFifo _kb_event_buffer;
+    RtSafeRtEventFifo _output_event_buffer;
 };
 
 } // namespace engine

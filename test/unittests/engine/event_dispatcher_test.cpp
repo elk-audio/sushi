@@ -81,8 +81,8 @@ protected:
     }
     EventDispatcher* _module_under_test;
     EngineMockup     _test_engine{44100};
-    RtEventFifo      _in_rt_queue;
-    RtEventFifo      _out_rt_queue;
+    RtSafeRtEventFifo      _in_rt_queue;
+    RtSafeRtEventFifo      _out_rt_queue;
 
     DummyPoster      _poster;
 };

@@ -82,7 +82,7 @@ protected:
     }
     HostControlMockup _host_control;
     Vst3xWrapper* _module_under_test;
-    RtEventFifo _event_queue;
+    RtSafeRtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
@@ -149,7 +149,7 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;

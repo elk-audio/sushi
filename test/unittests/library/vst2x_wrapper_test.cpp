@@ -251,7 +251,7 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 {
     SetUp("libvst2_test_plugin.so");
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
     _module_under_test->notify_parameter_change_rt(0, 0.5f);

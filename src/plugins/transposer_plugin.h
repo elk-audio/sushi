@@ -36,7 +36,7 @@ private:
 
     FloatParameterValue*   _transpose_parameter;
 
-    RtEventFifo _queue;
+    RtSafeRtEventFifo _queue;
 };
 
 float samples_per_note(float note_fraction, float tempo, float samplerate);

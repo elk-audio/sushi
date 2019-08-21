@@ -61,7 +61,7 @@ private:
 class EventDispatcher : public BaseEventDispatcher
 {
 public:
-    EventDispatcher(engine::BaseEngine* engine, RtEventFifo* in_rt_queue,  RtEventFifo* out_rt_queue);
+    EventDispatcher(engine::BaseEngine* engine, RtSafeRtEventFifo* in_rt_queue,  RtSafeRtEventFifo* out_rt_queue);
 
     virtual ~EventDispatcher() = default;
 
@@ -103,8 +103,8 @@ private:
     engine::BaseEngine*         _engine;
 
     SynchronizedQueue<Event*>   _in_queue;
-    RtEventFifo*                _in_rt_queue;
-    RtEventFifo*                _out_rt_queue;
+    RtSafeRtEventFifo*                _in_rt_queue;
+    RtSafeRtEventFifo*                _out_rt_queue;
     std::deque<Event*>          _waiting_list;
 
     Worker                      _worker;

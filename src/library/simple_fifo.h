@@ -89,15 +89,6 @@ private:
     int _tail{0};
 };
 
-template <size_t size>
-class NonRtSafeRtEventFifo : public SimpleFifo<RtEvent, size>, public RtEventPipe
-{
-    NonRtSafeRtEventFifo() = default;
-    virtual ~NonRtSafeRtEventFifo() = default;
-
-    void send_event(const RtEvent &event) override {SimpleFifo<RtEvent, size>::push(event);}
-};
-
 }// namespace sushi
 
 #endif //SUSHI_SIMPLE_FIFO_H

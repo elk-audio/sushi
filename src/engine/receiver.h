@@ -21,7 +21,7 @@ namespace receiver {
 class AsynchronousEventReceiver
 {
 public:
-    AsynchronousEventReceiver(RtEventFifo* queue) : _queue{queue} {}
+    AsynchronousEventReceiver(RtSafeRtEventFifo* queue) : _queue{queue} {}
 
     /**
      * @brief Blocks the current thread while waiting for a response to a given event
@@ -38,7 +38,7 @@ private:
         bool    status;
     };
     std::vector<Node> _receive_list;
-    RtEventFifo* _queue;
+    RtSafeRtEventFifo* _queue;
 };
 
 

@@ -41,7 +41,7 @@ void ClipDetector::set_output_channels(int channels)
     _output_clip_count = std::vector<unsigned int>(channels, _interval);
 }
 
-void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input)
+void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input)
 {
     auto& counter = audio_input? _input_clip_count : _output_clip_count;
     for (int i = 0; i < buffer.channel_count(); ++i)
@@ -1139,7 +1139,7 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
     _prev_gate_states = buffer.gate_values;
 }
 
-void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtEventFifo& source_queue)
+void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue)
 {
     RtEvent event;
     while (source_queue.pop(event))

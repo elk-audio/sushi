@@ -36,7 +36,7 @@ protected:
 
 TEST_F(TestClipDetector, TestClipping)
 {
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     ChunkSampleBuffer buffer(TEST_CHANNEL_COUNT);
     test_utils::fill_sample_buffer(buffer, 0.5f);
     _module_under_test.detect_clipped_samples(buffer, queue, false);
