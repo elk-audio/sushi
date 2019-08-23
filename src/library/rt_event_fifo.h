@@ -46,6 +46,7 @@ private:
 template <size_t size>
 class RtEventFifo : public SimpleFifo<RtEvent, size>, public RtEventPipe
 {
+public:
     RtEventFifo() = default;
     virtual ~RtEventFifo() = default;
 

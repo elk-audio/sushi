@@ -126,6 +126,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
+                      src/plugins/cv_to_control_plugin.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/lfo_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
@@ -183,6 +184,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/plugins/arpeggiator_plugin.h
+                        src/plugins/cv_to_control_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/lfo_plugin.h
                         src/plugins/passthrough_plugin.h
