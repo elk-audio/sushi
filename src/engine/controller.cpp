@@ -186,7 +186,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
     return returns;
 }
 
-ext::ControlStatus Controller::send_note_on(int track_id, int note, int channel, float velocity)
+ext::ControlStatus Controller::send_note_on(int track_id, int channel, int note, float velocity)
 {
     MIND_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
@@ -195,7 +195,7 @@ ext::ControlStatus Controller::send_note_on(int track_id, int note, int channel,
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::send_note_off(int track_id, int note, int channel, float velocity)
+ext::ControlStatus Controller::send_note_off(int track_id, int channel, int note, float velocity)
 {
     MIND_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
@@ -203,7 +203,7 @@ ext::ControlStatus Controller::send_note_off(int track_id, int note, int channel
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;}
 
-ext::ControlStatus Controller::send_note_aftertouch(int track_id, int note, int channel, float value)
+ext::ControlStatus Controller::send_note_aftertouch(int track_id, int channel, int note, float value)
 {
     MIND_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
