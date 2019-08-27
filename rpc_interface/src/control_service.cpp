@@ -223,7 +223,7 @@ grpc::Status SushiControlService::SendNoteOn(grpc::ServerContext* /*context*/,
                                              const sushi_rpc::NoteOnRequest*request,
                                              sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_on(request->track().id(), request->note(), request->channel(), request->velocity());
+    auto status = _controller->send_note_on(request->track().id(), request->channel(), request->note(), request->velocity());
     return to_grpc_status(status);
 }
 
@@ -231,7 +231,7 @@ grpc::Status SushiControlService::SendNoteOff(grpc::ServerContext* /*context*/,
                                               const sushi_rpc::NoteOffRequest* request,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_off(request->track().id(), request->note(), request->channel(), request->velocity());
+    auto status = _controller->send_note_off(request->track().id(), request->channel(), request->note(), request->velocity());
     return to_grpc_status(status);
 }
 
@@ -239,7 +239,7 @@ grpc::Status SushiControlService::SendNoteAftertouch(grpc::ServerContext* /*cont
                                                      const sushi_rpc::NoteAftertouchRequest* request,
                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_aftertouch(request->track().id(), request->note(), request->channel(), request->value());
+    auto status = _controller->send_note_aftertouch(request->track().id(), request->channel(), request->note(), request->value());
     return to_grpc_status(status);
 }
 
