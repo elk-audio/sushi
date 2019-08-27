@@ -190,7 +190,7 @@ ext::ControlStatus Controller::send_note_on(int track_id, int note, int channel,
 {
     MIND_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
-                                   note, channel, velocity, IMMEDIATE_PROCESS);
+                                   channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
@@ -199,7 +199,7 @@ ext::ControlStatus Controller::send_note_off(int track_id, int note, int channel
 {
     MIND_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
-                                   note, channel, velocity, IMMEDIATE_PROCESS);
+                                   channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;}
 
@@ -207,7 +207,7 @@ ext::ControlStatus Controller::send_note_aftertouch(int track_id, int note, int 
 {
     MIND_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
-                                   note, channel, value, IMMEDIATE_PROCESS);
+                                   channel, note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;}
 
