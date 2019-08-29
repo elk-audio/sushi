@@ -54,5 +54,5 @@ third-party/rehost/
 # CMake's compile_commnads used by clang-tools
 compile_commands.json
 
-# Log files created by running sushi from somwhere in the repository
+# Log files created by running sushi from somewhere in the repository
 log.txt
