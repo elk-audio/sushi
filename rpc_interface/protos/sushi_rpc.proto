@@ -151,7 +151,7 @@ message SyncMode {
 
 message TimeSignature {
     int32 numerator = 1;
-    int32 denomainator = 2;
+    int32 denominator = 2;
 }
 
 message CpuTimings {

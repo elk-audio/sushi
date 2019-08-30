@@ -190,7 +190,7 @@ grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*contex
                                                    sushi_rpc::TimeSignature* response)
 {
     auto ts = _controller->get_time_signature();
-    response->set_denomainator(ts.denominator);
+    response->set_denominator(ts.denominator);
     response->set_numerator(ts.numerator);
     return grpc::Status::OK;
 }
@@ -201,7 +201,7 @@ grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*contex
 {
     sushi::ext::TimeSignature ts;
     ts.numerator = request->numerator();
-    ts.denominator = request->denomainator();
+    ts.denominator = request->denominator();
     auto status = _controller->set_time_signature(ts);
     return to_grpc_status(status);
 }
