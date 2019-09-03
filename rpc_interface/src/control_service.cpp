@@ -61,30 +61,66 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
+inline std::string error_message_from_status(sushi::ext::ControlStatus status)
+{
+   switch (status)
+    {
+        case sushi::ext::ControlStatus::OK:
+            return "Everything OK";
+
+        case sushi::ext::ControlStatus::ERROR:
+            return "Sushi control status: ERROR";
+
+        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
+            return "Sushi control status: UNSUPPORTED OPERATION";
+
+        case sushi::ext::ControlStatus::NOT_FOUND:
+            return "Sushi control status: NOT FOUND";
+
+        case sushi::ext::ControlStatus::OUT_OF_RANGE:
+            return "Sushi control status: OUT OF RANGE";
+
+        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:
+            return "Sushi control status: INVALID ARGUMENTS";
+
+        default:
+            return "Sushi control status: INTERNAL";
+    } 
+}
+
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
+    std::string out_error;
+    if (!error)
+    {
+        out_error = error_message_from_status(status);
+    }
+    else
+    {
+        out_error = error;
+    }
     switch (status)
     {
         case sushi::ext::ControlStatus::OK:
             return ::grpc::Status::OK;
 
         case sushi::ext::ControlStatus::ERROR:
-            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
+            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, out_error);
 
         case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
-            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
+            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, out_error);
 
         case sushi::ext::ControlStatus::NOT_FOUND:
-            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
+            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, out_error);
 
         case sushi::ext::ControlStatus::OUT_OF_RANGE:
-            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, error);
+            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, out_error);
 
         case sushi::ext::ControlStatus::INVALID_ARGUMENTS:
-            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, error);
+            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, out_error);
 
         default:
-            return ::grpc::Status(::grpc::StatusCode::INTERNAL, error);
+            return ::grpc::Status(::grpc::StatusCode::INTERNAL, out_error);
     }
 }
 
@@ -511,6 +547,7 @@ grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*
     auto [status, id] = _controller->get_parameter_id(request->processor().id(), request->parametername());
     if (status != sushi::ext::ControlStatus::OK)
     {
+        // Not always correct message. Also triggered by wrong processor id.
         return to_grpc_status(status,  "No parameter with that name");
     }
     response->set_parameter_id(id);
