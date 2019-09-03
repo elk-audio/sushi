@@ -61,7 +61,7 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
-inline std::string error_message_from_status(sushi::ext::ControlStatus status)
+inline const char* error_message_from_status(sushi::ext::ControlStatus status)
 {
    switch (status)
     {
@@ -90,14 +90,9 @@ inline std::string error_message_from_status(sushi::ext::ControlStatus status)
 
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
-    std::string out_error;
     if (!error)
     {
-        out_error = error_message_from_status(status);
-    }
-    else
-    {
-        out_error = error;
+        error = error_message_from_status(status);
     }
     switch (status)
     {
@@ -105,22 +100,22 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
             return ::grpc::Status::OK;
 
         case sushi::ext::ControlStatus::ERROR:
-            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, out_error);
+            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
 
         case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
-            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, out_error);
+            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
 
         case sushi::ext::ControlStatus::NOT_FOUND:
-            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, out_error);
+            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
 
         case sushi::ext::ControlStatus::OUT_OF_RANGE:
-            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, out_error);
+            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, error);
 
         case sushi::ext::ControlStatus::INVALID_ARGUMENTS:
-            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, out_error);
+            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, error);
 
         default:
-            return ::grpc::Status(::grpc::StatusCode::INTERNAL, out_error);
+            return ::grpc::Status(::grpc::StatusCode::INTERNAL, error);
     }
 }
 
