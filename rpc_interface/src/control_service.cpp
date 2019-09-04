@@ -61,8 +61,26 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
+inline const char* to_string(const sushi::ext::ControlStatus status)
+{
+   switch (status)
+    {
+        case sushi::ext::ControlStatus::OK:                    return "OK";
+        case sushi::ext::ControlStatus::ERROR:                 return "ERROR";
+        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION: return "UNSUPPORTED OPERATION";
+        case sushi::ext::ControlStatus::NOT_FOUND:             return "NOT FOUND";
+        case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
+        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
+        default:                                               return "INTERNAL";
+    } 
+}
+
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
+    if (!error)
+    {
+        error = to_string(status);
+    }
     switch (status)
     {
         case sushi::ext::ControlStatus::OK:
