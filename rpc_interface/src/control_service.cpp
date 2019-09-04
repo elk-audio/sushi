@@ -61,30 +61,17 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
-inline const char* error_message_from_status(sushi::ext::ControlStatus status)
+inline const char* to_string(const sushi::ext::ControlStatus status)
 {
    switch (status)
     {
-        case sushi::ext::ControlStatus::OK:
-            return "Everything OK";
-
-        case sushi::ext::ControlStatus::ERROR:
-            return "Sushi control status: ERROR";
-
-        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
-            return "Sushi control status: UNSUPPORTED OPERATION";
-
-        case sushi::ext::ControlStatus::NOT_FOUND:
-            return "Sushi control status: NOT FOUND";
-
-        case sushi::ext::ControlStatus::OUT_OF_RANGE:
-            return "Sushi control status: OUT OF RANGE";
-
-        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:
-            return "Sushi control status: INVALID ARGUMENTS";
-
-        default:
-            return "Sushi control status: INTERNAL";
+        case sushi::ext::ControlStatus::OK:                    return "OK";
+        case sushi::ext::ControlStatus::ERROR:                 return "ERROR";
+        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION: return "UNSUPPORTED OPERATION";
+        case sushi::ext::ControlStatus::NOT_FOUND:             return "NOT FOUND";
+        case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
+        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
+        default:                                               return "INTERNAL";
     } 
 }
 
@@ -542,7 +529,6 @@ grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*
     auto [status, id] = _controller->get_parameter_id(request->processor().id(), request->parametername());
     if (status != sushi::ext::ControlStatus::OK)
     {
-        // Not always correct message. Also triggered by wrong processor id.
         return to_grpc_status(status,  "No parameter with that name");
     }
     response->set_parameter_id(id);
