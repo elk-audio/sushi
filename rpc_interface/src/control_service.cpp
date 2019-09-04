@@ -79,7 +79,7 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
 {
     if (!error)
     {
-        error = error_message_from_status(status);
+        error = to_string(status);
     }
     switch (status)
     {
