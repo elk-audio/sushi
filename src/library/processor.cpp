@@ -4,7 +4,7 @@ namespace sushi {
 
 ProcessorReturnCode Processor::connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id)
 {
-    if (cv_input_id >= _cv_in_connections.size() || _cv_in_connections[cv_input_id].enabled)
+    if (cv_input_id >= static_cast<int>(_cv_in_connections.size()) || _cv_in_connections[cv_input_id].enabled)
     {
         return ProcessorReturnCode::ERROR;
     }
@@ -24,6 +24,7 @@ ProcessorReturnCode Processor::connect_cv_to_parameter(ObjectId parameter_id, in
     }
     _cv_in_connections[cv_input_id].enabled = true;
     _cv_in_connections[cv_input_id].parameter_id = parameter_id;
+    return ProcessorReturnCode::OK;
 }
 
 ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id)
@@ -53,8 +54,9 @@ ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, 
     return ProcessorReturnCode::OK;
 }
 
-ProcessorReturnCode Processor::connect_gate_from_processor(int gate_output_id, int channel, int note_no)
+ProcessorReturnCode Processor::connect_gate_from_processor(int /*gate_output_id*/, int /*channel*/, int /*note_no*/)
 {
+    // TODO - Implementation needed
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 

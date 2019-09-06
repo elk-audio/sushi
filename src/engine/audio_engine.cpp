@@ -14,6 +14,7 @@
 #include "plugins/sample_player_plugin.h"
 #include "plugins/peak_meter_plugin.h"
 #include "plugins/transposer_plugin.h"
+#include "plugins/cv_to_control_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -295,13 +296,15 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::connect_gate_to_sync(int gate_input_id, int ppq_ticks)
+EngineReturnStatus AudioEngine::connect_gate_to_sync(int /*gate_input_id*/, int /*ppq_ticks*/)
 {
+    // TODO -  Needs implementing
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::connect_sync_to_gate(int gate_output_id, int ppq_ticks)
+EngineReturnStatus AudioEngine::connect_sync_to_gate(int /*gate_output_id*/, int /*ppq_ticks*/)
 {
+    // TODO -  Needs implementing
     return EngineReturnStatus::OK;
 }
 
@@ -372,6 +375,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     else if (uid == "sushi.testing.transposer")
     {
         instance = new transposer_plugin::TransposerPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.cv_to_control")
+    {
+        instance = new cv_to_control_plugin::CvToControlPlugin(_host_control);
     }
     return instance;
 }
