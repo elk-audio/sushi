@@ -21,14 +21,13 @@ protected:
     ControllerTest()
     {
     }
-    void SetUp(const std::string& config_file)
+    void SetUp()
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
         _engine.set_audio_output_channels(ENGINE_CHANNELS);
-        std::string path = test_utils::get_data_dir_path();
-        path.append(config_file);
-        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config(path));
-        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks(path));
+
+        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
+        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
         _dispatcher = _engine.event_dispatcher();
         _module_under_test = _engine.controller();
         ASSERT_TRUE(_module_under_test != nullptr);
@@ -37,18 +36,16 @@ protected:
     void TearDown()
     {
     }
-
+    std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
-    jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher};
+    jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _path};
     dispatcher::BaseEventDispatcher* _dispatcher;
     ext::SushiControl* _module_under_test;
 };
 
 TEST_F(ControllerTest, TestMainEngineControls)
 {
-    SetUp(TEST_FILE);
-
     EXPECT_FLOAT_EQ(TEST_SAMPLE_RATE, _module_under_test->get_samplerate());
     EXPECT_EQ(ext::PlayingMode::PLAYING, _module_under_test->get_playing_mode());
     EXPECT_EQ(ext::SyncMode::INTERNAL, _module_under_test->get_sync_mode());
@@ -85,8 +82,6 @@ TEST_F(ControllerTest, TestMainEngineControls)
 
 TEST_F(ControllerTest, TestKeyboardControls)
 {
-    SetUp(TEST_FILE);
-
     /* No sanity checks on track ids is currently done, so these are just called to excercise the code */
     EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_on(0, 40, 0, 1.0));
     EXPECT_EQ(ext::ControlStatus::OK, _module_under_test->send_note_off(0, 40, 0, 1.0));
@@ -98,8 +93,6 @@ TEST_F(ControllerTest, TestKeyboardControls)
 
 TEST_F(ControllerTest, TestTrackControls)
 {
-    SetUp(TEST_FILE);
-
     auto [not_found_status, id_unused] = _module_under_test->get_track_id("not_found");
     EXPECT_EQ(ext::ControlStatus::NOT_FOUND, not_found_status);
     auto [status, id] = _module_under_test->get_track_id("main");
@@ -161,8 +154,6 @@ TEST_F(ControllerTest, TestTrackControls)
 
 TEST_F(ControllerTest, TestProcessorControls)
 {
-    SetUp(TEST_FILE);
-
     auto [not_found_status, id_unused] = _module_under_test->get_processor_id("not_found");
     EXPECT_EQ(ext::ControlStatus::NOT_FOUND, not_found_status);
     auto [status, id] = _module_under_test->get_processor_id("equalizer_0_l");
@@ -218,8 +209,6 @@ TEST_F(ControllerTest, TestProcessorControls)
 
 TEST_F(ControllerTest, TestParameterControls)
 {
-    SetUp(TEST_FILE);
-
     auto [status, proc_id] = _module_under_test->get_processor_id("equalizer_0_l");
     ASSERT_EQ(ext::ControlStatus::OK, status);
     auto [found_status, id] = _module_under_test->get_parameter_id(proc_id, "frequency");
