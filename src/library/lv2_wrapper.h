@@ -131,6 +131,24 @@ private:
     void _notify_parameter_change_rt(int parameter_index, float value);
     void _notify_parameter_change(int parameter_index, float value);
 
+    void jalv_set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body);
+    void _create_controls(LV2Model *model, bool writable);
+
+//  void jalv_ui_instantiate(LV2Model* model, const char* native_ui_type, void* parent);
+
+    void jalv_ui_port_event(LV2Model* jalv, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer);
+//  bool jalv_send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, uint32_t size, const void* body);
+//  void jalv_init_ui(LV2Model* model);
+    uint32_t jalv_ui_port_index(void* const controller, const char* symbol);
+
+//  void jalv_apply_ui_events(LV2Model* jalv, uint32_t nframes);
+
+//  void jalv_ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer);
+
+    bool jalv_ui_is_resizable(LV2Model* model);
+    struct Port* jalv_port_by_symbol(LV2Model* model, const char* sym);
+    ControlID* jalv_control_by_symbol(LV2Model* model, const char* sym);
+
     float _sample_rate{0};
 
     /** Wrappers for preparing data to pass to processReplacing */

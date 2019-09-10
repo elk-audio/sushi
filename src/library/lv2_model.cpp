@@ -8,6 +8,7 @@
 
 #include "lv2_model.h"
 #include "lv2_features.h"
+#include "logging.h"
 
 namespace {
 // TODO: verify that these LV2 features work as intended:
@@ -23,6 +24,8 @@ static const LV2_Feature static_features[] = {
 
 namespace sushi {
 namespace lv2 {
+
+MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 bool LV2Model::initialize_host_feature_list()
 {

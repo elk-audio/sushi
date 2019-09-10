@@ -6,8 +6,10 @@
 #include "test_utils/host_control_mockup.h"
 
 #include "test_utils/engine_mockup.h"
+#include "library/lv2_features.cpp"
 #include "library/lv2_wrapper.cpp"
 #include "library/lv2_model.cpp"
+#include "library/lv2_control.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
@@ -107,6 +109,7 @@ protected:
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
+        _module_under_test->set_event_output(&_fifo);
         _module_under_test->set_enabled(true);
     }
 
@@ -114,6 +117,8 @@ protected:
     {
         delete _module_under_test;
     }
+
+    RtEventFifo _fifo;
 
     HostControlMockup _host_control;
     Lv2Wrapper* _module_under_test{nullptr};
@@ -146,7 +151,7 @@ TEST_F(TestLv2Wrapper, TestParameterSetViaEvent)
     EXPECT_EQ(0.123f, value.second);
 }
 
-TEST_F(TestLv2Wrapper, TestProcess)
+TEST_F(TestLv2Wrapper, TestProcessing)
 {
     SetUp("http://lv2plug.in/plugins/eg-amp");
 
@@ -197,7 +202,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-TEST_F(TestLv2Wrapper, TestMidiEvents)
+TEST_F(TestLv2Wrapper, TestMidiEventInput)
 {
     SetUp("http://moddevices.com/plugins/mda/JX10");
 
@@ -216,7 +221,7 @@ TEST_F(TestLv2Wrapper, TestMidiEvents)
         }
     }
 
-    // The JX10 synth doesn't seem to have the snappiest of release times.
+    // The JX10 synthesizer doesn't seem to have the snappiest of release times.
     // For a buffer of 64 samples, only the very last few are 0,
     // even when setting the envelope release to 0.
 
@@ -234,6 +239,46 @@ TEST_F(TestLv2Wrapper, TestMidiEvents)
            ASSERT_FLOAT_EQ(LV2SYNTH_EXPECTED_OUT_NOTE_OFF[i][j], out_buffer.channel(i)[j]);
         }
     }
+}
+
+TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
+{
+    SetUp("http://lv2plug.in/plugins/eg-fifths");
+
+    ASSERT_TRUE(_fifo.empty());
+
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    RtEvent e;
+    bool got_event = _fifo.pop(e);
+    ASSERT_TRUE(got_event);
+
+    ASSERT_EQ(_module_under_test->id(), e.processor_id());
+
+    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
+    ASSERT_EQ(60, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
+    ASSERT_EQ(67, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
+    ASSERT_EQ(60, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
+    ASSERT_EQ(67, e.keyboard_event()->note());
+
+    ASSERT_TRUE(_fifo.empty());
 }
 
 // TODO Ilias: Currently crashes, due to update speaker arrangement not being populated.

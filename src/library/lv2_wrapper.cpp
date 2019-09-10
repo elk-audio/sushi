@@ -1,13 +1,11 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include <math.h>
-
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <csignal>
 
 #include "lv2_wrapper.h"
+#include "lv2_features.h"
 
 #include "logging.h"
 
@@ -109,9 +107,11 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _fetch_plugin_name_and_label();
 
 // TODO: Re-introduce when program management is implemented for LV2.
-//  _number_of_programs = _plugin_handle->numPrograms;
+    //_number_of_programs = _plugin_handle->numPrograms;
 
     _create_ports(library_handle);
+    _create_controls(_model, true);
+    _create_controls(_model, false);
 
     // Register internal parameters
     if (!_register_parameters())
@@ -124,18 +124,385 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
+void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
+{
+    const LilvPlugin* plugin = model->plugin;
+    LilvWorld* world = model->world;
+    LilvNode* patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+    LilvNode* patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
+
+    const LilvNode* uri_node = lilv_plugin_get_uri(plugin);
+    const std::string uri_as_string = lilv_node_as_string(uri_node);
+
+    // TODO: Once Worker extension is implemented, test the eg-sampler plugin - it advertises parameters read here.
+    LilvNodes* properties = lilv_world_find_nodes(
+            world,
+            uri_node,
+            writable ? patch_writable : patch_readable,
+            NULL);
+
+    LILV_FOREACH(nodes, p, properties)
+    {
+        const LilvNode* property = lilv_nodes_get(properties, p);
+        ControlID* record = NULL;
+
+        if (!writable && lilv_world_ask(world,
+                                        uri_node,
+                                        patch_writable,
+                                        property))
+        {
+            // Find existing writable control
+            for (size_t i = 0; i < model->controls.n_controls; ++i)
+            {
+                if (lilv_node_equals(model->controls.controls[i]->node, property))
+                {
+                    record = model->controls.controls[i];
+                    record->is_readable = true;
+                    break;
+                }
+            }
+
+            if (record)
+            {
+                continue;
+            }
+        }
+
+        record = new_property_control(model, property);
+        if (writable)
+        {
+            record->is_writable = true;
+        }
+        else
+        {
+            record->is_readable = true;
+        }
+
+        if (record->value_type)
+        {
+            add_control(&model->controls, record);
+        }
+        else
+        {
+            fprintf(stderr, "Parameter <%s> has unknown value type, ignored\n",
+                    lilv_node_as_string(record->node));
+            free(record);
+        }
+    }
+    lilv_nodes_free(properties);
+
+    lilv_node_free(patch_readable);
+    lilv_node_free(patch_writable);
+}
+
+void Lv2Wrapper::jalv_set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body)
+{
+    LV2Model* model = control->model;
+    if (control->type == PORT && type == model->forge.Float) {
+        struct Port* port = &control->model->ports[control->index];
+        port->control = *(const float*)body;
+    } else if (control->type == PROPERTY) {
+        // Copy forge since it is used by process thread
+        LV2_Atom_Forge forge = model->forge;
+        LV2_Atom_Forge_Frame frame;
+        uint8_t buf[1024];
+        lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+
+        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Set);
+        lv2_atom_forge_key(&forge, model->urids.patch_property);
+        lv2_atom_forge_urid(&forge, control->property);
+        lv2_atom_forge_key(&forge, model->urids.patch_value);
+        lv2_atom_forge_atom(&forge, size, type);
+        lv2_atom_forge_write(&forge, body, size);
+
+        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+//        jalv_ui_write(model,
+//                      model->control_in,
+//                      lv2_atom_total_size(atom),
+//                      model->urids.atom_eventTransfer,
+//                      atom);
+    }
+}
+
+/*
+void Lv2Wrapper::jalv_ui_instantiate(LV2Model* jalv, const char* native_ui_type, void* parent)
+{
+#ifdef HAVE_SUIL
+        jalv->ui_host = suil_host_new(jalv_ui_write, jalv_ui_port_index, NULL, NULL);
+
+	const LV2_Feature parent_feature = {
+		LV2_UI__parent, parent
+	};
+	const LV2_Feature instance_feature = {
+		NS_EXT "instance-access", lilv_instance_get_handle(jalv->instance)
+	};
+	const LV2_Feature data_feature = {
+		LV2_DATA_ACCESS_URI, &jalv->features.ext_data
+	};
+	const LV2_Feature idle_feature = {
+		LV2_UI__idleInterface, NULL
+	};
+	const LV2_Feature* ui_features[] = {
+		&jalv->features.map_feature,
+		&jalv->features.unmap_feature,
+		&instance_feature,
+		&data_feature,
+		&jalv->features.log_feature,
+		&parent_feature,
+		&jalv->features.options_feature,
+		&idle_feature,
+		NULL
+	};
+
+	const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(jalv->ui));
+	const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(jalv->ui));
+	char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
+	char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
+
+	jalv->ui_instance = suil_instance_new(
+		jalv->ui_host,
+		jalv,
+		native_ui_type,
+		lilv_node_as_uri(lilv_plugin_get_uri(jalv->plugin)),
+		lilv_node_as_uri(lilv_ui_get_uri(jalv->ui)),
+		lilv_node_as_uri(jalv->ui_type),
+		bundle_path,
+		binary_path,
+		ui_features);
+
+	lilv_free(binary_path);
+	lilv_free(bundle_path);
+#endif
+}
+*/
+
+
+bool Lv2Wrapper::jalv_ui_is_resizable(LV2Model* model)
+{
+    if (!model->ui)
+    {
+        return false;
+    }
+
+    const LilvNode* s = lilv_ui_get_uri(model->ui);
+    LilvNode* p = lilv_new_uri(model->world, LV2_CORE__optionalFeature);
+    LilvNode* fs = lilv_new_uri(model->world, LV2_UI__fixedSize);
+    LilvNode* nrs = lilv_new_uri(model->world, LV2_UI__noUserResize);
+
+    LilvNodes* fs_matches = lilv_world_find_nodes(model->world, s, p, fs);
+    LilvNodes* nrs_matches = lilv_world_find_nodes(model->world, s, p, nrs);
+
+    lilv_nodes_free(nrs_matches);
+    lilv_nodes_free(fs_matches);
+    lilv_node_free(nrs);
+    lilv_node_free(fs);
+    lilv_node_free(p);
+
+    return !fs_matches && !nrs_matches;
+}
+
+//void Lv2Wrapper::jalv_ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer)
+//{
+//    LV2Model* const model = (LV2Model*)jalv_handle;
+//
+//    if (protocol != 0 && protocol != model->urids.atom_eventTransfer)
+//    {
+//        fprintf(stderr, "UI write with unsupported protocol %d (%s)\n",
+//                protocol, unmap_uri(model, protocol));
+//        return;
+//    }
+//
+//    if (port_index >= model->num_ports)
+//    {
+//        fprintf(stderr, "UI write to out of range port index %d\n",
+//                port_index);
+//        return;
+//    }
+//
+//    // We no longer have command line options for module.
+//    /*model->opts.dump &&*/
+//    // This is just for Logging.
+//    // TODO: Port to use MIND logger!
+//    // TODO: It is the only code depending on sratom which I don't corrently include.
+//    /* if (protocol == model->urids.atom_eventTransfer)
+//    {
+//        const LV2_Atom* atom = (const LV2_Atom*)buffer;
+//
+//        char* str  = sratom_to_turtle(
+//                model->sratom, &model->unmap, "jalv:", NULL, NULL,
+//                atom->type, atom->size, LV2_ATOM_BODY_CONST(atom));
+//
+//        jalv_ansi_start(stdout, 36);
+//        printf("\n## UI => Plugin (%u bytes) ##\n%s\n", atom->size, str);
+//
+//        jalv_ansi_reset(stdout);
+//        free(str);
+//    }
+//    */
+//
+//    char buf[sizeof(ControlChange) + buffer_size];
+//    ControlChange* ev = (ControlChange*)buf;
+//    ev->index = port_index;
+//    ev->protocol = protocol;
+//    ev->size = buffer_size;
+//    memcpy(ev->body, buffer, buffer_size);
+//
+//    zix_ring_write(model->ui_events, buf, sizeof(buf));
+//}
+
+//void Lv2Wrapper::jalv_apply_ui_events(LV2Model* jalv, uint32_t nframes)
+//{
+//    if (!jalv->has_ui)
+//    {
+//        return;
+//    }
+//
+//    ControlChange ev;
+//    const size_t space = zix_ring_read_space(jalv->ui_events);
+//    for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
+//    {
+//        zix_ring_read(jalv->ui_events, (char*)&ev, sizeof(ev));
+//        char body[ev.size];
+//        if (zix_ring_read(jalv->ui_events, body, ev.size) != ev.size)
+//        {
+//            fprintf(stderr, "error: Error reading from UI ring buffer\n");
+//            break;
+//        }
+//        assert(ev.index < jalv->num_ports);
+//        struct Port* const port = &jalv->ports[ev.index];
+//        if (ev.protocol == 0)
+//        {
+//            assert(ev.size == sizeof(float));
+//            port->control = *(float*)body;
+//        }
+//        else if (ev.protocol == jalv->urids.atom_eventTransfer)
+//        {
+//            LV2_Evbuf_Iterator e = lv2_evbuf_end(port->evbuf);
+//            const LV2_Atom* const atom = (const LV2_Atom*)body;
+//            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+//                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+//        }
+//        else
+//        {
+//            fprintf(stderr,"error: Unknown control change protocol %d\n",
+//                    ev.protocol);
+//        }
+//    }
+//}
+
+uint32_t Lv2Wrapper::jalv_ui_port_index(void* const controller, const char* symbol)
+{
+    LV2Model* const model = (LV2Model*)controller;
+    struct Port* port = jalv_port_by_symbol(model, symbol);
+
+    return port ? port->index : LV2UI_INVALID_PORT_INDEX;
+}
+
+//void Lv2Wrapper::jalv_init_ui(LV2Model* model)
+//{
+//    // Set initial control port values
+//    for (uint32_t i = 0; i < model->num_ports; ++i)
+//    {
+//        if (model->ports[i].type == TYPE_CONTROL)
+//        {
+//            jalv_ui_port_event(model, i,
+//                               sizeof(float), 0,
+//                               &model->ports[i].control);
+//        }
+//    }
+//
+//    if (model->control_in != (uint32_t)-1)
+//    {
+//        // Send patch:Get message for initial parameters/etc
+//        LV2_Atom_Forge forge = model->forge;
+//        LV2_Atom_Forge_Frame frame;
+//        uint8_t buf[1024];
+//        lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+//        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Get);
+//
+//        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+//        jalv_ui_write(model,
+//                      model->control_in,
+//                      lv2_atom_total_size(atom),
+//                      model->urids.atom_eventTransfer,
+//                      atom);
+//
+//        lv2_atom_forge_pop(&forge, &frame);
+//    }
+//}
+
+//bool Lv2Wrapper::jalv_send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+//{
+//    /* TODO (inherited): Be more disciminate about what to send */
+//    char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
+//    ControlChange* ev = (ControlChange*)evbuf;
+//    ev->index = port_index;
+//    ev->protocol = model->urids.atom_eventTransfer;
+//    ev->size = sizeof(LV2_Atom) + size;
+//
+//    LV2_Atom* atom = (LV2_Atom*)ev->body;
+//    atom->type = type;
+//    atom->size = size;
+//
+//    if (zix_ring_write_space(model->plugin_events) >= sizeof(evbuf) + size)
+//    {
+//        zix_ring_write(model->plugin_events, evbuf, sizeof(evbuf));
+//        zix_ring_write(model->plugin_events, (const char*)body, size);
+//        return true;
+//    }
+//    else
+//    {
+//        fprintf(stderr, "Plugin => UI buffer overflow!\n");
+//        return false;
+//    }
+//}
+
+/**
+   Get a port structure by symbol.
+
+   TODO: Build an index to make this faster, currently O(n) which may be
+   a problem when restoring the state of plugins with many ports.
+*/
+struct Port* Lv2Wrapper::jalv_port_by_symbol(LV2Model* model, const char* sym)
+{
+    for (uint32_t i = 0; i < model->num_ports; ++i)
+    {
+        struct Port* const port = &model->ports[i];
+        const LilvNode* port_sym = lilv_port_get_symbol(model->plugin, port->lilv_port);
+
+        if (!strcmp(lilv_node_as_string(port_sym), sym))
+        {
+            return port;
+        }
+    }
+
+    return NULL;
+}
+
+ControlID* Lv2Wrapper::jalv_control_by_symbol(LV2Model* model, const char* sym)
+{
+    for (size_t i = 0; i < model->controls.n_controls; ++i)
+    {
+        if (!strcmp(lilv_node_as_string(model->controls.controls[i]->symbol),
+                    sym))
+        {
+            return model->controls.controls[i];
+        }
+    }
+    return NULL;
+}
+
 void Lv2Wrapper::_fetch_plugin_name_and_label()
 {
-    const LilvNode *uri_node = lilv_plugin_get_uri(_model->plugin);
+    const LilvNode* uri_node = lilv_plugin_get_uri(_model->plugin);
     const std::string uri_as_string = lilv_node_as_string(uri_node);
     set_name(uri_as_string);
 
-    LilvNode *label_node = lilv_plugin_get_name(_model->plugin);
+    LilvNode* label_node = lilv_plugin_get_name(_model->plugin);
     const std::string label_as_string = lilv_node_as_string(label_node);
     set_label(label_as_string);
-    lilv_free(label_node);
+    lilv_free(label_node); // Why do I free this but not uri_node? Remember...
 }
-
 
 bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {
@@ -171,14 +538,21 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
         _create_port(plugin, i, default_values[i]);
     }
 
-// TODO: find a plugin where the control_input isn't returned null.
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
             plugin,
             _model->nodes.
             lv2_InputPort,
             _model->nodes.lv2_control);
+
+    // The (optional) lv2:designation of this port is lv2:control,
+    // which indicates that this is the "main" control port where the host should send events
+    // it expects to configure the plugin, for example changing the MIDI program.
+    // This is necessary since it is possible to have several MIDI input ports,
+    // though typically it is best to have one.
     if (control_input)
     {
+// TODO: test with MidiGate when UI code is activated.
+// control_in in Jalv seems to only be used in UI code.
         _model->control_in = lilv_port_get_index(plugin, control_input);
     }
 
@@ -232,15 +606,15 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
         _cleanup();
     }
 
-// TODO: Re-introduce once 'GUI' is implemented.
-/*    const bool hidden = !show_hidden &&
-                        lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);*/
+    const bool hidden = !show_hidden &&
+                        lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);
 
     /* Set control values */
     if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_ControlPort))
     {
         port->type = TYPE_CONTROL;
 
+// TODO: min max def are used also in the Jalv control structure. Remove these eventually?
         LilvNode* minNode;
         LilvNode* maxNode;
         LilvNode* defNode;
@@ -261,6 +635,11 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
         lilv_node_free(minNode);
         lilv_node_free(maxNode);
         lilv_node_free(defNode);
+
+        if (!hidden)
+        {
+            add_control(&_model->controls, new_port_control(_model, port->index));
+        }
     }
     else if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_AudioPort))
     {
@@ -287,7 +666,8 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
         _cleanup();
     }
 
-    if(port->type == TYPE_AUDIO) {
+    if(port->type == TYPE_AUDIO)
+    {
         if(port->flow == FLOW_INPUT)
             _max_input_channels++;
         else if(port->flow == FLOW_OUTPUT)
@@ -397,6 +777,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
     std::vector<std::string> programs;
+// TODO: return all program names!
     /*for (int i = 0; i < _number_of_programs; ++i)
     {
         char buffer[kVstMaxProgNameLen] = "";
@@ -410,6 +791,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 {
     if (this->supports_programs() && program < _number_of_programs)
     {
+// TODO: Actually DO set program!
        /* _vst_dispatcher(effBeginSetProgram, 0, 0, nullptr, 0);
         *//* Vst2 lacks a mechanism for signaling that the program change was successful *//*
         _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
@@ -604,7 +986,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::CONTROL_CHANGE:
                 {
                     _decoded_midi_cc_msg = midi::decode_control_change(_outgoing_midi_data);
-                    output_event(RtEvent::make_parameter_change_event(0, // Target 0 here - not sure why. Same as in VST3.
+                    output_event(RtEvent::make_parameter_change_event(this->id(),
                                                                       _decoded_midi_cc_msg.channel,
                                                                       _decoded_midi_cc_msg.controller,
                                                                       _decoded_midi_cc_msg.value));
@@ -613,7 +995,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::NOTE_ON:
                 {
                     _decoded_node_on_msg = midi::decode_note_on(_outgoing_midi_data);
-                    output_event(RtEvent::make_note_on_event(0,
+                    output_event(RtEvent::make_note_on_event(this->id(),
                                                              0, // Sample offset 0?
                                                              _decoded_node_on_msg.channel,
                                                              _decoded_node_on_msg.note,
@@ -623,7 +1005,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::NOTE_OFF:
                 {
                     _decoded_node_off_msg = midi::decode_note_off(_outgoing_midi_data);
-                    output_event(RtEvent::make_note_off_event(0,
+                    output_event(RtEvent::make_note_off_event(this->id(),
                                                               0, // Sample offset 0?
                                                               _decoded_node_off_msg.channel,
                                                               _decoded_node_off_msg.note,
@@ -633,7 +1015,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::PITCH_BEND:
                 {
                     _decoded_pitch_bend_msg = midi::decode_pitch_bend(_outgoing_midi_data);
-                    output_event(RtEvent::make_pitch_bend_event(0,
+                    output_event(RtEvent::make_pitch_bend_event(this->id(),
                                                                 0, // Sample offset 0?
                                                                 _decoded_pitch_bend_msg.channel,
                                                                 _decoded_pitch_bend_msg.value));
@@ -642,7 +1024,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::POLY_KEY_PRESSURE:
                 {
                     _decoded_poly_pressure_msg = midi::decode_poly_key_pressure(_outgoing_midi_data);
-                    output_event(RtEvent::make_note_aftertouch_event(0,
+                    output_event(RtEvent::make_note_aftertouch_event(this->id(),
                                                                      0, // Sample offset 0?
                                                                      _decoded_poly_pressure_msg.channel,
                                                                      _decoded_poly_pressure_msg.note,
@@ -652,14 +1034,14 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
                 case midi::MessageType::CHANNEL_PRESSURE:
                 {
                     _decoded_channel_pressure_msg = midi::decode_channel_pressure(_outgoing_midi_data);
-                    output_event(RtEvent::make_aftertouch_event(0,
+                    output_event(RtEvent::make_aftertouch_event(this->id(),
                                                                 0, // Sample offset 0?
                                                                 _decoded_channel_pressure_msg.channel,
                                                                 _decoded_channel_pressure_msg.pressure));
                     break;
                 }
                 default:
-                    output_event(RtEvent::make_wrapped_midi_event(0,
+                    output_event(RtEvent::make_wrapped_midi_event(this->id(),
                                                                   0, // Sample offset 0?
                                                                   _outgoing_midi_data));
                     break;

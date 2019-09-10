@@ -12,8 +12,6 @@
 #include <map>
 #include <mutex>
 
-#include "logging.h"
-
 // Temporary - just to check that it finds them.
 #include <lilv-0/lilv/lilv.h>
 
@@ -43,12 +41,12 @@
 #include "../engine/base_event_dispatcher.h"
 #include "lv2_evbuf.h"
 
+#include "lv2_model.h"
+
 namespace sushi {
 namespace lv2 {
-
 static const bool TRACE_OPTION = false;
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 static inline bool lv2_ansi_start(FILE *stream, int color)
 {
 // TODO: What is this.
@@ -63,35 +61,11 @@ return 0;
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,
             const char *fmt,
-            va_list ap)
-{
-LV2Model* model  = (LV2Model*)handle;
-if (type == model->urids.log_Trace && TRACE_OPTION)
-{
-    MIND_LOG_WARNING("LV2 trace: {}", fmt);
-}
-else if (type == model->urids.log_Error)
-{
-    MIND_LOG_ERROR("LV2 error: {}", fmt);
-}
-else if (type == model->urids.log_Warning)
-{
-    MIND_LOG_WARNING("LV2 warning: {}", fmt);
-}
-
-return 0;
-}
+            va_list ap);
 
 int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,
-           const char *fmt, ...)
-{
-va_list args;
-va_start(args, fmt);
-const int ret = lv2_vprintf(handle, type, fmt, args);
-va_end(args);
-return ret;
-}
+           const char *fmt, ...);
 
 // Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
 
@@ -117,7 +91,6 @@ static void init_feature(LV2_Feature* const dest, const char* const URI, void* d
     dest->URI = URI;
     dest->data = data;
 }
-
 
 
 } // end namespace lv2
