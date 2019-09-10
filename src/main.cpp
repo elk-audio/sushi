@@ -270,7 +270,9 @@ int main(int argc, char* argv[])
     }
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine.get());
-    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
+    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
+                                                                              midi_dispatcher.get(),
+                                                                              config_filename);
 
     midi_dispatcher->set_midi_inputs(1);
     midi_dispatcher->set_midi_outputs(1);
@@ -284,7 +286,7 @@ int main(int argc, char* argv[])
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
 
-    auto [audio_config_status, audio_config] = configurator->load_audio_config(config_filename);
+    auto [audio_config_status, audio_config] = configurator->load_audio_config();
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Error reading audio or host config, check logs for details.");
@@ -348,22 +350,22 @@ int main(int argc, char* argv[])
         error_exit("Error initializing frontend, check logs for details.");
     }
 
-    auto status = configurator->load_host_config(config_filename);
+    auto status = configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load host configuration from config file");
     }
-    status = configurator->load_tracks(config_filename);
+    status = configurator->load_tracks();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load tracks from Json config file");
     }
-    configurator->load_midi(config_filename);
-    configurator->load_cv_gate(config_filename);
+    configurator->load_midi();
+    configurator->load_cv_gate();
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
-        auto [status, events] = configurator->load_event_list(config_filename);
+        auto [status, events] = configurator->load_event_list();
         if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
@@ -371,8 +373,9 @@ int main(int argc, char* argv[])
     }
     else
     {
-        configurator->load_events(config_filename);
+        configurator->load_events();
     }
+    configurator.reset();
 
     if (enable_timings)
     {

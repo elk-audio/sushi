@@ -25,10 +25,9 @@ protected:
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
         _engine.set_audio_output_channels(ENGINE_CHANNELS);
-        std::string path = test_utils::get_data_dir_path();
-        path.append(config_file);
-        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config(path));
-        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks(path));
+
+        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
+        ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
         _dispatcher = _engine.event_dispatcher();
         _module_under_test = _engine.controller();
         ASSERT_TRUE(_module_under_test != nullptr);
@@ -37,10 +36,10 @@ protected:
     void TearDown()
     {
     }
-
+    std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
-    jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher};
+    jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _path};
     dispatcher::BaseEventDispatcher* _dispatcher;
     ext::SushiControl* _module_under_test;
 };
