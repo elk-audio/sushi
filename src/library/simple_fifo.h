@@ -1,6 +1,10 @@
 /**
  * @brief Simple, non-thread safe fifo queue for use internally in the engine when
  *        concurrent access is not neccesary.
+ *        Support for popping elements by value or reference, though in most cases
+ *        the most efficient should be to interate over the elements in place and
+ *        the call clear()
+ *        Capacity should ideally be a power of 2.
  * @copyright MIND Music Labs AB, Stockholm
  */
 
@@ -8,12 +12,11 @@
 #define SUSHI_SIMPLE_FIFO_H
 
 #include <array>
-
-#include "library/rt_event_pipe.h"
+#include <cassert>
 
 namespace sushi {
 
-template<typename T, size_t capacity>
+template<typename T, size_t storage_capacity>
 class SimpleFifo
 {
 public:
@@ -51,14 +54,14 @@ public:
 
     T operator [](int i) const
     {
-        assert(static_cast<size_t>(i) < capacity);
-        return _data[(_head + i) % capacity];
+        assert(static_cast<size_t>(i) < storage_capacity);
+        return _data[(_head + i) % storage_capacity];
     }
 
     T& operator [](int i)
     {
-        assert(static_cast<size_t>(i) < capacity);
-        return _data[(_head + i) % capacity];
+        assert(static_cast<size_t>(i) < storage_capacity);
+        return _data[(_head + i) % storage_capacity];
     }
 
     int size() const
@@ -70,7 +73,8 @@ public:
         return capacity - _head + _tail;
     }
 
-    int capacity_() const {return capacity;}
+    // Actual capacity is 1 less than reserved storage, otherwis head == tail would indicate both full and empty
+    int capacity() const {return storage_capacity - 1;}
 
     bool empty() const {return _head == _tail;}
 
@@ -81,9 +85,9 @@ public:
     }
 
 private:
-    inline int increment(int index) {return (index + 1) % capacity;}
+    inline int increment(int index) {return (index + 1) % storage_capacity;}
 
-    std::array<T, capacity> _data;
+    std::array<T, storage_capacity> _data;
     // Elements are pushed at the tail and read from the head (head is first in the queue)
     int _head{0};
     int _tail{0};

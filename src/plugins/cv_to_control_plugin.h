@@ -17,6 +17,8 @@
 namespace sushi {
 namespace cv_to_control_plugin {
 
+constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
+
 class CvToControlPlugin : public InternalPlugin
 {
 public:
@@ -46,16 +48,16 @@ private:
     IntParameterValue*  _coarse_tune_parameter;
     IntParameterValue*  _polyphony_parameter;
 
-    std::array<FloatParameterValue*, MAX_ENGINE_CV_IO_PORTS> _pitch_parameters;
-    std::array<FloatParameterValue*, MAX_ENGINE_CV_IO_PORTS> _velocity_parameters;
+    std::array<FloatParameterValue*, MAX_CV_VOICES> _pitch_parameters;
+    std::array<FloatParameterValue*, MAX_CV_VOICES> _velocity_parameters;
 
-    std::array<ControlVoice, MAX_ENGINE_CV_IO_PORTS> _voices;
-    std::vector<int>                                 _deferred_note_offs;
-    RtEventFifo<MAX_ENGINE_GATE_PORTS>               _gate_events;
+    std::array<ControlVoice, MAX_CV_VOICES>         _voices;
+    std::vector<int>                                _deferred_note_offs;
+    RtEventFifo<MAX_ENGINE_GATE_PORTS>              _gate_events;
 };
 
 std::pair<int, float> cv_to_pitch(float value);
 
-}// namespace sample_player_plugin
+}// namespace cv_to_control_plugin
 }// namespace sushi
 #endif //SUSHI_CV_TO_CONTROL_PLUGIN_H
