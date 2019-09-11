@@ -159,7 +159,9 @@ TEST_F(TestLv2Wrapper, TestProcessing)
     ChunkSampleBuffer out_buffer(1);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
     _module_under_test->process_audio(in_buffer, out_buffer);
+
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
@@ -180,6 +182,7 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
     _module_under_test->process_event(event);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
+
     test_utils::assert_buffer_value(0.0f, out_buffer);
 
     auto [status, value] = _module_under_test->parameter_value(0);

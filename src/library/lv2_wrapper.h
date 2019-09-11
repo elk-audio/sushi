@@ -121,7 +121,7 @@ private:
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     void _deliver_inputs_to_plugin();
-    void _deliver_outputs_from_plugin();
+    void _deliver_outputs_from_plugin(bool send_ui_updates);
 
     void _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();

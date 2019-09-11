@@ -2,6 +2,7 @@
 
 #include "library/lv2_symap.cpp"
 #include "library/lv2_evbuf.cpp"
+#include "library/lv2_worker.cpp"
 #include "library/lv2_plugin_loader.cpp"
 
 using namespace sushi;

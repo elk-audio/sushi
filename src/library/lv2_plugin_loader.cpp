@@ -17,6 +17,8 @@
 
 #include "lv2_plugin_loader.h"
 
+#include "lv2_worker.h"
+
 #include "logging.h"
 
 namespace sushi {
@@ -86,6 +88,21 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
         return;
     }
 
+    _model->_features.ext_data.data_access = lilv_instance_get_descriptor(_model->instance)->extension_data;
+
+    /* Create workers if necessary */
+    if (lilv_plugin_has_extension_data(plugin_handle, _model->nodes.work_interface))
+    {
+        const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
+                lilv_instance_get_extension_data(_model->instance, LV2_WORKER__interface);
+
+        lv2_worker_init(_model, &_model->worker, iface, true);
+        if (_model->safe_restore)
+        {
+            lv2_worker_init(_model, &_model->state_worker, iface, false);
+        }
+    }
+
     /* Activate plugin */
     lilv_instance_activate(_model->instance);
 }
@@ -93,13 +110,19 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 void PluginLoader::close_plugin_instance()
 {
 // TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
-    // Refactor to allow multiple olugins!
+    // Refactor to allow multiple plugins!
 
     if (_model->instance != nullptr)
     {
         _model->exit = true;
+
+        /* Terminate the worker */
+        lv2_worker_finish(&_model->worker);
+
         lilv_instance_deactivate(_model->instance);
         lilv_instance_free(_model->instance);
+
+        lv2_worker_destroy(&_model->worker);
 
         for (unsigned i = 0; i < _model->controls.n_controls; ++i)
         {

@@ -335,7 +335,7 @@ typedef struct {
     void* response; ///< Worker response buffer
     std::mutex sem; ///< Worker semaphore
 
-    const LV2_Worker_Interface* iface; ///< Plugin worker interface
+    const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
     bool threaded; ///< Run work in another thread
 } Lv2_Worker;
 
@@ -370,10 +370,7 @@ public:
         lilv_world_load_all(world);
 
         _initialize_map_feature();
-
-        //_model.worker.model       = _model;
-        //_model.state_worker.model = _model;
-
+        _initialize_worker_feature();
         _initialize_unmap_feature();
         _initialize_urid_symap();
         _initialize_log_feature();
@@ -431,7 +428,7 @@ public:
     char*              temp_dir;       ///< Temporary plugin state directory
     char*              save_dir;       ///< Plugin save directory
 */
-//  bool               safe_restore;   ///< Plugin restore() is thread-safe
+    bool               safe_restore;   ///< Plugin restore() is thread-safe
 
 // TODO: Ilias The below needs re-introducing for control no?
     bool               has_ui;         ///< True iff a control UI is present
@@ -471,6 +468,7 @@ private:
     void _initialize_unmap_feature();
     void _initialize_log_feature();
     void _initialize_urid_symap();
+    void _initialize_worker_feature();
 };
 
 } // end namespace lv2

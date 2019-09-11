@@ -5,6 +5,7 @@
 #include <csignal>
 
 #include "lv2_wrapper.h"
+#include "lv2_worker.h"
 #include "lv2_features.h"
 
 #include "logging.h"
@@ -889,7 +890,27 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
         lilv_instance_run(_model->instance, AUDIO_CHUNK_SIZE);
 
-        _deliver_outputs_from_plugin();
+        /* Process any worker replies. */
+        lv2_worker_emit_responses(&_model->state_worker, _model->instance);
+        lv2_worker_emit_responses(&_model->worker, _model->instance);
+
+        /* Notify the plugin the run() cycle is finished */
+        if (_model->worker.iface && _model->worker.iface->end_run)
+        {
+            _model->worker.iface->end_run(_model->instance->lv2_handle);
+        }
+
+// TODO: Reintroduce when implementing 'GUI'.
+        /* Check if it's time to send updates to the UI */
+//        _model->event_delta_t += nframes;
+          bool send_ui_updates = false;
+//        float update_frames   = _model->sample_rate / _model->ui_update_hz;
+//        if (_model->has_ui && (_model->event_delta_t > update_frames)) {
+//            send_ui_updates = true;
+//            _model->event_delta_t = 0;
+//        }
+
+        _deliver_outputs_from_plugin(send_ui_updates);
     }
 }
 
@@ -934,7 +955,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
     _model->request_update = false;
 }
 
-void Lv2Wrapper::_deliver_outputs_from_plugin()
+void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
 {
     for (_p = 0; _p < _model->num_ports; ++_p)
     {
@@ -953,6 +974,21 @@ void Lv2Wrapper::_deliver_outputs_from_plugin()
                             _model->plugin_latency = _current_port->control;
 // TODO: Introduce latency compensation reporting to Sushi
                         }
+                    }
+                    else if (send_ui_updates)
+                    {
+                        char buf[sizeof(ControlChange) + sizeof(float)];
+                        ControlChange* ev = (ControlChange*)buf;
+                        ev->index = _p;
+                        ev->protocol = 0;
+                        ev->size = sizeof(float);
+                        *(float*)ev->body = _current_port->control;
+// TODO: Re-introduce once plugin_events and ringbuffers are working.
+//                        if (zix_ring_write(_model->plugin_events, buf, sizeof(buf)) < sizeof(buf))
+//                        {
+//// TODO: Log properly
+//                            fprintf(stderr, "Plugin => UI buffer overflow!\n");
+//                        }
                     }
                     break;
                 case TYPE_EVENT:

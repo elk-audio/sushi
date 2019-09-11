@@ -65,17 +65,18 @@ static void* worker_func(void* data)
 }
 
 // TODO: what is ZIX_UNUSED?
-void lv2_worker_init(/*ZIX_UNUSED*/ LV2Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool                        threaded)
+void lv2_worker_init(/*ZIX_UNUSED*/ LV2Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded)
 {
 	worker->iface = iface;
 	worker->threaded = threaded;
 
-//	if (threaded)
-//	{
+	if (threaded)
+	{
 //		zix_thread_create(&worker->thread, 4096, worker_func, worker);
 //		worker->requests = zix_ring_new(4096);
 //		zix_ring_mlock(worker->requests);
-//	}
+	}
+
 //
 //	worker->responses = zix_ring_new(4096);
 //	worker->response  = malloc(4096);

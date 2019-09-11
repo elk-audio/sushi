@@ -8,6 +8,7 @@
 
 #include "lv2_model.h"
 #include "lv2_features.h"
+#include "lv2_worker.h"
 #include "logging.h"
 
 namespace {
@@ -34,11 +35,9 @@ bool LV2Model::initialize_host_feature_list()
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
-// TODO: Re-introduce these or remove!
-            /*
-            &model.features.sched_feature,
-            &model.features.options_feature,
-            */
+            &_features.sched_feature,
+// TODO: Re-introduce options extension!
+            //&_features.options_feature,
             &static_features[0],
             &static_features[1],
             &static_features[2],
@@ -116,6 +115,22 @@ void LV2Model::_initialize_unmap_feature()
     this->unmap.handle = this;
     this->unmap.unmap = unmap_uri;
     init_feature(&this->_features.unmap_feature, LV2_URID__unmap, &this->unmap);
+}
+
+void LV2Model::_initialize_worker_feature()
+{
+    this->worker.model = this;
+    this->state_worker.model = this;
+
+    this->_features.sched.handle = &this->worker;
+    this->_features.sched.schedule_work = lv2_worker_schedule;
+    init_feature(&this->_features.sched_feature,
+                 LV2_WORKER__schedule, &this->_features.sched);
+
+    this->_features.ssched.handle = &this->state_worker;
+    this->_features.ssched.schedule_work = lv2_worker_schedule;
+    init_feature(&this->_features.state_sched_feature,
+                 LV2_WORKER__schedule, &this->_features.ssched);
 }
 
 }
