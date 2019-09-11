@@ -61,8 +61,8 @@ class LV2Model;
 /** Type of plugin control. */
 typedef enum
 {
-    PORT,     ///< Control port
-    PROPERTY  ///< Property (set via atom message)
+    PORT, ///< Control port
+    PROPERTY ///< Property (set via atom message)
 } ControlType;
 
 typedef struct
@@ -124,7 +124,6 @@ typedef struct
     uint32_t size;
     uint8_t  body[];
 } ControlChange;
-
 
 enum PortFlow
 {
@@ -202,41 +201,41 @@ public:
     Lv2_Host_Nodes(LilvWorld* world)
     {
         /* Cache URIs for concepts we'll use */
-        this->atom_AtomPort          = lilv_new_uri(world, LV2_ATOM__AtomPort);
-        this->atom_Chunk             = lilv_new_uri(world, LV2_ATOM__Chunk);
-        this->atom_Float             = lilv_new_uri(world, LV2_ATOM__Float);
-        this->atom_Path              = lilv_new_uri(world, LV2_ATOM__Path);
-        this->atom_Sequence          = lilv_new_uri(world, LV2_ATOM__Sequence);
-        this->lv2_AudioPort          = lilv_new_uri(world, LV2_CORE__AudioPort);
-        this->lv2_CVPort             = lilv_new_uri(world, LV2_CORE__CVPort);
-        this->lv2_ControlPort        = lilv_new_uri(world, LV2_CORE__ControlPort);
-        this->lv2_InputPort          = lilv_new_uri(world, LV2_CORE__InputPort);
-        this->lv2_OutputPort         = lilv_new_uri(world, LV2_CORE__OutputPort);
+        this->atom_AtomPort = lilv_new_uri(world, LV2_ATOM__AtomPort);
+        this->atom_Chunk = lilv_new_uri(world, LV2_ATOM__Chunk);
+        this->atom_Float = lilv_new_uri(world, LV2_ATOM__Float);
+        this->atom_Path = lilv_new_uri(world, LV2_ATOM__Path);
+        this->atom_Sequence = lilv_new_uri(world, LV2_ATOM__Sequence);
+        this->lv2_AudioPort = lilv_new_uri(world, LV2_CORE__AudioPort);
+        this->lv2_CVPort = lilv_new_uri(world, LV2_CORE__CVPort);
+        this->lv2_ControlPort = lilv_new_uri(world, LV2_CORE__ControlPort);
+        this->lv2_InputPort = lilv_new_uri(world, LV2_CORE__InputPort);
+        this->lv2_OutputPort = lilv_new_uri(world, LV2_CORE__OutputPort);
         this->lv2_connectionOptional = lilv_new_uri(world, LV2_CORE__connectionOptional);
-        this->lv2_control            = lilv_new_uri(world, LV2_CORE__control);
-        this->lv2_default            = lilv_new_uri(world, LV2_CORE__default);
-        this->lv2_enumeration        = lilv_new_uri(world, LV2_CORE__enumeration);
-        this->lv2_integer            = lilv_new_uri(world, LV2_CORE__integer);
-        this->lv2_maximum            = lilv_new_uri(world, LV2_CORE__maximum);
-        this->lv2_minimum            = lilv_new_uri(world, LV2_CORE__minimum);
-        this->lv2_name               = lilv_new_uri(world, LV2_CORE__name);
-        this->lv2_reportsLatency     = lilv_new_uri(world, LV2_CORE__reportsLatency);
-        this->lv2_sampleRate         = lilv_new_uri(world, LV2_CORE__sampleRate);
-        this->lv2_symbol             = lilv_new_uri(world, LV2_CORE__symbol);
-        this->lv2_toggled            = lilv_new_uri(world, LV2_CORE__toggled);
-        this->midi_MidiEvent         = lilv_new_uri(world, LV2_MIDI__MidiEvent);
-        this->pg_group               = lilv_new_uri(world, LV2_PORT_GROUPS__group);
-        this->pprops_logarithmic     = lilv_new_uri(world, LV2_PORT_PROPS__logarithmic);
-        this->pprops_notOnGUI        = lilv_new_uri(world, LV2_PORT_PROPS__notOnGUI);
-        this->pprops_rangeSteps      = lilv_new_uri(world, LV2_PORT_PROPS__rangeSteps);
-        this->pset_Preset            = lilv_new_uri(world, LV2_PRESETS__Preset);
-        this->pset_bank              = lilv_new_uri(world, LV2_PRESETS__bank);
-        this->rdfs_comment           = lilv_new_uri(world, LILV_NS_RDFS "comment");
-        this->rdfs_label             = lilv_new_uri(world, LILV_NS_RDFS "label");
-        this->rdfs_range             = lilv_new_uri(world, LILV_NS_RDFS "range");
-        this->rsz_minimumSize        = lilv_new_uri(world, LV2_RESIZE_PORT__minimumSize);
-        this->work_interface         = lilv_new_uri(world, LV2_WORKER__interface);
-        this->work_schedule          = lilv_new_uri(world, LV2_WORKER__schedule);
+        this->lv2_control = lilv_new_uri(world, LV2_CORE__control);
+        this->lv2_default = lilv_new_uri(world, LV2_CORE__default);
+        this->lv2_enumeration = lilv_new_uri(world, LV2_CORE__enumeration);
+        this->lv2_integer = lilv_new_uri(world, LV2_CORE__integer);
+        this->lv2_maximum = lilv_new_uri(world, LV2_CORE__maximum);
+        this->lv2_minimum = lilv_new_uri(world, LV2_CORE__minimum);
+        this->lv2_name = lilv_new_uri(world, LV2_CORE__name);
+        this->lv2_reportsLatency = lilv_new_uri(world, LV2_CORE__reportsLatency);
+        this->lv2_sampleRate = lilv_new_uri(world, LV2_CORE__sampleRate);
+        this->lv2_symbol = lilv_new_uri(world, LV2_CORE__symbol);
+        this->lv2_toggled = lilv_new_uri(world, LV2_CORE__toggled);
+        this->midi_MidiEvent = lilv_new_uri(world, LV2_MIDI__MidiEvent);
+        this->pg_group = lilv_new_uri(world, LV2_PORT_GROUPS__group);
+        this->pprops_logarithmic = lilv_new_uri(world, LV2_PORT_PROPS__logarithmic);
+        this->pprops_notOnGUI = lilv_new_uri(world, LV2_PORT_PROPS__notOnGUI);
+        this->pprops_rangeSteps = lilv_new_uri(world, LV2_PORT_PROPS__rangeSteps);
+        this->pset_Preset = lilv_new_uri(world, LV2_PRESETS__Preset);
+        this->pset_bank = lilv_new_uri(world, LV2_PRESETS__bank);
+        this->rdfs_comment = lilv_new_uri(world, LILV_NS_RDFS "comment");
+        this->rdfs_label = lilv_new_uri(world, LILV_NS_RDFS "label");
+        this->rdfs_range = lilv_new_uri(world, LILV_NS_RDFS "range");
+        this->rsz_minimumSize = lilv_new_uri(world, LV2_RESIZE_PORT__minimumSize);
+        this->work_interface = lilv_new_uri(world, LV2_WORKER__interface);
+        this->work_schedule = lilv_new_uri(world, LV2_WORKER__schedule);
     }
 
     ~Lv2_Host_Nodes()
@@ -316,6 +315,29 @@ public:
     LilvNode* work_interface;
     LilvNode* work_schedule;
 };
+
+typedef enum
+{
+    LV2_RUNNING,
+    LV2_PAUSE_REQUESTED,
+    LV2_PAUSED
+} Lv2_PlayState;
+
+typedef struct {
+    LV2Model* model; // TODO: Is this needed?
+
+    // ZixRing* requests; ///< Requests to the worker
+    // ZixRing* responses; ///< Responses from the worker
+
+// TODO: Introduce proper thread. std::thread
+//  ZixThread thread; ///< Worker thread
+
+    void* response; ///< Worker response buffer
+    std::mutex sem; ///< Worker semaphore
+
+    const LV2_Worker_Interface* iface; ///< Plugin worker interface
+    bool threaded; ///< Run work in another thread
+} Lv2_Worker;
 
 typedef struct
 {
@@ -398,12 +420,12 @@ public:
 
     bool request_update{false}; ///< True iff a plugin update is needed
 
-/*  JalvWorker         worker;         ///< Worker thread implementation
-    JalvWorker         state_worker;   ///< Synchronous worker for state restore
-    ZixSem             work_lock;      ///< Lock for plugin work() method
-    ZixSem             done;           ///< Exit semaphore
-    ZixSem             paused;         ///< Paused signal from process thread
-    JalvPlayState      play_state;     ///< Current play state*/
+    Lv2_Worker worker; ///< Worker thread implementation
+    Lv2_Worker state_worker; ///< Synchronous worker for state restore
+    std::mutex work_lock; ///< Lock for plugin work() method
+    std::mutex done; ///< Exit semaphore
+    std::mutex paused; ///< Paused signal from process thread
+    Lv2_PlayState play_state; ///< Current play state
 
 /*
     char*              temp_dir;       ///< Temporary plugin state directory
@@ -445,7 +467,6 @@ public:
     bool initialize_host_feature_list();
 
 private:
-
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();
