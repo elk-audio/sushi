@@ -70,7 +70,7 @@ public:
         {
             return _tail - _head;
         }
-        return capacity - _head + _tail;
+        return storage_capacity - _head + _tail;
     }
 
     // Actual capacity is 1 less than reserved storage, otherwis head == tail would indicate both full and empty

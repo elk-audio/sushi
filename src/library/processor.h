@@ -289,15 +289,6 @@ public:
     virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
 
     /**
-     * @brief Connect a cv input to a parameter of the processor
-     * @param parameter_id The id of the parameter to connect to
-     * @param cv_input_id The id of the cv input
-     * @return ProcessorReturnCode::OK on success, error code on failure
-     */
-     // TODO - Handled by the engine for now
-    virtual ProcessorReturnCode connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id);
-
-    /**
      * @brief Connect a parameter of the processor to a cv out so that rt updates of
      *        the parameter will be sent to the cv output
      * @param parameter_id The id of the parameter to connect from
@@ -335,7 +326,7 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter, ObjectId id);
 
-    void output_event(RtEvent event)
+    void output_event(const RtEvent& event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);
@@ -371,21 +362,6 @@ protected:
 
     HostControl _host_control;
 
-    struct CvInConnection
-    {
-        ObjectId parameter_id;
-        bool enabled;
-    };
-    struct CvOutConnection
-    {
-        ObjectId parameter_id;
-        int cv_id;
-    };
-
-    std::array<CvInConnection, MAX_ENGINE_CV_IO_PORTS> _cv_in_connections;
-    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
-    int _outgoing_cv_connections{0};
-
 private:
     RtEventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
@@ -396,6 +372,15 @@ private:
 
     std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
     std::vector<ParameterDescriptor*> _parameters_by_index;
+
+    struct CvOutConnection
+    {
+        ObjectId parameter_id;
+        int cv_id;
+    };
+
+    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
+    int _outgoing_cv_connections{0};
 };
 
 constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);

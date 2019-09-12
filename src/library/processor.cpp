@@ -2,31 +2,6 @@
 
 namespace sushi {
 
-ProcessorReturnCode Processor::connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id)
-{
-    if (cv_input_id >= static_cast<int>(_cv_in_connections.size()) || _cv_in_connections[cv_input_id].enabled)
-    {
-        return ProcessorReturnCode::ERROR;
-    }
-    bool param_exists = false;
-    for (const auto& p : this->all_parameters())
-    {
-        // Loop over all parameters since parameter ids don't necessarily match indexes (VST 3 for instance)
-        if (p->id() == parameter_id)
-        {
-            param_exists = true;
-            break;
-        }
-    }
-    if (param_exists == false)
-    {
-        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
-    }
-    _cv_in_connections[cv_input_id].enabled = true;
-    _cv_in_connections[cv_input_id].parameter_id = parameter_id;
-    return ProcessorReturnCode::OK;
-}
-
 ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id)
 {
     if (cv_output_id >= static_cast<int>(_cv_out_connections.size()) ||
