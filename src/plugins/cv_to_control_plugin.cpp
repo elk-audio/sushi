@@ -70,13 +70,23 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     int  tune = _coarse_tune_parameter->value();
     int  polyphony = _polyphony_parameter->value();
 
+    _send_deferred_events(channel);
+    _process_cv_signals(polyphony, channel, tune, send_velocity, send_pitch_bend);
+    _process_gate_changes(polyphony, channel, tune, send_velocity, send_pitch_bend);
+}
+
+void CvToControlPlugin::_send_deferred_events(int channel)
+{
     // Note offs that are deferred to create overlapping notes
     for (auto note : _deferred_note_offs)
     {
         output_event(RtEvent::make_note_off_event(0, 0, channel, note, 1.0f));
     }
     _deferred_note_offs.clear();
+}
 
+void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend)
+{
     if (send_pitch_bend && polyphony == 1)
     {
         if (_voices[0].active)
@@ -107,8 +117,10 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
             }
         }
     }
+}
 
-    // Handle gate changes
+void CvToControlPlugin::_process_gate_changes(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend)
+{
     while (_gate_events.empty() == false)
     {
         const auto& event = _gate_events.pop();
@@ -137,7 +149,6 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
             }
         }
     }
-
 }
 
 std::pair<int, float> cv_to_pitch(float value)

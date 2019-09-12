@@ -42,6 +42,9 @@ private:
         float velocity{0};
     };
 
+    void _send_deferred_events();
+    void _parse_events(bool retrigger, int polyphony);
+    void _send_cv_signals(float tune_offset, int polyphony, bool send_velocity, bool send_modulation);
     int get_free_voice_id(int polyphony);
 
     BoolParameterValue*   _send_velocity_parameter;

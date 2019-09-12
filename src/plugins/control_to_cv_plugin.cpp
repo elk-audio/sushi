@@ -74,15 +74,23 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     float fine_tune = _fine_tune_parameter->value();
     int  polyphony = _polyphony_parameter->value();
 
-    float tune_offset = coarse_tune + fine_tune;
+    _send_deferred_events();
+    _parse_events(retrigger_mode, polyphony);
+    _send_cv_signals(coarse_tune + fine_tune + _pitch_bend_value, polyphony, send_velocity, send_modulation);
+}
 
+void ControlToCvPlugin::_send_deferred_events()
+{
     while (_deferred_events.empty() == false)
     {
         auto event = _deferred_events.pop();
         this->output_event(event);
     }
     _deferred_events.clear();
+}
 
+void ControlToCvPlugin::_parse_events(bool retrigger, int polyphony)
+{
     while (_kb_events.empty() == false)
     {
         auto event = _kb_events.pop();
@@ -93,7 +101,7 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
                 auto typed_event = event.keyboard_event();
                 int voice_id = get_free_voice_id(polyphony);
                 auto& voice = _voices[voice_id];
-                if (retrigger_mode && voice.active)
+                if (retrigger && voice.active)
                 {
                     // Send the gate low event now, and send the gate high event to the next buffer
                     output_event(RtEvent::make_gate_event(this->id(), 0, voice_id, false));
@@ -142,11 +150,14 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
         }
     }
     _kb_events.clear();
+}
 
+void ControlToCvPlugin::_send_cv_signals(float tune_offset, int polyphony, bool send_velocity, bool send_modulation)
+{
     // As notes have a non-zero decay, pitch matters even if gate is off, hence always send pitch on all notes
     for (int i = 0; i < polyphony; ++i)
     {
-        set_parameter_and_notify(_pitch_parameters[i], pitch_to_cv(_voices[i].note + _pitch_bend_value + tune_offset));
+        set_parameter_and_notify(_pitch_parameters[i], pitch_to_cv(_voices[i].note + tune_offset));
     }
     if (send_velocity)
     {

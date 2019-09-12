@@ -36,6 +36,10 @@ public:
 
 private:
 
+    void _send_deferred_events(int channel);
+    void _process_cv_signals(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend);
+    void _process_gate_changes(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend);
+
     struct ControlVoice
     {
         bool active{false};
