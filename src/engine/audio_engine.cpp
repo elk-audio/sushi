@@ -15,6 +15,7 @@
 #include "plugins/peak_meter_plugin.h"
 #include "plugins/transposer_plugin.h"
 #include "plugins/cv_to_control_plugin.h"
+#include "plugins/control_to_cv_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -379,6 +380,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     else if (uid == "sushi.testing.cv_to_control")
     {
         instance = new cv_to_control_plugin::CvToControlPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.control_to_cv")
+    {
+        instance = new control_to_cv_plugin::ControlToCvPlugin(_host_control);
     }
     return instance;
 }

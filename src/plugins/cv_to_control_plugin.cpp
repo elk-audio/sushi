@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 
 #include "plugins/cv_to_control_plugin.h"
 
@@ -92,7 +91,7 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     }
     else
     {
-        for (int i = 0; i < polyphony && i < _voices.size(); ++i)
+        for (int i = 0; i < polyphony && i < static_cast<int>(_voices.size()); ++i)
         {
             auto& voice = _voices[i];
             if (voice.active)

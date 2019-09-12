@@ -42,6 +42,7 @@ enable_testing()
 
 SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/arpeggiator_plugin_test.cpp
+               unittests/plugins/control_to_cv_plugin_test.cpp
                unittests/plugins/cv_to_control_plugin_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp

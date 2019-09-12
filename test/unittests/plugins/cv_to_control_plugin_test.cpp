@@ -4,8 +4,6 @@
 #include "library/rt_event_fifo.h"
 #include "test_utils/host_control_mockup.h"
 
-#include <iostream>
-
 using namespace sushi;
 using namespace sushi::cv_to_control_plugin;
 
