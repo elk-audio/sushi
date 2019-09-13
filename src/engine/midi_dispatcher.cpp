@@ -79,15 +79,16 @@ inline Event* make_param_change_event(InputConnection &c,
     if (c.relative)
     {
         abs_value = c.virtual_abs_value;
-        if (msg.value == 1u)
+        if (msg.value < 64u)
         {
-            abs_value += 1u;
-            abs_value = std::min(abs_value, static_cast<uint8_t>(127));
+            auto clipped_increment = std::min<uint8_t>(msg.value, 127u - abs_value);
+            abs_value += clipped_increment;
         }
-        else if (msg.value == 127u)
+        else
         {
-            abs_value -= 1u;
-            abs_value = std::max(abs_value, static_cast<uint8_t>(0));
+            // Two-complement encoding for negative relative changes
+            auto clipped_decrease = std::min<uint8_t>(128u - msg.value, abs_value);
+            abs_value -= clipped_decrease;
         }
         c.virtual_abs_value = abs_value;
     }
