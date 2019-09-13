@@ -610,7 +610,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id);
+    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
