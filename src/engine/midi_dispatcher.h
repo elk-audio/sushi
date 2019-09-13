@@ -34,7 +34,7 @@ struct InputConnection
     ObjectId parameter;
     float min_range;
     float max_range;
-    bool is_relative;
+    bool relative;
     uint8_t virtual_abs_value;
 };
 

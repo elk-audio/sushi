@@ -76,7 +76,7 @@ inline Event* make_param_change_event(InputConnection &c,
     // Maybe TODO: currently this is based on a virtual controller absolute value which is
     // initialized at 64. An alternative would be to read the parameter value from the plugin
     // and compute a change from that. We should investigate what other DAWs are doing.
-    if (c.is_relative)
+    if (c.relative)
     {
         abs_value = c.virtual_abs_value;
         if (msg.value == 1u)
@@ -148,7 +148,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.parameter = parameter_id;
     connection.min_range = min_range;
     connection.max_range = max_range;
-    connection.is_relative = use_relative_mode;
+    connection.relative = use_relative_mode;
     connection.virtual_abs_value = 64;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
     MIND_LOG_INFO("Connected parameter \"{}\" "
