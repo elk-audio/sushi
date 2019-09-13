@@ -137,9 +137,9 @@ R"(
               {
                 "type": "number"
               },
-              "relative":
+              "mode":
               {
-                "type": "boolean"
+                "enum": ["absolute", "relative"]
               }
             },
             "required": ["port", "channel", "cc_number", "plugin_name", "parameter_name", "min_range", "max_range"]

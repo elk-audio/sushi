@@ -212,9 +212,10 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
         for (const auto& cc_map : midi["cc_mappings"].GetArray())
         {
             bool is_relative = false;
-            if (cc_map.HasMember("relative"))
+            if (cc_map.HasMember("mode"))
             {
-                is_relative = cc_map["relative"].GetBool();
+                auto cc_mode = std::string(cc_map["mode"].GetString());
+                is_relative = (cc_mode.compare("relative") == 0);
             }
 
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
