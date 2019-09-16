@@ -14,6 +14,11 @@ inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,
                                  Time timestamp)
 {
+    if (msg.velocity == 0)
+    {
+        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
+    }
+
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
