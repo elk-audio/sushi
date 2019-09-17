@@ -79,12 +79,11 @@ protected:
         _module_under_test->stop();
         delete _module_under_test;
     }
-    EventDispatcher* _module_under_test;
-    EngineMockup     _test_engine{44100};
-    RtSafeRtEventFifo      _in_rt_queue;
-    RtSafeRtEventFifo      _out_rt_queue;
-
-    DummyPoster      _poster;
+    EventDispatcher*    _module_under_test;
+    EngineMockup        _test_engine{44100};
+    RtSafeRtEventFifo   _in_rt_queue;
+    RtSafeRtEventFifo   _out_rt_queue;
+    DummyPoster         _poster;
 };
 
 TEST_F(TestEventDispatcher, TestInstantiation)

@@ -103,8 +103,8 @@ private:
     engine::BaseEngine*         _engine;
 
     SynchronizedQueue<Event*>   _in_queue;
-    RtSafeRtEventFifo*                _in_rt_queue;
-    RtSafeRtEventFifo*                _out_rt_queue;
+    RtSafeRtEventFifo*          _in_rt_queue;
+    RtSafeRtEventFifo*          _out_rt_queue;
     std::deque<Event*>          _waiting_list;
 
     Worker                      _worker;
