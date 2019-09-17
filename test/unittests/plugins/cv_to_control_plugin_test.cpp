@@ -43,7 +43,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.5);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 1, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -71,7 +71,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     EXPECT_EQ(60, recv_event.keyboard_event()->note());
 
     // Now Send a gate low event and we should receive a note off with the new note
-    event = RtEvent::make_gate_event(0, 0, 1, false);
+    event = RtEvent::make_note_off_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     recv_event = _event_output.pop();
@@ -92,7 +92,7 @@ TEST_F(CvToControlPluginTest, TestPitchBendMode)
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.501);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 1, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -126,7 +126,7 @@ TEST_F(CvToControlPluginTest, TestVelocity)
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("velocity_1")->id(), 0.75);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 1, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -144,7 +144,7 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.5);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 1, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -155,9 +155,9 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     EXPECT_TRUE(_event_output.empty());
 
     // Sent 2 new gate ons
-    event = RtEvent::make_gate_event(0, 0, 2, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 1, 1.0f);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 3, true);
+    event = RtEvent::make_note_on_event(0, 0, 0, 2, 1.0f);
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_2")->id(), 0.3);
     _module_under_test.process_event(event);
@@ -169,9 +169,9 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     EXPECT_TRUE(_event_output.empty());
 
     // Sent 2 new gate offs
-    event = RtEvent::make_gate_event(0, 0, 1, false);
+    event = RtEvent::make_note_off_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
-    event = RtEvent::make_gate_event(0, 0, 3, false);
+    event = RtEvent::make_note_off_event(0, 0, 0, 2, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     recv_event = _event_output.pop();
@@ -180,7 +180,7 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     EXPECT_EQ(RtEventType::NOTE_OFF, recv_event.type());
     EXPECT_TRUE(_event_output.empty());
 
-    event = RtEvent::make_gate_event(0, 0, 2, false);
+    event = RtEvent::make_note_off_event(0, 0, 0, 1, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     recv_event = _event_output.pop();

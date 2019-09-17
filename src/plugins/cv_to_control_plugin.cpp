@@ -48,7 +48,8 @@ void CvToControlPlugin::configure(float sample_rate)
 
 void CvToControlPlugin::process_event(const RtEvent& event)
 {
-    if (event.type() == RtEventType::GATE_EVENT)
+    // Plugins listens to all channels
+    if (event.type() == RtEventType::NOTE_ON || event.type() == RtEventType::NOTE_OFF)
     {
         _gate_events.push(event);
         return;
@@ -124,12 +125,12 @@ void CvToControlPlugin::_process_gate_changes(int polyphony, int channel, int tu
     while (_gate_events.empty() == false)
     {
         const auto& event = _gate_events.pop();
-        const auto gate_event = event.gate_event();
-        // Count gates from 1
-        int gate = gate_event->gate_no() -1;
-        if (gate <= polyphony && gate >= 0)
+        const auto kbd_event = event.keyboard_event();
+        int gate = kbd_event->note();
+        bool gate_state = kbd_event->type() == RtEventType::NOTE_ON;
+        if (gate < polyphony && gate >= 0)
         {
-            if (gate_event->value()) // Gate high
+            if (gate_state) // Gate high
             {
                 float velocity = send_velocity? _velocity_parameters[gate]->value() : 1.0f;
                 _voices[gate].active = true;

@@ -29,10 +29,21 @@ ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, 
     return ProcessorReturnCode::OK;
 }
 
-ProcessorReturnCode Processor::connect_gate_from_processor(int /*gate_output_id*/, int /*channel*/, int /*note_no*/)
+ProcessorReturnCode Processor::connect_gate_from_processor(int gate_output_id, int channel, int note_no)
 {
-    // TODO - Implementation needed
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    assert(gate_output_id < MAX_ENGINE_GATE_PORTS || note_no <= MAX_ENGINE_GATE_NOTE_NO);
+    GateKey key = to_gate_key(channel, note_no);
+    if (_outgoing_gate_connections.count(key) > 0)
+    {
+        return ProcessorReturnCode::ERROR;
+    }
+    GateOutConnection con;
+    con.channel = channel;
+    con.note = note_no;
+    con.gate_id = gate_output_id;
+    _outgoing_gate_connections[key] = con;
+
+    return ProcessorReturnCode::OK;
 }
 
 bool Processor::register_parameter(ParameterDescriptor* parameter, ObjectId id)
@@ -66,6 +77,17 @@ bool Processor::maybe_output_cv_value(ObjectId parameter_id, float value)
         }
     }
     return false;
+}
+
+bool Processor::maybe_output_gate_event(int channel, int note, bool note_on)
+{
+    auto con = _outgoing_gate_connections.find(to_gate_key(channel, note));
+    if (con == _outgoing_gate_connections.end())
+    {
+        return false;
+    }
+    output_event(RtEvent::make_gate_event(this->id(), 0, con->second.gate_id, note_on));
+    return true;
 }
 
 void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)

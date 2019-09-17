@@ -256,7 +256,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
                                                           int note_no,
                                                           int channel)
 {
-    if (gate_input_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    if (gate_input_id >= MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
     {
         return EngineReturnStatus::ERROR;
     }
@@ -279,7 +279,7 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
                                                             int note_no,
                                                             int channel)
 {
-    if (gate_output_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    if (gate_output_id >= MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
     {
         return EngineReturnStatus::ERROR;
     }

@@ -10,6 +10,7 @@ static const std::string DEFAULT_NAME = "sushi.testing.control_to_cv";
 static const std::string DEFAULT_LABEL = "Keyboard control to CV adapter";
 constexpr int TUNE_RANGE = 24;
 constexpr float PITCH_BEND_RANGE = 12.0f;
+constexpr int SEND_CHANNEL = 0;
 
 ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -81,12 +82,12 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
 
 void ControlToCvPlugin::_send_deferred_events()
 {
-    while (_deferred_events.empty() == false)
+    while (_deferred_gate_highs.empty() == false)
     {
-        auto event = _deferred_events.pop();
-        this->output_event(event);
+        auto gate_id = _deferred_gate_highs.pop();
+        maybe_output_gate_event(SEND_CHANNEL, gate_id, true);
     }
-    _deferred_events.clear();
+    _deferred_gate_highs.clear();
 }
 
 void ControlToCvPlugin::_parse_events(bool retrigger, int polyphony)
@@ -103,13 +104,13 @@ void ControlToCvPlugin::_parse_events(bool retrigger, int polyphony)
                 auto& voice = _voices[voice_id];
                 if (retrigger && voice.active)
                 {
-                    // Send the gate low event now, and send the gate high event to the next buffer
-                    output_event(RtEvent::make_gate_event(this->id(), 0, voice_id, false));
-                    _deferred_events.push(RtEvent::make_gate_event(this->id(), 0, voice_id, true));
+                    // Send the gate low event now, and send the gate high event in the next buffer
+                    maybe_output_gate_event(SEND_CHANNEL, voice_id, false);
+                    _deferred_gate_highs.push(voice_id);
                 }
                 else if (voice.active == false)
                 {
-                    output_event(RtEvent::make_gate_event(this->id(), 0, voice_id, true));
+                    maybe_output_gate_event(SEND_CHANNEL, voice_id, true);
                 }
                 voice.active = true;
                 voice.note = typed_event->note();
@@ -125,7 +126,7 @@ void ControlToCvPlugin::_parse_events(bool retrigger, int polyphony)
                     auto& voice = _voices[i];
                     if (voice.note == typed_event->note() && voice.active)
                     {
-                        output_event(RtEvent::make_gate_event(this->id(), 0, i, false));
+                        maybe_output_gate_event(SEND_CHANNEL, i, false);
                         voice.active = false; // TODO - should we handle release velocity, should it be optional?
                     }
                 }

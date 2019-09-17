@@ -64,7 +64,7 @@ private:
     int                                             _last_voice{0};
     std::array<ControlVoice, MAX_CV_VOICES>         _voices;
     RtEventFifo<MAX_ENGINE_GATE_PORTS>              _kb_events;
-    RtEventFifo<MAX_CV_VOICES>                      _deferred_events;
+    SimpleFifo<int, MAX_ENGINE_GATE_PORTS>          _deferred_gate_highs;
 };
 
 float pitch_to_cv(float value);

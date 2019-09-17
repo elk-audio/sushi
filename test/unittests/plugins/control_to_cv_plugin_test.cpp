@@ -41,6 +41,8 @@ TEST_F(ControlToCvPluginTest, TestMonophonicMode)
     // Only connect 1 pitch output
     auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
+    status = _module_under_test.connect_gate_from_processor(0, 0, 0);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     ASSERT_EQ(1, _event_output.size());
@@ -120,6 +122,10 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
     status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_1")->id(), VEL_CV_1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_2")->id(), VEL_CV_2);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    status = _module_under_test.connect_gate_from_processor(0, 0, 0);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    status = _module_under_test.connect_gate_from_processor(1, 0, 1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     auto event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("polyphony")->id(), 2.0f);
@@ -223,6 +229,8 @@ TEST_F(ControlToCvPluginTest, TestPitchBend)
     constexpr int PITCH_CV = 2;
     auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
+    status = _module_under_test.connect_gate_from_processor(0, 0, 0);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     // Send a note on message and a pitch bend message
     auto event = RtEvent::make_note_on_event(_module_under_test.id(), 0, 0, 48, 0.5f);
@@ -261,6 +269,8 @@ TEST_F(ControlToCvPluginTest, TestModulation)
     auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("modulation")->id(), MOD_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    status = _module_under_test.connect_gate_from_processor(0, 0, 0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     auto event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("send_modulation")->id(), 2.0f);

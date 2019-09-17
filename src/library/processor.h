@@ -9,6 +9,7 @@
 #define SUSHI_PROCESSOR_H
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "library/sample_buffer.h"
@@ -342,6 +343,15 @@ protected:
     bool maybe_output_cv_value(ObjectId parameter_id, float value);
 
     /**
+     * @brief Handle gate outputs if note on or note off events are mapped to gate outputs
+     * @param channel The channel id of the event
+     * @param note The midi note number of the event
+     * @param note_on True if this is a note on event, false if it is a note off event
+     * @return true if there is an active outgoing connection from this note/channel combination, false otherwise
+     */
+    bool maybe_output_gate_event(int channel, int note, bool note_on);
+
+    /**
     * @brief Utility function do to general bypass/passthrough audio processing.
     *        Useful for processors that don't implement this on their own.
     * @param in_buffer Input SampleBuffer
@@ -381,6 +391,19 @@ private:
 
     std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
     int _outgoing_cv_connections{0};
+
+    using GateKey = int;
+    GateKey to_gate_key(int8_t channel, int8_t note)
+    {
+        return channel + (note << sizeof(note));
+    }
+    struct GateOutConnection
+    {
+        int8_t note;
+        int8_t channel;
+        int gate_id;
+    };
+    std::unordered_map<GateKey, GateOutConnection> _outgoing_gate_connections;
 };
 
 constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);
