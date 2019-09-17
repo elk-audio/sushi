@@ -22,34 +22,48 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
 
     switch (opcode)
     {
-    case audioMasterAutomate:
-    {
-        auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
-        if (twine::is_current_thread_realtime())
+        case audioMasterAutomate:
         {
-            wrapper_instance->notify_parameter_change_rt(index, opt);
-        }
-        else
-        {
-            wrapper_instance->notify_parameter_change(index, opt);
-            MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
-                           wrapper_instance->name(), index, opt);
+            auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            if (twine::is_current_thread_realtime())
+            {
+                wrapper_instance->notify_parameter_change_rt(index, opt);
+            }
+            else
+            {
+                wrapper_instance->notify_parameter_change(index, opt);
+                MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                               wrapper_instance->name(), index, opt);
+            }
+            break;
         }
 
-        break;
-    }
-    case audioMasterVersion :
-        result = kVstVersion;
-        break;
+        case audioMasterVersion:
+        {
+            result = kVstVersion;
+            break;
+        }
 
-    case  audioMasterGetTime:
-    {
-        // Pass a pointer to a VstTimeInfo populated with updated data to the plugin
-        auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
-        result = reinterpret_cast<VstIntPtr>(wrapper_instance->time_info());
-    }
-    default:
-        break;
+        case  audioMasterGetTime:
+        {
+            // Pass a pointer to a VstTimeInfo populated with updated data to the plugin
+            auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            result = reinterpret_cast<VstIntPtr>(wrapper_instance->time_info());
+            break;
+        }
+
+        case audioMasterProcessEvents:
+        {
+            auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            auto events = reinterpret_cast<VstEvents*>(ptr);
+            for (int i = 0; i < events->numEvents; ++i)
+            {
+                wrapper_instance->output_vst_event(events->events[i]);
+            }
+        }
+
+        default:
+            break;
     }
 
     return result;

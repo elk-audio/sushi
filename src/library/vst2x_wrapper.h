@@ -94,6 +94,17 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
     /**
+     * @brief Get the vst time information
+     * @return A populated VstTimeInfo struct
+     */
+    VstTimeInfo* time_info();
+
+private:
+    friend VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
+                                               VstInt32 opcode, VstInt32 index,
+                                               VstIntPtr value, void* ptr, float opt);
+
+    /**
      * @brief Notify the host of a parameter change from inside the plugin
      *        This must be called from the realtime thread
      * @param parameter_index The index of the parameter that has changed
@@ -111,12 +122,10 @@ public:
     void notify_parameter_change(VstInt32 parameter_index, float value);
 
     /**
-     * @brief Get the vst time information
-     * @return A populated VstTimeInfo struct
+     * @brief Output a vst midi event from the plugin.
+     * @param event Pointer to a VstEvent struct
      */
-    VstTimeInfo* time_info();
-
-private:
+    void output_vst_event(const VstEvent* event);
     /**
      * @brief Tell the plugin that we're done with it and release all resources
      * we allocated during initialization.

@@ -1,4 +1,5 @@
 #include "processor.h"
+#include "library/midi_decoder.h"
 
 namespace sushi {
 
@@ -106,6 +107,68 @@ void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         {
             out_buffer.replace(c, c % _current_input_channels, in_buffer);
         }
+    }
+}
+
+void Processor::output_midi_event_as_internal(MidiDataByte midi_data, int sample_offset)
+{
+    auto msg_type = midi::decode_message_type(midi_data);
+    switch (msg_type)
+    {
+        case midi::MessageType::NOTE_ON:
+        {
+            auto msg = midi::decode_note_on(midi_data);
+            if (maybe_output_gate_event(msg.channel, msg.note, true) == false)
+            {
+                output_event(RtEvent::make_note_on_event(this->id(), sample_offset, msg.channel,
+                                                         msg.note, msg.velocity / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::NOTE_OFF:
+        {
+            auto msg = midi::decode_note_off(midi_data);
+            if (maybe_output_gate_event(msg.channel, msg.note, false) == false)
+            {
+                output_event(RtEvent::make_note_off_event(this->id(), sample_offset, msg.channel,
+                                                          msg.note, msg.velocity / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::PITCH_BEND:
+        {
+            auto msg = midi::decode_pitch_bend(midi_data);
+            output_event(RtEvent::make_pitch_bend_event(this->id(), sample_offset, msg.channel,
+                                                        msg.value / static_cast<float>(midi::MAX_PITCH_BEND) / 2.0f -
+                                                        1.0f));
+            break;
+        }
+        case midi::MessageType::CONTROL_CHANGE:
+        {
+            auto msg = midi::decode_control_change(midi_data);
+            if (msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
+            {
+                output_event(RtEvent::make_kb_modulation_event(this->id(), sample_offset, msg.channel,
+                                                               msg.value / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::POLY_KEY_PRESSURE:
+        {
+            auto msg = midi::decode_poly_key_pressure(midi_data);
+            output_event(RtEvent::make_note_aftertouch_event(this->id(), sample_offset, msg.channel,
+                                                             msg.note, msg.pressure / 127.0f));
+            break;
+        }
+        case midi::MessageType::CHANNEL_PRESSURE:
+        {
+            auto msg = midi::decode_channel_pressure(midi_data);
+            output_event(RtEvent::make_aftertouch_event(this->id(), sample_offset, msg.channel, msg.pressure / 127.0f));
+            break;
+        }
+        default:
+            break;
+
     }
 }
 

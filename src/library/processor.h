@@ -327,6 +327,14 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter, ObjectId id);
 
+    /**
+     * @brief Convert midi data and output as an internal event, taking account any gate
+     *        routing configurations active on the processor.
+     * @param midi_data raw midi data from the plugin
+     * @param sample_offset Intra-buffer offset in samples
+     */
+    void output_midi_event_as_internal(MidiDataByte midi_data, int sample_offset);
+
     void output_event(const RtEvent& event)
     {
         if (_output_pipe)
