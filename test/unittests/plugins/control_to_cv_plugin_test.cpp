@@ -39,7 +39,7 @@ TEST_F(ControlToCvPluginTest, TestMonophonicMode)
     constexpr int PITCH_CV = 1;
 
     // Only connect 1 pitch output
-    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
+    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_0")->id(), PITCH_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_gate_from_processor(0, 0, 0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -115,13 +115,13 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
     constexpr int VEL_CV_2 = 3;
 
     // Use 2 pitch and 2 velocity outputs
-    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV_1);
+    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_0")->id(), PITCH_CV_1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_2")->id(), PITCH_CV_2);
+    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV_2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_1")->id(), VEL_CV_1);
+    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_0")->id(), VEL_CV_1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_2")->id(), VEL_CV_2);
+    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("velocity_1")->id(), VEL_CV_2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_gate_from_processor(0, 0, 0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -227,7 +227,7 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
 TEST_F(ControlToCvPluginTest, TestPitchBend)
 {
     constexpr int PITCH_CV = 2;
-    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
+    auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_0")->id(), PITCH_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_gate_from_processor(0, 0, 0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -268,7 +268,7 @@ TEST_F(ControlToCvPluginTest, TestModulation)
     // Use 2 pitch and 2 velocity outputs
     auto status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("modulation")->id(), MOD_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_1")->id(), PITCH_CV);
+    status = _module_under_test.connect_cv_from_parameter(_module_under_test.parameter_from_name("pitch_0")->id(), PITCH_CV);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     status = _module_under_test.connect_gate_from_processor(0, 0, 0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);

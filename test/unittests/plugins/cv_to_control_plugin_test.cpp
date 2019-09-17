@@ -41,7 +41,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     // Set pitch parameter and send a gate high event, we should receive a note on event
     auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 1);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.5);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.5);
     _module_under_test.process_event(event);
     event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
@@ -54,7 +54,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     EXPECT_TRUE(_event_output.empty());
 
     // Change the pitch enough to trigger a new note on
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.51);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.51);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -90,7 +90,7 @@ TEST_F(CvToControlPluginTest, TestPitchBendMode)
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_bend_enabled")->id(), 1);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.501);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.501);
     _module_under_test.process_event(event);
     event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
@@ -107,7 +107,7 @@ TEST_F(CvToControlPluginTest, TestPitchBendMode)
     EXPECT_TRUE(_event_output.empty());
 
     // Change the pitch up ~one semitone, this should not send a new note on, only a pitch bend with a higher value
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.51);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.51);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     EXPECT_FALSE(_event_output.empty());
@@ -122,9 +122,9 @@ TEST_F(CvToControlPluginTest, TestVelocity)
     // Set pitch parameter and send a gate high event, we should receive a note on event and a pitch bend
     auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("velocity_enabled")->id(), 1);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.5);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.5);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("velocity_1")->id(), 0.75);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("velocity_0")->id(), 0.75);
     _module_under_test.process_event(event);
     event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
@@ -142,7 +142,7 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     // Set pitch parameter and send a gate high event, we should receive a note on event
     auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 4);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.5);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.5);
     _module_under_test.process_event(event);
     event = RtEvent::make_note_on_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
@@ -159,7 +159,7 @@ TEST_F(CvToControlPluginTest, TestPolyphony)
     _module_under_test.process_event(event);
     event = RtEvent::make_note_on_event(0, 0, 0, 2, 1.0f);
     _module_under_test.process_event(event);
-    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_2")->id(), 0.3);
+    event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_1")->id(), 0.3);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
     recv_event = _event_output.pop();

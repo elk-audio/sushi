@@ -31,7 +31,7 @@ ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(
 
     for (int i = 0; i < MAX_CV_VOICES; ++i)
     {
-        auto i_str = std::to_string(i + 1);
+        auto i_str = std::to_string(i);
         _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, 0, 0, 1, new FloatParameterPreProcessor(0, 1));
         _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, 0.5, 0, 1, new FloatParameterPreProcessor(0, 1));
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
