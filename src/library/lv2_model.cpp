@@ -9,6 +9,7 @@
 #include "lv2_model.h"
 #include "lv2_features.h"
 #include "lv2_worker.h"
+#include "lv2_state.h"
 #include "logging.h"
 
 namespace {
@@ -36,6 +37,7 @@ bool LV2Model::initialize_host_feature_list()
             &_features.unmap_feature,
             &_features.log_feature,
             &_features.sched_feature,
+            &_features.make_path_feature,
 // TODO: Re-introduce options extension!
             //&_features.options_feature,
             &static_features[0],
@@ -141,6 +143,14 @@ void LV2Model::_initialize_safe_restore_feature()
     init_feature(&this->_features.safe_restore_feature,
                  LV2_STATE__threadSafeRestore,
                  NULL);
+}
+
+void LV2Model::_initialize_make_path_feature()
+{
+    this->_features.make_path.handle = this;
+    this->_features.make_path.path = make_path;
+    init_feature(&this->_features.make_path_feature,
+                 LV2_STATE__makePath, &this->_features.make_path);
 }
 
 }

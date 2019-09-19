@@ -61,6 +61,10 @@ namespace lv2 {
 #    define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
+#ifndef MIN
+#    define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 class LV2Model;
 
 /** Type of plugin control. */
@@ -388,6 +392,7 @@ public:
         _initialize_urid_symap();
         _initialize_log_feature();
         _initialize_safe_restore_feature();
+        _initialize_make_path_feature();
     }
 
     ~LV2Model()
@@ -446,8 +451,8 @@ public:
 // TODO: The below needs re-introducing for control no?
     bool has_ui; ///< True iff a control UI is present
     Controls controls; ///< Available plugin controls
-//  uint32_t event_delta_t;  ///< Frames since last update sent to UI
-//  float ui_update_hz;   ///< Frequency of UI updates
+    uint32_t event_delta_t;  ///< Frames since last update sent to UI
+    float ui_update_hz;   ///< Frequency of UI updates
 
 // void* window; ///< Window (if applicable)
 
@@ -483,6 +488,7 @@ private:
     void _initialize_urid_symap();
     void _initialize_worker_feature();
     void _initialize_safe_restore_feature();
+    void _initialize_make_path_feature();
 };
 
 } // end namespace lv2
