@@ -58,6 +58,14 @@ return fprintf(stream, "\033[0;%dm", color);
 return 0;
 }
 
+/**
+   Get a port structure by symbol.
+
+   (Inherited) TODO: Build an index to make this faster, currently O(n) which may be
+   a problem when restoring the state of plugins with many ports.
+*/
+struct Port* port_by_symbol(LV2Model* model, const char* sym);
+
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,
             const char *fmt,
@@ -66,6 +74,24 @@ int lv2_vprintf(LV2_Log_Handle handle,
 int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,
            const char *fmt, ...);
+
+typedef int (*PresetSink)(LV2Model*       model,
+                          const LilvNode* node,
+                          const LilvNode* title,
+                          void*           data);
+
+static char* lv2_strjoin(const char* a, const char* b)
+{
+    const size_t a_len = strlen(a);
+    const size_t b_len = strlen(b);
+    char* const out = (char*)malloc(a_len + b_len + 1);
+
+    memcpy(out, a, a_len);
+    memcpy(out + a_len, b, b_len);
+    out[a_len + b_len] = '\0';
+
+    return out;
+}
 
 // Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
 

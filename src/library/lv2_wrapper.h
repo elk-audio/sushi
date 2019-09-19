@@ -146,7 +146,7 @@ private:
 //  void jalv_ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer);
 
     bool jalv_ui_is_resizable(LV2Model* model);
-    struct Port* jalv_port_by_symbol(LV2Model* model, const char* sym);
+
     ControlID* jalv_control_by_symbol(LV2Model* model, const char* sym);
 
     float _sample_rate{0};
@@ -173,10 +173,10 @@ private:
     // process_audio.
     RtEventFifo _incoming_event_queue;
 
-    /* TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
-    *  Currently, this is instantiated in wrapper.
-    *  But if there's more than one plugin, there should not be two instances of _loader, right?
-    */
+/* TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
+*  Currently, this is instantiated in wrapper.
+*  But if there's more than one plugin, there should not be two instances of _loader, right?
+*/
     PluginLoader _loader;
 
     // The below are all fields used in process_audio:

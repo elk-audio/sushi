@@ -36,10 +36,15 @@
 
 #include "processor.h"
 
+#include "zix/ring.h"
+#include "zix/sem.h"
+#include "zix/thread.h"
+
 #include "lv2_symap.h"
 
 #include "../engine/base_event_dispatcher.h"
 #include "lv2_evbuf.h"
+
 
 namespace sushi {
 namespace lv2 {
@@ -326,17 +331,17 @@ typedef enum
 typedef struct {
     LV2Model* model; // TODO: Is this needed?
 
-    // ZixRing* requests; ///< Requests to the worker
-    // ZixRing* responses; ///< Responses from the worker
+    ZixRing* requests = nullptr; ///< Requests to the worker
+    ZixRing* responses = nullptr; ///< Responses from the worker
 
 // TODO: Introduce proper thread. std::thread
-//  ZixThread thread; ///< Worker thread
+    ZixThread thread; ///< Worker thread
 
-    void* response; ///< Worker response buffer
-    std::mutex sem; ///< Worker semaphore
+    void* response = nullptr; ///< Worker response buffer
+    ZixSem sem;
 
     const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
-    bool threaded; ///< Run work in another thread
+    bool threaded = false; ///< Run work in another thread
 } Lv2_Worker;
 
 typedef struct
@@ -369,11 +374,17 @@ public:
         /* Find all installed plugins */
         lilv_world_load_all(world);
 
+        zix_sem_init(&this->done, 0);
+
+        zix_sem_init(&this->paused, 0);
+        zix_sem_init(&this->worker.sem, 0);
+
         _initialize_map_feature();
         _initialize_worker_feature();
         _initialize_unmap_feature();
         _initialize_urid_symap();
         _initialize_log_feature();
+        _initialize_safe_restore_feature();
     }
 
     ~LV2Model()
@@ -419,46 +430,45 @@ public:
 
     Lv2_Worker worker; ///< Worker thread implementation
     Lv2_Worker state_worker; ///< Synchronous worker for state restore
-    std::mutex work_lock; ///< Lock for plugin work() method
-    std::mutex done; ///< Exit semaphore
-    std::mutex paused; ///< Paused signal from process thread
+    ZixSem work_lock; ///< Lock for plugin work() method
+    ZixSem done; ///< Exit semaphore
+    ZixSem paused; ///< Paused signal from process thread
     Lv2_PlayState play_state; ///< Current play state
 
-/*
-    char*              temp_dir;       ///< Temporary plugin state directory
-    char*              save_dir;       ///< Plugin save directory
-*/
-    bool               safe_restore;   ///< Plugin restore() is thread-safe
+    char* temp_dir; ///< Temporary plugin state directory
+    char* save_dir; ///< Plugin save directory
 
-// TODO: Ilias The below needs re-introducing for control no?
-    bool               has_ui;         ///< True iff a control UI is present
-    Controls           controls;       ///< Available plugin controls
-//  uint32_t           event_delta_t;  ///< Frames since last update sent to UI
-//  float              ui_update_hz;   ///< Frequency of UI updates
+    bool safe_restore; ///< Plugin restore() is thread-safe
+
+// TODO: The below needs re-introducing for control no?
+    bool has_ui; ///< True iff a control UI is present
+    Controls controls; ///< Available plugin controls
+//  uint32_t event_delta_t;  ///< Frames since last update sent to UI
+//  float ui_update_hz;   ///< Frequency of UI updates
 
 // void* window; ///< Window (if applicable)
 
-    LilvUIs*           uis;            ///< All plugin UIs (RDF data)LilvInstance
-    const LilvUI*      ui;             ///< Plugin UI (RDF data)
-    const LilvNode*    ui_type;        ///< Plugin UI type (unwrapped)
+    LilvUIs* uis; ///< All plugin UIs (RDF data)LilvInstance
+    const LilvUI* ui; ///< Plugin UI (RDF data)
+    const LilvNode* ui_type; ///< Plugin UI type (unwrapped)
 
-//  SerdEnv*           env;            ///< Environment for RDF printing
+//  SerdEnv* env; ///< Environment for RDF printing
 
 //  TODO: This is a separate library. Only used once for logging, I could include that later.
-//  Sratom*            sratom;         ///< Atom serialiser
-//  Sratom*            ui_sratom;      ///< Atom serialiser for UI thread
+//  Sratom* sratom;         ///< Atom serialiser
+//  Sratom* ui_sratom;      ///< Atom serialiser for UI thread
 
 // I either include this, or use a different ringbuffer already used in Sushi.
-//  ZixRing*           ui_events;      ///< Port events from UI
-//  ZixRing*           plugin_events;  ///< Port events from plugin
+    ZixRing* ui_events; ///< Port events from UI
+    ZixRing* plugin_events; ///< Port events from plugin
 
-//  void*              ui_event_buf;   ///< Buffer for reading UI port events
+    void*  ui_event_buf; ///< Buffer for reading UI port events
 
-//  uint32_t           position;       ///< Transport position in frames
-//  float              bpm;            ///< Transport tempo in beats per minute
-//  bool               rolling;        ///< Transport speed (0=stop, 1=play)
+    uint32_t position; ///< Transport position in frames
+    float bpm; ///< Transport tempo in beats per minute
+    bool rolling; ///< Transport speed (0=stop, 1=play)
 
-    Lv2_Host_Features   _features;
+    Lv2_Host_Features _features;
     const LV2_Feature** feature_list;
 
     bool initialize_host_feature_list();
@@ -469,6 +479,7 @@ private:
     void _initialize_log_feature();
     void _initialize_urid_symap();
     void _initialize_worker_feature();
+    void _initialize_safe_restore_feature();
 };
 
 } // end namespace lv2

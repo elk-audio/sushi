@@ -18,6 +18,7 @@
 #include "lv2_plugin_loader.h"
 
 #include "lv2_worker.h"
+#include "lv2_state.h"
 
 #include "logging.h"
 
@@ -67,8 +68,6 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         return nullptr;
     }
 
-// TODO: Introduce state_threadSafeRestore later.
-
 // TODO: Introduce necessary UI code from Jalv.
 
     return plugin;
@@ -103,14 +102,18 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
         }
     }
 
-    /* Activate plugin */
-    lilv_instance_activate(_model->instance);
+    LilvNode* state_threadSafeRestore = lilv_new_uri(_model->world, LV2_STATE__threadSafeRestore);
+    if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
+    {
+        _model->safe_restore = true;
+    }
+    lilv_node_free(state_threadSafeRestore);
 }
 
 void PluginLoader::close_plugin_instance()
 {
 // TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
-    // Refactor to allow multiple plugins!
+// Refactor to allow multiple plugins!
 
     if (_model->instance != nullptr)
     {

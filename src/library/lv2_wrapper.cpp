@@ -4,9 +4,10 @@
 #include <iostream>
 #include <csignal>
 
+#include "lv2_features.h"
 #include "lv2_wrapper.h"
 #include "lv2_worker.h"
-#include "lv2_features.h"
+#include "lv2_state.h"
 
 #include "logging.h"
 
@@ -83,6 +84,8 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _model = _loader.getModel();
     _model->plugin = library_handle;
 
+    _model->play_state = LV2_PAUSED;
+
 // TODO: Move initialization to Model constructor, which throws if it fails.
     if(!_model->initialize_host_feature_list())
     {
@@ -114,6 +117,13 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _create_controls(_model, true);
     _create_controls(_model, false);
 
+    LilvState* state = NULL;
+    if (!state)
+    {
+        /* Not restoring state, load the plugin as a preset to get default */
+        state = lilv_state_new_from_world(_model->world, &_model->map, lilv_plugin_get_uri(library_handle));
+    }
+
     // Register internal parameters
     if (!_register_parameters())
     {
@@ -121,6 +131,17 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
+
+    /* Apply loaded state to plugin instance if necessary */
+    if (state)
+    {
+        apply_state(_model, state);
+    }
+
+    /* Activate plugin */
+    lilv_instance_activate(_model->instance);
+
+    _model->play_state = LV2_RUNNING;
 
     return ProcessorReturnCode::OK;
 }
@@ -135,7 +156,7 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
     const LilvNode* uri_node = lilv_plugin_get_uri(plugin);
     const std::string uri_as_string = lilv_node_as_string(uri_node);
 
-    // TODO: Once Worker extension is implemented, test the eg-sampler plugin - it advertises parameters read here.
+// TODO: Once Worker extension is implemented, test the eg-sampler plugin - it advertises parameters read here.
     LilvNodes* properties = lilv_world_find_nodes(
             world,
             uri_node,
@@ -277,7 +298,6 @@ void Lv2Wrapper::jalv_ui_instantiate(LV2Model* jalv, const char* native_ui_type,
 }
 */
 
-
 bool Lv2Wrapper::jalv_ui_is_resizable(LV2Model* model)
 {
     if (!model->ui)
@@ -394,7 +414,7 @@ bool Lv2Wrapper::jalv_ui_is_resizable(LV2Model* model)
 uint32_t Lv2Wrapper::jalv_ui_port_index(void* const controller, const char* symbol)
 {
     LV2Model* const model = (LV2Model*)controller;
-    struct Port* port = jalv_port_by_symbol(model, symbol);
+    struct Port* port = port_by_symbol(model, symbol);
 
     return port ? port->index : LV2UI_INVALID_PORT_INDEX;
 }
@@ -434,7 +454,7 @@ uint32_t Lv2Wrapper::jalv_ui_port_index(void* const controller, const char* symb
 
 //bool Lv2Wrapper::jalv_send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
 //{
-//    /* TODO (inherited): Be more disciminate about what to send */
+//    /* TODO (inherited): Be more discriminate about what to send */
 //    char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
 //    ControlChange* ev = (ControlChange*)evbuf;
 //    ev->index = port_index;
@@ -457,28 +477,6 @@ uint32_t Lv2Wrapper::jalv_ui_port_index(void* const controller, const char* symb
 //        return false;
 //    }
 //}
-
-/**
-   Get a port structure by symbol.
-
-   TODO: Build an index to make this faster, currently O(n) which may be
-   a problem when restoring the state of plugins with many ports.
-*/
-struct Port* Lv2Wrapper::jalv_port_by_symbol(LV2Model* model, const char* sym)
-{
-    for (uint32_t i = 0; i < model->num_ports; ++i)
-    {
-        struct Port* const port = &model->ports[i];
-        const LilvNode* port_sym = lilv_port_get_symbol(model->plugin, port->lilv_port);
-
-        if (!strcmp(lilv_node_as_string(port_sym), sym))
-        {
-            return port;
-        }
-    }
-
-    return NULL;
-}
 
 ControlID* Lv2Wrapper::jalv_control_by_symbol(LV2Model* model, const char* sym)
 {
@@ -730,7 +728,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(Obj
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-// TODO: Populate
+// TODO: Populate parameter_value_formatted
     /*if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
         char buffer[kVstMaxParamStrLen] = "";
@@ -884,6 +882,35 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
     else
     {
+        switch (_model->play_state)
+        {
+            case LV2_PAUSE_REQUESTED:
+                _model->play_state = LV2_PAUSED;
+                zix_sem_post(&_model->paused);
+                break;
+            case LV2_PAUSED:
+                for (uint32_t p = 0; p < _model->num_ports; ++p)
+                {
+// TODO: Implement the below pause funcationality:
+//                    jack_port_t* jport = _model->ports[p].sys_port;
+//                    if (jport && _model->ports[p].flow == FLOW_OUTPUT)
+//                    {
+//                        void* buf = jack_port_get_buffer(jport, nframes);
+//                        if (_model->ports[p].type == TYPE_EVENT)
+//                        {
+//                            jack_midi_clear_buffer(buf);
+//                        }
+//                        else
+//                        {
+//                            memset(buf, '\0', nframes * sizeof(float));
+//                        }
+//                    }
+                }
+                return/* 0*/;
+            default:
+                break;
+        }
+
         _map_audio_buffers(in_buffer, out_buffer);
 
         _deliver_inputs_to_plugin();
@@ -983,12 +1010,11 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
                         ev->protocol = 0;
                         ev->size = sizeof(float);
                         *(float*)ev->body = _current_port->control;
-// TODO: Re-introduce once plugin_events and ringbuffers are working.
-//                        if (zix_ring_write(_model->plugin_events, buf, sizeof(buf)) < sizeof(buf))
-//                        {
-//// TODO: Log properly
-//                            fprintf(stderr, "Plugin => UI buffer overflow!\n");
-//                        }
+                        if (zix_ring_write(_model->plugin_events, buf, sizeof(buf)) < sizeof(buf))
+                        {
+// TODO: Log properly
+                            fprintf(stderr, "Plugin => UI buffer overflow!\n");
+                        }
                     }
                     break;
                 case TYPE_EVENT:
@@ -1009,7 +1035,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
 
         lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
 
-// TODO: WHY SHOULD THIS BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
+// TODO: This works, but WHY SHOULD IT BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
         _midi_size--;
 
         if (_midi_type == _model->urids.midi_MidiEvent)
@@ -1108,7 +1134,7 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
     }*/
 
 // TODO: This will never run for now! will be used for having 'UI' support.
-    // with LV2Model example. Request_update is never set to true.
+// with LV2Model example. Request_update is never set to true.
     if (_model->request_update)
     {
         // Plugin state has changed, request an update

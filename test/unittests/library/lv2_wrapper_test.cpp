@@ -6,6 +6,7 @@
 #include "test_utils/host_control_mockup.h"
 
 #include "test_utils/engine_mockup.h"
+#include "library/lv2_state.cpp"
 #include "library/lv2_features.cpp"
 #include "library/lv2_wrapper.cpp"
 #include "library/lv2_model.cpp"
@@ -284,7 +285,20 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_TRUE(_fifo.empty());
 }
 
-// TODO Ilias: Currently crashes, due to update speaker arrangement not being populated.
+// TODO: Currently this simply runs it, so it checks it loads without error. It should check functionality further.
+TEST_F(TestLv2Wrapper, TestPluginWithStateAndWorkerThreads)
+{
+    SetUp("http://lv2plug.in/plugins/eg-sampler");
+
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+}
+
+// TODO: Currently crashes, due to update speaker arrangement not being populated.
 /*TEST_F(TestLv2Wrapper, TestMonoProcess)
 {
     SetUp("http://lv2plug.in/plugins/eg-amp");
@@ -304,7 +318,7 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     test_utils::assert_buffer_value(2.0f, mono_buffer);
 }*/
 
-// TODO Ilias: Re-instate once time info is implemented.
+// TODO: Re-instate once time info is implemented.
 /*TEST_F(TestLv2Wrapper, TestTimeInfo)
 {
     SetUp("libagain.so");

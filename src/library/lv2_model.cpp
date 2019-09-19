@@ -133,6 +133,13 @@ void LV2Model::_initialize_worker_feature()
                  LV2_WORKER__schedule, &this->_features.ssched);
 }
 
+void LV2Model::_initialize_safe_restore_feature()
+{
+    init_feature(&this->_features.safe_restore_feature,
+                 LV2_STATE__threadSafeRestore,
+                 NULL);
+}
+
 }
 }
 

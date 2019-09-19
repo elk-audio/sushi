@@ -212,7 +212,9 @@ endif()
 if (${WITH_LV2})
     set(ADDITIONAL_LV2_SOURCES src/library/lv2_evbuf.cpp
                                src/library/lv2_symap.cpp
+                               src/library/zix/ring.cpp
                                src/library/lv2_worker.cpp
+                                src/library/lv2_state.cpp
                                src/library/lv2_features.cpp
                                src/library/lv2_wrapper.cpp
                                src/library/lv2_model.cpp
