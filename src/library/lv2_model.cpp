@@ -75,6 +75,9 @@ void LV2Model::_initialize_urid_symap()
     this->urids.log_Error = symap_map(this->symap, LV2_LOG__Error);
     this->urids.log_Trace = symap_map(this->symap, LV2_LOG__Trace);
     this->urids.log_Warning = symap_map(this->symap, LV2_LOG__Warning);
+    this->urids.log_Entry = symap_map(this->symap, LV2_LOG__Entry);
+    this->urids.log_Note = symap_map(this->symap, LV2_LOG__Note);
+    this->urids.log_log = symap_map(this->symap, LV2_LOG__log);
     this->urids.midi_MidiEvent = symap_map(this->symap, LV2_MIDI__MidiEvent);
     this->urids.param_sampleRate = symap_map(this->symap, LV2_PARAMETERS__sampleRate);
     this->urids.patch_Get = symap_map(this->symap, LV2_PATCH__Get);

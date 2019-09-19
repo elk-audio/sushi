@@ -43,11 +43,23 @@ int lv2_vprintf(LV2_Log_Handle handle,
     }
     else if (type == model->urids.log_Error)
     {
-        MIND_LOG_ERROR("LV2 error: {}", fmt);
+        MIND_LOG_ERROR("LV2 Error: {}", fmt);
     }
     else if (type == model->urids.log_Warning)
     {
         MIND_LOG_WARNING("LV2 warning: {}", fmt);
+    }
+    else if (type == model->urids.log_Entry)
+    {
+        MIND_LOG_WARNING("LV2 Entry: {}", fmt);
+    }
+    else if (type == model->urids.log_Note)
+    {
+        MIND_LOG_WARNING("LV2 Note: {}", fmt);
+    }
+    else if (type == model->urids.log_log)
+    {
+        MIND_LOG_WARNING("LV2 log: {}", fmt);
     }
 
     return 0;

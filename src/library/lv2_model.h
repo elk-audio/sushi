@@ -180,6 +180,9 @@ typedef struct
     LV2_URID log_Error;
     LV2_URID log_Trace;
     LV2_URID log_Warning;
+    LV2_URID log_Entry;
+    LV2_URID log_Note;
+    LV2_URID log_log;
     LV2_URID midi_MidiEvent;
     LV2_URID param_sampleRate;
     LV2_URID patch_Get;

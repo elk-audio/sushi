@@ -45,7 +45,8 @@
 
 namespace sushi {
 namespace lv2 {
-static const bool TRACE_OPTION = false;
+// writing also LV2 Trace Log messages to file.
+static const bool TRACE_OPTION = true;
 
 static inline bool lv2_ansi_start(FILE *stream, int color)
 {
@@ -75,10 +76,10 @@ int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,
            const char *fmt, ...);
 
-typedef int (*PresetSink)(LV2Model*       model,
+typedef int (*PresetSink)(LV2Model* model,
                           const LilvNode* node,
                           const LilvNode* title,
-                          void*           data);
+                          void* data);
 
 static char* lv2_strjoin(const char* a, const char* b)
 {
@@ -118,10 +119,8 @@ static void init_feature(LV2_Feature* const dest, const char* const URI, void* d
     dest->data = data;
 }
 
-
 } // end namespace lv2
 } // end namespace sushi
-
 
 #endif //SUSHI_BUILD_WITH_LV2
 #ifndef SUSHI_BUILD_WITH_LV2
