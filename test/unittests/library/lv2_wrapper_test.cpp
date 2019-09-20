@@ -12,6 +12,8 @@
 #include "library/lv2_model.cpp"
 #include "library/lv2_control.cpp"
 
+#include <iomanip>
+
 using namespace sushi;
 using namespace sushi::lv2;
 
@@ -93,6 +95,48 @@ static constexpr float LV2SYNTH_EXPECTED_OUT_NOTE_OFF[2][64] = {
         -3.717811705428176e-05f, -3.423996167839505e-05f, -3.15259640046861e-05f, -2.90197986032581e-05f,
         -2.6706265998655e-05f, 0.0f, 0.0f, 0.0f
     }
+};
+
+static constexpr float LV2_SAMPLER_EXPECTED_OUT_NOTE_ON[1][64] = {
+        {
+                8.593750e-02f, 1.562500e-01f, 2.109375e-01f, 2.812500e-01f,
+                3.359375e-01f, 3.906250e-01f, 4.531250e-01f, 5.078125e-01f,
+                5.546875e-01f, 6.093750e-01f, 6.562500e-01f, 7.031250e-01f,
+                7.421875e-01f, 7.890625e-01f, 8.203125e-01f, 8.593750e-01f,
+                8.828125e-01f, 9.140625e-01f, 9.375000e-01f, 9.531250e-01f,
+                9.765625e-01f, 9.765625e-01f, 9.921875e-01f, 9.921875e-01f,
+                9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.687500e-01f,
+                9.453125e-01f, 9.375000e-01f, 9.062500e-01f, 8.828125e-01f,
+                8.515625e-01f, 8.203125e-01f, 7.890625e-01f, 7.343750e-01f,
+                7.031250e-01f, 6.484375e-01f, 6.093750e-01f, 5.546875e-01f,
+                5.000000e-01f, 4.531250e-01f, 3.828125e-01f, 3.359375e-01f,
+                2.734375e-01f, 2.187500e-01f, 1.562500e-01f, 9.375000e-02f,
+                3.125000e-02f, -3.906250e-02f, -9.375000e-02f, -1.640625e-01f,
+                -2.187500e-01f, -2.890625e-01f, -3.437500e-01f, -4.062500e-01f,
+                -4.531250e-01f, -5.078125e-01f, -5.625000e-01f, -6.171875e-01f,
+                -6.640625e-01f, -7.187500e-01f, -7.500000e-01f, -7.890625e-01f
+        }
+};
+
+static constexpr float LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[1][64] = {
+        {
+                -8.281250e-01f, -8.671875e-01f, -8.906250e-01f, -9.296875e-01f,
+                -9.531250e-01f, -9.609375e-01f, -9.843750e-01f, -9.921875e-01f,
+                -1.000000e+00f, -1.000000e+00f, -1.000000e+00f, -1.000000e+00f,
+                -1.000000e+00f, -9.843750e-01f, -9.687500e-01f, -9.531250e-01f,
+                -9.218750e-01f, -9.062500e-01f, -8.671875e-01f, -8.437500e-01f,
+                -7.968750e-01f, -7.578125e-01f, -7.265625e-01f, -6.718750e-01f,
+                -6.328125e-01f, -5.703125e-01f, -5.234375e-01f, -4.609375e-01f,
+                -4.062500e-01f, -3.515625e-01f, -2.890625e-01f, -2.343750e-01f,
+                -1.718750e-01f, -1.171875e-01f, -4.687500e-02f, 1.562500e-02f,
+                7.031250e-02f, 1.406250e-01f, 1.953125e-01f, 2.656250e-01f,
+                3.203125e-01f, 3.828125e-01f, 4.375000e-01f, 5.000000e-01f,
+                5.390625e-01f, 6.015625e-01f, 6.406250e-01f, 6.953125e-01f,
+                7.343750e-01f, 7.812500e-01f, 8.125000e-01f, 8.515625e-01f,
+                8.750000e-01f, 9.062500e-01f, 9.218750e-01f, 9.531250e-01f,
+                9.609375e-01f, 9.843750e-01f, 9.921875e-01f, 9.921875e-01f,
+                9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.765625e-01f
+        }
 };
 
 constexpr float TEST_SAMPLE_RATE = 48000;
@@ -285,17 +329,56 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_TRUE(_fifo.empty());
 }
 
-// TODO: Currently this simply runs it, so it checks it loads without error. It should check functionality further.
+// TODO: Currently this runs it, and checks the output from a MIDI on and then off. IT should also test changing the sample file.
 TEST_F(TestLv2Wrapper, TestPluginWithStateAndWorkerThreads)
 {
     SetUp("http://lv2plug.in/plugins/eg-sampler");
 
-    ChunkSampleBuffer in_buffer(2);
-    ChunkSampleBuffer out_buffer(2);
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
 
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
+
+//  std::cout << std::scientific;
+//  int print_i = 0;
+    for (int i=0; i<1; i++) // Increment to 2 when supporting stereo loading of mono plugins.
+    {
+        for (int j=0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        {
+//          std::cout << out_buffer.channel(i)[j] << "f, ";
+            ASSERT_FLOAT_EQ(LV2_SAMPLER_EXPECTED_OUT_NOTE_ON[i][j], out_buffer.channel(i)[j]);
+//          print_i++;
+//          if(print_i == 4)
+//          {
+//              std::cout << std::endl;
+//              print_i = 0;
+//          }
+        }
+//      std::cout << std::endl;
+    }
+
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+//  std::cout << std::endl << std::endl;
+//  print_i = 0;
+
+    for (int i=0; i<1; i++) // Increment to 2 when supporting stereo loading of mono plugins.
+    {
+        for (int j=0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        {
+//          std::cout << out_buffer.channel(i)[j] << "f, ";
+            ASSERT_FLOAT_EQ(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[i][j], out_buffer.channel(i)[j]);
+//          print_i++;
+//          if(print_i == 4)
+//          {
+//              std::cout << std::endl;
+//              print_i = 0;
+//          }
+        }
+//      std::cout << std::endl;
+    }
 }
 
 // TODO: Currently crashes, due to update speaker arrangement not being populated.
