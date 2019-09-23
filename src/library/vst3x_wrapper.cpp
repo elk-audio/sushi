@@ -747,17 +747,23 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             switch (vst_event.type)
             {
                 case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
-                    output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
-                                                             vst_event.noteOn.channel,
-                                                             vst_event.noteOn.pitch,
-                                                             vst_event.noteOn.velocity));
+                    if (maybe_output_gate_event(vst_event.noteOn.channel, vst_event.noteOn.pitch, true) == false)
+                    {
+                        output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
+                                                                    vst_event.noteOn.channel,
+                                                                    vst_event.noteOn.pitch,
+                                                                    vst_event.noteOn.velocity));
+                    }
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
-                    output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
-                                                              vst_event.noteOff.channel,
-                                                              vst_event.noteOff.pitch,
-                                                              vst_event.noteOff.velocity));
+                    if (maybe_output_gate_event(vst_event.noteOn.channel, vst_event.noteOn.pitch, false) == false)
+                    {
+                        output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
+                                                                     vst_event.noteOff.channel,
+                                                                     vst_event.noteOff.pitch,
+                                                                     vst_event.noteOff.velocity));
+                    }
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kPolyPressureEvent:
