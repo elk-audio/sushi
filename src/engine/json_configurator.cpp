@@ -15,6 +15,8 @@ using namespace midi_dispatcher;
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
+constexpr int ERROR_DISPLAY_CHARS = 50;
+
 std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_config()
 {
     AudioConfig audio_config;
@@ -401,7 +403,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
     }
     if(_validate_against_schema(_json_data, section) == false)
     {
-        MIND_LOG_ERROR("Config file {} does not follow schema", _document_path);
+        MIND_LOG_ERROR("Config file {} does not follow schema: {}", _document_path, (int)section);
         return {JsonConfigReturnStatus::INVALID_CONFIGURATION, _json_data};
     }
 
@@ -410,7 +412,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::HOST_CONFIG:
             if(_json_data.HasMember("host_config") == false)
             {
-                MIND_LOG_DEBUG("Config file does not have any Host Config definitions");
+                MIND_LOG_INFO("Config file does not have any Host Config definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["host_config"]};
@@ -418,7 +420,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::TRACKS:
             if(_json_data.HasMember("tracks") == false)
             {
-                MIND_LOG_DEBUG("Config file does not have any Track definitions");
+                MIND_LOG_INFO("Config file does not have any Track definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["tracks"]};
@@ -426,7 +428,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::MIDI:
             if(_json_data.HasMember("midi") == false)
             {
-                MIND_LOG_DEBUG("Config file does not have MIDI definitions");
+                MIND_LOG_INFO("Config file does not have MIDI definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["midi"]};
@@ -434,7 +436,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::CV_GATE:
             if(_json_data.HasMember("cv_control") == false)
             {
-                MIND_LOG_DEBUG("Config file does not have CV/Gate definitions");
+                MIND_LOG_INFO("Config file does not have CV/Gate definitions");
                 return {JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["cv_control"]};
@@ -442,7 +444,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::EVENTS:
             if(_json_data.HasMember("events") == false)
             {
-                MIND_LOG_DEBUG("Config file does not have any Event definitions");
+                MIND_LOG_INFO("Config file does not have any Event definitions");
                 return {JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["events"]};
@@ -682,13 +684,9 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
         rapidjson::StringBuffer string_buffer;
         invalid_config_pointer.Stringify(string_buffer);
         std::string error_node = string_buffer.GetString();
-        if(error_node.empty())
+        if(error_node.empty() == false)
         {
-            MIND_LOG_ERROR("Invalid Json Config File: missing definitions in the root of the document");
-        }
-        else
-        {
-            MIND_LOG_ERROR("Invalid Json Config File: Incorrect definition at {}", error_node);
+            MIND_LOG_ERROR("Schema validation failure at {}", error_node);
         }
         return false;
     }
@@ -708,7 +706,11 @@ JsonConfigReturnStatus JsonConfigurator::_load_data()
     _json_data.Parse(config_file_contents.c_str());
     if(_json_data.HasParseError())
     {
-        MIND_LOG_ERROR("Error parsing JSON config file: {}",  rapidjson::GetParseError_En(_json_data.GetParseError()));
+        [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
+        MIND_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
+                       rapidjson::GetParseError_En(_json_data.GetParseError()),
+                       err_offset,
+                       config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );
         return JsonConfigReturnStatus::INVALID_FILE;
     }
     return JsonConfigReturnStatus::OK;
