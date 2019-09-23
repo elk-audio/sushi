@@ -64,7 +64,7 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnWithZeroVelEvent)
 {
-    InputConnection connection = {25, 26, 0, 1};
+    InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOnMessage message = {1, 60, 0};
     Event* event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
