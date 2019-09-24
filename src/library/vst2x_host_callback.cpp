@@ -55,6 +55,10 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
         case audioMasterProcessEvents:
         {
             auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            if (wrapper_instance == nullptr)
+            {
+                return 0; // Plugins could call this during initialisation, before the wrapper has finished construction
+            }
             auto events = reinterpret_cast<VstEvents*>(ptr);
             for (int i = 0; i < events->numEvents; ++i)
             {
