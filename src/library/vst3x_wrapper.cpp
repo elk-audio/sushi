@@ -338,6 +338,27 @@ void Vst3xWrapper::set_bypassed(bool bypassed)
     }
 }
 
+bool Vst3xWrapper::bypassed() const
+{
+    if (_bypass_parameter.supported)
+    {
+        float value;
+        std::tie(std::ignore, value) = this->parameter_value_normalised(_bypass_parameter.id);
+        return value > 0.5;
+    }
+    return _bypass_manager.bypassed();
+}
+
+const ParameterDescriptor* Vst3xWrapper::parameter_from_id(ObjectId id) const
+{
+    auto descriptor = _parameters_by_vst3_id.find(static_cast<Steinberg::Vst::ParamID>(id));
+    if (descriptor !=  _parameters_by_vst3_id.end())
+    {
+        return descriptor->second;
+    }
+    return nullptr;
+}
+
 std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value(ObjectId parameter_id) const
 {
     /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
@@ -532,11 +553,17 @@ bool Vst3xWrapper::_register_parameters()
             else if (register_parameter(new FloatParameterDescriptor(title, title, 0, 1, nullptr), info.id))
             {
                 MIND_LOG_INFO("Registered parameter {}, id {}", title, info.id);
-            } else
+            }
+            else
             {
                 MIND_LOG_INFO("Error registering parameter {}.", title);
             }
         }
+    }
+    // Create a "backwards map" from Vst3 parameter ids to parameter indices
+    for (auto param : this->all_parameters())
+    {
+        _parameters_by_vst3_id[param->id()] = param;
     }
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
@@ -864,18 +891,6 @@ int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
     }
     return res == Steinberg::kResultOk? EventStatus::HANDLED_OK : EventStatus::ERROR;
 }
-
-bool Vst3xWrapper::bypassed() const
-{
-    if (_bypass_parameter.supported)
-    {
-        float value;
-        std::tie(std::ignore, value) = this->parameter_value_normalised(_bypass_parameter.id);
-        return value > 0.5;
-    }
-    return _bypass_manager.bypassed();
-}
-
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
 {

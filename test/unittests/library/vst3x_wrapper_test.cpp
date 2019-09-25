@@ -97,6 +97,17 @@ TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
     EXPECT_EQ(DELAY_PARAM_ID, parameters[0]->id());
     EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
     EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_module_under_test->_bypass_parameter.id));
+
+    auto descriptor = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(descriptor);
+    EXPECT_EQ(DELAY_PARAM_ID, descriptor->id());
+
+    descriptor = _module_under_test->parameter_from_id(DELAY_PARAM_ID);
+    ASSERT_TRUE(descriptor);
+    EXPECT_EQ(DELAY_PARAM_ID, descriptor->id());
+
+    descriptor = _module_under_test->parameter_from_id(12345);
+    ASSERT_FALSE(descriptor);
 }
 
 TEST_F(TestVst3xWrapper, TestProcessing)
