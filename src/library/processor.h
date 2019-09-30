@@ -136,7 +136,7 @@ public:
      * @return A pointer to the parameter descriptor or a null pointer
      *         if there is no processor with that id
      */
-    const ParameterDescriptor* parameter_from_id(ObjectId id) const
+    virtual const ParameterDescriptor* parameter_from_id(ObjectId id) const
     {
         return (id < _parameters_by_index.size()) ? _parameters_by_index[id] : nullptr;
     }

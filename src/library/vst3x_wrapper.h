@@ -78,6 +78,8 @@ public:
 
     bool bypassed() const override;
 
+    const ParameterDescriptor* parameter_from_id(ObjectId id) const override;
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
@@ -199,6 +201,7 @@ private:
     SpecialParameter _aftertouch_parameter;
 
     memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, 100> _parameter_update_queue;
+    std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
     friend class ComponentHandler;
 };
 
