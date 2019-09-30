@@ -36,6 +36,24 @@ enum class FrontendType
     NONE
 };
 
+constexpr std::array SUSHI_ENABLED_BUILD_OPTIONS = {
+#ifdef SUSHI_BUILD_WITH_VST2
+        "vst2",
+#endif
+#ifdef SUSHI_BUILD_WITH_VST3
+        "vst3",
+#endif
+#ifdef SUSHI_BUILD_WITH_JACK
+        "jack",
+#endif
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+        "xenomai",
+#endif
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+        "rpc control",
+#endif
+};
+
 bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
@@ -63,29 +81,17 @@ void print_version_and_build_info()
     std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
                                 << SUSHI__VERSION_MIN << "."
                                 << SUSHI__VERSION_REV << std::endl;
-    std::vector<std::string> build_opts;
-#ifdef SUSHI_BUILD_WITH_VST3
-    build_opts.emplace_back("vst3");
-#endif
-#ifdef SUSHI_BUILD_WITH_JACK
-    build_opts.emplace_back("jack");
-#endif
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    build_opts.emplace_back("xenomai");
-#endif
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    build_opts.push_back("rpc control");
-#endif
-    std::ostringstream opts_joined;
-    for (const auto& o : build_opts)
+
+    std::cout << "Build options enabled: ";
+    for (const auto& o : SUSHI_ENABLED_BUILD_OPTIONS)
     {
-        if (&o != &build_opts[0])
+        if (o != SUSHI_ENABLED_BUILD_OPTIONS.front())
         {
-            opts_joined << ", ";
+           std::cout << ", ";
         }
-        opts_joined << o;
+        std::cout << o;
     }
-    std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
+    std::cout << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
 #ifdef SUSHI_BUILD_WITH_XENOMAI
