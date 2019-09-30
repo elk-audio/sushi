@@ -36,6 +36,17 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
    
     std::string log_level_lowercase = min_log_level;
     std::transform(min_log_level.begin(), min_log_level.end(), log_level_lowercase.begin(), ::tolower);
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
+
+    Logger::_logger_file_name.assign(file_name);
+    Logger::_logger_name.assign(logger_name);
+
+    logger_instance = setup_logging();
+
+    if (logger_instance == nullptr)
+    {
+        ret = MIND_LOG_FAILED_TO_START_LOGGER;
+    }
     if (level_map.count(log_level_lowercase) > 0)
     {
         spdlog::set_level(level_map[log_level_lowercase]);
@@ -43,15 +54,6 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     else
     {
         ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
-    }
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
-
-    Logger::_logger_file_name.assign(file_name);
-    Logger::_logger_name.assign(logger_name);
-    logger_instance = setup_logging();
-    if (logger_instance == nullptr)
-    {
-        ret = MIND_LOG_FAILED_TO_START_LOGGER;
     }
     return ret;
 }
