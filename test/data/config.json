@@ -9,7 +9,7 @@
         },
         "playing_mode" : "playing",
         "tempo_sync" : "internal",
-        "cv_inputs" : 0,
+        "cv_inputs" : 1,
         "cv_outputs" : 2,
         "audio_clip_detection" :
         {
@@ -191,11 +191,6 @@
                 "cv" : 0,
                 "processor" : "gain_0_r",
                 "parameter" : "gain"
-            },
-            {
-                "cv" : 1,
-                "processor" : "seq",
-                "parameter" : "pitch_out"
             }
         ],
         "gate_inputs" : [

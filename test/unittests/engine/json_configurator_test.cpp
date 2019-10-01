@@ -65,7 +65,7 @@ TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
     auto [status, audio_config] = _module_under_test->load_audio_config(_path);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_TRUE(audio_config.cv_inputs.has_value());
-    ASSERT_EQ(0, audio_config.cv_inputs.value());
+    ASSERT_EQ(1, audio_config.cv_inputs.value());
     ASSERT_TRUE(audio_config.cv_outputs.has_value());
     ASSERT_EQ(2, audio_config.cv_outputs.value());
 }

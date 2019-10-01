@@ -200,7 +200,7 @@ public:
     Vst2xWrapper(HostControl host_control, const std::string& /* vst_plugin_path */) :
         Processor(host_control) {}
     ProcessorReturnCode init(float sample_rate) override;
-    void process_event(RtEvent /*event*/) override {}
+    void process_event(const RtEvent& /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
 };
 
