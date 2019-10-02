@@ -16,7 +16,6 @@ namespace mind {
 // http://stackoverflow.com/questions/14808864/can-i-initialize-static-float-variable-during-runtime
 // answer from Edward A.
 
-int logger_flush_interval = 10; //seconds
 std::string Logger::_logger_file_name = "/tmp/sushi.log";
 std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
@@ -24,7 +23,9 @@ std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
 
 MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
                                         const std::string& logger_name,
-                                        const std::string& min_log_level)
+                                        const std::string& min_log_level,
+                                        const bool enable_flush_interval,
+                                        const int log_flush_interval)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 
@@ -44,7 +45,10 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
 
     logger_instance = setup_logging();
 
-    spdlog::flush_every(std::chrono::seconds(logger_flush_interval));
+    if (enable_flush_interval)
+    {
+        spdlog::flush_every(std::chrono::seconds(log_flush_interval));
+    }
 
     if (logger_instance == nullptr)
     {

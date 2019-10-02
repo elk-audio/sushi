@@ -152,11 +152,13 @@ int main(int argc, char* argv[])
     std::string jack_server_name = std::string("");
     int osc_server_port = SUSHI_OSC_SERVER_PORT;
     int osc_send_port = SUSHI_OSC_SEND_PORT;
+    int log_flush_interval = 0;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
     int  rt_cpu_cores = 1;
     bool enable_timings = false;
+    bool enable_flush_interval = false;
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -182,6 +184,11 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_LOG_FILE:
             log_filename.assign(opt.arg);
+            break;
+
+        case OPT_IDX_LOG_FLUSH_INTERVAL:
+            log_flush_interval = atoi(opt.arg);
+            enable_flush_interval = true;
             break;
 
         case OPT_IDX_CONFIG_FILE:
@@ -258,7 +265,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level);
+    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
     if (ret_code != MIND_LOG_ERROR_CODE_OK)
     {
         std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;

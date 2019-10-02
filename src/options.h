@@ -84,6 +84,7 @@ enum OptionIndex
     OPT_IDX_VERSION,
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
+    OPT_IDX_LOG_FLUSH_INTERVAL,
     OPT_IDX_CONFIG_FILE,
     OPT_IDX_USE_OFFLINE,
     OPT_IDX_INPUT_FILE,
@@ -151,6 +152,14 @@ const optionparser::Descriptor usage[] =
         "log-file",
         SushiArg::NonEmpty,
         "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+    },
+    {
+        OPT_IDX_LOG_FLUSH_INTERVAL,
+        OPT_TYPE_UNUSED,
+        "",
+        "log-flush-interval",
+        SushiArg::NonEmpty,
+        "\t\t --log-flush-interval=<seconds> \tEnable flushing the log periodically and specify the interval."
     },
     {
         OPT_IDX_CONFIG_FILE,
