@@ -3,6 +3,8 @@
 #include "library/midi_encoder.h"
 #include "logging.h"
 
+#include <algorithm>
+
 namespace sushi {
 namespace midi_dispatcher {
 
@@ -12,8 +14,13 @@ inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,
                                  Time timestamp)
 {
+    if (msg.velocity == 0)
+    {
+        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
+    }
+
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.note, velocity, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
 inline Event* make_note_off_event(const InputConnection &c,
@@ -21,7 +28,7 @@ inline Event* make_note_off_event(const InputConnection &c,
                                   Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.note, velocity, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
 inline Event* make_note_aftertouch_event(const InputConnection &c,
@@ -29,7 +36,7 @@ inline Event* make_note_aftertouch_event(const InputConnection &c,
                                          Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.note, pressure, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
 }
 
 inline Event* make_aftertouch_event(const InputConnection &c,
@@ -37,7 +44,7 @@ inline Event* make_aftertouch_event(const InputConnection &c,
                                     Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, pressure, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
 }
 
 inline Event* make_modulation_event(const InputConnection &c,
@@ -45,7 +52,7 @@ inline Event* make_modulation_event(const InputConnection &c,
                                     Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, value, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
 }
 
 inline Event* make_pitch_bend_event(const InputConnection &c,
@@ -53,7 +60,7 @@ inline Event* make_pitch_bend_event(const InputConnection &c,
                                     Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
-    return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, value, timestamp);
+    return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
 }
 
 inline Event* make_wrapped_midi_event(const InputConnection &c,
@@ -66,12 +73,39 @@ inline Event* make_wrapped_midi_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(const InputConnection &c,
+inline Event* make_param_change_event(InputConnection &c,
                                       const midi::ControlChangeMessage &msg,
                                       Time timestamp)
 {
-    float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
+    uint8_t abs_value = msg.value;
+    // Maybe TODO: currently this is based on a virtual controller absolute value which is
+    // initialized at 64. An alternative would be to read the parameter value from the plugin
+    // and compute a change from that. We should investigate what other DAWs are doing.
+    if (c.relative)
+    {
+        abs_value = c.virtual_abs_value;
+        if (msg.value < 64u)
+        {
+            auto clipped_increment = std::min<uint8_t>(msg.value, 127u - abs_value);
+            abs_value += clipped_increment;
+        }
+        else
+        {
+            // Two-complement encoding for negative relative changes
+            auto clipped_decrease = std::min<uint8_t>(128u - msg.value, abs_value);
+            abs_value -= clipped_decrease;
+        }
+        c.virtual_abs_value = abs_value;
+    }
+    float value = static_cast<float>(abs_value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
+}
+
+inline Event* make_program_change_event(const InputConnection &c,
+                                        const midi::ProgramChangeMessage &msg,
+                                        Time timestamp)
+{
+    return new ProgramChangeEvent(c.target, msg.program, timestamp);
 }
 
 
@@ -97,33 +131,57 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              int cc_no,
                                                              float min_range,
                                                              float max_range,
+                                                             bool use_relative_mode,
                                                              int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
-    ObjectId processor_id;
-    ObjectId parameter_id;
-    engine::EngineReturnStatus status;
-    std::tie(status, processor_id) = _engine->processor_id_from_name(processor_name);
-    std::tie(status, parameter_id) = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [proc_status, processor_id] = _engine->processor_id_from_name(processor_name);
+    auto [param_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
+    if (proc_status != engine::EngineReturnStatus::OK)
     {
-        if(status == engine::EngineReturnStatus::INVALID_PROCESSOR)
-        {
-            return MidiDispatcherStatus::INVALID_PROCESSOR;
-        }
+        return MidiDispatcherStatus::INVALID_PROCESSOR;
+    }
+    if (param_status != engine::EngineReturnStatus::OK)
+    {
         return MidiDispatcherStatus::INVALID_PARAMETER;
     }
+
     InputConnection connection;
     connection.target = processor_id;
     connection.parameter = parameter_id;
     connection.min_range = min_range;
     connection.max_range = max_range;
+    connection.relative = use_relative_mode;
+    connection.virtual_abs_value = 64;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
     MIND_LOG_INFO("Connected parameter \"{}\" "
                            "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
+    return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
+                                                             const std::string& processor_name,
+                                                             int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+    auto [status, id] = _engine->processor_id_from_name(processor_name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
+    }
+    InputConnection connection;
+    connection.target = id;
+    connection.parameter = 0;
+    connection.min_range = 0;
+    connection.max_range = 0;
+    _pc_routes[midi_input][channel].push_back(connection);
+    MIND_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor \"{}\"", midi_input, processor_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -135,9 +193,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    ObjectId id;
-    engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(track_name);
+    auto [status, id] = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -160,9 +216,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    ObjectId id;
-    engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(track_name);
+    auto [status, id] = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -174,7 +228,8 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     connection.max_range = 0;
     _raw_routes_in[midi_input][channel].push_back(connection);
     MIND_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
-    return MidiDispatcherStatus::OK;}
+    return MidiDispatcherStatus::OK;
+}
 
 MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &track_name, int channel)
 {
@@ -186,9 +241,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     {
         return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
     }
-    ObjectId id;
-    engine::EngineReturnStatus status;
-    std::tie(status, id) = _engine->processor_id_from_name(track_name);
+    auto[status, id] = _engine->processor_id_from_name(track_name);
     if (status != engine::EngineReturnStatus::OK)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -210,13 +263,13 @@ void MidiDispatcher::clear_connections()
     _kb_routes_in.clear();
 }
 
-void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
+void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 {
     int channel = midi::decode_channel(data);
     int size = data.size();
     /* Dispatch raw midi messages */
     {
-        const auto& cons = _raw_routes_in.find(input);
+        const auto& cons = _raw_routes_in.find(port);
         if (cons != _raw_routes_in.end())
         {
             for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -237,21 +290,21 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::CONTROL_CHANGE:
         {
             midi::ControlChangeMessage decoded_msg = midi::decode_control_change(data);
-            const auto& cons = _cc_routes.find(input);
+            const auto& cons = _cc_routes.find(port);
             if (cons != _cc_routes.end())
             {
-                for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
+                for (auto& c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
-                for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
+                for (auto& c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
             }
             if (decoded_msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
             {
-                const auto& cons = _kb_routes_in.find(input);
+                const auto& cons = _kb_routes_in.find(port);
                 if (cons != _kb_routes_in.end())
                 {
                     for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -270,7 +323,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::NOTE_ON:
         {
             midi::NoteOnMessage decoded_msg = midi::decode_note_on(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -288,7 +341,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::NOTE_OFF:
         {
             midi::NoteOffMessage decoded_msg = midi::decode_note_off(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -306,7 +359,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::PITCH_BEND:
         {
             midi::PitchBendMessage decoded_msg = midi::decode_pitch_bend(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -324,7 +377,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::POLY_KEY_PRESSURE:
         {
             midi::PolyKeyPressureMessage decoded_msg = midi::decode_poly_key_pressure(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -342,7 +395,7 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
         case midi::MessageType::CHANNEL_PRESSURE:
         {
             midi::ChannelPressureMessage decoded_msg = midi::decode_channel_pressure(data);
-            const auto& cons = _kb_routes_in.find(input);
+            const auto& cons = _kb_routes_in.find(port);
             if (cons != _kb_routes_in.end())
             {
                 for (auto c : cons->second[midi::MidiChannel::OMNI])
@@ -352,6 +405,24 @@ void MidiDispatcher::send_midi(int input, MidiDataByte data, Time timestamp)
                 for (auto c : cons->second[decoded_msg.channel])
                 {
                     _event_dispatcher->post_event( make_aftertouch_event(c, decoded_msg, timestamp));
+                }
+            }
+            break;
+        }
+
+        case midi::MessageType::PROGRAM_CHANGE:
+        {
+            midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(data);
+            const auto& cons = _pc_routes.find(port);
+            if (cons != _pc_routes.end())
+            {
+                for (auto c : cons->second[midi::MidiChannel::OMNI])
+                {
+                    _event_dispatcher->post_event(make_program_change_event(c, decoded_msg, timestamp));
+                }
+                for (auto c : cons->second[decoded_msg.channel])
+                {
+                    _event_dispatcher->post_event(make_program_change_event(c, decoded_msg, timestamp));
                 }
             }
             break;

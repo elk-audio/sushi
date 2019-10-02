@@ -26,7 +26,7 @@ protected:
 TEST_F(TestVst2xPluginLoader, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
-    char* full_again_path = realpath("libagain.so", NULL);
+    char* full_again_path = realpath("libvst2_test_plugin.so", NULL);
     auto library_handle = PluginLoader::get_library_handle_for_plugin(full_again_path);
     ASSERT_NE(nullptr, library_handle);
     free(full_again_path);

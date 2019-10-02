@@ -101,7 +101,7 @@ protected:
 TEST_F(TestArpeggiatorPlugin, TestOutput)
 {
     ChunkSampleBuffer buffer;
-    auto event = RtEvent::make_note_on_event(0, 0, 50, 1.0f);
+    auto event = RtEvent::make_note_on_event(0, 0, 0, 50, 1.0f);
     _module_under_test->process_event(event);
     _host_control._transport.set_tempo(120.0f);
 

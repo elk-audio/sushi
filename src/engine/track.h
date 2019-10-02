@@ -18,11 +18,13 @@
 #include "library/constants.h"
 #include "library/performance_timer.h"
 
+#include "dsp_library/value_smoother.h"
+
 namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
-constexpr int TRACK_MAX_CHANNELS = 8;
+constexpr int TRACK_MAX_CHANNELS = 10;
 constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
 
 class Track : public InternalPlugin, public RtEventPipe
@@ -46,6 +48,10 @@ public:
     Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer);
 
     ~Track() = default;
+
+    ProcessorReturnCode init(float sample_rate) override;
+
+    void configure(float sample_rate) override;
 
     /**
      * @brief Adds a plugin to the end of the track.
@@ -192,6 +198,7 @@ private:
     void _common_init();
     void _update_channel_config();
     void _process_output_events();
+    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus);
 
     std::vector<Processor*> _processors;
     ChunkSampleBuffer _input_buffer;
@@ -203,15 +210,14 @@ private:
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
+    std::array<ValueSmootherFilter<float>, TRACK_MAX_BUSSES> _pan_gain_smoothers_right;
+    std::array<ValueSmootherFilter<float>, TRACK_MAX_BUSSES> _pan_gain_smoothers_left;
 
     performance::PerformanceTimer* _timer;
 
     RtEventFifo _kb_event_buffer;
     RtEventFifo _output_event_buffer;
 };
-
-void apply_pan_and_gain(ChunkSampleBuffer& buffer, float gain, float pan);
-
 
 } // namespace engine
 } // namespace sushi

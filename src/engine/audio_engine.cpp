@@ -11,6 +11,7 @@
 #include "plugins/arpeggiator_plugin.h"
 #include "plugins/sample_player_plugin.h"
 #include "plugins/peak_meter_plugin.h"
+#include "plugins/transposer_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -18,15 +19,50 @@ namespace sushi {
 namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
-constexpr int ENGINE_TIMING_ID = MAX_RT_PROCESSOR_ID + 1;
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
+constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
+
+
+void ClipDetector::set_sample_rate(float samplerate)
+{
+    _interval = samplerate * CLIPPING_DETECTION_INTERVAL.count() / 1000 - AUDIO_CHUNK_SIZE;
+}
+
+void ClipDetector::set_input_channels(int channels)
+{
+    _input_clip_count = std::vector<unsigned int>(channels, _interval);
+}
+
+void ClipDetector::set_output_channels(int channels)
+{
+    _output_clip_count = std::vector<unsigned int>(channels, _interval);
+}
+
+void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input)
+{
+    auto& counter = audio_input? _input_clip_count : _output_clip_count;
+    for (int i = 0; i < buffer.channel_count(); ++i)
+    {
+        if (buffer.count_clipped_samples(i, 1) > 0 && counter[i] >= _interval)
+        {
+            queue.push(RtEvent::make_clip_notification_event(0, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
+                                                                   ClipNotificationRtEvent::ClipChannelType::OUTPUT));
+            counter[i] = 0;
+        }
+        else
+        {
+            counter[i] += AUDIO_CHUNK_SIZE;
+        }
+    }
+}
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
                                                                 _multicore_processing(rt_cpu_cores > 1),
                                                                 _rt_cores(rt_cpu_cores),
-                                                                _transport(sample_rate)
+                                                                _transport(sample_rate),
+                                                                _clip_detector(sample_rate)
 {
     this->set_sample_rate(sample_rate);
     _event_dispatcher.run();
@@ -39,7 +75,7 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
 AudioEngine::~AudioEngine()
 {
     _event_dispatcher.stop();
-    if (_timings_enabled)
+    if (_process_timer.enabled())
     {
         _process_timer.enable(false);
         print_timings_to_file(TIMING_FILE_NAME);
@@ -55,6 +91,19 @@ void AudioEngine::set_sample_rate(float sample_rate)
     }
     _transport.set_sample_rate(sample_rate);
     _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
+    _clip_detector.set_sample_rate(sample_rate);
+}
+
+void AudioEngine::set_audio_input_channels(int channels)
+{
+    _clip_detector.set_input_channels(channels);
+    BaseEngine::set_audio_input_channels(channels);
+}
+
+void AudioEngine::set_audio_output_channels(int channels)
+{
+    _clip_detector.set_output_channels(channels);
+    BaseEngine::set_audio_output_channels(channels);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
@@ -170,13 +219,13 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     {
         instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
     }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
-    }
     else if (uid == "sushi.testing.peakmeter")
     {
         instance = new peak_meter_plugin::PeakMeterPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.transposer")
+    {
+        instance = new transposer_plugin::TransposerPlugin(_host_control);
     }
     return instance;
 }
@@ -210,9 +259,9 @@ EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
     return EngineReturnStatus::OK;
 }
 
-bool AudioEngine::_processor_exists(const std::string& name)
+bool AudioEngine::_processor_exists(const std::string& processor_name)
 {
-    auto processor_node = _processors.find(name);
+    auto processor_node = _processors.find(processor_name);
     if(processor_node == _processors.end())
     {
         return false;
@@ -281,6 +330,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _event_dispatcher.set_time(_transport.current_process_time());
     auto state = _state.load();
 
+    if (_input_clip_detection_enabled)
+    {
+        _clip_detector.detect_clipped_samples(*in_buffer, _main_out_queue, true);
+    }
     _copy_audio_to_tracks(in_buffer);
 
     if (_multicore_processing)
@@ -300,6 +353,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
+    if (_output_clip_detection_enabled)
+    {
+        _clip_detector.detect_clipped_samples(*out_buffer, _main_out_queue, false);
+    }
     _process_timer.stop_timer(engine_timestamp, ENGINE_TIMING_ID);
 }
 
@@ -618,8 +675,24 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
     return _deregister_processor(processor->name());
 }
 
+const Processor* AudioEngine::processor(ObjectId processor_id) const
+{
+    return const_cast<AudioEngine*>(this)->mutable_processor(processor_id);
+}
+
+Processor* AudioEngine::mutable_processor(ObjectId processor_id)
+{
+    /* TODO - use a better way of storing processors and return a shared pointer*/
+    if (processor_id >= _realtime_processors.size())
+    {
+        return nullptr;
+    }
+    return _realtime_processors[processor_id];
+}
+
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
 {
+    track->init(_sample_rate);
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {
@@ -748,16 +821,6 @@ bool AudioEngine::_handle_internal_events(RtEvent &event)
                 typed_event->set_handled(false);
             break;
         }
-        case RtEventType::SET_BYPASS:
-        {
-            auto typed_event = event.processor_command_event();
-            auto processor = static_cast<Track*>(_realtime_processors[typed_event->processor_id()]);
-            if (processor)
-            {
-                processor->set_bypassed(typed_event->value());
-            }
-            return true;
-        }
         case RtEventType::TEMPO:
         {
             /* Eventually we might want to do sample accurate tempo changes */
@@ -825,33 +888,26 @@ void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
     }
 }
 
-void AudioEngine::enable_timing_statistics(bool enabled)
-{
-    _timings_enabled = enabled;
-    _process_timer.enable(enabled);
-}
-
 void AudioEngine::print_timings_to_log()
 {
-    if (_timings_enabled == false)
+    if (_process_timer.enabled())
     {
-        return;
-    }
-    for (const auto& processor : _processors)
-    {
-        auto id = processor.second->id();
-        auto timings = _process_timer.timings_for_node(id);
+        for (const auto& processor : _processors)
+        {
+            auto id = processor.second->id();
+            auto timings = _process_timer.timings_for_node(id);
+            if (timings.has_value())
+            {
+                MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                              timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+            }
+        }
+        auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
         if (timings.has_value())
         {
-            MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+            MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
                           timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
         }
-    }
-    auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
-    if (timings.has_value())
-    {
-        MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
-                      timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
     }
 }
 

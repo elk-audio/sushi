@@ -19,7 +19,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
                                                               float max_value,
                                                               FloatParameterPreProcessor* pre_proc)
 {
-    if (!pre_proc)
+    if (pre_proc == nullptr)
     {
         pre_proc = new FloatParameterPreProcessor(min_value, max_value);
     }
@@ -42,7 +42,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           int max_value,
                                                           IntParameterPreProcessor* pre_proc)
 {
-    if (! pre_proc)
+    if (pre_proc == nullptr)
     {
          pre_proc = new IntParameterPreProcessor(min_value, max_value);
     }
@@ -171,6 +171,78 @@ void InternalPlugin::set_parameter_and_notify(BoolParameterValue*storage, bool n
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
     output_event(e);
+}
+
+std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId parameter_id) const
+{
+    if (parameter_id >= _parameter_values.size())
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+    }
+    const auto& value_storage = _parameter_values[parameter_id];
+    if (value_storage.type() == ParameterType::FLOAT)
+    {
+        return {ProcessorReturnCode::OK, value_storage.float_parameter_value()->raw_value()};
+    }
+    else if (value_storage.type() == ParameterType::INT)
+    {
+        return {ProcessorReturnCode::OK, value_storage.int_parameter_value()->raw_value()};
+    }
+    else if (value_storage.type() == ParameterType::BOOL)
+    {
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_value()? 1.0f : 0.0f};
+    }
+    return {ProcessorReturnCode::PARAMETER_ERROR, 0};
+}
+
+std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_normalised(ObjectId parameter_id) const
+{
+    if (parameter_id >= _parameter_values.size())
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+    }
+    const auto& value_storage = _parameter_values[parameter_id];
+    if (value_storage.type() == ParameterType::FLOAT)
+    {
+        auto desc = static_cast<FloatParameterDescriptor*>(value_storage.float_parameter_value()->descriptor());
+        float value = value_storage.float_parameter_value()->raw_value();
+        float norm_value = (value - desc->min_value()) / (desc->max_value() - desc->min_value());
+        return {ProcessorReturnCode::OK, norm_value};
+    }
+    else if (value_storage.type() == ParameterType::INT)
+    {
+        auto desc = static_cast<IntParameterDescriptor*>(value_storage.int_parameter_value()->descriptor());
+        float value = value_storage.int_parameter_value()->raw_value();
+        float norm_value = (value - desc->min_value()) / static_cast<float>((desc->max_value() - desc->min_value()));
+        return {ProcessorReturnCode::OK, norm_value};
+    }
+    else if (value_storage.type() == ParameterType::BOOL)
+    {
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->value()? 1.0f : 0.0f};
+    }
+    return {ProcessorReturnCode::PARAMETER_ERROR, 0};
+}
+
+std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_formatted(ObjectId parameter_id) const
+{
+    if (parameter_id >= _parameter_values.size())
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+    }
+    const auto& value_storage = _parameter_values[parameter_id];
+    if (value_storage.type() == ParameterType::FLOAT)
+    {
+        return {ProcessorReturnCode::OK, std::to_string(value_storage.float_parameter_value()->raw_value())};
+    }
+    else if (value_storage.type() == ParameterType::INT)
+    {
+        return {ProcessorReturnCode::OK, std::to_string(value_storage.int_parameter_value()->raw_value())};
+    }
+    else if (value_storage.type() == ParameterType::BOOL)
+    {
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->value()? "True" : "False"};
+    }
+    return {ProcessorReturnCode::PARAMETER_ERROR, ""};
 }
 
 } // end namespace sushi

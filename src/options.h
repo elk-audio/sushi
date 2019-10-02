@@ -1,16 +1,20 @@
 #include <cstdio> 
 #include "optionparser.h"
 
+#define SUSHI_Q(x) #x
+#define SUSHI_QUOTE(x) SUSHI_Q(x)
+
 ////////////////////////////////////////////////////////////////////////////////
 // Options Defaults
 ////////////////////////////////////////////////////////////////////////////////
 
 #define SUSHI_LOG_LEVEL_DEFAULT "info"
-#define SUSHI_LOG_FILENAME_DEFAULT "log"
+#define SUSHI_LOG_FILENAME_DEFAULT "/tmp/sushi.log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
-
+#define SUSHI_OSC_SERVER_PORT 24024
+#define SUSHI_OSC_SEND_PORT 24023
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -92,7 +96,9 @@ enum OptionIndex
     OPT_IDX_USE_XENOMAI_RASPA,
     OPT_IDX_XENOMAI_DEBUG_MODE_SW,
     OPT_IDX_MULTICORE_PROCESSING,
-    OPT_IDX_TIMINGS_STATISTICS
+    OPT_IDX_TIMINGS_STATISTICS,
+    OPT_IDX_OSC_RECEIVE_PORT,
+    OPT_IDX_OSC_SEND_PORT
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -112,7 +118,7 @@ const optionparser::Descriptor usage[] =
         "",         // shortopt
         "",         // longopt
         SushiArg::Unknown, // check_arg
-        "\nUSAGE: sushi [options] [input_filename]\n\nOptions:" // help
+        "\nUSAGE: sushi -r|-j|-o|-d [options] \n\nOptions:" // help
     },
     {
         OPT_IDX_HELP,
@@ -144,7 +150,7 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
     },
     {
         OPT_IDX_CONFIG_FILE,
@@ -249,6 +255,22 @@ const optionparser::Descriptor usage[] =
         "timing-statistics",
         SushiArg::Optional,
         "\t\t--timing-statistics \tEnable performance timings on all audio processors."
+    },
+    {
+        OPT_IDX_OSC_RECEIVE_PORT,
+        OPT_TYPE_UNUSED,
+        "p",
+        "osc-rcv-port",
+        SushiArg::NonEmpty,
+        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_QUOTE(SUSHI_OSC_SERVER_PORT) "]."
+    },
+    {
+        OPT_IDX_OSC_SEND_PORT,
+        OPT_TYPE_UNUSED,
+        "",
+        "osc-send-port",
+        SushiArg::NonEmpty,
+        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_QUOTE(SUSHI_OSC_SEND_PORT) "]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

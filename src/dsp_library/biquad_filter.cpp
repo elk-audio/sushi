@@ -25,10 +25,10 @@ inline float process_one_pole(const OnePoleCoefficients coefficients, const floa
 
 void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, float q, float gain)
 {
-    double A = sqrt(gain); // Note that the dB to linear gain conversion is done in the parameters preprocessor
+    double A = std::sqrt(gain); // Note that the dB to linear gain conversion is done in the parameters preprocessor
     double w0 = 2 * M_PI * frequency / samplerate;
-    double w0_cos = cos(w0);
-    double w0_sin = sin(w0);
+    double w0_cos = std::cos(w0);
+    double w0_sin = std::sin(w0);
     double alpha = 0.5 * w0_sin / q;
     double a0 = 1 + alpha / A;
 
@@ -43,8 +43,8 @@ void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, f
 void calc_biquad_lowpass(Coefficients&  filter, float samplerate, float frequency)
 {
     float w0 = 2 * M_PI * frequency / samplerate;
-    float w0_cos = cos(w0);
-    float w0_sin = sin(w0);
+    float w0_cos = std::cos(w0);
+    float w0_sin = std::sin(w0);
     float alpha = w0_sin;
     float a0 = 1 + alpha;
 

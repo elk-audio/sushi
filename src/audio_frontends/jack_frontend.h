@@ -13,8 +13,6 @@
 #include <jack/jack.h>
 
 #include "base_audio_frontend.h"
-#include "control_frontends/osc_frontend.h"
-#include "control_frontends/base_midi_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
@@ -29,8 +27,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
             autoconnect_ports(autoconnect_ports)
     {}
 
-    virtual ~JackFrontendConfiguration()
-    {}
+    virtual ~JackFrontendConfiguration() = default;
 
     std::string client_name;
     std::string server_name;
@@ -40,9 +37,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
-            BaseAudioFrontend(engine, midi_dispatcher)
-    {}
+    JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     virtual ~JackFrontend()
     {
@@ -85,14 +80,6 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     /**
-     * @brief Connects the OSC frontend to all parameters and processors
-     */
-    void connect_control_frontends() override
-    {
-        _osc_control->connect_all();
-    }
-
-    /**
      * @brief Call to clean up resources and release ports
      */
     void cleanup() override;
@@ -104,15 +91,15 @@ public:
 
 private:
     /* Set up the jack client and associated ports */
-    AudioFrontendStatus setup_client(const std::string client_name, const std::string server_name);
+    AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);
     AudioFrontendStatus setup_sample_rate();
     AudioFrontendStatus setup_ports();
     /* Call after activation to connect the frontend ports to system ports */
     AudioFrontendStatus connect_ports();
 
     /* Internal process callback function */
-    int internal_process_callback(jack_nframes_t nframes);
-    int internal_samplerate_callback(jack_nframes_t nframes);
+    int internal_process_callback(jack_nframes_t framecount);
+    int internal_samplerate_callback(jack_nframes_t sample_rate);
     void internal_latency_callback(jack_latency_callback_mode_t mode);
 
     void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
@@ -126,9 +113,6 @@ private:
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
-
-    std::unique_ptr<control_frontend::OSCFrontend> _osc_control;
-    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend;
 };
 
 }; // end namespace jack_frontend
@@ -153,8 +137,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine,
-            midi_dispatcher::MidiDispatcher* midi_dispatcher);
+    JackFrontend(engine::BaseEngine* engine);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override
     {return AudioFrontendStatus::OK;}
     void cleanup() override {}

@@ -301,6 +301,14 @@ TEST (TestSampleBuffer, TestAddWithGain)
         ASSERT_FLOAT_EQ(7.0f, buffer.channel(0)[n]);
         ASSERT_FLOAT_EQ(8.0f, buffer.channel(1)[n]);
     }
+
+    // Test single channel adding with gain
+    buffer.add_with_gain(1, 1, buffer_2, -2.0f);
+    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
+    {
+        ASSERT_FLOAT_EQ(7.0f, buffer.channel(0)[n]);
+        ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
+    }
 }
 
 TEST (TestSampleBuffer, TestRamping)
@@ -326,4 +334,66 @@ TEST (TestSampleBuffer, TestRamping)
     ASSERT_FLOAT_EQ(1.0f, buffer.channel(1)[0]);
     ASSERT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
     ASSERT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 0.0001f);
+}
+
+TEST (TestSampleBuffer, TestAddWithRamp)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(2);
+    for (unsigned int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        buffer.channel(0)[i] = 1.0f;
+        buffer.channel(1)[i] = 1.0f;
+        buffer_2.channel(0)[i] = 1.0f;
+        buffer_2.channel(1)[i] = 1.0f;
+    }
+
+    // Test buffers with equal channel count
+    buffer.add_with_ramp(buffer_2, 0.5f, 1.0f);
+
+    ASSERT_FLOAT_EQ(1.5f, buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(1.5f, buffer.channel(1)[0]);
+
+    ASSERT_NEAR(1.75f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
+    ASSERT_NEAR(1.75f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
+
+    ASSERT_FLOAT_EQ(2.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+    ASSERT_FLOAT_EQ(2.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+
+    // Test adding mono buffer to stereo buffer with ramp
+    SampleBuffer<AUDIO_CHUNK_SIZE> mono_buffer(1);
+    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
+    {
+        mono_buffer.channel(0)[n] = 1.0f;
+    }
+    for (unsigned int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        buffer.channel(0)[i] = 1.0f;
+        buffer.channel(1)[i] = 1.0f;
+    }
+
+    buffer.add_with_ramp(mono_buffer, 1.0f, 2.0f);
+
+    ASSERT_FLOAT_EQ(2.0f, buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(2.0f, buffer.channel(1)[0]);
+
+    ASSERT_NEAR(2.5f, buffer.channel(0)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
+    ASSERT_NEAR(2.5f, buffer.channel(1)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
+
+    ASSERT_FLOAT_EQ(3.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+    ASSERT_FLOAT_EQ(3.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+}
+
+TEST (TestSampleBuffer, TestCountClippedSamples)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    ASSERT_EQ(0, buffer.count_clipped_samples());
+
+    buffer.channel(0)[4] = 1.7f;
+    buffer.channel(1)[3] = 1.1f;
+    buffer.channel(1)[2] = -1.05f;
+    ASSERT_EQ(3, buffer.count_clipped_samples());
+    ASSERT_EQ(3, buffer.count_clipped_samples(0,2));
+    ASSERT_EQ(2, buffer.count_clipped_samples(1,1));
+    ASSERT_EQ(1, buffer.count_clipped_samples(0,1));
 }

@@ -11,7 +11,7 @@ static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 
 TEST(EventTest, TestToRtEvent)
 {
-    auto note_on_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, 1, 48, 1.0f, IMMEDIATE_PROCESS);
+    auto note_on_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, 1, 0, 48, 1.0f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(note_on_event.is_keyboard_event());
     EXPECT_TRUE(note_on_event.maps_to_rt_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, note_on_event.time());
@@ -20,21 +20,22 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(5, rt_event.sample_offset());
     EXPECT_EQ(1u, rt_event.keyboard_event()->processor_id());
     EXPECT_EQ(48, rt_event.keyboard_event()->note());
+    EXPECT_EQ(0, rt_event.keyboard_event()->channel());
     EXPECT_FLOAT_EQ(1.0f, rt_event.keyboard_event()->velocity());
 
-    auto note_off_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, 1, 48, 1.0f, IMMEDIATE_PROCESS);
+    auto note_off_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, 1, 1, 48, 1.0f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(note_off_event.is_keyboard_event());
     EXPECT_TRUE(note_off_event.maps_to_rt_event());
     rt_event = note_off_event.to_rt_event(5);
     EXPECT_EQ(RtEventType::NOTE_OFF, rt_event.type());
 
-    auto note_at_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, 1, 48, 1.0f, IMMEDIATE_PROCESS);
+    auto note_at_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, 1, 2, 48, 1.0f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(note_at_event.is_keyboard_event());
     EXPECT_TRUE(note_at_event.maps_to_rt_event());
     rt_event = note_at_event.to_rt_event(5);
     EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());;
 
-    auto pitchbend_event = KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, 2, 0.5f, IMMEDIATE_PROCESS);
+    auto pitchbend_event = KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, 2, 3, 0.5f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(pitchbend_event.is_keyboard_event());
     rt_event = pitchbend_event.to_rt_event(6);
     EXPECT_EQ(RtEventType::PITCH_BEND, rt_event.type());
@@ -42,13 +43,13 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(2u, rt_event.keyboard_common_event()->processor_id());
     EXPECT_FLOAT_EQ(0.5f, rt_event.keyboard_common_event()->value());
 
-    auto modulation_event = KeyboardEvent(KeyboardEvent::Subtype::MODULATION, 3, 1.0f, IMMEDIATE_PROCESS);
+    auto modulation_event = KeyboardEvent(KeyboardEvent::Subtype::MODULATION, 3, 4, 1.0f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(modulation_event.is_keyboard_event());
     EXPECT_TRUE(modulation_event.maps_to_rt_event());
     rt_event = modulation_event.to_rt_event(5);
     EXPECT_EQ(RtEventType::MODULATION, rt_event.type());
 
-    auto aftertouch_event = KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, 4, 1.0f, IMMEDIATE_PROCESS);
+    auto aftertouch_event = KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, 4, 5, 1.0f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(aftertouch_event.is_keyboard_event());
     EXPECT_TRUE(aftertouch_event.maps_to_rt_event());
     rt_event = aftertouch_event.to_rt_event(5);
@@ -101,103 +102,116 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(9u, rt_event.async_work_completion_event()->processor_id());
     EXPECT_EQ(53u, rt_event.async_work_completion_event()->sending_event_id());
 
+    auto bypass_event = SetProcessorBypassEvent(10, true, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(bypass_event.bypass_enabled());
+    rt_event = bypass_event.to_rt_event(12);
+    EXPECT_EQ(RtEventType::SET_BYPASS, rt_event.type());
+    EXPECT_TRUE(rt_event.processor_command_event()->value());
+    EXPECT_EQ(10u, rt_event.processor_command_event()->processor_id());
+
     auto tempo_event = SetEngineTempoEvent(135, IMMEDIATE_PROCESS);
     EXPECT_TRUE(tempo_event.maps_to_rt_event());
-    rt_event = tempo_event.to_rt_event(12);
+    rt_event = tempo_event.to_rt_event(13);
     EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
-    EXPECT_EQ(12, rt_event.sample_offset());
+    EXPECT_EQ(13, rt_event.sample_offset());
     EXPECT_FLOAT_EQ(135.0f, rt_event.tempo_event()->tempo());
 
     auto time_sig_event = SetEngineTimeSignatureEvent({3, 4}, IMMEDIATE_PROCESS);
     EXPECT_TRUE(time_sig_event.maps_to_rt_event());
-    rt_event = time_sig_event.to_rt_event(13);
+    rt_event = time_sig_event.to_rt_event(14);
     EXPECT_EQ(RtEventType::TIME_SIGNATURE, rt_event.type());
-    EXPECT_EQ(13, rt_event.sample_offset());
+    EXPECT_EQ(14, rt_event.sample_offset());
     EXPECT_EQ(3, rt_event.time_signature_event()->time_signature().numerator);
     EXPECT_EQ(4, rt_event.time_signature_event()->time_signature().denominator);
 
     auto trans_state_event = SetEnginePlayingModeStateEvent(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
     EXPECT_TRUE(trans_state_event.maps_to_rt_event());
-    rt_event = trans_state_event.to_rt_event(14);
+    rt_event = trans_state_event.to_rt_event(15);
     EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
-    EXPECT_EQ(14, rt_event.sample_offset());
+    EXPECT_EQ(15, rt_event.sample_offset());
     EXPECT_EQ(PlayingMode::RECORDING, rt_event.playing_mode_event()->mode());
 
     auto sync_mode_event = SetEngineSyncModeEvent(SyncMode::ABLETON_LINK, IMMEDIATE_PROCESS);
     EXPECT_TRUE(sync_mode_event.maps_to_rt_event());
-    rt_event = sync_mode_event.to_rt_event(15);
+    rt_event = sync_mode_event.to_rt_event(16);
     EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
-    EXPECT_EQ(15, rt_event.sample_offset());
+    EXPECT_EQ(16, rt_event.sample_offset());
     EXPECT_EQ(SyncMode::ABLETON_LINK, rt_event.sync_mode_event()->mode());
 }
 
 TEST(EventTest, TestFromRtEvent)
 {
-    auto note_on_event = RtEvent::make_note_on_event(2, 0, 48, 1.0f);
+    auto note_on_event = RtEvent::make_note_on_event(2, 0, 1, 48, 1.0f);
     Event* event = Event::from_rt_event(note_on_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, kb_event->subtype());
+    EXPECT_EQ(1, kb_event->channel());
     EXPECT_EQ(48, kb_event->note());
     EXPECT_EQ(2u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(1.0f, kb_event->value());
     delete event;
 
-    auto note_off_event = RtEvent::make_note_off_event(3, 0, 49, 1.0f);
+    auto note_off_event = RtEvent::make_note_off_event(3, 0, 2, 49, 1.0f);
     event = Event::from_rt_event(note_off_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, kb_event->subtype());
+    EXPECT_EQ(2, kb_event->channel());
     EXPECT_EQ(49, kb_event->note());
     EXPECT_EQ(3u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(1.0f, kb_event->value());
     delete event;
 
-    auto note_at_event = RtEvent::make_note_aftertouch_event(4, 0, 50, 1.0f);
+    auto note_at_event = RtEvent::make_note_aftertouch_event(4, 0, 3, 50, 1.0f);
     event = Event::from_rt_event(note_at_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, kb_event->subtype());
+    EXPECT_EQ(3, kb_event->channel());
     EXPECT_EQ(50, kb_event->note());
     EXPECT_EQ(4u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(1.0f, kb_event->value());
     delete event;
 
-    auto mod_event = RtEvent::make_kb_modulation_event(5, 0, 0.5f);
+    auto mod_event = RtEvent::make_kb_modulation_event(5, 0, 4, 0.5f);
     event = Event::from_rt_event(mod_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::MODULATION, kb_event->subtype());
+    EXPECT_EQ(4, kb_event->channel());
     EXPECT_EQ(5u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(0.5f, kb_event->value());
     delete event;
 
-    auto pb_event = RtEvent::make_pitch_bend_event(6, 0, 0.6f);
+    auto pb_event = RtEvent::make_pitch_bend_event(6, 0, 5, 0.6f);
     event = Event::from_rt_event(pb_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::PITCH_BEND, kb_event->subtype());
+    EXPECT_EQ(5, kb_event->channel());
     EXPECT_EQ(6u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(0.6f, kb_event->value());
     delete event;
 
-    auto at_event = RtEvent::make_aftertouch_event(7, 0, 0.7f);
+    auto at_event = RtEvent::make_aftertouch_event(7, 0, 6, 0.7f);
     event = Event::from_rt_event(at_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     kb_event = static_cast<KeyboardEvent*>(event);
     EXPECT_EQ(KeyboardEvent::Subtype::AFTERTOUCH, kb_event->subtype());
+    EXPECT_EQ(6, kb_event->channel());
     EXPECT_EQ(7u, kb_event->processor_id());
     EXPECT_FLOAT_EQ(0.7f, kb_event->value());
     delete event;

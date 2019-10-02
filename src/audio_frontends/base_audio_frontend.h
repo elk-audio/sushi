@@ -5,7 +5,6 @@
 #define SUSHI_BASE_AUDIO_FRONTEND_H
 
 #include "engine/base_engine.h"
-#include "engine/midi_dispatcher.h"
 
 namespace sushi {
 
@@ -24,8 +23,7 @@ enum class AudioFrontendStatus
     INVALID_OUTPUT_FILE,
     INVALID_SEQUENCER_DATA,
     INVALID_CHUNK_SIZE,
-    AUDIO_HW_ERROR,
-    MIDI_PORT_ERROR
+    AUDIO_HW_ERROR
 };
 
 /**
@@ -33,11 +31,9 @@ enum class AudioFrontendStatus
  */
 struct BaseAudioFrontendConfiguration
 {
-    BaseAudioFrontendConfiguration()
-    {}
+    BaseAudioFrontendConfiguration() {}
 
-    virtual ~BaseAudioFrontendConfiguration()
-    {}
+    virtual ~BaseAudioFrontendConfiguration() = default;
 };
 
 /**
@@ -46,12 +42,9 @@ struct BaseAudioFrontendConfiguration
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) :
-            _engine(engine), _midi_dispatcher(midi_dispatcher)
-    {}
+    BaseAudioFrontend(engine::BaseEngine* engine) : _engine(engine) {}
 
-    virtual ~BaseAudioFrontend()
-    {}
+    virtual ~BaseAudioFrontend() = default;
 
     /**
      * @brief Initialize frontend with the given configuration.
@@ -66,12 +59,7 @@ public:
     {
         _config = config;
         return AudioFrontendStatus::OK;
-    }
-
-    /**
-     * @brief Connects any control frontend instatiated (OSC, etc) by the audio frontend
-     */
-    virtual void connect_control_frontends() {};
+    };
 
     /**
      * @brief Free resources allocated during init. stops the frontend if currently running.
@@ -86,7 +74,6 @@ public:
 protected:
     BaseAudioFrontendConfiguration* _config;
     engine::BaseEngine* _engine;
-    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 

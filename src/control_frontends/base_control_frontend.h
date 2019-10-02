@@ -16,6 +16,14 @@
 namespace sushi {
 namespace control_frontend {
 
+
+enum class ControlFrontendStatus
+{
+    OK,
+    ERROR,
+    INTERFACE_UNAVAILABLE
+};
+
 class BaseControlFrontend : public EventPoster
 {
 public:
@@ -36,6 +44,8 @@ public:
         static_cast<BaseControlFrontend*>(arg)->_completion_callback(event, return_status);
     }
 
+    virtual ControlFrontendStatus init() = 0;
+
     virtual void run() = 0;
 
     virtual void stop() = 0;
@@ -44,11 +54,11 @@ public:
 
     void send_string_parameter_change_event(ObjectId processor, ObjectId parameter, const std::string& value);
 
-    void send_keyboard_event(ObjectId processor, KeyboardEvent::Subtype type, int note, float value);
+    void send_keyboard_event(ObjectId processor, KeyboardEvent::Subtype type, int channel, int note, float velocity);
 
-    void send_note_on_event(ObjectId processor, int note, float value);
+    void send_note_on_event(ObjectId processor, int channel, int note, float velocity);
 
-    void send_note_off_event(ObjectId processor, int note, float value);
+    void send_note_off_event(ObjectId processor, int channel, int note, float velocity);
 
     void send_program_change_event(ObjectId processor, int program);
 

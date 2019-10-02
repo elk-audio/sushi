@@ -93,6 +93,28 @@ then
     exit 0
 fi
 
+#####################################
+# Extra Optimization Compiler Flags #
+#####################################
+if [[ "$CROSS_COMPILE" == "" ]]
+then
+    TARGET_ARCH=$(uname --m)
+    echo "Detected build for native machine (${TARGET_ARCH}), setting machine optimization flags accordingly..."
+    if [[ $TARGET_ARCH == x86* ]]
+    then
+        X86_OPT_FLAGS="-mfpmath=sse -msse4.2"
+        export CFLAGS="$CFLAGS $X86_OPT_FLAGS"
+        export CXXFLAGS="$CXXFLAGS $X86_OPT_FLAGS"
+    elif [[ $TARGET_ARCH == arm* ]]
+    then
+        ARM_OPT_FLAGS="-mfpu=neon -mfloat-abi=hard"
+        export CFLAGS="$CFLAGS $ARM_OPT_FLAGS"
+        export CXXFLAGS="$CXXFLAGS $ARM_OPT_FLAGS"
+    fi
+else
+    echo "Detected cross compile build. Not setting any machine optimization flags..."
+fi
+
 ######################
 #  Script Processing #
 ######################
@@ -105,8 +127,8 @@ if $GENERATE_RELEASE
 then
     echo "Generating Release build directory:"
     mkdir -p $BUILD_DIR/release
-    cd $BUILD_DIR/release 
-    cmake -DCMAKE_BUILD_TYPE=Release $PROJECT_DIR $CMAKE_EXTRA_ARGS
+    cd $BUILD_DIR/release
+    cmake -DCMAKE_BUILD_TYPE=Release $CMAKE_EXTRA_ARGS $PROJECT_DIR
     if $BUILD_PROJECTS; then
         make
     fi
@@ -117,7 +139,7 @@ then
     echo "Generating Debug build directory:"
     mkdir -p $BUILD_DIR/debug
     cd $BUILD_DIR/debug
-    cmake -DCMAKE_BUILD_TYPE=Debug $PROJECT_DIR $CMAKE_EXTRA_ARGS
+    cmake -DCMAKE_BUILD_TYPE=Debug $CMAKE_EXTRA_ARGS $PROJECT_DIR
     if $BUILD_PROJECTS; then
         make
     fi

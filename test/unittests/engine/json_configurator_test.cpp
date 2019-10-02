@@ -1,4 +1,5 @@
 #include <fstream>
+
 #include "gtest/gtest.h"
 
 #define private public
@@ -20,7 +21,6 @@ class TestJsonConfigurator : public ::testing::Test
 {
 protected:
     TestJsonConfigurator() {}
-
 
     void SetUp()
     {
@@ -104,6 +104,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
     ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
     ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
+    ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
 }
 
 TEST_F(TestJsonConfigurator, TestParseFile)
@@ -156,16 +157,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     track["plugins"].PushBack(test_plugin, test_cfg.GetAllocator());
     ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
 
-    /* Add vst plugin  */
     rapidjson::Value& plugin = track["plugins"][0];
-    const char* full_plugin_path = realpath("libagain.so", NULL);
-    track["name"] = "tracks_with_vst2_plugin";
-    plugin["name"] = "vst2_plugin";
-    plugin["path"].SetString(full_plugin_path, test_cfg.GetAllocator());
-    plugin["type"] = "vst2x";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
-    delete full_plugin_path;
-
     track["name"] = "track_invalid_internal";
     plugin["name"] = "invalid_internal_plugin";
     plugin["uid"] = "wrong_uid";

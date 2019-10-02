@@ -155,8 +155,8 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
     ASSERT_NE(0, data.size);
     _module_under_test->_sample.set_sample(reinterpret_cast<float*>(data.data), data.size * sizeof(float));
     out_buffer.clear();
-    RtEvent note_on = RtEvent::make_note_on_event(0, 5, 60, 1.0f);
-    RtEvent note_on2 = RtEvent::make_note_on_event(0, 50, 65, 1.0f);
+    RtEvent note_on = RtEvent::make_note_on_event(0, 5, 0, 60, 1.0f);
+    RtEvent note_on2 = RtEvent::make_note_on_event(0, 50, 0, 65, 1.0f);
     _module_under_test->process_event(note_on);
     _module_under_test->process_event(note_on2);
 

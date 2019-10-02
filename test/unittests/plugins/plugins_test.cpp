@@ -60,7 +60,7 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     RtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     _module_under_test->set_event_output(&event_queue);
-    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0);
+    RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0, 0);
 
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);

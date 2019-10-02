@@ -18,7 +18,6 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
@@ -34,8 +33,6 @@ void JackFrontend::cleanup()
         jack_client_close(_client);
         _client = nullptr;
     }
-    _midi_frontend->stop();
-    _osc_control->stop();
 }
 
 
@@ -51,13 +48,11 @@ void JackFrontend::run()
     {
         connect_ports();
     }
-    _midi_frontend->run();
-    _osc_control->run();
 }
 
 
-AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
-                                               const std::string server_name)
+AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
+                                               const std::string& server_name)
 {
     jack_status_t jack_status;
     jack_options_t options = JackNullOption;
@@ -67,7 +62,7 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         options = JackServerName;
     }
     _client = jack_client_open(client_name.c_str(), options, &jack_status, server_name.c_str());
-    if (!_client)
+    if (_client == nullptr)
     {
         MIND_LOG_ERROR("Failed to open Jack server, error: {}.", jack_status);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -97,14 +92,6 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string client_name,
         MIND_LOG_ERROR("Failed to setup ports");
         return status;
     }
-    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        MIND_LOG_ERROR("Failed to setup Alsa midi frontend");
-        return AudioFrontendStatus::MIDI_PORT_ERROR;
-    }
-    _midi_dispatcher->set_frontend(_midi_frontend.get());
     return AudioFrontendStatus::OK;
 }
 
@@ -135,7 +122,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    JACK_DEFAULT_AUDIO_TYPE,
                                    JackPortIsOutput,
                                    0);
-        if (!port)
+        if (port == nullptr)
         {
             MIND_LOG_ERROR("Failed to open Jack output port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -149,7 +136,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    JACK_DEFAULT_AUDIO_TYPE,
                                    JackPortIsInput,
                                    0);
-        if (!port)
+        if (port == nullptr)
         {
             MIND_LOG_ERROR("Failed to open Jack input port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -164,7 +151,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
 AudioFrontendStatus JackFrontend::connect_ports()
 {
     const char** out_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsInput);
-    if (!out_ports)
+    if (out_ports == nullptr)
     {
         MIND_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -184,7 +171,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
 
     /* Same for input ports */
     const char** in_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsOutput);
-    if (!in_ports)
+    if (in_ports == nullptr)
     {
         MIND_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -206,10 +193,10 @@ AudioFrontendStatus JackFrontend::connect_ports()
 }
 
 
-int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
+int JackFrontend::internal_process_callback(jack_nframes_t framecount)
 {
     set_flush_denormals_to_zero();
-    if (no_frames < 64 || no_frames % 64)
+    if (framecount < 64 || framecount % 64)
     {
         MIND_LOG_CRITICAL("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
@@ -228,7 +215,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t no_frames)
     }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     Time start_time = std::chrono::microseconds(current_usecs);
-    for (jack_nframes_t frame = 0; frame < no_frames; frame += AUDIO_CHUNK_SIZE)
+    for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         _engine->update_time(start_time + delta_time, current_frames + frame - _start_frame);
@@ -300,8 +287,7 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-JackFrontend::JackFrontend(engine::BaseEngine* engine,
-                           midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
+JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Jack support!");

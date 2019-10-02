@@ -1,0 +1,273 @@
+/** gRPC definitions for external control of sushi
+ *
+ * @copyright 2018 MIND Music Labs AB, Stockholm, Sweden
+ */
+
+syntax = "proto3";
+
+package sushi_rpc;
+
+service SushiController {
+    rpc GetSamplerate (GenericVoidValue) returns (GenericFloatValue) {}
+    rpc GetPlayingMode (GenericVoidValue) returns (PlayingMode) {}
+    rpc SetPlayingMode (PlayingMode) returns (GenericVoidValue) {}
+    rpc GetSyncMode (GenericVoidValue) returns (SyncMode) {}
+    rpc SetSyncMode (SyncMode) returns (GenericVoidValue) {}
+    rpc GetTempo (GenericVoidValue) returns (GenericFloatValue) {}
+    rpc SetTempo (GenericFloatValue) returns (GenericVoidValue) {}
+    rpc GetTimeSignature (GenericVoidValue) returns (TimeSignature) {}
+    rpc SetTimeSignature (TimeSignature) returns (GenericVoidValue) {}
+    rpc GetTracks(GenericVoidValue) returns (TrackInfoList) {}
+
+    // Keyboard control
+    rpc SendNoteOn(NoteOnRequest) returns (GenericVoidValue) {}
+    rpc SendNoteOff(NoteOffRequest) returns (GenericVoidValue) {}
+    rpc SendNoteAftertouch(NoteAftertouchRequest) returns (GenericVoidValue) {}
+    rpc SendAftertouch(NoteModulationRequest) returns (GenericVoidValue) {}
+    rpc SendPitchBend(NoteModulationRequest) returns (GenericVoidValue) {}
+    rpc SendModulation(NoteModulationRequest) returns (GenericVoidValue) {}
+
+    // Cpu timings
+    rpc GetEngineTimings(GenericVoidValue) returns (CpuTimings) {}
+    rpc GetTrackTimings(TrackIdentifier) returns (CpuTimings) {}
+    rpc GetProcessorTimings(ProcessorIdentifier) returns (CpuTimings) {}
+    rpc ResetAllTimings(GenericVoidValue) returns (GenericVoidValue) {}
+    rpc ResetTrackTimings(TrackIdentifier) returns (GenericVoidValue) {}
+    rpc ResetProcessorTimings(ProcessorIdentifier) returns (GenericVoidValue) {}
+
+    // Track control
+    rpc GetTrackId(GenericStringValue) returns (TrackIdentifier) {}
+    rpc GetTrackInfo(TrackIdentifier) returns (TrackInfo) {}
+    rpc GetTrackProcessors(TrackIdentifier) returns (ProcessorInfoList) {}
+    rpc GetTrackParameters(TrackIdentifier) returns (ParameterInfoList) {}
+    // list requests left out for now
+
+    // Processor control
+    rpc GetProcessorId (GenericStringValue) returns (ProcessorIdentifier) {}
+    rpc GetProcessorInfo (ProcessorIdentifier) returns (ProcessorInfo) {}
+    rpc GetProcessorBypassState (ProcessorIdentifier) returns (GenericBoolValue) {}
+    rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorCurrentProgram (ProcessorIdentifier) returns (ProgramIdentifier) {}
+    rpc GetProcessorCurrentProgramName (ProcessorIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorProgramName (ProcessorProgramIdentifier) returns (GenericStringValue) {}
+    rpc GetProcessorPrograms (ProcessorIdentifier) returns (ProgramInfoList) {}
+    rpc SetProcessorProgram (ProcessorProgramSetRequest) returns (GenericVoidValue) {}
+    rpc GetProcessorParameters (ProcessorIdentifier) returns (ParameterInfoList) {}
+    // list requests left out
+
+    // Parameter control
+    rpc GetParameterId (ParameterIdRequest) returns (ParameterIdentifier) {}
+    rpc GetParameterInfo (ParameterIdentifier) returns (ParameterInfo) {}
+    rpc GetParameterValue(ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueNormalised(ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueAsString(ParameterIdentifier) returns (GenericStringValue) {}
+    rpc GetStringPropertyValue(ParameterIdentifier) returns (GenericStringValue) {}
+    rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetParameterValueNormalised(ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
+}
+
+
+/**
+ * Global wrappers for primitive types.
+ *
+ * gRPC requires the usage of custom messages as arguments/return types of services,
+ * and it is good practice to define custom values for better future expansion of the
+ * protocol.
+ *
+ * However, this leads to unnecessary bloat especially for cases where it's clear
+ * that a primitive type is the best choice (e.g. GetNumSomething), so we define here
+ * some common cases to all services.
+ */
+
+message GenericVoidValue {
+}
+
+message GenericFloatValue {
+    float value = 1;
+}
+
+message GenericIntValue {
+    int32 value = 1;
+}
+
+message GenericBoolValue {
+    bool value = 1;
+}
+
+message GenericStringValue {
+    string value = 1;
+}
+
+/* Common types */
+
+message TrackIdentifier {
+    int32 id = 1;
+}
+
+message ProcessorIdentifier {
+    int32 id = 1;
+}
+
+message ParameterIdentifier {
+    int32 processor_id = 1;
+    int32 parameter_id = 2;
+}
+
+/* 0 is reserved for "not set" in protobuf, so we don't use it for a valid response */
+message ParameterType {
+    enum Type {
+        DUMMY = 0;
+        BOOL = 1;
+        INT = 2;
+        FLOAT = 3;
+        STRING_PROPERTY = 4;
+        DATA_PROPERTY = 5;
+    }
+    Type type = 1;
+}
+
+/* Messages */
+
+message PlayingMode {
+    enum Mode {
+        DUMMY = 0;
+        STOPPED = 1;
+        PLAYING = 2;
+        RECORDING = 3;
+    }
+    Mode mode = 1;
+}
+
+message SyncMode {
+    enum Mode {
+        DUMMY = 0;
+        INTERNAL = 1;
+        MIDI = 2;
+        LINK = 3;
+    }
+    Mode mode = 1;
+}
+
+message TimeSignature {
+    int32 numerator = 1;
+    int32 denominator = 2;
+}
+
+message CpuTimings {
+    float average = 1;
+    float min = 2;
+    float max = 3;
+}
+
+message NoteOnRequest {
+    TrackIdentifier track = 1;
+    int32 channel = 2;
+    int32 note = 3;
+    float velocity = 4;
+}
+
+message NoteOffRequest {
+    TrackIdentifier track = 1;
+    int32 channel = 2;
+    int32 note = 3;
+    float velocity = 4;
+}
+
+message NoteAftertouchRequest {
+    TrackIdentifier track = 1;
+    int32 channel = 2;
+    int32 note = 3;
+    float value = 4;
+}
+
+message NoteModulationRequest {
+    TrackIdentifier track = 1;
+    int32 channel = 2;
+    float value = 3;
+}
+
+message TrackInfo {
+    int32  id = 1;
+    string label = 2;
+    string name = 3;
+    int32  input_channels = 4;
+    int32  input_busses = 5;
+    int32  output_channels = 6;
+    int32  output_busses = 7;
+    int32  processor_count = 8;
+}
+
+message TrackInfoList {
+    repeated TrackInfo tracks = 1;
+}
+
+message ProcessorInfo {
+    int32  id = 1;
+    string label = 2;
+    string name = 3;
+    int32  parameter_count = 4;
+    int32  program_count = 5;
+}
+
+message ProcessorInfoList {
+    repeated ProcessorInfo processors = 1;
+}
+
+message ProgramIdentifier {
+    int32 program = 1;
+}
+
+message ProcessorProgramIdentifier {
+    ProcessorIdentifier processor = 1;
+    int32 program = 2;
+}
+
+message ProgramInfo {
+    ProgramIdentifier id = 1;
+    string name = 2;
+}
+
+message ProgramInfoList {
+    repeated ProgramInfo programs = 1;
+}
+
+message ProcessorProgramSetRequest {
+    ProcessorIdentifier processor = 1;
+    ProgramIdentifier program = 2;
+}
+
+message ProcessorBypassStateSetRequest {
+    ProcessorIdentifier processor = 1;
+    bool value = 2;
+}
+
+message ParameterInfo {
+    int32  id = 1;
+    ParameterType  type = 2;
+    string label = 3;
+    string name = 4;
+    string unit = 5;
+    bool   automatable = 6;
+    float  min_range = 7;
+    float  max_range = 8;
+}
+
+message ParameterInfoList {
+    repeated ParameterInfo parameters = 1;
+}
+
+message ParameterIdRequest {
+    ProcessorIdentifier processor  = 1;
+    string ParameterName = 2;
+}
+
+message ParameterSetRequest {
+    ParameterIdentifier parameter = 1;
+    float value = 2;
+}
+
+message StringPropertySetRequest {
+    ParameterIdentifier property = 1;
+    string value = 2;
+}

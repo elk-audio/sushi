@@ -19,6 +19,61 @@ using namespace sushi::engine;
 /*
 * Engine tests
 */
+class TestClipDetector : public ::testing::Test
+{
+protected:
+    TestClipDetector()
+    {}
+
+    void SetUp()
+    {
+        _module_under_test.set_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test.set_output_channels(TEST_CHANNEL_COUNT);
+    }
+
+    ClipDetector _module_under_test{SAMPLE_RATE};
+};
+
+TEST_F(TestClipDetector, TestClipping)
+{
+    RtEventFifo queue;
+    ChunkSampleBuffer buffer(TEST_CHANNEL_COUNT);
+    test_utils::fill_sample_buffer(buffer, 0.5f);
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    /* No samples outside (-1.0, 1.0) so this should result in no notifications */
+    ASSERT_TRUE(queue.empty());
+
+    /* Set 2 samples to clipped, we should now have 2 clip notifications */
+    buffer.channel(1)[10] = 1.5f;
+    buffer.channel(3)[6] = -1.3f;
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    ASSERT_FALSE(queue.empty());
+    RtEvent notification;
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(1, notification.clip_notification_event()->channel());
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(3, notification.clip_notification_event()->channel());
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::OUTPUT, notification.clip_notification_event()->channel_type());
+
+    /* But calling again immediately should not trigger due to the rate limiting */
+    _module_under_test.detect_clipped_samples(buffer, queue, false);
+    ASSERT_TRUE(queue.empty());
+
+    /* But calling with audio_inout set to true should trigger 2 new */
+    _module_under_test.detect_clipped_samples(buffer, queue, true);
+    ASSERT_FALSE(queue.empty());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::INPUT, notification.clip_notification_event()->channel_type());
+    ASSERT_TRUE(queue.pop(notification));
+    ASSERT_FALSE(queue.pop(notification));
+
+}
+
+
+/*
+* Engine tests
+*/
 class TestEngine : public ::testing::Test
 {
 protected:
@@ -178,29 +233,27 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ(status, EngineReturnStatus::OK);
     status = _module_under_test->add_plugin_to_track("left",
                                                      "sushi.testing.gain",
-                                                     "gain_0_r",
+                                                     "gain",
                                                      "   ",
                                                      PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    char* full_plugin_path = realpath("libvstxsynth.so", NULL);
     status = _module_under_test->add_plugin_to_track("left",
+                                                     "sushi.testing.sampleplayer",
+                                                     "synth",
                                                      "",
-                                                     "vst_synth",
-                                                     full_plugin_path,
-                                                     PluginType::VST2X);
-    delete full_plugin_path;
+                                                     PluginType::INTERNAL);
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_TRUE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_TRUE(_module_under_test->_processor_exists("vst_synth"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("gain"));
+    ASSERT_TRUE(_module_under_test->_processor_exists("synth"));
     ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_processors.size());
-    ASSERT_EQ("gain_0_r", _module_under_test->_audio_graph[0]->_processors[0]->name());
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[1]->name());
+    ASSERT_EQ("gain", _module_under_test->_audio_graph[0]->_processors[0]->name());
+    ASSERT_EQ("synth", _module_under_test->_audio_graph[0]->_processors[1]->name());
 
     /* Test removal of plugin */
-    status = _module_under_test->remove_plugin_from_track("left", "gain_0_r");
+    status = _module_under_test->remove_plugin_from_track("left", "gain");
     ASSERT_EQ(status, EngineReturnStatus::OK);
-    ASSERT_FALSE(_module_under_test->_processor_exists("gain_0_r"));
-    ASSERT_EQ("vst_synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
+    ASSERT_FALSE(_module_under_test->_processor_exists("gain"));
+    ASSERT_EQ("synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
 
     /* Negative tests */
     status = _module_under_test->add_plugin_to_track("not_found",

@@ -21,6 +21,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/controller.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/mind_allocator.h"
@@ -32,6 +33,35 @@
 
 namespace sushi {
 namespace engine {
+
+class ClipDetector
+{
+public:
+    ClipDetector(float sample_rate)
+    {
+        this->set_sample_rate(sample_rate);
+    }
+
+    void set_sample_rate(float samplerate);
+
+    void set_input_channels(int channels);
+
+    void set_output_channels(int channels);
+    /**
+     * @brief Find clipped samples in a buffer and send notifications
+     * @param buffer The audio buffer to process
+     * @param queue Endpoint for clipping notifications
+     * @param audio_input Set to true if the audio buffer comes directly from the an audio inout (i.e. before any processing)
+     */
+    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input);
+
+private:
+
+    unsigned int _interval;
+    std::vector<unsigned int> _input_clip_count;
+    std::vector<unsigned int> _output_clip_count;
+};
+
 
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
 
@@ -57,6 +87,18 @@ public:
      * @param sample_rate The new sample rate in Hz
      */
     void set_sample_rate(float sample_rate) override;
+
+    /**
+     * @brief Set the number of input audio channels, set by the audio frontend before starting processing
+     * @param channels The number of audio channels to use
+     */
+    void set_audio_input_channels(int channels) override;
+
+    /**
+     * @brief Set the number of output audio channels, set by the audio frontend before starting processing
+     * @param channels The number of audio channels to use
+     */
+    void set_audio_output_channels(int channels) override;
 
     /**
      * @brief Connect an engine input channel to an input channel of a given track.
@@ -255,15 +297,15 @@ public:
     /**
      * @brief Creates and adds a plugin to a track.
      * @param track_id The unique id of the track to which the processor will be appended
-     * @param uid The unique id of the plugin
-     * @param name The name to give the plugin after loading
+     * @param plugin_uid The unique id of the plugin
+     * @param plugin_name The name to give the plugin after loading
      * @param plugin_path The file to load the plugin from, only valid for external plugins
      * @param plugin_type The type of plugin, i.e. internal or external
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
     EngineReturnStatus add_plugin_to_track(const std::string &track_name,
-                                           const std::string &uid,
-                                           const std::string &name,
+                                           const std::string &plugin_uid,
+                                           const std::string &plugin_name,
                                            const std::string &plugin_path,
                                            PluginType plugin_type) override;
 
@@ -275,6 +317,22 @@ public:
      */
     EngineReturnStatus remove_plugin_from_track(const std::string &track_name,
                                                 const std::string &plugin_name) override;
+
+    /**
+     * @brief Access a particular processor by its unique id for querying
+     * @param processor_id The id of the processor
+     * @return A const pointer to the processor instance if found, nullptr otherwise
+     */
+    const Processor* processor(ObjectId processor_id) const override;
+
+    /**
+     * @brief Access a particular processor by its unique id for editing,
+     *        use with care and not from several threads at once
+     * @param processor_id The id of the processor
+     * @return A mutable pointer to the processor instance if found, nullptr otherwise
+     */
+    Processor* mutable_processor(ObjectId processor_id) override;
+
     /**
      * @brief Return all processors. Potentially dangerous so use with care and eventually
      *        there should be better and safer ways of accessing processors.
@@ -291,9 +349,27 @@ public:
      *        from outside the engine.
      * @return An std::vector of containing all Tracks
      */
-    const std::vector<Track*>& all_tracks()
+    const std::vector<Track*>& all_tracks() override
     {
         return _audio_graph;
+    }
+
+    /**
+     * @brief Enable audio clip detection on engine inputs
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_input_clip_detection(bool enabled) override
+    {
+        _input_clip_detection_enabled = enabled;
+    }
+
+    /**
+     * @brief Enable audio clip detection on engine outputs
+     * @param enabled Enable if true, disable if false
+     */
+    void enable_output_clip_detection(bool enabled) override
+    {
+        _output_clip_detection_enabled = enabled;
     }
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
@@ -301,11 +377,20 @@ public:
         return &_event_dispatcher;
     }
 
-    /**
-     * @brief Enable timings of all audio processors
-     * @param enabled Enable if true, disable if false
-     */
-    void enable_timing_statistics(bool enabled) override;
+    sushi::ext::SushiControl* controller() override
+    {
+        return &_controller;
+    }
+
+    sushi::engine::Transport* transport() override
+    {
+        return &_transport;
+    }
+
+    performance::BasePerformanceTimer* performance_timer() override
+    {
+        return &_process_timer;
+    }
 
     /**
      * @brief Print the current processor timings (in enabled) in the log
@@ -420,10 +505,15 @@ private:
     Transport _transport;
 
     dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+    Controller _controller{this};
 
     HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
     bool _timings_enabled{false};
+
+    bool _input_clip_detection_enabled{false};
+    bool _output_clip_detection_enabled{false};
+    ClipDetector _clip_detector;
 };
 
 /**

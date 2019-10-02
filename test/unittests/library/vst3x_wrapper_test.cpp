@@ -2,21 +2,25 @@
 
 #include "test_utils/test_utils.h"
 #include "library/rt_event_fifo.h"
-#include "library/vst3x_host_app.cpp"
 #include "library/vst3x_utils.cpp"
 #include "test_utils/host_control_mockup.h"
 
 #define private public
 #include "library/vst3x_wrapper.cpp"
+#include "library/vst3x_host_app.cpp"
 
 using namespace sushi;
 using namespace sushi::vst3;
 
-char PLUGIN_FILE[] = "../VST3/adelay.vst3";
-char PLUGIN_NAME[] = "ADelay";
+#ifdef NDEBUG
+const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
+#else
+const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
+#endif
+const char PLUGIN_NAME[] = "ADelay";
 
-char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
-char SYNTH_PLUGIN_NAME[] = "mda JX10";
+const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
+const char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
@@ -24,35 +28,30 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 
 
 /* Quick test to test plugin loading */
-TEST(TestVst3xPluginLoader, TestLoadPlugin)
+TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    PluginLoader module_under_test(full_test_plugin_path, PLUGIN_NAME);
-    bool success;
-    PluginInstance instance;
-    std::tie(success, instance) = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
     ASSERT_TRUE(success);
-    ASSERT_TRUE(instance.processor());
-    ASSERT_TRUE(instance.component());
-    ASSERT_TRUE(instance.controller());
+    ASSERT_TRUE(module_under_test.processor());
+    ASSERT_TRUE(module_under_test.component());
+    ASSERT_TRUE(module_under_test.controller());
 
     free(full_test_plugin_path);
 }
 
 /* Test that nothing breaks if the plugin is not found */
-TEST(TestVst3xPluginLoader, TestLoadPluginFromErroneousFilename)
+TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
     /* Non existing library */
-    PluginLoader module_under_test("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
-    bool success;
-    PluginInstance instance;
-    std::tie(success, instance) = module_under_test.load_plugin();
+    PluginInstance module_under_test;
+    bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     ASSERT_FALSE(success);
 
     /* Existing library but non-existing plugin */
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    module_under_test = PluginLoader(full_test_plugin_path, "NoPluginWithThisName");
-    std::tie(success, instance) = module_under_test.load_plugin();
+    success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
     free(full_test_plugin_path);
 }
@@ -64,7 +63,7 @@ protected:
     {
     }
 
-    void SetUp(char* plugin_file, char* plugin_name)
+    void SetUp(const char* plugin_file, const char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
         _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, plugin_name);
@@ -73,6 +72,7 @@ protected:
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
+        _module_under_test->set_event_output(&_event_queue);
     }
 
     void TearDown()
@@ -81,6 +81,7 @@ protected:
     }
     HostControlMockup _host_control;
     Vst3xWrapper* _module_under_test;
+    RtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
@@ -95,6 +96,17 @@ TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
     EXPECT_EQ(DELAY_PARAM_ID, parameters[0]->id());
     EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
     EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_module_under_test->_bypass_parameter.id));
+
+    auto descriptor = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(descriptor);
+    EXPECT_EQ(DELAY_PARAM_ID, descriptor->id());
+
+    descriptor = _module_under_test->parameter_from_id(DELAY_PARAM_ID);
+    ASSERT_TRUE(descriptor);
+    EXPECT_EQ(DELAY_PARAM_ID, descriptor->id());
+
+    descriptor = _module_under_test->parameter_from_id(12345);
+    ASSERT_FALSE(descriptor);
 }
 
 TEST_F(TestVst3xWrapper, TestProcessing)
@@ -115,6 +127,33 @@ TEST_F(TestVst3xWrapper, TestProcessing)
     EXPECT_FLOAT_EQ(0.0f, out_buffer.channel(1)[0]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(0)[1]);
     EXPECT_FLOAT_EQ(1.0f, out_buffer.channel(1)[1]);
+}
+
+TEST_F(TestVst3xWrapper, TestBypassProcessing)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    // The adelay example supports soft bypass.
+    EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
+    EXPECT_EQ(BYPASS_PARAM_ID, _module_under_test->_bypass_parameter.id);
+
+    // Set bypass and manually feed the generated RtEvent back to the
+    // wrapper processor as event dispatcher is not running
+    _module_under_test->set_bypassed(true);
+    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
+    EXPECT_TRUE(bypass_event.get());
+    _module_under_test->process_event(bypass_event->to_rt_event(0));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    // Manually call the event callback to send the update back to the
+    // controller, as eventloop is not running
+    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Don't test actual bypass processing because the ADelay example
+    // doesn't implement that...
 }
 
 TEST_F(TestVst3xWrapper, TestEventForwarding)
@@ -184,4 +223,85 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     EXPECT_FLOAT_EQ(120.0f, context->tempo);
     EXPECT_EQ(3, context->timeSigNumerator);
     EXPECT_EQ(4, context->timeSigDenominator);
+}
+
+TEST_F(TestVst3xWrapper, TestParameterHandling)
+{
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    _module_under_test->set_enabled(true);
+
+    auto [status, value] = _module_under_test->parameter_value_normalised(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(1.0f, value);
+
+    auto event = RtEvent::make_parameter_change_event(_module_under_test->id(), 0, DELAY_PARAM_ID, 0.5f);
+    _module_under_test->process_event(event);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    // Manually call the event callback to send the update back to the controller, as eventloop is not running
+    _module_under_test->parameter_update_callback(_module_under_test, 0);
+
+    std::tie(status, value) = _module_under_test->parameter_value(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(0.5f, value);
+
+    std::string string_repr;
+    std::tie(status, string_repr) = _module_under_test->parameter_value_formatted(DELAY_PARAM_ID);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ("0.5000", string_repr);
+}
+
+class TestVst3xUtils : public ::testing::Test
+{
+protected:
+    TestVst3xUtils() {}
+};
+
+TEST_F(TestVst3xUtils, TestNoteOnConversion)
+{
+    auto event = RtEvent::make_note_on_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_on_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOnEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOn.channel);
+    EXPECT_EQ(45, vst_event.noteOn.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOn.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOn.velocity);
+    EXPECT_EQ(0, vst_event.noteOn.length);
+    EXPECT_EQ(-1, vst_event.noteOn.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestNoteOffConversion)
+{
+    auto event = RtEvent::make_note_off_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_note_off_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kNoteOffEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.noteOff.channel);
+    EXPECT_EQ(45, vst_event.noteOff.pitch);
+    EXPECT_FLOAT_EQ(0.0f, vst_event.noteOff.tuning);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.noteOff.velocity);
+    EXPECT_EQ(-1, vst_event.noteOff.noteId);
+}
+
+TEST_F(TestVst3xUtils, TestAftertouchConversion)
+{
+    auto event = RtEvent::make_note_aftertouch_event(ObjectId(0), 12, 1, 45, 0.5f);
+    auto vst_event = convert_aftertouch_event(event.keyboard_event());
+    EXPECT_EQ(0, vst_event.busIndex);
+    EXPECT_EQ(12, vst_event.sampleOffset);
+    EXPECT_EQ(0, vst_event.ppqPosition);
+    EXPECT_EQ(0, vst_event.flags);
+    EXPECT_EQ(Steinberg::Vst::Event::kPolyPressureEvent, vst_event.type);
+    EXPECT_EQ(1, vst_event.polyPressure.channel);
+    EXPECT_EQ(45, vst_event.polyPressure.pitch);
+    EXPECT_FLOAT_EQ(0.5f, vst_event.polyPressure.pressure);
+    EXPECT_EQ(-1, vst_event.polyPressure.noteId);
 }

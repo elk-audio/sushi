@@ -16,14 +16,14 @@ namespace mind {
 // http://stackoverflow.com/questions/14808864/can-i-initialize-static-float-variable-during-runtime
 // answer from Edward A.
 
-std::string Logger::_logger_file_name = "log.txt";
+std::string Logger::_logger_file_name = "/tmp/sushi.log";
 std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
+std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
 
-
-MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
-                                              const std::string logger_name,
-                                              const std::string min_log_level)
+MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
+                                        const std::string& logger_name,
+                                        const std::string& min_log_level)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 
@@ -36,20 +36,25 @@ MIND_LOG_ERROR_CODE Logger::set_logger_params(const std::string file_name,
    
     std::string log_level_lowercase = min_log_level;
     std::transform(min_log_level.begin(), min_log_level.end(), log_level_lowercase.begin(), ::tolower);
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
+
+    Logger::_logger_file_name.assign(file_name);
+    Logger::_logger_name.assign(logger_name);
+
+    logger_instance = setup_logging();
+
+    if (logger_instance == nullptr)
+    {
+        ret = MIND_LOG_FAILED_TO_START_LOGGER;
+    }
     if (level_map.count(log_level_lowercase) > 0)
     {
-        // Logger::_min_log_level = level_map[log_level_lowercase];
         spdlog::set_level(level_map[log_level_lowercase]);
     }
     else
     {
         ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
-
-    Logger::_logger_file_name.assign(file_name);
-    Logger::_logger_name.assign(logger_name);
-
     return ret;
 }
 
@@ -58,41 +63,23 @@ std::string Logger::get_error_message(MIND_LOG_ERROR_CODE status)
     static std::string error_messages[] = 
     {
         "Ok",
-        "Invalid Log Level"
+        "Invalid Log Level",
+        "Failed to start logger"
     };
 
     return error_messages[status];
-
 }
 
-std::shared_ptr<spdlog::logger> Logger::get_logger()
+std::shared_ptr<spdlog::logger> Logger::setup_logging()
 {
-    /*
-     * Note: A static function variable avoids all initialization
-     * order issues associated with a static member variable
-     */
-    static auto spdlog_instance = setup_logging();
-    if (!spdlog_instance)
-    {
-        std::cerr << "Error, logger is not initialized properly!!! " << std::endl;
-    }
-    return spdlog_instance;
-}
-
-std::shared_ptr<spdlog::logger> setup_logging()
-{
-    /*
-     * Note, configuration parameters are defined here to guarantee
-     * that they are defined before calling get_logger()
-     */
     const int  MAX_LOG_FILE_SIZE    = 10'000'000;           // In bytes
     const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
 
-    spdlog::set_level(Logger::min_log_level());
-    auto async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(Logger::logger_name(),
-                                                        Logger::logger_file_name(),
-                                                        MAX_LOG_FILE_SIZE,
-                                                        1);
+    spdlog::set_level(_min_log_level);
+    auto async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(_logger_name,
+                                                                               _logger_file_name,
+                                                                               MAX_LOG_FILE_SIZE,
+                                                                               1);
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");

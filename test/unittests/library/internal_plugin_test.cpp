@@ -1,3 +1,5 @@
+#include <tuple>
+
 #include "gtest/gtest.h"
 
 #include "engine/transport.h"
@@ -7,6 +9,7 @@
 #undef private
 
 #include "test_utils/host_control_mockup.h"
+#include "test_utils/test_utils.h"
 
 
 using namespace sushi;
@@ -92,6 +95,14 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
     EXPECT_TRUE(value->value());
+    // Access the parameter from the external interface
+    auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(1.0f, ext_value);
+    auto [err_status, unused_value] = _module_under_test->parameter_value(45);
+    EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
+
+    DECLARE_UNUSED(unused_value);
 }
 
 TEST_F(InternalPluginTest, TestIntParameterHandling)
@@ -105,6 +116,17 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
     EXPECT_FLOAT_EQ(6.0f, value->value());
+    // Access the parameter from the external interface
+    auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(6.0f, ext_value);
+    auto [status_1, norm_value] = _module_under_test->parameter_value_normalised(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_1);
+    EXPECT_FLOAT_EQ(0.6f, norm_value);
+    auto [err_status, unused_value] = _module_under_test->parameter_value(45);
+    EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
+
+    DECLARE_UNUSED(unused_value);
 }
 
 TEST_F(InternalPluginTest, TestFloatParameterHandling)
@@ -118,4 +140,15 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 5);
     _module_under_test->process_event(event);
     EXPECT_EQ(5, value->value());
+    // Access the parameter from the external interface
+    auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_FLOAT_EQ(5.0f, ext_value);
+    auto [status_1, norm_value] = _module_under_test->parameter_value_normalised(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_1);
+    EXPECT_FLOAT_EQ(0.5f, norm_value);
+    [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);
+    EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
+
+    DECLARE_UNUSED(unused_value);
 }

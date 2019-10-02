@@ -26,6 +26,7 @@ namespace EventStatus {
 enum EventStatus : int
 {
     HANDLED_OK,
+    ERROR,
     NOT_HANDLED,
     QUEUED_HANDLING,
     UNRECOGNIZED_RECEIVER,
@@ -74,6 +75,9 @@ public:
 
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() {return false;}
+
+    /* Convertible to EngineNotification */
+    virtual bool is_engine_notification() {return false;}
 
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() {return false;}
@@ -128,10 +132,12 @@ public:
     };
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
+                  int channel,
                   float value,
                   Time timestamp) : Event(timestamp),
                                     _subtype(subtype),
                                     _processor_id(processor_id),
+                                    _channel(channel),
                                     _note(0),
                                     _velocity(value)
     {
@@ -142,11 +148,13 @@ public:
 
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
+                  int channel,
                   int note,
                   float velocity,
                   Time timestamp) : Event(timestamp),
                                     _subtype(subtype),
                                     _processor_id(processor_id),
+                                    _channel(channel),
                                     _note(note),
                                     _velocity(velocity) {}
 
@@ -166,6 +174,7 @@ public:
 
     Subtype         subtype() {return _subtype;}
     ObjectId        processor_id() {return _processor_id;}
+    int             channel() {return _channel;}
     int             note() {return _note;}
     float           velocity() {return _velocity;}
     float           value() {return _velocity;}
@@ -174,6 +183,7 @@ public:
 protected:
     Subtype         _subtype;
     ObjectId        _processor_id;
+    int             _channel;
     int             _note;
     float           _velocity;
     MidiDataByte    _midi_data;
@@ -286,16 +296,36 @@ public:
                                                                             timestamp),
                                                        _subtype(subtype) {}
 
-    virtual bool is_parameter_change_notification() override {return true;}
+    bool is_parameter_change_notification() override {return true;}
 
-    virtual bool is_parameter_change_event() override {return false;}
+    bool is_parameter_change_event() override {return false;}
 
-    virtual bool maps_to_rt_event() override {return false;}
+    bool maps_to_rt_event() override {return false;}
 
     Subtype             subtype() {return _subtype;}
 
 private:
     Subtype     _subtype;
+};
+
+class SetProcessorBypassEvent : public Event
+{
+public:
+    SetProcessorBypassEvent(ObjectId processor_id, bool bypass_enabled, Time timestamp) : Event(timestamp),
+                                                                                          _processor_id(processor_id),
+                                                                                          _bypass_enabled(bypass_enabled)
+    {}
+
+    bool maps_to_rt_event() override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) override;
+
+    ObjectId processor_id() {return _processor_id;}
+    bool bypass_enabled() {return _bypass_enabled;}
+
+private:
+    ObjectId _processor_id;
+    bool     _bypass_enabled;
 };
 
 // TODO how to handle strings and blobs here?
@@ -309,7 +339,7 @@ public:
 
     virtual bool is_engine_event() override {return true;}
 
-    virtual int execute(engine::BaseEngine*engine) = 0;
+    virtual int execute(engine::BaseEngine* engine) = 0;
 
 protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
@@ -325,7 +355,7 @@ public:
     AddTrackEvent(const std::string& name, int channels, Time timestamp) : EngineEvent(timestamp),
                                                                               _name(name),
                                                                               _channels(channels){}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
@@ -341,7 +371,7 @@ public:
     };
     RemoveTrackEvent(const std::string& name, Time timestamp) : EngineEvent(timestamp),
                                                                    _name(name) {}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
@@ -371,7 +401,7 @@ public:
                                                                       _name(name),
                                                                       _file(file),
                                                                       _processor_type(processor_type) {}
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string     _track;
@@ -395,11 +425,60 @@ public:
                                            _name(name),
                                            _track(track) {}
 
-    int execute(engine::BaseEngine*engine) override;
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
     std::string _track;
+};
+
+class ProgramChangeEvent : public EngineEvent
+{
+public:
+
+    ProgramChangeEvent(ObjectId processor_id,
+                       int program_no,
+                       Time timestamp) : EngineEvent(timestamp),
+                                         _processor_id(processor_id),
+                                         _program_no(program_no) {}
+
+    int execute(engine::BaseEngine* engine) override;
+
+    ObjectId            processor_id() {return _processor_id;}
+    int                 program_no() {return _program_no;}
+
+protected:
+    ObjectId            _processor_id;
+    int                 _program_no;
+};
+
+/* Dont instantiate this event directly */
+class EngineNotificationEvent : public Event
+{
+public:
+     bool is_engine_notification() override {return true;}
+
+protected:
+    explicit EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
+};
+
+class ClippingNotificationEvent : public EngineNotificationEvent
+{
+public:
+    enum class ClipChannelType
+    {
+        INPUT,
+        OUTPUT,
+    };
+    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                                           _channel(channel),
+                                                                                           _channel_type(channel_type) {}
+    int channel() {return _channel;}
+    ClipChannelType channel_type() {return _channel_type;}
+
+private:
+    int _channel;
+    ClipChannelType _channel_type;
 };
 
 class AsynchronousWorkEvent : public Event

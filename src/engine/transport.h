@@ -62,10 +62,22 @@ public:
     void set_tempo(float tempo) {_set_tempo = tempo; _new_tempo = true;}
 
     /**
+     * @brief Return the current set playing mode
+     * @return the current set playing mode
+     */
+    PlayingMode playing_mode() const {return _playmode;}
+
+    /**
      * @brief Set the playing mode, i.e. playing, stopped, recording etc..
      * @param mode The new playing mode.
      */
     void set_playing_mode(PlayingMode mode) {_set_playmode = mode; _new_playmode = true;}
+
+    /**
+     * @brief Return the current current mode of synchronising tempo and beats
+     * @return the current set mode of synchronisation
+     */
+    SyncMode sync_mode() const {return _sync_mode;}
 
     /**
      * @brief Set the current mode of synchronising tempo and beats

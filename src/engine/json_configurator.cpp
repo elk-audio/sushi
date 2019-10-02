@@ -80,6 +80,21 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config(const std::string& pat
         _engine->set_tempo_sync_mode(mode);
     }
 
+    if (host_config.HasMember("audio_clip_detection"))
+    {
+        const auto& clip_det = host_config["audio_clip_detection"].GetObject();
+        if (clip_det.HasMember("inputs"))
+        {
+            _engine->enable_input_clip_detection(clip_det["inputs"].GetBool());
+            MIND_LOG_INFO("Setting engine input clip detection {}", clip_det["inputs"].GetBool()? "enabled" : "disabled");
+        }
+        if (clip_det.HasMember("outputs"))
+        {
+            _engine->enable_output_clip_detection(clip_det["outputs"].GetBool());
+            MIND_LOG_INFO("Setting engine output clip detection {}", clip_det["outputs"].GetBool()? "enabled" : "disabled");
+        }
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -170,16 +185,46 @@ JsonConfigReturnStatus JsonConfigurator::load_midi(const std::string& path_to_fi
         }
     }
 
+    if(midi.HasMember("program_change_connections"))
+    {
+        for (const auto& con : midi["program_change_connections"].GetArray())
+        {
+            auto res = _midi_dispatcher->connect_pc_to_processor(con["port"].GetInt(),
+                                                                 con["plugin"].GetString(),
+                                                                 _get_midi_channel(con["channel"]));
+            if (res != MidiDispatcherStatus::OK)
+            {
+                if(res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
+                {
+                    MIND_LOG_ERROR("Invalid port \"{}\" specified specified for MIDI program change "
+                                   "channel connections in Json Config file.", con["port"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
+                MIND_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                               "connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+        }
+    }
+
     if(config["midi"].HasMember("cc_mappings"))
     {
         for (const auto& cc_map : midi["cc_mappings"].GetArray())
         {
+            bool is_relative = false;
+            if (cc_map.HasMember("mode"))
+            {
+                auto cc_mode = std::string(cc_map["mode"].GetString());
+                is_relative = (cc_mode.compare("relative") == 0);
+            }
+
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
                                                                  cc_map["plugin_name"].GetString(),
                                                                  cc_map["parameter_name"].GetString(),
                                                                  cc_map["cc_number"].GetInt(),
                                                                  cc_map["min_range"].GetFloat(),
                                                                  cc_map["max_range"].GetFloat(),
+                                                                 is_relative,
                                                                  _get_midi_channel(cc_map["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -441,7 +486,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                         data["value"].GetFloat(),
                                         timestamp);
     }
-    else if (json_event["type"] == "property_change")
+    if (json_event["type"] == "property_change")
     {
         auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
                                                                       data["property_name"].GetString());
@@ -455,18 +500,20 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                              data["value"].GetString(),
                                              timestamp);
     }
-    else if (json_event["type"] == "note_on")
+    if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
                                  processor_id,
+                                 0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);
     }
-    else if (json_event["type"] == "note_off")
+    if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
                                  processor_id,
+                                 0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
                                  timestamp);
@@ -515,7 +562,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Document& config, Jso
         rapidjson::StringBuffer string_buffer;
         invalid_config_pointer.Stringify(string_buffer);
         std::string error_node = string_buffer.GetString();
-        if(error_node == "")
+        if(error_node.empty())
         {
             MIND_LOG_ERROR("Invalid Json Config File: missing definitions in the root of the document");
         }

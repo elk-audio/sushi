@@ -12,6 +12,10 @@
 using namespace sushi;
 using namespace sushi::control_frontend;
 
+constexpr float TEST_SAMPLE_RATE = 44100;
+constexpr int OSC_TEST_SERVER_PORT = 24024;
+constexpr int OSC_TEST_SEND_PORT = 24023;
+
 class TestOSCFrontend : public ::testing::Test
 {
 protected:
@@ -29,21 +33,22 @@ protected:
         port_stream << _server_port;
         auto port_str = port_stream.str();
         _address = lo_address_new("localhost", port_str.c_str());
+        ASSERT_EQ(ControlFrontendStatus::OK, _module_under_test.init());
         _module_under_test.run();
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
     }
 
     void TearDown()
     {
+        _module_under_test.stop();
         lo_address_free(_address);
     }
-    EngineMockup _test_engine{44100};
-    int _server_port{24024};
+    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
-    OSCFrontend _module_under_test{&_test_engine};
+    OSCFrontend _module_under_test{&_test_engine, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
     EventDispatcherMockup* _test_dispatcher;
 };
-
 
 TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
 {

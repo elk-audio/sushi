@@ -34,6 +34,8 @@ struct InputConnection
     ObjectId parameter;
     float min_range;
     float max_range;
+    bool relative;
+    uint8_t virtual_abs_value;
 };
 
 struct OutputConnection
@@ -107,6 +109,18 @@ public:
                                                  int cc_no,
                                                  float min_range,
                                                  float max_range,
+                                                 bool use_relative_mode,
+                                                 int channel = midi::MidiChannel::OMNI);
+
+    /**
+    * @brief Connects midi program change messages to a processor.
+    * @brief midi_input Index to the registered midi output.
+    * @param processor The processor target
+    * @param channel If not OMNI, only the given channel will be connected.
+    * @return true if successfully forwarded midi message
+    */
+    MidiDispatcherStatus connect_pc_to_processor(int midi_input,
+                                                 const std::string &processor_name,
                                                  int channel = midi::MidiChannel::OMNI);
 
     /**
@@ -173,7 +187,8 @@ private:
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
     std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
     std::map<int, std::array<std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
-    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI +1>> _raw_routes_in;
+    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _pc_routes;
+    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _raw_routes_in;
     int _midi_inputs{0};
     int _midi_outputs{0};
 

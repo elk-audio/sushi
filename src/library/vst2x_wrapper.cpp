@@ -1,5 +1,8 @@
-#include "library/vst2x_wrapper.h"
+#ifdef SUSHI_BUILD_WITH_VST2
 
+#include "twine/twine.h"
+
+#include "library/vst2x_wrapper.h"
 #include "logging.h"
 
 namespace {
@@ -58,6 +61,9 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     // Get plugin can do:s
     int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
     _can_do_soft_bypass = (bypass == 1);
+    _number_of_programs = _plugin_handle->numPrograms;
+
+    MIND_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -130,11 +136,94 @@ void Vst2xWrapper::set_enabled(bool enabled)
 
 void Vst2xWrapper::set_bypassed(bool bypassed)
 {
-    Processor::set_bypassed(bypassed);
-    if (_can_do_soft_bypass)
+    assert(twine::is_current_thread_realtime() == false);
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId parameter_id) const
+{
+    if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
-        _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, NULL, 0.0f);
+        float value  = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(parameter_id));
+        return {ProcessorReturnCode::OK, value};
     }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+}
+
+std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value_normalised(ObjectId parameter_id) const
+{
+    return this->parameter_value(parameter_id);
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::parameter_value_formatted(ObjectId parameter_id) const
+{
+    if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
+    {
+        char buffer[kVstMaxParamStrLen] = "";
+        _vst_dispatcher(effGetParamDisplay, 0, static_cast<VstInt32>(parameter_id), buffer, 0);
+        return {ProcessorReturnCode::OK, buffer};
+    }
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+}
+
+int Vst2xWrapper::current_program() const
+{
+    if (this->supports_programs())
+    {
+        return _vst_dispatcher(effGetProgram, 0, 0, nullptr, 0);
+    }
+    return 0;
+}
+
+std::string Vst2xWrapper::current_program_name() const
+{
+    if (this->supports_programs())
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
+        return std::string(buffer);
+    }
+    return "";
+}
+
+std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int program) const
+{
+    if (this->supports_programs())
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
+        return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
+    }
+    return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
+}
+
+std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_program_names() const
+{
+    if (!this->supports_programs())
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
+    }
+    std::vector<std::string> programs;
+    for (int i = 0; i < _number_of_programs; ++i)
+    {
+        char buffer[kVstMaxProgNameLen] = "";
+        _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
+        programs.push_back(buffer);
+    }
+    return {ProcessorReturnCode::OK, programs};
+}
+
+ProcessorReturnCode Vst2xWrapper::set_program(int program)
+{
+    if (this->supports_programs() && program < _number_of_programs)
+    {
+        _vst_dispatcher(effBeginSetProgram, 0, 0, nullptr, 0);
+        /* Vst2 lacks a mechanism for signaling that the program change was successful */
+        _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
+        _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
+        return ProcessorReturnCode::OK;
+    }
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
 void Vst2xWrapper::_cleanup()
@@ -193,6 +282,15 @@ void Vst2xWrapper::process_event(RtEvent event)
             MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
+    else if(event.type() == RtEventType::SET_BYPASS)
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_can_do_soft_bypass)
+        {
+            _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
+        }
+    }
     else
     {
         MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
@@ -202,7 +300,7 @@ void Vst2xWrapper::process_event(RtEvent event)
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_bypassed && !_can_do_soft_bypass)
+    if (_can_do_soft_bypass == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
         _vst_midi_events_fifo.flush();
@@ -212,6 +310,10 @@ void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _vst_dispatcher(effProcessEvents, 0, 0, _vst_midi_events_fifo.flush(), 0.0f);
         _map_audio_buffers(in_buffer, out_buffer);
         _plugin_handle->processReplacing(_plugin_handle, _process_inputs, _process_outputs, AUDIO_CHUNK_SIZE);
+        if (_can_do_soft_bypass == false && _bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        }
     }
 }
 
@@ -257,7 +359,7 @@ VstTimeInfo* Vst2xWrapper::time_info()
 
     _time_info.samplePos          = transport->current_samples();
     _time_info.sampleRate         = _sample_rate;
-    _time_info.nanoSeconds        = std::chrono::nanoseconds(transport->current_process_time()).count();
+    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
     _time_info.ppqPos             = transport->current_beats();
     _time_info.tempo              = transport->current_tempo();
     _time_info.barStartPos        = transport->current_bar_start_beats();
@@ -310,7 +412,6 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
     }
 }
 
-
 VstSpeakerArrangementType arrangement_from_channels(int channels)
 {
     switch (channels)
@@ -334,8 +435,23 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         default:
             return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
     }
-    return kNumSpeakerArr;
 }
 
 } // namespace vst2
 } // namespace sushi
+
+#endif //SUSHI_BUILD_WITH_VST2
+#ifndef SUSHI_BUILD_WITH_VST2
+#include "library/vst2x_wrapper.h"
+#include "logging.h"
+namespace sushi {
+namespace vst2 {
+MIND_GET_LOGGER;
+ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
+{
+    /* The log print needs to be in a cpp file for initialisation order reasons */
+    MIND_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+}}}
+#endif
+
