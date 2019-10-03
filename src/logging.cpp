@@ -25,7 +25,7 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
                                         const std::string& logger_name,
                                         const std::string& min_log_level,
                                         const bool enable_flush_interval,
-                                        const int log_flush_interval)
+                                        const std::chrono::seconds log_flush_interval)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 
@@ -47,7 +47,7 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
 
     if (enable_flush_interval)
     {
-        spdlog::flush_every(std::chrono::seconds(log_flush_interval));
+        spdlog::flush_every(log_flush_interval);
     }
 
     if (logger_instance == nullptr)
