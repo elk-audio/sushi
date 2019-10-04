@@ -192,7 +192,7 @@ void apply_state(LV2Model* model, LilvState* state)
 		{
             model->play_state = LV2_PAUSE_REQUESTED;
 
-            zix_sem_wait(&model->paused);
+            model->paused.wait();
 		}
 
 		const LV2_Feature* state_features[6] = {

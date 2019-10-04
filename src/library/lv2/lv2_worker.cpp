@@ -39,7 +39,12 @@ static void* worker_func(void* data)
 	void* buf = NULL;
 	while (true)
 	{
-		zix_sem_wait(&worker->sem);
+	    // CHANGE, WRONG.
+        //std::unique_lock<std::mutex> lock(worker->sem);
+
+        worker->sem.wait();
+		//zix_sem_wait(&worker->sem);
+
 		if (model->exit)
 		{
 			break;
@@ -57,10 +62,9 @@ static void* worker_func(void* data)
 
 		zix_ring_read(worker->requests, (char*)buf, size);
 
-		zix_sem_wait(&model->work_lock);
+        std::unique_lock<std::mutex> lock(model->work_lock);
 		worker->iface->work(
 			model->instance->lv2_handle, lv2_worker_respond, worker, size, buf);
-		zix_sem_post(&model->work_lock);
 	}
 
 	free(buf);
@@ -91,7 +95,8 @@ void lv2_worker_finish(Lv2_Worker* worker)
 {
 	if (worker->threaded)
 	{
-		zix_sem_post(&worker->sem);
+        worker->sem.notify();
+		//zix_sem_post(&worker->sem);
 		zix_thread_join(worker->thread, NULL);
 	}
 }
@@ -123,15 +128,15 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
 		// Schedule a request to be executed by the worker thread
 		zix_ring_write(worker->requests, (const char*)&size, sizeof(size));
 		zix_ring_write(worker->requests, (const char*)data, size);
-		zix_sem_post(&worker->sem);
+        worker->sem.notify();
 	}
 	else
 	    {
 		// Execute work immediately in this thread
-		zix_sem_wait(&model->work_lock);
+
+		std::unique_lock<std::mutex> lock(model->work_lock);
 		worker->iface->work(
                 model->instance->lv2_handle, lv2_worker_respond, worker, size, data);
-		zix_sem_post(&model->work_lock);
 	}
 	return LV2_WORKER_SUCCESS;
 }

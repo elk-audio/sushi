@@ -97,7 +97,7 @@ static char* lv2_strjoin(const char* a, const char* b)
 static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 {
     LV2Model* model = (LV2Model*)handle;
-    std::unique_lock<std::mutex> lock(model->symap_lock); // Added by Ilias, replacing ZixSem
+    std::unique_lock<std::mutex> lock(model->symap_lock);
     const LV2_URID id = symap_map(model->symap, uri);
 
     return id;
@@ -106,7 +106,7 @@ static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 static const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
 {
     LV2Model* model = (LV2Model*)handle;
-    std::unique_lock<std::mutex> lock(model->symap_lock);  // Added by Ilias, replacing ZixSem
+    std::unique_lock<std::mutex> lock(model->symap_lock);
     const char* uri = symap_unmap(model->symap, urid);
     return uri;
 }

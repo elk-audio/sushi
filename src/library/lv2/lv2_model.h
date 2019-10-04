@@ -38,11 +38,12 @@
 #include "../../engine/base_event_dispatcher.h"
 
 #include "zix/ring.h"
-#include "zix/sem.h"
 #include "zix/thread.h"
 #include "lv2_symap.h"
 #include "lv2_evbuf.h"
 
+#include <mutex>
+#include <condition_variable>
 
 namespace sushi {
 namespace lv2 {
@@ -64,6 +65,34 @@ namespace lv2 {
 #endif
 
 class LV2Model;
+
+class Semaphore {
+public:
+    Semaphore (int count_ = 0)
+            : count(count_) {}
+
+    inline void notify()
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        count++;
+        cv.notify_one();
+    }
+
+    inline void wait()
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+
+        while(count == 0){
+            cv.wait(lock);
+        }
+        count--;
+    }
+
+private:
+    std::mutex mtx;
+    std::condition_variable cv;
+    int count;
+};
 
 /** Type of plugin control. */
 typedef enum
@@ -343,7 +372,7 @@ typedef struct {
     ZixThread thread; ///< Worker thread
 
     void* response = nullptr; ///< Worker response buffer
-    ZixSem sem;
+    Semaphore sem;
 
     const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
     bool threaded = false; ///< Run work in another thread
@@ -378,11 +407,6 @@ public:
         // on the local machine.
         /* Find all installed plugins */
         lilv_world_load_all(world);
-
-        zix_sem_init(&this->done, 0);
-
-        zix_sem_init(&this->paused, 0);
-        zix_sem_init(&this->worker.sem, 0);
 
         _initialize_map_feature();
         _initialize_worker_feature();
@@ -436,9 +460,9 @@ public:
 
     Lv2_Worker worker; ///< Worker thread implementation
     Lv2_Worker state_worker; ///< Synchronous worker for state restore
-    ZixSem work_lock; ///< Lock for plugin work() method
-    ZixSem done; ///< Exit semaphore
-    ZixSem paused; ///< Paused signal from process thread
+    std::mutex work_lock; ///< Lock for plugin work() method
+    Semaphore done; ///< Exit semaphore
+    Semaphore paused; ///< Paused signal from process thread
     Lv2_PlayState play_state; ///< Current play state
 
     char* temp_dir; ///< Temporary plugin state directory

@@ -588,7 +588,7 @@ bool Lv2Wrapper::jalv_send_to_ui(LV2Model* model, uint32_t port_index, uint32_t 
     }
 }
 
-// TODO: Curently unused
+// TODO: Currently unused
 bool Lv2Wrapper::jalv_update(LV2Model* model)
 {
 //    /* Check quit flag and close if set. */
@@ -1073,7 +1073,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         {
             case LV2_PAUSE_REQUESTED:
                 _model->play_state = LV2_PAUSED;
-                zix_sem_post(&_model->paused);
+                _model->paused.notify();
                 break;
             case LV2_PAUSED:
                 for (uint32_t p = 0; p < _model->num_ports; ++p)
