@@ -15,6 +15,7 @@
 
 namespace sushi {
 
+// TODO: This description seems stale! Is it really only used in stompbox...? Should it only...?
 /**
  * @brief internal wrapper class for StompBox instances that keeps track
  * of all the host-related configuration.
@@ -40,7 +41,7 @@ public:
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -59,7 +60,7 @@ public:
 
     /**
      * @brief Register an int typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter

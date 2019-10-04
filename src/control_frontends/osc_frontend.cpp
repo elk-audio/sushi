@@ -75,7 +75,7 @@ static int osc_send_keyboard_event(const char* /*path*/,
     }
     else if (event == "program_change")
     {
-        connection->instance->send_program_change_event(connection->processor, 0, note);
+        connection->instance->send_program_change_event(connection->processor, note);
     }
     else
     {
@@ -83,6 +83,19 @@ static int osc_send_keyboard_event(const char* /*path*/,
         return 0;
     }
     MIND_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
+    return 0;
+}
+
+static int osc_send_program_change_event(const char* /*path*/,
+                                   const char* /*types*/,
+                                   lo_arg** argv,
+                                   int /*argc*/,
+                                   void* /*data*/,
+                                   void* user_data)
+{
+    auto connection = static_cast<OscConnection*>(user_data);
+    int program_id = argv[0]->i;
+    connection->instance->send_program_change_event(connection->processor, program_id);
     return 0;
 }
 
@@ -260,14 +273,24 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
 
 }; // anonymous namespace
 
-OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
-                                                       _osc_server(nullptr),
-                                                       _server_port(DEFAULT_SERVER_PORT),
-                                                       _send_port(DEFAULT_SEND_PORT)
+OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
+                         int server_port,
+                         int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                                          _osc_server(nullptr),
+                                          _server_port(server_port),
+                                          _send_port(send_port)
+{}
+
+ControlFrontendStatus OSCFrontend::init()
 {
     std::stringstream port_stream;
     port_stream << _server_port;
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
+    if (_osc_server == nullptr)
+    {
+        MIND_LOG_ERROR("Failed to set up OSC server, Port likely in use");
+        return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
+    }
 
     std::stringstream send_port_stream;
     send_port_stream << _send_port;
@@ -275,6 +298,7 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine) : BaseControlFrontend(engin
     setup_engine_control();
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
+    return ControlFrontendStatus::OK;
 }
 
 OSCFrontend::~OSCFrontend()
@@ -377,6 +401,25 @@ bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
     return true;
 }
 
+bool OSCFrontend::connect_to_program_change(const std::string &processor_name)
+{
+    std::string osc_path = "/program/";
+    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
+    if (processor_status != engine::EngineReturnStatus::OK)
+    {
+        return false;
+    }
+    osc_path = osc_path + spaces_to_underscore(processor_name);
+    OscConnection* connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = 0;
+    connection->instance = this;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
+    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    return true;
+}
+
 void OSCFrontend::connect_all()
 {
     auto& processors = _engine->all_processors();
@@ -394,6 +437,10 @@ void OSCFrontend::connect_all()
             {
                 connect_to_string_parameter(processor.second->name(), param->name());
             }
+        }
+        if (processor.second->supports_programs())
+        {
+            connect_to_program_change(processor.second->name());
         }
     }
     auto& tracks = _engine->all_tracks();

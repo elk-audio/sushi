@@ -34,6 +34,18 @@ Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID paramet
     return Steinberg::kResultOk;
 }
 
+Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
+{
+    if (flags | Steinberg::Vst::kParamValuesChanged)
+    {
+        if (_wrapper_instance->_sync_controller_to_processor() == true)
+        {
+            return Steinberg::kResultOk;
+        }
+    }
+    return Steinberg::kResultFalse;
+}
+
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
  * But edited to follow Mind coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
@@ -41,12 +53,12 @@ class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConne
 public:
     MIND_DECLARE_NON_COPYABLE(ConnectionProxy);
 
-    explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* srcConnection) : _source_connection (srcConnection) {}
+    explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* src_connection) : _source_connection(src_connection) {}
     virtual ~ConnectionProxy() = default;
 
-    Steinberg::tresult PLUGIN_API connect(Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API disconnect(Steinberg::Vst::IConnectionPoint* other) override;
-    Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage* message) override;
+    Steinberg::tresult connect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult disconnect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult notify(Steinberg::Vst::IMessage* message) override;
 
     bool disconnect();
 
@@ -103,8 +115,6 @@ Steinberg::tresult PLUGIN_API ConnectionProxy::notify(Steinberg::Vst::IMessage* 
 {
     if (_dest_connection)
     {
-        // TODO we should test if we are in UI main thread else postpone the message
-        // Steinberg comment, maybe we should add a check here
         return _dest_connection->notify(message);
     }
     return Steinberg::kResultFalse;
@@ -116,19 +126,15 @@ bool ConnectionProxy::disconnect()
     return  status == Steinberg::kResultTrue;
 }
 
-PluginInstance::PluginInstance()
-{
-    // Constructor defined here and not in header file, otherwise we
-    // would need to put the definition of ConnectionProxy here too
-}
+PluginInstance::PluginInstance() = default;
 
 PluginInstance::~PluginInstance()
 {
-    if(_component_connection)
+    if (_component_connection)
     {
         _component_connection->disconnect();
     }
-    if(_controller_connection)
+    if (_controller_connection)
     {
         _controller_connection->disconnect();
     }
@@ -149,6 +155,13 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
         MIND_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
         return false;
     }
+    Steinberg::PFactoryInfo info;
+    if (factory->getFactoryInfo(&info) != Steinberg::kResultOk)
+    {
+        return false;
+    }
+    // In the future we might want to check for more things than just vendor name here
+    _vendor = info.vendor;
 
     auto component = load_component(factory, plugin_name);
     if (!component)
@@ -175,6 +188,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
         MIND_LOG_ERROR("Failed to load controller");
         return false;
     }
+
     res = controller->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
@@ -186,6 +200,9 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     _processor = processor;
     _controller = controller;
     _name = plugin_name;
+
+    _query_extension_interfaces();
+
     if (_connect_components() == false)
     {
         MIND_LOG_ERROR("Failed to connect component to editor");
@@ -194,26 +211,45 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     return true;
 }
 
+void PluginInstance::_query_extension_interfaces()
+{
+    Steinberg::Vst::IMidiMapping* midi_mapper;
+    auto res = _controller->queryInterface(Steinberg::Vst::IMidiMapping::iid, reinterpret_cast<void**>(&midi_mapper));
+    if (res == Steinberg::kResultOk)
+    {
+        _midi_mapper = midi_mapper;
+        MIND_LOG_INFO("Plugin supports Midi Mapping interface");
+    }
+    Steinberg::Vst::IUnitInfo* unit_info;
+    res = _controller->queryInterface(Steinberg::Vst::IUnitInfo::iid, reinterpret_cast<void**>(&unit_info));
+    if (res == Steinberg::kResultOk)
+    {
+        _unit_info = unit_info;
+        MIND_LOG_INFO("Plugin supports Unit Info interface for programs");
+    }
+}
+
 bool PluginInstance::_connect_components()
 {
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> compICP(_component);
-    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> contrICP(_controller);
-    if (!compICP || !contrICP)
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> component_connection(_component);
+    Steinberg::FUnknownPtr<Steinberg::Vst::IConnectionPoint> controller_connection(_controller);
+
+    if (!component_connection || !controller_connection)
     {
         MIND_LOG_ERROR("Failed to create connection points");
         return false;
     }
 
-    _component_connection = NEW ConnectionProxy(compICP);
-    _controller_connection = NEW ConnectionProxy(contrICP);
+    _component_connection = NEW ConnectionProxy(component_connection);
+    _controller_connection = NEW ConnectionProxy(controller_connection);
 
-    if (_component_connection->connect(contrICP) != Steinberg::kResultTrue)
+    if (_component_connection->connect(controller_connection) != Steinberg::kResultTrue)
     {
         MIND_LOG_ERROR("Failed to connect component");
     }
     else
     {
-        if (_controller_connection->connect(compICP) != Steinberg::kResultTrue)
+        if (_controller_connection->connect(component_connection) != Steinberg::kResultTrue)
         {
             MIND_LOG_ERROR("Failed to connect controller");
         }
@@ -225,6 +261,27 @@ bool PluginInstance::_connect_components()
     return false;
 }
 
+bool PluginInstance::notify_controller(Steinberg::Vst::IMessage*message)
+{
+    // This calls notify() on the component connection proxy, which is has the controller
+    // connected as its destination. So it is the controller being notified
+    auto res = _component_connection->notify(message);
+    if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool PluginInstance::notify_processor(Steinberg::Vst::IMessage*message)
+{
+    auto res = _controller_connection->notify(message);
+    if (res == Steinberg::kResultOk || res == Steinberg::kResultFalse)
+    {
+        return true;
+    }
+    return false;
+}
 
 Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
                                            const std::string& plugin_name)
@@ -271,7 +328,6 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
     /* The controller can be implemented both as a part of the component or
      * as a separate object, Steinberg recommends the latter though */
     Steinberg::Vst::IEditController* controller;
-
     auto res = component->queryInterface(Steinberg::Vst::IEditController::iid,
                                          reinterpret_cast<void**>(&controller));
     if (res == Steinberg::kResultOk)

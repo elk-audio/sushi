@@ -23,7 +23,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
     {
         pre_proc = new FloatParameterPreProcessor(min_value, max_value);
     }
-    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, min_value, max_value, pre_proc);
+    auto param = new FloatParameterDescriptor(id, label, min_value, max_value, pre_proc);
     if (!this->register_parameter(param))
     {
         return nullptr;

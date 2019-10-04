@@ -13,6 +13,8 @@
 using namespace sushi;
 using namespace engine;
 
+constexpr float TEST_SAMPLE_RATE = 48000;
+
 class DummyProcessor : public Processor
 {
 public:
@@ -53,6 +55,10 @@ class TrackTest : public ::testing::Test
 protected:
     TrackTest() {}
 
+    void SetUp()
+    {
+        _module_under_test.init(TEST_SAMPLE_RATE);
+    }
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
     Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
@@ -166,9 +172,10 @@ TEST_F(TrackTest, TestPanAndGain)
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
 
-    /* Exact values will be tested by the pan function, just verify that it had an effect */
-    EXPECT_EQ(0.0f, out.channel(LEFT_CHANNEL_INDEX)[0]);
-    EXPECT_LT(2.0f, out.channel(RIGHT_CHANNEL_INDEX)[0]);
+    /* As volume changes will be smoothed, we won't get the exact result. Just verify
+     * that it had an effect. Exact values will be tested by the pan function */
+    EXPECT_LT(out.channel(LEFT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
+    EXPECT_GT(out.channel(RIGHT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
 }
 
 TEST_F(TrackTest, TestEventProcessing)
@@ -231,22 +238,19 @@ TEST_F(TrackTest, TestEventForwarding)
     ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
 }
 
-TEST(TestStandAloneFunctions, TestApplyPanAndGain)
+TEST(TestStandAloneFunctions, TesPanAndGainCalculation)
 {
-    ChunkSampleBuffer buffer(2);
-    test_utils::fill_sample_buffer(buffer, 2.0f);
-    apply_pan_and_gain(buffer, 5.0f, 0);
-    test_utils::assert_buffer_value(10.0f, buffer);
+    auto [left_gain, right_gain] = calc_l_r_gain(5.0f, 0.0f);
+    EXPECT_FLOAT_EQ(5, left_gain);
+    EXPECT_FLOAT_EQ(5, right_gain);
 
     /* Pan hard right */
-    test_utils::fill_sample_buffer(buffer, 1.0f);
-    apply_pan_and_gain(buffer, 1.0f, 1.0f);
-    EXPECT_EQ(0.0f, buffer.channel(LEFT_CHANNEL_INDEX)[0]);
-    EXPECT_NEAR(1.41f, buffer.channel(RIGHT_CHANNEL_INDEX)[0], 0.01f);
+    std::tie(left_gain, right_gain) = calc_l_r_gain(1.0f, 1.0f);
+    EXPECT_FLOAT_EQ(0.0f, left_gain);
+    EXPECT_NEAR(1.41, right_gain, 0.01f);
 
     /* Pan mid left */
-    test_utils::fill_sample_buffer(buffer, 1.0f);
-    apply_pan_and_gain(buffer, 1.0f, -0.5f);
-    EXPECT_NEAR(1.2f, buffer.channel(LEFT_CHANNEL_INDEX)[0], 0.01f);
-    EXPECT_EQ(0.5f, buffer.channel(RIGHT_CHANNEL_INDEX)[0]);
+    std::tie(left_gain, right_gain) = calc_l_r_gain(1.0f, -0.5f);
+    EXPECT_NEAR(1.2f, left_gain, 0.01f);
+    EXPECT_FLOAT_EQ(0.5, right_gain);
 }

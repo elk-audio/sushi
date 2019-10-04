@@ -10,7 +10,6 @@
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
-#include "control_frontends/alsa_midi_frontend.h"
 #include "logging.h"
 
 namespace sushi {
@@ -18,10 +17,7 @@ namespace audio_frontend {
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
-int global_init()
-{
-    return raspa_init();
-}
+bool XenomaiRaspaFrontend::_raspa_initialised = false;
 
 AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -31,15 +27,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return ret_code;
     }
     auto raspa_config = static_cast<XenomaiRaspaFrontendConfiguration*>(_config);
-
-    // Control
-    _osc_control = std::make_unique<control_frontend::OSCFrontend>(_engine);
-    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(_midi_dispatcher);
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        return AudioFrontendStatus::MIDI_PORT_ERROR;
-    }
 
     // RASPA
     if (RASPA_N_FRAMES_PER_BUFFER != AUDIO_CHUNK_SIZE)
@@ -71,24 +58,27 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     return AudioFrontendStatus::OK;
 }
 
-
 void XenomaiRaspaFrontend::cleanup()
 {
-    _osc_control->stop();
-    _midi_frontend->stop();
-    MIND_LOG_INFO("Closing Raspa driver.");
-    raspa_close();
+    if (_raspa_initialised)
+    {
+        MIND_LOG_INFO("Closing Raspa driver.");
+        raspa_close();
+    }
+    _raspa_initialised = false;
 }
-
 
 void XenomaiRaspaFrontend::run()
 {
     raspa_start_realtime();
-    _osc_control->run();
-    _osc_control->connect_all();
-    _midi_frontend->run();
 }
 
+int XenomaiRaspaFrontend::global_init()
+{
+    auto status = raspa_init();
+    _raspa_initialised = status == 0;
+    return status;
+}
 
 void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* output)
 {
@@ -103,7 +93,6 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     _engine->process_chunk(&in_buffer, &out_buffer);
 }
 
-
 }; // end namespace audio_frontend
 }; // end namespace sushi
 
@@ -115,8 +104,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
 namespace sushi {
 namespace audio_frontend {
 MIND_GET_LOGGER;
-XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine,
-                                midi_dispatcher::MidiDispatcher* midi_dispatcher) : BaseAudioFrontend(engine, midi_dispatcher)
+XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     MIND_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");

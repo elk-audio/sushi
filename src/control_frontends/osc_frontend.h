@@ -24,10 +24,6 @@
 namespace sushi {
 namespace control_frontend {
 
-constexpr int DEFAULT_SERVER_PORT = 24024;
-constexpr int DEFAULT_SEND_PORT = 24025;
-
-
 class OSCFrontend;
 struct OscConnection
 {
@@ -39,7 +35,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine);
+    OSCFrontend(engine::BaseEngine* engine, int server_port, int send_port);
 
     ~OSCFrontend();
 
@@ -56,6 +52,15 @@ public:
 
     bool connect_to_string_parameter(const std::string &processor_name,
                                      const std::string &parameter_name);
+
+    /**
+     * @brief Connect program change messages to a specific processor.
+     *        The resulting osc path will be;
+     *        "/program/processor i (program_id)"
+     * @param processor_name Name of the processor
+     * @return
+     */
+    bool connect_to_program_change(const std::string & processor_name);
 
     /**
      * @brief Output changes from the given parameter of the given
@@ -87,6 +92,8 @@ public:
     void run() override {_start_server();}
 
     void stop() override {_stop_server();}
+
+    ControlFrontendStatus init() override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;

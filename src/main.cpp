@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <csignal>
+#include <memory>
 #include <condition_variable>
 
 #include "twine/src/twine_internal.h"
@@ -19,6 +20,8 @@
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
+#include "control_frontends/osc_frontend.h"
+#include "control_frontends/alsa_midi_frontend.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -31,6 +34,28 @@ enum class FrontendType
     JACK,
     XENOMAI_RASPA,
     NONE
+};
+
+constexpr std::array SUSHI_ENABLED_BUILD_OPTIONS = {
+#ifdef SUSHI_BUILD_WITH_VST2
+        "vst2",
+#endif
+#ifdef SUSHI_BUILD_WITH_VST3
+        "vst3",
+#endif
+#ifdef SUSHI_BUILD_WITH_LV2
+        "lv2",
+#endif
+#ifdef SUSHI_BUILD_WITH_JACK
+        "jack",
+#endif
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+        "xenomai",
+#endif
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+        "rpc control",
+#endif
+
 };
 
 bool                    exit_flag = false;
@@ -49,34 +74,28 @@ void print_sushi_headline()
     std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
 }
 
+void error_exit(const std::string& message)
+{
+    std::cerr << message << std::endl;
+    std::exit(1);
+}
+
 void print_version_and_build_info()
 {
     std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
                                 << SUSHI__VERSION_MIN << "."
                                 << SUSHI__VERSION_REV << std::endl;
-    std::vector<std::string> build_opts;
-#ifdef SUSHI_BUILD_WITH_VST3
-    build_opts.emplace_back("vst3");
-#endif
-#ifdef SUSHI_BUILD_WITH_JACK
-    build_opts.emplace_back("jack");
-#endif
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    build_opts.emplace_back("xenomai");
-#endif
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    build_opts.push_back("rpc control");
-#endif
-    std::ostringstream opts_joined;
-    for (const auto& o : build_opts)
+
+    std::cout << "Build options enabled: ";
+    for (const auto& o : SUSHI_ENABLED_BUILD_OPTIONS)
     {
-        if (&o != &build_opts[0])
+        if (o != SUSHI_ENABLED_BUILD_OPTIONS.front())
         {
-            opts_joined << ", ";
+           std::cout << ", ";
         }
-        opts_joined << o;
+        std::cout << o;
     }
-    std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
+    std::cout << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
 #ifdef SUSHI_BUILD_WITH_XENOMAI
@@ -84,19 +103,15 @@ void print_version_and_build_info()
 #endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
-#ifdef SUSHI_BUILD_WITH_LV2
-    build_opts.emplace_back("lv2");
-#endif
 }
 
 int main(int argc, char* argv[])
 {
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto ret = sushi::audio_frontend::global_init();
+    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (ret < 0)
     {
-        std::cerr << "Failed to initialize Xenomai process, err. code: " << ret << std::endl;
-        exit(ret);
+        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
     }
 #endif
 
@@ -139,6 +154,8 @@ int main(int argc, char* argv[])
     std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
+    int osc_server_port = SUSHI_OSC_SERVER_PORT;
+    int osc_send_port = SUSHI_OSC_SEND_PORT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
@@ -223,6 +240,14 @@ int main(int argc, char* argv[])
             enable_timings = true;
             break;
 
+        case OPT_IDX_OSC_RECEIVE_PORT:
+            osc_server_port = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_OSC_SEND_PORT:
+            osc_send_port = atoi(opt.arg);
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -237,7 +262,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
+    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level);
     if (ret_code != MIND_LOG_ERROR_CODE_OK)
     {
         std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
@@ -253,31 +278,37 @@ int main(int argc, char* argv[])
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
-    sushi::engine::AudioEngine engine(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
-    sushi::midi_dispatcher::MidiDispatcher midi_dispatcher(&engine);
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
+    auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine.get());
+    midi_dispatcher->set_midi_inputs(1);
+    midi_dispatcher->set_midi_outputs(1);
 
-    midi_dispatcher.set_midi_inputs(1);
-    midi_dispatcher.set_midi_outputs(1);
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine->controller());
+#endif
 
-    sushi::audio_frontend::BaseAudioFrontend* frontend;
-    sushi::audio_frontend::BaseAudioFrontendConfiguration* fe_config;
+    std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>         midi_frontend;
+    std::unique_ptr<sushi::control_frontend::OSCFrontend>           osc_frontend;
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
+
     switch (frontend_type)
     {
         case FrontendType::JACK:
         {
             MIND_LOG_INFO("Setting up Jack audio frontend");
-            fe_config = new sushi::audio_frontend::JackFrontendConfiguration(jack_client_name,
-                                                                             jack_server_name,
-                                                                             connect_ports);
-            frontend = new sushi::audio_frontend::JackFrontend(&engine, &midi_dispatcher);
+            frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
+                                                                                                 jack_server_name,
+                                                                                                 connect_ports);
+            audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
             break;
         }
 
         case FrontendType::XENOMAI_RASPA:
         {
             MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
-            fe_config = new sushi::audio_frontend::XenomaiRaspaFrontendConfiguration(debug_mode_switches);
-            frontend = new sushi::audio_frontend::XenomaiRaspaFrontend(&engine, &midi_dispatcher);
+            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches);
+            audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
             break;
         }
 
@@ -294,64 +325,89 @@ int main(int argc, char* argv[])
             {
                 MIND_LOG_INFO("Setting up offline audio frontend");
             }
-            fe_config = new sushi::audio_frontend::OfflineFrontendConfiguration(input_filename, output_filename, dummy);
-            frontend = new sushi::audio_frontend::OfflineFrontend(&engine, &midi_dispatcher);
+            frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
+                                                                                                    output_filename,
+                                                                                                    dummy);
+            audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(engine.get());
             break;
         }
 
         default:
-            std::cerr << "No audio frontend selected." << std::endl;
-            std::exit(1);
+            error_exit("No audio frontend selected.");
     }
 
-    auto fe_ret_code = frontend->init(fe_config);
-    if (fe_ret_code != sushi::audio_frontend::AudioFrontendStatus::OK)
+    auto audio_frontend_status = audio_frontend->init(frontend_config.get());
+    if (audio_frontend_status != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
-        std::cerr << "Error initializing frontend, check logs for details." << std::endl;
-        std::exit(1);
+        error_exit("Error initializing frontend, check logs for details.");
     }
 
-    sushi::jsonconfig::JsonConfigurator configurator(&engine, &midi_dispatcher);
-    auto status = configurator.load_host_config(config_filename);
+    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
+    auto status = configurator->load_host_config(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load host configuration from config file");
-        std::exit(1);
+        error_exit("Failed to load host configuration from config file");
     }
-    status = configurator.load_tracks(config_filename);
+    status = configurator->load_tracks(config_filename);
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Main: Failed to load tracks from Json config file");
-        std::exit(1);
+        error_exit("Failed to load tracks from Json config file");
     }
-    configurator.load_midi(config_filename);
+    configurator->load_midi(config_filename);
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
-        auto [status, events] = configurator.load_event_list(config_filename);
+        auto [status, events] = configurator->load_event_list(config_filename);
         if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
-            static_cast<sushi::audio_frontend::OfflineFrontend*>(frontend)->add_sequencer_events(events);
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
         }
     }
     else
     {
-        configurator.load_events(config_filename);
+        configurator->load_events(config_filename);
     }
 
     if (enable_timings)
     {
-        engine.performance_timer()->enable(true);
+        engine->performance_timer()->enable(true);
     }
 
-    frontend->connect_control_frontends();
-    frontend->run();
+    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    {
+        midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_dispatcher.get());
+
+        auto midi_ok = midi_frontend->init();
+        if (!midi_ok)
+        {
+            error_exit("Failed to setup Alsa midi frontend");
+        }
+        midi_dispatcher->set_frontend(midi_frontend.get());
+
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), osc_server_port, osc_send_port);
+        auto osc_status = osc_frontend->init();
+        if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
+        {
+            error_exit("Failed to setup OSC frontend");
+        }
+        osc_frontend->connect_all();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Start everything! //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    audio_frontend->run();
+
+    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    {
+        midi_frontend->run();
+        osc_frontend->run();
+    }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    sushi_rpc::GrpcServer rpc_server(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine.controller());
-    rpc_server.start();
+    rpc_server->start();
 #endif
-
 
     if (frontend_type != FrontendType::OFFLINE)
     {
@@ -360,7 +416,17 @@ int main(int argc, char* argv[])
         exit_notifier.wait(lock, exit_condition);
     }
 
-    frontend->cleanup();
+    ////////////////////////////////////////////////////////////////////////////////
+    // Cleanup before exiting! //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    {
+        osc_frontend->stop();
+        midi_frontend->stop();
+    }
+
+    audio_frontend->cleanup();
     MIND_LOG_INFO("Sushi exited normally.");
     return 0;
 }

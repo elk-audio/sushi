@@ -119,6 +119,7 @@ ext::SyncMode Controller::get_sync_mode() const
 
 void Controller::set_sync_mode(ext::SyncMode sync_mode)
 {
+    MIND_LOG_DEBUG("set_sync_mode called");
     auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
@@ -185,28 +186,28 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
     return returns;
 }
 
-ext::ControlStatus Controller::send_note_on(int track_id, int note, int channel, float velocity)
+ext::ControlStatus Controller::send_note_on(int track_id, int channel, int note, float velocity)
 {
     MIND_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
-                                   note, channel, velocity, IMMEDIATE_PROCESS);
+                                   channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::send_note_off(int track_id, int note, int channel, float velocity)
+ext::ControlStatus Controller::send_note_off(int track_id, int channel, int note, float velocity)
 {
     MIND_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
-                                   note, channel, velocity, IMMEDIATE_PROCESS);
+                                   channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;}
 
-ext::ControlStatus Controller::send_note_aftertouch(int track_id, int note, int channel, float value)
+ext::ControlStatus Controller::send_note_aftertouch(int track_id, int channel, int note, float value)
 {
     MIND_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
-                                   note, channel, value, IMMEDIATE_PROCESS);
+                                   channel, note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;}
 
@@ -396,10 +397,16 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
     return {ext::ControlStatus::OK, processor->bypassed()};
 }
 
-ext::ControlStatus Controller::set_processor_bypass_state(int /*processor_id*/, bool /*bypass_enabled*/)
+ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
-    MIND_LOG_DEBUG("set_processor_bypass_state called, returning ");
-    return {ext::ControlStatus::OK};
+    MIND_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
+    auto processor = _engine->mutable_processor(static_cast<ObjectId>(processor_id));
+    if (processor == nullptr)
+    {
+        return ext::ControlStatus::NOT_FOUND;
+    }
+    processor->set_bypassed(bypass_enabled);
+    return ext::ControlStatus::OK;
 }
 
 std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int processor_id) const
@@ -597,13 +604,13 @@ std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_st
 
 std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
 {
-    MIND_LOG_DEBUG("get_string_property_value called, returning ");
-    return {ext::ControlStatus::OK, "helloworld"};
+    MIND_LOG_DEBUG("get_string_property_value called");
+    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
 }
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id);
+    MIND_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
@@ -626,8 +633,8 @@ ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, 
 
 ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
 {
-    MIND_LOG_DEBUG("set_string_property_value called, returning ");
-    return ext::ControlStatus::OK;
+    MIND_LOG_DEBUG("set_string_property_value called");
+    return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const

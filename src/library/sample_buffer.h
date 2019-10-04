@@ -345,6 +345,7 @@ public:
      */
     void replace(int dest_channel, int source_channel, const SampleBuffer &source)
     {
+        assert(source_channel < source.channel_count() && dest_channel < this->channel_count());
         std::copy(source.channel(source_channel),
                   source.channel(source_channel) + size,
                   _buffer + (dest_channel * size));
@@ -421,6 +422,72 @@ public:
     }
 
     /**
+     * @brief Sums one channel of source buffer into one channel of the buffer after applying gain.
+     */
+    void add_with_gain(int dest_channel, int source_channel, const SampleBuffer& source, float gain)
+    {
+        float* source_data = source._buffer + size * source_channel;
+        float* dest_data = _buffer + size * dest_channel;
+        for (int i = 0; i < size; ++i)
+        {
+            dest_data[i] += source_data[i] * gain;
+        }
+    }
+
+    /**
+     * @brief Sums the content of SampleBuffer source into this buffer after applying a
+     *        linear gain ramp.
+     *
+     * @param source The buffer to copy from. Has to be either a 1 channel buffer or have
+     *        the same number of channels as this buffer
+     * @param start The value to start the ramp from
+     * @param end The value to end the ramp
+    */
+    void add_with_ramp(const SampleBuffer &source, float start, float end)
+    {
+        assert(source.channel_count() == 1 || source.channel_count() == _channel_count);
+
+        float inc = (end - start) / (size - 1);
+        if (source.channel_count() == 1)
+        {
+            for (int channel = 0; channel < _channel_count; ++channel)
+            {
+                float* dest = _buffer + size * channel;
+                for (int i = 0; i < size; ++i)
+                {
+                    dest[i] += source._buffer[i] * (start + i * inc);
+                }
+            }
+        } else if (source.channel_count() == _channel_count)
+        {
+            for (int channel = 0; channel < _channel_count; ++channel)
+            {
+                float* source_data = _buffer + size * channel;
+                float* dest_data = _buffer + size * channel;
+                for (int i = 0; i < size; ++i)
+                {
+                    dest_data[i] += source_data[i] * (start + i * inc);
+                }
+            }
+        }
+    }
+
+    /**
+    * @brief Sums one channel of source buffer into one channel of the buffer after applying
+    *        a linear gain ramp.
+    */
+    void add_with_ramp(int dest_channel, int source_channel, const SampleBuffer& source, float start, float end)
+    {
+        float inc = (end - start) / (size - 1);
+        float* source_data = source._buffer + size * source_channel;
+        float* dest_data = _buffer + size * dest_channel;
+        for (int i = 0; i < size; ++i)
+        {
+            dest_data[i] += source_data[i] * (start + i * inc);
+        }
+    }
+
+    /**
      * @brief Ramp the volume of all channels linearly from start to end
      * @param start The value to start the ramp from
      * @param end The value to end the ramp
@@ -430,12 +497,10 @@ public:
         float inc = (end - start) / (size - 1);
         for (int channel = 0; channel < _channel_count; ++channel)
         {
-            float vol = start;
             float* data = _buffer + size * channel;
             for (int i = 0; i < size; ++i)
             {
-                data[i] *= vol;
-                vol += inc;
+                data[i] *= start + i * inc;
             }
         }
     }

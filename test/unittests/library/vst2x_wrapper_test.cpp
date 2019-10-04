@@ -11,34 +11,32 @@
 using namespace sushi;
 using namespace sushi::vst2;
 
-// Reference output signal from VstXSynth
+// Reference output signal from TestPlugin
 // in response to NoteON C4 (60), vel=127, default parameters
-static constexpr float VSTXSYNTH_EXPECTED_OUT[2][64] = {
+static constexpr float TEST_SYNTH_EXPECTED_OUT[2][64] = {
         {
-                -0.29699999f, -0.29380956f, -0.29061913f, -0.28742871f, -0.28409326f, -0.28090283f,
-                -0.27771240f, -0.27437696f, -0.27118653f, -0.26799610f, -0.26466063f, -0.26147023f,
-                -0.25827980f, -0.25494432f, -0.25175390f, -0.24856347f, -0.24522804f, -0.24203759f,
-                -0.23884717f, -0.23551174f, -0.23232129f, -0.22913086f, -0.22579540f, -0.22260499f,
-                -0.21941455f, -0.21607910f, -0.21288869f, -0.20969824f, -0.20636280f, -0.20317237f,
-                -0.19998193f, -0.19664648f, -0.19345607f, -0.19026563f, -0.18693018f, -0.18373975f,
-                -0.18054931f, -0.17721386f, -0.17402345f, -0.17083301f, -0.16749756f, -0.16430713f,
-                -0.16111670f, -0.15792628f, -0.15459082f, -0.15140040f, -0.14820996f, -0.14487451f,
-                -0.14168409f, -0.13849366f, -0.13515820f, -0.13196778f, -0.12877734f, -0.12544189f,
-                -0.12225147f, -0.11906105f, -0.11572558f, -0.11253516f, -0.10934473f, -0.10600928f,
-                -0.10281885f, -0.09962842f, -0.09629297f, -0.09310254f
+                1, 0.999853, 0.999414, 0.998681, 0.997655, 0.996337, 0.994727, 0.992825,
+                0.990632, 0.988149, 0.985375, 0.982313, 0.978963, 0.975326, 0.971403,
+                0.967195, 0.962703, 0.95793, 0.952875, 0.947541, 0.941929, 0.936041,
+                0.929879, 0.923443, 0.916738, 0.909763, 0.902521, 0.895015, 0.887247,
+                0.879218, 0.870932, 0.86239, 0.853596, 0.844551, 0.835258, 0.825721,
+                0.815941, 0.805923, 0.795668, 0.785179, 0.774461, 0.763515, 0.752346,
+                0.740956, 0.729348, 0.717527, 0.705496, 0.693257, 0.680815, 0.668174,
+                0.655337, 0.642307, 0.62909, 0.615688, 0.602105, 0.588346, 0.574414,
+                0.560314, 0.546049, 0.531625, 0.517045, 0.502313, 0.487433, 0.472411
         },
         {
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f,
-                -0.29699999f, -0.29699999f, -0.29699999f, -0.29699999f, 0.29699999f, 0.29699999f,
-                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f,
-                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f,
-                0.29699999f, 0.29699999f, 0.29699999f, 0.29699999f
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f, 0.5f
         }
 };
 
@@ -70,21 +68,17 @@ protected:
     Vst2xWrapper* _module_under_test;
 };
 
-// TODO:
-//      Steinberg's again SDK plugin used here is very limited in functionalities,
-//      so we can't test all host controls. Add more tests after preparing an ad-hoc
-//      test plugin.
 
 TEST_F(TestVst2xWrapper, TestSetName)
 {
-    SetUp("libagain.so");
-    EXPECT_EQ("Gain", _module_under_test->name());
-    EXPECT_EQ("Gain", _module_under_test->label());
+    SetUp("libvst2_test_plugin.so");
+    EXPECT_EQ("Test Plugin", _module_under_test->name());
+    EXPECT_EQ("Test Plugin", _module_under_test->label());
 }
 
 TEST_F(TestVst2xWrapper, TestSetChannels)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 
@@ -97,7 +91,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 
 TEST_F(TestVst2xWrapper, TestParameterInitialization)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
@@ -105,13 +99,13 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 
 TEST_F(TestVst2xWrapper, TestPluginCanDos)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
 }
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
     auto handle = _module_under_test->_plugin_handle;
@@ -120,7 +114,7 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 
 TEST_F(TestVst2xWrapper, TestProcess)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
@@ -131,7 +125,7 @@ TEST_F(TestVst2xWrapper, TestProcess)
 
 TEST_F(TestVst2xWrapper, TestMonoProcess)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     ChunkSampleBuffer mono_buffer(1);
     ChunkSampleBuffer stereo_buffer(2);
 
@@ -150,7 +144,7 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
 
 TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
@@ -172,21 +166,36 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 
 TEST_F(TestVst2xWrapper, TestBypassProcessing)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
+    // Set the gain to 0.5
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.5f);
+    _module_under_test->process_event(event);
+
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
+    // Set bypass and manually feed the generated RtEvent back to the
+    // wrapper processor as event dispatcher is not running
     _module_under_test->set_bypassed(true);
-    _module_under_test->process_event(event);
+    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
+    EXPECT_TRUE(bypass_event.get());
+    _module_under_test->process_event(bypass_event->to_rt_event(0));
+    EXPECT_TRUE(_module_under_test->bypassed());
     _module_under_test->process_audio(in_buffer, out_buffer);
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Test that we are ramping up the audio to the bypass value
+    float prev_value = 0;
+    for (int i = 1; i< AUDIO_CHUNK_SIZE; ++i)
+    {
+        EXPECT_GT(out_buffer.channel(0)[i], prev_value);
+        prev_value = out_buffer.channel(0)[i];
+    }
 }
 
 TEST_F(TestVst2xWrapper, TestTimeInfo)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     _host_control._transport.set_tempo(60);
     _host_control._transport.set_time_signature({4, 4});
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
@@ -202,7 +211,7 @@ TEST_F(TestVst2xWrapper, TestTimeInfo)
 
 TEST_F(TestVst2xWrapper, TestMidiEvents)
 {
-    SetUp("libvstxsynth.so");
+    SetUp("libvst2_test_plugin.so");
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
@@ -212,11 +221,11 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
     {
         for (int j=0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
         {
-            ASSERT_FLOAT_EQ(VSTXSYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j]);
+            ASSERT_NEAR(TEST_SYNTH_EXPECTED_OUT[i][j], out_buffer.channel(i)[j], 0.00001);
         }
     }
 
-    // Send NoteOFF, VstXsynth immediately silence everything
+    // Send NoteOFF, plugin should immediately silence everything
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
@@ -224,14 +233,14 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
 
 TEST_F(TestVst2xWrapper, TestConfigurationChange)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
 }
 
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     ASSERT_FALSE(_host_control._dummy_dispatcher.got_event());
     _module_under_test->notify_parameter_change(0, 0.5f);
     auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
@@ -241,7 +250,7 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 
 TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 {
-    SetUp("libagain.so");
+    SetUp("libvst2_test_plugin.so");
     RtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
@@ -254,20 +263,20 @@ TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 
 TEST_F(TestVst2xWrapper, TestProgramManagement)
 {
-    SetUp("libvstxsynth.so");
+    SetUp("libvst2_test_plugin.so");
     ASSERT_TRUE(_module_under_test->supports_programs());
-    ASSERT_EQ(128, _module_under_test->program_count());
+    ASSERT_EQ(3, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
-    ASSERT_EQ("Basic", _module_under_test->current_program_name());
+    ASSERT_EQ("Program 1", _module_under_test->current_program_name());
     auto [status, program_name] = _module_under_test->program_name(2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    ASSERT_EQ("Basic", program_name);
+    ASSERT_EQ("Program 3", program_name);
     // Access with an invalid program number
     std::tie(status, program_name) = _module_under_test->program_name(2000);
     ASSERT_NE(ProcessorReturnCode::OK, status);
-    // Get all programs, all programs are named "Basic" in VstXSynth
+    // Get all programs,
     auto [res, programs] = _module_under_test->all_program_names();
     ASSERT_EQ(ProcessorReturnCode::OK, res);
-    ASSERT_EQ("Basic", programs[50]);
-    ASSERT_EQ(128u, programs.size());
+    ASSERT_EQ("Program 2", programs[1]);
+    ASSERT_EQ(3u, programs.size());
 }

@@ -114,13 +114,15 @@ message ParameterIdentifier {
     int32 parameter_id = 2;
 }
 
+/* 0 is reserved for "not set" in protobuf, so we don't use it for a valid response */
 message ParameterType {
     enum Type {
-        BOOL = 0;
-        INT = 1;
-        FLOAT = 2;
-        STRING_PROPERTY = 3;
-        DATA_PROPERTY = 4;
+        DUMMY = 0;
+        BOOL = 1;
+        INT = 2;
+        FLOAT = 3;
+        STRING_PROPERTY = 4;
+        DATA_PROPERTY = 5;
     }
     Type type = 1;
 }
@@ -129,25 +131,27 @@ message ParameterType {
 
 message PlayingMode {
     enum Mode {
-        STOPPED = 0;
-        PLAYING = 1;
-        RECORDING = 2;
+        DUMMY = 0;
+        STOPPED = 1;
+        PLAYING = 2;
+        RECORDING = 3;
     }
     Mode mode = 1;
 }
 
 message SyncMode {
     enum Mode {
-        INTERNAL = 0;
-        MIDI = 1;
-        LINK = 2;
+        DUMMY = 0;
+        INTERNAL = 1;
+        MIDI = 2;
+        LINK = 3;
     }
     Mode mode = 1;
 }
 
 message TimeSignature {
     int32 numerator = 1;
-    int32 denomainator = 2;
+    int32 denominator = 2;
 }
 
 message CpuTimings {
@@ -158,22 +162,22 @@ message CpuTimings {
 
 message NoteOnRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float velocity = 4;
 }
 
 message NoteOffRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float velocity = 4;
 }
 
 message NoteAftertouchRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float value = 4;
 }
 

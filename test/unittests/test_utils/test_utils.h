@@ -51,7 +51,10 @@ inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer, 
 
 inline std::string get_data_dir_path()
 {
-    char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
+    // DO NOT COMMIT - JUST FOR GETTING TESTS TO RUN ON CLION.
+    // Make general fix instead.
+    //char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");
+    char const* test_data_dir = "/home/ilias/workspaces/sushi/test/data";
     if (test_data_dir == nullptr)
     {
         EXPECT_TRUE(false) << "Can't access Test Data environment variable\n";
