@@ -47,7 +47,15 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
 
     if (enable_flush_interval)
     {
-        spdlog::flush_every(log_flush_interval);
+        if (log_flush_interval.count() > 0)
+        {
+            spdlog::flush_every(log_flush_interval);
+        }
+        else
+        {
+            return MIND_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
+        }
+        
     }
 
     if (logger_instance == nullptr)

@@ -157,8 +157,8 @@ int main(int argc, char* argv[])
     bool debug_mode_switches = false;
     int  rt_cpu_cores = 1;
     bool enable_timings = false;
-    bool enable_flush_interval = SUSHI_LOG_ENABLE_FLUSH_INTERVAL;
-    std::chrono::seconds log_flush_interval = std::chrono::seconds(SUSHI_LOG_FLUSH_INTERVAL_DEFAULT);
+    bool enable_flush_interval = false;
+    std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -187,11 +187,8 @@ int main(int argc, char* argv[])
             break;
 
         case OPT_IDX_LOG_FLUSH_INTERVAL:
-            if (std::stoi(opt.arg) > 0)
-            {
-                log_flush_interval = std::chrono::seconds(std::stoi(opt.arg));
-                enable_flush_interval = true;
-            }
+            log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
+            enable_flush_interval = true;
             break;
 
         case OPT_IDX_CONFIG_FILE:
