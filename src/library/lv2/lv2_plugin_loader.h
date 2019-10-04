@@ -46,7 +46,7 @@
 
 #include "lv2_model.h"
 
-#include "constants.h"
+#include "../constants.h"
 
 #pragma GCC diagnostic pop
 

@@ -219,16 +219,16 @@ if (${WITH_VST3})
 endif()
 
 if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2_evbuf.cpp
-                               src/library/lv2_symap.cpp
-                               src/library/zix/ring.cpp
-                               src/library/lv2_worker.cpp
-                                src/library/lv2_state.cpp
-                               src/library/lv2_features.cpp
-                               src/library/lv2_wrapper.cpp
-                               src/library/lv2_model.cpp
-                               src/library/lv2_control.cpp
-                               src/library/lv2_plugin_loader.cpp)
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_evbuf.cpp
+                               src/library/lv2/lv2_symap.cpp
+                               src/library/lv2/zix/ring.cpp
+                               src/library/lv2/lv2_worker.cpp
+                               src/library/lv2/lv2_state.cpp
+                               src/library/lv2/lv2_features.cpp
+                               src/library/lv2/lv2_wrapper.cpp
+                               src/library/lv2/lv2_model.cpp
+                               src/library/lv2/lv2_control.cpp
+                               src/library/lv2/lv2_plugin_loader.cpp)
 endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"

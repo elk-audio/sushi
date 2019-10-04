@@ -14,7 +14,7 @@
 #include "plugins/transposer_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
-#include "library/lv2_wrapper.h"
+#include "library/lv2/lv2_wrapper.h"
 
 namespace sushi {
 namespace engine {

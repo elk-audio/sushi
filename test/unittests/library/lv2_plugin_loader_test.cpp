@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "library/lv2_symap.cpp"
-#include "library/lv2_evbuf.cpp"
-#include "library/zix/ring.cpp"
-#include "library/lv2_worker.cpp"
-#include "library/lv2_plugin_loader.cpp"
+#include "library/lv2/lv2_symap.cpp"
+#include "library/lv2/lv2_evbuf.cpp"
+#include "library/lv2/zix/ring.cpp"
+#include "library/lv2/lv2_worker.cpp"
+#include "library/lv2/lv2_plugin_loader.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;

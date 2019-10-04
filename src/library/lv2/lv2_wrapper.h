@@ -11,16 +11,13 @@
 
 #include <map>
 
-#include "processor.h"
+#include "../processor.h"
 #include "lv2_plugin_loader.h"
-
 #include "lv2_evbuf.h"
-#include "../engine/base_event_dispatcher.h"
-
+#include "../../engine/base_event_dispatcher.h"
 #include "library/rt_event_fifo.h"
-
-#include "midi_encoder.h"
-#include "midi_decoder.h"
+#include "../midi_encoder.h"
+#include "../midi_decoder.h"
 
 namespace sushi {
 namespace lv2 {
