@@ -91,6 +91,8 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
 
+    _in_controls.gate_values = raspa_get_gate_values();
+
     ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, _audio_input_channels);
     ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, _audio_output_channels);
     for (int i = 0; i < _cv_input_channels; ++i)
@@ -99,6 +101,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     }
     out_buffer.clear();
     _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls);
+    raspa_set_gate_values(_out_controls.gate_values);
     /* The Xenomai/Raspa frontend outputs only positive cv */
     for (int i = 0; i < _cv_output_channels; ++i)
     {

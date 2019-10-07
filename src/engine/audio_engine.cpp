@@ -64,14 +64,12 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 inline uint32_t get_single_bit(uint32_t data, int bit)
 {
-    constexpr uint32_t INITIAL_BIT_MASK = 0x80000000;
-    return (data << bit) & INITIAL_BIT_MASK;
+    return (data >> bit) & 1U;
 }
 
-uint32_t set_single_bit(uint32_t value, uint32_t data, int bit)
+inline uint32_t set_single_bit(uint32_t data, int bit, bool value)
 {
-    uint32_t mask = 1u << bit;
-    return value? data | mask : data &mask;
+    return data ^= (- static_cast<uint32_t>(value) ^ data) & (1U << bit);
 }
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
@@ -1168,7 +1166,7 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
             case RtEventType::GATE_EVENT:
             {
                 auto typed_event = event.gate_event();
-                buffer.gate_values = set_single_bit(typed_event->value(), buffer.gate_values, typed_event->gate_no());
+                buffer.gate_values = set_single_bit(buffer.gate_values, typed_event->gate_no(), typed_event->value());
                 break;
             }
 

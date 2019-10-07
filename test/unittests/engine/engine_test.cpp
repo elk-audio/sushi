@@ -70,6 +70,21 @@ TEST_F(TestClipDetector, TestClipping)
 
 }
 
+TEST(TestEngineUtils, TestGetSingleBit)
+{
+    EXPECT_EQ(1, get_single_bit(0x0000FFFF, 0));
+    EXPECT_EQ(1, get_single_bit(0x0000FFFF, 2));
+    EXPECT_EQ(0, get_single_bit(0x0000FFFF, 16));
+    EXPECT_EQ(1, get_single_bit(0x0000FFF0, 4));
+}
+
+TEST(TestEngineUtils, TestSetSingleBit)
+{
+    EXPECT_EQ(0x00000004, set_single_bit(0x00000000, 2, true));
+    EXPECT_EQ(0x00010000, set_single_bit(0x00000000, 16, true));
+    EXPECT_EQ(0xFFFFFFFD, set_single_bit(0xFFFFFFFF, 1, false));
+    EXPECT_EQ(0xFF7F0000, set_single_bit(0xFFFF0000, 23, false));
+}
 
 /*
 * Engine tests
