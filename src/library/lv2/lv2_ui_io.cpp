@@ -1,6 +1,5 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
-#include <iostream>
 #include <csignal>
 
 #include "lv2_features.h"
@@ -12,7 +11,69 @@
 namespace sushi {
 namespace lv2 {
 
+    /* Size factor for UI ring buffers.  The ring size is a few times the size of
+   an event output to give the UI a chance to keep up. Experiments with Ingen,
+   which can highly saturate its event output, led me to this value. It
+   really ought to be enough for anybody(TM).
+*/
+#define N_BUFFER_CYCLES 16
+
 MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+
+void Lv2_UI_IO::init(float sample_rate, int midi_buf_size)
+{
+    if (_buffer_size == 0)
+    {
+        /* The UI ring is fed by plugin output ports (usually one), and the UI
+           updates roughly once per cycle.  The ring size is a few times the
+           size of the MIDI output to give the UI a chance to keep up.  The UI
+           should be able to keep up with 4 cycles, and tests show this works
+           for me, but this value might need increasing to avoid overflows.
+        */
+        _buffer_size = midi_buf_size * N_BUFFER_CYCLES;
+    }
+
+    if (_update_rate == 0.0)
+    {
+        /* Calculate a reasonable UI update frequency. */
+        ui_update_hz = sample_rate / midi_buf_size * 2.0f;
+        ui_update_hz = MAX(25.0f, ui_update_hz);
+    }
+    else
+    {
+        /* Use user-specified UI update rate. */
+        ui_update_hz = _update_rate;
+        ui_update_hz = MAX(1.0f, ui_update_hz);
+    }
+
+    /* The UI can only go so fast, clamp to reasonable limits */
+    ui_update_hz = MIN(60, ui_update_hz);
+    _buffer_size = MAX(4096, _buffer_size);
+    fprintf(stderr, "Comm buffers: %d bytes\n", _buffer_size);
+    fprintf(stderr, "Update rate:  %.01f Hz\n", ui_update_hz);
+
+    /* Create Plugin <=> UI communication buffers */
+
+
+    _ui_events = zix_ring_new(_buffer_size);
+    zix_ring_mlock(_ui_events);
+
+    _plugin_events = zix_ring_new(_buffer_size);
+    zix_ring_mlock(_plugin_events);
+}
+
+void Lv2_UI_IO::write_ui_event(const char* buf)
+{
+    if (zix_ring_write(_plugin_events, buf, sizeof(buf)) < sizeof(buf))
+    {
+        MIND_LOG_ERROR("Plugin => UI buffer overflow!");
+    }
+}
+
+void Lv2_UI_IO::set_buffer_size(uint32_t buffer_size)
+{
+    _buffer_size = MAX(_buffer_size, buffer_size * N_BUFFER_CYCLES);
+}
 
 // TODO: Currently unused
 void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body)
@@ -166,7 +227,7 @@ void Lv2_UI_IO::ui_write(void* const jalv_handle, uint32_t port_index, uint32_t 
     ev->size = buffer_size;
     memcpy(ev->body, buffer, buffer_size);
 
-    zix_ring_write(model->ui_events, buf, sizeof(buf));
+    zix_ring_write(_ui_events, buf, sizeof(buf));
 }
 
 // TODO: Currently unused.
@@ -178,12 +239,12 @@ void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
     }
 
     ControlChange ev;
-    const size_t space = zix_ring_read_space(model->ui_events);
+    const size_t space = zix_ring_read_space(_ui_events);
     for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
     {
-        zix_ring_read(model->ui_events, (char*)&ev, sizeof(ev));
+        zix_ring_read(_ui_events, (char*)&ev, sizeof(ev));
         char body[ev.size];
-        if (zix_ring_read(model->ui_events, body, ev.size) != ev.size)
+        if (zix_ring_read(_ui_events, body, ev.size) != ev.size)
         {
             fprintf(stderr, "error: Error reading from UI ring buffer\n");
             break;
@@ -320,10 +381,10 @@ bool Lv2_UI_IO::send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, 
     atom->type = type;
     atom->size = size;
 
-    if (zix_ring_write_space(model->plugin_events) >= sizeof(evbuf) + size)
+    if (zix_ring_write_space(_plugin_events) >= sizeof(evbuf) + size)
     {
-        zix_ring_write(model->plugin_events, evbuf, sizeof(evbuf));
-        zix_ring_write(model->plugin_events, (const char*)body, size);
+        zix_ring_write(_plugin_events, evbuf, sizeof(evbuf));
+        zix_ring_write(_plugin_events, (const char*)body, size);
         return true;
     }
     else
@@ -344,19 +405,19 @@ bool Lv2_UI_IO::update(LV2Model* model)
 //
 //    /* Emit UI events. */
 //    ControlChange ev;
-//    const size_t  space = zix_ring_read_space(model->plugin_events);
+//    const size_t  space = zix_ring_read_space(model->_plugin_events);
 //    for (size_t i = 0;
 //         i + sizeof(ev) < space;
 //         i += sizeof(ev) + ev.size) {
 //        /* Read event header to get the size */
-//        zix_ring_read(model->plugin_events, (char*)&ev, sizeof(ev));
+//        zix_ring_read(model->_plugin_events, (char*)&ev, sizeof(ev));
 //
 //        /* Resize read buffer if necessary */
 //        model->ui_event_buf = realloc(model->ui_event_buf, ev.size);
 //        void* const buf = model->ui_event_buf;
 //
 //        /* Read event body */
-//        zix_ring_read(model->plugin_events, (char*)buf, ev.size);
+//        zix_ring_read(model->_plugin_events, (char*)buf, ev.size);
 //
 //        if (model->opts.dump && ev.protocol == model->urids.atom_eventTransfer) {
 //            /* Dump event in Turtle to the console */
@@ -385,8 +446,7 @@ ControlID* Lv2_UI_IO::control_by_symbol(LV2Model* model, const char* sym)
 {
     for (size_t i = 0; i < model->controls.n_controls; ++i)
     {
-        if (!strcmp(lilv_node_as_string(model->controls.controls[i]->symbol),
-                    sym))
+        if (!strcmp(lilv_node_as_string(model->controls.controls[i]->symbol), sym))
         {
             return model->controls.controls[i];
         }

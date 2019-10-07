@@ -10,6 +10,7 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include "lv2_evbuf.h"
+#include "zix/ring.h"
 
 namespace sushi {
 namespace lv2 {
@@ -32,8 +33,20 @@ public:
 
     ~Lv2_UI_IO()
     {
+        if(_ui_events)
+            zix_ring_free(_ui_events);
 
+        if(_plugin_events)
+            zix_ring_free(_plugin_events);
     }
+
+    void init(float sample_rate, int _sample_rate);
+
+    void write_ui_event(const char* buf);
+
+    void set_buffer_size(uint32_t buffer_size);
+
+    // Inherited from Jalv:
 
     void set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body);
 
@@ -62,7 +75,18 @@ public:
     ControlID* control_by_symbol(LV2Model* model, const char* sym);
 
 private:
+    // void* window; ///< Window (if applicable)
+    void*  ui_event_buf; ///< Buffer for reading UI port events
 
+    uint32_t _buffer_size; ///< Plugin <= >UI communication buffer size
+    double _update_rate;  ///< UI update rate in Hz
+
+    uint32_t event_delta_t;  ///< Frames since last update sent to UI
+    float ui_update_hz;   ///< Frequency of UI updates
+
+    // TODO: use our own ringbuffer eventually.
+    ZixRing* _ui_events; ///< Port events from UI
+    ZixRing* _plugin_events; ///< Port events from plugin
 };
 
 } // end namespace lv2

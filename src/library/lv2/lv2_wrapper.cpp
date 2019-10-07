@@ -129,41 +129,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         fprintf(stderr, "UI: None\n");
     }
 
-    if (_buffer_size == 0)
-    {
-        /* The UI ring is fed by plugin output ports (usually one), and the UI
-           updates roughly once per cycle.  The ring size is a few times the
-           size of the MIDI output to give the UI a chance to keep up.  The UI
-           should be able to keep up with 4 cycles, and tests show this works
-           for me, but this value might need increasing to avoid overflows.
-        */
-        _buffer_size = _model->midi_buf_size * N_BUFFER_CYCLES;
-    }
-
-    if (_update_rate == 0.0)
-    {
-        /* Calculate a reasonable UI update frequency. */
-        _model->ui_update_hz = _model->sample_rate / _model->midi_buf_size * 2.0f;
-        _model->ui_update_hz = MAX(25.0f, _model->ui_update_hz);
-    }
-    else
-    {
-        /* Use user-specified UI update rate. */
-        _model->ui_update_hz = _update_rate;
-        _model->ui_update_hz = MAX(1.0f, _model->ui_update_hz);
-    }
-
-    /* The UI can only go so fast, clamp to reasonable limits */
-    _model->ui_update_hz = MIN(60, _model->ui_update_hz);
-    _buffer_size = MAX(4096, _buffer_size);
-    fprintf(stderr, "Comm buffers: %d bytes\n", _buffer_size);
-    fprintf(stderr, "Update rate:  %.01f Hz\n", _model->ui_update_hz);
-
-    /* Create Plugin <=> UI communication buffers */
-    _model->ui_events = zix_ring_new(_buffer_size);
-    _model->plugin_events = zix_ring_new(_buffer_size);
-    zix_ring_mlock(_model->ui_events);
-    zix_ring_mlock(_model->plugin_events);
+    _UI_IO.init(_sample_rate, _model->midi_buf_size);
 
     _create_ports(library_handle);
     _create_controls(_model, true);
@@ -268,30 +234,6 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
     lilv_node_free(patch_readable);
     lilv_node_free(patch_writable);
 }
-
-// MOST LIKELY NOT NEEDED.
-//static void signal_handler(ZIX_UNUSED int sig)
-//{
-//    zix_sem_post(exit_sem);
-//}
-//
-//static void setup_signals(Jalv* const jalv)
-//{
-//    exit_sem = &jalv->done;
-//
-//#ifdef HAVE_SIGACTION
-//    struct sigaction action;
-//    sigemptyset(&action.sa_mask);
-//    action.sa_flags   = 0;
-//    action.sa_handler = signal_handler;
-//    sigaction(SIGINT, &action, NULL);
-//    sigaction(SIGTERM, &action, NULL);
-//#else
-//    /* May not work in combination with fgets in the console interface */
-//    signal(SIGINT, signal_handler);
-//    signal(SIGTERM, signal_handler);
-//#endif
-//}
 
 void Lv2Wrapper::_fetch_plugin_name_and_label()
 {
@@ -481,7 +423,8 @@ void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
     if (min_size && lilv_node_is_int(min_size))
     {
         port->buf_size = lilv_node_as_int(min_size);
-        _buffer_size = MAX(_buffer_size, port->buf_size * N_BUFFER_CYCLES);
+
+        _UI_IO.set_buffer_size(port->buf_size);
     }
 
     lilv_node_free(min_size);
@@ -538,6 +481,16 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatte
         return {ProcessorReturnCode::OK, buffer};
     }*/
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+}
+
+bool Lv2Wrapper::supports_programs() const
+{
+    return _number_of_programs > 0;
+}
+
+int Lv2Wrapper::program_count() const
+{
+    return _number_of_programs;
 }
 
 int Lv2Wrapper::current_program() const
@@ -605,8 +558,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 void Lv2Wrapper::_cleanup()
 {
     free(_model->ports);
-    zix_ring_free(_model->ui_events);
-    zix_ring_free(_model->plugin_events);
+
     symap_free(_model->symap);
 
     // Tell plugin to stop and shutdown
@@ -819,10 +771,9 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
                         ev->protocol = 0;
                         ev->size = sizeof(float);
                         *(float*)ev->body = _current_port->control;
-                        if (zix_ring_write(_model->plugin_events, buf, sizeof(buf)) < sizeof(buf))
-                        {
-                            MIND_LOG_ERROR("Plugin => UI buffer overflow!");
-                        }
+
+                        // TODO Untested.
+                        _UI_IO.write_ui_event(buf);
                     }
                     break;
                 case TYPE_EVENT:

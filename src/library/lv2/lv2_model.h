@@ -49,12 +49,6 @@ namespace sushi {
 namespace lv2 {
 
 // From LV2Model example:
-/* Size factor for UI ring buffers.  The ring size is a few times the size of
-   an event output to give the UI a chance to keep up. Experiments with Ingen,
-   which can highly saturate its event output, led me to this value. It
-   really ought to be enough for anybody(TM).
-*/
-#define N_BUFFER_CYCLES 16
 
 #ifndef MAX
 #    define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -368,7 +362,7 @@ typedef struct {
     ZixRing* requests = nullptr; ///< Requests to the worker
     ZixRing* responses = nullptr; ///< Responses from the worker
 
-// TODO: Introduce proper thread. std::thread
+// TODO: Introduce std::thread instead - to remove Zix dependency.
     ZixThread thread; ///< Worker thread
 
     void* response = nullptr; ///< Worker response buffer
@@ -470,13 +464,10 @@ public:
 
     bool safe_restore; ///< Plugin restore() is thread-safe
 
+    // TODO: Move to ui_io?
 // TODO: The below needs re-introducing for control no?
     bool has_ui; ///< True iff a control UI is present
     Controls controls; ///< Available plugin controls
-    uint32_t event_delta_t;  ///< Frames since last update sent to UI
-    float ui_update_hz;   ///< Frequency of UI updates
-
-// void* window; ///< Window (if applicable)
 
     LilvUIs* uis; ///< All plugin UIs (RDF data)LilvInstance
     const LilvUI* ui; ///< Plugin UI (RDF data)
@@ -487,12 +478,6 @@ public:
 //  TODO: This is a separate library. Only used once for logging, I could include that later.
 //  Sratom* sratom;         ///< Atom serialiser
 //  Sratom* ui_sratom;      ///< Atom serialiser for UI thread
-
-// I either include this, or use a different ringbuffer already used in Sushi.
-    ZixRing* ui_events; ///< Port events from UI
-    ZixRing* plugin_events; ///< Port events from plugin
-
-    void*  ui_event_buf; ///< Buffer for reading UI port events
 
     uint32_t position; ///< Transport position in frames
     float bpm; ///< Transport tempo in beats per minute

@@ -69,9 +69,9 @@ public:
 
     std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
 
-    bool supports_programs() const override {return _number_of_programs > 0;}
+    bool supports_programs() const override;
 
-    int program_count() const override {return _number_of_programs;}
+    int program_count() const override;
 
     int current_program() const override;
 
@@ -145,9 +145,6 @@ private:
     std::string _plugin_path;
 
     bool show_hidden{true};
-
-    uint32_t _buffer_size; ///< Plugin <= >UI communication buffer size
-    double _update_rate;  ///< UI update rate in Hz
 
     //  VstTimeInfo _time_info;
 
