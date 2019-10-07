@@ -40,7 +40,7 @@ public:
             zix_ring_free(_plugin_events);
     }
 
-    void init(float sample_rate, int _sample_rate);
+    void init(const LilvPlugin* plugin, float sample_rate, int _sample_rate);
 
     void write_ui_event(const char* buf);
 
@@ -75,6 +75,10 @@ public:
     ControlID* control_by_symbol(LV2Model* model, const char* sym);
 
 private:
+    LilvUIs* _uis; ///< All plugin UIs (RDF data)LilvInstance
+    const LilvUI* _ui; ///< Plugin UI (RDF data)
+    const LilvNode* _ui_type; ///< Plugin UI type (unwrapped)
+
     // void* window; ///< Window (if applicable)
     void*  ui_event_buf; ///< Buffer for reading UI port events
 

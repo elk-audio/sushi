@@ -423,7 +423,7 @@ public:
 
     LilvWorld* world; ///< Lilv World
 
-    LV2_URID_Map  map; ///< URI => Int map
+    LV2_URID_Map map; ///< URI => Int map
     LV2_URID_Unmap unmap; ///< Int => URI map
 
     Symap* symap; ///< URI map
@@ -468,10 +468,6 @@ public:
 // TODO: The below needs re-introducing for control no?
     bool has_ui; ///< True iff a control UI is present
     Controls controls; ///< Available plugin controls
-
-    LilvUIs* uis; ///< All plugin UIs (RDF data)LilvInstance
-    const LilvUI* ui; ///< Plugin UI (RDF data)
-    const LilvNode* ui_type; ///< Plugin UI type (unwrapped)
 
 //  SerdEnv* env; ///< Environment for RDF printing
 

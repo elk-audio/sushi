@@ -20,8 +20,24 @@ namespace lv2 {
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-void Lv2_UI_IO::init(float sample_rate, int midi_buf_size)
+void Lv2_UI_IO::init(const LilvPlugin* plugin, float sample_rate, int midi_buf_size)
 {
+    /* Get a plugin UI */
+    _uis = lilv_plugin_get_uis(plugin);
+    _ui = lilv_uis_get(_uis, lilv_uis_begin(_uis));
+
+    /* Create ringbuffers for UI if necessary */
+    if (_ui)
+    {
+        auto ui_uri = lilv_ui_get_uri(_ui);
+        auto ui_name = lilv_node_as_uri(ui_uri);
+        fprintf(stderr, "UI: %s\n", ui_name);
+    }
+    else
+    {
+        fprintf(stderr, "UI: None\n");
+    }
+
     if (_buffer_size == 0)
     {
         /* The UI ring is fed by plugin output ports (usually one), and the UI
@@ -135,8 +151,8 @@ void Lv2_UI_IO::ui_instantiate(LV2Model* model, const char* native_ui_type, void
 		NULL
 	};
 
-	const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(jalv->ui));
-	const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(jalv->ui));
+	const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_ui));
+	const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(_ui));
 	char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
 	char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
 
@@ -145,8 +161,8 @@ void Lv2_UI_IO::ui_instantiate(LV2Model* model, const char* native_ui_type, void
 		jalv,
 		native_ui_type,
 		lilv_node_as_uri(lilv_plugin_get_uri(jalv->plugin)),
-		lilv_node_as_uri(lilv_ui_get_uri(jalv->ui)),
-		lilv_node_as_uri(jalv->ui_type),
+		lilv_node_as_uri(lilv_ui_get_uri(jalv->_ui)),
+		lilv_node_as_uri(_ui_type),
 		bundle_path,
 		binary_path,
 		ui_features);
@@ -159,12 +175,12 @@ void Lv2_UI_IO::ui_instantiate(LV2Model* model, const char* native_ui_type, void
 // TODO: Currently unused.
 bool Lv2_UI_IO::ui_is_resizable(LV2Model* model)
 {
-    if (!model->ui)
+    if (!_ui)
     {
         return false;
     }
 
-    const LilvNode* s = lilv_ui_get_uri(model->ui);
+    const LilvNode* s = lilv_ui_get_uri(_ui);
     LilvNode* p = lilv_new_uri(model->world, LV2_CORE__optionalFeature);
     LilvNode* fs = lilv_new_uri(model->world, LV2_UI__fixedSize);
     LilvNode* nrs = lilv_new_uri(model->world, LV2_UI__noUserResize);

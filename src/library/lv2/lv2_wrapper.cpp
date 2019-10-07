@@ -113,34 +113,11 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 // TODO: Re-introduce when program management is implemented for LV2.
     //_number_of_programs = _plugin_handle->numPrograms;
 
-    /* Get a plugin UI */
-    _model->uis = lilv_plugin_get_uis(_model->plugin);
-    _model->ui = lilv_uis_get(_model->uis, lilv_uis_begin(_model->uis));
-
-    /* Create ringbuffers for UI if necessary */
-    if (_model->ui)
-    {
-        auto ui_uri = lilv_ui_get_uri(_model->ui);
-        auto ui_name = lilv_node_as_uri(ui_uri);
-        fprintf(stderr, "UI: %s\n", ui_name);
-    }
-    else
-    {
-        fprintf(stderr, "UI: None\n");
-    }
-
-    _UI_IO.init(_sample_rate, _model->midi_buf_size);
+    _UI_IO.init(_model->plugin, _sample_rate, _model->midi_buf_size);
 
     _create_ports(library_handle);
     _create_controls(_model, true);
     _create_controls(_model, false);
-
-    LilvState* state = NULL;
-    if (!state)
-    {
-        /* Not restoring state, load the plugin as a preset to get default */
-        state = lilv_state_new_from_world(_model->world, &_model->map, lilv_plugin_get_uri(library_handle));
-    }
 
     // Register internal parameters
     if (!_register_parameters())
@@ -150,6 +127,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
+    auto state = lilv_state_new_from_world(_model->world, &_model->map, lilv_plugin_get_uri(library_handle));
     /* Apply loaded state to plugin instance if necessary */
     if (state)
     {
