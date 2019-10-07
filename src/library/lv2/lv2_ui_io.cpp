@@ -1,0 +1,416 @@
+#ifdef SUSHI_BUILD_WITH_LV2
+
+#include <iostream>
+#include <csignal>
+
+#include "lv2_features.h"
+#include "library/rt_event_fifo.h"
+#include "lv2_ui_io.h"
+
+#include "logging.h"
+
+namespace sushi {
+namespace lv2 {
+
+MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+
+// TODO: Currently unused
+void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body)
+{
+    LV2Model* model = control->model;
+    if (control->type == PORT && type == model->forge.Float) {
+        struct Port* port = &control->model->ports[control->index];
+        port->control = *(const float*)body;
+    } else if (control->type == PROPERTY) {
+        // Copy forge since it is used by process thread
+        LV2_Atom_Forge forge = model->forge;
+        LV2_Atom_Forge_Frame frame;
+        uint8_t buf[1024];
+        lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+
+        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Set);
+        lv2_atom_forge_key(&forge, model->urids.patch_property);
+        lv2_atom_forge_urid(&forge, control->property);
+        lv2_atom_forge_key(&forge, model->urids.patch_value);
+        lv2_atom_forge_atom(&forge, size, type);
+        lv2_atom_forge_write(&forge, body, size);
+
+        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+        ui_write(model,
+                 model->control_in,
+                 lv2_atom_total_size(atom),
+                 model->urids.atom_eventTransfer,
+                 atom);
+    }
+}
+
+// TODO Currently unused
+void Lv2_UI_IO::ui_instantiate(LV2Model* model, const char* native_ui_type, void* parent)
+{
+#ifdef HAVE_SUIL
+        jalv->ui_host = suil_host_new(jalv_ui_write, jalv_ui_port_index, NULL, NULL);
+
+	const LV2_Feature parent_feature = {
+		LV2_UI__parent, parent
+	};
+	const LV2_Feature instance_feature = {
+		NS_EXT "instance-access", lilv_instance_get_handle(jalv->instance)
+	};
+	const LV2_Feature data_feature = {
+		LV2_DATA_ACCESS_URI, &jalv->features.ext_data
+	};
+	const LV2_Feature idle_feature = {
+		LV2_UI__idleInterface, NULL
+	};
+	const LV2_Feature* ui_features[] = {
+		&jalv->features.map_feature,
+		&jalv->features.unmap_feature,
+		&instance_feature,
+		&data_feature,
+		&jalv->features.log_feature,
+		&parent_feature,
+		&jalv->features.options_feature,
+		&idle_feature,
+		NULL
+	};
+
+	const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(jalv->ui));
+	const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(jalv->ui));
+	char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
+	char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
+
+	jalv->ui_instance = suil_instance_new(
+		jalv->ui_host,
+		jalv,
+		native_ui_type,
+		lilv_node_as_uri(lilv_plugin_get_uri(jalv->plugin)),
+		lilv_node_as_uri(lilv_ui_get_uri(jalv->ui)),
+		lilv_node_as_uri(jalv->ui_type),
+		bundle_path,
+		binary_path,
+		ui_features);
+
+	lilv_free(binary_path);
+	lilv_free(bundle_path);
+#endif
+}
+
+// TODO: Currently unused.
+bool Lv2_UI_IO::ui_is_resizable(LV2Model* model)
+{
+    if (!model->ui)
+    {
+        return false;
+    }
+
+    const LilvNode* s = lilv_ui_get_uri(model->ui);
+    LilvNode* p = lilv_new_uri(model->world, LV2_CORE__optionalFeature);
+    LilvNode* fs = lilv_new_uri(model->world, LV2_UI__fixedSize);
+    LilvNode* nrs = lilv_new_uri(model->world, LV2_UI__noUserResize);
+
+    LilvNodes* fs_matches = lilv_world_find_nodes(model->world, s, p, fs);
+    LilvNodes* nrs_matches = lilv_world_find_nodes(model->world, s, p, nrs);
+
+    lilv_nodes_free(nrs_matches);
+    lilv_nodes_free(fs_matches);
+    lilv_node_free(nrs);
+    lilv_node_free(fs);
+    lilv_node_free(p);
+
+    return !fs_matches && !nrs_matches;
+}
+
+void Lv2_UI_IO::ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer)
+{
+    LV2Model* const model = (LV2Model*)jalv_handle;
+
+    if (protocol != 0 && protocol != model->urids.atom_eventTransfer)
+    {
+        fprintf(stderr, "UI write with unsupported protocol %d (%s)\n",
+                protocol, unmap_uri(model, protocol));
+        return;
+    }
+
+    if (port_index >= model->num_ports)
+    {
+        fprintf(stderr, "UI write to out of range port index %d\n",
+                port_index);
+        return;
+    }
+
+    // We no longer have command line options for module.
+    /*model->opts.dump &&*/
+    // This is just for Logging.
+    // TODO: Port to use MIND logger!
+    // TODO: It is the only code depending on sratom which I don't currently include.
+    /* if (protocol == model->urids.atom_eventTransfer)
+    {
+        const LV2_Atom* atom = (const LV2_Atom*)buffer;
+
+        char* str  = sratom_to_turtle(
+                model->sratom, &model->unmap, "jalv:", NULL, NULL,
+                atom->type, atom->size, LV2_ATOM_BODY_CONST(atom));
+
+        jalv_ansi_start(stdout, 36);
+        printf("\n## UI => Plugin (%u bytes) ##\n%s\n", atom->size, str);
+
+        jalv_ansi_reset(stdout);
+        free(str);
+    }
+    */
+
+    char buf[sizeof(ControlChange) + buffer_size];
+    ControlChange* ev = (ControlChange*)buf;
+    ev->index = port_index;
+    ev->protocol = protocol;
+    ev->size = buffer_size;
+    memcpy(ev->body, buffer, buffer_size);
+
+    zix_ring_write(model->ui_events, buf, sizeof(buf));
+}
+
+// TODO: Currently unused.
+void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
+{
+    if (!model->has_ui)
+    {
+        return;
+    }
+
+    ControlChange ev;
+    const size_t space = zix_ring_read_space(model->ui_events);
+    for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
+    {
+        zix_ring_read(model->ui_events, (char*)&ev, sizeof(ev));
+        char body[ev.size];
+        if (zix_ring_read(model->ui_events, body, ev.size) != ev.size)
+        {
+            fprintf(stderr, "error: Error reading from UI ring buffer\n");
+            break;
+        }
+        assert(ev.index < model->num_ports);
+        struct Port* const port = &model->ports[ev.index];
+        if (ev.protocol == 0)
+        {
+            assert(ev.size == sizeof(float));
+            port->control = *(float*)body;
+        }
+        else if (ev.protocol == model->urids.atom_eventTransfer)
+        {
+            LV2_Evbuf_Iterator e = lv2_evbuf_end(port->evbuf);
+            const LV2_Atom* const atom = (const LV2_Atom*)body;
+            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+        }
+        else
+        {
+            fprintf(stderr,"error: Unknown control change protocol %d\n",
+                    ev.protocol);
+        }
+    }
+}
+
+// TODO: Essentially unused passed as reference to commented code
+uint32_t Lv2_UI_IO::ui_port_index(void* const controller, const char* symbol)
+{
+    LV2Model* const model = (LV2Model*)controller;
+    struct Port* port = port_by_symbol(model, symbol);
+
+    return port ? port->index : LV2UI_INVALID_PORT_INDEX;
+}
+
+// TODO: Currently unused.
+void Lv2_UI_IO::init_ui(LV2Model* model)
+{
+    // Set initial control port values
+    for (uint32_t i = 0; i < model->num_ports; ++i)
+    {
+        if (model->ports[i].type == TYPE_CONTROL)
+        {
+            ui_port_event(model, i,
+                          sizeof(float), 0,
+                          &model->ports[i].control);
+        }
+    }
+
+    if (model->control_in != (uint32_t)-1)
+    {
+        // Send patch:Get message for initial parameters/etc
+        LV2_Atom_Forge forge = model->forge;
+        LV2_Atom_Forge_Frame frame;
+        uint8_t buf[1024];
+        lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Get);
+
+        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+        ui_write(model,
+                 model->control_in,
+                 lv2_atom_total_size(atom),
+                 model->urids.atom_eventTransfer,
+                 atom);
+
+        lv2_atom_forge_pop(&forge, &frame);
+    }
+}
+
+void  Lv2_UI_IO::ui_port_event(LV2Model* model, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer)
+{
+// TODO: Should this be populated?
+
+//    if (model->ui_instance)
+//    {
+//        suil_instance_port_event(model->ui_instance, port_index,
+//                                 buffer_size, protocol, buffer);
+//        return;
+//    }
+//    else
+//    if (protocol == 0 && (Controller*)model->ports[port_index].widget) {
+//        control_changed(model,
+//                        (Controller*)model->ports[port_index].widget,
+//                        buffer_size,
+//                        model->forge.Float,
+//                        buffer);
+//        return;
+//    }
+//    else if (protocol == 0)
+//    {
+//        return;  // No widget (probably notOnGUI)
+//    }
+//    else if (protocol != model->urids.atom_eventTransfer)
+//    {
+//        fprintf(stderr, "Unknown port event protocol\n");
+//        return;
+//    }
+//
+//    const LV2_Atom* atom = (const LV2_Atom*)buffer;
+//    if (lv2_atom_forge_is_object_type(&model->forge, atom->type))
+//    {
+//        updating = true;
+//        const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
+//        if (obj->body.otype == model->urids.patch_Set) {
+//            const LV2_Atom_URID* property = NULL;
+//            const LV2_Atom*      value    = NULL;
+//            if (!patch_set_get(model, obj, &property, &value)) {
+//                property_changed(model, property->body, value);
+//            }
+//        } else if (obj->body.otype == model->urids.patch_Put) {
+//            const LV2_Atom_Object* body = NULL;
+//            if (!patch_put_get(model, obj, &body)) {
+//                LV2_ATOM_OBJECT_FOREACH(body, prop) {
+//                    property_changed(model, prop->key, &prop->value);
+//                }
+//            }
+//        } else {
+//            printf("Unknown object type?\n");
+//        }
+//        updating = false;
+//    }
+}
+
+bool Lv2_UI_IO::send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+{
+    /* TODO (inherited): Be more discriminate about what to send */
+    char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
+    ControlChange* ev = (ControlChange*)evbuf;
+    ev->index = port_index;
+    ev->protocol = model->urids.atom_eventTransfer;
+    ev->size = sizeof(LV2_Atom) + size;
+
+    LV2_Atom* atom = (LV2_Atom*)ev->body;
+    atom->type = type;
+    atom->size = size;
+
+    if (zix_ring_write_space(model->plugin_events) >= sizeof(evbuf) + size)
+    {
+        zix_ring_write(model->plugin_events, evbuf, sizeof(evbuf));
+        zix_ring_write(model->plugin_events, (const char*)body, size);
+        return true;
+    }
+    else
+    {
+        fprintf(stderr, "Plugin => UI buffer overflow!\n");
+        return false;
+    }
+}
+
+// TODO: Currently unused
+bool Lv2_UI_IO::update(LV2Model* model)
+{
+//    /* Check quit flag and close if set. */
+//    if (zix_sem_try_wait(&model->done)) {
+//        jalv_close_ui(model);
+//        return false;
+//    }
+//
+//    /* Emit UI events. */
+//    ControlChange ev;
+//    const size_t  space = zix_ring_read_space(model->plugin_events);
+//    for (size_t i = 0;
+//         i + sizeof(ev) < space;
+//         i += sizeof(ev) + ev.size) {
+//        /* Read event header to get the size */
+//        zix_ring_read(model->plugin_events, (char*)&ev, sizeof(ev));
+//
+//        /* Resize read buffer if necessary */
+//        model->ui_event_buf = realloc(model->ui_event_buf, ev.size);
+//        void* const buf = model->ui_event_buf;
+//
+//        /* Read event body */
+//        zix_ring_read(model->plugin_events, (char*)buf, ev.size);
+//
+//        if (model->opts.dump && ev.protocol == model->urids.atom_eventTransfer) {
+//            /* Dump event in Turtle to the console */
+//            LV2_Atom* atom = (LV2_Atom*)buf;
+//            char*     str  = sratom_to_turtle(
+//                    model->ui_sratom, &model->unmap, "LV2:", NULL, NULL,
+//                    atom->type, atom->size, LV2_ATOM_BODY(atom));
+//            jalv_ansi_start(stdout, 35);
+//            printf("\n## Plugin => UI (%u bytes) ##\n%s\n", atom->size, str);
+//            jalv_ansi_reset(stdout);
+//            free(str);
+//        }
+//
+//        ui_port_event(model, ev.index, ev.size, ev.protocol, buf);
+//
+//        if (ev.protocol == 0 && model->opts.print_controls) {
+//            jalv_print_control(model, &model->ports[ev.index], *(float*)buf);
+//        }
+//    }
+
+    return true;
+}
+
+// TODO: Currently unused!
+ControlID* Lv2_UI_IO::control_by_symbol(LV2Model* model, const char* sym)
+{
+    for (size_t i = 0; i < model->controls.n_controls; ++i)
+    {
+        if (!strcmp(lilv_node_as_string(model->controls.controls[i]->symbol),
+                    sym))
+        {
+            return model->controls.controls[i];
+        }
+    }
+    return NULL;
+}
+
+} // namespace lv2
+} // namespace sushi
+
+#endif //SUSHI_BUILD_WITH_LV2
+#ifndef SUSHI_BUILD_WITH_LV2
+
+#include "lv2_ui_io.h"
+#include "logging.h"
+namespace sushi {
+namespace lv2 {
+MIND_GET_LOGGER;
+//ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
+//{
+//    /* The log print needs to be in a cpp file for initialisation order reasons */
+//    MIND_LOG_ERROR("Sushi was not built with LV2 support!");
+//    return ProcessorReturnCode::ERROR;
+//}
+}
+}
+#endif

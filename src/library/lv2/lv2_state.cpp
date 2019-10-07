@@ -167,7 +167,8 @@ static void set_port_value(const char* port_symbol,
 	{
 		// Send value to running plugin
 // TODO: Reintroduce eventually
-//		jalv_ui_write(model, port->index, sizeof(fvalue), 0, &fvalue);
+// Currently in lv2_ui_io.
+//		ui_write(model, port->index, sizeof(fvalue), 0, &fvalue);
 	}
 
 	if (model->has_ui)

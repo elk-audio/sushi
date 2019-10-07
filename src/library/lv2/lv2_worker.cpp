@@ -17,7 +17,6 @@
 #include "lv2_worker.h"
 
 #include "zix/ring.h"
-#include "zix/sem.h"
 #include "zix/thread.h"
 
 namespace sushi {
@@ -39,11 +38,7 @@ static void* worker_func(void* data)
 	void* buf = NULL;
 	while (true)
 	{
-	    // CHANGE, WRONG.
-        //std::unique_lock<std::mutex> lock(worker->sem);
-
         worker->sem.wait();
-		//zix_sem_wait(&worker->sem);
 
 		if (model->exit)
 		{
@@ -96,7 +91,6 @@ void lv2_worker_finish(Lv2_Worker* worker)
 	if (worker->threaded)
 	{
         worker->sem.notify();
-		//zix_sem_post(&worker->sem);
 		zix_thread_join(worker->thread, NULL);
 	}
 }

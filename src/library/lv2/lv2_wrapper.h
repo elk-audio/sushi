@@ -14,6 +14,7 @@
 #include "../processor.h"
 #include "lv2_plugin_loader.h"
 #include "lv2_evbuf.h"
+#include "lv2_ui_io.h"
 #include "../../engine/base_event_dispatcher.h"
 #include "library/rt_event_fifo.h"
 #include "../midi_encoder.h"
@@ -128,31 +129,7 @@ private:
     void _notify_parameter_change_rt(int parameter_index, float value);
     void _notify_parameter_change(int parameter_index, float value);
 
-    void jalv_set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body);
     void _create_controls(LV2Model *model, bool writable);
-
-    void jalv_ui_instantiate(LV2Model* model, const char* native_ui_type, void* parent);
-
-    void jalv_ui_port_event(LV2Model* jalv,
-            uint32_t port_index,
-            uint32_t buffer_size,
-            uint32_t protocol,
-            const void* buffer);
-
-    bool jalv_send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, uint32_t size, const void* body);
-
-    bool jalv_update(LV2Model* model);
-
-    void jalv_init_ui(LV2Model* model);
-    uint32_t jalv_ui_port_index(void* const controller, const char* symbol);
-
-    void jalv_apply_ui_events(LV2Model* model, uint32_t nframes);
-
-    void jalv_ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer);
-
-    bool jalv_ui_is_resizable(LV2Model* model);
-
-    ControlID* jalv_control_by_symbol(LV2Model* model, const char* sym);
 
     float _sample_rate{0};
 
@@ -184,6 +161,8 @@ private:
 *  But if there's more than one plugin, there should not be two instances of _loader, right?
 */
     PluginLoader _loader;
+
+    Lv2_UI_IO _UI_IO;
 
     // The below are all fields used in process_audio:
     int _p = 0, _i = 0, _o = 0;
