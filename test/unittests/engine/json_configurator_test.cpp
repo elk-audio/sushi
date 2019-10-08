@@ -28,9 +28,9 @@ protected:
         _engine->set_audio_input_channels(ENGINE_CHANNELS);
         _engine->set_audio_output_channels(ENGINE_CHANNELS);
         _midi_dispatcher = new MidiDispatcher(_engine);
-        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
+        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _path);
     }
 
     void TearDown()
@@ -62,14 +62,14 @@ TEST_F(TestJsonConfigurator, TestInstantiation)
 
 TEST_F(TestJsonConfigurator, TestLoadHostConfig)
 {
-    auto status = _module_under_test->load_host_config(_path);
+    auto status = _module_under_test->load_host_config();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_FLOAT_EQ(48000.0f, _engine->sample_rate());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadTracks)
 {
-    auto status = _module_under_test->load_tracks(_path);
+    auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_EQ(2, _engine->_audio_graph[0]->input_channels());
     ASSERT_EQ(2, _engine->_audio_graph[0]->output_channels());
@@ -95,11 +95,11 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
 
 TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
-    auto status = _module_under_test->load_tracks(_path);
+    auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     _midi_dispatcher->set_midi_inputs(1);
 
-    status = _module_under_test->load_midi(_path);
+    status = _module_under_test->load_midi();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
     ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
@@ -107,24 +107,9 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
 }
 
-TEST_F(TestJsonConfigurator, TestParseFile)
-{
-    /* Test Successful parsing of file */
-    rapidjson::Document config;
-    auto status = _module_under_test->_parse_file(_path, config, JsonSection::HOST_CONFIG);
-    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_TRUE(config.HasMember("tracks"));
-    ASSERT_TRUE(config.HasMember("midi"));
-    ASSERT_TRUE(config.HasMember("events"));
-
-    /* Test Unsuccessful parsing of file */
-    status = _module_under_test->_parse_file("wrong_path", config, JsonSection::HOST_CONFIG);
-    ASSERT_EQ(JsonConfigReturnStatus::INVALID_FILE, status);
-}
-
 TEST_F(TestJsonConfigurator, TestMakeChain)
 {
-    /* Create plugin track without stompboxes */
+    /* Create plugin track without processors */
     rapidjson::Document test_cfg;
     rapidjson::Value track(rapidjson::kObjectType);
     rapidjson::Value mode("mono");
@@ -283,23 +268,29 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
 
 TEST_F(TestJsonConfigurator, TestMidiSchema)
 {
-    rapidjson::Document test_cfg;
-    _module_under_test->_parse_file(_path, test_cfg, JsonSection::MIDI);
-    rapidjson::Value& track_connections = test_cfg["midi"]["track_connections"][0];
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+    auto [status, midi_cfg] =_module_under_test->_parse_section(JsonSection::MIDI);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
+    rapidjson::Document mutable_cfg;
+    mutable_cfg.SetObject();
+    rapidjson::Value val(rapidjson::kObjectType);
+    mutable_cfg.AddMember("midi", val, mutable_cfg.GetAllocator());
+    mutable_cfg["midi"].CopyFrom(midi_cfg, mutable_cfg.GetAllocator());
+
+    rapidjson::Value& track_connections = mutable_cfg["midi"]["track_connections"][0];
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
     track_connections["channel"] = "invalid";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
     track_connections["channel"] = 16;
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
 }
 
 TEST_F(TestJsonConfigurator, TestLoadEventList)
 {
     // Load the tracks first so we can find the processors
-    ASSERT_EQ(JsonConfigReturnStatus::OK, _module_under_test->load_tracks(_path));
+    ASSERT_EQ(JsonConfigReturnStatus::OK, _module_under_test->load_tracks());
 
-    auto [status, events] = _module_under_test->load_event_list(_path);
+    auto [status, events] = _module_under_test->load_event_list();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_EQ(4u, events.size());
 }
