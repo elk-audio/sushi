@@ -23,7 +23,9 @@ std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
 
 MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
                                         const std::string& logger_name,
-                                        const std::string& min_log_level)
+                                        const std::string& min_log_level,
+                                        const bool enable_flush_interval,
+                                        const std::chrono::seconds log_flush_interval)
 {
     MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
 
@@ -42,6 +44,19 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     Logger::_logger_name.assign(logger_name);
 
     logger_instance = setup_logging();
+
+    if (enable_flush_interval)
+    {
+        if (log_flush_interval.count() > 0)
+        {
+            spdlog::flush_every(log_flush_interval);
+        }
+        else
+        {
+            return MIND_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
+        }
+        
+    }
 
     if (logger_instance == nullptr)
     {
