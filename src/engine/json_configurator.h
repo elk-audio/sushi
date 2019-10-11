@@ -62,7 +62,7 @@ public:
     ~JsonConfigurator() {}
 
     /**
-     * @brief Reads the json config  and retuns all audio frontend configuration options
+     * @brief Reads the json config  and returns all audio frontend configuration options
      *        that are not set on the audio engine directly
      * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
      *         JsonConfigReturnStatus::OK

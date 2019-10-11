@@ -289,7 +289,11 @@ int main(int argc, char* argv[])
     auto [audio_config_status, audio_config] = configurator->load_audio_config();
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        error_exit("Error reading audio or host config, check logs for details.");
+        if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
+        {
+            error_exit("Error reading config file, invalid file: " + config_filename);
+        }
+        error_exit("Error reading host config, check logs for details.");
     }
     int cv_inputs = audio_config.cv_inputs.value_or(0);
     int cv_outputs = audio_config.cv_outputs.value_or(0);
@@ -356,24 +360,40 @@ int main(int argc, char* argv[])
         error_exit("Failed to load host configuration from config file");
     }
     status = configurator->load_tracks();
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load tracks from Json config file");
     }
-    configurator->load_midi();
-    configurator->load_cv_gate();
+    status = configurator->load_midi();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    {
+        error_exit("Failed to load MIDI mapping from Json config file");
+    }
+    status = configurator->load_cv_gate();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
+    {
+        error_exit("Failed to load CV and Gate configuration");
+    }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator->load_event_list();
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
+        }
+        else
+        {
+            error_exit("Failed to load Event list from Json config file");
         }
     }
     else
     {
-        configurator->load_events();
+        status = configurator->load_events();
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        {
+            error_exit("Failed to load Events from Json config file");
+        }
     }
     configurator.reset();
 
