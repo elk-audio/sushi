@@ -311,10 +311,6 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wait_for_workers_idle();
-    }
     auto engine_timestamp = _process_timer.start_timer();
 
     RtEvent in_event;
@@ -347,6 +343,11 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, Sampl
         {
             track->render();
         }
+    }
+
+    if (_multicore_processing)
+    {
+        _worker_pool->wait_for_workers_idle();
     }
 
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
