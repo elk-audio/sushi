@@ -359,20 +359,31 @@ int main(int argc, char* argv[])
     {
         error_exit("Failed to load tracks from Json config file");
     }
-
-    configurator->load_midi();
+    status = configurator->load_midi();
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    {
+        error_exit("Failed to load MIDI mapping from Json config file");
+    }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator->load_event_list();
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
+        }
+        else
+        {
+            error_exit("Failed to load Event list from Json config file");
         }
     }
     else
     {
-        configurator->load_events();
+        status = configurator->load_events();
+        if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        {
+            error_exit("Failed to load Events from Json config file");
+        }
     }
     configurator.reset();
 
