@@ -32,14 +32,14 @@ int scale_point_cmp(const ScalePoint *a, const ScalePoint *b)
     return 1;
 }
 
-ControlID *new_port_control(LV2Model *model, uint32_t index)
+ControlID* new_port_control(Port* port, LV2Model *model, uint32_t index)
 {
-    struct Port *port = &model->ports[index];
-    const LilvPort *lport = port->lilv_port;
-    const LilvPlugin *plug = model->plugin;
-    const Lv2_Host_Nodes *nodes = &model->nodes;
+    const LilvPort* lport = port->get_lilv_port();
+    const LilvPlugin* plug = model->plugin;
+    const Lv2_Host_Nodes* nodes = &model->nodes;
 
-    ControlID *id = (ControlID *) calloc(1, sizeof(ControlID));
+    // TODO: Refactor Calloc!
+    ControlID* id = (ControlID*) calloc(1, sizeof(ControlID));
     id->model = model;
     id->type = PORT;
     id->node = lilv_node_duplicate(lilv_port_get_node(plug, lport));

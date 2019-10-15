@@ -63,7 +63,7 @@ return 0;
    (Inherited) TODO: Build an index to make this faster, currently O(n) which may be
    a problem when restoring the state of plugins with many ports.
 */
-struct Port* port_by_symbol(LV2Model* model, const char* sym);
+Port* port_by_symbol(LV2Model* model, const char* sym);
 
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,

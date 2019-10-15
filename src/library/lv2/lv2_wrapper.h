@@ -84,13 +84,8 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
-    /**
-    * @brief Allocates LV2 port buffers (only necessary for MIDI)
-    */
-    void _allocate_port_buffers(LV2Model *model);
-
     void _create_ports(const LilvPlugin *plugin);
-    void _create_port(const LilvPlugin *plugin, int port_index, float default_value);
+    std::unique_ptr<Port> _create_port(const LilvPlugin *plugin, int port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -143,8 +138,6 @@ private:
     int _number_of_programs{0};
 
     std::string _plugin_path;
-
-    bool show_hidden{true};
 
     //  VstTimeInfo _time_info;
 

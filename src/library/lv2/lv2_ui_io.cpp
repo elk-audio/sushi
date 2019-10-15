@@ -96,7 +96,7 @@ void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID ty
 {
     LV2Model* model = control->model;
     if (control->type == PORT && type == model->forge.Float) {
-        struct Port* port = &control->model->ports[control->index];
+        Port* port = control->model->ports[control->index].get();
         port->control = *(const float*)body;
     } else if (control->type == PROPERTY) {
         // Copy forge since it is used by process thread
@@ -266,7 +266,7 @@ void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
             break;
         }
         assert(ev.index < model->num_ports);
-        struct Port* const port = &model->ports[ev.index];
+        Port* port = model->ports[ev.index].get();
         if (ev.protocol == 0)
         {
             assert(ev.size == sizeof(float));
@@ -274,7 +274,7 @@ void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
         }
         else if (ev.protocol == model->urids.atom_eventTransfer)
         {
-            LV2_Evbuf_Iterator e = lv2_evbuf_end(port->evbuf);
+            LV2_Evbuf_Iterator e = lv2_evbuf_end(port->_evbuf);
             const LV2_Atom* const atom = (const LV2_Atom*)body;
             lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
                             (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
@@ -293,7 +293,7 @@ uint32_t Lv2_UI_IO::ui_port_index(void* const controller, const char* symbol)
     LV2Model* const model = (LV2Model*)controller;
     struct Port* port = port_by_symbol(model, symbol);
 
-    return port ? port->index : LV2UI_INVALID_PORT_INDEX;
+    return port ? port->getIndex() : LV2UI_INVALID_PORT_INDEX;
 }
 
 // TODO: Currently unused.
@@ -302,11 +302,11 @@ void Lv2_UI_IO::init_ui(LV2Model* model)
     // Set initial control port values
     for (uint32_t i = 0; i < model->num_ports; ++i)
     {
-        if (model->ports[i].type == TYPE_CONTROL)
+        if (model->ports[i]->getType() == TYPE_CONTROL)
         {
             ui_port_event(model, i,
                           sizeof(float), 0,
-                          &model->ports[i].control);
+                          &model->ports[i]->control);
         }
     }
 

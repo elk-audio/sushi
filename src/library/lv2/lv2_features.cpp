@@ -15,12 +15,12 @@ namespace lv2 {
 
     MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-struct Port* port_by_symbol(LV2Model* model, const char* sym)
+Port* port_by_symbol(LV2Model* model, const char* sym)
 {
     for (uint32_t i = 0; i < model->num_ports; ++i)
     {
-        struct Port* const port = &model->ports[i];
-        const LilvNode* port_sym = lilv_port_get_symbol(model->plugin, port->lilv_port);
+        Port* port = model->ports[i].get();
+        const LilvNode* port_sym = lilv_port_get_symbol(model->plugin, port->get_lilv_port());
 
         if (!strcmp(lilv_node_as_string(port_sym), sym))
         {
@@ -28,7 +28,7 @@ struct Port* port_by_symbol(LV2Model* model, const char* sym)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 int lv2_vprintf(LV2_Log_Handle handle,

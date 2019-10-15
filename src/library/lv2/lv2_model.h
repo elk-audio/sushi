@@ -9,8 +9,10 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include <exception>
 #include <map>
 #include <mutex>
+#include <condition_variable>
 
 // Temporary - just to check that it finds them.
 #include <lilv-0/lilv/lilv.h>
@@ -40,10 +42,8 @@
 #include "zix/ring.h"
 #include "zix/thread.h"
 #include "lv2_symap.h"
+#include "lv2_port.h"
 #include "lv2_evbuf.h"
-
-#include <mutex>
-#include <condition_variable>
 
 namespace sushi {
 namespace lv2 {
@@ -130,7 +130,7 @@ typedef struct
     bool is_readable; ///< Readable (output)
 } ControlID;
 
-ControlID* new_port_control(LV2Model* model, uint32_t index);
+ControlID* new_port_control(Port* port, LV2Model* model, uint32_t index);
 
 ControlID* new_property_control(LV2Model* model, const LilvNode* property);
 
@@ -154,42 +154,6 @@ typedef struct
     uint32_t size;
     uint8_t  body[];
 } ControlChange;
-
-enum PortFlow
-{
-    FLOW_UNKNOWN,
-    FLOW_INPUT,
-    FLOW_OUTPUT
-};
-
-enum PortType
-{
-    TYPE_UNKNOWN,
-    TYPE_CONTROL,
-    TYPE_AUDIO,
-    TYPE_EVENT,
-    TYPE_CV
-};
-
-class Port
-{
-public:
-    const LilvPort* lilv_port; ///< LV2 port
-    enum PortType type; ///< Data type
-    enum PortFlow flow; ///< Data flow direction
-
-    LV2_Evbuf* evbuf; ///< For MIDI ports, otherwise NULL
-
-    void* widget; ///< Control widget, if applicable
-    int buf_size; ///< Custom buffer size, or 0
-    int index; ///< Port index
-    float control; ///< For control ports, otherwise 0.0f
-
-    // For ranges. Only used in control ports.
-    float def{1.0f};
-    float max{1.0f};
-    float min{0.0f};
-};
 
 typedef struct
 {
@@ -434,7 +398,7 @@ public:
 
     LilvInstance* instance{nullptr}; ///< Plugin instance (shared library)
 
-    struct Port* ports; ///< Port array of size num_ports
+    std::vector<std::unique_ptr<Port>> ports; ///< Port array of size num_ports
 
     int midi_buf_size{4096}; ///< Size of MIDI port buffers
 

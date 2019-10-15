@@ -18,6 +18,7 @@
 
 #include "lv2_state.h"
 #include "lv2_model.h"
+#include "lv2_port.h"
 #include "lv2_features.h"
 
 namespace sushi {
@@ -31,13 +32,14 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 	return lv2_strjoin(model->save_dir ? model->save_dir : model->temp_dir, path);
 }
 
+// This one has a footprint as required by lilv.
 static const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
     LV2Model* model = (LV2Model*)user_data;
 
-	struct Port* port = port_by_symbol(model, port_symbol);
+	Port* port = port_by_symbol(model, port_symbol);
 
-	if (port && port->flow == FLOW_INPUT && port->type == TYPE_CONTROL)
+	if (port && port->getFlow() == FLOW_INPUT && port->getType() == TYPE_CONTROL)
 	{
 		*size = sizeof(float);
 		*type = model->forge.Float;
@@ -152,7 +154,7 @@ static void set_port_value(const char* port_symbol,
 
 	if (model->play_state != LV2_RUNNING)
 	{
-		// Set value on port struct directly
+		// Set value on port directly
 		port->control = fvalue;
 	}
 	else

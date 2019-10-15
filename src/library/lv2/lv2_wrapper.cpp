@@ -1,11 +1,11 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include <exception>
 #include <math.h>
 #include <iostream>
-#include <csignal>
 
-#include "lv2_features.h"
 #include "lv2_wrapper.h"
+#include "lv2_port.h"
 #include "lv2_worker.h"
 #include "lv2_state.h"
 
@@ -36,34 +36,6 @@ static bool feature_is_supported(LV2Model* model, const char* uri)
         }
     }
     return false;
-}
-
-void Lv2Wrapper::_allocate_port_buffers(LV2Model* model)
-{
-    for (int i = 0; i < model->num_ports; ++i)
-    {
-        struct Port* const port = &model->ports[i];
-
-        switch (port->type)
-        {
-            case TYPE_EVENT: {
-                lv2_evbuf_free(port->evbuf);
-                const size_t buf_size = (port->buf_size > 0)
-                                        ? port->buf_size
-                                        : model->midi_buf_size;
-                port->evbuf = lv2_evbuf_new(
-                        buf_size,
-                        model->map.map(model->map.handle,
-                                      lilv_node_as_string(model->nodes.atom_Chunk)),
-                        model->map.map(model->map.handle,
-                                      lilv_node_as_string(model->nodes.atom_Sequence)));
-                lilv_instance_connect_port(
-                        model->instance, i, lv2_evbuf_get_buffer(port->evbuf));
-            }
-            default:
-                break;
-        }
-    }
 }
 
 ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
@@ -248,7 +220,6 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
     _max_output_channels = 0;
 
     _model->num_ports = lilv_plugin_get_num_ports(plugin);
-    _model->ports = (struct Port*)calloc(_model->num_ports, sizeof(struct Port));
 
     float* default_values = (float*)calloc(lilv_plugin_get_num_ports(plugin), sizeof(float));
 
@@ -256,7 +227,8 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 
     for (int i = 0; i < _model->num_ports; ++i)
     {
-        _create_port(plugin, i, default_values[i]);
+        auto newPort = _create_port(plugin, i, default_values[i]);
+        _model->ports.emplace_back(std::move(newPort));
     }
 
     const LilvPort* control_input = lilv_plugin_get_port_by_designation(
@@ -279,135 +251,50 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 
     free(default_values);
 
-    if (!_model->buf_size_set) {
-        _allocate_port_buffers(_model);
-    }
-
     // Channel setup derived from ports:
     _current_input_channels = _max_input_channels;
     _current_output_channels = _max_output_channels;
 }
 
 /**
-   Create a port structure from data description. This is called before plugin
+   Create a port from data description. This is called before plugin
    and Jack instantiation. The remaining instance-specific setup
    (e.g. buffers) is done later in activate_port().
 */
-void Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
+std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
-    struct Port* const port = &(_model->ports[port_index]);
+    std::unique_ptr<Port> to_return = nullptr;
 
-    port->lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
-    port->index = port_index;
-    port->control = 0.0f;
-    port->flow = FLOW_UNKNOWN;
-
-    // The below are not used in lv2apply example.
-    //port->sys_port = NULL; // For audio/MIDI ports, otherwise NULL
-
-    port->evbuf = nullptr; // For MIDI ports, otherwise NULL
-
-    port->buf_size = 0; // Custom buffer size, or 0
-
-    const bool optional = lilv_port_has_property(plugin, port->lilv_port, _model->nodes.lv2_connectionOptional);
-
-    /* Set the port flow (input or output) */
-    if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_InputPort))
+    try
     {
-        port->flow = FLOW_INPUT;
-    }
-    else if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_OutputPort))
-    {
-        port->flow = FLOW_OUTPUT;
-    }
-    else if (!optional)
-    {
-        assert(false);
-        MIND_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
-        _cleanup();
-    }
+        to_return = std::make_unique<Port>(plugin, port_index, default_value, _model);
 
-    const bool hidden = !show_hidden &&
-                        lilv_port_has_property(plugin, port->lilv_port, _model->nodes.pprops_notOnGUI);
-
-    /* Set control values */
-    if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_ControlPort))
-    {
-        port->type = TYPE_CONTROL;
-
-// TODO: min max def are used also in the Jalv control structure. Remove these eventually?
-        LilvNode* minNode;
-        LilvNode* maxNode;
-        LilvNode* defNode;
-
-        lilv_port_get_range(plugin, port->lilv_port, &defNode, &minNode, &maxNode);
-
-        if(defNode != nullptr)
-            port->def = lilv_node_as_float(defNode);
-
-        if(maxNode != nullptr)
-            port->max = lilv_node_as_float(maxNode);
-
-        if(minNode != nullptr)
-            port->min = lilv_node_as_float(minNode);
-
-        port->control = isnan(default_value) ? port->def : default_value;
-
-        lilv_node_free(minNode);
-        lilv_node_free(maxNode);
-        lilv_node_free(defNode);
-
-        if (!hidden)
+        if(to_return->getType() == TYPE_AUDIO)
         {
-            add_control(&_model->controls, new_port_control(_model, port->index));
+            if (to_return->getFlow() == FLOW_INPUT)
+                _max_input_channels++;
+            else if (to_return->getFlow() == FLOW_OUTPUT)
+                _max_output_channels++;
         }
-    }
-    else if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.lv2_AudioPort))
-    {
-        port->type = TYPE_AUDIO;
 
-// TODO: CV port(s).
-//#ifdef HAVE_JACK_METADATA
-//        } else if (lilv_port_is_a(model->plugin, port->lilv_port,
-//                      model->nodes.lv2_CVPort)) {
-//port->type = TYPE_CV;
-//#endif
+        // TODO: This is always returned NULL for eg-amp output, should it be?
+        LilvNode *min_size = lilv_port_get(plugin, to_return->get_lilv_port(), _model->nodes.rsz_minimumSize);
 
+        if(min_size &&lilv_node_is_int(min_size))
+        {
+            int buf_size = lilv_node_as_int(min_size);
+            _UI_IO.set_buffer_size(buf_size);
+        }
+
+        lilv_node_free(min_size);
     }
-    else if (lilv_port_is_a(plugin, port->lilv_port, _model->nodes.atom_AtomPort))
+    catch(Port::FailedCreation& e)
     {
-        port->type = TYPE_EVENT;
-    }
-    else if (!optional)
-    {
-        assert(false);
-        _cleanup();
-        assert(false);
-        MIND_LOG_ERROR("Mandatory LV2 port has unknown data type");
         _cleanup();
     }
 
-    if(port->type == TYPE_AUDIO)
-    {
-        if(port->flow == FLOW_INPUT)
-            _max_input_channels++;
-        else if(port->flow == FLOW_OUTPUT)
-            _max_output_channels++;
-    }
-
-// TODO: This is always returned NULL for eg-amp output, should it be?
-    LilvNode* min_size = lilv_port_get(plugin, port->lilv_port, _model->nodes.rsz_minimumSize);
-
-    if (min_size && lilv_node_is_int(min_size))
-    {
-        port->buf_size = lilv_node_as_int(min_size);
-
-        _UI_IO.set_buffer_size(port->buf_size);
-    }
-
-    lilv_node_free(min_size);
+    return to_return;
 }
-
 
 void Lv2Wrapper::configure(float sample_rate)
 {
@@ -433,7 +320,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
     const int index = static_cast<int>(parameter_id);
     if (index < _model->num_ports)
     {
-        struct Port* port = &_model->ports[index];
+        Port* port = _model->ports[index].get();
         if (port)
         {
             value = port->control;
@@ -535,7 +422,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    free(_model->ports);
+    _model->ports.clear();
 
     symap_free(_model->symap);
 
@@ -551,19 +438,19 @@ bool Lv2Wrapper::_register_parameters()
 
     for (int _pi = 0; _pi < _model->num_ports; ++_pi)
     {
-        const Port& currentPort = _model->ports[_pi];
+        Port* currentPort = _model->ports[_pi].get();
 
-        if (currentPort.type == TYPE_CONTROL)
+        if (currentPort->getType() == TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
-            auto nameNode = lilv_port_get_name(_model->plugin, currentPort.lilv_port);
+            auto nameNode = lilv_port_get_name(_model->plugin, currentPort->get_lilv_port());
 
             std::string nameAsString = lilv_node_as_string(nameNode);
 
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(nameAsString, // name
                     nameAsString, // label
-                    currentPort.min, // range min
-                    currentPort.max, // range max
+                    currentPort->getMin(), // range min
+                    currentPort->getMax(), // range max
                     nullptr), // ParameterPreProcessor
                     static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
 
@@ -593,7 +480,7 @@ void Lv2Wrapper::process_event(RtEvent event)
         const int portIndex = static_cast<int>(id);
         assert(portIndex < _model->num_ports);
 
-        struct Port* port = &(_model->ports[portIndex]);
+        Port* port = _model->ports[portIndex].get();
 
         port->control = typed_event->value();
     }
@@ -684,29 +571,29 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
 {
     for (_p = 0, _i = 0, _o = 0; _p < _model->num_ports; ++_p)
     {
-        _current_port = &(_model->ports[_p]);
+        _current_port = _model->ports[_p].get();
 
-        switch(_current_port->type)
+        switch(_current_port->getType())
         {
             case TYPE_CONTROL:
                 lilv_instance_connect_port(_model->instance, _p, &_current_port->control);
                 break;
             case TYPE_AUDIO:
-                if (_current_port->flow == FLOW_INPUT)
+                if (_current_port->getFlow() == FLOW_INPUT)
                     lilv_instance_connect_port(_model->instance, _p, _process_inputs[_i++]);
                 else
                     lilv_instance_connect_port(_model->instance, _p, _process_outputs[_o++]);
                 break;
             case TYPE_EVENT:
-                if (_current_port->flow == FLOW_INPUT)
+                if (_current_port->getFlow() == FLOW_INPUT)
                 {
-                    lv2_evbuf_reset(_current_port->evbuf, true);
+                    _current_port->resetInputBuffer();
                     _process_midi_input_for_current_port();
 
                 }
-                else if (_current_port->flow == FLOW_OUTPUT)// Clear event output for plugin to write to.
+                else if (_current_port->getFlow() == FLOW_OUTPUT)// Clear event output for plugin to write to.
                 {
-                    lv2_evbuf_reset(_current_port->evbuf, false);
+                    _current_port->resetOutputBuffer();
                 }
                 break;
 // TODO: Implement also CV support.
@@ -725,14 +612,14 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
 {
     for (_p = 0; _p < _model->num_ports; ++_p)
     {
-        _current_port = &(_model->ports[_p]);
-        if(_current_port->flow == FLOW_OUTPUT)
+        _current_port = _model->ports[_p].get();
+        if(_current_port->getFlow() == FLOW_OUTPUT)
         {
-            switch(_current_port->type)
+            switch(_current_port->getType())
             {
                 case TYPE_CONTROL:
                     if (lilv_port_has_property(_model->plugin,
-                                               _current_port->lilv_port,
+                                               _current_port->get_lilv_port(),
                                                _model->nodes.lv2_reportsLatency))
                     {
                         if (_model->plugin_latency != _current_port->control)
@@ -764,7 +651,7 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
 
 void Lv2Wrapper::_process_midi_output_for_current_port()
 {
-    for (LV2_Evbuf_Iterator buf_i = lv2_evbuf_begin(_current_port->evbuf);
+    for (LV2_Evbuf_Iterator buf_i = lv2_evbuf_begin(_current_port->_evbuf);
          lv2_evbuf_is_valid(buf_i);
          buf_i = lv2_evbuf_next(buf_i))
     {
@@ -858,7 +745,7 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
 
 void Lv2Wrapper::_process_midi_input_for_current_port()
 {
-    _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->evbuf);
+    _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->_evbuf);
 
 // TODO: Re-introduce transport support.
     /* Write transport change event if applicable */
