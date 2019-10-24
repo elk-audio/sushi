@@ -34,6 +34,8 @@ struct InputConnection
     ObjectId parameter;
     float min_range;
     float max_range;
+    bool relative;
+    uint8_t virtual_abs_value;
 };
 
 struct OutputConnection
@@ -107,6 +109,7 @@ public:
                                                  int cc_no,
                                                  float min_range,
                                                  float max_range,
+                                                 bool use_relative_mode,
                                                  int channel = midi::MidiChannel::OMNI);
 
     /**

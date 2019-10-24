@@ -43,6 +43,7 @@ build/
 cmake-build-debug/
 cmake-build-release/
 third-party/install/
+third-party/rehost/
 
 # Windows folders
 *.ini
@@ -53,3 +54,5 @@ third-party/install/
 # CMake's compile_commnads used by clang-tools
 compile_commands.json
 
+# Log files created by running sushi from somewhere in the repository
+log.txt

@@ -3,6 +3,8 @@
 #include "library/midi_encoder.h"
 #include "logging.h"
 
+#include <algorithm>
+
 namespace sushi {
 namespace midi_dispatcher {
 
@@ -12,6 +14,11 @@ inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,
                                  Time timestamp)
 {
+    if (msg.velocity == 0)
+    {
+        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
+    }
+
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
@@ -66,11 +73,31 @@ inline Event* make_wrapped_midi_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(const InputConnection &c,
+inline Event* make_param_change_event(InputConnection &c,
                                       const midi::ControlChangeMessage &msg,
                                       Time timestamp)
 {
-    float value = static_cast<float>(msg.value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
+    uint8_t abs_value = msg.value;
+    // Maybe TODO: currently this is based on a virtual controller absolute value which is
+    // initialized at 64. An alternative would be to read the parameter value from the plugin
+    // and compute a change from that. We should investigate what other DAWs are doing.
+    if (c.relative)
+    {
+        abs_value = c.virtual_abs_value;
+        if (msg.value < 64u)
+        {
+            auto clipped_increment = std::min<uint8_t>(msg.value, 127u - abs_value);
+            abs_value += clipped_increment;
+        }
+        else
+        {
+            // Two-complement encoding for negative relative changes
+            auto clipped_decrease = std::min<uint8_t>(128u - msg.value, abs_value);
+            abs_value -= clipped_decrease;
+        }
+        c.virtual_abs_value = abs_value;
+    }
+    float value = static_cast<float>(abs_value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
@@ -104,6 +131,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              int cc_no,
                                                              float min_range,
                                                              float max_range,
+                                                             bool use_relative_mode,
                                                              int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
@@ -126,6 +154,8 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.parameter = parameter_id;
     connection.min_range = min_range;
     connection.max_range = max_range;
+    connection.relative = use_relative_mode;
+    connection.virtual_abs_value = 64;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
     MIND_LOG_INFO("Connected parameter \"{}\" "
                            "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
@@ -263,11 +293,11 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
             const auto& cons = _cc_routes.find(port);
             if (cons != _cc_routes.end())
             {
-                for (auto c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
+                for (auto& c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
-                for (auto c : cons->second[decoded_msg.controller][decoded_msg.channel])
+                for (auto& c : cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }

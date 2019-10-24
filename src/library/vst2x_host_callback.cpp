@@ -9,12 +9,9 @@ namespace vst2 {
 
 MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
-// Disable unused variable warnings as the host callback just print debug info atm
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
-                                    VstInt32 opcode, VstInt32 index,
-                                    VstIntPtr value, void* ptr, float opt)
+VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 index,
+                                    [[maybe_unused]] VstIntPtr value,
+                                    [[maybe_unused]] void* ptr, float opt)
 {
     VstIntPtr result = 0;
 
@@ -25,15 +22,23 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
         case audioMasterAutomate:
         {
             auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            if (wrapper_instance == nullptr)
+            {
+                return 0; // Plugins could call this during initialisation, before the wrapper has finished construction
+            }
             if (twine::is_current_thread_realtime())
             {
-                wrapper_instance->notify_parameter_change_rt(index, opt);
-            }
-            else
-            {
-                wrapper_instance->notify_parameter_change(index, opt);
-                MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
-                               wrapper_instance->name(), index, opt);
+                auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+                if (twine::is_current_thread_realtime())
+                {
+                    wrapper_instance->notify_parameter_change_rt(index, opt);
+                }
+                else
+                {
+                    wrapper_instance->notify_parameter_change(index, opt);
+                    MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                                   wrapper_instance->name(), index, opt);
+                }
             }
             break;
         }
@@ -44,10 +49,14 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
             break;
         }
 
-        case  audioMasterGetTime:
+        case audioMasterGetTime:
         {
             // Pass a pointer to a VstTimeInfo populated with updated data to the plugin
             auto wrapper_instance = reinterpret_cast<Vst2xWrapper*>(effect->user);
+            if (wrapper_instance == nullptr)
+            {
+                return 0; // Plugins could call this during initialisation, before the wrapper has finished construction
+            }
             result = reinterpret_cast<VstIntPtr>(wrapper_instance->time_info());
             break;
         }
@@ -64,16 +73,16 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
             {
                 wrapper_instance->output_vst_event(events->events[i]);
             }
+            break;
         }
 
         default:
             break;
-    }
 
+    }
     return result;
 
 }
-#pragma GCC diagnostic pop
 
 } // namespace vst2
 } // namespace sushi
