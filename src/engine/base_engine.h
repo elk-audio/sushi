@@ -31,7 +31,7 @@ struct ControlBuffer
 
     std::array<float, MAX_ENGINE_CV_IO_PORTS> cv_values;
     // Bit field of gate states
-    unsigned int gate_values;
+    uint32_t gate_values;
 };
 
 enum class EngineReturnStatus

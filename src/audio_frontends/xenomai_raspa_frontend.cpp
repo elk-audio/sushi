@@ -15,6 +15,8 @@
 namespace sushi {
 namespace audio_frontend {
 
+constexpr int RASPA_INPUT_CHANNELS = RASPA_N_CHANNELS == 8? 6 : RASPA_N_CHANNELS;
+
 MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
 bool XenomaiRaspaFrontend::_raspa_initialised = false;
@@ -91,22 +93,23 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     int64_t samplecount = raspa_get_samplecount();
     _engine->update_time(timestamp, samplecount);
 
-    _in_controls.gate_values = raspa_get_gate_values();
+    // Gate in signals from the Sika board are inverted, hence invert all bits
+    _in_controls.gate_values = ~raspa_get_gate_values();
 
     ChunkSampleBuffer in_buffer = ChunkSampleBuffer::create_from_raw_pointer(input, 0, _audio_input_channels);
     ChunkSampleBuffer out_buffer = ChunkSampleBuffer::create_from_raw_pointer(output, 0, _audio_output_channels);
     for (int i = 0; i < _cv_input_channels; ++i)
     {
-        map_audio_to_cv(_in_controls.cv_values[i] = input[(_audio_input_channels + i + 1) * AUDIO_CHUNK_SIZE - 1]);
+        _in_controls.cv_values[i] = map_audio_to_cv(input[(_audio_input_channels + i + 1) * AUDIO_CHUNK_SIZE - 1] * CV_IN_CORR);
     }
     out_buffer.clear();
     _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls);
     raspa_set_gate_values(_out_controls.gate_values);
-    /* The Xenomai/Raspa frontend outputs only positive cv */
+    /* Sika board outputs only positive cv */
     for (int i = 0; i < _cv_output_channels; ++i)
     {
         float* out_data = output + (_audio_output_channels + i) * AUDIO_CHUNK_SIZE;
-        _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], _out_controls.cv_values[i]);
+        _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], _out_controls.cv_values[i] * CV_OUT_CORR);
     }
 }
 
@@ -116,18 +119,20 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
      * setting cv channels will reduce the number of audio channels. CV channels are
      * counted from the back, so if RASPA_N_CHANNELS is 8 and cv inputs is set to 2,
      * The engine will be set to 6 audio input channels and the last 2 will be used
-     * as cv input 0 and cv input 1, respectively */
-    if (config->cv_inputs > std::min(MAX_ENGINE_CV_IO_PORTS, RASPA_N_CHANNELS))
+     * as cv input 0 and cv input 1, respectively
+     * In the first revision, CV outs are on channels 4 and 5 (counted from 0) and
+     * optional on 6 and 7, only 0 or 4 cv channels is accepted */
+    if (config->cv_inputs != 0 && config->cv_inputs != 2)
     {
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    if (config->cv_outputs > std::min(MAX_ENGINE_CV_IO_PORTS, RASPA_N_CHANNELS))
+    if (config->cv_outputs != 0 && config->cv_outputs != 4)
     {
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _cv_input_channels = config->cv_inputs;
     _cv_output_channels = config->cv_outputs;
-    _audio_input_channels = RASPA_N_CHANNELS - _cv_input_channels;
+    _audio_input_channels = RASPA_N_CHANNELS == 8? 6 - _cv_input_channels : RASPA_N_CHANNELS - _cv_input_channels;
     _audio_output_channels = RASPA_N_CHANNELS - _cv_output_channels;
     _engine->set_audio_input_channels(_audio_input_channels);
     _engine->set_audio_output_channels(_audio_output_channels);

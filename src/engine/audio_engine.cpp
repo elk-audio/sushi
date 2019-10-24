@@ -267,6 +267,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     con.processor_id = processor_node->second->id();
     con.note_no = note_no;
     con.channel = channel;
+    con.gate_id = gate_input_id;
     _gate_in_routes.push_back(con);
     MIND_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;

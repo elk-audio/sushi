@@ -2,7 +2,7 @@
     "host_config" : {
         "samplerate" : 48000,
         "cv_inputs" : 2,
-        "cv_outputs" :2
+        "cv_outputs" :0
     },
     "tracks" : [
         {
@@ -17,14 +17,14 @@
             ],
             "plugins" : [
                 {
-                    "uid" : "sushi.testing.arpeggiator",
-                    "name" : "arp",
+                    "uid" : "sushi.testing.cv_to_control",
+                    "name" : "cv-conv",
                     "type" : "internal"
                 },
                 {
-                    "uid" : "sushi.testing.control_to_cv",
-                    "name" : "cv-conv",
-                    "type" : "internal"
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
+                    "name" : "synth",
+                    "type" : "vst2x"
                 }
             ]
         }
@@ -34,23 +34,29 @@
     },
     "cv_control" : {
         "cv_inputs" : [
-        ],
-        "cv_outputs" : [
             {
                 "cv" : 0,
                 "processor" : "cv-conv",
                 "parameter" : "pitch_0"
+            },
+            {
+                "cv": 1,
+                "processor" : "synth",
+                "parameter" : "VCF Freq"
             }
         ],
-        "gate_inputs" : [ ],
+        "cv_outputs" : [
+
+        ],
+        "gate_inputs" : [  {
+            "mode" : "note_event",
+            "processor" : "cv-conv",
+            "gate" : 0,
+            "note_no" : 0,
+            "channel" : 0
+        } ],
         "gate_outputs" : [
-            {
-                "mode" : "note_event",
-                "processor" : "cv-conv",
-                "gate" : 0,
-                "note_no" : 0,
-                "channel" : 0
-            }
+
         ]
     }
 }
