@@ -49,10 +49,9 @@ option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
-set(XENOMAI_AUDIO_SAMPLE_RATE 48000 CACHE STRING "Set the sampling rate in Raspa")
 
 if (${WITH_XENOMAI})
-    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels @ ${XENOMAI_AUDIO_SAMPLE_RATE}Hz")
+    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels")
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
@@ -269,10 +268,6 @@ endif()
 
 if (${XENOMAI_AUDIO_CHANNELS})
     set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
-endif()
-
-if (${XENOMAI_AUDIO_SAMPLE_RATE})
-    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "" FORCE)
 endif()
 
 if (${WITH_XENOMAI})

@@ -36,18 +36,14 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_ERROR("Chunk size mismatch, check driver configuration.");
         return AudioFrontendStatus::INVALID_CHUNK_SIZE;
     }
+
     auto cv_audio_status = config_audio_channels(raspa_config);
     if (cv_audio_status != AudioFrontendStatus::OK)
     {
         MIND_LOG_ERROR("Incompatible cv and audio channel setup");
         return cv_audio_status;
     }
-    _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
-    if (_engine->sample_rate() != RASPA_AUDIO_SAMPLE_RATE)
-    {
-        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), RASPA_AUDIO_SAMPLE_RATE);
-        _engine->set_sample_rate(RASPA_AUDIO_SAMPLE_RATE);
-    }
+
     unsigned int debug_flags = 0;
     if (raspa_config->break_on_mode_sw)
     {
@@ -60,6 +56,14 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         MIND_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+
+    auto raspa_sample_rate = raspa_get_sampling_rate();
+    if (_engine->sample_rate() != raspa_sample_rate)
+    {
+        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), raspa_sample_rate);
+        _engine->set_sample_rate(raspa_sample_rate);
+    }
+    _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
 
     return AudioFrontendStatus::OK;
 }

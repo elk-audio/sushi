@@ -35,7 +35,8 @@ enum MIND_LOG_ERROR_CODE
 {
     MIND_LOG_ERROR_CODE_OK = 0,
     MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL = 1,
-    MIND_LOG_FAILED_TO_START_LOGGER = 2
+    MIND_LOG_FAILED_TO_START_LOGGER = 2,
+    MIND_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL = 3
 };
 
 #define SPDLOG_DEBUG_ON
@@ -85,8 +86,8 @@ enum MIND_LOG_ERROR_CODE
  *
  * See help of Logger::set_logger_params for more details
  */
-#define MIND_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL) \
-    mind::Logger::init_logger(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL)
+#define MIND_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL) \
+    mind::Logger::init_logger(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL)
 
 
 #define MIND_LOG_GET_ERROR_MESSAGE(retcode) \
@@ -112,7 +113,9 @@ public:
      */
     static MIND_LOG_ERROR_CODE init_logger(const std::string& file_name,
                                            const std::string& logger_name,
-                                           const std::string& min_log_level);
+                                           const std::string& min_log_level,
+                                           const bool enable_flush_interval,
+                                           const std::chrono::seconds log_flush_interval);
 
 
     /**
