@@ -120,8 +120,8 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
      * counted from the back, so if RASPA_N_CHANNELS is 8 and cv inputs is set to 2,
      * The engine will be set to 6 audio input channels and the last 2 will be used
      * as cv input 0 and cv input 1, respectively
-     * In the first revision, CV outs are on channels 4 and 5 (counted from 0) and
-     * optional on 6 and 7, only 0 or 4 cv channels is accepted */
+     * In the first revision Sika, CV outs are on channels 4 and 5 (counted from 0) and
+     * optional on 6 and 7, so only 0 or 4 cv channels is accepted */
     if (config->cv_inputs != 0 && config->cv_inputs != 2)
     {
         return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -132,7 +132,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     }
     _cv_input_channels = config->cv_inputs;
     _cv_output_channels = config->cv_outputs;
-    _audio_input_channels = RASPA_N_CHANNELS == 8? 6 - _cv_input_channels : RASPA_N_CHANNELS - _cv_input_channels;
+    _audio_input_channels = RASPA_INPUT_CHANNELS - _cv_input_channels;
     _audio_output_channels = RASPA_N_CHANNELS - _cv_output_channels;
     _engine->set_audio_input_channels(_audio_input_channels);
     _engine->set_audio_output_channels(_audio_output_channels);
