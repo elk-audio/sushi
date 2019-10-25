@@ -61,8 +61,26 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
+inline const char* to_string(const sushi::ext::ControlStatus status)
+{
+   switch (status)
+    {
+        case sushi::ext::ControlStatus::OK:                    return "OK";
+        case sushi::ext::ControlStatus::ERROR:                 return "ERROR";
+        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION: return "UNSUPPORTED OPERATION";
+        case sushi::ext::ControlStatus::NOT_FOUND:             return "NOT FOUND";
+        case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
+        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
+        default:                                               return "INTERNAL";
+    } 
+}
+
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
 {
+    if (!error)
+    {
+        error = to_string(status);
+    }
     switch (status)
     {
         case sushi::ext::ControlStatus::OK:
@@ -190,7 +208,7 @@ grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*contex
                                                    sushi_rpc::TimeSignature* response)
 {
     auto ts = _controller->get_time_signature();
-    response->set_denomainator(ts.denominator);
+    response->set_denominator(ts.denominator);
     response->set_numerator(ts.numerator);
     return grpc::Status::OK;
 }
@@ -201,7 +219,7 @@ grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*contex
 {
     sushi::ext::TimeSignature ts;
     ts.numerator = request->numerator();
-    ts.denominator = request->denomainator();
+    ts.denominator = request->denominator();
     auto status = _controller->set_time_signature(ts);
     return to_grpc_status(status);
 }
@@ -223,7 +241,7 @@ grpc::Status SushiControlService::SendNoteOn(grpc::ServerContext* /*context*/,
                                              const sushi_rpc::NoteOnRequest*request,
                                              sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_on(request->track().id(), request->note(), request->channel(), request->velocity());
+    auto status = _controller->send_note_on(request->track().id(), request->channel(), request->note(), request->velocity());
     return to_grpc_status(status);
 }
 
@@ -231,7 +249,7 @@ grpc::Status SushiControlService::SendNoteOff(grpc::ServerContext* /*context*/,
                                               const sushi_rpc::NoteOffRequest* request,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_off(request->track().id(), request->note(), request->channel(), request->velocity());
+    auto status = _controller->send_note_off(request->track().id(), request->channel(), request->note(), request->velocity());
     return to_grpc_status(status);
 }
 
@@ -239,7 +257,7 @@ grpc::Status SushiControlService::SendNoteAftertouch(grpc::ServerContext* /*cont
                                                      const sushi_rpc::NoteAftertouchRequest* request,
                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_aftertouch(request->track().id(), request->note(), request->channel(), request->value());
+    auto status = _controller->send_note_aftertouch(request->track().id(), request->channel(), request->note(), request->value());
     return to_grpc_status(status);
 }
 

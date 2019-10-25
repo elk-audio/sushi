@@ -78,6 +78,8 @@ public:
 
     bool bypassed() const override;
 
+    const ParameterDescriptor* parameter_from_id(ObjectId id) const override;
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
@@ -201,6 +203,7 @@ private:
     SpecialParameter _aftertouch_parameter;
 
     memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, 100> _parameter_update_queue;
+    std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
     friend class ComponentHandler;
 };
 
@@ -224,7 +227,7 @@ public:
     Vst3xWrapper(HostControl host_control, const std::string& /* vst_plugin_path */, const std::string& /* plugin_name */) :
         Processor(host_control) {}
     ProcessorReturnCode init(float sample_rate) override;
-    void process_event(RtEvent /*event*/) override {}
+    void process_event(const RtEvent& /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
 };
 

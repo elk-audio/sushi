@@ -49,10 +49,9 @@ option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
-set(XENOMAI_AUDIO_SAMPLE_RATE 48000 CACHE STRING "Set the sampling rate in Raspa")
 
 if (${WITH_XENOMAI})
-    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels @ ${XENOMAI_AUDIO_SAMPLE_RATE}Hz")
+    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels")
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
@@ -126,6 +125,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
+                      src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
                       src/plugins/gain_plugin.cpp
                       src/plugins/lfo_plugin.cpp
@@ -166,6 +166,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
                         src/library/spinlock.h
+                        src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
@@ -184,6 +185,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/plugins/arpeggiator_plugin.h
+                        src/plugins/control_to_cv_plugin.h
                         src/plugins/cv_to_control_plugin.h
                         src/plugins/gain_plugin.h
                         src/plugins/lfo_plugin.h
@@ -266,10 +268,6 @@ endif()
 
 if (${XENOMAI_AUDIO_CHANNELS})
     set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
-endif()
-
-if (${XENOMAI_AUDIO_SAMPLE_RATE})
-    set(RASPA_AUDIO_SAMPLE_RATE ${XENOMAI_AUDIO_SAMPLE_RATE} CACHE STRING "" FORCE)
 endif()
 
 if (${WITH_XENOMAI})

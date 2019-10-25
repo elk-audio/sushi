@@ -231,12 +231,20 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& cc_map : midi["cc_mappings"].GetArray())
         {
+            bool is_relative = false;
+            if (cc_map.HasMember("mode"))
+            {
+                auto cc_mode = std::string(cc_map["mode"].GetString());
+                is_relative = (cc_mode.compare("relative") == 0);
+            }
+
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
                                                                  cc_map["plugin_name"].GetString(),
                                                                  cc_map["parameter_name"].GetString(),
                                                                  cc_map["cc_number"].GetInt(),
                                                                  cc_map["min_range"].GetFloat(),
                                                                  cc_map["max_range"].GetFloat(),
+                                                                 is_relative,
                                                                  _get_midi_channel(cc_map["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -294,11 +302,13 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             auto res = _engine->connect_cv_from_parameter(cv_out["processor"].GetString(),
                                                           cv_out["parameter"].GetString(),
                                                           cv_out["cv"].GetInt());
-            MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                              "Failed to connect cv output {} to parameter {} on processor {}",
-                              cv_out["cv"].GetInt(),
-                              cv_out["parameter"].GetString(),
-                              cv_out["processor"].GetString());
+            if (res != EngineReturnStatus::OK)
+            {
+                MIND_LOG_ERROR("Failed to connect cv output {} to parameter {} on processor {}",
+                               cv_out["cv"].GetInt(),
+                               cv_out["parameter"].GetString(),
+                               cv_out["processor"].GetString());
+            }
         }
     }
     if (cv_config.HasMember("gate_inputs"))
@@ -309,9 +319,10 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             {
                 auto res = _engine->connect_gate_to_sync(gate_in["gate"].GetInt(),
                                                          gate_in["ppq_ticks"].GetInt());
-
-                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                                  "Failed to set gate {} as sync input", gate_in["gate"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    MIND_LOG_ERROR("Failed to set gate {} as sync input", gate_in["gate"].GetInt());
+                }
 
             }
             else if (gate_in["mode"] == "note_event")
@@ -320,11 +331,12 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                               gate_in["gate"].GetInt(),
                                                               gate_in["note_no"].GetInt(),
                                                               gate_in["channel"].GetInt());
-
-                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                                  "Failed to connect gate {} to processor {}",
-                                  gate_in["gate"].GetInt(),
-                                  gate_in["processor"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    MIND_LOG_ERROR("Failed to connect gate {} to processor {}",
+                                   gate_in["gate"].GetInt(),
+                                   gate_in["processor"].GetInt());
+                }
             }
         }
     }
@@ -336,9 +348,10 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             {
                 auto res = _engine->connect_sync_to_gate(gate_out["gate"].GetInt(),
                                                          gate_out["ppq_ticks"].GetInt());
-
-                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                                  "Failed to set gate {} as sync output", gate_out["gate"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    MIND_LOG_ERROR("Failed to set gate {} as sync output", gate_out["gate"].GetInt());
+                }
 
             }
             else if (gate_out["mode"] == "note_event")
@@ -347,11 +360,12 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                                 gate_out["gate"].GetInt(),
                                                                 gate_out["note_no"].GetInt(),
                                                                 gate_out["channel"].GetInt());
-
-                MIND_LOG_ERROR_IF(res != EngineReturnStatus::OK,
-                                  "Failed to connect gate {} from processor {}",
-                                  gate_out["gate"].GetInt(),
-                                  gate_out["processor"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    MIND_LOG_ERROR("Failed to connect gate {} from processor {}",
+                                   gate_out["gate"].GetInt(),
+                                   gate_out["processor"].GetInt());
+                }
             }
         }
     }

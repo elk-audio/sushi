@@ -36,6 +36,24 @@ enum class FrontendType
     NONE
 };
 
+constexpr std::array SUSHI_ENABLED_BUILD_OPTIONS = {
+#ifdef SUSHI_BUILD_WITH_VST2
+        "vst2",
+#endif
+#ifdef SUSHI_BUILD_WITH_VST3
+        "vst3",
+#endif
+#ifdef SUSHI_BUILD_WITH_JACK
+        "jack",
+#endif
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+        "xenomai",
+#endif
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+        "rpc control",
+#endif
+};
+
 bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
@@ -63,29 +81,17 @@ void print_version_and_build_info()
     std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
                                 << SUSHI__VERSION_MIN << "."
                                 << SUSHI__VERSION_REV << std::endl;
-    std::vector<std::string> build_opts;
-#ifdef SUSHI_BUILD_WITH_VST3
-    build_opts.emplace_back("vst3");
-#endif
-#ifdef SUSHI_BUILD_WITH_JACK
-    build_opts.emplace_back("jack");
-#endif
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    build_opts.emplace_back("xenomai");
-#endif
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    build_opts.push_back("rpc control");
-#endif
-    std::ostringstream opts_joined;
-    for (const auto& o : build_opts)
+
+    std::cout << "Build options enabled: ";
+    for (const auto& o : SUSHI_ENABLED_BUILD_OPTIONS)
     {
-        if (&o != &build_opts[0])
+        if (o != SUSHI_ENABLED_BUILD_OPTIONS.front())
         {
-            opts_joined << ", ";
+           std::cout << ", ";
         }
-        opts_joined << o;
+        std::cout << o;
     }
-    std::cout << "Build options enabled: " << opts_joined.str() << std::endl;
+    std::cout << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
 #ifdef SUSHI_BUILD_WITH_XENOMAI
@@ -151,6 +157,8 @@ int main(int argc, char* argv[])
     bool debug_mode_switches = false;
     int  rt_cpu_cores = 1;
     bool enable_timings = false;
+    bool enable_flush_interval = false;
+    std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
@@ -176,6 +184,11 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_LOG_FILE:
             log_filename.assign(opt.arg);
+            break;
+
+        case OPT_IDX_LOG_FLUSH_INTERVAL:
+            log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
+            enable_flush_interval = true;
             break;
 
         case OPT_IDX_CONFIG_FILE:
@@ -252,7 +265,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_LOG_SET_PARAMS(log_filename, "Logger", log_level);
+    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
     if (ret_code != MIND_LOG_ERROR_CODE_OK)
     {
         std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;

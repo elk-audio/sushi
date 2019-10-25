@@ -11,6 +11,16 @@
 namespace sushi {
 namespace audio_frontend {
 
+/* These are calculated theoretical correction factors from the Sika board and
+ * provide a mapping that works fine for parameters and reasonable for pitch.
+ * Pitch mapping that need extra precision will need separate calibration for
+ * each cv port.
+ * The CV_IN_CORR also accounts for the fact that the cv inputs are inverted
+ * in the Sika board. Could eventually be fixed in the driver */
+
+constexpr float CV_OUT_CORR = 0.987f;
+constexpr float CV_IN_CORR = -1.449f;
+
 /**
  * @brief Sets the FTZ (flush denormals to zero) and DAC (denormals are zero) flags
  *        in the cpu to avoid performance hits of denormals in the audio thread. This

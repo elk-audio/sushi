@@ -15,6 +15,7 @@
 #include "plugins/peak_meter_plugin.h"
 #include "plugins/transposer_plugin.h"
 #include "plugins/cv_to_control_plugin.h"
+#include "plugins/control_to_cv_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -63,14 +64,12 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 inline uint32_t get_single_bit(uint32_t data, int bit)
 {
-    constexpr uint32_t INITIAL_BIT_MASK = 0x80000000;
-    return (data << bit) & INITIAL_BIT_MASK;
+    return (data >> bit) & 1U;
 }
 
-uint32_t set_single_bit(uint32_t value, uint32_t data, int bit)
+inline uint32_t set_single_bit(uint32_t data, int bit, bool value)
 {
-    uint32_t mask = 1u << bit;
-    return value? data | mask : data &mask;
+    return data ^= (- static_cast<uint32_t>(value) ^ data) & (1U << bit);
 }
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
@@ -255,7 +254,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
                                                           int note_no,
                                                           int channel)
 {
-    if (gate_input_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    if (gate_input_id >= MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
     {
         return EngineReturnStatus::ERROR;
     }
@@ -268,6 +267,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     con.processor_id = processor_node->second->id();
     con.note_no = note_no;
     con.channel = channel;
+    con.gate_id = gate_input_id;
     _gate_in_routes.push_back(con);
     MIND_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;
@@ -278,7 +278,7 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
                                                             int note_no,
                                                             int channel)
 {
-    if (gate_output_id > MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
+    if (gate_output_id >= MAX_ENGINE_GATE_PORTS || note_no > MAX_ENGINE_GATE_NOTE_NO)
     {
         return EngineReturnStatus::ERROR;
     }
@@ -380,6 +380,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     {
         instance = new cv_to_control_plugin::CvToControlPlugin(_host_control);
     }
+    else if (uid == "sushi.testing.control_to_cv")
+    {
+        instance = new control_to_cv_plugin::ControlToCvPlugin(_host_control);
+    }
     return instance;
 }
 
@@ -467,10 +471,6 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wait_for_workers_idle();
-    }
     auto engine_timestamp = _process_timer.start_timer();
 
     RtEvent in_event;
@@ -510,6 +510,12 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
         }
         _process_outgoing_events(*out_controls, _processor_out_queue);
     }
+
+    if (_multicore_processing)
+    {
+        _worker_pool->wait_for_workers_idle();
+    }
+
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
@@ -1163,7 +1169,7 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
             case RtEventType::GATE_EVENT:
             {
                 auto typed_event = event.gate_event();
-                buffer.gate_values = set_single_bit(typed_event->value(), buffer.gate_values, typed_event->gate_no());
+                buffer.gate_values = set_single_bit(buffer.gate_values, typed_event->gate_no(), typed_event->value());
                 break;
             }
 

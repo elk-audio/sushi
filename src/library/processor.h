@@ -9,6 +9,7 @@
 #define SUSHI_PROCESSOR_H
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "library/sample_buffer.h"
@@ -137,7 +138,7 @@ public:
      * @return A pointer to the parameter descriptor or a null pointer
      *         if there is no processor with that id
      */
-    const ParameterDescriptor* parameter_from_id(ObjectId id) const
+    virtual const ParameterDescriptor* parameter_from_id(ObjectId id) const
     {
         return (id < _parameters_by_index.size()) ? _parameters_by_index[id] : nullptr;
     }
@@ -289,15 +290,6 @@ public:
     virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
 
     /**
-     * @brief Connect a cv input to a parameter of the processor
-     * @param parameter_id The id of the parameter to connect to
-     * @param cv_input_id The id of the cv input
-     * @return ProcessorReturnCode::OK on success, error code on failure
-     */
-     // TODO - Handled by the engine for now
-    virtual ProcessorReturnCode connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id);
-
-    /**
      * @brief Connect a parameter of the processor to a cv out so that rt updates of
      *        the parameter will be sent to the cv output
      * @param parameter_id The id of the parameter to connect from
@@ -335,7 +327,15 @@ protected:
      */
     bool register_parameter(ParameterDescriptor* parameter, ObjectId id);
 
-    void output_event(RtEvent event)
+    /**
+     * @brief Convert midi data and output as an internal event, taking account any gate
+     *        routing configurations active on the processor.
+     * @param midi_data raw midi data from the plugin
+     * @param sample_offset Intra-buffer offset in samples
+     */
+    void output_midi_event_as_internal(MidiDataByte midi_data, int sample_offset);
+
+    void output_event(const RtEvent& event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);
@@ -349,6 +349,15 @@ protected:
      * @return true If there is an active outgoing connection from this parameter, false otherwise
      */
     bool maybe_output_cv_value(ObjectId parameter_id, float value);
+
+    /**
+     * @brief Handle gate outputs if note on or note off events are mapped to gate outputs
+     * @param channel The channel id of the event
+     * @param note The midi note number of the event
+     * @param note_on True if this is a note on event, false if it is a note off event
+     * @return true if there is an active outgoing connection from this note/channel combination, false otherwise
+     */
+    bool maybe_output_gate_event(int channel, int note, bool note_on);
 
     /**
     * @brief Utility function do to general bypass/passthrough audio processing.
@@ -371,21 +380,6 @@ protected:
 
     HostControl _host_control;
 
-    struct CvInConnection
-    {
-        ObjectId parameter_id;
-        bool enabled;
-    };
-    struct CvOutConnection
-    {
-        ObjectId parameter_id;
-        int cv_id;
-    };
-
-    std::array<CvInConnection, MAX_ENGINE_CV_IO_PORTS> _cv_in_connections;
-    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
-    int _outgoing_cv_connections{0};
-
 private:
     RtEventPipe* _output_pipe{nullptr};
     /* Automatically generated unique id for identifying this processor */
@@ -396,6 +390,28 @@ private:
 
     std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
     std::vector<ParameterDescriptor*> _parameters_by_index;
+
+    struct CvOutConnection
+    {
+        ObjectId parameter_id;
+        int cv_id;
+    };
+
+    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
+    int _outgoing_cv_connections{0};
+
+    using GateKey = int;
+    GateKey to_gate_key(int8_t channel, int8_t note)
+    {
+        return channel + (note << sizeof(note));
+    }
+    struct GateOutConnection
+    {
+        int8_t note;
+        int8_t channel;
+        int gate_id;
+    };
+    std::unordered_map<GateKey, GateOutConnection> _outgoing_gate_connections;
 };
 
 constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);

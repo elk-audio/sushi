@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 
 #include "plugins/cv_to_control_plugin.h"
 
@@ -10,7 +9,7 @@ namespace cv_to_control_plugin {
 static const std::string DEFAULT_NAME = "sushi.testing.cv_to_control";
 static const std::string DEFAULT_LABEL = "Cv to control adapter";
 constexpr int TUNE_RANGE = 24;
-constexpr float PITCH_BEND_RANGE = 12;
+constexpr float PITCH_BEND_RANGE = 12.0f;
 
 CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -20,14 +19,14 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
     _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", false);
     _channel_parameter  = register_int_parameter("channel", "Channel", 0, 0, 16, new IntParameterPreProcessor(0, 16));
     _coarse_tune_parameter  = register_int_parameter("tune", "Tune", 0, -TUNE_RANGE, TUNE_RANGE, new IntParameterPreProcessor(-24, 24));
-    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", 1, 1, MAX_ENGINE_CV_IO_PORTS,
-                                                 new IntParameterPreProcessor(1, MAX_ENGINE_CV_IO_PORTS));
+    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", 1, 1, MAX_CV_VOICES,
+                                                 new IntParameterPreProcessor(1, MAX_CV_VOICES));
     assert(_pitch_bend_mode_parameter && _velocity_mode_parameter && _channel_parameter &&
                                            _coarse_tune_parameter && _polyphony_parameter);
 
-    for (int i = 0; i < MAX_ENGINE_CV_IO_PORTS; ++i)
+    for (int i = 0; i < MAX_CV_VOICES; ++i)
     {
-        auto i_str = std::to_string(i + 1);
+        auto i_str = std::to_string(i);
         _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, 0, 0, 1, new FloatParameterPreProcessor(0, 1));
         _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, 0.5, 0, 1, new FloatParameterPreProcessor(0, 1));
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
@@ -49,7 +48,8 @@ void CvToControlPlugin::configure(float sample_rate)
 
 void CvToControlPlugin::process_event(const RtEvent& event)
 {
-    if (event.type() == RtEventType::GATE_EVENT)
+    // Plugins listens to all channels
+    if (event.type() == RtEventType::NOTE_ON || event.type() == RtEventType::NOTE_OFF)
     {
         _gate_events.push(event);
         return;
@@ -71,13 +71,23 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     int  tune = _coarse_tune_parameter->value();
     int  polyphony = _polyphony_parameter->value();
 
+    _send_deferred_events(channel);
+    _process_cv_signals(polyphony, channel, tune, send_velocity, send_pitch_bend);
+    _process_gate_changes(polyphony, channel, tune, send_velocity, send_pitch_bend);
+}
+
+void CvToControlPlugin::_send_deferred_events(int channel)
+{
     // Note offs that are deferred to create overlapping notes
     for (auto note : _deferred_note_offs)
     {
         output_event(RtEvent::make_note_off_event(0, 0, channel, note, 1.0f));
     }
     _deferred_note_offs.clear();
+}
 
+void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend)
+{
     if (send_pitch_bend && polyphony == 1)
     {
         if (_voices[0].active)
@@ -92,7 +102,7 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     }
     else
     {
-        for (int i = 0; i < polyphony && i < MAX_ENGINE_CV_IO_PORTS; ++i)
+        for (int i = 0; i < polyphony && i < static_cast<int>(_voices.size()); ++i)
         {
             auto& voice = _voices[i];
             if (voice.active)
@@ -108,17 +118,19 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
             }
         }
     }
+}
 
-    // Handle gate changes
+void CvToControlPlugin::_process_gate_changes(int polyphony, int channel, int tune, bool send_velocity, bool send_pitch_bend)
+{
     while (_gate_events.empty() == false)
     {
         const auto& event = _gate_events.pop();
-        const auto gate_event = event.gate_event();
-        // Count gates from 1
-        int gate = gate_event->gate_no() -1;
-        if (gate <= polyphony && gate >= 0)
+        const auto kbd_event = event.keyboard_event();
+        int gate = kbd_event->note();
+        bool gate_state = kbd_event->type() == RtEventType::NOTE_ON;
+        if (gate < polyphony && gate >= 0)
         {
-            if (gate_event->value()) // Gate high
+            if (gate_state) // Gate high
             {
                 float velocity = send_velocity? _velocity_parameters[gate]->value() : 1.0f;
                 _voices[gate].active = true;
@@ -138,7 +150,6 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
             }
         }
     }
-
 }
 
 std::pair<int, float> cv_to_pitch(float value)
@@ -149,5 +160,5 @@ std::pair<int, float> cv_to_pitch(float value)
     double fraction = modf(value * 120.0f , &int_note);
     return {static_cast<int>(int_note), static_cast<float>(fraction)};
 }
-}// namespace sample_player_plugin
+}// namespace cv_to_control_plugin
 }// namespace sushi

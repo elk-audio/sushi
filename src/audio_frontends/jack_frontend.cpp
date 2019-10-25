@@ -29,7 +29,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _no_cv_input_ports = jack_config->cv_inputs;
-    status = _engine->set_cv_input_channels(jack_config->cv_inputs);
+    status = _engine->set_cv_output_channels(jack_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
         MIND_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);

@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #define SUSHI_LOG_LEVEL_DEFAULT "info"
-#define SUSHI_LOG_FILENAME_DEFAULT "log"
+#define SUSHI_LOG_FILENAME_DEFAULT "/tmp/sushi.log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
@@ -84,6 +84,7 @@ enum OptionIndex
     OPT_IDX_VERSION,
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
+    OPT_IDX_LOG_FLUSH_INTERVAL,
     OPT_IDX_CONFIG_FILE,
     OPT_IDX_USE_OFFLINE,
     OPT_IDX_INPUT_FILE,
@@ -118,7 +119,7 @@ const optionparser::Descriptor usage[] =
         "",         // shortopt
         "",         // longopt
         SushiArg::Unknown, // check_arg
-        "\nUSAGE: sushi [options] [input_filename]\n\nOptions:" // help
+        "\nUSAGE: sushi -r|-j|-o|-d [options] \n\nOptions:" // help
     },
     {
         OPT_IDX_HELP,
@@ -150,7 +151,15 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+    },
+    {
+        OPT_IDX_LOG_FLUSH_INTERVAL,
+        OPT_TYPE_UNUSED,
+        "",
+        "log-flush-interval",
+        SushiArg::NonEmpty,
+        "\t\t --log-flush-interval=<seconds> \tEnable flushing the log periodically and specify the interval."
     },
     {
         OPT_IDX_CONFIG_FILE,

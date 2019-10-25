@@ -151,7 +151,7 @@ message SyncMode {
 
 message TimeSignature {
     int32 numerator = 1;
-    int32 denomainator = 2;
+    int32 denominator = 2;
 }
 
 message CpuTimings {
@@ -162,22 +162,22 @@ message CpuTimings {
 
 message NoteOnRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float velocity = 4;
 }
 
 message NoteOffRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float velocity = 4;
 }
 
 message NoteAftertouchRequest {
     TrackIdentifier track = 1;
-    int32 note = 2;
-    int32 channel = 3;
+    int32 channel = 2;
+    int32 note = 3;
     float value = 4;
 }
 

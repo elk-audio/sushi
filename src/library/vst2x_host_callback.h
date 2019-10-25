@@ -11,7 +11,7 @@ namespace vst2 {
 
 typedef AEffect *(*plugin_entry_proc)(audioMasterCallback host);
 
-extern VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
+extern VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
                                            VstInt32 opcode, VstInt32 index,
                                            VstIntPtr value, void* ptr, float opt);
 

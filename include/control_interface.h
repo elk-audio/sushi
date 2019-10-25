@@ -120,8 +120,8 @@ public:
     virtual std::vector<TrackInfo>              get_tracks() const = 0;
 
     // Keyboard control
-    virtual ControlStatus                       send_note_on(int track_id, int note, int channel, float velocity) = 0;
-    virtual ControlStatus                       send_note_off(int track_id, int note, int channel, float velocity) = 0;
+    virtual ControlStatus                       send_note_on(int track_id, int channel, int note, float velocity) = 0;
+    virtual ControlStatus                       send_note_off(int track_id, int channel, int note, float velocity) = 0;
     virtual ControlStatus                       send_note_aftertouch(int track_id, int channel, int note, float value) = 0;
     virtual ControlStatus                       send_aftertouch(int track_id, int channel, float value) = 0;
     virtual ControlStatus                       send_pitch_bend(int track_id, int channel, float value) = 0;

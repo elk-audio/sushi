@@ -1,31 +1,7 @@
 #include "processor.h"
+#include "library/midi_decoder.h"
 
 namespace sushi {
-
-ProcessorReturnCode Processor::connect_cv_to_parameter(ObjectId parameter_id, int cv_input_id)
-{
-    if (cv_input_id >= static_cast<int>(_cv_in_connections.size()) || _cv_in_connections[cv_input_id].enabled)
-    {
-        return ProcessorReturnCode::ERROR;
-    }
-    bool param_exists = false;
-    for (const auto& p : this->all_parameters())
-    {
-        // Loop over all parameters since parameter ids don't necessarily match indexes (VST 3 for instance)
-        if (p->id() == parameter_id)
-        {
-            param_exists = true;
-            break;
-        }
-    }
-    if (param_exists == false)
-    {
-        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
-    }
-    _cv_in_connections[cv_input_id].enabled = true;
-    _cv_in_connections[cv_input_id].parameter_id = parameter_id;
-    return ProcessorReturnCode::OK;
-}
 
 ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id)
 {
@@ -54,10 +30,21 @@ ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, 
     return ProcessorReturnCode::OK;
 }
 
-ProcessorReturnCode Processor::connect_gate_from_processor(int /*gate_output_id*/, int /*channel*/, int /*note_no*/)
+ProcessorReturnCode Processor::connect_gate_from_processor(int gate_output_id, int channel, int note_no)
 {
-    // TODO - Implementation needed
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    assert(gate_output_id < MAX_ENGINE_GATE_PORTS || note_no <= MAX_ENGINE_GATE_NOTE_NO);
+    GateKey key = to_gate_key(channel, note_no);
+    if (_outgoing_gate_connections.count(key) > 0)
+    {
+        return ProcessorReturnCode::ERROR;
+    }
+    GateOutConnection con;
+    con.channel = channel;
+    con.note = note_no;
+    con.gate_id = gate_output_id;
+    _outgoing_gate_connections[key] = con;
+
+    return ProcessorReturnCode::OK;
 }
 
 bool Processor::register_parameter(ParameterDescriptor* parameter, ObjectId id)
@@ -93,6 +80,17 @@ bool Processor::maybe_output_cv_value(ObjectId parameter_id, float value)
     return false;
 }
 
+bool Processor::maybe_output_gate_event(int channel, int note, bool note_on)
+{
+    auto con = _outgoing_gate_connections.find(to_gate_key(channel, note));
+    if (con == _outgoing_gate_connections.end())
+    {
+        return false;
+    }
+    output_event(RtEvent::make_gate_event(this->id(), 0, con->second.gate_id, note_on));
+    return true;
+}
+
 void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     if (_current_input_channels == 0)
@@ -109,6 +107,68 @@ void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         {
             out_buffer.replace(c, c % _current_input_channels, in_buffer);
         }
+    }
+}
+
+void Processor::output_midi_event_as_internal(MidiDataByte midi_data, int sample_offset)
+{
+    auto msg_type = midi::decode_message_type(midi_data);
+    switch (msg_type)
+    {
+        case midi::MessageType::NOTE_ON:
+        {
+            auto msg = midi::decode_note_on(midi_data);
+            if (maybe_output_gate_event(msg.channel, msg.note, true) == false)
+            {
+                output_event(RtEvent::make_note_on_event(this->id(), sample_offset, msg.channel,
+                                                         msg.note, msg.velocity / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::NOTE_OFF:
+        {
+            auto msg = midi::decode_note_off(midi_data);
+            if (maybe_output_gate_event(msg.channel, msg.note, false) == false)
+            {
+                output_event(RtEvent::make_note_off_event(this->id(), sample_offset, msg.channel,
+                                                          msg.note, msg.velocity / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::PITCH_BEND:
+        {
+            auto msg = midi::decode_pitch_bend(midi_data);
+            output_event(RtEvent::make_pitch_bend_event(this->id(), sample_offset, msg.channel,
+                                                        msg.value / static_cast<float>(midi::MAX_PITCH_BEND) / 2.0f -
+                                                        1.0f));
+            break;
+        }
+        case midi::MessageType::CONTROL_CHANGE:
+        {
+            auto msg = midi::decode_control_change(midi_data);
+            if (msg.controller == midi::MOD_WHEEL_CONTROLLER_NO)
+            {
+                output_event(RtEvent::make_kb_modulation_event(this->id(), sample_offset, msg.channel,
+                                                               msg.value / 127.0f));
+            }
+            break;
+        }
+        case midi::MessageType::POLY_KEY_PRESSURE:
+        {
+            auto msg = midi::decode_poly_key_pressure(midi_data);
+            output_event(RtEvent::make_note_aftertouch_event(this->id(), sample_offset, msg.channel,
+                                                             msg.note, msg.pressure / 127.0f));
+            break;
+        }
+        case midi::MessageType::CHANNEL_PRESSURE:
+        {
+            auto msg = midi::decode_channel_pressure(midi_data);
+            output_event(RtEvent::make_aftertouch_event(this->id(), sample_offset, msg.channel, msg.pressure / 127.0f));
+            break;
+        }
+        default:
+            break;
+
     }
 }
 

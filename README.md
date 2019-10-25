@@ -25,7 +25,7 @@ Configuration files are used for global host configs, track and plugins configur
 
 ## Run-time OSC control
 
-Sushi listens on port 24024 for the following OSC commands:
+Sushi listens on port 24024 by default for the following OSC commands:
 
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
