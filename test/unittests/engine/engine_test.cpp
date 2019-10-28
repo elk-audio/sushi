@@ -423,3 +423,39 @@ TEST_F(TestEngine, TestCvRouting)
     // We should have a non-zero value in this slot
     ASSERT_NE(0.0f, out_controls.cv_values[1]);
 }
+TEST_F(TestEngine, TestGateRouting)
+{
+    /* Build a cv/gate to midi to cv/gate chain and verify gate changes travel through it*/
+    _module_under_test->create_track("cv", 0);
+    auto status = _module_under_test->add_plugin_to_track("cv",
+                                                          "sushi.testing.cv_to_control",
+                                                          "cv_ctrl",
+                                                          "   ",
+                                                          PluginType::INTERNAL);
+    status = _module_under_test->add_plugin_to_track("cv",
+                                                     "sushi.testing.control_to_cv",
+                                                     "ctrl_cv",
+                                                     "   ",
+                                                     PluginType::INTERNAL);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    status = _module_under_test->set_cv_input_channels(2);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    status = _module_under_test->set_cv_output_channels(2);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    status = _module_under_test->connect_gate_to_processor("cv_ctrl", 1, 0, 0);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    status = _module_under_test->connect_gate_from_processor("ctrl_cv", 0, 0, 0);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
+    ControlBuffer in_controls;
+    ControlBuffer out_controls;
+    in_controls.gate_values = 0x02u;
+
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
+    ASSERT_EQ(0x01u, out_controls.gate_values);
+}
