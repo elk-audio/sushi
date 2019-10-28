@@ -180,8 +180,9 @@ std::string Vst2xWrapper::current_program_name() const
 {
     if (this->supports_programs())
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return std::string(buffer);
     }
     return "";
@@ -191,8 +192,9 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int progr
 {
     if (this->supports_programs())
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
     }
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -207,8 +209,9 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_progr
     std::vector<std::string> programs;
     for (int i = 0; i < _number_of_programs; ++i)
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         programs.push_back(buffer);
     }
     return {ProcessorReturnCode::OK, programs};
@@ -252,6 +255,7 @@ bool Vst2xWrapper::_register_parameters()
     {
         // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
+        param_name[VST_STRING_BUFFER_SIZE-1] = 0;
         param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
