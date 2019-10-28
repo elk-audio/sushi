@@ -159,8 +159,9 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::parameter_value_format
 {
     if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
-        char buffer[kVstMaxParamStrLen] = "";
-        _vst_dispatcher(effGetParamDisplay, 0, static_cast<VstInt32>(parameter_id), buffer, 0);
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
+        _vst_dispatcher(effGetParamDisplay, static_cast<VstInt32>(parameter_id), 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return {ProcessorReturnCode::OK, buffer};
     }
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
