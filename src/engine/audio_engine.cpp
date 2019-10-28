@@ -61,17 +61,6 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     }
 }
 
-
-inline uint32_t get_single_bit(uint32_t data, int bit)
-{
-    return (data >> bit) & 1U;
-}
-
-inline uint32_t set_single_bit(uint32_t data, int bit, bool value)
-{
-    return data ^= (- static_cast<uint32_t>(value) ^ data) & (1U << bit);
-}
-
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
                                                                 _multicore_processing(rt_cpu_cores > 1),
                                                                 _rt_cores(rt_cpu_cores),
@@ -1128,14 +1117,14 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
         send_rt_event(ev);
     }
     // Get gate state changes by xor:ing with previous states
-    uint32_t gate_diffs = _prev_gate_states ^ buffer.gate_values;
-    if (gate_diffs > 0)
+    auto gate_diffs = _prev_gate_values ^ buffer.gate_values;
+    if (gate_diffs.any())
     {
         for (const auto& r : _gate_in_routes)
         {
-            if (get_single_bit(gate_diffs, r.gate_id))
+            if (gate_diffs[r.gate_id])
             {
-                auto gate_high = get_single_bit(buffer.gate_values, r.gate_id);
+                auto gate_high = buffer.gate_values[r.gate_id];
                 if (gate_high)
                 {
                     auto ev = RtEvent::make_note_on_event(r.processor_id, 0, r.channel, r.note_no, 1.0f);
@@ -1149,7 +1138,7 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
             }
         }
     }
-    _prev_gate_states = buffer.gate_values;
+    _prev_gate_values = buffer.gate_values;
 }
 
 void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue)
@@ -1169,7 +1158,7 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
             case RtEventType::GATE_EVENT:
             {
                 auto typed_event = event.gate_event();
-                buffer.gate_values = set_single_bit(buffer.gate_values, typed_event->gate_no(), typed_event->value());
+                _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
                 break;
             }
 
@@ -1177,6 +1166,7 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
                 _main_out_queue.push(event);
         }
     }
+    buffer.gate_values = _outgoing_gate_values;
 }
 
 RealtimeState update_state(RealtimeState current_state)

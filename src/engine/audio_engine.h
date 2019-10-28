@@ -608,7 +608,8 @@ private:
 
     std::vector<CvConnection> _cv_in_routes;
     std::vector<GateConnection> _gate_in_routes;
-    uint32_t _prev_gate_states{0};
+    BitSet32 _prev_gate_values{0};
+    BitSet32 _outgoing_gate_values{0};
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 

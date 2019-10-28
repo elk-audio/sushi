@@ -12,6 +12,7 @@
 #include <vector>
 #include <utility>
 #include <bitset>
+#include <limits>
 
 #include "library/constants.h"
 #include "base_event_dispatcher.h"
@@ -25,13 +26,14 @@
 namespace sushi {
 namespace engine {
 
+using BitSet32 = std::bitset<std::numeric_limits<uint32_t>::digits>;
+
 struct ControlBuffer
 {
     ControlBuffer() : cv_values{0}, gate_values{0} {}
 
     std::array<float, MAX_ENGINE_CV_IO_PORTS> cv_values;
-    // Bit field of gate states
-    uint32_t gate_values;
+    BitSet32 gate_values;
 };
 
 enum class EngineReturnStatus

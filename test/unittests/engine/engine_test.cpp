@@ -70,22 +70,6 @@ TEST_F(TestClipDetector, TestClipping)
 
 }
 
-TEST(TestEngineUtils, TestGetSingleBit)
-{
-    EXPECT_EQ(1u, get_single_bit(0x0000FFFF, 0));
-    EXPECT_EQ(1u, get_single_bit(0x0000FFFF, 2));
-    EXPECT_EQ(0u, get_single_bit(0x0000FFFF, 16));
-    EXPECT_EQ(1u, get_single_bit(0x0000FFF0, 4));
-}
-
-TEST(TestEngineUtils, TestSetSingleBit)
-{
-    EXPECT_EQ(0x00000004u, set_single_bit(0x00000000, 2, true));
-    EXPECT_EQ(0x00010000u, set_single_bit(0x00000000, 16, true));
-    EXPECT_EQ(0xFFFFFFFDu, set_single_bit(0xFFFFFFFF, 1, false));
-    EXPECT_EQ(0xFF7F0000u, set_single_bit(0xFFFF0000, 23, false));
-}
-
 /*
 * Engine tests
 */
@@ -432,6 +416,8 @@ TEST_F(TestEngine, TestGateRouting)
                                                           "cv_ctrl",
                                                           "   ",
                                                           PluginType::INTERNAL);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
     status = _module_under_test->add_plugin_to_track("cv",
                                                      "sushi.testing.control_to_cv",
                                                      "ctrl_cv",
@@ -454,8 +440,11 @@ TEST_F(TestEngine, TestGateRouting)
     ChunkSampleBuffer out_buffer(1);
     ControlBuffer in_controls;
     ControlBuffer out_controls;
-    in_controls.gate_values = 0x02u;
+    in_controls.gate_values.reset();
+    in_controls.gate_values[1] = true;
 
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
-    ASSERT_EQ(0x01u, out_controls.gate_values);
+    // A gate high event on gate input 1 should result in a gate high on gate output 0
+    ASSERT_TRUE(out_controls.gate_values[0]);
+    ASSERT_EQ(1u, out_controls.gate_values.count());
 }
