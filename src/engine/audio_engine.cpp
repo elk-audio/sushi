@@ -683,7 +683,6 @@ const Processor* AudioEngine::processor(ObjectId processor_id) const
 
 Processor* AudioEngine::mutable_processor(ObjectId processor_id)
 {
-    /* TODO - use a better way of storing processors and return a shared pointer*/
     if (processor_id >= _realtime_processors.size())
     {
         return nullptr;
