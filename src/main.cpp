@@ -67,7 +67,7 @@ void sigint_handler([[maybe_unused]] int sig)
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
+    std::cout << "Copyright 2016-2019 Elk, Stockholm" << std::endl;
 }
 
 void error_exit(const std::string& message)
