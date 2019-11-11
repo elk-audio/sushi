@@ -12,6 +12,7 @@
 #include "plugins/sample_player_plugin.h"
 #include "plugins/peak_meter_plugin.h"
 #include "plugins/transposer_plugin.h"
+#include "plugins/step_sequencer_plugin.h"
 #include "library/vst2x_wrapper.h"
 #include "library/vst3x_wrapper.h"
 
@@ -226,6 +227,10 @@ Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
     else if (uid == "sushi.testing.transposer")
     {
         instance = new transposer_plugin::TransposerPlugin(_host_control);
+    }
+    else if (uid == "sushi.testing.step_sequencer")
+    {
+        instance = new step_sequencer_plugin::StepSequencerPlugin(_host_control);
     }
     return instance;
 }
