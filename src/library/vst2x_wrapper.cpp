@@ -159,6 +159,7 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::parameter_value_format
 {
     if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
+        // Many plugins don't respect the kVstMaxParamStrLen limit, so better use a larger buffer
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetParamDisplay, static_cast<VstInt32>(parameter_id), 0, buffer, 0);
         buffer[VST_STRING_BUFFER_SIZE-1] = 0;
