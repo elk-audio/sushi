@@ -1,5 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
- * @brief Offline frontend (using libsndfile) to test Sushi host and plugins
+ * @brief Main entry point to Sushi
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
@@ -67,7 +83,7 @@ void sigint_handler([[maybe_unused]] int sig)
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2016-2019 Elk, Stockholm" << std::endl;
+    std::cout << "Copyright 2017-2019 Elk, Stockholm" << std::endl;
 }
 
 void error_exit(const std::string& message)
