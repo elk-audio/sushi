@@ -113,14 +113,11 @@ void InternalPlugin::process_event(RtEvent event)
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::BOOL_PARAMETER_CHANGE:
         {
-            /* These are "managed events" and not handled directly by the stompbox,
-             * other events are passed on unaltered. Maybe in the future we'll do
-             * some kind of conversion to StompboxEvents here to avoid exposing
-             * the internal event structure to 3rd party devs. */
+            /* These are "managed events" where this function provides a default
+             * implementation for handling these and setting parameter values */
             auto typed_event = event.parameter_change_event();
             if (typed_event->param_id() >= _parameter_values.size())
             {
-                /* Out of bounds index, this should not happen, might replace with an assert. */
                 break;
             }
             auto storage = &_parameter_values[typed_event->param_id()];

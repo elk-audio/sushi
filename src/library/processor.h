@@ -354,7 +354,6 @@ protected:
     }
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
-    /* TODO - Is this a reasonable requirement? */
     int _max_input_channels{0};
     int _max_output_channels{0};
 
@@ -386,7 +385,7 @@ static int chunks_to_ramp(float sample_rate)
 }
 
 /**
- * @brief Convience class to encapsulate the bypass state logic and when to ramp audio up
+ * @brief Convenience class to encapsulate the bypass state logic and when to ramp audio up
  *        or down in order to avoid audio clicks and artefacts.
  */
 class BypassManager
@@ -406,7 +405,7 @@ public:
 
     /**
      * @brief Set the bypass state
-     * @param bypass_enabled If true sets bypass enabled, if false turns off bypass
+     * @param bypass_enabled If true, sets bypass enabled, if false, turns off bypass
      * @param sample_rate The current sample rate, used for calculating ramp time
      */
     void set_bypass(bool bypass_enabled, float sample_rate)

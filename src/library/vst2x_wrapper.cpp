@@ -439,7 +439,7 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         case 7:
             return kSpeakerArr70Music;
         default:
-            return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
+            return kSpeakerArr80Music;
     }
 }
 

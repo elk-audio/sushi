@@ -261,11 +261,6 @@ void Vst3xWrapper::process_event(RtEvent event)
             }
             break;
         }
-        case RtEventType::WRAPPED_MIDI_EVENT:
-        {
-            // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
-            // Or do nothing, no reason to send raw midi to at VST3 plugin
-        }
         case RtEventType::SET_BYPASS:
         {
             bool bypassed = static_cast<bool>(event.processor_command_event()->value());

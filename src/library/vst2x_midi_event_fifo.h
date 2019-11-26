@@ -118,9 +118,6 @@ private:
     /**
     * @brief Helper to initialize VstMidiEvent inside the buffer from Event
     *
-    * @note TODO: Event messages do not have MIDI channel information,
-    *             so at the moment just pass 0. We'll have to rewrite this
-    *             when we'll have a MidiEncoder available.
     */
     void _fill_vst_event(const int idx, RtEvent event)
     {

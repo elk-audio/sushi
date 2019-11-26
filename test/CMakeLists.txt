@@ -33,7 +33,7 @@ endif()
 #####################################
 
 # build gtest framework
-add_subdirectory(gtest_1_7_0)
+add_subdirectory(gtest)
 enable_testing()
 
 #####################
@@ -119,7 +119,7 @@ endif()
 
 set(INCLUDE_DIRS "${INCLUDE_DIRS}"
                  ${PROJECT_SOURCE_DIR}/test/unittests
-                 ${PROJECT_SOURCE_DIR}/test/gtest_1_7_0/include)
+                 ${PROJECT_SOURCE_DIR}/test/gtest/include)
 
 target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
 
