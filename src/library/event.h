@@ -85,7 +85,7 @@ public:
     /* Event is directly convertible to an RtEvent */
     virtual bool maps_to_rt_event() {return false;}
 
-    /** Return the RtEvent counterpart of the Event */
+    /* Return the RtEvent counterpart of the Event */
     virtual RtEvent to_rt_event(int /*sample_offset*/) {return RtEvent();}
 
     /**

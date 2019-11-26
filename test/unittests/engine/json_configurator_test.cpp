@@ -149,7 +149,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     plugin["type"] = "internal";
     ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
 
-    track["name"] = "trackk_invalid_stompname";
+    track["name"] = "track_invalid_name";
     plugin["name"] = "internal_plugin";
     plugin["uid"] = "sushi.testing.gain";
     plugin["type"] = "internal";

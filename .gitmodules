@@ -26,3 +26,6 @@
 [submodule "twine"]
 	path = twine
 	url = git@bitbucket.org:mindswteam/twine.git
+[submodule "test/gtest"]
+	path = test/gtest
+	url = https://github.com/google/googletest.git

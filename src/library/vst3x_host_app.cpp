@@ -17,8 +17,6 @@ constexpr char HOST_NAME[] = "Sushi";
 Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
 
 {
-    // TODO, Eventually find a better way, building and including the
-    // entire sdk lib for small util functions like this feels stupid.
     Steinberg::UString128 str(HOST_NAME);
     str.copyTo (name, 0);
     return Steinberg::kResultOk;

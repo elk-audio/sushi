@@ -16,11 +16,9 @@
 namespace sushi {
 
 /**
- * @brief internal wrapper class for StompBox instances that keeps track
- * of all the host-related configuration.
+ * @brief internal base class for processors that keeps track of all host-related
+ * configuration and provides basic parameter and event handling.
  */
-
-
 class InternalPlugin : public Processor
 {
 public:
@@ -40,7 +38,7 @@ public:
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -59,7 +57,7 @@ public:
 
     /**
      * @brief Register an int typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -93,7 +91,7 @@ public:
      * @brief Register a string property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @return true if the property was registered succesfully
+     * @return true if the property was registered successfully
      */
     bool register_string_property(const std::string& name,
                                   const std::string& label);
@@ -103,7 +101,7 @@ public:
      * @brief Register a data property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @return true if the property was registered succesfully
+     * @return true if the property was registered successfully
      */
     bool register_data_property(const std::string& name,
                                 const std::string& label);
