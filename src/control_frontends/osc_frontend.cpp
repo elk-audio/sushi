@@ -443,7 +443,7 @@ void OSCFrontend::connect_all()
         auto parameters = processor.second->all_parameters();
         for (auto& param : parameters)
         {
-            if (param->type() == ParameterType::FLOAT)
+            if (param->type() == ParameterType::FLOAT || param->type() == ParameterType::INT || param->type() == ParameterType::BOOL)
             {
                 connect_to_parameter(processor.second->name(), param->name());
                 connect_from_parameter(processor.second->name(), param->name());

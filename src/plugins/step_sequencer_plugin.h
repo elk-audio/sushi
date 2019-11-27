@@ -1,6 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
  * @brief Simple 8-step sequencer example.
- * @copyright MIND Music Labs AB, Stockholm
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_STEP_SEQUENCER_PLUGIN_H
@@ -35,7 +50,7 @@ public:
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
 private:
-    std::array<IntParameterValue*, SEQUENCER_STEPS> _pitch_parameters;
+    std::array<IntParameterValue*, SEQUENCER_STEPS>  _pitch_parameters;
     std::array<BoolParameterValue*, SEQUENCER_STEPS> _step_parameters;
     std::array<BoolParameterValue*, SEQUENCER_STEPS> _step_indicator_parameters;
     std::array<int, SEQUENCER_STEPS> _sequence;

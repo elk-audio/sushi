@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Simple 8-step sequencer example.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include <algorithm>
 
 #include "plugins/step_sequencer_plugin.h"
@@ -6,7 +26,7 @@
 namespace sushi {
 namespace step_sequencer_plugin {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("step_seq");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("step_seq");
 
 static const std::string DEFAULT_NAME = "sushi.testing.step_sequencer";
 static const std::string DEFAULT_LABEL = "Step Sequencer";
@@ -83,9 +103,8 @@ void StepSequencerPlugin::process_event(RtEvent event)
             {
                 set_parameter_and_notify(_step_indicator_parameters[typed_event->param_id()/3], typed_event->value() > 0.5f);
             }
-            break;
+            [[fallthrough]];
         }
-
         default:
             InternalPlugin::process_event(event);
     }
