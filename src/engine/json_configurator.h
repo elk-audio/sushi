@@ -69,77 +69,71 @@ class JsonConfigurator
 {
 public:
     JsonConfigurator(engine::BaseEngine* engine,
-                     midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
-                                                                         _midi_dispatcher(midi_dispatcher) {}
+                     midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                     const std::string& path) : _engine(engine),
+                                                _midi_dispatcher(midi_dispatcher),
+                                                _document_path(path){}
 
     ~JsonConfigurator() {}
 
     /**
-     * @brief Reads a json config file and retuns all audio frontend configuration options
+     * @brief Reads the json config  and returns all audio frontend configuration options
      *        that are not set on the audio engine directly
-     * @param path_to_file String which denotes the path of the file.
      * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
      *         JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config(const std::string& path_to_file);
+    std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config();
 
     /**
-     * @brief reads a json config file and set the given host configuration options
+     * @brief Reads the json config  and set the given host configuration options
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_host_config(const std::string& path_to_file);
+    JsonConfigReturnStatus load_host_config();
 
     /**
-     * @brief reads a json config file, searches for valid tracks
-     * definitions and configures the engine with the specified tracks.
-     * @param path_to_file String which denotes the path of the file.
+     * @brief Reads the json config , searches for valid tracks
+     *        definitions and configures the engine with the specified tracks.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_tracks(const std::string &path_to_file);
+    JsonConfigReturnStatus load_tracks();
 
     /**
-     * @brief reads a json config file, searches for valid MIDI connections and
+     * @brief Reads the json config , searches for valid MIDI connections and
      *        MIDI CC Mapping definitions and configures the engine with the specified MIDI information.
-     * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_midi(const std::string& path_to_file);
+    JsonConfigReturnStatus load_midi();
 
     /**
-     * @brief reads a json config file, searches for valid control voltage and gate
+     * @brief Reads the json config , searches for valid control voltage and gate
      *        connection definitions and configures the engine with the specified routing.
-     * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_cv_gate(const std::string& path_to_file);
+    JsonConfigReturnStatus load_cv_gate();
 
     /**
-     * @brief reads a json config file, searches for a valid "events" definition and
+     * @brief Reads the json config , searches for a valid "events" definition and
      *        queues them to the engines internal queue.
-     * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus load_events(const std::string& path_to_file);
+    JsonConfigReturnStatus load_events();
 
     /**
-     * @brief Reads a json config file, searches for a valid "events" definition and
+     * @brief Reads the json config , searches for a valid "events" definition and
      *        returns all parsed events as a list
-     * @param path_to_file String which denotes the path of the file.
      * @return An std::vector with the parsed events which is only valid if the status
      *         returned is JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list(const std::string& path_to_file);
+    std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
 
 private:
     /**
-     * @brief Helper function to parse the json file using the rapidjson library.
-     * @param path_to_file String which denotes the path of the file.
-     * @param config rapidjson document object where the json data is stored after reading from the file.
+     * @brief Helper function to retrieve a particular section of the json configuration
      * @param section Jsonsection to denote which section is to be validated.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
-    JsonConfigReturnStatus _parse_file(const std::string& path_to_file, rapidjson::Document& config, JsonSection section);
+    std::pair<JsonConfigReturnStatus, const rapidjson::Value&> _parse_section(JsonSection section);
 
     /**
      * @brief Uses Engine's API to create a single track with the specified number of channels and adds
@@ -177,10 +171,15 @@ private:
      * @param section JsonSection to denote which json section is to be validated.
      * @return true if json follows schema, false otherwise
      */
-    bool _validate_against_schema(rapidjson::Document& config, JsonSection section);
+    bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
+
+    JsonConfigReturnStatus _load_data();
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+
+    std::string _document_path;
+    rapidjson::Document _json_data;
 };
 
 }/* namespace JSONCONFIG */
