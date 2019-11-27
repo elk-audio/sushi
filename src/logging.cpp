@@ -118,7 +118,7 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");
-    async_file_logger->warn("   Started Mind Logger!");
+    async_file_logger->warn("   Started Sushi Logger!");
     async_file_logger->warn("#############################");
     return async_file_logger;
 }

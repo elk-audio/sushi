@@ -1,7 +1,6 @@
 /**
- * @Brief Helper and utility functions for unit tests
- * @copyright MIND Music Labs AB, Stockholm
- *
+ * @brief Helper and utility functions for unit tests
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_TEST_UTILS_H

@@ -1,6 +1,3 @@
-/**
- * @Brief Fifo implementation that is wait free for 1 consumer/ 1 producer.
- */
 /* Not any company's property but Public-Domain
  * Do with source-code as you will. No requirement to keep this
  * header if need to use it/change it/ or do whatever with it
@@ -16,6 +13,10 @@
 // should be mentioned the thinking of what goes where
 // it is a "controversy" whether what is tail and what is head
 // http://en.wikipedia.org/wiki/FIFO#Head_or_tail_first
+
+/**
+ * @brief Fifo implementation that is wait free for 1 consumer/ 1 producer.
+ */
 
 #ifndef CIRCULARFIFO_AQUIRE_RELEASE_H_
 #define CIRCULARFIFO_AQUIRE_RELEASE_H_

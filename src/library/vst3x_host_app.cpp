@@ -65,7 +65,7 @@ Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 }
 
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
- * But edited to follow Mind coding style. See plugprovider.cpp. */
+ * But edited to follow Elk coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
 {
 public:
@@ -224,7 +224,6 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     if (_connect_components() == false)
     {
         MIND_LOG_ERROR("Failed to connect component to editor");
-        // Might still be ok? Plugin might not have an editor.
     }
     return true;
 }

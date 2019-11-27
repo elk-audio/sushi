@@ -20,7 +20,7 @@
 
  /**
  * @Brief Handles time, tempo and start/stop inside the engine
- * @copyright MIND Music Labs AB, Stockholm
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_TRANSPORT_H
