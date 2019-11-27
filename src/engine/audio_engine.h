@@ -38,7 +38,7 @@
 #include "engine/controller.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
-#include "library/mind_allocator.h"
+#include "library/elk_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"
@@ -82,7 +82,7 @@ constexpr int MAX_RT_PROCESSOR_ID = 1000;
 class AudioEngine : public BaseEngine
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(AudioEngine);
+    SUSHI_DECLARE_NON_COPYABLE(AudioEngine);
 
     /**
      * @brief Construct a new AudioEngine

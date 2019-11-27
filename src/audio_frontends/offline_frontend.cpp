@@ -29,7 +29,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("offline audio");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
 constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise
 constexpr int   NOISE_SEED = 5; // Using a constant seed makes potential errors reproducible
@@ -65,23 +65,23 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
         {
             cleanup();
-            MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
+            SUSHI_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
             return AudioFrontendStatus::INVALID_INPUT_FILE;
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
         if (sample_rate_file != _engine->sample_rate())
         {
-            MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                             sample_rate_file,
-                             _engine->sample_rate());
+            SUSHI_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
+                              sample_rate_file,
+                              _engine->sample_rate());
         }
 
         // Open output file with same format as input file
         if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
         {
             cleanup();
-            MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
+            SUSHI_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
     }

@@ -18,19 +18,17 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <cstddef>
-#include <cstdlib>
-#include <EABase/eabase.h>
-#include <new>
+#ifndef SUSHI_ELK_ALLOCATOR_H
+#define SUSHI_ELK_ALLOCATOR_H
 
-#include "mind_allocator.h"
+/*
+ * Default allocators for EASTL
+ */
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags,
+                     const char* file, int line);
 
-void* operator new[](size_t size, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
-{
-    return malloc(size);
-}
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName,
+                     int flags, unsigned debugFlags, const char* file, int line);
 
-void* operator new[](size_t size, size_t /*alignment*/, size_t /*alignmentOffset*/, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
-{
-    return malloc(size);
-}
+
+#endif //SUSHI_ELK_ALLOCATOR_H

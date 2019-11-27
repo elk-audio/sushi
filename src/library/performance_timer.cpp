@@ -23,7 +23,7 @@
 #include "performance_timer.h"
 #include "logging.h"
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("processtimer");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("processtimer");
 
 namespace sushi {
 namespace performance {

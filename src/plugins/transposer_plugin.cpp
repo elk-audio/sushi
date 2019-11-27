@@ -28,7 +28,7 @@
 namespace sushi {
 namespace transposer_plugin {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("transposer");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("transposer");
 
 static const std::string DEFAULT_NAME = "sushi.testing.transposer";
 static const std::string DEFAULT_LABEL = "Transposer";

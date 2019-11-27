@@ -44,7 +44,7 @@ constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
 class Track : public InternalPlugin, public RtEventPipe
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(Track);
+    SUSHI_DECLARE_NON_COPYABLE(Track);
 
     /**
      * @brief Create a track with a given number of channels

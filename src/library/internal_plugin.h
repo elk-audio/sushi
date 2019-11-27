@@ -35,7 +35,7 @@ namespace sushi {
 class InternalPlugin : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(InternalPlugin)
+    SUSHI_DECLARE_NON_COPYABLE(InternalPlugin)
 
     explicit InternalPlugin(HostControl host_control);
 

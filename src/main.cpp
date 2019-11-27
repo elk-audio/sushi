@@ -281,13 +281,13 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
-    if (ret_code != MIND_LOG_ERROR_CODE_OK)
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
-        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 
-    MIND_GET_LOGGER_WITH_MODULE_NAME("main");
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
@@ -319,7 +319,7 @@ int main(int argc, char* argv[])
     {
         case FrontendType::JACK:
         {
-            MIND_LOG_INFO("Setting up Jack audio frontend");
+            SUSHI_LOG_INFO("Setting up Jack audio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
                                                                                                  jack_server_name,
                                                                                                  connect_ports);
@@ -329,7 +329,7 @@ int main(int argc, char* argv[])
 
         case FrontendType::XENOMAI_RASPA:
         {
-            MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+            SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches);
             audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
             break;
@@ -342,11 +342,11 @@ int main(int argc, char* argv[])
             if (frontend_type == FrontendType::DUMMY)
             {
                 dummy = true;
-                MIND_LOG_INFO("Setting up dummy audio frontend");
+                SUSHI_LOG_INFO("Setting up dummy audio frontend");
             }
             else
             {
-                MIND_LOG_INFO("Setting up offline audio frontend");
+                SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
             frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
                                                                                                     output_filename,
@@ -462,6 +462,6 @@ int main(int argc, char* argv[])
     }
 
     audio_frontend->cleanup();
-    MIND_LOG_INFO("Sushi exited normally.");
+    SUSHI_LOG_INFO("Sushi exited normally.");
     return 0;
 }

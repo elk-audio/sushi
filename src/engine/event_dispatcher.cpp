@@ -27,7 +27,7 @@ namespace dispatcher {
 
 constexpr auto PRINT_TIMING_INTERVAL = std::chrono::seconds(5);
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtEventFifo* in_rt_queue,

@@ -39,8 +39,8 @@ constexpr int AUDIO_CHUNK_SIZE = 64;
  * in this case not neccesary to make the class non-copyable. But can
  * still be used for clarity.
  */
-#define MIND_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
-                                        type& operator=(const type&) = delete;
+#define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
+                                         type& operator=(const type&) = delete;
 
 
 #endif //SUSHI_CONSTANTS_H

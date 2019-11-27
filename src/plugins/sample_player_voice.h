@@ -42,7 +42,7 @@ enum class SamplePlayMode
 
 class Voice
 {
-    MIND_DECLARE_NON_COPYABLE(Voice);
+    SUSHI_DECLARE_NON_COPYABLE(Voice);
 public:
     Voice() {};
 

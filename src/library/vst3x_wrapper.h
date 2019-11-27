@@ -47,7 +47,7 @@ constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 class Vst3xWrapper : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(Vst3xWrapper)
+    SUSHI_DECLARE_NON_COPYABLE(Vst3xWrapper)
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */

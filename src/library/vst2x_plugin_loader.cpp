@@ -54,7 +54,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
@@ -63,7 +63,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plu
 {
     if (plugin_absolute_path.empty())
     {
-        MIND_LOG_ERROR("Empty library path");
+        SUSHI_LOG_ERROR("Empty library path");
         return nullptr; // Calling dlopen with an empty string returns a handle to the calling
                         // program, which can cause an infinite loop.
     }
@@ -71,7 +71,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plu
 
     if (libraryHandle == nullptr)
     {
-        MIND_LOG_ERROR("Could not open library, {}", dlerror());
+        SUSHI_LOG_ERROR("Could not open library, {}", dlerror());
         return nullptr;
     }
 
@@ -99,7 +99,7 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
         entryPoint.entryPointVoidPtr = dlsym(library_handle, "main");
         if (entryPoint.entryPointVoidPtr == nullptr)
         {
-              MIND_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+              SUSHI_LOG_ERROR("Couldn't get a pointer to plugin's main()");
               return nullptr;
         }
     }
@@ -114,7 +114,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
     if (dlclose(library_handle) != 0)
     {
-        MIND_LOG_WARNING("Could not safely close plugin, possible resource leak");
+        SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
     }
 }
 

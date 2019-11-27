@@ -26,7 +26,7 @@
 namespace sushi {
 namespace arpeggiator_plugin {
 
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("arpeggiator");
 
 constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float MULTIPLIER_8TH_NOTE = 2.0f;

@@ -23,11 +23,11 @@
 #include <iostream>
 
 #include "logging.h"
-#ifndef MIND_DISABLE_LOGGING
+#ifndef SUSHI_DISABLE_LOGGING
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/async.h"
 
-namespace mind {
+namespace elk {
 
 // Static variable need to be initialized here
 // so that the linker can find them.
@@ -41,13 +41,13 @@ std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
 std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
 
-MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
-                                        const std::string& logger_name,
-                                        const std::string& min_log_level,
-                                        const bool enable_flush_interval,
-                                        const std::chrono::seconds log_flush_interval)
+SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
+                                         const std::string& logger_name,
+                                         const std::string& min_log_level,
+                                         const bool enable_flush_interval,
+                                         const std::chrono::seconds log_flush_interval)
 {
-    MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
+    SUSHI_LOG_ERROR_CODE ret = SUSHI_LOG_ERROR_CODE_OK;
 
     std::map<std::string, spdlog::level::level_enum> level_map;
     level_map["debug"] = spdlog::level::debug;
@@ -73,14 +73,14 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
         }
         else
         {
-            return MIND_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
+            return SUSHI_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
         }
         
     }
 
     if (logger_instance == nullptr)
     {
-        ret = MIND_LOG_FAILED_TO_START_LOGGER;
+        ret = SUSHI_LOG_FAILED_TO_START_LOGGER;
     }
     if (level_map.count(log_level_lowercase) > 0)
     {
@@ -88,12 +88,12 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     }
     else
     {
-        ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
+        ret = SUSHI_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
     return ret;
 }
 
-std::string Logger::get_error_message(MIND_LOG_ERROR_CODE status)
+std::string Logger::get_error_message(SUSHI_LOG_ERROR_CODE status)
 {
     static std::string error_messages[] = 
     {
@@ -123,6 +123,6 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
     return async_file_logger;
 }
 
-} // end namespace mind
+} // end namespace elk
 
-#endif // MIND_DISABLE_LOGGING
+#endif // SUSHI_DISABLE_LOGGING

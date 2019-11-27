@@ -44,7 +44,7 @@ constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 class Vst2xWrapper : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(Vst2xWrapper)
+    SUSHI_DECLARE_NON_COPYABLE(Vst2xWrapper)
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */

@@ -45,7 +45,7 @@ constexpr int MAX_LOG_ENTRIES = 20000;
 class PerformanceTimer : public BasePerformanceTimer
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(PerformanceTimer);
+    SUSHI_DECLARE_NON_COPYABLE(PerformanceTimer);
 
     PerformanceTimer() = default;
     virtual ~PerformanceTimer();

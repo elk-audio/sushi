@@ -42,7 +42,7 @@ constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("engine");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 
 void ClipDetector::set_sample_rate(float samplerate)
@@ -140,7 +140,7 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
     }
     Connection con = {input_channel, track_channel, track->id()};
     _in_audio_connections.push_back(con);
-    MIND_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
+    SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
     return EngineReturnStatus::OK;
 }
 
@@ -159,7 +159,7 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     }
     Connection con = {output_channel, track_channel, track->id()};
     _out_audio_connections.push_back(con);
-    MIND_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
+    SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
     return EngineReturnStatus::OK;
 }
 
@@ -254,17 +254,17 @@ EngineReturnStatus AudioEngine::_register_processor(Processor* processor, const 
 {
     if(name.empty())
     {
-        MIND_LOG_ERROR("Plugin name is not specified");
+        SUSHI_LOG_ERROR("Plugin name is not specified");
         return EngineReturnStatus::INVALID_PLUGIN_NAME;
     }
     if(_processor_exists(name))
     {
-        MIND_LOG_WARNING("Processor with this name already exists");
+        SUSHI_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     processor->set_name(name);
     _processors[name] = std::move(std::unique_ptr<Processor>(processor));
-    MIND_LOG_DEBUG("Succesfully registered processor {}.", name);
+    SUSHI_LOG_DEBUG("Succesfully registered processor {}.", name);
     return EngineReturnStatus::OK;
 }
 
@@ -305,7 +305,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
         /* TODO - When non-rt callbacks for events are ready we can have the
          * rt processor list re-allocated outside the rt domain
          * In the meantime, put alilmit in the number of processors */
-        MIND_LOG_ERROR("Realtime processor list full");
+        SUSHI_LOG_ERROR("Realtime processor list full");
         assert(false);
     }
     if(_realtime_processors[processor->id()] != nullptr)
@@ -441,13 +441,13 @@ EngineReturnStatus AudioEngine::send_rt_event(RtEvent& event)
     }
     if (event.processor_id() > _realtime_processors.size())
     {
-        MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
+        SUSHI_LOG_WARNING("Invalid processor id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     auto processor_node = _realtime_processors[event.processor_id()];
     if (processor_node == nullptr)
     {
-        MIND_LOG_WARNING("Invalid processor id {}.", event.processor_id());
+        SUSHI_LOG_WARNING("Invalid processor id {}.", event.processor_id());
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     processor_node->process_event(event);
@@ -520,7 +520,7 @@ EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, i
 {
     if((input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES))
     {
-        MIND_LOG_ERROR("Invalid number of busses for new track");
+        SUSHI_LOG_ERROR("Invalid number of busses for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
     Track* track = new Track(_host_control, input_busses, output_busses, &_process_timer);
@@ -531,7 +531,7 @@ EngineReturnStatus AudioEngine::create_track(const std::string &name, int channe
 {
     if((channel_count != 1 && channel_count != 2))
     {
-        MIND_LOG_ERROR("Invalid number of channels for new track");
+        SUSHI_LOG_ERROR("Invalid number of channels for new track");
         return EngineReturnStatus::INVALID_N_CHANNELS;
     }
     Track* track = new Track(_host_control, channel_count, &_process_timer);
@@ -545,7 +545,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
     auto track_node = _processors.find(track_name);
     if (track_node == _processors.end())
     {
-        MIND_LOG_ERROR("Couldn't delete track {}, not found", track_name);
+        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_name);
         return EngineReturnStatus::INVALID_TRACK;
     }
     auto track = track_node->second.get();
@@ -559,7 +559,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
-            MIND_LOG_ERROR("Failed to remove processor {} from processing part", track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track_name);
         }
         return _deregister_processor(track_name);
     }
@@ -573,7 +573,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
                 _remove_processor_from_realtime_part(track->id());
                 return _deregister_processor(track_name);
             }
-            MIND_LOG_WARNING("Plugin track {} was not in the audio graph", track_name);
+            SUSHI_LOG_WARNING("Plugin track {} was not in the audio graph", track_name);
         }
         return EngineReturnStatus::INVALID_TRACK;
     }
@@ -588,7 +588,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
     auto track_node = _processors.find(track_name);
     if (track_node == _processors.end())
     {
-        MIND_LOG_ERROR("Track named {} does not exist in processor list", track_name);
+        SUSHI_LOG_ERROR("Track named {} does not exist in processor list", track_name);
         return EngineReturnStatus::INVALID_TRACK;
     }
     auto track = static_cast<Track*>(track_node->second.get());
@@ -599,7 +599,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
             plugin = _make_internal_plugin(plugin_uid);
             if(plugin == nullptr)
             {
-                MIND_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
+                SUSHI_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
                 return EngineReturnStatus::INVALID_PLUGIN_UID;
             }
             break;
@@ -616,13 +616,13 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
     auto processor_status = plugin->init(_sample_rate);
     if(processor_status != ProcessorReturnCode::OK)
     {
-        MIND_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
+        SUSHI_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
         return EngineReturnStatus::INVALID_PLUGIN_UID;
     }
     EngineReturnStatus status = _register_processor(plugin, plugin_name);
     if(status != EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Failed to register plugin {}", plugin_name);
+        SUSHI_LOG_ERROR("Failed to register plugin {}", plugin_name);
         delete plugin;
         return status;
     }
@@ -638,7 +638,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
         {
-            MIND_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
+            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -682,14 +682,14 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
         bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!remove_ok || !delete_ok)
         {
-            MIND_LOG_ERROR("Failed to remove/delete processor {} from processing part", plugin_name);
+            SUSHI_LOG_ERROR("Failed to remove/delete processor {} from processing part", plugin_name);
         }
     }
     else
     {
         if (!track->remove(processor->id()))
         {
-            MIND_LOG_ERROR("Failed to remove processor {} from track {}", plugin_name, track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from track {}", plugin_name, track_name);
         }
         _remove_processor_from_realtime_part(processor->id());
     }
@@ -738,7 +738,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
         {
-            MIND_LOG_ERROR("Failed to insert/add track {} to processing part", name);
+            SUSHI_LOG_ERROR("Failed to insert/add track {} to processing part", name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     } else
@@ -750,7 +750,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
     {
         _worker_pool->add_worker(Track::ext_render_function, track);
     }
-    MIND_LOG_INFO("Track {} successfully added to engine", name);
+    SUSHI_LOG_INFO("Track {} successfully added to engine", name);
     return EngineReturnStatus::OK;
 }
 
@@ -918,14 +918,14 @@ void AudioEngine::print_timings_to_log()
             auto timings = _process_timer.timings_for_node(id);
             if (timings.has_value())
             {
-                MIND_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
                               timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
             }
         }
         auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
         if (timings.has_value())
         {
-            MIND_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
+            SUSHI_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
                           timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
         }
     }
@@ -949,7 +949,7 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
     file.open(filename, std::ios_base::out);
     if (!file.is_open())
     {
-        MIND_LOG_WARNING("Couldn't write timings to file");
+        SUSHI_LOG_WARNING("Couldn't write timings to file");
         return;
     }
     file.setf(std::ios::left);

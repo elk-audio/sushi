@@ -27,7 +27,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 index,
                                     [[maybe_unused]] VstIntPtr value,
@@ -35,7 +35,7 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
 {
     VstIntPtr result = 0;
 
-    MIND_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
+    SUSHI_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
 
     switch (opcode)
     {
@@ -53,8 +53,8 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
         else
         {
             wrapper_instance->notify_parameter_change(index, opt);
-            MIND_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
-                           wrapper_instance->name(), index, opt);
+            SUSHI_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                            wrapper_instance->name(), index, opt);
         }
 
         break;

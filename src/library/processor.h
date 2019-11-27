@@ -405,7 +405,7 @@ static int chunks_to_ramp(float sample_rate)
 class BypassManager
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(BypassManager);
+    SUSHI_DECLARE_NON_COPYABLE(BypassManager);
 
     BypassManager() = default;
     explicit BypassManager(bool bypassed_by_default) :

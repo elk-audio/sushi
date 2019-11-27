@@ -23,7 +23,7 @@
 #include "track.h"
 #include "logging.h"
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("track");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("track");
 
 namespace sushi {
 namespace engine {

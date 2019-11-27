@@ -35,7 +35,7 @@ class SpinLock
 public:
     SpinLock() = default;
 
-    MIND_DECLARE_NON_COPYABLE(SpinLock);
+    SUSHI_DECLARE_NON_COPYABLE(SpinLock);
 
     void lock()
     {

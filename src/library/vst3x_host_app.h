@@ -51,7 +51,7 @@ public:
 class ComponentHandler : public Steinberg::Vst::IComponentHandler
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(ComponentHandler);
+    SUSHI_DECLARE_NON_COPYABLE(ComponentHandler);
 
     explicit ComponentHandler(Vst3xWrapper* wrapper_instance);
     Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
@@ -72,7 +72,7 @@ private:
 class PluginInstance
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(PluginInstance);
+    SUSHI_DECLARE_NON_COPYABLE(PluginInstance);
 
     PluginInstance();
     ~PluginInstance();

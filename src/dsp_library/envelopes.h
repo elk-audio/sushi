@@ -37,7 +37,7 @@ constexpr float SHORTEST_ENVELOPE_TIME = 1.0e-5f;
  */
 class AdsrEnvelope
 {
-    MIND_DECLARE_NON_COPYABLE(AdsrEnvelope);
+    SUSHI_DECLARE_NON_COPYABLE(AdsrEnvelope);
 
     enum class EnvelopeState
     {

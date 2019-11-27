@@ -48,7 +48,7 @@ template<int capacity>
 class Vst2xMidiEventFIFO
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(Vst2xMidiEventFIFO)
+    SUSHI_DECLARE_NON_COPYABLE(Vst2xMidiEventFIFO)
     /**
      *  @brief Allocate VstMidiEvent buffer and prepare VstEvents* pointers
      */

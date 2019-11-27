@@ -30,7 +30,7 @@ namespace dsp {
  */
 class Sample
 {
-    MIND_DECLARE_NON_COPYABLE(Sample);
+    SUSHI_DECLARE_NON_COPYABLE(Sample);
 public:
     Sample() {}
 

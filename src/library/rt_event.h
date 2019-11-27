@@ -33,8 +33,8 @@ namespace sushi {
 /* Currently limiting the size of an event to 32 bytes and forcing it to align
  * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
  * but likely not further */
-#ifndef MIND_EVENT_CACHE_ALIGNMENT
-#define MIND_EVENT_CACHE_ALIGNMENT 32
+#ifndef SUSHI_EVENT_CACHE_ALIGNMENT
+#define SUSHI_EVENT_CACHE_ALIGNMENT 32
 #endif
 
 /**
@@ -494,7 +494,7 @@ private:
  *        classes via function calls that essentially casts the event to the
  *        given rt event type.
  */
-class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
+class alignas(SUSHI_EVENT_CACHE_ALIGNMENT) RtEvent
 {
 public:
     RtEvent() {};
@@ -862,7 +862,7 @@ private:
 
 /* Compile time check that the event container fits withing given memory constraints and
  * they can be safely copied without side effects. Important for real-time performance*/
-static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
+static_assert(sizeof(RtEvent) == SUSHI_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
 /**

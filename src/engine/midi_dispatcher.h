@@ -72,7 +72,7 @@ enum class MidiDispatcherStatus
 
 class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
 {
-    MIND_DECLARE_NON_COPYABLE(MidiDispatcher);
+    SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
     MidiDispatcher(engine::BaseEngine* engine);

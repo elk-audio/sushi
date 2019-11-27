@@ -28,7 +28,7 @@
 namespace sushi {
 namespace control_frontend {
 
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER;
 
 constexpr int STOP_RETRIES = 200;
 constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(2);

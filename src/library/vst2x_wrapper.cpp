@@ -38,7 +38,7 @@ namespace vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
@@ -83,7 +83,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _can_do_soft_bypass = (bypass == 1);
     _number_of_programs = _plugin_handle->numPrograms;
 
-    MIND_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
+    SUSHI_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -280,11 +280,11 @@ bool Vst2xWrapper::_register_parameters()
         param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
-            MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
+            SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
+            SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -305,7 +305,7 @@ void Vst2xWrapper::process_event(RtEvent event)
     {
         if (_vst_midi_events_fifo.push(event) == false)
         {
-            MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else if(event.type() == RtEventType::SET_BYPASS)
@@ -319,7 +319,7 @@ void Vst2xWrapper::process_event(RtEvent event)
     }
     else
     {
-        MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
+        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 
 }
@@ -472,11 +472,11 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
 #include "logging.h"
 namespace sushi {
 namespace vst2 {
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER;
 ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
+    SUSHI_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }}}
 #endif
