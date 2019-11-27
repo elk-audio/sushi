@@ -82,8 +82,8 @@ void sigint_handler([[maybe_unused]] int sig)
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2017-2019 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2019 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI is Affero GPL. Source code is available from github.com/elk-audio" << std::endl;
 }
 
 void error_exit(const std::string& message)
