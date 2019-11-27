@@ -228,7 +228,7 @@ EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& proce
     con.parameter_id = param->id();
     con.cv_id = cv_input_id;
     _cv_in_routes.push_back(con);
-    MIND_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
+    SUSHI_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
     return EngineReturnStatus::OK;
 }
 
@@ -255,7 +255,7 @@ EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    MIND_LOG_INFO("Connected parameter {} on {} to cv output {}", parameter_name, processor_name, cv_output_id);
+    SUSHI_LOG_INFO("Connected parameter {} on {} to cv output {}", parameter_name, processor_name, cv_output_id);
     return EngineReturnStatus::OK;
 }
 
@@ -279,7 +279,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     con.channel = channel;
     con.gate_id = gate_input_id;
     _gate_in_routes.push_back(con);
-    MIND_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
+    SUSHI_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
 
@@ -302,7 +302,7 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
     {
         return EngineReturnStatus::ERROR;
     }
-    MIND_LOG_INFO("Connected processor {} to gate output {} from channel {}", gate_output_id, processor_name, channel);
+    SUSHI_LOG_INFO("Connected processor {} to gate output {} from channel {}", gate_output_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
 

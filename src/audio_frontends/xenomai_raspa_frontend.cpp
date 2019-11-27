@@ -55,7 +55,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     auto cv_audio_status = config_audio_channels(raspa_config);
     if (cv_audio_status != AudioFrontendStatus::OK)
     {
-        MIND_LOG_ERROR("Incompatible cv and audio channel setup");
+        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
         return cv_audio_status;
     }
 

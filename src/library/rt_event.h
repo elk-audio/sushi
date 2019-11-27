@@ -535,7 +535,7 @@ private:
  *        classes via function calls that essentially casts the event to the
  *        given rt event type.
  */
-class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
+class alignas(SUSHI_EVENT_CACHE_ALIGNMENT) RtEvent
 {
 public:
     RtEvent() {};

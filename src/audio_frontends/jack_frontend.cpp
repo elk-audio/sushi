@@ -45,14 +45,14 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     auto status = _engine->set_cv_input_channels(jack_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Setting {} cv inputs failed", jack_config->cv_inputs);
+        SUSHI_LOG_ERROR("Setting {} cv inputs failed", jack_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _no_cv_input_ports = jack_config->cv_inputs;
     status = _engine->set_cv_output_channels(jack_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);
+        SUSHI_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _no_cv_output_ports = jack_config->cv_outputs;
@@ -129,7 +129,7 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
     status = setup_cv_ports();
     if (status != AudioFrontendStatus::OK)
     {
-        MIND_LOG_ERROR("Failed to setup cv ports");
+        SUSHI_LOG_ERROR("Failed to setup cv ports");
         return status;
     }
     return AudioFrontendStatus::OK;
@@ -197,7 +197,7 @@ AudioFrontendStatus JackFrontend::setup_cv_ports()
                                                  0);
         if (_cv_input_ports[i] == nullptr)
         {
-            MIND_LOG_ERROR("Failed to open Jack cv input port {}.", i);
+            SUSHI_LOG_ERROR("Failed to open Jack cv input port {}.", i);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -210,7 +210,7 @@ AudioFrontendStatus JackFrontend::setup_cv_ports()
                                                   0);
         if (_cv_output_ports[i] == nullptr)
         {
-            MIND_LOG_ERROR("Failed to open Jack cv output port {}.", i);
+            SUSHI_LOG_ERROR("Failed to open Jack cv output port {}.", i);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }

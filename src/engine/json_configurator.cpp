@@ -162,7 +162,7 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks(const std::string &path_to_
             return status;
         }
     }
-    SUSHI_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", _document_path);
+    SUSHI_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", path_to_file);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -443,7 +443,7 @@ JsonConfigReturnStatus JsonConfigurator::_parse_file(const std::string& path_to_
     std::ifstream config_file(path_to_file);
     if(!config_file.good())
     {
-        MIND_LOG_ERROR("Invalid file passed to JsonConfigurator {}", path_to_file);
+        SUSHI_LOG_ERROR("Invalid file passed to JsonConfigurator {}", path_to_file);
         return JsonConfigReturnStatus::INVALID_FILE;
     }
     //iterate through every char in file and store in the string
@@ -641,7 +641,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                                                       data["property_name"].GetString());
         if (status != sushi::engine::EngineReturnStatus::OK)
         {
-            MIND_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
+            SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
         return new StringPropertyChangeEvent(processor_id,

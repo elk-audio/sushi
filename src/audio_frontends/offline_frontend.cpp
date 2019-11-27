@@ -99,13 +99,13 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     auto status = _engine->set_cv_input_channels(off_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
+        SUSHI_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     status = _engine->set_cv_output_channels(off_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);
+        SUSHI_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _engine->set_output_latency(std::chrono::microseconds(0));
