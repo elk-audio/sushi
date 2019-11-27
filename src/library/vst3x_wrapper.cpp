@@ -1,4 +1,22 @@
-#ifdef SUSHI_BUILD_WITH_VST3
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Wrapper for VST 3.x plugins.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */#ifdef SUSHI_BUILD_WITH_VST3
 
 #include <fstream>
 #include <string>
@@ -32,7 +50,7 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext
                                                   Steinberg::Vst::ProcessContext::kTempoValid &
                                                   Steinberg::Vst::ProcessContext::kTimeSigValid;
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
 // Convert a Steinberg 128 char unicode string to 8 bit ascii std::string
 std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
@@ -53,7 +71,7 @@ std::vector<std::string> get_preset_locations()
     {
         locations.emplace_back(std::string(home_dir) + "/.vst3/presets/");
     }
-    MIND_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
+    SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
     locations.emplace_back("/usr/share/vst3/presets/");
     locations.emplace_back("/usr/local/share/vst3/presets/");
     char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
@@ -71,7 +89,7 @@ std::vector<std::string> get_preset_locations()
             path_length = 0;
         }
     }
-    MIND_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory");
+    SUSHI_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory");
     return locations;
 }
 
@@ -84,7 +102,7 @@ std::string extract_preset_name(const std::string& path)
 // Recursively search subdirs for preset files
 void add_patches(const std::string& path, std::vector<std::string>& patches)
 {
-    MIND_LOG_INFO("Looking for presets in: {}", path);
+    SUSHI_LOG_INFO("Looking for presets in: {}", path);
     DIR* dir = opendir(path.c_str());
     if (dir == nullptr)
     {
@@ -99,7 +117,7 @@ void add_patches(const std::string& path, std::vector<std::string>& patches)
             auto suffix_pos = patch_name.rfind(VST_PRESET_SUFFIX);
             if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
             {
-                MIND_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
+                SUSHI_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
                 patches.emplace_back(std::move(path + "/" + patch_name));
             }
         }
@@ -151,18 +169,18 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     auto res = _instance.component()->setActive(Steinberg::TBool(true));
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Failed to activate component with error code: {}", res);
+        SUSHI_LOG_ERROR("Failed to activate component with error code: {}", res);
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
     res = _instance.controller()->setComponentHandler(&_component_handler);
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Failed to set component handler with error code: {}", res);
+        SUSHI_LOG_ERROR("Failed to set component handler with error code: {}", res);
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
     if (!_sync_processor_to_controller())
     {
-        MIND_LOG_WARNING("failed to sync controller");
+        SUSHI_LOG_WARNING("failed to sync controller");
     }
 
     if (!_setup_channels())
@@ -195,7 +213,7 @@ void Vst3xWrapper::configure(float sample_rate)
     if (!_setup_processing())
     {
         // TODO how to handle this?
-        MIND_LOG_ERROR("Error setting sample rate to {}", sample_rate);
+        SUSHI_LOG_ERROR("Error setting sample rate to {}", sample_rate);
     }
     if (reset_enabled)
     {
@@ -260,11 +278,6 @@ void Vst3xWrapper::process_event(const RtEvent& event)
                 _add_parameter_change(_aftertouch_parameter.id, typed_event->value(), typed_event->sample_offset());
             }
             break;
-        }
-        case RtEventType::WRAPPED_MIDI_EVENT:
-        {
-            // TODO - Invoke midi decoder here, vst3 doesn't support raw midi
-            // Or do nothing, no reason to send raw midi to at VST3 plugin
         }
         case RtEventType::SET_BYPASS:
         {
@@ -407,13 +420,13 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
 {
     if (_supports_programs && _internal_programs)
     {
-        MIND_LOG_INFO("Program name {}", program);
+        SUSHI_LOG_INFO("Program name {}", program);
         auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
         Steinberg::Vst::String128 buffer;
         auto res = mutable_unit->getProgramName(_main_program_list_id, program, buffer);
         if (res == Steinberg::kResultOk)
         {
-            MIND_LOG_INFO("Program name returned error {}", res);
+            SUSHI_LOG_INFO("Program name returned error {}", res);
             return {ProcessorReturnCode::OK, to_ascii_str(buffer)};
         }
     }
@@ -421,7 +434,7 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
     {
         return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program])};
     }
-    MIND_LOG_INFO("Set program name failed");
+    SUSHI_LOG_INFO("Set program name failed");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
 }
 
@@ -429,7 +442,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
 {
     if (_supports_programs)
     {
-        MIND_LOG_INFO("all Program names");
+        SUSHI_LOG_INFO("all Program names");
         std::vector<std::string> programs;
         auto mutable_unit = const_cast<PluginInstance*>(&_instance)->unit_info();
         for (int i = 0; i < _program_count; ++i)
@@ -443,7 +456,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
                     programs.emplace_back(to_ascii_str(buffer));
                 } else
                 {
-                    MIND_LOG_INFO("Program name returned error {} on {}", res, i);
+                    SUSHI_LOG_INFO("Program name returned error {} on {}", res, i);
                     break;
                 }
             }
@@ -452,10 +465,10 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
                 programs.emplace_back(extract_preset_name(_program_files[i]));
             }
         }
-        MIND_LOG_INFO("Return list with {} programs", programs.size());
+        SUSHI_LOG_INFO("Return list with {} programs", programs.size());
         return {ProcessorReturnCode::OK, programs};
     }
-    MIND_LOG_INFO("All program names failed");
+    SUSHI_LOG_INFO("All program names failed");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
 }
 
@@ -475,17 +488,17 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
                                               IMMEDIATE_PROCESS);
         event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
         _host_control.post_event(event);
-        MIND_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
+        SUSHI_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
         return ProcessorReturnCode::OK;
     }
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
     {
-        MIND_LOG_INFO("Loading file based preset");
+        SUSHI_LOG_INFO("Loading file based preset");
         Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb"));
         if (stream == nullptr)
         {
-            MIND_LOG_INFO("Failed to load file {}", _program_files[program]);
+            SUSHI_LOG_INFO("Failed to load file {}", _program_files[program]);
             return ProcessorReturnCode::ERROR;
         }
         Steinberg::Vst::PresetFile preset_file(stream);
@@ -499,7 +512,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
         {
-            MIND_LOG_ERROR("Idle message returned error");
+            SUSHI_LOG_ERROR("Idle message returned error");
         }
         if (res)
         {
@@ -507,10 +520,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
             return ProcessorReturnCode::OK;
         } else
         {
-            MIND_LOG_INFO("restore state returned error");
+            SUSHI_LOG_INFO("restore state returned error");
         }
     }
-    MIND_LOG_INFO("Error in program change");
+    SUSHI_LOG_INFO("Error in program change");
     return ProcessorReturnCode::ERROR;
 }
 
@@ -539,7 +552,7 @@ bool Vst3xWrapper::_register_parameters()
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
-                MIND_LOG_INFO("Plugin supports soft bypass");
+                SUSHI_LOG_INFO("Plugin supports soft bypass");
             }
             else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
                     _program_change_parameter.supported == false)
@@ -549,15 +562,15 @@ bool Vst3xWrapper::_register_parameters()
                  * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
-                MIND_LOG_INFO("We have a program change parameter at {}", info.id);
+                SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
             }
             else if (register_parameter(new FloatParameterDescriptor(title, title, 0, 1, nullptr), info.id))
             {
-                MIND_LOG_INFO("Registered parameter {}, id {}", title, info.id);
+                SUSHI_LOG_INFO("Registered parameter {}, id {}", title, info.id);
             }
             else
             {
-                MIND_LOG_INFO("Error registering parameter {}.", title);
+                SUSHI_LOG_INFO("Error registering parameter {}.", title);
             }
         }
     }
@@ -579,19 +592,19 @@ bool Vst3xWrapper::_register_parameters()
         if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kCtrlModWheel,
                                                      _mod_wheel_parameter.id) == Steinberg::kResultOk)
         {
-            MIND_LOG_INFO("Plugin supports mod wheel parameter mapping");
+            SUSHI_LOG_INFO("Plugin supports mod wheel parameter mapping");
             _mod_wheel_parameter.supported = true;
         }
         if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kPitchBend,
                                                      _pitch_bend_parameter.id) == Steinberg::kResultOk)
         {
-            MIND_LOG_INFO("Plugin supports pitch bend parameter mapping");
+            SUSHI_LOG_INFO("Plugin supports pitch bend parameter mapping");
             _pitch_bend_parameter.supported = true;
         }
         if (_instance.midi_mapper()->getMidiControllerAssignment(0, 0, Steinberg::Vst::kAfterTouch,
                                                      _aftertouch_parameter.id) == Steinberg::kResultOk)
         {
-            MIND_LOG_INFO("Plugin supports aftertouch parameter mapping");
+            SUSHI_LOG_INFO("Plugin supports aftertouch parameter mapping");
             _aftertouch_parameter.supported = true;
         }
     }
@@ -602,7 +615,7 @@ bool Vst3xWrapper::_setup_audio_busses()
 {
     int input_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kInput);
     int output_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kOutput);
-    MIND_LOG_INFO("Plugin has {} audio input buffers and {} audio output buffers", input_audio_busses, output_audio_busses);
+    SUSHI_LOG_INFO("Plugin has {} audio input buffers and {} audio output buffers", input_audio_busses, output_audio_busses);
     if (output_audio_busses == 0)
     {
         return false;
@@ -623,7 +636,7 @@ bool Vst3xWrapper::_setup_audio_busses()
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
             {
-                MIND_LOG_ERROR("Failed to activate plugin input bus {}", i);
+                SUSHI_LOG_ERROR("Failed to activate plugin input bus {}", i);
                 return false;
             }
             break;
@@ -641,13 +654,13 @@ bool Vst3xWrapper::_setup_audio_busses()
                                                      Steinberg::Vst::BusDirections::kOutput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
             {
-                MIND_LOG_ERROR("Failed to activate plugin output bus {}", i);
+                SUSHI_LOG_ERROR("Failed to activate plugin output bus {}", i);
                 return false;
             }
             break;
         }
     }
-    MIND_LOG_INFO("Vst3 wrapper ({}) has {} inputs and {} outputs", this->name(), _max_input_channels, _max_output_channels);
+    SUSHI_LOG_INFO("Vst3 wrapper ({}) has {} inputs and {} outputs", this->name(), _max_input_channels, _max_output_channels);
     return true;
 }
 
@@ -655,7 +668,7 @@ bool Vst3xWrapper::_setup_event_busses()
 {
     int input_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kInput);
     int output_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kOutput);
-    MIND_LOG_INFO("Plugin has {} event input buffers and {} event output buffers", input_busses, output_busses);
+    SUSHI_LOG_INFO("Plugin has {} event input buffers and {} event output buffers", input_busses, output_busses);
     /* Try to activate all busses here */
     for (int i = 0; i < input_busses; ++i)
     {
@@ -663,7 +676,7 @@ bool Vst3xWrapper::_setup_event_busses()
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
         if (res != Steinberg::kResultOk)
         {
-            MIND_LOG_ERROR("Failed to activate plugin input event bus {}", i);
+            SUSHI_LOG_ERROR("Failed to activate plugin input event bus {}", i);
             return false;
         }
     }
@@ -673,7 +686,7 @@ bool Vst3xWrapper::_setup_event_busses()
                                                       Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
         if (res != Steinberg::kResultOk)
         {
-            MIND_LOG_ERROR("Failed to activate plugin output event bus {}", i);
+            SUSHI_LOG_ERROR("Failed to activate plugin output event bus {}", i);
             return false;
         }
     }
@@ -682,7 +695,7 @@ bool Vst3xWrapper::_setup_event_busses()
 
 bool Vst3xWrapper::_setup_channels()
 {
-    MIND_LOG_INFO("Vst3 wrapper ({}) setting up {} inputs and {} outputs", this->name(), _current_input_channels, _current_output_channels);
+    SUSHI_LOG_INFO("Vst3 wrapper ({}) setting up {} inputs and {} outputs", this->name(), _current_input_channels, _current_output_channels);
     Steinberg::Vst::SpeakerArrangement input_arr = speaker_arr_from_channels(_current_input_channels);
     Steinberg::Vst::SpeakerArrangement output_arr = speaker_arr_from_channels(_current_output_channels);
 
@@ -690,7 +703,7 @@ bool Vst3xWrapper::_setup_channels()
     auto res = _instance.processor()->setBusArrangements(&input_arr, (_max_input_channels == 0)? 0:1, &output_arr, 1);
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Failed to set a valid channel arrangement");
+        SUSHI_LOG_ERROR("Failed to set a valid channel arrangement");
         return false;
     }
     return true;
@@ -707,7 +720,7 @@ bool Vst3xWrapper::_setup_processing()
     auto res = _instance.processor()->setupProcessing(setup);
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Error setting up processing, error code: {}", res);
+        SUSHI_LOG_ERROR("Error setting up processing, error code: {}", res);
         return false;
     }
     return true;
@@ -717,12 +730,12 @@ bool Vst3xWrapper::_setup_internal_program_handling()
 {
     if (_instance.unit_info() == nullptr || _program_change_parameter.supported == false)
     {
-        MIND_LOG_INFO("No unit info or program change parameter");
+        SUSHI_LOG_INFO("No unit info or program change parameter");
         return false;
     }
     if (_instance.unit_info()->getProgramListCount() == 0)
     {
-        MIND_LOG_INFO("ProgramListCount is 0");
+        SUSHI_LOG_INFO("ProgramListCount is 0");
         return false;
     }
     _main_program_list_id = 0;
@@ -730,7 +743,7 @@ bool Vst3xWrapper::_setup_internal_program_handling()
     auto res = _instance.unit_info()->getUnitInfo(Steinberg::Vst::kRootUnitId, info);
     if (res == Steinberg::kResultOk && info.programListId != Steinberg::Vst::kNoProgramListId)
     {
-        MIND_LOG_INFO("Program list id {}", info.programListId);
+        SUSHI_LOG_INFO("Program list id {}", info.programListId);
         _main_program_list_id = info.programListId;
     }
     /* This is most likely 0, but query and store for good measure as we might want
@@ -741,11 +754,11 @@ bool Vst3xWrapper::_setup_internal_program_handling()
     {
         _supports_programs = true;
         _program_count = list_info.programCount;
-        MIND_LOG_INFO("Plugin supports internal programs, program count: {}", _program_count);
+        SUSHI_LOG_INFO("Plugin supports internal programs, program count: {}", _program_count);
         _internal_programs = true;
         return true;
     }
-    MIND_LOG_INFO("No program list info, returned {}", res);
+    SUSHI_LOG_INFO("No program list info, returned {}", res);
     return false;
 }
 
@@ -757,7 +770,7 @@ bool Vst3xWrapper::_setup_file_program_handling()
         _supports_programs = true;
         _file_based_programs = true;
         _program_count = static_cast<int>(_program_files.size());
-        MIND_LOG_INFO("Using external file programs, {} program files found", _program_files.size());
+        SUSHI_LOG_INFO("Using external file programs, {} program files found", _program_files.size());
         return true;
     }
     return false;
@@ -876,7 +889,7 @@ bool Vst3xWrapper::_sync_controller_to_processor()
         auto res = _instance.component()->setState (&stream);
         return res == Steinberg::kResultTrue? true : false;
     }
-    MIND_LOG_WARNING("Failed to get state from controller");
+    SUSHI_LOG_WARNING("Failed to get state from controller");
     return false;
 }
 
@@ -889,7 +902,7 @@ bool Vst3xWrapper::_sync_processor_to_controller()
         auto res = _instance.controller()->setComponentState (&stream);
         return res == Steinberg::kResultTrue? true : false;
     }
-    MIND_LOG_WARNING("Failed to get state from processor");
+    SUSHI_LOG_WARNING("Failed to get state from processor");
     return false;
 }
 
@@ -899,17 +912,17 @@ void Vst3xWrapper::_program_change_callback(Event* event, int status)
     {
         auto typed_event = static_cast<ParameterChangeEvent*>(event);
         _current_program = static_cast<int>(typed_event->float_value() * _program_count);
-        MIND_LOG_INFO("Set program to {} completed, {}", _current_program, typed_event->parameter_id());
+        SUSHI_LOG_INFO("Set program to {} completed, {}", _current_program, typed_event->parameter_id());
         _instance.controller()->setParamNormalized(_program_change_parameter.id, typed_event->float_value());
         Steinberg::Vst::HostMessage message;
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
         {
-            MIND_LOG_ERROR("Idle message returned error");
+            SUSHI_LOG_ERROR("Idle message returned error");
         }
         return;
     }
-    MIND_LOG_INFO("Set program failed with status: {}", status);
+    SUSHI_LOG_INFO("Set program failed with status: {}", status);
 }
 
 int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
@@ -956,11 +969,11 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
 #include "logging.h"
 namespace sushi {
 namespace vst3 {
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER;
 ProcessorReturnCode Vst3xWrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with Vst 3 support!");
+    SUSHI_LOG_ERROR("Sushi was not built with Vst 3 support!");
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }}}
 #endif

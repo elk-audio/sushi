@@ -1,8 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
- * @Brief Internal plugin manager.
- * @copyright MIND Music Labs AB, Stockholm
- *
- *
+ * @brief Internal plugin manager.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_INTERNAL_PLUGIN_H
@@ -16,15 +29,13 @@
 namespace sushi {
 
 /**
- * @brief internal wrapper class for StompBox instances that keeps track
- * of all the host-related configuration.
+ * @brief internal base class for processors that keeps track of all host-related
+ * configuration and provides basic parameter and event handling.
  */
-
-
 class InternalPlugin : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(InternalPlugin)
+    SUSHI_DECLARE_NON_COPYABLE(InternalPlugin)
 
     explicit InternalPlugin(HostControl host_control);
 
@@ -40,7 +51,7 @@ public:
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -59,7 +70,7 @@ public:
 
     /**
      * @brief Register an int typed parameter and return a pointer to a value
-     *        storage object that will hold the value and set automaticaly when
+     *        storage object that will hold the value and set automatically when
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
@@ -93,7 +104,7 @@ public:
      * @brief Register a string property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @return true if the property was registered succesfully
+     * @return true if the property was registered successfully
      */
     bool register_string_property(const std::string& name,
                                   const std::string& label);
@@ -103,7 +114,7 @@ public:
      * @brief Register a data property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @return true if the property was registered succesfully
+     * @return true if the property was registered successfully
      */
     bool register_data_property(const std::string& name,
                                 const std::string& label);

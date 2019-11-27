@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Internal plugin manager.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include "library/internal_plugin.h"
 
 namespace sushi {
@@ -113,14 +133,11 @@ void InternalPlugin::process_event(const RtEvent& event)
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::BOOL_PARAMETER_CHANGE:
         {
-            /* These are "managed events" and not handled directly by the stompbox,
-             * other events are passed on unaltered. Maybe in the future we'll do
-             * some kind of conversion to StompboxEvents here to avoid exposing
-             * the internal event structure to 3rd party devs. */
+            /* These are "managed events" where this function provides a default
+             * implementation for handling these and setting parameter values */
             auto typed_event = event.parameter_change_event();
             if (typed_event->param_id() >= _parameter_values.size())
             {
-                /* Out of bounds index, this should not happen, might replace with an assert. */
                 break;
             }
             auto storage = &_parameter_values[typed_event->param_id()];

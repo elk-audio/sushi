@@ -1,5 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
- * @brief Offline frontend (using libsndfile) to test Sushi host and plugins
+ * @brief Main entry point to Sushi
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
@@ -66,8 +82,8 @@ void sigint_handler([[maybe_unused]] int sig)
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2019 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI is Affero GPL. Source code is available from github.com/elk-audio" << std::endl;
 }
 
 void error_exit(const std::string& message)
@@ -265,13 +281,13 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
-    if (ret_code != MIND_LOG_ERROR_CODE_OK)
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
-        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 
-    MIND_GET_LOGGER_WITH_MODULE_NAME("main");
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
@@ -309,7 +325,7 @@ int main(int argc, char* argv[])
     {
         case FrontendType::JACK:
         {
-            MIND_LOG_INFO("Setting up Jack audio frontend");
+            SUSHI_LOG_INFO("Setting up Jack audio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
                                                                                                  jack_server_name,
                                                                                                  connect_ports,
@@ -321,7 +337,7 @@ int main(int argc, char* argv[])
 
         case FrontendType::XENOMAI_RASPA:
         {
-            MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+            SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches,
                                                                                                          cv_inputs,
                                                                                                          cv_outputs);
@@ -336,11 +352,11 @@ int main(int argc, char* argv[])
             if (frontend_type == FrontendType::DUMMY)
             {
                 dummy = true;
-                MIND_LOG_INFO("Setting up dummy audio frontend");
+                SUSHI_LOG_INFO("Setting up dummy audio frontend");
             }
             else
             {
-                MIND_LOG_INFO("Setting up offline audio frontend");
+                SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
             frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
                                                                                                     output_filename,
@@ -446,6 +462,6 @@ int main(int argc, char* argv[])
     }
 
     audio_frontend->cleanup();
-    MIND_LOG_INFO("Sushi exited normally.");
+    SUSHI_LOG_INFO("Sushi exited normally.");
     return 0;
 }

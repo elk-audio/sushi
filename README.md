@@ -40,4 +40,4 @@ Path                                   | Typespec | Arguments
 /engine/set_playing_mode               |  s       | "playing" or "stopped"
 /engine/set_sync_mode                  |  s       | "internal", "ableton_link" or "midi"
 
-Copyright 2016-2018 MIND Music Labs AB, Stockholm, Sweden.
+Copyright 2016-2019 MIND Music Labs AB, Stockholm, Sweden.

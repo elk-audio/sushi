@@ -14,37 +14,23 @@
  */
 
 /**
- * @brief Gain plugin example
+ * @brief Custom allocator for EASTL
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef GAIN_PLUGIN_H
-#define GAIN_PLUGIN_H
+#include <cstddef>
+#include <cstdlib>
+#include <EABase/eabase.h>
+#include <new>
 
-#include "library/internal_plugin.h"
+#include "elk_allocator.h"
 
-namespace sushi {
-namespace gain_plugin {
-
-constexpr int MAX_CHANNELS = 16;
-static const std::string DEFAULT_NAME = "sushi.testing.gain";
-static const std::string DEFAULT_LABEL = "Gain";
-
-class GainPlugin : public InternalPlugin
+void* operator new[](size_t size, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
 {
-public:
-    GainPlugin(HostControl host_control);
+    return malloc(size);
+}
 
-    ~GainPlugin();
-
-    void set_input_channels(int channels) override;
-
-    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
-
-private:
-    FloatParameterValue* _gain_parameter;
-};
-
-}// namespace gain_plugin
-}// namespace sushi
-#endif // GAIN_PLUGIN_H
+void* operator new[](size_t size, size_t /*alignment*/, size_t /*alignmentOffset*/, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
+{
+    return malloc(size);
+}
