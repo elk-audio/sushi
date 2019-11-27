@@ -83,7 +83,7 @@ void sigint_handler([[maybe_unused]] int sig)
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Copyright 2017-2019 Elk, Stockholm" << std::endl;
-    std::cout << "SUSHI is Affero GPL. Source code is available from github.com/elk-audio" << std::endl;
+    std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
 void error_exit(const std::string& message)
