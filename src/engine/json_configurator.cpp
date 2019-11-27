@@ -161,7 +161,7 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
             return status;
         }
     }
-    SUSHI_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", path_to_file);
+    SUSHI_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", _document_path);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -413,7 +413,6 @@ JsonConfigReturnStatus JsonConfigurator::load_events()
 std::pair<JsonConfigReturnStatus, std::vector<Event*>>
 JsonConfigurator::load_event_list()
 {
-    rapidjson::Document json_events;
     std::vector<Event*> events;
     auto [status, json_events] = _parse_section(JsonSection::EVENTS);
     if(status != JsonConfigReturnStatus::OK)
@@ -449,7 +448,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::HOST_CONFIG:
             if(_json_data.HasMember("host_config") == false)
             {
-                MIND_LOG_INFO("Config file does not have any Host Config definitions");
+                SUSHI_LOG_INFO("Config file does not have any Host Config definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["host_config"]};
@@ -457,7 +456,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::TRACKS:
             if(_json_data.HasMember("tracks") == false)
             {
-                MIND_LOG_INFO("Config file does not have any Track definitions");
+                SUSHI_LOG_INFO("Config file does not have any Track definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["tracks"]};
@@ -465,7 +464,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::MIDI:
             if(_json_data.HasMember("midi") == false)
             {
-                MIND_LOG_INFO("Config file does not have MIDI definitions");
+                SUSHI_LOG_INFO("Config file does not have MIDI definitions");
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["midi"]};
@@ -473,7 +472,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::CV_GATE:
             if(_json_data.HasMember("cv_control") == false)
             {
-                MIND_LOG_INFO("Config file does not have CV/Gate definitions");
+                SUSHI_LOG_INFO("Config file does not have CV/Gate definitions");
                 return {JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["cv_control"]};
@@ -481,7 +480,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         case JsonSection::EVENTS:
             if(_json_data.HasMember("events") == false)
             {
-                MIND_LOG_INFO("Config file does not have any Event definitions");
+                SUSHI_LOG_INFO("Config file does not have any Event definitions");
                 return {JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["events"]};
@@ -514,16 +513,16 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
 
     if(status == EngineReturnStatus::INVALID_PLUGIN_NAME || status == EngineReturnStatus::INVALID_PROCESSOR)
     {
-        MIND_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
+        SUSHI_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
     if(status != EngineReturnStatus::OK)
     {
-        MIND_LOG_ERROR("Track Name {} failed to create", name);
+        SUSHI_LOG_ERROR("Track Name {} failed to create", name);
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
-    MIND_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
+    SUSHI_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
 
     for(const auto& con : track_def["inputs"].GetArray())
     {
@@ -537,7 +536,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
         if(status != EngineReturnStatus::OK)
         {
-            MIND_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
+            SUSHI_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -555,7 +554,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
         if(status != EngineReturnStatus::OK)
         {
-            MIND_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
+            SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -589,17 +588,17 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
             {
-                MIND_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
+                SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
             }
-            MIND_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
+            SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
-        MIND_LOG_DEBUG("Successfully added Plugin \"{}\" to"
+        SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to"
                                " Chain \"{}\"", plugin_name, name);
     }
 
-    MIND_LOG_DEBUG("Successfully added Track {} to the engine", name);
+    SUSHI_LOG_DEBUG("Successfully added Track {} to the engine", name);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -621,7 +620,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     auto [status, processor_id] = _engine->processor_id_from_name(data["plugin_name"].GetString());
     if (status != sushi::engine::EngineReturnStatus::OK)
     {
-        MIND_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
+        SUSHI_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
         return nullptr;
     }
     if (json_event["type"] == "parameter_change")
@@ -630,7 +629,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                                                       data["parameter_name"].GetString());
         if (status != sushi::engine::EngineReturnStatus::OK)
         {
-            MIND_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
+            SUSHI_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
         return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
@@ -645,7 +644,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                                                       data["property_name"].GetString());
         if (status != sushi::engine::EngineReturnStatus::OK)
         {
-            MIND_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
+            SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
         return new StringPropertyChangeEvent(processor_id,
@@ -723,7 +722,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
         std::string error_node = string_buffer.GetString();
         if(error_node.empty() == false)
         {
-            MIND_LOG_ERROR("Schema validation failure at {}", error_node);
+            SUSHI_LOG_ERROR("Schema validation failure at {}", error_node);
         }
         return false;
     }
@@ -735,7 +734,7 @@ JsonConfigReturnStatus JsonConfigurator::_load_data()
     std::ifstream config_file(_document_path);
     if(!config_file.good())
     {
-        MIND_LOG_ERROR("Invalid file passed to JsonConfigurator {}", _document_path);
+        SUSHI_LOG_ERROR("Invalid file passed to JsonConfigurator {}", _document_path);
         return JsonConfigReturnStatus::INVALID_FILE;
     }
     //iterate through every char in file and store in the string
@@ -744,7 +743,7 @@ JsonConfigReturnStatus JsonConfigurator::_load_data()
     if(_json_data.HasParseError())
     {
         [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
-        MIND_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
+        SUSHI_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
                        rapidjson::GetParseError_En(_json_data.GetParseError()),
                        err_offset,
                        config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );

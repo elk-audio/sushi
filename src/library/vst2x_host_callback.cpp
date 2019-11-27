@@ -98,10 +98,6 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
 
         default:
             break;
-
-    }
-    default:
-        break;
     }
 
     return result;
