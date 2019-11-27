@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Wrapper for VST 2.x plugins.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifdef SUSHI_BUILD_WITH_VST2
 
 #include "twine/twine.h"
@@ -18,7 +38,7 @@ namespace vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
@@ -63,7 +83,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _can_do_soft_bypass = (bypass == 1);
     _number_of_programs = _plugin_handle->numPrograms;
 
-    MIND_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
+    SUSHI_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -159,8 +179,10 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::parameter_value_format
 {
     if (static_cast<int>(parameter_id) < _plugin_handle->numParams)
     {
-        char buffer[kVstMaxParamStrLen] = "";
-        _vst_dispatcher(effGetParamDisplay, 0, static_cast<VstInt32>(parameter_id), buffer, 0);
+        // Many plugins don't respect the kVstMaxParamStrLen limit, so better use a larger buffer
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
+        _vst_dispatcher(effGetParamDisplay, static_cast<VstInt32>(parameter_id), 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return {ProcessorReturnCode::OK, buffer};
     }
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
@@ -179,8 +201,9 @@ std::string Vst2xWrapper::current_program_name() const
 {
     if (this->supports_programs())
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return std::string(buffer);
     }
     return "";
@@ -190,8 +213,9 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int progr
 {
     if (this->supports_programs())
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
     }
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -206,8 +230,9 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_progr
     std::vector<std::string> programs;
     for (int i = 0; i < _number_of_programs; ++i)
     {
-        char buffer[kVstMaxProgNameLen] = "";
+        char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
+        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
         programs.push_back(buffer);
     }
     return {ProcessorReturnCode::OK, programs};
@@ -251,14 +276,15 @@ bool Vst2xWrapper::_register_parameters()
     {
         // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
+        param_name[VST_STRING_BUFFER_SIZE-1] = 0;
         param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
         if (param_inserted_ok)
         {
-            MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
+            SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
+            SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -279,7 +305,7 @@ void Vst2xWrapper::process_event(RtEvent event)
     {
         if (_vst_midi_events_fifo.push(event) == false)
         {
-            MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else if(event.type() == RtEventType::SET_BYPASS)
@@ -293,7 +319,7 @@ void Vst2xWrapper::process_event(RtEvent event)
     }
     else
     {
-        MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
+        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 
 }
@@ -433,7 +459,7 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
         case 7:
             return kSpeakerArr70Music;
         default:
-            return kSpeakerArr80Music; //TODO - decide how to handle multichannel setups
+            return kSpeakerArr80Music;
     }
 }
 
@@ -446,11 +472,11 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
 #include "logging.h"
 namespace sushi {
 namespace vst2 {
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER;
 ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
+    SUSHI_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }}}
 #endif

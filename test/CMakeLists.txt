@@ -33,7 +33,7 @@ endif()
 #####################################
 
 # build gtest framework
-add_subdirectory(gtest_1_7_0)
+add_subdirectory(gtest)
 enable_testing()
 
 #####################
@@ -94,7 +94,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/tra
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
-target_compile_definitions(unit_tests PRIVATE -DMIND_DISABLE_LOGGING -D__cdecl= )
+target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING -D__cdecl= )
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
@@ -120,7 +120,7 @@ endif()
 
 set(INCLUDE_DIRS "${INCLUDE_DIRS}"
                  ${PROJECT_SOURCE_DIR}/test/unittests
-                 ${PROJECT_SOURCE_DIR}/test/gtest_1_7_0/include)
+                 ${PROJECT_SOURCE_DIR}/test/gtest/include)
 
 target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
 

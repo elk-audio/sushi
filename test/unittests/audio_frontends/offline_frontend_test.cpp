@@ -120,9 +120,9 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
-    sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher);
+    sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher, test_config_file);
     rapidjson::Document config;
-    auto [status, events] = configurator.load_event_list(test_config_file);
+    auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
     _module_under_test->add_sequencer_events(events);
 

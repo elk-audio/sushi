@@ -1,6 +1,21 @@
-/**
- * @brief Frontend using Xenomai with RASPA library for XMOS board.
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+ /**
+ * @brief Frontend using Xenomai with RASPA library for XMOS board.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 #ifdef SUSHI_BUILD_WITH_XENOMAI
 
@@ -15,7 +30,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
 bool XenomaiRaspaFrontend::_raspa_initialised = false;
 
@@ -31,7 +46,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     // RASPA
     if (RASPA_N_FRAMES_PER_BUFFER != AUDIO_CHUNK_SIZE)
     {
-        MIND_LOG_ERROR("Chunk size mismatch, check driver configuration.");
+        SUSHI_LOG_ERROR("Chunk size mismatch, check driver configuration.");
         return AudioFrontendStatus::INVALID_CHUNK_SIZE;
     }
     _engine->set_audio_input_channels(RASPA_N_CHANNELS);
@@ -46,14 +61,14 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this, debug_flags);
     if (raspa_ret < 0)
     {
-        MIND_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
+        SUSHI_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     auto raspa_sample_rate = raspa_get_sampling_rate();
     if (_engine->sample_rate() != raspa_sample_rate)
     {
-        MIND_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), raspa_sample_rate);
+        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), raspa_sample_rate);
         _engine->set_sample_rate(raspa_sample_rate);
     }
     _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
@@ -65,7 +80,7 @@ void XenomaiRaspaFrontend::cleanup()
 {
     if (_raspa_initialised)
     {
-        MIND_LOG_INFO("Closing Raspa driver.");
+        SUSHI_LOG_INFO("Closing Raspa driver.");
         raspa_close();
     }
     _raspa_initialised = false;
@@ -106,11 +121,11 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
 #include "logging.h"
 namespace sushi {
 namespace audio_frontend {
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER;
 XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
+    SUSHI_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
     assert(false);
 }}}
 

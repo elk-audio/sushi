@@ -14,28 +14,23 @@
  */
 
 /**
- * @brief Vst2 host callback implementation
+ * @brief Custom allocator for EASTL
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_VST2X_HOST_CALLBACK_H
-#define SUSHI_VST2X_HOST_CALLBACK_H
+#include <cstddef>
+#include <cstdlib>
+#include <EABase/eabase.h>
+#include <new>
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#define VST_FORCE_DEPRECATED 0
-#include "aeffectx.h"
-#pragma GCC diagnostic pop
+#include "elk_allocator.h"
 
-namespace sushi {
-namespace vst2 {
+void* operator new[](size_t size, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
+{
+    return malloc(size);
+}
 
-typedef AEffect *(*plugin_entry_proc)(audioMasterCallback host);
-
-extern VstIntPtr VSTCALLBACK host_callback(AEffect* /* effect */,
-                                           VstInt32 opcode, VstInt32 index,
-                                           VstIntPtr value, void* ptr, float opt);
-
-} // namespace vst2
-} // namespace sushi
-
-#endif //SUSHI_VST2X_HOST_CALLBACK_H
+void* operator new[](size_t size, size_t /*alignment*/, size_t /*alignmentOffset*/, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
+{
+    return malloc(size);
+}

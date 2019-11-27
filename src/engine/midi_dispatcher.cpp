@@ -1,14 +1,33 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Handles translation of midi to internal events and midi routing
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
+#include <algorithm>
 
 #include "engine/midi_dispatcher.h"
 #include "library/midi_encoder.h"
 #include "logging.h"
 
-#include <algorithm>
-
 namespace sushi {
 namespace midi_dispatcher {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
 inline Event* make_note_on_event(const InputConnection &c,
                                  const midi::NoteOnMessage &msg,
@@ -157,7 +176,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     connection.relative = use_relative_mode;
     connection.virtual_abs_value = 64;
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    MIND_LOG_INFO("Connected parameter \"{}\" "
+    SUSHI_LOG_INFO("Connected parameter \"{}\" "
                            "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
     return MidiDispatcherStatus::OK;
 }
@@ -181,7 +200,7 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _pc_routes[midi_input][channel].push_back(connection);
-    MIND_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor \"{}\"", midi_input, processor_name);
+    SUSHI_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor \"{}\"", midi_input, processor_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -204,7 +223,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _kb_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -227,7 +246,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     connection.min_range = 0;
     connection.max_range = 0;
     _raw_routes_in[midi_input][channel].push_back(connection);
-    MIND_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;
 }
 
@@ -253,7 +272,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     connection.max_range = 4.5678f;
     connection.cc_number = 123;
     _kb_routes_out[id].push_back(connection);
-    MIND_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
+    SUSHI_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -467,8 +486,8 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::WRAPPED_MIDI:
                         midi_data = typed_event->midi_data();
                 }
-                MIND_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
-                              midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
+                SUSHI_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
+                                midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
                 _frontend->send_midi(c.output, midi_data, event->time());
             }
         }

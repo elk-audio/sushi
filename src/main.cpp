@@ -1,5 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
- * @brief Offline frontend (using libsndfile) to test Sushi host and plugins
+ * @brief Main entry point to Sushi
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
@@ -66,8 +82,8 @@ void sigint_handler([[maybe_unused]] int sig)
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Sensus Universal Sound Host Interface" << std::endl;
-    std::cout << "Copyright 2016-2018 MIND Music Labs, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2019 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
 void error_exit(const std::string& message)
@@ -265,13 +281,13 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = MIND_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
-    if (ret_code != MIND_LOG_ERROR_CODE_OK)
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
-        std::cerr << MIND_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 
-    MIND_GET_LOGGER_WITH_MODULE_NAME("main");
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
@@ -283,6 +299,10 @@ int main(int argc, char* argv[])
     }
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine.get());
+    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
+                                                                              midi_dispatcher.get(),
+                                                                              config_filename);
+
     midi_dispatcher->set_midi_inputs(1);
     midi_dispatcher->set_midi_outputs(1);
 
@@ -299,7 +319,7 @@ int main(int argc, char* argv[])
     {
         case FrontendType::JACK:
         {
-            MIND_LOG_INFO("Setting up Jack audio frontend");
+            SUSHI_LOG_INFO("Setting up Jack audio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
                                                                                                  jack_server_name,
                                                                                                  connect_ports);
@@ -309,7 +329,7 @@ int main(int argc, char* argv[])
 
         case FrontendType::XENOMAI_RASPA:
         {
-            MIND_LOG_INFO("Setting up Xenomai RASPA frontend");
+            SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches);
             audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
             break;
@@ -322,11 +342,11 @@ int main(int argc, char* argv[])
             if (frontend_type == FrontendType::DUMMY)
             {
                 dummy = true;
-                MIND_LOG_INFO("Setting up dummy audio frontend");
+                SUSHI_LOG_INFO("Setting up dummy audio frontend");
             }
             else
             {
-                MIND_LOG_INFO("Setting up offline audio frontend");
+                SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
             frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
                                                                                                     output_filename,
@@ -345,31 +365,43 @@ int main(int argc, char* argv[])
         error_exit("Error initializing frontend, check logs for details.");
     }
 
-    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(), midi_dispatcher.get());
-    auto status = configurator->load_host_config(config_filename);
+    auto status = configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load host configuration from config file");
     }
-    status = configurator->load_tracks(config_filename);
+    status = configurator->load_tracks();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load tracks from Json config file");
     }
-    configurator->load_midi(config_filename);
+    status = configurator->load_midi();
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    {
+        error_exit("Failed to load MIDI mapping from Json config file");
+    }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
-        auto [status, events] = configurator->load_event_list(config_filename);
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        auto [status, events] = configurator->load_event_list();
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
+        }
+        else
+        {
+            error_exit("Failed to load Event list from Json config file");
         }
     }
     else
     {
-        configurator->load_events(config_filename);
+        status = configurator->load_events();
+        if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        {
+            error_exit("Failed to load Events from Json config file");
+        }
     }
+    configurator.reset();
 
     if (enable_timings)
     {
@@ -430,6 +462,6 @@ int main(int argc, char* argv[])
     }
 
     audio_frontend->cleanup();
-    MIND_LOG_INFO("Sushi exited normally.");
+    SUSHI_LOG_INFO("Sushi exited normally.");
     return 0;
 }

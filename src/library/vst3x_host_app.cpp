@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief VST 3.x  plugin loader
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include <cstring>
 
 #include "pluginterfaces/base/ustring.h"
@@ -10,15 +30,13 @@
 namespace sushi {
 namespace vst3 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst3");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
 constexpr char HOST_NAME[] = "Sushi";
 
 Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
 
 {
-    // TODO, Eventually find a better way, building and including the
-    // entire sdk lib for small util functions like this feels stupid.
     Steinberg::UString128 str(HOST_NAME);
     str.copyTo (name, 0);
     return Steinberg::kResultOk;
@@ -47,11 +65,11 @@ Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 }
 
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
- * But edited to follow Mind coding style. See plugprovider.cpp. */
+ * But edited to follow Elk coding style. See plugprovider.cpp. */
 class ConnectionProxy : public Steinberg::FObject, public Steinberg::Vst::IConnectionPoint
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(ConnectionProxy);
+    SUSHI_DECLARE_NON_COPYABLE(ConnectionProxy);
 
     explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* src_connection) : _source_connection(src_connection) {}
     virtual ~ConnectionProxy() = default;
@@ -146,13 +164,13 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     _module = VST3::Hosting::Module::create(plugin_path, error_msg);
     if (!_module)
     {
-        MIND_LOG_ERROR("Failed to load VST3 Module: {}", error_msg);
+        SUSHI_LOG_ERROR("Failed to load VST3 Module: {}", error_msg);
         return false;
     }
     auto factory = _module->getFactory().get();
     if (!factory)
     {
-        MIND_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
+        SUSHI_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
         return false;
     }
     Steinberg::PFactoryInfo info;
@@ -171,28 +189,28 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     auto res = component->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Failed to initialize component with error code: {}", res);
+        SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);
         return false;
     }
 
     auto processor = load_processor(component);
     if (!processor)
     {
-        MIND_LOG_ERROR("Failed to get processor from component");
+        SUSHI_LOG_ERROR("Failed to get processor from component");
         return false;
     }
 
     auto controller = load_controller(factory, component);
     if (!controller)
     {
-        MIND_LOG_ERROR("Failed to load controller");
+        SUSHI_LOG_ERROR("Failed to load controller");
         return false;
     }
 
     res = controller->initialize(&_host_app);
     if (res != Steinberg::kResultOk)
     {
-        MIND_LOG_ERROR("Failed to initialize component with error code: {}", res);
+        SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);
         return false;
     }
 
@@ -205,8 +223,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
 
     if (_connect_components() == false)
     {
-        MIND_LOG_ERROR("Failed to connect component to editor");
-        // Might still be ok? Plugin might not have an editor.
+        SUSHI_LOG_ERROR("Failed to connect component to editor");
     }
     return true;
 }
@@ -218,14 +235,14 @@ void PluginInstance::_query_extension_interfaces()
     if (res == Steinberg::kResultOk)
     {
         _midi_mapper = midi_mapper;
-        MIND_LOG_INFO("Plugin supports Midi Mapping interface");
+        SUSHI_LOG_INFO("Plugin supports Midi Mapping interface");
     }
     Steinberg::Vst::IUnitInfo* unit_info;
     res = _controller->queryInterface(Steinberg::Vst::IUnitInfo::iid, reinterpret_cast<void**>(&unit_info));
     if (res == Steinberg::kResultOk)
     {
         _unit_info = unit_info;
-        MIND_LOG_INFO("Plugin supports Unit Info interface for programs");
+        SUSHI_LOG_INFO("Plugin supports Unit Info interface for programs");
     }
 }
 
@@ -236,7 +253,7 @@ bool PluginInstance::_connect_components()
 
     if (!component_connection || !controller_connection)
     {
-        MIND_LOG_ERROR("Failed to create connection points");
+        SUSHI_LOG_ERROR("Failed to create connection points");
         return false;
     }
 
@@ -245,13 +262,13 @@ bool PluginInstance::_connect_components()
 
     if (_component_connection->connect(controller_connection) != Steinberg::kResultTrue)
     {
-        MIND_LOG_ERROR("Failed to connect component");
+        SUSHI_LOG_ERROR("Failed to connect component");
     }
     else
     {
         if (_controller_connection->connect(component_connection) != Steinberg::kResultTrue)
         {
-            MIND_LOG_ERROR("Failed to connect controller");
+            SUSHI_LOG_ERROR("Failed to connect controller");
         }
         else
         {
@@ -290,7 +307,7 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
     {
         Steinberg::PClassInfo info;
         factory->getClassInfo(i, &info);
-        MIND_LOG_INFO("Querying plugin {} of type {}", info.name, info.category);
+        SUSHI_LOG_INFO("Querying plugin {} of type {}", info.name, info.category);
         if (info.name == plugin_name)
         {
             Steinberg::Vst::IComponent* component;
@@ -298,14 +315,14 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
                                                reinterpret_cast<void**>(&component));
             if (res == Steinberg::kResultOk)
             {
-                MIND_LOG_INFO("Creating plugin {}", info.name);
+                SUSHI_LOG_INFO("Creating plugin {}", info.name);
                 return component;
             }
-            MIND_LOG_ERROR("Failed to create component with error code: {}", res);
+            SUSHI_LOG_ERROR("Failed to create component with error code: {}", res);
             return nullptr;
         }
     }
-    MIND_LOG_ERROR("No match for plugin {} in factory", plugin_name);
+    SUSHI_LOG_ERROR("No match for plugin {} in factory", plugin_name);
     return nullptr;
 }
 
@@ -348,7 +365,7 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
                 return controller;
             }
         }
-        MIND_LOG_ERROR("Failed to create controller with error code: {}", res);
+        SUSHI_LOG_ERROR("Failed to create controller with error code: {}", res);
     }
     return nullptr;
 }
