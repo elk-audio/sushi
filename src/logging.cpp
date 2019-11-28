@@ -1,13 +1,33 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Logging wrapper
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include <map>
 #include <algorithm>
 #include <iostream>
 
 #include "logging.h"
-#ifndef MIND_DISABLE_LOGGING
+#ifndef SUSHI_DISABLE_LOGGING
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/async.h"
 
-namespace mind {
+namespace elk {
 
 // Static variable need to be initialized here
 // so that the linker can find them.
@@ -21,11 +41,13 @@ std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
 std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
 
-MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
-                                        const std::string& logger_name,
-                                        const std::string& min_log_level)
+SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
+                                         const std::string& logger_name,
+                                         const std::string& min_log_level,
+                                         const bool enable_flush_interval,
+                                         const std::chrono::seconds log_flush_interval)
 {
-    MIND_LOG_ERROR_CODE ret = MIND_LOG_ERROR_CODE_OK;
+    SUSHI_LOG_ERROR_CODE ret = SUSHI_LOG_ERROR_CODE_OK;
 
     std::map<std::string, spdlog::level::level_enum> level_map;
     level_map["debug"] = spdlog::level::debug;
@@ -43,9 +65,22 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
 
     logger_instance = setup_logging();
 
+    if (enable_flush_interval)
+    {
+        if (log_flush_interval.count() > 0)
+        {
+            spdlog::flush_every(log_flush_interval);
+        }
+        else
+        {
+            return SUSHI_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
+        }
+        
+    }
+
     if (logger_instance == nullptr)
     {
-        ret = MIND_LOG_FAILED_TO_START_LOGGER;
+        ret = SUSHI_LOG_FAILED_TO_START_LOGGER;
     }
     if (level_map.count(log_level_lowercase) > 0)
     {
@@ -53,12 +88,12 @@ MIND_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     }
     else
     {
-        ret = MIND_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
+        ret = SUSHI_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
     return ret;
 }
 
-std::string Logger::get_error_message(MIND_LOG_ERROR_CODE status)
+std::string Logger::get_error_message(SUSHI_LOG_ERROR_CODE status)
 {
     static std::string error_messages[] = 
     {
@@ -83,11 +118,11 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");
-    async_file_logger->warn("   Started Mind Logger!");
+    async_file_logger->warn("   Started Sushi Logger!");
     async_file_logger->warn("#############################");
     return async_file_logger;
 }
 
-} // end namespace mind
+} // end namespace elk
 
-#endif // MIND_DISABLE_LOGGING
+#endif // SUSHI_DISABLE_LOGGING

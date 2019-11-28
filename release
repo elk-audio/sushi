@@ -3,7 +3,7 @@
 
 __author__      = "Stefano Zambon"
 __date__        = "March 7th 2016"
-__copyright__   = "Copyright (C) 2016 MIND Music Labs"
+__copyright__   = "Copyright (C) 2016 Modern Ancient Instruments Networked AB, dba Elk"
 
 import subprocess
 import re

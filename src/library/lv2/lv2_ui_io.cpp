@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include <csignal>
@@ -18,7 +38,7 @@ namespace lv2 {
 */
 #define N_BUFFER_CYCLES 16
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 void Lv2_UI_IO::init(const LilvPlugin* plugin, float sample_rate, int midi_buf_size)
 {
@@ -82,7 +102,7 @@ void Lv2_UI_IO::write_ui_event(const char* buf)
 {
     if (zix_ring_write(_plugin_events, buf, sizeof(buf)) < sizeof(buf))
     {
-        MIND_LOG_ERROR("Plugin => UI buffer overflow!");
+        SUSHI_LOG_ERROR("Plugin => UI buffer overflow!");
     }
 }
 
@@ -484,7 +504,7 @@ MIND_GET_LOGGER;
 //ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
 //{
 //    /* The log print needs to be in a cpp file for initialisation order reasons */
-//    MIND_LOG_ERROR("Sushi was not built with LV2 support!");
+//    SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");
 //    return ProcessorReturnCode::ERROR;
 //}
 }

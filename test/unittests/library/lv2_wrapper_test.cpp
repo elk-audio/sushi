@@ -10,6 +10,7 @@
 #include "library/lv2/lv2_features.cpp"
 #include "library/lv2/lv2_wrapper.cpp"
 #include "library/lv2/lv2_ui_io.cpp"
+#include "library/lv2/lv2_port.cpp"
 #include "library/lv2/lv2_model.cpp"
 #include "library/lv2/lv2_control.cpp"
 

@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include <exception>
@@ -21,7 +41,7 @@ static constexpr int LV2_STRING_BUFFER_SIZE = 256;
 namespace sushi {
 namespace lv2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 /** Return true iff Sushi supports the given feature. */
 static bool feature_is_supported(LV2Model* model, const char* uri)
@@ -47,7 +67,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     auto library_handle = _loader.get_plugin_handle_from_URI(_plugin_path.c_str());
     if (library_handle == nullptr)
     {
-        MIND_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
+        SUSHI_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
         _cleanup();
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
@@ -75,7 +95,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     if (_model->instance == nullptr)
     {
-        MIND_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
+        SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
@@ -94,7 +114,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     // Register internal parameters
     if (!_register_parameters())
     {
-        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
+        SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
@@ -206,7 +226,7 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
         const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
         if (!feature_is_supported(_model, uri))
         {
-            MIND_LOG_ERROR("LV2 feature {} is not supported\n", uri);
+            SUSHI_LOG_ERROR("LV2 feature {} is not supported\n", uri);
             return false;
         }
     }
@@ -456,11 +476,11 @@ bool Lv2Wrapper::_register_parameters()
 
             if (param_inserted_ok)
             {
-                MIND_LOG_DEBUG("Plugin: {}, registered param: {}", name(), nameAsString);
+                SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), nameAsString);
             }
             else
             {
-                MIND_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), nameAsString);
+                SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), nameAsString);
             }
 
             lilv_node_free(nameNode);
@@ -488,12 +508,12 @@ void Lv2Wrapper::process_event(RtEvent event)
     {
         if (_incoming_event_queue.push(event) == false)
         {
-            MIND_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else
     {
-        MIND_LOG_INFO("Plugin: {}, received unhandled event", name());
+        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 }
 
@@ -957,7 +977,7 @@ MIND_GET_LOGGER;
 ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    MIND_LOG_ERROR("Sushi was not built with LV2 support!");
+    SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");
     return ProcessorReturnCode::ERROR;
 }}}
 #endif

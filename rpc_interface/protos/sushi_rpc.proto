@@ -1,6 +1,6 @@
 /** gRPC definitions for external control of sushi
  *
- * @copyright 2018 MIND Music Labs AB, Stockholm, Sweden
+ * @copyright 2018 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 syntax = "proto3";

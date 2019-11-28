@@ -1,7 +1,21 @@
-/**
- * @Brief Wrapper for LV2 plugins - models.
- * @copyright MIND Music Labs AB, Stockholm
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - extra features.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_LV2
@@ -13,7 +27,7 @@
 namespace sushi {
 namespace lv2 {
 
-    MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port* port_by_symbol(LV2Model* model, const char* sym)
 {
@@ -39,27 +53,27 @@ int lv2_vprintf(LV2_Log_Handle handle,
     LV2Model* model  = (LV2Model*)handle;
     if (type == model->urids.log_Trace && TRACE_OPTION)
     {
-        MIND_LOG_WARNING("LV2 trace: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 trace: {}", fmt);
     }
     else if (type == model->urids.log_Error)
     {
-        MIND_LOG_ERROR("LV2 Error: {}", fmt);
+        SUSHI_LOG_ERROR("LV2 Error: {}", fmt);
     }
     else if (type == model->urids.log_Warning)
     {
-        MIND_LOG_WARNING("LV2 warning: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 warning: {}", fmt);
     }
     else if (type == model->urids.log_Entry)
     {
-        MIND_LOG_WARNING("LV2 Entry: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 Entry: {}", fmt);
     }
     else if (type == model->urids.log_Note)
     {
-        MIND_LOG_WARNING("LV2 Note: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 Note: {}", fmt);
     }
     else if (type == model->urids.log_log)
     {
-        MIND_LOG_WARNING("LV2 log: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 log: {}", fmt);
     }
 
     return 0;

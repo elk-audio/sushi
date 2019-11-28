@@ -1,7 +1,21 @@
-/**
- * @Brief Wrapper for LV2 plugins - port.
- * @copyright MIND Music Labs AB, Stockholm
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - port.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_LV2
@@ -17,7 +31,7 @@
 namespace sushi {
 namespace lv2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // TODO: Pass model as const eventually
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
@@ -46,7 +60,7 @@ _buf_size(0) // Custom buffer size, or 0
     else if (!optional)
     {
         assert(false);
-        MIND_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
+        SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
         throw Port::FailedCreation();
     }
 
@@ -104,7 +118,7 @@ _buf_size(0) // Custom buffer size, or 0
     else if (!optional)
     {
         assert(false);
-        MIND_LOG_ERROR("Mandatory LV2 port has unknown data type");
+        SUSHI_LOG_ERROR("Mandatory LV2 port has unknown data type");
         throw Port::FailedCreation();
     }
 

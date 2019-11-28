@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Sampler plugin example to test event and sample handling
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include <cassert>
 #include <sndfile.h>
 
@@ -7,7 +27,7 @@
 namespace sushi {
 namespace sample_player_plugin {
 
-MIND_GET_LOGGER;
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -74,8 +94,8 @@ void SamplePlayerPlugin::process_event(RtEvent event)
             }
             bool voice_allocated = false;
             auto key_event = event.keyboard_event();
-            MIND_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
-                           key_event->note(), key_event->velocity());
+            SUSHI_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
+                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (!voice.active())
@@ -106,8 +126,8 @@ void SamplePlayerPlugin::process_event(RtEvent event)
                 break;
             }
             auto key_event = event.keyboard_event();
-            MIND_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
-                           key_event->note(), key_event->velocity());
+            SUSHI_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
+                            key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
                 if (voice.active() && voice.current_note() == key_event->note())
@@ -185,7 +205,7 @@ BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
     SF_INFO     soundfile_info = {};
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
-        MIND_LOG_ERROR("Failed to open sample file: {}", file_name);
+        SUSHI_LOG_ERROR("Failed to open sample file: {}", file_name);
         return {0, nullptr};
     }
     assert(soundfile_info.channels == 1);
@@ -209,14 +229,14 @@ int SamplePlayerPlugin::_non_rt_callback(EventId id)
         if (sample_data.size > 0)
         {
             _pending_sample = sample_data;
-            MIND_LOG_INFO("SamplePlayer: Successfully loaded sample data");
+            SUSHI_LOG_INFO("SamplePlayer: Successfully loaded sample data");
             return SampleChangeStatus::SUCCESS;
         }
         return SampleChangeStatus::FAILURE;
     }
     else
     {
-        MIND_LOG_WARNING("Sampleplayer: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
+        SUSHI_LOG_WARNING("Sampleplayer: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
         return SampleChangeStatus::FAILURE;
     }
 }

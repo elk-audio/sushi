@@ -1,6 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
  * @brief Set of compact and performance oriented events for use in the realtime part.
- * @copyright MIND Music Labs AB, Stockholm
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_RT_EVENTS_H
@@ -18,8 +33,8 @@ namespace sushi {
 /* Currently limiting the size of an event to 32 bytes and forcing it to align
  * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
  * but likely not further */
-#ifndef MIND_EVENT_CACHE_ALIGNMENT
-#define MIND_EVENT_CACHE_ALIGNMENT 32
+#ifndef SUSHI_EVENT_CACHE_ALIGNMENT
+#define SUSHI_EVENT_CACHE_ALIGNMENT 32
 #endif
 
 /**
@@ -479,7 +494,7 @@ private:
  *        classes via function calls that essentially casts the event to the
  *        given rt event type.
  */
-class alignas(MIND_EVENT_CACHE_ALIGNMENT) RtEvent
+class alignas(SUSHI_EVENT_CACHE_ALIGNMENT) RtEvent
 {
 public:
     RtEvent() {};
@@ -847,7 +862,7 @@ private:
 
 /* Compile time check that the event container fits withing given memory constraints and
  * they can be safely copied without side effects. Important for real-time performance*/
-static_assert(sizeof(RtEvent) == MIND_EVENT_CACHE_ALIGNMENT, "");
+static_assert(sizeof(RtEvent) == SUSHI_EVENT_CACHE_ALIGNMENT, "");
 static_assert(std::is_trivially_copyable<RtEvent>::value, "");
 
 /**

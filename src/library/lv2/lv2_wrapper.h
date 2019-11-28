@@ -1,7 +1,21 @@
-/**
- * @Brief Wrapper for VST 2.x plugins.
- * @copyright MIND Music Labs AB, Stockholm
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - port.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_LV2_PLUGIN_H
@@ -33,7 +47,7 @@ constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
 class Lv2Wrapper : public Processor
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(Lv2Wrapper)
+    SUSHI_DECLARE_NON_COPYABLE(Lv2Wrapper)
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */

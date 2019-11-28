@@ -1,7 +1,21 @@
-/**
- * @Brief Wrapper for LV2 plugins - models.
- * @copyright MIND Music Labs AB, Stockholm
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - model.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_LV2
@@ -27,7 +41,7 @@ static const LV2_Feature static_features[] = {
 namespace sushi {
 namespace lv2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 bool LV2Model::initialize_host_feature_list()
 {
@@ -51,7 +65,7 @@ bool LV2Model::initialize_host_feature_list()
 
     if (!feature_list)
     {
-        MIND_LOG_ERROR("Failed to allocate LV2 feature list.");
+        SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
         return false;
     }
 

@@ -1,5 +1,20 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
 /**
-* Parts taken and/or adapted from Jalv LV2 host:
+* Parts adapted from Jalv LV2 host:
 * Copyright 2007-2016 David Robillard <http://drobilla.net>
 
 * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,6 +30,11 @@
 * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+/**
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - plugin loader.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include "lv2_plugin_loader.h"
 
 #include "lv2_worker.h"
@@ -25,7 +45,7 @@
 namespace sushi {
 namespace lv2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 PluginLoader::PluginLoader()
 {
@@ -43,7 +63,7 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 {
     if (plugin_URI_string.empty())
     {
-        MIND_LOG_ERROR("Empty library path");
+        SUSHI_LOG_ERROR("Empty library path");
         return nullptr; // Calling dlopen with an empty string returns a handle to the calling
         // program, which can cause an infinite loop.
     }
@@ -53,18 +73,18 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 
     if (!plugin_uri)
     {
-        MIND_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
+        SUSHI_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
         return nullptr;
     }
 
     /* Find plugin */
-    MIND_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
+    SUSHI_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
     const LilvPlugin* plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
     if (!plugin)
     {
-        MIND_LOG_ERROR("Failed to find LV2 plugin.");
+        SUSHI_LOG_ERROR("Failed to find LV2 plugin.");
         return nullptr;
     }
 
@@ -83,7 +103,7 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 
     if (_model->instance == nullptr)
     {
-        MIND_LOG_ERROR("Failed instantiating LV2 plugin.");
+        SUSHI_LOG_ERROR("Failed instantiating LV2 plugin.");
         return;
     }
 
