@@ -36,7 +36,7 @@ ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _range_parameter  = register_int_parameter("range", "Range", 2, 1, 5, new IntParameterPreProcessor(1, 5));
+    _range_parameter  = register_int_parameter("range", "Range", "octaves", 2, 1, 5, new IntParameterPreProcessor(1, 5));
     assert(_range_parameter);
     _max_input_channels = 0;
     _max_output_channels = 0;
