@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief VST 3.x  plugin loader
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifndef SUSHI_VST3X_HOST_CONTEXT_H
 #define SUSHI_VST3X_HOST_CONTEXT_H
 
@@ -31,7 +51,7 @@ public:
 class ComponentHandler : public Steinberg::Vst::IComponentHandler
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(ComponentHandler);
+    SUSHI_DECLARE_NON_COPYABLE(ComponentHandler);
 
     explicit ComponentHandler(Vst3xWrapper* wrapper_instance);
     Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
@@ -52,7 +72,7 @@ private:
 class PluginInstance
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(PluginInstance);
+    SUSHI_DECLARE_NON_COPYABLE(PluginInstance);
 
     PluginInstance();
     ~PluginInstance();

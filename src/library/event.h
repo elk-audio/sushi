@@ -1,6 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
  * @brief Main event class used for communication across modules outside the rt part
- * @copyright MIND Music Labs AB, Stockholm
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_CONTROL_EVENT_H
@@ -85,7 +100,7 @@ public:
     /* Event is directly convertible to an RtEvent */
     virtual bool maps_to_rt_event() {return false;}
 
-    /** Return the RtEvent counterpart of the Event */
+    /* Return the RtEvent counterpart of the Event */
     virtual RtEvent to_rt_event(int /*sample_offset*/) {return RtEvent();}
 
     /**

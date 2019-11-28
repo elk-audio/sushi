@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+* @brief Offline frontend to process audio files in chunks
+* @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+*/
+
 #include <cmath>
 #include <cstring>
 #include <random>
@@ -9,7 +29,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("offline audio");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
 constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise
 constexpr int   NOISE_SEED = 5; // Using a constant seed makes potential errors reproducible
@@ -45,23 +65,23 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
         {
             cleanup();
-            MIND_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
+            SUSHI_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
             return AudioFrontendStatus::INVALID_INPUT_FILE;
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
         if (sample_rate_file != _engine->sample_rate())
         {
-            MIND_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                             sample_rate_file,
-                             _engine->sample_rate());
+            SUSHI_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
+                              sample_rate_file,
+                              _engine->sample_rate());
         }
 
         // Open output file with same format as input file
         if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
         {
             cleanup();
-            MIND_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
+            SUSHI_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
     }

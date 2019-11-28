@@ -1,31 +1,49 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
-* Parts taken and/or adapted from:
-* MrsWatson - https://github.com/teragonaudio/MrsWatson
-*
-* Original copyright notice with BSD license:
-* Copyright (c) 2013 Teragon Audio. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* * Redistributions of source code must retain the above copyright notice,
-*   this list of conditions and the following disclaimer.
-* * Redistributions in binary form must reproduce the above copyright notice,
-*   this list of conditions and the following disclaimer in the documentation
-*   and/or other materials provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
-*/
+ * @brief Utilities for loading plugins stored in dynamic libraries
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ *
+ * Parts taken and/or adapted from:
+ * MrsWatson - https://github.com/teragonaudio/MrsWatson
+ *
+ * Original copyright notice with BSD license:
+ * Copyright (c) 2013 Teragon Audio. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 #include <cstdlib>
 
 #include "library/vst2x_plugin_loader.h"
@@ -36,7 +54,7 @@
 namespace sushi {
 namespace vst2 {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("vst2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
@@ -45,7 +63,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plu
 {
     if (plugin_absolute_path.empty())
     {
-        MIND_LOG_ERROR("Empty library path");
+        SUSHI_LOG_ERROR("Empty library path");
         return nullptr; // Calling dlopen with an empty string returns a handle to the calling
                         // program, which can cause an infinite loop.
     }
@@ -53,7 +71,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plu
 
     if (libraryHandle == nullptr)
     {
-        MIND_LOG_ERROR("Could not open library, {}", dlerror());
+        SUSHI_LOG_ERROR("Could not open library, {}", dlerror());
         return nullptr;
     }
 
@@ -81,7 +99,7 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
         entryPoint.entryPointVoidPtr = dlsym(library_handle, "main");
         if (entryPoint.entryPointVoidPtr == nullptr)
         {
-              MIND_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+              SUSHI_LOG_ERROR("Couldn't get a pointer to plugin's main()");
               return nullptr;
         }
     }
@@ -96,7 +114,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
     if (dlclose(library_handle) != 0)
     {
-        MIND_LOG_WARNING("Could not safely close plugin, possible resource leak");
+        SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
     }
 }
 

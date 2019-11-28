@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Alsa midi frontend
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include <cstdlib>
 
 #include <alsa/seq_event.h>
@@ -6,7 +26,7 @@
 #include "library/midi_decoder.h"
 #include "logging.h"
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 
 namespace sushi {
 namespace midi_frontend {
@@ -31,14 +51,14 @@ bool AlsaMidiFrontend::init()
     auto alsamidi_ret = snd_seq_open(&_seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error opening MIDI port: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Error opening MIDI port: {}", strerror(-alsamidi_ret));
         return false;
     }
 
     alsamidi_ret = snd_seq_set_client_name(_seq_handle, "Sushi");
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -47,7 +67,7 @@ bool AlsaMidiFrontend::init()
     alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, NULL);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -59,19 +79,19 @@ bool AlsaMidiFrontend::init()
     alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_input_parser);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error creating MIDI Input RtEvent Parser: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Error creating MIDI Input RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
     alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_output_parser);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Error creating MIDI Output RtEvent Parser: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Error creating MIDI Output RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
     alsamidi_ret = snd_seq_nonblock(_seq_handle, 1);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Setting non-blocking mode failed: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Setting non-blocking mode failed: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -80,7 +100,7 @@ bool AlsaMidiFrontend::init()
 
     if (alsamidi_ret < 0 )
     {
-        MIND_LOG_ERROR("Failed to set sequencer to use queue: {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Failed to set sequencer to use queue: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -132,11 +152,11 @@ void AlsaMidiFrontend::_poll_function()
                         Time timestamp = timestamped? _to_sushi_time(&ev->time.time) : IMMEDIATE_PROCESS;
                         _receiver->send_midi(0, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
 
-                        MIND_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}] timestamp: {}",
-                                       data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], timestamp.count());
+                        SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}] timestamp: {}",
+                                        data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], timestamp.count());
 
                     }
-                    MIND_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", byte_count);
+                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", byte_count);
                 }
                 snd_seq_free_event(ev);
             }
@@ -151,7 +171,7 @@ void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timesta
     auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
     if (bytes <= 0 )
     {
-        MIND_LOG_INFO("Failed to encode event: {} {}", strerror(-bytes), ev.type);
+        SUSHI_LOG_INFO("Failed to encode event: {} {}", strerror(-bytes), ev.type);
     }
     snd_seq_ev_set_source(&ev, _output_midi_port);
     snd_seq_ev_set_subs(&ev);
@@ -161,7 +181,7 @@ void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timesta
     snd_seq_drain_output(_seq_handle);
     if (bytes <= 0)
     {
-        MIND_LOG_WARNING("Event output returned: {}, type {}", strerror(-bytes), ev.type);
+        SUSHI_LOG_WARNING("Event output returned: {}, type {}", strerror(-bytes), ev.type);
     }
 }
 
@@ -175,7 +195,7 @@ bool AlsaMidiFrontend::_init_time()
     int alsamidi_ret = snd_seq_get_queue_status(_seq_handle, _queue, queue_status);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Couldn't get queue status {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Couldn't get queue status {}", strerror(-alsamidi_ret));
         return false;
     }
     start_time = snd_seq_queue_status_get_real_time(queue_status);
@@ -192,7 +212,7 @@ bool AlsaMidiFrontend::_init_ports()
 
     if (_input_midi_port < 0)
     {
-        MIND_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_input_midi_port));
+        SUSHI_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_input_midi_port));
         return false;
     }
 
@@ -202,7 +222,7 @@ bool AlsaMidiFrontend::_init_ports()
 
     if (_output_midi_port < 0)
     {
-        MIND_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_output_midi_port));
+        SUSHI_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_output_midi_port));
         return false;
     }
     /* For some weird reason directly creating the port with the specific timestamping
@@ -216,7 +236,7 @@ bool AlsaMidiFrontend::_init_ports()
     int alsamidi_ret = snd_seq_set_port_info(_seq_handle, _output_midi_port, port_info);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Couldn't set output port time configuration{}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Couldn't set output port time configuration{}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -227,7 +247,7 @@ bool AlsaMidiFrontend::_init_ports()
     alsamidi_ret = snd_seq_set_port_info(_seq_handle, _input_midi_port, port_info);
     if (alsamidi_ret < 0)
     {
-        MIND_LOG_ERROR("Couldn't set inpput port time configuration {}", strerror(-alsamidi_ret));
+        SUSHI_LOG_ERROR("Couldn't set inpput port time configuration {}", strerror(-alsamidi_ret));
         return false;
     }
     return true;

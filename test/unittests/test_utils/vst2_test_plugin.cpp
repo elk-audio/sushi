@@ -10,7 +10,7 @@ AudioEffect* createEffectInstance(audioMasterCallback audioMaster)
 namespace test_utils {
 
 constexpr char EFFECT_NAME[] = "Test Plugin";
-constexpr char VENDOR_NAME[] = "MIND Music Labs";
+constexpr char VENDOR_NAME[] = "Elk";
 
 constexpr char PROGRAM_1[] = "Program 1";
 constexpr char PROGRAM_2[] = "Program 2";

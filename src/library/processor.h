@@ -1,10 +1,24 @@
-/**
- * @Brief Interface class for objects that process audio. Processor objects can be plugins,
- *        sends, faders, mixer/channel adaptors, or chains of processors.
- * @copyright MIND Music Labs AB, Stockholm
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
  *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
  *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
+
+/**
+ * @brief Interface class for objects that process audio. Processor objects can be plugins,
+ *        sends, faders, mixer/channel adaptors, or chains of processors.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifndef SUSHI_PROCESSOR_H
 #define SUSHI_PROCESSOR_H
 
@@ -354,7 +368,6 @@ protected:
     }
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
-    /* TODO - Is this a reasonable requirement? */
     int _max_input_channels{0};
     int _max_output_channels{0};
 
@@ -386,13 +399,13 @@ static int chunks_to_ramp(float sample_rate)
 }
 
 /**
- * @brief Convience class to encapsulate the bypass state logic and when to ramp audio up
+ * @brief Convenience class to encapsulate the bypass state logic and when to ramp audio up
  *        or down in order to avoid audio clicks and artefacts.
  */
 class BypassManager
 {
 public:
-    MIND_DECLARE_NON_COPYABLE(BypassManager);
+    SUSHI_DECLARE_NON_COPYABLE(BypassManager);
 
     BypassManager() = default;
     explicit BypassManager(bool bypassed_by_default) :
@@ -406,7 +419,7 @@ public:
 
     /**
      * @brief Set the bypass state
-     * @param bypass_enabled If true sets bypass enabled, if false turns off bypass
+     * @param bypass_enabled If true, sets bypass enabled, if false, turns off bypass
      * @param sample_rate The current sample rate, used for calculating ramp time
      */
     void set_bypass(bool bypass_enabled, float sample_rate)

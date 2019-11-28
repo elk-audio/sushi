@@ -1,6 +1,21 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
 /**
- * @brief OSC runtime user frontend
- * @copyright MIND Music Labs AB, Stockholm
+ * @brief OSC runtime control frontend
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <algorithm>
@@ -14,7 +29,7 @@
 namespace sushi {
 namespace control_frontend {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 namespace {
 
@@ -22,7 +37,7 @@ static void osc_error(int num, const char* msg, const char* path)
 {
     if (msg && path) // Sometimes liblo passes a nullpointer for msg
     {
-        MIND_LOG_ERROR("liblo server error {} in path {}: {}", num, path, msg);
+        SUSHI_LOG_ERROR("liblo server error {} in path {}: {}", num, path, msg);
     }
 }
 
@@ -36,7 +51,7 @@ static int osc_send_parameter_change_event(const char* /*path*/,
     auto connection = static_cast<OscConnection*>(user_data);
     float value = argv[0]->f;
     connection->instance->send_parameter_change_event(connection->processor, connection->parameter, value);
-    MIND_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
 
@@ -50,7 +65,7 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
     connection->instance->send_string_parameter_change_event(connection->processor, connection->parameter, value);
-    MIND_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    SUSHI_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
 
@@ -80,10 +95,10 @@ static int osc_send_keyboard_event(const char* /*path*/,
     }
     else
     {
-        MIND_LOG_WARNING("Unrecognized event: {}.", event);
+        SUSHI_LOG_WARNING("Unrecognized event: {}.", event);
         return 0;
     }
-    MIND_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
+    SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
     return 0;
 }
 
@@ -110,7 +125,7 @@ static int osc_add_track(const char* /*path*/,
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string name(&argv[0]->s);
     int channels = argv[1]->i;
-    MIND_LOG_DEBUG("Got an osc_add_track request {} {}", name, channels);
+    SUSHI_LOG_DEBUG("Got an osc_add_track request {} {}", name, channels);
     instance->send_add_track_event(name, channels);
     return 0;
 }
@@ -124,7 +139,7 @@ static int osc_delete_track(const char* /*path*/,
 {
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string name(&argv[0]->s);
-    MIND_LOG_DEBUG("Got an osc_delete_track request {}", name);
+    SUSHI_LOG_DEBUG("Got an osc_delete_track request {}", name);
     instance->send_remove_track_event(name);
     return 0;
 }
@@ -144,7 +159,7 @@ static int osc_add_processor(const char* /*path*/,
     std::string type(&argv[4]->s);
     // TODO If these are eventually to be accessed by a user we must sanitize
     // the input and disallow supplying a direct library path for loading.
-    MIND_LOG_DEBUG("Got an add_processor request {}", name);
+    SUSHI_LOG_DEBUG("Got an add_processor request {}", name);
     AddProcessorEvent::ProcessorType processor_type;
     if (type == "internal")
     {
@@ -160,7 +175,7 @@ static int osc_add_processor(const char* /*path*/,
     }
     else
     {
-        MIND_LOG_WARNING("Unrecognized plugin type \"{}\"", type);
+        SUSHI_LOG_WARNING("Unrecognized plugin type \"{}\"", type);
         return 0;
     }
     instance->send_add_processor_event(track, uid, name, file, processor_type);
@@ -177,7 +192,7 @@ static int osc_delete_processor(const char* /*path*/,
     auto instance = static_cast<OSCFrontend*>(user_data);
     std::string track(&argv[0]->s);
     std::string name(&argv[1]->s);
-    MIND_LOG_DEBUG("Got a delete_processor request {} from {}", name, track);
+    SUSHI_LOG_DEBUG("Got a delete_processor request {} from {}", name, track);
     instance->send_remove_processor_event(track, name);
     return 0;
 }
@@ -191,7 +206,7 @@ static int osc_set_tempo(const char* /*path*/,
 {
     auto instance = static_cast<OSCFrontend*>(user_data);
     float tempo = argv[0]->f;
-    MIND_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
+    SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
     instance->send_set_tempo_event(tempo);
     return 0;
 }
@@ -206,7 +221,7 @@ static int osc_set_time_signature(const char* /*path*/,
     auto instance = static_cast<OSCFrontend*>(user_data);
     int numerator = argv[0]->i;
     int denominator = argv[1]->i;
-    MIND_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
+    SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
     instance->send_set_time_signature_event({numerator, denominator});
     return 0;
 }
@@ -231,11 +246,11 @@ static int osc_set_playing_mode(const char* /*path*/,
     }
     else
     {
-        MIND_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
+        SUSHI_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
         return 0;
     }
 
-    MIND_LOG_DEBUG("Got a set playing mode {} request", mode_str);
+    SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
     instance->send_set_playing_mode_event(mode);
     return 0;
 }
@@ -264,10 +279,10 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
     }
     else
     {
-        MIND_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
+        SUSHI_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
         return 0;
     }
-    MIND_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
+    SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
     instance->send_set_sync_mode_event(mode);
     return 0;
 }
@@ -289,7 +304,7 @@ ControlFrontendStatus OSCFrontend::init()
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
     if (_osc_server == nullptr)
     {
-        MIND_LOG_ERROR("Failed to set up OSC server, Port likely in use");
+        SUSHI_LOG_ERROR("Failed to set up OSC server, Port likely in use");
         return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
     }
 
@@ -335,7 +350,7 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
-    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -360,7 +375,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
-    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -379,7 +394,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     std::string id_string = "/parameter/" + spaces_to_underscore(processor_name) + "/" +
             spaces_to_underscore(parameter_name);
     _outgoing_connections[processor_id][parameter_id] = id_string;
-    MIND_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
     return true;
 }
 
@@ -398,7 +413,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_event, connection);
-    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -417,7 +432,7 @@ bool OSCFrontend::connect_to_program_change(const std::string &processor_name)
     connection->instance = this;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
-    MIND_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -458,7 +473,7 @@ void OSCFrontend::_start_server()
     int ret = lo_server_thread_start(_osc_server);
     if (ret < 0)
     {
-        MIND_LOG_ERROR("Error {} while starting OSC server thread", ret);
+        SUSHI_LOG_ERROR("Error {} while starting OSC server thread", ret);
     }
 }
 
@@ -468,7 +483,7 @@ void OSCFrontend::_stop_server()
     int ret = lo_server_thread_stop(_osc_server);
     if (ret < 0)
     {
-        MIND_LOG_ERROR("Error {} while stopping OSC server thread", ret);
+        SUSHI_LOG_ERROR("Error {} while stopping OSC server thread", ret);
     }
 }
 
@@ -496,7 +511,7 @@ int OSCFrontend::process(Event* event)
             if (param_node != node->second.end())
             {
                 lo_send(_osc_out_address, param_node->second.c_str(), "f", typed_event->float_value());
-                MIND_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
+                SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
             }
         }
         return EventStatus::HANDLED_OK;
@@ -519,7 +534,7 @@ int OSCFrontend::process(Event* event)
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    MIND_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0? "ok" : "failure", return_status);
+    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
 }
 
 std::string spaces_to_underscore(const std::string &s)
