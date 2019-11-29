@@ -57,7 +57,7 @@ inline void set_flush_denormals_to_zero()
  */
 inline float map_audio_to_cv(float audio)
 {
-    return (audio + 1 ) * 0.5f;
+    return (audio + 1.0f) * 0.5f;
 }
 
 /**

@@ -60,5 +60,5 @@ void LfoPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuf
     this->set_parameter_and_notify(_out_parameter, (std::sin(_phase) + 1) * 0.5f);
 }
 
-}// namespace gain_plugin
+}// namespace lfo_plugin
 }// namespace sushi
