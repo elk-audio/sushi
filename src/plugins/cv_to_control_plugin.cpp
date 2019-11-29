@@ -36,11 +36,11 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", false);
-    _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", false);
-    _channel_parameter  = register_int_parameter("channel", "Channel", 0, 0, 16, new IntParameterPreProcessor(0, 16));
-    _coarse_tune_parameter  = register_int_parameter("tune", "Tune", 0, -TUNE_RANGE, TUNE_RANGE, new IntParameterPreProcessor(-24, 24));
-    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", 1, 1, MAX_CV_VOICES,
+    _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", "", false);
+    _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false);
+    _channel_parameter  = register_int_parameter("channel", "Channel", "", 0, 0, 16, new IntParameterPreProcessor(0, 16));
+    _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones", 0, -TUNE_RANGE, TUNE_RANGE, new IntParameterPreProcessor(-24, 24));
+    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "", 1, 1, MAX_CV_VOICES,
                                                  new IntParameterPreProcessor(1, MAX_CV_VOICES));
     assert(_pitch_bend_mode_parameter && _velocity_mode_parameter && _channel_parameter &&
                                            _coarse_tune_parameter && _polyphony_parameter);
@@ -48,8 +48,8 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
     for (int i = 0; i < MAX_CV_VOICES; ++i)
     {
         auto i_str = std::to_string(i);
-        _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, 0, 0, 1, new FloatParameterPreProcessor(0, 1));
-        _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, 0.5, 0, 1, new FloatParameterPreProcessor(0, 1));
+        _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones", 0, 0, 1, new FloatParameterPreProcessor(0, 1));
+        _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "", 0.5, 0, 1, new FloatParameterPreProcessor(0, 1));
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
     }
     _max_input_channels = 0;
