@@ -32,8 +32,7 @@ namespace sushi {
 class RtEventPipe
 {
 public:
-    virtual void send_event(RtEvent event) = 0;
-
+    virtual void send_event(const RtEvent& event) = 0;
 };
 
 } // end namespace sushi

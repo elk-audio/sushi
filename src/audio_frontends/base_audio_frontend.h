@@ -47,9 +47,12 @@ enum class AudioFrontendStatus
  */
 struct BaseAudioFrontendConfiguration
 {
-    BaseAudioFrontendConfiguration() {}
+    BaseAudioFrontendConfiguration(int cv_inputs, int cv_outputs) : cv_inputs{cv_inputs},
+                                                                    cv_outputs{cv_outputs} {}
 
     virtual ~BaseAudioFrontendConfiguration() = default;
+    int cv_inputs;
+    int cv_outputs;
 };
 
 /**

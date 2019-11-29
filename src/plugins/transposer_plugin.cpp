@@ -51,7 +51,7 @@ ProcessorReturnCode TransposerPlugin::init(float /*sample_rate*/)
     return ProcessorReturnCode::OK;
 }
 
-void TransposerPlugin::process_event(RtEvent event)
+void TransposerPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

@@ -69,28 +69,44 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(7, wm_event->midi_data()[1]);
     EXPECT_EQ(8, wm_event->midi_data()[2]);
 
+    event = RtEvent::make_gate_event(127, 6, 1, true);
+    EXPECT_EQ(RtEventType::GATE_EVENT, event.type());
+    auto gate_event = event.gate_event();
+    EXPECT_EQ(ObjectId(127), gate_event->processor_id());
+    EXPECT_EQ(6, gate_event->sample_offset());
+    EXPECT_EQ(1, gate_event->gate_no());
+    EXPECT_TRUE(gate_event->value());
+
+    event = RtEvent::make_cv_event(128, 7, 2, 0.5);
+    EXPECT_EQ(RtEventType::CV_EVENT, event.type());
+    auto cv_event = event.cv_event();
+    EXPECT_EQ(ObjectId(128), cv_event->processor_id());
+    EXPECT_EQ(7, cv_event->sample_offset());
+    EXPECT_EQ(2, cv_event->cv_id());
+    EXPECT_FLOAT_EQ(0.5, cv_event->value());
+
     std::string str("Hej");
-    event = RtEvent::make_string_parameter_change_event(127, 6, 65, &str);
+    event = RtEvent::make_string_parameter_change_event(129, 8, 65, &str);
     EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, event.type());
     auto spc_event = event.string_parameter_change_event();
-    EXPECT_EQ(ObjectId(127), spc_event->processor_id());
-    EXPECT_EQ(6, spc_event->sample_offset());
+    EXPECT_EQ(ObjectId(129), spc_event->processor_id());
+    EXPECT_EQ(8, spc_event->sample_offset());
     EXPECT_EQ(ObjectId(65), spc_event->param_id());
     EXPECT_EQ("Hej", *spc_event->value());
 
     uint8_t TEST_DATA[3] = {1,2,3};
     BlobData data{sizeof(TEST_DATA), TEST_DATA};
-    event = RtEvent::make_data_parameter_change_event(128, 7, 66, data);
+    event = RtEvent::make_data_parameter_change_event(130, 9, 66, data);
     EXPECT_EQ(RtEventType::DATA_PROPERTY_CHANGE, event.type());
     auto dpc_event = event.data_parameter_change_event();
-    EXPECT_EQ(ObjectId(128), dpc_event->processor_id());
-    EXPECT_EQ(7, dpc_event->sample_offset());
+    EXPECT_EQ(ObjectId(130), dpc_event->processor_id());
+    EXPECT_EQ(9, dpc_event->sample_offset());
     EXPECT_EQ(ObjectId(66), dpc_event->param_id());
     EXPECT_EQ(3, dpc_event->value().data[2]);
 
-    event = RtEvent::make_bypass_processor_event(130, true);
+    event = RtEvent::make_bypass_processor_event(131, true);
     EXPECT_EQ(RtEventType::SET_BYPASS, event.type());
-    EXPECT_EQ(130u, event.processor_id());
+    EXPECT_EQ(131u, event.processor_id());
     EXPECT_TRUE(event.processor_command_event()->value());
 
     event = RtEvent::make_stop_engine_event();

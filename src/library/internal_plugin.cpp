@@ -125,7 +125,7 @@ bool InternalPlugin::register_data_property(const std::string &id,
 }
 
 
-void InternalPlugin::process_event(RtEvent event)
+void InternalPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
@@ -169,11 +169,14 @@ void InternalPlugin::process_event(RtEvent event)
     }
 }
 
-void InternalPlugin::set_parameter_and_notify(FloatParameterValue*storage, float new_value)
+void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, float new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
-    output_event(e);
+    if (maybe_output_cv_value(storage->descriptor()->id(), new_value) == false)
+    {
+        auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+        output_event(e);
+    }
 }
 
 void InternalPlugin::set_parameter_and_notify(IntParameterValue*storage, int new_value)

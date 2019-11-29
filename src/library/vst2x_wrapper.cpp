@@ -23,6 +23,7 @@
 #include "twine/twine.h"
 
 #include "library/vst2x_wrapper.h"
+#include "library/midi_decoder.h"
 #include "logging.h"
 
 namespace {
@@ -292,7 +293,7 @@ bool Vst2xWrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Vst2xWrapper::process_event(RtEvent event)
+void Vst2xWrapper::process_event(const RtEvent& event)
 {
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
@@ -352,8 +353,11 @@ void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float va
     {
         return;
     }
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
-    output_event(e);
+    if (maybe_output_cv_value(parameter_index, value) == false)
+    {
+        auto e = RtEvent::make_parameter_change_event(this->id(), 0, static_cast<ObjectId>(parameter_index), value);
+        output_event(e);
+    }
 }
 
 void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
@@ -435,6 +439,16 @@ void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
     if (_current_input_channels == 1 && _max_input_channels == 2)
     {
         _double_mono_input = true;
+    }
+}
+
+void Vst2xWrapper::output_vst_event(const VstEvent* event)
+{
+    assert(event);
+    if (event->type == kVstMidiType)
+    {
+        MidiDataByte midi_data = midi::to_midi_data_byte(reinterpret_cast<const uint8_t*>(event->data), 3);
+        output_midi_event_as_internal(midi_data, event->deltaFrames);
     }
 }
 
