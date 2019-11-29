@@ -35,21 +35,21 @@
 namespace sushi {
 namespace engine {
 
-MIND_GET_LOGGER_WITH_MODULE_NAME("transport");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
 
 void peer_callback(size_t peers)
 {
-    MIND_LOG_INFO("Ableton link reports {} peers connected ", peers);
+    SUSHI_LOG_INFO("Ableton link reports {} peers connected ", peers);
 }
 
 void tempo_callback(double tempo)
 {
-    MIND_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
+    SUSHI_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
 }
 
 void start_stop_callback(bool playing)
 {
-    MIND_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
+    SUSHI_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
 
 
@@ -96,7 +96,7 @@ void Transport::set_time(Time timestamp, int64_t samples)
     _new_playmode = false;
     //static int logg = 0;
     //logg = ++logg % 1000;
-    //MIND_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
+    //SUSHI_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
 }
 
 void Transport::set_time_signature(TimeSignature signature)
@@ -144,7 +144,7 @@ void Transport::_update_internal_sync(int64_t samples)
     if (chunks_passed < 1)
     {
         //chunks_passed = 1;
-        MIND_LOG_INFO("First time {}", chunks_passed);
+        SUSHI_LOG_INFO("First time {}", chunks_passed);
     }
 
     if (_playmode != PlayingMode::STOPPED)
@@ -201,7 +201,7 @@ void Transport::set_sync_mode(SyncMode mode)
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
     if (mode == SyncMode::ABLETON_LINK)
     {
-        MIND_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
         return;
     }
 #endif
