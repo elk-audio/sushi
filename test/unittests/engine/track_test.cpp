@@ -31,7 +31,7 @@ public:
         return ProcessorReturnCode::OK;
     }
 
-    void process_event(RtEvent /*event*/) override {}
+    void process_event(const RtEvent& /*event*/) override {}
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
     {
         out_buffer = in_buffer;
@@ -181,7 +181,7 @@ TEST_F(TrackTest, TestPanAndGain)
 TEST_F(TrackTest, TestEventProcessing)
 {
     ChunkSampleBuffer buffer(2);
-    RtEventFifo event_queue;
+    RtSafeRtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
@@ -214,7 +214,7 @@ TEST_F(TrackTest, TestEventProcessing)
 TEST_F(TrackTest, TestEventForwarding)
 {
     ChunkSampleBuffer buffer(2);
-    RtEventFifo event_queue;
+    RtSafeRtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);

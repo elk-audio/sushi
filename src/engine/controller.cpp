@@ -72,6 +72,7 @@ inline ext::SyncMode to_external(const sushi::SyncMode mode)
     {
         case SyncMode::INTERNAL:     return ext::SyncMode::INTERNAL;
         case SyncMode::MIDI_SLAVE:   return ext::SyncMode::MIDI;
+        case SyncMode::GATE_INPUT:   return ext::SyncMode::GATE;
         case SyncMode::ABLETON_LINK: return ext::SyncMode::LINK;
         default:                     return ext::SyncMode::INTERNAL;
     }
@@ -83,6 +84,7 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
     {
         case ext::SyncMode::INTERNAL: return sushi::SyncMode::INTERNAL;
         case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI_SLAVE;
+        case ext::SyncMode::GATE:     return sushi::SyncMode::GATE_INPUT;
         case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
         default:                      return sushi::SyncMode::INTERNAL;
     }

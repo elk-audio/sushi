@@ -30,8 +30,8 @@ constexpr auto PRINT_TIMING_INTERVAL = std::chrono::seconds(5);
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
-                                 RtEventFifo* in_rt_queue,
-                                 RtEventFifo* out_rt_queue) : _running{false},
+                                 RtSafeRtEventFifo* in_rt_queue,
+                                 RtSafeRtEventFifo* out_rt_queue) : _running{false},
                                                               _engine{engine},
                                                               _in_rt_queue{in_rt_queue},
                                                               _out_rt_queue{out_rt_queue},

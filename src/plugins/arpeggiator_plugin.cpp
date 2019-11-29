@@ -59,7 +59,7 @@ void ArpeggiatorPlugin::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void ArpeggiatorPlugin::process_event(RtEvent event)
+void ArpeggiatorPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

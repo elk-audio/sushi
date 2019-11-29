@@ -14,40 +14,38 @@
  */
 
 /**
- * @brief Example unit gain plugin. Passes audio unprocessed from input to output
+ * @brief Simple Cv control plugin example
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef PASSTHROUGH_PLUGIN_H
-#define PASSTHROUGH_PLUGIN_H
+#ifndef LFO_PLUGIN_H
+#define LFO_PLUGIN_H
 
 #include "library/internal_plugin.h"
-#include "library/rt_event_fifo.h"
 
 namespace sushi {
-namespace passthrough_plugin {
+namespace lfo_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.passthrough";
-static const std::string DEFAULT_LABEL = "Passthrough";
-
-class PassthroughPlugin : public InternalPlugin
+class LfoPlugin : public InternalPlugin
 {
 public:
-    PassthroughPlugin(HostControl host_control);
+    LfoPlugin(HostControl host_control);
 
-    ~PassthroughPlugin();
+    ~LfoPlugin();
 
-    void process_event(const RtEvent& event) override
-    {
-        _event_queue.push(event);
-    };
+    ProcessorReturnCode init(float sample_rate) override;
+
+    void configure(float sample_rate) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    RtSafeRtEventFifo _event_queue;
+    float _phase{0};
+    float _buffers_per_second;
+    FloatParameterValue* _freq_parameter;
+    FloatParameterValue* _out_parameter;
 };
 
-}// namespace passthrough_plugin
+}// namespace lfo_plugin
 }// namespace sushi
-#endif //PASSTHROUGH_PLUGIN_H
+#endif // LFO_PLUGIN_H
