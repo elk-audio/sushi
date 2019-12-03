@@ -24,7 +24,7 @@ protected:
         _module_under_test.set_event_output(&_fifo);
     }
 
-    RtEventFifo _fifo;
+    RtEventFifo<10> _fifo;
     HostControlMockup _host_control;
     StepSequencerPlugin _module_under_test{_host_control.make_host_control_mockup(TEST_SAMPLERATE)};
 };

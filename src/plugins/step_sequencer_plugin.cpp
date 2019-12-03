@@ -43,9 +43,9 @@ StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlu
     for (int i = 0; i < SEQUENCER_STEPS; ++i)
     {
         std::string str_nr = std::to_string(i);
-        _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, 0, -24, 24, new IntParameterPreProcessor(-24, 24));
-        _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, true);
-        _step_indicator_parameters[i] = register_bool_parameter("step_ind_" + str_nr, "Step Indication " + str_nr, true);
+        _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, "semitone", 0, -24, 24, new IntParameterPreProcessor(-24, 24));
+        _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, "", true);
+        _step_indicator_parameters[i] = register_bool_parameter("step_ind_" + str_nr, "Step Indication " + str_nr, "", true);
         assert(_pitch_parameters[i] && _step_indicator_parameters[i] && _step_indicator_parameters[i]);
     }
     for (auto& s : _sequence)
@@ -72,7 +72,7 @@ void StepSequencerPlugin::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void StepSequencerPlugin::process_event(RtEvent event)
+void StepSequencerPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
@@ -116,10 +116,9 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
     if (_host_control.transport()->playing_mode() == PlayingMode::STOPPED)
     {
         // If not playing, we pass keyboard events through unchanged.
-        RtEvent e;
-        while (_event_queue.pop(e))
+        while (_event_queue.empty() == false)
         {
-            output_event(e);
+            output_event(_event_queue.pop());
         }
         return;
     }
@@ -158,8 +157,7 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
         }
     }
 
-    RtEvent e;
-    while (_event_queue.pop(e))  {} // drain queue
+    _event_queue.clear();
 }
 
 float samples_per_qn(float tempo, float samplerate)

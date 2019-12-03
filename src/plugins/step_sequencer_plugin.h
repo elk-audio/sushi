@@ -31,6 +31,7 @@ namespace step_sequencer_plugin {
 
 constexpr int SEQUENCER_STEPS = 8;
 constexpr int START_NOTE = 48;
+constexpr int NOTE_EVENT_QUEUE_SIZE = 40;
 
 class StepSequencerPlugin : public InternalPlugin
 {
@@ -45,7 +46,7 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
@@ -61,7 +62,7 @@ private:
     int     _transpose{0};
     int     _current_note{0};
 
-    RtEventFifo _event_queue;
+    RtEventFifo<NOTE_EVENT_QUEUE_SIZE> _event_queue;
 };
 
 float samples_per_qn(float tempo, float samplerate);
