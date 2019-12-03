@@ -95,6 +95,9 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
+    EXPECT_EQ("Gain", gain_param->name());
+    EXPECT_EQ("Gain", gain_param->label());
+    EXPECT_EQ("dB", gain_param->unit());
 }
 
 TEST_F(TestVst2xWrapper, TestPluginCanDos)

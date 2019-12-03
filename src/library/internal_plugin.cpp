@@ -34,6 +34,7 @@ InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_contro
 
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
+                                                              const std::string& unit,
                                                               float default_value,
                                                               float min_value,
                                                               float max_value,
@@ -43,7 +44,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
     {
         pre_proc = new FloatParameterPreProcessor(min_value, max_value);
     }
-    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, min_value, max_value, pre_proc);
+    FloatParameterDescriptor* param = new FloatParameterDescriptor(id, label, unit, min_value, max_value, pre_proc);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -57,6 +58,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
 
 IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           const std::string& label,
+                                                          const std::string& unit,
                                                           int default_value,
                                                           int min_value,
                                                           int max_value,
@@ -66,7 +68,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
     {
          pre_proc = new IntParameterPreProcessor(min_value, max_value);
     }
-    IntParameterDescriptor* param = new IntParameterDescriptor(id, label, min_value, max_value, pre_proc);
+    IntParameterDescriptor* param = new IntParameterDescriptor(id, label, unit, min_value, max_value, pre_proc);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -80,9 +82,10 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
 
 BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& id,
                                                             const std::string& label,
+                                                            const std::string& unit,
                                                             bool default_value)
 {
-    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, true, false, nullptr);
+    BoolParameterDescriptor* param = new BoolParameterDescriptor(id, label, unit, true, false, nullptr);
     if (!this->register_parameter(param))
     {
         return nullptr;
@@ -96,9 +99,10 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
 
 
 bool InternalPlugin::register_string_property(const std::string &id,
-                                              const std::string &label)
+                                              const std::string &label,
+                                              const std::string& unit)
 {
-    StringPropertyDescriptor* param = new StringPropertyDescriptor(id, label);
+    StringPropertyDescriptor* param = new StringPropertyDescriptor(id, label, unit);
     if (!this->register_parameter(param))
     {
         return false;
@@ -111,9 +115,10 @@ bool InternalPlugin::register_string_property(const std::string &id,
 
 
 bool InternalPlugin::register_data_property(const std::string &id,
-                                            const std::string &label)
+                                            const std::string &label,
+                                            const std::string& unit)
 {
-    DataPropertyDescriptor* param = new DataPropertyDescriptor(id, label);
+    DataPropertyDescriptor* param = new DataPropertyDescriptor(id, label, unit);
     if (!this->register_parameter(param))
     {
         return false;

@@ -134,7 +134,7 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ(2u, parameters.size());
     EXPECT_EQ("gain", parameters[0].name);
     EXPECT_EQ("Gain", parameters[0].label);
-    EXPECT_EQ("", parameters[0].unit);
+    EXPECT_EQ("dB", parameters[0].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[0].type);
     EXPECT_TRUE(parameters[0].automatable);
     EXPECT_FLOAT_EQ(-120.0f, parameters[0].min_range);
@@ -180,7 +180,7 @@ TEST_F(ControllerTest, TestProcessorControls)
     EXPECT_EQ(3u, parameters.size());
     EXPECT_EQ("frequency", parameters[0].name);
     EXPECT_EQ("Frequency", parameters[0].label);
-    EXPECT_EQ("", parameters[0].unit);
+    EXPECT_EQ("Hz", parameters[0].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[0].type);
     EXPECT_TRUE(parameters[0].automatable);
     EXPECT_FLOAT_EQ(20.0f, parameters[0].min_range);
@@ -188,7 +188,7 @@ TEST_F(ControllerTest, TestProcessorControls)
 
     EXPECT_EQ("gain", parameters[1].name);
     EXPECT_EQ("Gain", parameters[1].label);
-    EXPECT_EQ("", parameters[1].unit);
+    EXPECT_EQ("dB", parameters[1].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[1].type);
     EXPECT_TRUE(parameters[1].automatable);
     EXPECT_FLOAT_EQ(-24.0f, parameters[1].min_range);
@@ -219,7 +219,7 @@ TEST_F(ControllerTest, TestParameterControls)
 
     EXPECT_EQ("frequency", info.name);
     EXPECT_EQ("Frequency", info.label);
-    EXPECT_EQ("", info.unit);
+    EXPECT_EQ("Hz", info.unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, info.type);
     EXPECT_EQ(true, info.automatable);
     EXPECT_FLOAT_EQ(20.0f, info.min_range);

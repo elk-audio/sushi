@@ -270,15 +270,17 @@ void Vst2xWrapper::_cleanup()
 bool Vst2xWrapper::_register_parameters()
 {
     char param_name[VST_STRING_BUFFER_SIZE] = {0};
+    char param_unit[VST_STRING_BUFFER_SIZE] = {0};
 
     VstInt32 idx = 0;
     bool param_inserted_ok = true;
     while (param_inserted_ok && (idx < _plugin_handle->numParams) )
     {
-        // TODO - query for some more properties here eventually
         _vst_dispatcher(effGetParamName, idx, 0, param_name, 0);
+        _vst_dispatcher(effGetParamLabel, idx, 0, param_unit, 0);
         param_name[VST_STRING_BUFFER_SIZE-1] = 0;
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, 0, 1, nullptr));
+        param_unit[VST_STRING_BUFFER_SIZE-1] = 0;
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, param_unit, 0, 1, nullptr));
         if (param_inserted_ok)
         {
             SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
