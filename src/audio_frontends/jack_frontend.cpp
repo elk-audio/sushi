@@ -42,6 +42,20 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
     _engine->set_audio_output_channels(MAX_FRONTEND_CHANNELS);
+    auto status = _engine->set_cv_input_channels(jack_config->cv_inputs);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Setting {} cv inputs failed", jack_config->cv_inputs);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    _no_cv_input_ports = jack_config->cv_inputs;
+    status = _engine->set_cv_output_channels(jack_config->cv_outputs);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    _no_cv_output_ports = jack_config->cv_outputs;
     return setup_client(jack_config->client_name, jack_config->server_name);
 }
 
@@ -112,6 +126,12 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
         SUSHI_LOG_ERROR("Failed to setup ports");
         return status;
     }
+    status = setup_cv_ports();
+    if (status != AudioFrontendStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Failed to setup cv ports");
+        return status;
+    }
     return AudioFrontendStatus::OK;
 }
 
@@ -159,6 +179,38 @@ AudioFrontendStatus JackFrontend::setup_ports()
         if (port == nullptr)
         {
             SUSHI_LOG_ERROR("Failed to open Jack input port {}.", port_no - 1);
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+    }
+    return AudioFrontendStatus::OK;
+}
+
+
+AudioFrontendStatus JackFrontend::setup_cv_ports()
+{
+    for (int i = 0; i < _no_cv_input_ports; ++i)
+    {
+        _cv_input_ports[i] = jack_port_register (_client,
+                                                 std::string("cv_input_" + std::to_string(i)).c_str(),
+                                                 JACK_DEFAULT_AUDIO_TYPE,
+                                                 JackPortIsInput,
+                                                 0);
+        if (_cv_input_ports[i] == nullptr)
+        {
+            SUSHI_LOG_ERROR("Failed to open Jack cv input port {}.", i);
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+    }
+    for (int i = 0; i < _no_cv_output_ports; ++i)
+    {
+        _cv_output_ports[i] = jack_port_register (_client,
+                                                  std::string("cv_output_" + std::to_string(i)).c_str(),
+                                                  JACK_DEFAULT_AUDIO_TYPE,
+                                                  JackPortIsOutput,
+                                                  0);
+        if (_cv_output_ports[i] == nullptr)
+        {
+            SUSHI_LOG_ERROR("Failed to open Jack cv output port {}.", i);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -284,12 +336,23 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
         float* in_data = static_cast<float*>(jack_port_get_buffer(_input_ports[i], frame_count)) + start_frame;
         std::copy(in_data, in_data + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
     }
+    for (int i = 0; i < _no_cv_input_ports; ++i)
+    {
+        float* in_data = static_cast<float*>(jack_port_get_buffer(_cv_input_ports[i], frame_count)) + start_frame;
+        _in_controls.cv_values[i] = map_audio_to_cv(in_data[AUDIO_CHUNK_SIZE - 1]);
+    }
     _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer);
+    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls);
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) +start_frame;
+        float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) + start_frame;
         std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data);
+    }
+    /* The jack frontend both inputs and outputs cv in audio range [-1, 1] */
+    for (int i = 0; i < _no_cv_output_ports; ++i)
+    {
+        float* out_data = static_cast<float*>(jack_port_get_buffer(_cv_output_ports[i], frame_count)) + start_frame;
+        _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], map_cv_to_audio(_out_controls.cv_values[i]));
     }
 }
 

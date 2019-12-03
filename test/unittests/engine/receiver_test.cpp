@@ -23,7 +23,7 @@ protected:
     void TearDown()
     { }
 
-    RtEventFifo _queue;
+    RtSafeRtEventFifo _queue;
     AsynchronousEventReceiver _module_under_test{&_queue};
 };
 

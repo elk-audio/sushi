@@ -67,7 +67,7 @@ public:
      * @param queue Endpoint for clipping notifications
      * @param audio_input Set to true if the audio buffer comes directly from the an audio inout (i.e. before any processing)
      */
-    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtEventFifo& queue, bool audio_input);
+    void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
 
@@ -103,16 +103,34 @@ public:
     void set_sample_rate(float sample_rate) override;
 
     /**
-     * @brief Set the number of input audio channels, set by the audio frontend before starting processing
+     * @brief Set the number of input audio channels, set by the audio frontend before
+     *        starting processing
      * @param channels The number of audio channels to use
      */
     void set_audio_input_channels(int channels) override;
 
     /**
-     * @brief Set the number of output audio channels, set by the audio frontend before starting processing
+     * @brief Set the number of output audio channels, set by the audio frontend before
+     *        starting processing
      * @param channels The number of audio channels to use
      */
     void set_audio_output_channels(int channels) override;
+
+    /**
+     * @brief Set the number of control voltage inputs, set by the audio frontend before
+     *        starting processing
+     * @param channels The number of cv input channels to use
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus set_cv_input_channels(int channels) override;
+
+    /**
+     * @brief Set the number of control voltage outputs, set by the audio frontend before
+     *        starting processing
+     * @param channels The number of cv input channels to use
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus set_cv_output_channels(int channels) override;
 
     /**
      * @brief Connect an engine input channel to an input channel of a given track.
@@ -122,9 +140,9 @@ public:
      * @param track_name The unique name of the track.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
-    virtual EngineReturnStatus connect_audio_input_channel(int input_channel,
-                                                           int track_channel,
-                                                           const std::string& track_name) override;
+    EngineReturnStatus connect_audio_input_channel(int input_channel,
+                                                   int track_channel,
+                                                   const std::string& track_name) override;
 
     /**
      * @brief Connect an output channel of a track to an engine output channel.
@@ -134,9 +152,9 @@ public:
      * @param track_name The unique name of the track.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
-    virtual EngineReturnStatus connect_audio_output_channel(int output_channel,
-                                                            int track_channel,
-                                                            const std::string& track_name) override;
+    EngineReturnStatus connect_audio_output_channel(int output_channel,
+                                                    int track_channel,
+                                                    const std::string& track_name) override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -147,9 +165,9 @@ public:
      * @param track_name The unique name of the track.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
-    virtual EngineReturnStatus connect_audio_input_bus(int input_bus,
-                                                       int track_bus,
-                                                       const std::string& track_name) override;
+    EngineReturnStatus connect_audio_input_bus(int input_bus,
+                                               int track_bus,
+                                               const std::string& track_name) override;
 
     /**
      * @brief Connect an output bus of a track to an output bus (stereo pair)
@@ -160,9 +178,79 @@ public:
      * @param track_name The unique name of the track.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
-    virtual EngineReturnStatus connect_audio_output_bus(int output_bus,
-                                                        int track_bus,
-                                                        const std::string& track_name) override;
+    EngineReturnStatus connect_audio_output_bus(int output_bus,
+                                                int track_bus,
+                                                const std::string& track_name) override;
+
+    /**
+     * @brief Connect a control voltage input to control a parameter on a processor
+     * @param processor_name The unique name of the processor.
+     * @param parameter_name The name of the parameter to connect to
+     * @param cv_input_id The Cv input port id to use
+     * @return EngineReturnStatud::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_cv_to_parameter(const std::string& processor_name,
+                                               const std::string& parameter_name,
+                                               int cv_input_id) override;
+
+    /**
+     * @brief Connect a parameter on a processor to a control voltage output
+     * @param processor_name The unique name of the processor.
+     * @param parameter_name The name of the parameter to connect from
+     * @param cv_output_id The Cv output port id to use
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_cv_from_parameter(const std::string& processor_name,
+                                                 const std::string& parameter_name,
+                                                 int cv_output_id) override;
+
+    /**
+     * @brief Connect a gate input to a processor. Gate changes will be sent as note
+     *        on or note off messages to the processor on the selected channel and
+     *        with the selected note number.
+     * @param processor_name The unique name of the processor.
+     * @param gate_input_id The gate input port to use.
+     * @param note_no The note number to identify the gate id (0-127).
+     * @param channel The channel to use (0-15).
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_gate_to_processor(const std::string& processor_name,
+                                                 int gate_input_id,
+                                                 int note_no,
+                                                 int channel) override;
+
+    /**
+     * @brief Connect a processor to a gate output. Note on or note off messages sent
+     *        from the processor on the selected channel and note number will be converted
+     *        to gate events on the gate output.
+     * @param processor_name The unique name of the processor.
+     * @param gate_output_id The gate output port to use.
+     * @param note_no The note number to identify the gate id (0-127)
+     * @param channel The channel to use (0-15).
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_gate_from_processor(const std::string& processor_name,
+                                                   int gate_output_id,
+                                                   int note_no,
+                                                   int channel) override;
+
+    /**
+     * @brief Use a selected gate input as sync input.
+     * @param gate_input_id The gate input port to use as sync input.
+     * @param ppq_ticks Number of ticks per quarternote.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_gate_to_sync(int gate_input_id,
+                                            int ppq_ticks) override;
+
+    /**
+     * @brief Send sync pulses on a gate output.
+     * @param gate_output_id The gate output to use.
+     * @param ppq_ticks Number of pulses per quarternote.
+     * @return EngineReturnStatus::OK if successful, error status otherwise
+     */
+    EngineReturnStatus connect_sync_to_gate(int gate_output_id,
+                                            int ppq_ticks) override;
 
     /**
      * @brief Return the number of configured channels for a specific track
@@ -191,8 +279,13 @@ public:
      * @brief Process one chunk of audio from in_buffer and write the result to out_buffer
      * @param in_buffer input audio buffer
      * @param out_buffer output audio buffer
+     * @param in_controls input control voltage and gate data
+     * @param out_controls output control voltage and gate data
      */
-    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) override;
+    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                       SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                       ControlBuffer* in_controls,
+                       ControlBuffer* out_controls) override;
 
     /**
      * @brief Set the current time for the start of the current audio chunk
@@ -208,7 +301,7 @@ public:
      * @brief Inform the engine of the current system latency
      * @param latency The output latency of the audio system
      */
-    virtual void set_output_latency(Time latency) override
+    void set_output_latency(Time latency) override
     {
         _transport.set_latency(latency);
     }
@@ -477,7 +570,7 @@ private:
      */
     bool _handle_internal_events(RtEvent &event);
 
-    inline void _retrieve_events_from_tracks();
+    inline void _retrieve_events_from_tracks(ControlBuffer& buffer);
 
     inline void _copy_audio_to_tracks(ChunkSampleBuffer* input);
 
@@ -485,12 +578,10 @@ private:
 
     void print_timings_to_file(const std::string& filename);
 
-    struct Connection
-    {
-        int engine_channel;
-        int track_channel;
-        ObjectId track;
-    };
+    void _route_cv_gate_ins(ControlBuffer& buffer);
+
+    void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
+
     const bool _multicore_processing;
     const int  _rt_cores;
 
@@ -505,15 +596,42 @@ private:
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
 
-    std::vector<Connection> _in_audio_connections;
-    std::vector<Connection> _out_audio_connections;
+    struct AudioConnection
+    {
+        int engine_channel;
+        int track_channel;
+        ObjectId track;
+    };
+    std::vector<AudioConnection> _in_audio_connections;
+    std::vector<AudioConnection> _out_audio_connections;
+
+    struct CvConnection
+    {
+        ObjectId processor_id;
+        ObjectId parameter_id;
+        int cv_id;
+    };
+
+    struct GateConnection
+    {
+        ObjectId processor_id;
+        int gate_id;
+        int note_no;
+        int channel;
+    };
+
+    std::vector<CvConnection> _cv_in_routes;
+    std::vector<GateConnection> _gate_in_routes;
+    BitSet32 _prev_gate_values{0};
+    BitSet32 _outgoing_gate_values{0};
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    RtEventFifo _internal_control_queue;
-    RtEventFifo _main_in_queue;
-    RtEventFifo _main_out_queue;
-    RtEventFifo _control_queue_out;
+    RtSafeRtEventFifo _internal_control_queue;
+    RtSafeRtEventFifo _main_in_queue;
+    RtSafeRtEventFifo _processor_out_queue;
+    RtSafeRtEventFifo _main_out_queue;
+    RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;

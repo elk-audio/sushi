@@ -25,7 +25,10 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <bitset>
+#include <limits>
 
+#include "library/constants.h"
 #include "base_event_dispatcher.h"
 #include "engine/track.h"
 #include "library/base_performance_timer.h"
@@ -34,9 +37,18 @@
 #include "library/types.h"
 #include "control_interface.h"
 
-
 namespace sushi {
 namespace engine {
+
+using BitSet32 = std::bitset<std::numeric_limits<uint32_t>::digits>;
+
+struct ControlBuffer
+{
+    ControlBuffer() : cv_values{0}, gate_values{0} {}
+
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> cv_values;
+    BitSet32 gate_values;
+};
 
 enum class EngineReturnStatus
 {
@@ -100,6 +112,19 @@ public:
         _audio_outputs = channels;
     }
 
+    virtual EngineReturnStatus set_cv_input_channels(int channels)
+    {
+        _cv_inputs = channels;
+        return EngineReturnStatus::OK;
+
+    }
+
+    virtual EngineReturnStatus set_cv_output_channels(int channels)
+    {
+        _cv_outputs = channels;
+        return EngineReturnStatus::OK;
+    }
+
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
                                                            int /*track_channel*/,
                                                            const std::string& /*track_name*/)
@@ -128,6 +153,49 @@ public:
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus connect_cv_to_parameter(const std::string& /*processor_name*/,
+                                                       const std::string& /*parameter_name*/,
+                                                       int /*cv_input_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus connect_cv_from_parameter(const std::string& /*processor_name*/,
+                                                         const std::string& /*parameter_name*/,
+                                                         int /*cv_output_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus connect_gate_to_processor(const std::string& /*processor_name*/,
+                                                         int /*gate_input_id*/,
+                                                         int /*note_no*/,
+                                                         int /*channel*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus connect_gate_from_processor(const std::string& /*processor_name*/,
+                                                           int /*gate_output_id*/,
+                                                           int /*note_no*/,
+                                                           int /*channel*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus connect_gate_to_sync(int /*gate_input_id*/,
+                                                    int /*ppq_ticks*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus connect_sync_to_gate(int /*gate_output_id*/,
+                                                    int /*ppq_ticks*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+
     virtual int n_channels_in_track(int /*track_no*/)
     {
         return 2;
@@ -140,7 +208,10 @@ public:
 
     virtual void enable_realtime(bool /*enabled*/) {}
 
-    virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer, SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer) = 0;
+    virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                               SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                               ControlBuffer* in_controls,
+                               ControlBuffer* out_controls) = 0;
 
     virtual void update_time(Time /*timestamp*/, int64_t /*samples*/) = 0;
 
@@ -256,6 +327,8 @@ protected:
     float _sample_rate;
     int _audio_inputs{0};
     int _audio_outputs{0};
+    int _cv_inputs{0};
+    int _cv_outputs{0};
 };
 
 } // namespace engine

@@ -121,10 +121,14 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
                       src/library/performance_timer.cpp
+                      src/library/processor.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
+                      src/plugins/control_to_cv_plugin.cpp
+                      src/plugins/cv_to_control_plugin.cpp
                       src/plugins/gain_plugin.cpp
+                      src/plugins/lfo_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/peak_meter_plugin.cpp
@@ -163,6 +167,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
                         src/library/spinlock.h
+                        src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
@@ -181,7 +186,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/plugins/arpeggiator_plugin.h
+                        src/plugins/control_to_cv_plugin.h
+                        src/plugins/cv_to_control_plugin.h
                         src/plugins/gain_plugin.h
+                        src/plugins/lfo_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/peak_meter_plugin.h

@@ -91,7 +91,7 @@ protected:
     {
         delete _module_under_test;
     }
-    RtEventFifo _fifo;
+    RtSafeRtEventFifo _fifo;
     HostControlMockup _host_control;
     arpeggiator_plugin::ArpeggiatorPlugin* _module_under_test;
 };

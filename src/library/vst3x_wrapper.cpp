@@ -222,7 +222,7 @@ void Vst3xWrapper::configure(float sample_rate)
 }
 
 
-void Vst3xWrapper::process_event(RtEvent event)
+void Vst3xWrapper::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
@@ -311,6 +311,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
             _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         }
         _forward_events(_process_data);
+        _forward_params(_process_data);
     }
     _process_data.clear();
 }
@@ -538,8 +539,8 @@ bool Vst3xWrapper::_register_parameters()
         auto res = _instance.controller()->getParameterInfo(i, info);
         if (res == Steinberg::kResultOk)
         {
-            /* Vst3 uses a confusing model where parameters are indexed by an integer from 0
-             * to getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
+            /* Vst3 uses a model where parameters are indexed by an integer from 0 to
+             * getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
              * also has a 32 bit integer id which is arbitrarily assigned.
              *
              * When doing real time parameter updates, the parameters must be accessed using this
@@ -547,6 +548,7 @@ bool Vst3xWrapper::_register_parameters()
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto title = to_ascii_str(info.title);
+            auto unit = to_ascii_str(info.units);
             if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
@@ -563,7 +565,7 @@ bool Vst3xWrapper::_register_parameters()
                 _program_change_parameter.supported = true;
                 SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
             }
-            else if (register_parameter(new FloatParameterDescriptor(title, title, 0, 1, nullptr), info.id))
+            else if (register_parameter(new FloatParameterDescriptor(title, title, unit, 0, 1, nullptr), info.id))
             {
                 SUSHI_LOG_INFO("Registered parameter {}, id {}", title, info.id);
             }
@@ -581,8 +583,8 @@ bool Vst3xWrapper::_register_parameters()
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
      * parameters and we can query the plugin for what 'default' midi cc:s these parameters
-     * would be mapped to if the plugin was able to handle native midi. Kinda backwards,
-     * but we query the plugin for this and if that's the case, store the id:s of these
+     * would be mapped to if the plugin was able to handle native midi.
+     * So we query the plugin for this and if that's the case, store the id:s of these
      * 'special' parameters so we can map PB and Mod events to them.
      * Currently we dont hide these parameters, unlike the bypass parameter, so they can
      * still be controlled via OSC or other controllers. */
@@ -786,24 +788,30 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             switch (vst_event.type)
             {
                 case Steinberg::Vst::Event::EventTypes::kNoteOnEvent:
-                    output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
-                                                           vst_event.noteOn.channel,
-                                                           vst_event.noteOn.pitch,
-                                                           vst_event.noteOn.velocity));
+                    if (maybe_output_gate_event(vst_event.noteOn.channel, vst_event.noteOn.pitch, true) == false)
+                    {
+                        output_event(RtEvent::make_note_on_event(0, vst_event.sampleOffset,
+                                                                    vst_event.noteOn.channel,
+                                                                    vst_event.noteOn.pitch,
+                                                                    vst_event.noteOn.velocity));
+                    }
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kNoteOffEvent:
-                    output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
-                                                            vst_event.noteOff.channel,
-                                                            vst_event.noteOff.pitch,
-                                                            vst_event.noteOff.velocity));
+                    if (maybe_output_gate_event(vst_event.noteOn.channel, vst_event.noteOn.pitch, false) == false)
+                    {
+                        output_event(RtEvent::make_note_off_event(0, vst_event.sampleOffset,
+                                                                     vst_event.noteOff.channel,
+                                                                     vst_event.noteOff.pitch,
+                                                                     vst_event.noteOff.velocity));
+                    }
                     break;
 
                 case Steinberg::Vst::Event::EventTypes::kPolyPressureEvent:
                     output_event(RtEvent::make_note_aftertouch_event(0, vst_event.sampleOffset,
-                                                            vst_event.polyPressure.channel,
-                                                            vst_event.polyPressure.pitch,
-                                                            vst_event.polyPressure.pressure));
+                                                                     vst_event.polyPressure.channel,
+                                                                     vst_event.polyPressure.pitch,
+                                                                     vst_event.polyPressure.pressure));
                     break;
 
                 default:
@@ -811,7 +819,31 @@ void Vst3xWrapper::_forward_events(Steinberg::Vst::ProcessData& data)
             }
         }
     }
+}
 
+void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
+{
+    int param_count = data.outputParameterChanges->getParameterCount();
+    for (int i = 0; i < param_count; ++i)
+    {
+        auto queue = data.outputParameterChanges->getParameterData(i);
+        auto id = queue->getParameterId();
+        int points = queue->getPointCount();
+        if (points > 0)
+        {
+            double value;
+            int offset;
+            auto res = queue->getPoint(points - 1, offset, value);
+            if (res == Steinberg::kResultOk)
+            {
+                if (maybe_output_cv_value(id, value) == false)
+                {
+                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, static_cast<float>(value));
+                    output_event(e);
+                }
+            }
+        }
+    }
 }
 
 void Vst3xWrapper::_fill_processing_context()

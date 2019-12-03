@@ -41,7 +41,7 @@ public:
 
     virtual ~InternalPlugin() {};
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
@@ -55,6 +55,7 @@ public:
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
+     * @param unit The unit of the parameters display value
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
@@ -63,6 +64,7 @@ public:
      */
     FloatParameterValue* register_float_parameter(const std::string& name,
                                                   const std::string& label,
+                                                  const std::string& unit,
                                                   float default_value,
                                                   float min_value,
                                                   float max_value,
@@ -74,6 +76,7 @@ public:
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
+     * @param unit The unit of the parameters display value
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
@@ -82,6 +85,7 @@ public:
      */
     IntParameterValue* register_int_parameter(const std::string& name,
                                               const std::string& label,
+                                              const std::string& unit,
                                               int default_value,
                                               int min_value,
                                               int max_value,
@@ -93,31 +97,37 @@ public:
      *        the processor receives parameter change events
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
+     * @param unit The unit of the parameters display value
      * @param default_value The default value the parameter should have
      * @return Pointer to a BoolParameterValue object
      */
     BoolParameterValue* register_bool_parameter(const std::string& name,
                                                 const std::string& label,
+                                                const std::string& unit,
                                                 bool default_value);
 
     /**
      * @brief Register a string property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
+     * @param unit The unit of the parameters display value
      * @return true if the property was registered successfully
      */
     bool register_string_property(const std::string& name,
-                                  const std::string& label);
+                                  const std::string& label,
+                                  const std::string& unit);
 
 
     /**
      * @brief Register a data property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
+     * @param unit The unit of the parameters display value
      * @return true if the property was registered successfully
      */
     bool register_data_property(const std::string& name,
-                                const std::string& label);
+                                const std::string& label,
+                                const std::string& unit);
 
 
 protected:

@@ -40,7 +40,13 @@ TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(ho
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _transpose_parameter = register_float_parameter("transpose", "Transpose", 0,-24, 24, new FloatParameterPreProcessor(-24, 24) );
+    _transpose_parameter = register_float_parameter("transpose",
+                                                    "Transpose",
+                                                    "semitones",
+                                                    0,
+                                                    -24,
+                                                    24,
+                                                    new FloatParameterPreProcessor(-24, 24) );
     assert(_transpose_parameter);
     _max_input_channels = 0;
     _max_output_channels = 0;
@@ -51,7 +57,7 @@ ProcessorReturnCode TransposerPlugin::init(float /*sample_rate*/)
     return ProcessorReturnCode::OK;
 }
 
-void TransposerPlugin::process_event(RtEvent event)
+void TransposerPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {

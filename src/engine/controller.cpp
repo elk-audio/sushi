@@ -72,6 +72,7 @@ inline ext::SyncMode to_external(const sushi::SyncMode mode)
     {
         case SyncMode::INTERNAL:     return ext::SyncMode::INTERNAL;
         case SyncMode::MIDI_SLAVE:   return ext::SyncMode::MIDI;
+        case SyncMode::GATE_INPUT:   return ext::SyncMode::GATE;
         case SyncMode::ABLETON_LINK: return ext::SyncMode::LINK;
         default:                     return ext::SyncMode::INTERNAL;
     }
@@ -83,6 +84,7 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
     {
         case ext::SyncMode::INTERNAL: return sushi::SyncMode::INTERNAL;
         case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI_SLAVE;
+        case ext::SyncMode::GATE:     return sushi::SyncMode::GATE_INPUT;
         case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
         default:                      return sushi::SyncMode::INTERNAL;
     }
@@ -366,6 +368,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
                 ext::ParameterInfo info;
                 info.label = param->label();
                 info.name = param->name();
+                info.unit = param->unit();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
                 info.min_range = param->min_range();
@@ -523,6 +526,7 @@ Controller::get_processor_parameters(int processor_id) const
                 ext::ParameterInfo info;
                 info.label = param->label();
                 info.name = param->name();
+                info.unit = param->unit();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
                 info.min_range = param->min_range();
@@ -564,7 +568,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.id = descr->id();
             info.label = descr->label();
             info.name = descr->name();
-            info.unit = ""; // TODO - implement
+            info.unit = descr->unit();
             info.type = to_external(descr->type());
             info.min_range = descr->min_range();
             info.max_range = descr->max_range();

@@ -49,9 +49,10 @@ class ParameterDescriptor
 public:
     ParameterDescriptor(const std::string& name,
                         const std::string& label,
-                        ParameterType type) : _label(label), _name(name), _type(type) {}
+                        const std::string& unit,
+                        ParameterType type) : _label(label), _name(name), _unit(unit), _type(type) {}
 
-    virtual ~ParameterDescriptor() {}
+    virtual ~ParameterDescriptor() = default;
 
     /**
      * @brief Returns the enumerated type of the parameter
@@ -67,6 +68,11 @@ public:
     * @brief Returns a unique identifier to the parameter i.e. "oscillator_2_pitch"
     */
     const std::string& name() const {return _name;}
+
+    /**
+    * @brief Returns the unit of the parameter i.e. "dB" or "Hz"
+    */
+    const std::string& unit() const {return _unit;}
 
     /**
      * @brief Returns a unique identifier for this parameter
@@ -99,6 +105,7 @@ public:
 protected:
     std::string _label;
     std::string _name;
+    std::string _unit;
     ObjectId _id;
     ParameterType _type;
 };
@@ -167,15 +174,16 @@ public:
      */
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
+                             const std::string& unit,
                              T range_min,
                              T range_max,
                              ParameterPreProcessor<T>* pre_processor) :
-                                        ParameterDescriptor(name, label, enumerated_type),
+                                        ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min(range_min),
                                         _max(range_max) {}
 
-    ~TypedParameterDescriptor() {};
+    ~TypedParameterDescriptor() = default;
 
     float min_range() const override {return static_cast<float>(_min);}
     float max_range() const override {return static_cast<float>(_max);}
@@ -195,12 +203,12 @@ class TypedParameterDescriptor<T *, enumerated_type> : public ParameterDescripto
 {
 public:
     TypedParameterDescriptor(const std::string& name,
-                             const std::string& label) : ParameterDescriptor(name, label, enumerated_type) {}
+                             const std::string& label,
+                             const std::string& unit) : ParameterDescriptor(name, label, unit, enumerated_type) {}
 
-    ~TypedParameterDescriptor() {};
+    ~TypedParameterDescriptor() = default;
 
     virtual bool automatable() const override {return false;}
-
 };
 
 /* Partial specialization for pointer type parameters */
@@ -210,7 +218,8 @@ class TypedParameterDescriptor<BlobData, ParameterType::DATA> : public Parameter
 {
 public:
     TypedParameterDescriptor(const std::string& name,
-                             const std::string& label) : ParameterDescriptor(name, label, ParameterType::DATA) {}
+                             const std::string& label,
+                             const std::string& unit) : ParameterDescriptor(name, label, unit, ParameterType::DATA) {}
 
     ~TypedParameterDescriptor() {}
 
