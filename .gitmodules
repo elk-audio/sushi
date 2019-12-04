@@ -20,9 +20,6 @@
 [submodule "third-party/spdlog"]
 	path = third-party/spdlog
 	url = git://github.com/gabime/spdlog.git
-[submodule "raspalib"]
-	path = raspalib
-	url = git@bitbucket.org:mindswteam/raspalib.git
 [submodule "twine"]
 	path = twine
 	url = git@bitbucket.org:mindswteam/twine.git
