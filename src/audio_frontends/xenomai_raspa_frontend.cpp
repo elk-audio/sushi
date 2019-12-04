@@ -21,7 +21,7 @@
 
 #include <cerrno>
 
-#include "raspa/raspa.h"
+#include <raspa/raspa.h>
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
@@ -30,7 +30,13 @@
 namespace sushi {
 namespace audio_frontend {
 
-constexpr int RASPA_INPUT_CHANNELS = RASPA_N_CHANNELS == 8? 6 : RASPA_N_CHANNELS;
+/**
+ * Ensure version compatibility with raspa library
+ */
+constexpr int REQUIRED_RASPA_VER_MAJ = 0;
+constexpr int REQUIRED_RASPA_VER_MIN = 1;
+static_assert(REQUIRED_RASPA_VER_MAJ == RASPA_VERSION_MAJ, "Raspa major version mismatch");
+static_assert(REQUIRED_RASPA_VER_MIN == RASPA_VERSION_MIN, "Raspa minor version mismatch");
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
@@ -43,14 +49,8 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     {
         return ret_code;
     }
-    auto raspa_config = static_cast<const XenomaiRaspaFrontendConfiguration*>(_config);
 
-    // RASPA
-    if (RASPA_N_FRAMES_PER_BUFFER != AUDIO_CHUNK_SIZE)
-    {
-        SUSHI_LOG_ERROR("Chunk size mismatch, check driver configuration.");
-        return AudioFrontendStatus::INVALID_CHUNK_SIZE;
-    }
+    auto raspa_config = static_cast<const XenomaiRaspaFrontendConfiguration*>(_config);
 
     auto cv_audio_status = config_audio_channels(raspa_config);
     if (cv_audio_status != AudioFrontendStatus::OK)
@@ -65,10 +65,10 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         debug_flags |= RASPA_DEBUG_SIGNAL_ON_MODE_SW;
     }
 
-    auto raspa_ret = raspa_open(RASPA_N_CHANNELS, RASPA_N_FRAMES_PER_BUFFER, rt_process_callback, this, debug_flags);
+    auto raspa_ret = raspa_open(AUDIO_CHUNK_SIZE, rt_process_callback, this, debug_flags);
     if (raspa_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error opening RASPA: {}", strerror(-raspa_ret));
+        SUSHI_LOG_ERROR("Error opening RASPA: {}", raspa_get_error_msg(-raspa_ret));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -134,11 +134,9 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
 
 AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRaspaFrontendConfiguration* config)
 {
-    /* As the number of audio channels is given by the hw and known at compile time,
-     * setting cv channels will reduce the number of audio channels. CV channels are
-     * counted from the back, so if RASPA_N_CHANNELS is 8 and cv inputs is set to 2,
-     * The engine will be set to 6 audio input channels and the last 2 will be used
-     * as cv input 0 and cv input 1, respectively
+    /* CV channels ar counted from the back, so if RASPA_N_CHANNELS is 8 and
+     * cv inputs is set to 2, The engine will be set to 6 audio input channels
+     * and the last 2 will be used as cv input 0 and cv input 1, respectively
      * In the first revision Sika, CV outs are on channels 4 and 5 (counted from 0) and
      * optional on 6 and 7, so only 0 or 4 cv channels is accepted */
     if (config->cv_inputs != 0 && config->cv_inputs != 2)
@@ -151,8 +149,8 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     }
     _cv_input_channels = config->cv_inputs;
     _cv_output_channels = config->cv_outputs;
-    _audio_input_channels = RASPA_INPUT_CHANNELS - _cv_input_channels;
-    _audio_output_channels = RASPA_N_CHANNELS - _cv_output_channels;
+    _audio_input_channels = raspa_get_num_input_channels() - _cv_input_channels;
+    _audio_output_channels = raspa_get_num_output_channels() - _cv_output_channels;
     _engine->set_audio_input_channels(_audio_input_channels);
     _engine->set_audio_output_channels(_audio_output_channels);
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
