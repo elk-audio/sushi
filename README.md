@@ -24,10 +24,10 @@ See directory `example_configs` for the JSON-schema definition and some example 
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
 ## Building Sushi
-Sushi uses CMake as its build system. A generate script is also provided for convenient setup. Simply running _./generate_ with no arguments in the root of Sushi will setup a build folder containing a Release configuration and a Debug configuration. CMake arguments can be passed through the generate script using the _--cmake-args_ flag. Those arguments will then be added to both configurations.
+Sushi uses CMake as its build system. A generate script is also provided for convenient setup. Simply running `./generate` with no arguments in the root of Sushi will setup a build folder containing a Release configuration and a Debug configuration. CMake arguments can be passed through the generate script using the `--cmake-args` flag. Those arguments will then be added to both configurations.
 
 ### Useful CMake build options
-Various options can be passed to CMake directly, or through the generate script using the _--cmake-args_ flag. Both general CMake options and Sushi-specific options that control which features are built and included in Sushi can be passed. Note that all options need to be prefixed with "-D" when passing them. All options are on be default as that is the most common use case.
+Various options can be passed to CMake directly, or through the generate script using the `--cmake-args` flag. Both general CMake options and Sushi-specific options that control which features Sushi is built with can be passed. Note that all options need to be prefixed with `-D` when passing them. All options are on be default as that is the most common use case.
 
 Option                          | Value    | Default | Notes
 --------------------------------|----------|---------|------------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ If the Vst 2.4 SDK is not available, Sushi can still be built without Vst 2.x su
 
     $ ./generate --cmake-args="-DWITH_XENOMAI=off -DWITH_VST2=off" -b
 
-You can also skip the _-b_ flag and build by calling _make_ directly in build/debug or build/release
+It is also possible to skip the `-b` flag and build by calling `make` directly in build/debug or build/release
 
 ### Dependecies
 Sushi carries most dependencies as submodules and will build and link them automatically. A couple of depencies are not included however and must be provided or installed system-wide. See the list below:
@@ -70,7 +70,7 @@ Sushi listens on port 24024 by default for the following OSC commands:
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
 /parameter/plugin_id/parameter_name    |  f       | parameter value
-/keyboard_event/track_name             |  sif     | event type ("nore_on", "note_off", "program_change"), note index, norm. value
+/keyboard_event/track_name             |  sif     | event type ("note_on", "note_off", "program_change"), note index, norm. value
 /engine/add_track                      |  si      | name, n. of channels
 /engine/delete_track                   |  s       | name
 /engine/add_processor                  |  sssss   | track, id, name, file path, type
