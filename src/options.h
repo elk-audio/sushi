@@ -34,6 +34,7 @@
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
 #define SUSHI_OSC_SERVER_PORT 24024
 #define SUSHI_OSC_SEND_PORT 24023
+#define SUSHI_GRPC_LISTENING_PORT "[::]:51051"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -118,7 +119,8 @@ enum OptionIndex
     OPT_IDX_MULTICORE_PROCESSING,
     OPT_IDX_TIMINGS_STATISTICS,
     OPT_IDX_OSC_RECEIVE_PORT,
-    OPT_IDX_OSC_SEND_PORT
+    OPT_IDX_OSC_SEND_PORT,
+    OPT_IDX_GRPC_LISTEN_ADDRESS
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -299,6 +301,14 @@ const optionparser::Descriptor usage[] =
         "osc-send-port",
         SushiArg::NonEmpty,
         "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_QUOTE(SUSHI_OSC_SEND_PORT) "]."
+    },
+    {
+        OPT_IDX_GRPC_LISTEN_ADDRESS,
+        OPT_TYPE_UNUSED,
+        "",
+        "grpc-address",
+        SushiArg::NonEmpty,
+        "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT "]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

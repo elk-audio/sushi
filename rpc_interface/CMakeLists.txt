@@ -29,17 +29,12 @@ endforeach()
 ######################
 
 set(SUSHI_GRPC_SOURCES src/grpc_server.cpp
-                       src/control_service.cpp
-        )
-
+                       src/control_service.cpp )
 
 add_library(sushi_rpc STATIC
                       ${SUSHI_GRPC_SOURCES}
                       ${PROTO_SRCS}
-                      ${GRPC_SRCS}
-                      )
-
-#set_target_properties(sushi_rpc POSITION_INDEPENDENT_CODE ON)
+                      ${GRPC_SRCS} )
 
 target_include_directories(sushi_rpc PUBLIC include)
 target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf)

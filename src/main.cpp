@@ -168,6 +168,7 @@ int main(int argc, char* argv[])
     std::string jack_server_name = std::string("");
     int osc_server_port = SUSHI_OSC_SERVER_PORT;
     int osc_send_port = SUSHI_OSC_SEND_PORT;
+    std::string grpc_listening_address = std::string(SUSHI_GRPC_LISTENING_PORT);
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
@@ -267,6 +268,10 @@ int main(int argc, char* argv[])
             osc_send_port = atoi(opt.arg);
             break;
 
+        case OPT_IDX_GRPC_LISTEN_ADDRESS:
+            grpc_listening_address = opt.arg;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -307,7 +312,7 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_midi_outputs(1);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine->controller());
+    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
 #endif
 
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>         midi_frontend;
@@ -464,6 +469,7 @@ int main(int argc, char* argv[])
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    SUSHI_LOG_INFO("Starting gRPC server with address: {}", grpc_listening_address);
     rpc_server->start();
 #endif
 
