@@ -387,7 +387,7 @@ endif()
 #  Install         #
 ####################
 set(DOC_FILES_INSTALL
-    "${PROJECT_SOURCE_DIR}/LICENSE"
+    "${PROJECT_SOURCE_DIR}/LICENSE.md"
     "${PROJECT_SOURCE_DIR}/README.md"
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )
