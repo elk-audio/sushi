@@ -48,10 +48,9 @@ option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
-set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
 
 if (${WITH_XENOMAI})
-    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels")
+    message("Building with Xenomai support")
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
@@ -264,20 +263,28 @@ endif()
 #  Subdirectory configuration  #
 ################################
 
-if (${AUDIO_BUFFER_SIZE})
-    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "" FORCE)
-endif()
-
-if (${XENOMAI_AUDIO_CHANNELS})
-    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
-endif()
 
 if (${WITH_XENOMAI})
-    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
-    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
+    # explicitly link with cobalt lib
+    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+
+    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+    endif()
+    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
+        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+    endif()
+
+    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+
     set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    add_subdirectory(raspalib)
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
+    find_library(RASPA_LIB
+                 NAMES raspa
+                 PATHS /usr/lib /usr/local/lib
+                 )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
 else()
     set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
