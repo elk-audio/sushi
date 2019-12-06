@@ -62,6 +62,9 @@ Sushi carries most dependencies as submodules and will build and link with them 
   * Raspa - Only required if building for an Elk Powered board and is included in the Elk cross compiling SDK
   * gRPC - Needs to be built from source and installed system wide. See [https://github.com/grpc/grpc/blob/master/src/cpp/README.md] for instructions. The current version of gRPC used by sushi is 1.10.1. Other versions can not be guaranteed to work.
 
+## License
+
+Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Run-time OSC control
 
