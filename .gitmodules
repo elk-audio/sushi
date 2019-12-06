@@ -1,14 +1,14 @@
 [submodule "vst3_pluginterfaces"]
-	path = third-party/vstsdk3/pluginterfaces
+	path = third-party/vst3sdk/pluginterfaces
 	url = git://github.com/steinbergmedia/vst3_pluginterfaces.git
 [submodule "vst3_cmake"]
-	path = third-party/vstsdk3/cmake
+	path = third-party/vst3sdk/cmake
 	url = git://github.com/steinbergmedia/vst3_cmake.git
 [submodule "vst3_base"]
-	path = third-party/vstsdk3/base
+	path = third-party/vst3sdk/base
 	url = git://github.com/steinbergmedia/vst3_base.git
 [submodule "vst3_public_sdk"]
-	path = third-party/vstsdk3/public.sdk
+	path = third-party/vst3sdk/public.sdk
 	url = git://github.com/steinbergmedia/vst3_public_sdk
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson

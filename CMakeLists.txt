@@ -73,7 +73,7 @@ message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 # Build the given Vst3 host implementation into a separate library to
 # Avoid littering our own code with ugly defines
 
-set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
@@ -91,7 +91,7 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 else()
     set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
 endif()
-target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
 
 ####################
@@ -252,7 +252,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
