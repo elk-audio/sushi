@@ -128,7 +128,8 @@ void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune
             auto& voice = _voices[i];
             if (voice.active)
             {
-                auto[new_note, fraction] = cv_to_pitch(_pitch_parameters[i]->value());
+                int new_note;
+                std::tie(new_note, std::ignore) = cv_to_pitch(_pitch_parameters[i]->value());
                 if (voice.note != new_note)
                 {
                     _deferred_note_offs.push_back(voice.note);
