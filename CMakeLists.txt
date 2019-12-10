@@ -120,6 +120,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
                       src/library/performance_timer.cpp
+                      src/library/parameter_dump.cpp
                       src/library/processor.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
