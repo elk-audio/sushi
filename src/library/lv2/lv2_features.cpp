@@ -109,6 +109,29 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
     return buffer;
 }
 
+LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
+{
+    auto model = static_cast<LV2Model*>(handle);
+    std::unique_lock<std::mutex> lock(model->symap_lock);
+    const LV2_URID id = symap_map(model->symap, uri);
+
+    return id;
+}
+
+const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
+{
+    auto model = static_cast<LV2Model*>(handle);
+    std::unique_lock<std::mutex> lock(model->symap_lock);
+    const char* uri = symap_unmap(model->symap, urid);
+    return uri;
+}
+
+void init_feature(LV2_Feature* const dest, const char* const URI, void* data)
+{
+    dest->URI = URI;
+    dest->data = data;
+}
+
 }
 }
 

@@ -95,30 +95,11 @@ typedef int (*PresetSink)(LV2Model* model,
 
 char* make_path(LV2_State_Make_Path_Handle handle, const char* path);
 
-// Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
+LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri);
 
-static LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
-{
-    LV2Model* model = (LV2Model*)handle;
-    std::unique_lock<std::mutex> lock(model->symap_lock);
-    const LV2_URID id = symap_map(model->symap, uri);
+const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid);
 
-    return id;
-}
-
-static const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
-{
-    LV2Model* model = (LV2Model*)handle;
-    std::unique_lock<std::mutex> lock(model->symap_lock);
-    const char* uri = symap_unmap(model->symap, urid);
-    return uri;
-}
-
-static void init_feature(LV2_Feature* const dest, const char* const URI, void* data)
-{
-    dest->URI = URI;
-    dest->data = data;
-}
+void init_feature(LV2_Feature* const dest, const char* const URI, void* data);
 
 } // end namespace lv2
 } // end namespace sushi
