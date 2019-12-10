@@ -96,7 +96,7 @@ _buf_size(0) // Custom buffer size, or 0
 
         if (!hidden)
         {
-            add_control(&model->controls, new_port_control(this, model, _index));
+            &model->controls.emplace_back(new_port_control(this, model, _index));
         }
     }
     else if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_AudioPort))

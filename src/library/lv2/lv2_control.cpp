@@ -32,31 +32,30 @@ int scale_point_cmp(const ScalePoint *a, const ScalePoint *b)
     return 1;
 }
 
-ControlID* new_port_control(Port* port, LV2Model *model, uint32_t index)
+std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index)
 {
-    const LilvPort* lport = port->get_lilv_port();
-    const LilvPlugin* plug = model->plugin;
-    const Lv2_Host_Nodes* nodes = &model->nodes;
+    const auto lilvPort = port->get_lilv_port();
+    const auto plugin = model->plugin;
+    const auto nodes = &model->nodes;
 
-    // TODO: Refactor Calloc!
-    ControlID* id = (ControlID*) calloc(1, sizeof(ControlID));
+    auto id = std::make_unique<ControlID>();
     id->model = model;
     id->type = PORT;
-    id->node = lilv_node_duplicate(lilv_port_get_node(plug, lport));
-    id->symbol = lilv_node_duplicate(lilv_port_get_symbol(plug, lport));
-    id->label = lilv_port_get_name(plug, lport);
+    id->node = lilv_node_duplicate(lilv_port_get_node(plugin, lilvPort));
+    id->symbol = lilv_node_duplicate(lilv_port_get_symbol(plugin, lilvPort));
+    id->label = lilv_port_get_name(plugin, lilvPort);
     id->index = index;
-    id->group = lilv_port_get(plug, lport, model->nodes.pg_group);
+    id->group = lilv_port_get(plugin, lilvPort, model->nodes.pg_group);
     id->value_type = model->forge.Float;
-    id->is_writable = lilv_port_is_a(plug, lport, nodes->lv2_InputPort);
-    id->is_readable = lilv_port_is_a(plug, lport, nodes->lv2_OutputPort);
-    id->is_toggle = lilv_port_has_property(plug, lport, nodes->lv2_toggled);
-    id->is_integer = lilv_port_has_property(plug, lport, nodes->lv2_integer);
-    id->is_enumeration = lilv_port_has_property(plug, lport, nodes->lv2_enumeration);
-    id->is_logarithmic = lilv_port_has_property(plug, lport, nodes->pprops_logarithmic);
+    id->is_writable = lilv_port_is_a(plugin, lilvPort, nodes->lv2_InputPort);
+    id->is_readable = lilv_port_is_a(plugin, lilvPort, nodes->lv2_OutputPort);
+    id->is_toggle = lilv_port_has_property(plugin, lilvPort, nodes->lv2_toggled);
+    id->is_integer = lilv_port_has_property(plugin, lilvPort, nodes->lv2_integer);
+    id->is_enumeration = lilv_port_has_property(plugin, lilvPort, nodes->lv2_enumeration);
+    id->is_logarithmic = lilv_port_has_property(plugin, lilvPort, nodes->pprops_logarithmic);
 
-    lilv_port_get_range(plug, lport, &id->def, &id->min, &id->max);
-    if (lilv_port_has_property(plug, lport, model->nodes.lv2_sampleRate))
+    lilv_port_get_range(plugin, lilvPort, &id->def, &id->min, &id->max);
+    if (lilv_port_has_property(plugin, lilvPort, model->nodes.lv2_sampleRate))
     {
         /* Adjust range for lv2:sampleRate controls */
         if (lilv_node_is_float(id->min) || lilv_node_is_int(id->min))
@@ -74,15 +73,14 @@ ControlID* new_port_control(Port* port, LV2Model *model, uint32_t index)
     }
 
     /* Get scale points */
-    LilvScalePoints *sp = lilv_port_get_scale_points(plug, lport);
-    if (sp)
+    auto scale_points = lilv_port_get_scale_points(plugin, lilvPort);
+    if (scale_points)
     {
-        id->points = (ScalePoint *) malloc(
-                lilv_scale_points_size(sp) * sizeof(ScalePoint));
+        id->points = (ScalePoint*) malloc(lilv_scale_points_size(scale_points) * sizeof(ScalePoint));
         size_t np = 0;
-        LILV_FOREACH(scale_points, s, sp)
+        LILV_FOREACH(scale_points, s, scale_points)
         {
-            const LilvScalePoint *p = lilv_scale_points_get(sp, s);
+            const LilvScalePoint *p = lilv_scale_points_get(scale_points, s);
             if (lilv_node_is_float(lilv_scale_point_get_value(p)) ||
                 lilv_node_is_int(lilv_scale_point_get_value(p)))
             {
@@ -99,24 +97,23 @@ ControlID* new_port_control(Port* port, LV2Model *model, uint32_t index)
               (int (*)(const void *, const void *)) scale_point_cmp);
         id->n_points = np;
 
-        lilv_scale_points_free(sp);
+        lilv_scale_points_free(scale_points);
     }
 
     return id;
 }
 
-static bool has_range(LV2Model *model, const LilvNode *subject, const char *range_uri)
+static bool has_range(LV2Model* model, const LilvNode* subject, const char* range_uri)
 {
-    LilvNode *range = lilv_new_uri(model->world, range_uri);
-    const bool result = lilv_world_ask(
-            model->world, subject, model->nodes.rdfs_range, range);
+    auto range = lilv_new_uri(model->world, range_uri);
+    const bool result = lilv_world_ask(model->world, subject, model->nodes.rdfs_range, range);
     lilv_node_free(range);
     return result;
 }
 
-ControlID *new_property_control(LV2Model *model, const LilvNode *property)
+std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode *property)
 {
-    ControlID *id = (ControlID *) calloc(1, sizeof(ControlID));
+    auto id = std::make_unique<ControlID>();
     id->model = model;
     id->type = PROPERTY;
     id->node = lilv_node_duplicate(property);
@@ -155,25 +152,19 @@ ControlID *new_property_control(LV2Model *model, const LilvNode *property)
     return id;
 }
 
-void add_control(Controls *controls, ControlID *control)
+/* TODO: Re-introduce if needed.
+ * ControlID* get_property_control(std::vector<std::unique_ptr<ControlID>>* controls, LV2_URID property)
 {
-    controls->controls = (ControlID **) realloc(
-            controls->controls, (controls->n_controls + 1) * sizeof(ControlID * ));
-    controls->controls[controls->n_controls++] = control;
-}
-
-ControlID *get_property_control(const Controls *controls, LV2_URID property)
-{
-    for (size_t i = 0; i < controls->n_controls; ++i)
+    for (size_t i = 0; i < controls->size(); ++i)
     {
-        if (controls->controls[i]->property == property)
+        if (controls[i]->property == property)
         {
-            return controls->controls[i];
+            return controls[i]->get();
         }
     }
 
     return NULL;
 }
-
+*/
 }
 }

@@ -75,7 +75,7 @@ public:
 
     void process_event(RtEvent event) override;
 
-    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
@@ -98,8 +98,8 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
-    void _create_ports(const LilvPlugin *plugin);
-    std::unique_ptr<Port> _create_port(const LilvPlugin *plugin, int port_index, float default_value);
+    void _create_ports(const LilvPlugin* plugin);
+    std::unique_ptr<Port> _create_port(const LilvPlugin* plugin, int port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
@@ -125,7 +125,7 @@ private:
     bool _check_for_required_features(const LilvPlugin* plugin);
     void _fetch_plugin_name_and_label();
 
-    void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+    void _map_audio_buffers(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer);
 
     void _deliver_inputs_to_plugin();
     void _deliver_outputs_from_plugin(bool send_ui_updates);
@@ -138,7 +138,7 @@ private:
     void _notify_parameter_change_rt(int parameter_index, float value);
     void _notify_parameter_change(int parameter_index, float value);
 
-    void _create_controls(LV2Model *model, bool writable);
+    void _create_controls(LV2Model* model, bool writable);
 
     float _sample_rate{0};
 

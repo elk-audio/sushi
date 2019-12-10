@@ -147,9 +147,9 @@ void PluginLoader::close_plugin_instance()
 
         lv2_worker_destroy(&_model->worker);
 
-        for (unsigned i = 0; i < _model->controls.n_controls; ++i)
+        for (unsigned i = 0; i < _model->controls.size(); ++i)
         {
-            ControlID* const control = _model->controls.controls[i];
+            ControlID* const control = _model->controls[i].get();
             lilv_node_free(control->node);
             lilv_node_free(control->symbol);
             lilv_node_free(control->label);
@@ -159,9 +159,6 @@ void PluginLoader::close_plugin_instance()
             lilv_node_free(control->def);
             free(control);
         }
-
-        if(_model->controls.controls != nullptr)
-            free(_model->controls.controls);
 
         _model->instance = nullptr;
     }

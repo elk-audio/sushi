@@ -135,19 +135,13 @@ typedef struct
     bool is_readable; ///< Readable (output)
 } ControlID;
 
-ControlID* new_port_control(Port* port, LV2Model* model, uint32_t index);
+std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model* model, uint32_t index);
 
-ControlID* new_property_control(LV2Model* model, const LilvNode* property);
+std::unique_ptr<ControlID> new_property_control(LV2Model* model, const LilvNode* property);
 
-typedef struct
-{
-    size_t n_controls{0};
-    ControlID** controls{nullptr};
-} Controls;
+void add_control(std::vector<std::unique_ptr<ControlID>>* controls, ControlID* control);
 
-void add_control(Controls* controls, ControlID* control);
-
-ControlID* get_property_control(const Controls* controls, LV2_URID property);
+//ControlID* get_property_control(const std::vector<std::unique_ptr<ControlID>>* controls, LV2_URID property);
 
 /**
 Control change event, sent through ring buffers for UI updates.
@@ -436,7 +430,7 @@ public:
     // TODO: Move to ui_io?
 // TODO: The below needs re-introducing for control no?
     bool has_ui; ///< True iff a control UI is present
-    Controls controls; ///< Available plugin controls
+    std::vector<std::unique_ptr<ControlID>> controls; ///< Available plugin controls
 
 //  SerdEnv* env; ///< Environment for RDF printing
 

@@ -117,7 +117,7 @@ void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID ty
     LV2Model* model = control->model;
     if (control->type == PORT && type == model->forge.Float) {
         Port* port = control->model->ports[control->index].get();
-        port->control = *static_cast<const float*>(body;
+        port->control = *static_cast<const float*>(body);
     } else if (control->type == PROPERTY) {
         // Copy forge since it is used by process thread
         LV2_Atom_Forge forge = model->forge;
@@ -480,11 +480,11 @@ bool Lv2_UI_IO::update(LV2Model* model)
 // TODO: Currently unused!
 ControlID* Lv2_UI_IO::control_by_symbol(LV2Model* model, const char* sym)
 {
-    for (size_t i = 0; i < model->controls.n_controls; ++i)
+    for (size_t i = 0; i < model->controls.size(); ++i)
     {
-        if (!strcmp(lilv_node_as_string(model->controls.controls[i]->symbol), sym))
+        if (!strcmp(lilv_node_as_string(model->controls[i]->symbol), sym))
         {
-            return model->controls.controls[i];
+            return model->controls[i].get();
         }
     }
     return NULL;

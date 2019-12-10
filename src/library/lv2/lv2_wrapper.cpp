@@ -145,7 +145,7 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
     const std::string uri_as_string = lilv_node_as_string(uri_node);
 
 // TODO: Once Worker extension is implemented, test the eg-sampler plugin - it advertises parameters read here.
-    LilvNodes* properties = lilv_world_find_nodes(
+    auto properties = lilv_world_find_nodes(
             world,
             uri_node,
             writable ? patch_writable : patch_readable,
@@ -153,32 +153,32 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
 
     LILV_FOREACH(nodes, p, properties)
     {
-        const LilvNode* property = lilv_nodes_get(properties, p);
-        ControlID* record = NULL;
+        const auto property = lilv_nodes_get(properties, p);
 
+        bool found = false;
         if (!writable && lilv_world_ask(world,
                                         uri_node,
                                         patch_writable,
                                         property))
         {
             // Find existing writable control
-            for (size_t i = 0; i < model->controls.n_controls; ++i)
+            for (size_t i = 0; i < model->controls.size(); ++i)
             {
-                if (lilv_node_equals(model->controls.controls[i]->node, property))
+                if (lilv_node_equals(model->controls[i]->node, property))
                 {
-                    record = model->controls.controls[i];
-                    record->is_readable = true;
+                    found = true;
+                    model->controls[i]->is_readable = true;
                     break;
                 }
             }
 
-            if (record)
+            if (found)
             {
-                continue;
+                continue; // This skips subsequent.
             }
         }
 
-        record = new_property_control(model, property);
+        auto record = new_property_control(model, property);
         if (writable)
         {
             record->is_writable = true;
@@ -190,15 +190,15 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
 
         if (record->value_type)
         {
-            add_control(&model->controls, record);
+            &model->controls.emplace_back(std::move(record));
         }
         else
         {
             fprintf(stderr, "Parameter <%s> has unknown value type, ignored\n",
                     lilv_node_as_string(record->node));
-            free(record);
         }
     }
+
     lilv_nodes_free(properties);
 
     lilv_node_free(patch_readable);
@@ -220,30 +220,31 @@ void Lv2Wrapper::_fetch_plugin_name_and_label()
 bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {
     /* Check that any required features are supported */
-    LilvNodes* req_feats = lilv_plugin_get_required_features(plugin);
-    LILV_FOREACH(nodes, f, req_feats)
+    auto required_features = lilv_plugin_get_required_features(plugin);
+    LILV_FOREACH(nodes, f, required_features)
     {
-        const char* uri = lilv_node_as_uri(lilv_nodes_get(req_feats, f));
+        const char* uri = lilv_node_as_uri(lilv_nodes_get(required_features, f));
         if (!feature_is_supported(_model, uri))
         {
             SUSHI_LOG_ERROR("LV2 feature {} is not supported\n", uri);
             return false;
         }
     }
-    lilv_nodes_free(req_feats);
+    lilv_nodes_free(required_features);
     return true;
 }
 
-void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
+void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
 {
     _max_input_channels = 0;
     _max_output_channels = 0;
 
-    _model->num_ports = lilv_plugin_get_num_ports(plugin);
+    const int port_count = lilv_plugin_get_num_ports(plugin);
+    _model->num_ports = port_count;
 
-    float* default_values = (float*)calloc(lilv_plugin_get_num_ports(plugin), sizeof(float));
+    std::vector<float> default_values(port_count);
 
-    lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values);
+    lilv_plugin_get_port_ranges_float(plugin, NULL, NULL, default_values.data());
 
     for (int i = 0; i < _model->num_ports; ++i)
     {
@@ -251,7 +252,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
         _model->ports.emplace_back(std::move(newPort));
     }
 
-    const LilvPort* control_input = lilv_plugin_get_port_by_designation(
+    const auto control_input = lilv_plugin_get_port_by_designation(
             plugin,
             _model->nodes.
             lv2_InputPort,
@@ -269,8 +270,6 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
         _model->control_in = lilv_port_get_index(plugin, control_input);
     }
 
-    free(default_values);
-
     // Channel setup derived from ports:
     _current_input_channels = _max_input_channels;
     _current_output_channels = _max_output_channels;
@@ -283,37 +282,37 @@ void Lv2Wrapper::_create_ports(const LilvPlugin *plugin)
 */
 std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
-    std::unique_ptr<Port> to_return = nullptr;
+    std::unique_ptr<Port> port = nullptr;
 
     try
     {
-        to_return = std::make_unique<Port>(plugin, port_index, default_value, _model);
+        port = std::make_unique<Port>(plugin, port_index, default_value, _model);
 
-        if(to_return->getType() == TYPE_AUDIO)
+        if(port->getType() == TYPE_AUDIO)
         {
-            if (to_return->getFlow() == FLOW_INPUT)
+            if (port->getFlow() == FLOW_INPUT)
                 _max_input_channels++;
-            else if (to_return->getFlow() == FLOW_OUTPUT)
+            else if (port->getFlow() == FLOW_OUTPUT)
                 _max_output_channels++;
         }
 
         // TODO: This is always returned NULL for eg-amp output, should it be?
-        LilvNode *min_size = lilv_port_get(plugin, to_return->get_lilv_port(), _model->nodes.rsz_minimumSize);
+        auto min_size_node = lilv_port_get(plugin, port->get_lilv_port(), _model->nodes.rsz_minimumSize);
 
-        if(min_size &&lilv_node_is_int(min_size))
+        if(min_size_node && lilv_node_is_int(min_size_node))
         {
-            int buf_size = lilv_node_as_int(min_size);
+            int buf_size = lilv_node_as_int(min_size_node);
             _UI_IO.set_buffer_size(buf_size);
         }
 
-        lilv_node_free(min_size);
+        lilv_node_free(min_size_node);
     }
     catch(Port::FailedCreation& e)
     {
         _cleanup();
     }
 
-    return to_return;
+    return port;
 }
 
 void Lv2Wrapper::configure(float sample_rate)
@@ -340,7 +339,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
     const int index = static_cast<int>(parameter_id);
     if (index < _model->num_ports)
     {
-        Port* port = _model->ports[index].get();
+        auto port = _model->ports[index].get();
         if (port)
         {
             value = port->control;

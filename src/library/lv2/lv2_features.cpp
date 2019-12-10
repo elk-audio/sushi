@@ -33,10 +33,10 @@ Port* port_by_symbol(LV2Model* model, const char* sym)
 {
     for (uint32_t i = 0; i < model->num_ports; ++i)
     {
-        Port* port = model->ports[i].get();
-        const LilvNode* port_sym = lilv_port_get_symbol(model->plugin, port->get_lilv_port());
+        auto port = model->ports[i].get();
+        const auto port_symbol = lilv_port_get_symbol(model->plugin, port->get_lilv_port());
 
-        if (!strcmp(lilv_node_as_string(port_sym), sym))
+        if (!strcmp(lilv_node_as_string(port_symbol), sym))
         {
             return port;
         }
@@ -50,7 +50,7 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 const char *fmt,
                 va_list ap)
 {
-    LV2Model* model  = (LV2Model*)handle;
+    auto model  = static_cast<LV2Model*>(handle);
     if (type == model->urids.log_Trace && TRACE_OPTION)
     {
         SUSHI_LOG_WARNING("LV2 trace: {}", fmt);
