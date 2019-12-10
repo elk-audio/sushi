@@ -60,17 +60,6 @@ namespace lv2 {
 // writing also LV2 Trace Log messages to file.
 static const bool TRACE_OPTION = true;
 
-static inline bool lv2_ansi_start(FILE *stream, int color)
-{
-// TODO: What is this.
-#ifdef HAVE_ISATTY
-if (isatty(fileno(stream))) {
-return fprintf(stream, "\033[0;%dm", color);
-}
-#endif
-return 0;
-}
-
 /**
    Get a port structure by symbol.
 

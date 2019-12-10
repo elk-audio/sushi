@@ -49,8 +49,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 PluginLoader::PluginLoader()
 {
-    LilvWorld* world = lilv_world_new();
-
+    auto world = lilv_world_new();
     _model = new LV2Model(world);
 }
 
@@ -79,7 +78,7 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 
     /* Find plugin */
     SUSHI_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
-    const LilvPlugin* plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
+    const auto plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
     if (!plugin)
@@ -88,7 +87,7 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         return nullptr;
     }
 
-// TODO: Introduce necessary UI code from Jalv.
+// TODO: Introduce necessary UI code from Jalv?
 
     return plugin;
 }
@@ -96,10 +95,7 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
     /* Instantiate the plugin */
-    _model->instance = lilv_plugin_instantiate(
-            plugin_handle,
-            sample_rate,
-            feature_list);
+    _model->instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
 
     if (_model->instance == nullptr)
     {
@@ -112,17 +108,18 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
     /* Create workers if necessary */
     if (lilv_plugin_has_extension_data(plugin_handle, _model->nodes.work_interface))
     {
-        const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
-                lilv_instance_get_extension_data(_model->instance, LV2_WORKER__interface);
+        auto iface = reinterpret_cast<const LV2_Worker_Interface*>
+                (lilv_instance_get_extension_data(_model->instance, LV2_WORKER__interface));
 
         lv2_worker_init(_model, &_model->worker, iface, true);
+
         if (_model->safe_restore)
         {
             lv2_worker_init(_model, &_model->state_worker, iface, false);
         }
     }
 
-    LilvNode* state_threadSafeRestore = lilv_new_uri(_model->world, LV2_STATE__threadSafeRestore);
+    auto state_threadSafeRestore = lilv_new_uri(_model->world, LV2_STATE__threadSafeRestore);
     if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
     {
         _model->safe_restore = true;
@@ -132,9 +129,6 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 
 void PluginLoader::close_plugin_instance()
 {
-// TODO: Currently, as this builds on the JALV example, only a single plugin is supported.
-// Refactor to allow multiple plugins!
-
     if (_model->instance != nullptr)
     {
         _model->exit = true;
@@ -149,7 +143,7 @@ void PluginLoader::close_plugin_instance()
 
         for (unsigned i = 0; i < _model->controls.size(); ++i)
         {
-            ControlID* const control = _model->controls[i].get();
+            auto control = _model->controls[i].get();
             lilv_node_free(control->node);
             lilv_node_free(control->symbol);
             lilv_node_free(control->label);

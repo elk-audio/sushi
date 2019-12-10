@@ -31,7 +31,7 @@ namespace lv2 {
 
 Port* port_by_symbol(LV2Model* model, const char* sym)
 {
-    for (uint32_t i = 0; i < model->num_ports; ++i)
+    for (int i = 0; i < model->num_ports; ++i)
     {
         auto port = model->ports[i].get();
         const auto port_symbol = lilv_port_get_symbol(model->plugin, port->get_lilv_port());
@@ -47,7 +47,7 @@ Port* port_by_symbol(LV2Model* model, const char* sym)
 
 int lv2_vprintf(LV2_Log_Handle handle,
                 LV2_URID type,
-                const char *fmt,
+                const char* fmt,
                 va_list ap)
 {
     auto model  = static_cast<LV2Model*>(handle);

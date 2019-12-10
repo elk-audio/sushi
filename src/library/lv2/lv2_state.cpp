@@ -25,7 +25,7 @@ namespace sushi {
 namespace lv2 {
 
 // This one has a footprint as required by lilv.
-static const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
+const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
     LV2Model* model = (LV2Model*)user_data;
 
@@ -105,13 +105,13 @@ int unload_presets(LV2Model* model)
 	return 0;
 }
 
-static void set_port_value(const char* port_symbol,
+void set_port_value(const char* port_symbol,
                void* user_data,
                const void* value,
                ZIX_UNUSED uint32_t size,
                uint32_t type)
 {
-    LV2Model* model = (LV2Model*)user_data;
+    auto model = static_cast<LV2Model*>(user_data);
 	struct Port* port = port_by_symbol(model, port_symbol);
 	if (!port)
 	{

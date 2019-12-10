@@ -352,8 +352,8 @@ class LV2Model
 {
 public:
     LV2Model(LilvWorld* worldIn):
-    world(worldIn),
-    nodes(worldIn)
+    nodes(worldIn),
+    world(worldIn)
     {
         // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
         // on the local machine.

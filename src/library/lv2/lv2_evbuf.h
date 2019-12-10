@@ -129,7 +129,7 @@ function can be done in sequence without twiddling iter in-between).
 bool
 lv2_evbuf_write(LV2_Evbuf_Iterator *iter,
                 uint32_t frames,
-                uint32_t subframes,
+                uint32_t /*subframes*/,
                 uint32_t type,
                 uint32_t size,
                 const uint8_t *data);

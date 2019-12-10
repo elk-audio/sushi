@@ -35,11 +35,11 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // TODO: Pass model as const eventually
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
-_index(port_index),
 control(0.0f),
 _flow(FLOW_UNKNOWN),
 _evbuf(nullptr), // For MIDI ports, otherwise NULL
-_buf_size(0) // Custom buffer size, or 0
+_buf_size(0), // Custom buffer size, or 0
+_index(port_index)
 {
     lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
@@ -96,7 +96,7 @@ _buf_size(0) // Custom buffer size, or 0
 
         if (!hidden)
         {
-            &model->controls.emplace_back(new_port_control(this, model, _index));
+            model->controls.emplace_back(new_port_control(this, model, _index));
         }
     }
     else if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_AudioPort))
@@ -133,9 +133,7 @@ void Port::_allocate_port_buffers(LV2Model* model)
     {
         case TYPE_EVENT: {
             lv2_evbuf_free(_evbuf);
-            const size_t buf_size = (buf_size > 0)
-                                    ? buf_size
-                                    : model->midi_buf_size;
+            const size_t buf_size = model->midi_buf_size;
             _evbuf = lv2_evbuf_new(
                     buf_size,
                     model->map.map(model->map.handle,

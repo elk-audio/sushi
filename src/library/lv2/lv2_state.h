@@ -30,7 +30,7 @@ namespace lv2 {
 
 char* make_path(LV2_State_Make_Path_Handle handle, const char* path);
 
-static const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type);
+const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type);
 
 void save(LV2Model* model, const char* dir);
 
@@ -38,7 +38,7 @@ int load_presets(LV2Model* model, PresetSink sink, void* data);
 
 int unload_presets(LV2Model* model);
 
-static void set_port_value(const char* port_symbol,
+void set_port_value(const char* port_symbol,
                void* user_data,
                const void* value,
                ZIX_UNUSED uint32_t size,

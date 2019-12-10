@@ -138,7 +138,7 @@ private:
     void _notify_parameter_change_rt(int parameter_index, float value);
     void _notify_parameter_change(int parameter_index, float value);
 
-    void _create_controls(LV2Model* model, bool writable);
+    void _create_controls(bool writable);
 
     float _sample_rate{0};
 
@@ -160,26 +160,9 @@ private:
     // process_audio.
     RtEventFifo _incoming_event_queue;
 
-/* TODO: Check, can this initialization ever fail? then, make it pointer, and move construction to init();
-*  Currently, this is instantiated in wrapper.
-*  But if there's more than one plugin, there should not be two instances of _loader, right?
-*/
     PluginLoader _loader;
-
     Lv2_UI_IO _UI_IO;
     LV2Model* _model {nullptr};
-
-    // In process_midi_output_for_current_port, called by process_audio:
-    uint32_t _midi_frames, _midi_subframes, _midi_type, _midi_size;
-    uint8_t* _midi_body;
-    MidiDataByte _outgoing_midi_data;
-    midi::MessageType _outgoing_midi_type;
-    midi::ControlChangeMessage _decoded_midi_cc_msg;
-    midi::NoteOnMessage _decoded_node_on_msg;
-    midi::NoteOffMessage _decoded_node_off_msg;
-    midi::PitchBendMessage _decoded_pitch_bend_msg;
-    midi::PolyKeyPressureMessage _decoded_poly_pressure_msg;
-    midi::ChannelPressureMessage _decoded_channel_pressure_msg;
 };
 
 } // end namespace lv2

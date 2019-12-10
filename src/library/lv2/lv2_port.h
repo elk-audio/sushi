@@ -140,6 +140,11 @@ public:
         return max;
     }
 
+    int getIndex()
+    {
+        return _index;
+    }
+
 // TODO: Lilv requires a pointer to this, so as to set it.
     float control; ///< For control ports, otherwise 0.0f
 
@@ -153,11 +158,6 @@ public:
             return "Failed to Create LV2 Port";
         }
     };
-
-    int getIndex()
-    {
-        return _index;
-    }
 
 private:
     /**

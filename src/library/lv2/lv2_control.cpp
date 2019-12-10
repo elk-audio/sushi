@@ -63,8 +63,6 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
     auto scale_points = lilv_port_get_scale_points(plugin, lilvPort);
     if (scale_points)
     {
-        size_t np = lilv_scale_points_size(scale_points);
-
         LILV_FOREACH(scale_points, s, scale_points)
         {
             const auto scale_point = lilv_scale_points_get(scale_points, s);

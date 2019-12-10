@@ -72,7 +72,6 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-// TODO: Fix ownership of Model issue - once it is fully ported from Jalv.
     _model = _loader.getModel();
     _model->plugin = library_handle;
 
@@ -108,8 +107,8 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _UI_IO.init(_model->plugin, _sample_rate, _model->midi_buf_size);
 
     _create_ports(library_handle);
-    _create_controls(_model, true);
-    _create_controls(_model, false);
+    _create_controls(true);
+    _create_controls(false);
 
     // Register internal parameters
     if (!_register_parameters())
@@ -134,10 +133,10 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
-void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
+void Lv2Wrapper::_create_controls(bool writable)
 {
-    const LilvPlugin* plugin = model->plugin;
-    LilvWorld* world = model->world;
+    const LilvPlugin* plugin = _model->plugin;
+    LilvWorld* world = _model->world;
     LilvNode* patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
     LilvNode* patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
 
@@ -162,12 +161,12 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
                                         property))
         {
             // Find existing writable control
-            for (size_t i = 0; i < model->controls.size(); ++i)
+            for (size_t i = 0; i < _model->controls.size(); ++i)
             {
-                if (lilv_node_equals(model->controls[i]->node, property))
+                if (lilv_node_equals(_model->controls[i]->node, property))
                 {
                     found = true;
-                    model->controls[i]->is_readable = true;
+                    _model->controls[i]->is_readable = true;
                     break;
                 }
             }
@@ -178,7 +177,7 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
             }
         }
 
-        auto record = new_property_control(model, property);
+        auto record = new_property_control(_model, property);
         if (writable)
         {
             record->is_writable = true;
@@ -190,7 +189,7 @@ void Lv2Wrapper::_create_controls(LV2Model *model, bool writable)
 
         if (record->value_type)
         {
-            &model->controls.emplace_back(std::move(record));
+            _model->controls.emplace_back(std::move(record));
         }
         else
         {
@@ -532,7 +531,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
                 _model->paused.notify();
                 break;
             case LV2_PAUSED:
-                for (uint32_t p = 0; p < _model->num_ports; ++p)
+                for (int p = 0; p < _model->num_ports; ++p)
                 {
 // TODO: Implement the below pause functionality:
 //                    jack_port_t* jport = _model->ports[p].sys_port;
@@ -664,6 +663,10 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
                 case TYPE_EVENT:
                     _process_midi_output(current_port);
                     break;
+                case TYPE_UNKNOWN:
+                case TYPE_AUDIO:
+                case TYPE_CV:
+                    break;
             }
         }
     }
@@ -673,80 +676,83 @@ void Lv2Wrapper::_process_midi_output(const Port* port)
 {
     for (auto buf_i = lv2_evbuf_begin(port->_evbuf); lv2_evbuf_is_valid(buf_i); buf_i = lv2_evbuf_next(buf_i))
     {
+        uint32_t midi_frames, midi_subframes, midi_type, midi_size;
+        uint8_t* midi_body;
+
         // Get event from LV2 buffer
-        lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
+        lv2_evbuf_get(buf_i, &midi_frames, &midi_subframes, &midi_type, &midi_size, &midi_body);
 
 // TODO: This works, but WHY SHOULD IT BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
-        _midi_size--;
+        midi_size--;
 
-        if (_midi_type == _model->urids.midi_MidiEvent)
+        if (midi_type == _model->urids.midi_MidiEvent)
         {
-            _outgoing_midi_data = midi::to_midi_data_byte(_midi_body, _midi_size);
-            _outgoing_midi_type = midi::decode_message_type(_outgoing_midi_data);
+            auto outgoing_midi_data = midi::to_midi_data_byte(midi_body, midi_size);
+            auto outgoing_midi_type = midi::decode_message_type(outgoing_midi_data);
 
-            switch (_outgoing_midi_type)
+            switch (outgoing_midi_type)
             {
                 case midi::MessageType::CONTROL_CHANGE:
                 {
-                    _decoded_midi_cc_msg = midi::decode_control_change(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_control_change(outgoing_midi_data);
                     output_event(RtEvent::make_parameter_change_event(this->id(),
-                                                                      _decoded_midi_cc_msg.channel,
-                                                                      _decoded_midi_cc_msg.controller,
-                                                                      _decoded_midi_cc_msg.value));
+                                                                      decoded_message.channel,
+                                                                      decoded_message.controller,
+                                                                      decoded_message.value));
                     break;
                 }
                 case midi::MessageType::NOTE_ON:
                 {
-                    _decoded_node_on_msg = midi::decode_note_on(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_note_on(outgoing_midi_data);
                     output_event(RtEvent::make_note_on_event(this->id(),
                                                              0, // Sample offset 0?
-                                                             _decoded_node_on_msg.channel,
-                                                             _decoded_node_on_msg.note,
-                                                             _decoded_node_on_msg.velocity));
+                                                             decoded_message.channel,
+                                                             decoded_message.note,
+                                                             decoded_message.velocity));
                     break;
                 }
                 case midi::MessageType::NOTE_OFF:
                 {
-                    _decoded_node_off_msg = midi::decode_note_off(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_note_off(outgoing_midi_data);
                     output_event(RtEvent::make_note_off_event(this->id(),
                                                               0, // Sample offset 0?
-                                                              _decoded_node_off_msg.channel,
-                                                              _decoded_node_off_msg.note,
-                                                              _decoded_node_off_msg.velocity));
+                                                              decoded_message.channel,
+                                                              decoded_message.note,
+                                                              decoded_message.velocity));
                     break;
                 }
                 case midi::MessageType::PITCH_BEND:
                 {
-                    _decoded_pitch_bend_msg = midi::decode_pitch_bend(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_pitch_bend(outgoing_midi_data);
                     output_event(RtEvent::make_pitch_bend_event(this->id(),
                                                                 0, // Sample offset 0?
-                                                                _decoded_pitch_bend_msg.channel,
-                                                                _decoded_pitch_bend_msg.value));
+                                                                decoded_message.channel,
+                                                                decoded_message.value));
                     break;
                 }
                 case midi::MessageType::POLY_KEY_PRESSURE:
                 {
-                    _decoded_poly_pressure_msg = midi::decode_poly_key_pressure(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_poly_key_pressure(outgoing_midi_data);
                     output_event(RtEvent::make_note_aftertouch_event(this->id(),
                                                                      0, // Sample offset 0?
-                                                                     _decoded_poly_pressure_msg.channel,
-                                                                     _decoded_poly_pressure_msg.note,
-                                                                     _decoded_poly_pressure_msg.pressure));
+                                                                     decoded_message.channel,
+                                                                     decoded_message.note,
+                                                                     decoded_message.pressure));
                     break;
                 }
                 case midi::MessageType::CHANNEL_PRESSURE:
                 {
-                    _decoded_channel_pressure_msg = midi::decode_channel_pressure(_outgoing_midi_data);
+                    auto decoded_message = midi::decode_channel_pressure(outgoing_midi_data);
                     output_event(RtEvent::make_aftertouch_event(this->id(),
                                                                 0, // Sample offset 0?
-                                                                _decoded_channel_pressure_msg.channel,
-                                                                _decoded_channel_pressure_msg.pressure));
+                                                                decoded_message.channel,
+                                                                decoded_message.pressure));
                     break;
                 }
                 default:
                     output_event(RtEvent::make_wrapped_midi_event(this->id(),
                                                                   0, // Sample offset 0?
-                                                                  _outgoing_midi_data));
+                                                                  outgoing_midi_data));
                     break;
             }
         }
@@ -875,8 +881,9 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
     else
     {
         assert(false);
-        return MidiDataByte();
     }
+
+    return MidiDataByte();
 }
 
 void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
