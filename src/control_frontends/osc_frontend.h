@@ -132,7 +132,7 @@ private:
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 
-std::string spaces_to_underscore(const std::string &s);
+std::string make_safe_path(std::string name);
 
 }; // namespace user_frontend
 }; // namespace sensei

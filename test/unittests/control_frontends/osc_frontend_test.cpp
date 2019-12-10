@@ -224,9 +224,8 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
 }
 
-
-TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
+TEST(TestOSCFrontendInternal, TestMakeSafePath)
 {
-    std::string test_str("str with spaces ");
-    ASSERT_EQ("str_with_spaces_", spaces_to_underscore(test_str));
+    EXPECT_EQ("s_p_a_c_e_", make_safe_path("s p a c e "));
+    EXPECT_EQ("in_valid", make_safe_path("in\\\" v*[a]{l}id"));
 }

@@ -547,8 +547,8 @@ bool Vst3xWrapper::_register_parameters()
              * id and not its index. Hence the id in the registered ParameterDescriptors
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
-            auto title = to_ascii_str(info.title);
-            auto unit = to_ascii_str(info.units);
+            auto param_name = to_ascii_str(info.title);
+            auto param_unit = to_ascii_str(info.units);
             if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
@@ -565,13 +565,14 @@ bool Vst3xWrapper::_register_parameters()
                 _program_change_parameter.supported = true;
                 SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
             }
-            else if (register_parameter(new FloatParameterDescriptor(title, title, unit, 0, 1, nullptr), info.id))
+            else if (register_parameter(new FloatParameterDescriptor(_make_unique_parameter_name(param_name),
+                                                                     param_name, param_unit, 0, 1, nullptr), info.id))
             {
-                SUSHI_LOG_INFO("Registered parameter {}, id {}", title, info.id);
+                SUSHI_LOG_INFO("Registered parameter {}, id {}", param_name, info.id);
             }
             else
             {
-                SUSHI_LOG_INFO("Error registering parameter {}.", title);
+                SUSHI_LOG_INFO("Error registering parameter {}.", param_name);
             }
         }
     }

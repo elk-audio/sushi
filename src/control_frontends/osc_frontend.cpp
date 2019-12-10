@@ -342,7 +342,7 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     {
         return false;
     }
-    osc_path = osc_path + spaces_to_underscore(processor_name) + "/" + spaces_to_underscore(parameter_name);
+    osc_path = osc_path + make_safe_path(processor_name) + "/" + make_safe_path(parameter_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
@@ -367,7 +367,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
     {
         return false;
     }
-    osc_path = osc_path + spaces_to_underscore(processor_name) + "/" + spaces_to_underscore(parameter_name);
+    osc_path = osc_path + make_safe_path(processor_name) + "/" + make_safe_path(parameter_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
@@ -390,8 +390,8 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     {
         return false;
     }
-    std::string id_string = "/parameter/" + spaces_to_underscore(processor_name) + "/" +
-            spaces_to_underscore(parameter_name);
+    std::string id_string = "/parameter/" + make_safe_path(processor_name) + "/" +
+                            make_safe_path(parameter_name);
     _outgoing_connections[processor_id][parameter_id] = id_string;
     SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
     return true;
@@ -405,7 +405,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
     {
         return false;
     }
-    osc_path = osc_path + spaces_to_underscore(track_name);
+    osc_path = osc_path + make_safe_path(track_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -424,7 +424,7 @@ bool OSCFrontend::connect_to_program_change(const std::string &processor_name)
     {
         return false;
     }
-    osc_path = osc_path + spaces_to_underscore(processor_name);
+    osc_path = osc_path + make_safe_path(processor_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -536,13 +536,17 @@ void OSCFrontend::_completion_callback(Event* event, int return_status)
     SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
 }
 
-std::string spaces_to_underscore(const std::string &s)
+std::string make_safe_path(std::string name)
 {
-    std::string us_s = s;
-    std::replace(us_s.begin(), us_s.end(), ' ', '_');
-    return us_s;
+    // Based on which characters are invalid in the OSC Spec plus \ and "
+    constexpr std::string_view INVALID_CHARS = "#*./?[]{}\"\\";
+    for (char i : INVALID_CHARS)
+    {
+        name.erase(std::remove(name.begin(), name.end(), i), name.end());
+    }
+    std::replace(name.begin(), name.end(), ' ', '_');
+    return name;
 }
-
 
 }
 }
