@@ -390,7 +390,7 @@ public:
     const LilvPlugin* plugin; ///< Plugin class (RDF data)
     LilvState* preset;  ///< Current preset
 
-    LilvInstance* instance{nullptr}; ///< Plugin instance (shared library)
+    LilvInstance* instance {nullptr}; ///< Plugin instance (shared library)
 
     std::vector<std::unique_ptr<Port>> ports; ///< Port array of size num_ports
 
@@ -417,8 +417,8 @@ public:
     Semaphore paused; ///< Paused signal from process thread
     Lv2_PlayState play_state; ///< Current play state
 
-    char* temp_dir; ///< Temporary plugin state directory
-    char* save_dir; ///< Plugin save directory
+    std::string temp_dir; ///< Temporary plugin state directory
+    std::string save_dir; ///< Plugin save directory
 
     bool safe_restore; ///< Plugin restore() is thread-safe
 

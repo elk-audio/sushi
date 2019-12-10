@@ -24,14 +24,6 @@
 namespace sushi {
 namespace lv2 {
 
-char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
-{
-    LV2Model* model = (LV2Model*)handle;
-
-	// Create in save directory if saving, otherwise use temp directory
-	return lv2_strjoin(model->save_dir ? model->save_dir : model->temp_dir, path);
-}
-
 // This one has a footprint as required by lilv.
 static const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
@@ -53,11 +45,11 @@ static const void* get_port_value(const char* port_symbol, void* user_data, uint
 
 void save(LV2Model* model, const char* dir)
 {
-	model->save_dir = lv2_strjoin(dir, "/");
+	model->save_dir = std::string(dir) + "/";
 
 	LilvState* const state = lilv_state_new_from_instance(
 		model->plugin, model->instance, &model->map,
-		model->temp_dir, dir, dir, dir,
+		model->temp_dir.c_str(), dir, dir, dir,
 		get_port_value, model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, NULL);
 
@@ -66,8 +58,7 @@ void save(LV2Model* model, const char* dir)
 
 	lilv_state_free(state);
 
-	free(model->save_dir);
-	model->save_dir = NULL;
+	model->save_dir.clear();
 }
 
 int load_presets(LV2Model* model, PresetSink sink, void* data)
@@ -190,11 +181,10 @@ void apply_state(LV2Model* model, LilvState* state)
             model->paused.wait();
 		}
 
-		const LV2_Feature* state_features[6] = {
+		const LV2_Feature* state_features[7] = {
 			&model->_features.map_feature,
 			&model->_features.unmap_feature,
-// TODO: Implement make path Extension
-//			&model->_features.make_path_feature,
+			&model->_features.make_path_feature,
 			&model->_features.state_sched_feature,
 			&model->_features.safe_restore_feature,
 			&model->_features.log_feature,
@@ -225,7 +215,7 @@ int save_preset(LV2Model* model, const char* dir, const char* uri, const char* l
 {
 	LilvState* const state = lilv_state_new_from_instance(
             model->plugin, model->instance, &model->map,
-            model->temp_dir, dir, dir, dir,
+            model->temp_dir.c_str(), dir, dir, dir,
             get_port_value, model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, NULL);
 

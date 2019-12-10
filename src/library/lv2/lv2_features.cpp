@@ -90,6 +90,25 @@ int lv2_printf(LV2_Log_Handle handle,
     return ret;
 }
 
+char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
+{
+    auto model = static_cast<LV2Model*>(handle);
+
+    // Create in save directory if saving, otherwise use temp directory
+
+    std::string made_path;
+
+    if(!model->save_dir.empty())
+        made_path = model->save_dir + path;
+    else
+        made_path = model->temp_dir + path;
+
+    const std::string::size_type size = made_path.size();
+    char *buffer = new char[size + 1]; // Extra char for null
+    memcpy(buffer, made_path.c_str(), size + 1);
+    return buffer;
+}
+
 }
 }
 

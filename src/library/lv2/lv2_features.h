@@ -93,18 +93,7 @@ typedef int (*PresetSink)(LV2Model* model,
                           const LilvNode* title,
                           void* data);
 
-static char* lv2_strjoin(const char* a, const char* b)
-{
-    const size_t a_len = strlen(a);
-    const size_t b_len = strlen(b);
-    char* const out = (char*)malloc(a_len + b_len + 1);
-
-    memcpy(out, a, a_len);
-    memcpy(out + a_len, b, b_len);
-    out[a_len + b_len] = '\0';
-
-    return out;
-}
+char* make_path(LV2_State_Make_Path_Handle handle, const char* path);
 
 // Ilias TODO: Currently allocated plugin instances are not automatically freed when the _loader is destroyed. Should they be?
 
