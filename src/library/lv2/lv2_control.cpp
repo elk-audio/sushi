@@ -19,19 +19,6 @@
 namespace sushi {
 namespace lv2 {
 
-int scale_point_cmp(const ScalePoint *a, const ScalePoint *b)
-{
-    if (a->value < b->value)
-    {
-        return -1;
-    }
-    else if (a->value == b->value)
-    {
-        return 0;
-    }
-    return 1;
-}
-
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index)
 {
     const auto lilvPort = port->get_lilv_port();
@@ -76,26 +63,29 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
     auto scale_points = lilv_port_get_scale_points(plugin, lilvPort);
     if (scale_points)
     {
-        id->points = (ScalePoint*) malloc(lilv_scale_points_size(scale_points) * sizeof(ScalePoint));
-        size_t np = 0;
+        size_t np = lilv_scale_points_size(scale_points);
+
         LILV_FOREACH(scale_points, s, scale_points)
         {
-            const LilvScalePoint *p = lilv_scale_points_get(scale_points, s);
-            if (lilv_node_is_float(lilv_scale_point_get_value(p)) ||
-                lilv_node_is_int(lilv_scale_point_get_value(p)))
+            const auto scale_point = lilv_scale_points_get(scale_points, s);
+            if (lilv_node_is_float(lilv_scale_point_get_value(scale_point)) ||
+                lilv_node_is_int(lilv_scale_point_get_value(scale_point)))
             {
-                id->points[np].value = lilv_node_as_float(
-                        lilv_scale_point_get_value(p));
-                id->points[np].label = strdup(
-                        lilv_node_as_string(lilv_scale_point_get_label(p)));
-                ++np;
+                auto sp = std::make_unique<ScalePoint>();
+
+                sp->value = lilv_node_as_float(lilv_scale_point_get_value(scale_point));
+                sp->label = lilv_node_as_string(lilv_scale_point_get_label(scale_point));
+                id->points.emplace_back(std::move(sp));
             }
             /* TODO inherited: Non-float scale points? */
         }
 
-        qsort(id->points, np, sizeof(ScalePoint),
-              (int (*)(const void *, const void *)) scale_point_cmp);
-        id->n_points = np;
+        std::sort(id->points.begin(), id->points.end(),
+                [](const std::unique_ptr<ScalePoint>& a, const std::unique_ptr<ScalePoint>& b)
+                        {
+                            return a->value < b->value;
+                        }
+         );
 
         lilv_scale_points_free(scale_points);
     }

@@ -100,14 +100,12 @@ typedef enum
     PROPERTY ///< Property (set via atom message)
 } ControlType;
 
-typedef struct
+class ScalePoint
 {
+public:
     float value;
-    char* label;
-} ScalePoint;
-
-/** Order scale points by value. */
-int scale_point_cmp(const ScalePoint* a, const ScalePoint* b);
+    std::string label;
+};
 
 /** Plugin control. */
 typedef struct
@@ -121,8 +119,7 @@ typedef struct
     int index; ///< Iff type == PORT
     LilvNode* group; ///< Port/control group, or NULL
 //  void* widget; ///< Control Widget
-    int n_points; ///< Number of scale points
-    ScalePoint* points; ///< Scale points
+    std::vector<std::unique_ptr<ScalePoint>> points; ///< Scale points
     LV2_URID value_type; ///< Type of control value
     LilvNode* min; ///< Minimum value
     LilvNode* max; ///< Maximum value
@@ -138,8 +135,6 @@ typedef struct
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model* model, uint32_t index);
 
 std::unique_ptr<ControlID> new_property_control(LV2Model* model, const LilvNode* property);
-
-void add_control(std::vector<std::unique_ptr<ControlID>>* controls, ControlID* control);
 
 //ControlID* get_property_control(const std::vector<std::unique_ptr<ControlID>>* controls, LV2_URID property);
 
