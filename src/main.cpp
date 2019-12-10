@@ -38,6 +38,7 @@
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/alsa_midi_frontend.h"
+#include "library/parameter_dump.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -158,6 +159,8 @@ int main(int argc, char* argv[])
     std::string input_filename;
     std::string output_filename;
 
+    std::string parameter_dump_filename;
+
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
     std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
@@ -203,6 +206,10 @@ int main(int argc, char* argv[])
         case OPT_IDX_LOG_FLUSH_INTERVAL:
             log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
             enable_flush_interval = true;
+            break;
+
+        case OPT_IDX_DUMP_PARAMETERS:
+            parameter_dump_filename.assign(opt.arg);
             break;
 
         case OPT_IDX_CONFIG_FILE:
@@ -427,6 +434,19 @@ int main(int argc, char* argv[])
         }
     }
     configurator.reset();
+
+    if (!parameter_dump_filename.empty())
+    {
+        switch (sushi::dump_engine_processor_parameters(engine->controller(), parameter_dump_filename))
+        {
+        case 1:
+            error_exit("An error occured when dumping parameter data");
+            break;
+        
+        default:
+            break;
+        }
+    }
 
     if (enable_timings)
     {
