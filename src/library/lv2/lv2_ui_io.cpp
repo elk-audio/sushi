@@ -73,18 +73,18 @@ void Lv2_UI_IO::init(const LilvPlugin* plugin, float sample_rate, int midi_buf_s
     {
         /* Calculate a reasonable UI update frequency. */
         ui_update_hz = sample_rate / midi_buf_size * 2.0f;
-        ui_update_hz = MAX(25.0f, ui_update_hz);
+        ui_update_hz = std::max(25.0f, ui_update_hz);
     }
     else
     {
         /* Use user-specified UI update rate. */
         ui_update_hz = _update_rate;
-        ui_update_hz = MAX(1.0f, ui_update_hz);
+        ui_update_hz = std::max(1.0f, ui_update_hz);
     }
 
     /* The UI can only go so fast, clamp to reasonable limits */
-    ui_update_hz = MIN(60, ui_update_hz);
-    _buffer_size = MAX(4096, _buffer_size);
+    ui_update_hz = std::min(60.0f, ui_update_hz);
+    _buffer_size = std::max(4096, static_cast<int>(_buffer_size));
     fprintf(stderr, "Comm buffers: %d bytes\n", _buffer_size);
     fprintf(stderr, "Update rate:  %.01f Hz\n", ui_update_hz);
 
@@ -108,7 +108,7 @@ void Lv2_UI_IO::write_ui_event(const char* buf)
 
 void Lv2_UI_IO::set_buffer_size(uint32_t buffer_size)
 {
-    _buffer_size = MAX(_buffer_size, buffer_size * N_BUFFER_CYCLES);
+    _buffer_size = std::max(_buffer_size, buffer_size * N_BUFFER_CYCLES);
 }
 
 // TODO: Currently unused
@@ -117,7 +117,7 @@ void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID ty
     LV2Model* model = control->model;
     if (control->type == PORT && type == model->forge.Float) {
         Port* port = control->model->ports[control->index].get();
-        port->control = *(const float*)body;
+        port->control = *static_cast<const float*>(body;
     } else if (control->type == PROPERTY) {
         // Copy forge since it is used by process thread
         LV2_Atom_Forge forge = model->forge;

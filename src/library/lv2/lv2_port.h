@@ -174,9 +174,9 @@ private:
     int _index; ///< Port index
 
     // For ranges. Only used in control ports.
-    float def{1.0f};
-    float max{1.0f};
-    float min{0.0f};
+    float def {1.0f};
+    float max {1.0f};
+    float min {0.0f};
 
     bool _show_hidden{true};
 };
