@@ -130,10 +130,10 @@ private:
     void _deliver_inputs_to_plugin();
     void _deliver_outputs_from_plugin(bool send_ui_updates);
 
-    void _convert_event_to_midi_buffer(RtEvent& event);
+    MidiDataByte _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();
-    void _process_midi_input_for_current_port();
-    void _process_midi_output_for_current_port();
+    void _process_midi_input(const Port* port);
+    void _process_midi_output(const Port* port);
 
     void _notify_parameter_change_rt(int parameter_index, float value);
     void _notify_parameter_change(int parameter_index, float value);
@@ -167,18 +167,7 @@ private:
     PluginLoader _loader;
 
     Lv2_UI_IO _UI_IO;
-
-    // The below are all fields used in process_audio:
-    int _p = 0, _i = 0, _o = 0;
-    const KeyboardRtEvent* _keyboard_event_ptr{nullptr};
-    const KeyboardCommonRtEvent* _keyboard_common_event_ptr{nullptr};
-    const WrappedMidiRtEvent* _wrapped_midi_event_ptr{nullptr};
-    RtEvent _rt_event;
-    MidiDataByte _midi_data;
-    LV2_Evbuf_Iterator _lv2_evbuf_iterator;
-    LV2_Atom_Object _get_ATOM;
-    Port* _current_port{nullptr};
-    LV2Model* _model{nullptr};
+    LV2Model* _model {nullptr};
 
     // In process_midi_output_for_current_port, called by process_audio:
     uint32_t _midi_frames, _midi_subframes, _midi_type, _midi_size;

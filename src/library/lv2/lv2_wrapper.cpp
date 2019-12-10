@@ -588,31 +588,31 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
 void Lv2Wrapper::_deliver_inputs_to_plugin()
 {
-    for (_p = 0, _i = 0, _o = 0; _p < _model->num_ports; ++_p)
+    for (int p = 0, i = 0, o = 0; p < _model->num_ports; ++p)
     {
-        _current_port = _model->ports[_p].get();
+        auto current_port = _model->ports[p].get();
 
-        switch(_current_port->getType())
+        switch(current_port->getType())
         {
             case TYPE_CONTROL:
-                lilv_instance_connect_port(_model->instance, _p, &_current_port->control);
+                lilv_instance_connect_port(_model->instance, p, &current_port->control);
                 break;
             case TYPE_AUDIO:
-                if (_current_port->getFlow() == FLOW_INPUT)
-                    lilv_instance_connect_port(_model->instance, _p, _process_inputs[_i++]);
+                if (current_port->getFlow() == FLOW_INPUT)
+                    lilv_instance_connect_port(_model->instance, p, _process_inputs[i++]);
                 else
-                    lilv_instance_connect_port(_model->instance, _p, _process_outputs[_o++]);
+                    lilv_instance_connect_port(_model->instance, p, _process_outputs[o++]);
                 break;
             case TYPE_EVENT:
-                if (_current_port->getFlow() == FLOW_INPUT)
+                if (current_port->getFlow() == FLOW_INPUT)
                 {
-                    _current_port->resetInputBuffer();
-                    _process_midi_input_for_current_port();
+                    current_port->resetInputBuffer();
+                    _process_midi_input(current_port);
 
                 }
-                else if (_current_port->getFlow() == FLOW_OUTPUT)// Clear event output for plugin to write to.
+                else if (current_port->getFlow() == FLOW_OUTPUT)// Clear event output for plugin to write to.
                 {
-                    _current_port->resetOutputBuffer();
+                    current_port->resetOutputBuffer();
                 }
                 break;
 // TODO: Implement also CV support.
@@ -621,7 +621,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
                 assert(false);
                 break;
             default:
-                lilv_instance_connect_port(_model->instance, _p, NULL);
+                lilv_instance_connect_port(_model->instance, p, NULL);
         }
     }
     _model->request_update = false;
@@ -629,53 +629,51 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
 
 void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
 {
-    for (_p = 0; _p < _model->num_ports; ++_p)
+
+    for (int p = 0; p < _model->num_ports; ++p)
     {
-        _current_port = _model->ports[_p].get();
-        if(_current_port->getFlow() == FLOW_OUTPUT)
+        auto current_port = _model->ports[p].get();
+        if(current_port->getFlow() == FLOW_OUTPUT)
         {
-            switch(_current_port->getType())
+            switch(current_port->getType())
             {
                 case TYPE_CONTROL:
                     if (lilv_port_has_property(_model->plugin,
-                                               _current_port->get_lilv_port(),
+                                               current_port->get_lilv_port(),
                                                _model->nodes.lv2_reportsLatency))
                     {
-                        if (_model->plugin_latency != _current_port->control)
+                        if (_model->plugin_latency != current_port->control)
                         {
-                            _model->plugin_latency = _current_port->control;
+                            _model->plugin_latency = current_port->control;
 // TODO: Introduce latency compensation reporting to Sushi
                         }
                     }
                     else if (send_ui_updates)
                     {
                         char buf[sizeof(ControlChange) + sizeof(float)];
-                        ControlChange* ev = (ControlChange*)buf;
-                        ev->index = _p;
+                        auto ev = reinterpret_cast<ControlChange*>(buf);
+                        ev->index = p;
                         ev->protocol = 0;
                         ev->size = sizeof(float);
-                        *(float*)ev->body = _current_port->control;
+                        *(float*)ev->body = current_port->control;
 
                         // TODO Untested.
                         _UI_IO.write_ui_event(buf);
                     }
                     break;
                 case TYPE_EVENT:
-                    _process_midi_output_for_current_port();
+                    _process_midi_output(current_port);
                     break;
             }
         }
     }
 }
 
-void Lv2Wrapper::_process_midi_output_for_current_port()
+void Lv2Wrapper::_process_midi_output(const Port* port)
 {
-    for (LV2_Evbuf_Iterator buf_i = lv2_evbuf_begin(_current_port->_evbuf);
-         lv2_evbuf_is_valid(buf_i);
-         buf_i = lv2_evbuf_next(buf_i))
+    for (auto buf_i = lv2_evbuf_begin(port->_evbuf); lv2_evbuf_is_valid(buf_i); buf_i = lv2_evbuf_next(buf_i))
     {
         // Get event from LV2 buffer
-
         lv2_evbuf_get(buf_i, &_midi_frames, &_midi_subframes, &_midi_type, &_midi_size, &_midi_body);
 
 // TODO: This works, but WHY SHOULD IT BE NEEDED? to_midi_data_byte expects size to be 3 with an Assertion.
@@ -762,9 +760,9 @@ void Lv2Wrapper::_process_midi_output_for_current_port()
     }
 }
 
-void Lv2Wrapper::_process_midi_input_for_current_port()
+void Lv2Wrapper::_process_midi_input(const Port* port)
 {
-    _lv2_evbuf_iterator = lv2_evbuf_begin(_current_port->_evbuf);
+    auto lv2_evbuf_iterator = lv2_evbuf_begin(port->_evbuf);
 
 // TODO: Re-introduce transport support.
     /* Write transport change event if applicable */
@@ -781,106 +779,103 @@ void Lv2Wrapper::_process_midi_input_for_current_port()
     if (_model->request_update)
     {
         // Plugin state has changed, request an update
-        _get_ATOM = {
+        LV2_Atom_Object atom = {
                 {sizeof(LV2_Atom_Object_Body), _model->urids.atom_Object},
-                {0,                            _model->urids.patch_Get}};
+                {0,_model->urids.patch_Get}};
 
-        lv2_evbuf_write(&_lv2_evbuf_iterator, 0, 0,
-                        _get_ATOM.atom.type, _get_ATOM.atom.size,
-                        (const uint8_t *) LV2_ATOM_BODY(&_get_ATOM));
+        lv2_evbuf_write(&lv2_evbuf_iterator, 0, 0,
+                        atom.atom.type, atom.atom.size,
+                        (const uint8_t *) LV2_ATOM_BODY(&atom));
     }
 
     // MIDI transfer, from incoming RT event queue into LV2 event buffers:
+    RtEvent rt_event;
     while (!_incoming_event_queue.empty())
     {
-        if (_incoming_event_queue.pop(_rt_event))
+        if (_incoming_event_queue.pop(rt_event))
         {
-            _convert_event_to_midi_buffer(_rt_event);
+            MidiDataByte midi_data = _convert_event_to_midi_buffer(rt_event);
 
-            lv2_evbuf_write(&_lv2_evbuf_iterator,
-                            _rt_event.sample_offset(), // Is sample_offset the timestamp?
+            lv2_evbuf_write(&lv2_evbuf_iterator,
+                            rt_event.sample_offset(), // Is sample_offset the timestamp?
                             0, // Subframes
                             _model->urids.midi_MidiEvent,
-                            _midi_data.size(),
-                            _midi_data.data());
+                            midi_data.size(),
+                            midi_data.data());
         }
     }
 }
 
 void Lv2Wrapper::_flush_event_queue()
 {
+    RtEvent rt_event;
     while (!_incoming_event_queue.empty())
     {
-        _incoming_event_queue.pop(_rt_event);
+        _incoming_event_queue.pop(rt_event);
     }
 }
 
-void Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
+MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
 {
     if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::NOTE_AFTERTOUCH)
     {
-        _keyboard_event_ptr = event.keyboard_event();
+        auto keyboard_event_ptr = event.keyboard_event();
 
-        switch (_keyboard_event_ptr->type())
+        switch (keyboard_event_ptr->type())
         {
             case RtEventType::NOTE_ON:
             {
-                _midi_data = midi::encode_note_on(_keyboard_event_ptr->channel(),
-                                                  _keyboard_event_ptr->note(),
-                                                  _keyboard_event_ptr->velocity());
-                break;
+                return midi::encode_note_on(keyboard_event_ptr->channel(),
+                                                  keyboard_event_ptr->note(),
+                                                  keyboard_event_ptr->velocity());
             }
             case RtEventType::NOTE_OFF:
             {
-                _midi_data = midi::encode_note_off(_keyboard_event_ptr->channel(),
-                                                   _keyboard_event_ptr->note(),
-                                                   _keyboard_event_ptr->velocity());
-                break;
+                return midi::encode_note_off(keyboard_event_ptr->channel(),
+                                                   keyboard_event_ptr->note(),
+                                                   keyboard_event_ptr->velocity());
             }
             case RtEventType::NOTE_AFTERTOUCH:
             {
-                _midi_data = midi::encode_poly_key_pressure(_keyboard_event_ptr->channel(),
-                                                            _keyboard_event_ptr->note(),
-                                                            _keyboard_event_ptr->velocity());
-                break;
+                return midi::encode_poly_key_pressure(keyboard_event_ptr->channel(),
+                                                            keyboard_event_ptr->note(),
+                                                            keyboard_event_ptr->velocity());
             }
         }
     }
     else if (event.type() >= RtEventType::PITCH_BEND && event.type() <= RtEventType::MODULATION)
     {
-        _keyboard_common_event_ptr = event.keyboard_common_event();
+        auto keyboard_common_event_ptr = event.keyboard_common_event();
 
-        switch (_keyboard_common_event_ptr->type())
+        switch (keyboard_common_event_ptr->type())
         {
             case RtEventType::AFTERTOUCH:
             {
-                _midi_data = midi::encode_channel_pressure(_keyboard_common_event_ptr->channel(),
-                                                           _keyboard_common_event_ptr->value());
-                break;
+                return midi::encode_channel_pressure(keyboard_common_event_ptr->channel(),
+                                                           keyboard_common_event_ptr->value());
             }
             case RtEventType::PITCH_BEND:
             {
-                _midi_data = midi::encode_pitch_bend(_keyboard_common_event_ptr->channel(),
-                                                     _keyboard_common_event_ptr->value());
-                break;
+                return midi::encode_pitch_bend(keyboard_common_event_ptr->channel(),
+                                                     keyboard_common_event_ptr->value());
             }
             case RtEventType::MODULATION:
             {
-                _midi_data = midi::encode_control_change(_keyboard_common_event_ptr->channel(),
+                return midi::encode_control_change(keyboard_common_event_ptr->channel(),
                                                          midi::MOD_WHEEL_CONTROLLER_NO,
-                                                         _keyboard_common_event_ptr->value());
-                break;
+                                                         keyboard_common_event_ptr->value());
             }
         }
     }
     else if (event.type() == RtEventType::WRAPPED_MIDI_EVENT)
     {
-        _wrapped_midi_event_ptr = event.wrapped_midi_event();
-        _midi_data = _wrapped_midi_event_ptr->midi_data();
+        auto wrapped_midi_event_ptr = event.wrapped_midi_event();
+        return wrapped_midi_event_ptr->midi_data();
     }
     else
     {
         assert(false);
+        return MidiDataByte();
     }
 }
 
