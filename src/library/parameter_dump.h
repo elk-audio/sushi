@@ -27,6 +27,6 @@ namespace sushi {
 
 int dump_engine_processor_parameters(const ext::SushiControl* engine_controller, const std::string& file_path);
 
-}
+} // end namespace sushi
 
 #endif //SUSHI_PARAMETER_DUMP_H
