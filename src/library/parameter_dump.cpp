@@ -21,8 +21,7 @@
 #include <iostream>
 #include <cstdio>
 
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/writer.h"
+#include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
 #include "library/parameter_dump.h"
@@ -30,7 +29,7 @@
 
 namespace sushi {
 
-int dump_engine_processor_parameters(const ext::SushiControl* engine_controller, const std::string& file_path)
+rapidjson::Document generate_processor_parameter_document(const sushi::ext::SushiControl* engine_controller)
 {
     rapidjson::Document document;
     document.SetObject();
@@ -82,22 +81,15 @@ int dump_engine_processor_parameters(const ext::SushiControl* engine_controller,
 
     document.AddMember(rapidjson::Value("plugins", allocator),processors.Move(), allocator);
 
-    FILE* fp = fopen(file_path.c_str(), "w");
-    
-    if (fp == nullptr)
-    {
-        return 1;
-    }
-    
-    char writeBuffer[65536];
-    rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
-
-    rapidjson::PrettyWriter<rapidjson::FileWriteStream> writer(os);
-    document.Accept(writer);
-    
-    fclose(fp);
-
-    return 0;
+    return document;
 }
 
 } // end namespace sushi
+
+std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
+{
+    rapidjson::OStreamWrapper osw(out);
+    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
+    document.Accept(writer);
+    return out;
+}

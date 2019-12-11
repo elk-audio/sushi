@@ -175,6 +175,7 @@ int main(int argc, char* argv[])
     int  rt_cpu_cores = 1;
     bool enable_timings = false;
     bool enable_flush_interval = false;
+    bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
@@ -210,6 +211,7 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_DUMP_PARAMETERS:
             parameter_dump_filename.assign(opt.arg);
+            enable_parameter_dump = true;
             break;
 
         case OPT_IDX_CONFIG_FILE:
@@ -435,17 +437,12 @@ int main(int argc, char* argv[])
     }
     configurator.reset();
 
-    if (!parameter_dump_filename.empty())
+    if (enable_parameter_dump)
     {
-        switch (sushi::dump_engine_processor_parameters(engine->controller(), parameter_dump_filename))
-        {
-        case 1:
-            error_exit("An error occured when dumping parameter data");
-            break;
-        
-        default:
-            break;
-        }
+        // sushi::dump_engine_processor_parameters(engine->controller(), std::cout);
+        rapidjson::Document parameter_dump = sushi::generate_processor_parameter_document(engine->controller());
+        std::cout << parameter_dump;
+        exit_flag = true;
     }
 
     if (enable_timings)

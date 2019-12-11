@@ -25,8 +25,10 @@
 
 namespace sushi {
 
-int dump_engine_processor_parameters(const ext::SushiControl* engine_controller, const std::string& file_path);
+rapidjson::Document generate_processor_parameter_document(const sushi::ext::SushiControl* engine_controller);
 
 } // end namespace sushi
+
+std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
 
 #endif //SUSHI_PARAMETER_DUMP_H
