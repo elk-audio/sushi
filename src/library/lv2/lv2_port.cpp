@@ -23,9 +23,7 @@
 #include <math.h>
 
 #include "lv2_model.h"
-#include "lv2_features.h"
 #include "lv2_worker.h"
-#include "lv2_state.h"
 #include "logging.h"
 
 namespace sushi {
@@ -42,9 +40,6 @@ _buf_size(0), // Custom buffer size, or 0
 _index(port_index)
 {
     lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
-
-    // TODO: The below is not used in lv2apply example... Reinstate?
-    //port->sys_port = NULL; // For audio/MIDI ports, otherwise NULL
 
     const bool optional = lilv_port_has_property(plugin, lilv_port, model->nodes.lv2_connectionOptional);
 
@@ -125,6 +120,16 @@ _index(port_index)
     if (!model->buf_size_set) {
         _allocate_port_buffers(model);
     }
+}
+
+void Port::resetInputBuffer()
+{
+    lv2_evbuf_reset(_evbuf, true);
+}
+
+void Port::resetOutputBuffer()
+{
+    lv2_evbuf_reset(_evbuf, false);
 }
 
 void Port::_allocate_port_buffers(LV2Model* model)

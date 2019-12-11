@@ -135,12 +135,11 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
 void Lv2Wrapper::_create_controls(bool writable)
 {
-    const LilvPlugin* plugin = _model->plugin;
-    LilvWorld* world = _model->world;
-    LilvNode* patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
-    LilvNode* patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
-
-    const LilvNode* uri_node = lilv_plugin_get_uri(plugin);
+    const auto plugin = _model->plugin;
+    const auto uri_node = lilv_plugin_get_uri(plugin);
+    auto world = _model->world;
+    auto patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+    auto patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
     const std::string uri_as_string = lilv_node_as_string(uri_node);
 
 // TODO: Once Worker extension is implemented, test the eg-sampler plugin - it advertises parameters read here.
@@ -206,11 +205,11 @@ void Lv2Wrapper::_create_controls(bool writable)
 
 void Lv2Wrapper::_fetch_plugin_name_and_label()
 {
-    const LilvNode* uri_node = lilv_plugin_get_uri(_model->plugin);
+    const auto uri_node = lilv_plugin_get_uri(_model->plugin);
     const std::string uri_as_string = lilv_node_as_string(uri_node);
     set_name(uri_as_string);
 
-    LilvNode* label_node = lilv_plugin_get_name(_model->plugin);
+    auto label_node = lilv_plugin_get_name(_model->plugin);
     const std::string label_as_string = lilv_node_as_string(label_node);
     set_label(label_as_string);
     lilv_free(label_node); // Why do I free this but not uri_node? Remember...
@@ -456,7 +455,7 @@ bool Lv2Wrapper::_register_parameters()
 
     for (int _pi = 0; _pi < _model->num_ports; ++_pi)
     {
-        Port* currentPort = _model->ports[_pi].get();
+        auto currentPort = _model->ports[_pi].get();
 
         if (currentPort->getType() == TYPE_CONTROL)
         {
@@ -498,8 +497,7 @@ void Lv2Wrapper::process_event(RtEvent event)
         const int portIndex = static_cast<int>(id);
         assert(portIndex < _model->num_ports);
 
-        Port* port = _model->ports[portIndex].get();
-
+        auto port = _model->ports[portIndex].get();
         port->control = typed_event->value();
     }
     else if (is_keyboard_event(event))
@@ -628,7 +626,6 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
 
 void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
 {
-
     for (int p = 0; p < _model->num_ports; ++p)
     {
         auto current_port = _model->ports[p].get();

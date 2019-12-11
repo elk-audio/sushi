@@ -14,7 +14,7 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "lv2_model.h"
+#include "lv2_control.h"
 
 namespace sushi {
 namespace lv2 {
@@ -91,7 +91,7 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
     return id;
 }
 
-static bool has_range(LV2Model* model, const LilvNode* subject, const char* range_uri)
+bool has_range(LV2Model* model, const LilvNode* subject, const char* range_uri)
 {
     auto range = lilv_new_uri(model->world, range_uri);
     const bool result = lilv_world_ask(model->world, subject, model->nodes.rdfs_range, range);

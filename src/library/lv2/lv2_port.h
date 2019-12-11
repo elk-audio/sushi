@@ -28,36 +28,7 @@
 #include <map>
 #include <mutex>
 
-// Temporary - just to check that it finds them.
-#include <lilv-0/lilv/lilv.h>
-
-#include "lv2/resize-port/resize-port.h"
-#include "lv2/midi/midi.h"
-#include "lv2/log/log.h"
-#include "lv2/atom/atom.h"
-#include "lv2/atom/forge.h"
-#include "lv2/buf-size/buf-size.h"
-#include "lv2/data-access/data-access.h"
-#include "lv2/options/options.h"
-#include "lv2/parameters/parameters.h"
-#include "lv2/patch/patch.h"
-#include "lv2/port-groups/port-groups.h"
-#include "lv2/port-props/port-props.h"
-#include "lv2/presets/presets.h"
-#include "lv2/state/state.h"
-#include "lv2/time/time.h"
-#include "lv2/ui/ui.h"
-#include "lv2/urid/urid.h"
-#include "lv2/worker/worker.h"
-
-#include "../processor.h"
-#include "../../engine/base_event_dispatcher.h"
-
-#include "zix/ring.h"
-#include "zix/thread.h"
-#include "lv2_symap.h"
 #include "lv2_evbuf.h"
-#include "lv2_model.h"
 
 namespace sushi {
 namespace lv2 {
@@ -83,7 +54,7 @@ enum PortType
 class Port
 {
 public:
-    Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model);
+    Port(const LilvPlugin* plugin, int port_index, float default_value, LV2Model* model);
 
     ~Port()
     {
@@ -110,15 +81,9 @@ public:
         return _type;
     }
 
-    void resetInputBuffer()
-    {
-        lv2_evbuf_reset(_evbuf, true);
-    }
+    void resetInputBuffer();
 
-    void resetOutputBuffer()
-    {
-        lv2_evbuf_reset(_evbuf, false);
-    }
+    void resetOutputBuffer();
 
     void setBufSize(int buf_size)
     {

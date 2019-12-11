@@ -17,10 +17,7 @@
 #ifndef SUSHI_LV2_STATE_H
 #define SUSHI_LV2_STATE_H
 
-#ifdef HAVE_LV2_STATE
-#    include "lv2/lv2plug.in/ns/ext/state/state.h"
-#endif
-
+#include "lv2/lv2plug.in/ns/ext/state/state.h"
 #include "lv2/state/state.h"
 #include "lv2_model.h"
 #include "lv2_features.h"
