@@ -181,7 +181,7 @@ const optionparser::Descriptor usage[] =
         "",
         "log-flush-interval",
         SushiArg::NonEmpty,
-        "\t\t --log-flush-interval=<seconds> \tEnable flushing the log periodically and specify the interval."
+        "\t\t--log-flush-interval=<seconds> \tEnable flushing the log periodically and specify the interval."
     },
     {
         OPT_IDX_DUMP_PARAMETERS,
@@ -189,7 +189,7 @@ const optionparser::Descriptor usage[] =
         "",
         "dump-plugin-parameters",
         SushiArg::NonEmpty,
-        "\t\t --dump-plugin-parameters=<filename> \tEnable and specify parameter dump file destination."
+        "\t\t--dump-plugin-parameters=<filename> \tEnable and specify parameter dump file destination."
     },
     {
         OPT_IDX_CONFIG_FILE,
