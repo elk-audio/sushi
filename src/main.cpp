@@ -305,17 +305,14 @@ int main(int argc, char* argv[])
                                                                               midi_dispatcher.get(),
                                                                               config_filename);
 
-    midi_dispatcher->set_midi_inputs(1);
-    midi_dispatcher->set_midi_outputs(1);
-
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
 #endif
 
-    std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>         midi_frontend;
-    std::unique_ptr<sushi::control_frontend::OSCFrontend>           osc_frontend;
-    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
-    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
+    std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>                 midi_frontend;
+    std::unique_ptr<sushi::control_frontend::OSCFrontend>                   osc_frontend;
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>               audio_frontend;
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration>  frontend_config;
 
     auto [audio_config_status, audio_config] = configurator->load_audio_config();
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -328,6 +325,11 @@ int main(int argc, char* argv[])
     }
     int cv_inputs = audio_config.cv_inputs.value_or(0);
     int cv_outputs = audio_config.cv_outputs.value_or(0);
+    int midi_inputs = audio_config.midi_inputs.value_or(1);
+    int midi_outputs = audio_config.midi_outputs.value_or(1);
+
+    midi_dispatcher->set_midi_inputs(midi_inputs);
+    midi_dispatcher->set_midi_outputs(midi_outputs);
 
     switch (frontend_type)
     {
@@ -435,7 +437,7 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
-        midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_dispatcher.get());
+        midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 
         auto midi_ok = midi_frontend->init();
         if (!midi_ok)

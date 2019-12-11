@@ -48,6 +48,20 @@ protected:
     midi_receiver::MidiReceiver* _receiver;
 };
 
+class NullMidiFrontend : BaseMidiFrontend
+{
+public:
+    NullMidiFrontend(midi_receiver::MidiReceiver* receiver) : BaseMidiFrontend(receiver) {}
+
+    bool init() override {return true;};
+
+    void run() override {};
+
+    void stop() override {};
+
+    void send_midi(int /*input*/, MidiDataByte /*data*/, Time /*timestamp*/) override {};
+};
+
 } // end namespace midi_frontend
 } // end namespace sushi
 #endif //SUSHI_BASE_MIDI_FRONTEND_H

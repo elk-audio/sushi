@@ -23,6 +23,8 @@
 
 #include <thread>
 #include <atomic>
+#include <vector>
+#include <map>
 
 #include <alsa/asoundlib.h>
 
@@ -37,7 +39,7 @@ constexpr int ALSA_EVENT_MAX_SIZE = 12;
 class AlsaMidiFrontend : public BaseMidiFrontend
 {
 public:
-    AlsaMidiFrontend(midi_receiver::MidiReceiver* dispatcher);
+    AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher);
 
     ~AlsaMidiFrontend();
 
@@ -60,8 +62,11 @@ private:
     std::thread                 _worker;
     std::atomic<bool>           _running{false};
     snd_seq_t*                  _seq_handle{nullptr};
-    int                         _input_midi_port;
-    int                         _output_midi_port;
+    int                         _inputs;
+    int                         _outputs;
+    std::vector<int>            _input_midi_ports;
+    std::vector<int>            _output_midi_ports;
+    std::map<int, int>          _port_to_input_map;
     int                         _queue;
 
     snd_midi_event_t*           _input_parser{nullptr};
