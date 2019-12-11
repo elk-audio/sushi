@@ -185,11 +185,11 @@ const optionparser::Descriptor usage[] =
     },
     {
         OPT_IDX_DUMP_PARAMETERS,
-        OPT_TYPE_UNUSED,
+        OPT_TYPE_DISABLED,
         "",
-        "dump-plugin-parameters",
-        SushiArg::NonEmpty,
-        "\t\t--dump-plugin-parameters=<filename> \tEnable and specify parameter dump file destination."
+        "dump-plugins",
+        SushiArg::Optional,
+        "\t\t--dump-plugins \tDump plugin and parameter data to cout."
     },
     {
         OPT_IDX_CONFIG_FILE,

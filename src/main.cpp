@@ -125,8 +125,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    print_sushi_headline();
-
     signal(SIGINT, sigint_handler);
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -158,8 +156,6 @@ int main(int argc, char* argv[])
 
     std::string input_filename;
     std::string output_filename;
-
-    std::string parameter_dump_filename;
 
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
@@ -210,7 +206,6 @@ int main(int argc, char* argv[])
             break;
 
         case OPT_IDX_DUMP_PARAMETERS:
-            parameter_dump_filename.assign(opt.arg);
             enable_parameter_dump = true;
             break;
 
@@ -282,6 +277,15 @@ int main(int argc, char* argv[])
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
         }
+    }
+
+    if (!enable_parameter_dump)
+    {
+        print_sushi_headline();
+    }
+    else
+    {
+        frontend_type = FrontendType::DUMMY;
     }
 
     if (output_filename.empty() && !input_filename.empty())
