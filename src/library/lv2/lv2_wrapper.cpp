@@ -44,17 +44,21 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 /** Return true iff Sushi supports the given feature. */
-static bool feature_is_supported(LV2Model* model, const char* uri)
+bool feature_is_supported(LV2Model* model, const std::string& uri)
 {
-    if (!strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive")) {
+    if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
+    {
         return true;
     }
 
-    for (const LV2_Feature*const* f = model->feature_list; *f; ++f) {
-        if (!strcmp(uri, (*f)->URI)) {
+    for (auto f : model->_feature_list)
+    {
+        if (uri.compare(f->URI) == 0)
+        {
             return true;
         }
     }
+
     return false;
 }
 
@@ -78,11 +82,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _model->play_state = LV2_PAUSED;
 
 // TODO: Move initialization to Model constructor, which throws if it fails.
-    if(!_model->initialize_host_feature_list())
-    {
-        _cleanup();
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
+    _model->initialize_host_feature_list();
 
     if(!_check_for_required_features(_model->plugin))
     {
@@ -90,7 +90,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
-    _loader.load_plugin(library_handle, _sample_rate, _model->feature_list);
+    _loader.load_plugin(library_handle, _sample_rate, _model->_feature_list.data());
 
     if (_model->instance == nullptr)
     {

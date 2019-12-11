@@ -43,10 +43,10 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-bool LV2Model::initialize_host_feature_list()
+void LV2Model::initialize_host_feature_list()
 {
     /* Build feature list for passing to plugins */
-    const LV2_Feature* const features[] = {
+    std::vector<const LV2_Feature*> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
@@ -59,20 +59,9 @@ bool LV2Model::initialize_host_feature_list()
             &static_features[2],
             &static_features[3],
             nullptr
-    };
+    });
 
-    feature_list = static_cast<const LV2_Feature**>(calloc(1, sizeof(features)));
-
-    if (!feature_list)
-    {
-        SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
-        return false;
-    }
-
-// TODO: Isn't this leaking? It's from logic identical in Jalv.
-    memcpy(feature_list, features, sizeof(features));
-
-    return true;
+    _feature_list = std::move(features);
 }
 
 void LV2Model::_initialize_urid_symap()
