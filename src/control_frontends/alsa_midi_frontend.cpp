@@ -32,6 +32,7 @@ namespace sushi {
 namespace midi_frontend {
 
 constexpr int ALSA_POLL_TIMEOUT_MS = 200;
+constexpr auto CLIENT_NAME = "Sushi";
 
 int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_input)
 {
@@ -45,7 +46,6 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     }
 
     int port = snd_seq_create_simple_port(seq, name.c_str(), capabilities, SND_SEQ_PORT_TYPE_APPLICATION);
-
 
     if (port < 0)
     {
@@ -71,7 +71,6 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     return port;
 }
 
-
 AlsaMidiFrontend::AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher),
           _inputs(inputs),
@@ -96,7 +95,7 @@ bool AlsaMidiFrontend::init()
         return false;
     }
 
-    alsamidi_ret = snd_seq_set_client_name(_seq_handle, "Sushi");
+    alsamidi_ret = snd_seq_set_client_name(_seq_handle, CLIENT_NAME);
     if (alsamidi_ret < 0)
     {
         SUSHI_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
@@ -105,7 +104,7 @@ bool AlsaMidiFrontend::init()
 
     _queue = snd_seq_alloc_queue(_seq_handle);
 
-    alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, NULL);
+    alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, nullptr);
     if (alsamidi_ret < 0)
     {
         SUSHI_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
@@ -215,7 +214,6 @@ void AlsaMidiFrontend::_poll_function()
 
 void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
-    SUSHI_LOG_INFO("Sending midi on port {}, {}", output, _output_midi_ports[output]);
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);
     auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
@@ -234,7 +232,6 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
         SUSHI_LOG_WARNING("Event output returned: {}, type {}", strerror(-bytes), ev.type);
     }
 }
-
 
 bool AlsaMidiFrontend::_init_time()
 {
@@ -297,7 +294,6 @@ snd_seq_real_time_t AlsaMidiFrontend::_to_alsa_time(Time timestamp)
     alsa_time.tv_nsec = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::nanoseconds>(offset_time - seconds).count());
     return alsa_time;
 }
-
 
 } // end namespace midi_frontend
 } // end namespace sushi
