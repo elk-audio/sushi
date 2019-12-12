@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include "osc_utils.h"
 #include "osc_frontend.h"
 #include "logging.h"
 
@@ -328,8 +329,8 @@ OSCFrontend::~OSCFrontend()
     _event_dispatcher->unsubscribe_from_engine_notifications(this);
 }
 
-bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
-                                       const std::string &parameter_name)
+bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
+                                       const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
     auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
@@ -342,7 +343,7 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     {
         return false;
     }
-    osc_path = osc_path + make_safe_path(processor_name) + "/" + make_safe_path(parameter_name);
+    osc_path = osc_path + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
@@ -353,8 +354,8 @@ bool OSCFrontend::connect_to_parameter(const std::string &processor_name,
     return true;
 }
 
-bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
-                                              const std::string &parameter_name)
+bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
+                                              const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
     auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
@@ -367,7 +368,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string &processor_name,
     {
         return false;
     }
-    osc_path = osc_path + make_safe_path(processor_name) + "/" + make_safe_path(parameter_name);
+    osc_path = osc_path + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
@@ -390,14 +391,14 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     {
         return false;
     }
-    std::string id_string = "/parameter/" + make_safe_path(processor_name) + "/" +
-                            make_safe_path(parameter_name);
+    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" +
+                                            osc::make_safe_path(parameter_name);
     _outgoing_connections[processor_id][parameter_id] = id_string;
     SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
     return true;
 }
 
-bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
+bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
     std::string osc_path = "/keyboard_event/";
     auto [status, processor_id] = _engine->processor_id_from_name(track_name);
@@ -405,7 +406,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
     {
         return false;
     }
-    osc_path = osc_path + make_safe_path(track_name);
+    osc_path = osc_path + osc::make_safe_path(track_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -416,7 +417,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string &track_name)
     return true;
 }
 
-bool OSCFrontend::connect_to_program_change(const std::string &processor_name)
+bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
     std::string osc_path = "/program/";
     auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
@@ -424,7 +425,7 @@ bool OSCFrontend::connect_to_program_change(const std::string &processor_name)
     {
         return false;
     }
-    osc_path = osc_path + make_safe_path(processor_name);
+    osc_path = osc_path + osc::make_safe_path(processor_name);
     OscConnection* connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -536,7 +537,9 @@ void OSCFrontend::_completion_callback(Event* event, int return_status)
     SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
 }
 
-std::string make_safe_path(std::string name)
+} // namespace control_frontend
+
+std::string osc::make_safe_path(std::string name)
 {
     // Based on which characters are invalid in the OSC Spec plus \ and "
     constexpr std::string_view INVALID_CHARS = "#*./?[]{}\"\\";
@@ -548,5 +551,4 @@ std::string make_safe_path(std::string name)
     return name;
 }
 
-}
 }

@@ -148,6 +148,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
+                        src/control_frontends/osc_utils.h
                         src/control_frontends/base_midi_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h

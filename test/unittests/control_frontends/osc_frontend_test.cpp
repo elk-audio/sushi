@@ -11,6 +11,7 @@
 
 using namespace sushi;
 using namespace sushi::control_frontend;
+using namespace sushi::osc;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
