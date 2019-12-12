@@ -331,6 +331,10 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_midi_inputs(midi_inputs);
     midi_dispatcher->set_midi_outputs(midi_outputs);
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Set up Audio Frontend //
+    ////////////////////////////////////////////////////////////////////////////////
+
     switch (frontend_type)
     {
         case FrontendType::JACK:
@@ -386,6 +390,10 @@ int main(int argc, char* argv[])
     {
         error_exit("Error initializing frontend, check logs for details.");
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Load Configuration //
+    ////////////////////////////////////////////////////////////////////////////////
 
     auto status = configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
