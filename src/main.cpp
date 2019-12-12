@@ -435,16 +435,13 @@ int main(int argc, char* argv[])
         engine->performance_timer()->enable(true);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Set up Control Frontends //
+    ////////////////////////////////////////////////////////////////////////////////
+
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
-
-        auto midi_ok = midi_frontend->init();
-        if (!midi_ok)
-        {
-            error_exit("Failed to setup Alsa midi frontend");
-        }
-        midi_dispatcher->set_frontend(midi_frontend.get());
 
         osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), osc_server_port, osc_send_port);
         auto osc_status = osc_frontend->init();
@@ -454,16 +451,27 @@ int main(int argc, char* argv[])
         }
         osc_frontend->connect_all();
     }
+    else
+    {
+        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_dispatcher.get());
+    }
+
+    auto midi_ok = midi_frontend->init();
+    if (!midi_ok)
+    {
+        error_exit("Failed to setup Midi frontend");
+    }
+    midi_dispatcher->set_frontend(midi_frontend.get());
 
     ////////////////////////////////////////////////////////////////////////////////
     // Start everything! //
     ////////////////////////////////////////////////////////////////////////////////
 
     audio_frontend->run();
+    midi_frontend->run();
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
-        midi_frontend->run();
         osc_frontend->run();
     }
 

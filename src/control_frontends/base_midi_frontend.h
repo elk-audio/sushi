@@ -32,7 +32,7 @@ namespace midi_frontend {
 class BaseMidiFrontend
 {
 public:
-    BaseMidiFrontend(midi_receiver::MidiReceiver* receiver) : _receiver(receiver) {}
+    explicit BaseMidiFrontend(midi_receiver::MidiReceiver* receiver) : _receiver(receiver) {}
 
     virtual ~BaseMidiFrontend() {};
 
@@ -48,10 +48,14 @@ protected:
     midi_receiver::MidiReceiver* _receiver;
 };
 
-class NullMidiFrontend : BaseMidiFrontend
+/**
+ * @brief A no-op implementation of the MidiFrontend. Simply discards all midi inputs sent to it.
+ *        Useful for dummy and offline audio frontends.
+ */
+class NullMidiFrontend : public BaseMidiFrontend
 {
 public:
-    NullMidiFrontend(midi_receiver::MidiReceiver* receiver) : BaseMidiFrontend(receiver) {}
+    explicit NullMidiFrontend(midi_receiver::MidiReceiver* receiver) : BaseMidiFrontend(receiver) {}
 
     bool init() override {return true;};
 
