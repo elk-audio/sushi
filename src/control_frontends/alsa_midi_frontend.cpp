@@ -18,6 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <chrono>
 #include <cstdlib>
 
 #include <alsa/seq_event.h>
@@ -31,7 +32,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 namespace sushi {
 namespace midi_frontend {
 
-constexpr int ALSA_POLL_TIMEOUT_MS = 200;
+constexpr auto ALSA_POLL_TIMEOUT = std::chrono::milliseconds(200);
 constexpr auto CLIENT_NAME = "Sushi";
 
 int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_input)
@@ -176,7 +177,7 @@ void AlsaMidiFrontend::_poll_function()
     snd_seq_poll_descriptors(_seq_handle, descriptors.get(), static_cast<unsigned int>(descr_count), POLLIN);
     while (_running)
     {
-        if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
+        if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT.count()) > 0)
         {
             snd_seq_event_t* ev{nullptr};
             uint8_t data_buffer[ALSA_EVENT_MAX_SIZE]{0};
