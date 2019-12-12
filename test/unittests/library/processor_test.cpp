@@ -83,6 +83,14 @@ TEST_F(TestProcessor, TestParameterHandling)
     EXPECT_EQ(1u, param_list.size());
 }
 
+TEST_F(TestProcessor, TestDuplicateParameterNames)
+{
+    _module_under_test->register_parameter(new FloatParameterDescriptor("param", "Float", "fl", 0, 1, nullptr));
+    // Test uniqueness by entering an already existing parameter name
+    EXPECT_EQ("param_2", _module_under_test->_make_unique_parameter_name("param"));
+    EXPECT_EQ("parameter", _module_under_test->_make_unique_parameter_name(""));
+}
+
 TEST_F(TestProcessor, TestBypassProcessing)
 {
     ChunkSampleBuffer buffer(2);

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "processor.h"
 #include "library/midi_decoder.h"
 
@@ -170,6 +172,17 @@ void Processor::output_midi_event_as_internal(MidiDataByte midi_data, int sample
             break;
 
     }
+}
+
+std::string Processor::_make_unique_parameter_name(std::string name) const
+{
+    auto unique_name = name.empty() ? "parameter" : name;
+    int index = 1;
+    while (this->parameter_from_name(unique_name) != nullptr)
+    {
+        unique_name = name + "_" + std::to_string(++index);
+    }
+    return unique_name;
 }
 
 void BypassManager::crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,

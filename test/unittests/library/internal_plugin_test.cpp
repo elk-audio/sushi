@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 
 #define private public
-#include "library/internal_plugin.h"
+#include "library/internal_plugin.cpp"
 #undef private
 
 #include "test_utils/host_control_mockup.h"
@@ -81,7 +81,6 @@ TEST_F(InternalPluginTest, TestDuplicateParameterNames)
     auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", "", false);
     EXPECT_FALSE(test_param_2);
 }
-
 
 TEST_F(InternalPluginTest, TestBoolParameterHandling)
 {

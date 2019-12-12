@@ -6,13 +6,13 @@
 
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
+#include "library/internal_plugin.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
 #include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
-#include "library/internal_plugin.cpp"
 
 using namespace sushi;
 

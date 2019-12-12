@@ -280,7 +280,8 @@ bool Vst2xWrapper::_register_parameters()
         _vst_dispatcher(effGetParamLabel, idx, 0, param_unit, 0);
         param_name[VST_STRING_BUFFER_SIZE-1] = 0;
         param_unit[VST_STRING_BUFFER_SIZE-1] = 0;
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(param_name, param_name, param_unit, 0, 1, nullptr));
+        auto unique_name = _make_unique_parameter_name(param_name);
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name, param_name, param_unit, 0, 1, nullptr));
         if (param_inserted_ok)
         {
             SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
