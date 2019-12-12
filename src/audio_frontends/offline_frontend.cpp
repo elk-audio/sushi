@@ -93,9 +93,15 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
             SUSHI_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
+        _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
+        _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
     }
-    _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
+    else
+    {
+        _engine->set_audio_input_channels(DUMMY_FRONTEND_CHANNELS);
+        _engine->set_audio_output_channels(DUMMY_FRONTEND_CHANNELS);
+    }
+    
     auto status = _engine->set_cv_input_channels(off_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
@@ -235,7 +241,8 @@ void OfflineFrontend::_run_blocking()
         }
         else
         {
-            _buffer.from_interleaved(file_buffer);
+            auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_buffer, 0, 2);
+            buffer.from_interleaved(file_buffer);
         }
         /* Gate and CV are ignored when using file frontend */
         _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer);
@@ -246,7 +253,8 @@ void OfflineFrontend::_run_blocking()
         }
         else
         {
-            _buffer.to_interleaved(file_buffer);
+            auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_buffer, 0, 2);
+            buffer.to_interleaved(file_buffer);
         }
 
         // Write to file

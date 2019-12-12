@@ -189,7 +189,7 @@ const optionparser::Descriptor usage[] =
         "",
         "dump-plugins",
         SushiArg::Optional,
-        "\t\t--dump-plugins \tDump plugin and parameter data to cout."
+        "\t\t--dump-plugins \tDump plugin and parameter data to stdout in JSON format."
     },
     {
         OPT_IDX_CONFIG_FILE,

@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (!enable_parameter_dump)
+    if (enable_parameter_dump == false)
     {
         print_sushi_headline();
     }
@@ -442,11 +442,9 @@ int main(int argc, char* argv[])
     configurator.reset();
 
     if (enable_parameter_dump)
-    {
-        // sushi::dump_engine_processor_parameters(engine->controller(), std::cout);
-        rapidjson::Document parameter_dump = sushi::generate_processor_parameter_document(engine->controller());
-        std::cout << parameter_dump;
-        exit_flag = true;
+    { 
+        std::cout << sushi::generate_processor_parameter_document(engine->controller());
+        error_exit("");
     }
 
     if (enable_timings)
