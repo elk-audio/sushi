@@ -409,11 +409,11 @@ int main(int argc, char* argv[])
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator->load_event_list();
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
         }
-        else
+        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
         {
             error_exit("Failed to load Event list from Json config file");
         }
