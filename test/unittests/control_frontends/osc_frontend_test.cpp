@@ -11,6 +11,7 @@
 
 using namespace sushi;
 using namespace sushi::control_frontend;
+using namespace sushi::osc;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
@@ -224,9 +225,8 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
 }
 
-
-TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
+TEST(TestOSCFrontendInternal, TestMakeSafePath)
 {
-    std::string test_str("str with spaces ");
-    ASSERT_EQ("str_with_spaces_", spaces_to_underscore(test_str));
+    EXPECT_EQ("s_p_a_c_e_", make_safe_path("s p a c e "));
+    EXPECT_EQ("in_valid", make_safe_path("in\\\" v*[a]{l}id"));
 }

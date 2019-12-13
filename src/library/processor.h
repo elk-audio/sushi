@@ -381,6 +381,14 @@ protected:
     */
     void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
+    /**
+     * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
+     *        index will be added in case of duplicates
+     * @param name The name of the parameter
+     * @return An std::string containing a unique parameter name
+     */
+    std::string _make_unique_parameter_name(std::string name) const;
+
     /* Minimum number of output/input channels a processor should support should always be 0 */
     int _max_input_channels{0};
     int _max_output_channels{0};

@@ -132,9 +132,7 @@ private:
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 
-std::string spaces_to_underscore(const std::string &s);
-
-}; // namespace user_frontend
-}; // namespace sensei
+}; // namespace control_frontend
+}; // namespace sushi
 
 #endif //SUSHI_OSC_FRONTEND_H_H
