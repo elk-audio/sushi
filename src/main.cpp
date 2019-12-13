@@ -38,6 +38,7 @@
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/alsa_midi_frontend.h"
+#include "library/parameter_dump.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -124,8 +125,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    print_sushi_headline();
-
     signal(SIGINT, sigint_handler);
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +171,7 @@ int main(int argc, char* argv[])
     int  rt_cpu_cores = 1;
     bool enable_timings = false;
     bool enable_flush_interval = false;
+    bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i=0; i<cl_parser.optionsCount(); i++)
@@ -203,6 +203,10 @@ int main(int argc, char* argv[])
         case OPT_IDX_LOG_FLUSH_INTERVAL:
             log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
             enable_flush_interval = true;
+            break;
+
+        case OPT_IDX_DUMP_PARAMETERS:
+            enable_parameter_dump = true;
             break;
 
         case OPT_IDX_CONFIG_FILE:
@@ -273,6 +277,15 @@ int main(int argc, char* argv[])
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
         }
+    }
+
+    if (enable_parameter_dump == false)
+    {
+        print_sushi_headline();
+    }
+    else
+    {
+        frontend_type = FrontendType::DUMMY;
     }
 
     if (output_filename.empty() && !input_filename.empty())
@@ -427,6 +440,12 @@ int main(int argc, char* argv[])
         }
     }
     configurator.reset();
+
+    if (enable_parameter_dump)
+    { 
+        std::cout << sushi::generate_processor_parameter_document(engine->controller());
+        error_exit("");
+    }
 
     if (enable_timings)
     {
