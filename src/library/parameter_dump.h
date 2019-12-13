@@ -22,6 +22,7 @@
 #define SUSHI_PARAMETER_DUMP_H
 
 #include "engine/controller.h"
+#include "rapidjson/document.h"
 
 namespace sushi {
 
