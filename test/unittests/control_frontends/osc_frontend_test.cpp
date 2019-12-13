@@ -11,10 +11,13 @@
 
 using namespace sushi;
 using namespace sushi::control_frontend;
+using namespace sushi::osc;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
+constexpr int EVENT_WAIT_RETRIES = 20;
+constexpr auto EVENT_WAIT_TIME = std::chrono::milliseconds(2);
 
 class TestOSCFrontend : public ::testing::Test
 {
@@ -38,11 +41,27 @@ protected:
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
     }
 
+    std::unique_ptr<Event> wait_for_event()
+    {
+        for (int i = 0; i < EVENT_WAIT_RETRIES; ++i)
+        {
+            auto event = _test_dispatcher->retrieve_event();
+            if (event)
+            {
+                return std::move(event);
+            }
+            std::this_thread::sleep_for(EVENT_WAIT_TIME);
+        }
+        return nullptr;
+    }
+
     void TearDown()
     {
         _module_under_test.stop();
         lo_address_free(_address);
     }
+
+
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
@@ -55,9 +74,7 @@ TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
     ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_parameter_change_event());
     auto typed_event = static_cast<ParameterChangeEvent*>(event.get());
@@ -77,9 +94,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOnEvent)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_on", 46, 0.8f);
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_keyboard_event());
     auto typed_event = static_cast<KeyboardEvent*>(event.get());
@@ -94,9 +109,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOffEvent)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_off", 52, 0.7f);
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_keyboard_event());
     auto typed_event = static_cast<KeyboardEvent*>(event.get());
@@ -115,9 +128,7 @@ TEST_F(TestOSCFrontend, TestAddTrack)
 {
     lo_send(_address, "/engine/add_track", "si", "NewTrack", 2);
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<AddTrackEvent*>(event.get());
@@ -129,9 +140,7 @@ TEST_F(TestOSCFrontend, TestDeleteTrack)
 {
     lo_send(_address, "/engine/delete_track", "s", "NewTrack");
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<RemoveTrackEvent*>(event.get());
@@ -142,9 +151,7 @@ TEST_F(TestOSCFrontend, TestAddProcessor)
 {
     lo_send(_address, "/engine/add_processor", "sssss", "track", "uid", "plugin_name", "file_path", "internal");
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<AddProcessorEvent*>(event.get());
@@ -164,9 +171,7 @@ TEST_F(TestOSCFrontend, TestDeleteProcessor)
 {
     lo_send(_address, "/engine/delete_processor", "ss", "track", "processor");
 
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->is_engine_event());
     auto typed_event = static_cast<RemoveProcessorEvent*>(event.get());
@@ -177,9 +182,8 @@ TEST_F(TestOSCFrontend, TestDeleteProcessor)
 TEST_F(TestOSCFrontend, TestSetTempo)
 {
     lo_send(_address, "/engine/set_tempo", "f", 136.0f);
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     ASSERT_TRUE(event->maps_to_rt_event());
     auto rt_event = event->to_rt_event(0);
@@ -190,10 +194,7 @@ TEST_F(TestOSCFrontend, TestSetTempo)
 TEST_F(TestOSCFrontend, TestSetTimeSignature)
 {
     lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
-
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     ASSERT_TRUE(event->maps_to_rt_event());
     auto rt_event = event->to_rt_event(0);
@@ -205,10 +206,7 @@ TEST_F(TestOSCFrontend, TestSetTimeSignature)
 TEST_F(TestOSCFrontend, TestSetPlayingMode)
 {
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
-
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     ASSERT_TRUE(event->maps_to_rt_event());
     auto rt_event = event->to_rt_event(0);
@@ -219,10 +217,7 @@ TEST_F(TestOSCFrontend, TestSetPlayingMode)
 TEST_F(TestOSCFrontend, TestSetSyncMode)
 {
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
-
-    // Need to wait a bit to allow messages to come through
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    auto event = _test_dispatcher->retrieve_event();
+    auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
     ASSERT_TRUE(event->maps_to_rt_event());
     auto rt_event = event->to_rt_event(0);
@@ -230,9 +225,8 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
 }
 
-
-TEST(TestOSCFrontendInternal, TestSpacesToUnderscores)
+TEST(TestOSCFrontendInternal, TestMakeSafePath)
 {
-    std::string test_str("str with spaces ");
-    ASSERT_EQ("str_with_spaces_", spaces_to_underscore(test_str));
+    EXPECT_EQ("s_p_a_c_e_", make_safe_path("s p a c e "));
+    EXPECT_EQ("in_valid", make_safe_path("in\\\" v*[a]{l}id"));
 }

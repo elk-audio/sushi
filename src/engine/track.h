@@ -109,7 +109,7 @@ public:
      *
      * @return A reference to an RtEventFifo containing buffered events
      */
-    RtEventFifo& output_event_buffer()
+    RtSafeRtEventFifo& output_event_buffer()
     {
         return _output_event_buffer;
     }
@@ -182,7 +182,7 @@ public:
     }
 
     /* Inherited from Processor */
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out) override;
 
@@ -206,7 +206,7 @@ public:
     }
 
     /* Inherited from RtEventPipe */
-    void send_event(RtEvent event) override;
+    void send_event(const RtEvent& event) override;
 
 private:
     void _common_init();
@@ -229,8 +229,8 @@ private:
 
     performance::PerformanceTimer* _timer;
 
-    RtEventFifo _kb_event_buffer;
-    RtEventFifo _output_event_buffer;
+    RtSafeRtEventFifo _kb_event_buffer;
+    RtSafeRtEventFifo _output_event_buffer;
 };
 
 } // namespace engine

@@ -15,8 +15,8 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
-                    "name" : "synth",
+                    "path" : "/usr/lib/lxvst/obxdHeadless.so",
+                    "name" : "synth"
                     "type"   : "vst2x"
                 }
             ]

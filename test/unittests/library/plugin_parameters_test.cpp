@@ -67,11 +67,11 @@ protected:
     uint8_t* TEST_DATA = new uint8_t[3];
     BlobData blob{3, TEST_DATA};
 
-    FloatParameterDescriptor _module_under_test_float{"float_parameter", "FloatParameter", -10.0f, 10.0f, new ParameterPreProcessor<float>(-10, 10)};
-    IntParameterDescriptor _module_under_test_int{"int_parameter", "IntParameter", -10, 10, new ParameterPreProcessor<int>(-10, 10)};
-    BoolParameterDescriptor _module_under_test_bool{"bool_parameter", "BoolParameter", false, true, new ParameterPreProcessor<bool>(0, 1)};
-    StringPropertyDescriptor _module_under_test_string{"string_parameter", "String Parameter"};
-    DataPropertyDescriptor _module_under_test_data{"data_parameter", "Data Parameter"};
+    FloatParameterDescriptor _module_under_test_float{"float_parameter", "FloatParameter", "fl", -10.0f, 10.0f, new ParameterPreProcessor<float>(-10, 10)};
+    IntParameterDescriptor _module_under_test_int{"int_parameter", "IntParameter", "int", -10, 10, new ParameterPreProcessor<int>(-10, 10)};
+    BoolParameterDescriptor _module_under_test_bool{"bool_parameter", "BoolParameter", "bool", false, true, new ParameterPreProcessor<bool>(0, 1)};
+    StringPropertyDescriptor _module_under_test_string{"string_parameter", "String Parameter", ""};
+    DataPropertyDescriptor _module_under_test_data{"data_parameter", "Data Parameter", "data"};
 };
 
 TEST_F(TestParameter, TestTypeNameAndLabel)
@@ -93,6 +93,12 @@ TEST_F(TestParameter, TestTypeNameAndLabel)
     EXPECT_EQ("IntParameter", _module_under_test_int.label());
     EXPECT_EQ("String Parameter", _module_under_test_string.label());
     EXPECT_EQ("Data Parameter", _module_under_test_data.label());
+
+    EXPECT_EQ("bool", _module_under_test_bool.unit());
+    EXPECT_EQ("fl", _module_under_test_float.unit());
+    EXPECT_EQ("int", _module_under_test_int.unit());
+    EXPECT_EQ("", _module_under_test_string.unit());
+    EXPECT_EQ("data", _module_under_test_data.unit());
 }
 
 TEST(TestParameterValue, TestSet)

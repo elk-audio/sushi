@@ -93,7 +93,7 @@ enum SUSHI_LOG_ERROR_CODE
 #define SUSHI_LOG_INFO_IF(condition, msg, ...)     if (condition) { elk::Logger::logger_instance->info("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #define SUSHI_LOG_WARNING_IF(condition, msg, ...)  if (condition) { elk::Logger::logger_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #define SUSHI_LOG_ERROR_IF(condition, msg, ...)    if (condition) { elk::Logger::logger_instance->error("{}" msg, local_log_prefix, ##__VA_ARGS__); }
-#define SUSHI_LOG_CRITICAL_IF(condition, msg, ...) if (condition) { elk::Logger::logger_instance->critical"{}" msg, local_log_prefix, ##__VA_ARGS__); }
+#define SUSHI_LOG_CRITICAL_IF(condition, msg, ...) if (condition) { elk::Logger::logger_instance->critical("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 
 /*
  * Call this _before_ instantiating any object that use SUSHI_GET_LOGGER

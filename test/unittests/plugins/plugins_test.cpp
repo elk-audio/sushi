@@ -2,15 +2,14 @@
 
 #include "gtest/gtest.h"
 
-#include "test_utils/test_utils.h"
-#include "test_utils/host_control_mockup.h"
-#include "library/internal_plugin.cpp"
-
-
 #define private public
 
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
+#include "library/internal_plugin.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
+#include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
@@ -57,7 +56,7 @@ TEST_F(TestPassthroughPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    RtEventFifo event_queue;
+    RtSafeRtEventFifo event_queue;
     ASSERT_TRUE(event_queue.empty());
     _module_under_test->set_event_output(&event_queue);
     RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0, 0);
@@ -209,7 +208,7 @@ protected:
     }
     HostControlMockup _host_control;
     peak_meter_plugin::PeakMeterPlugin* _module_under_test;
-    RtEventFifo _fifo;
+    RtSafeRtEventFifo _fifo;
 };
 
 TEST_F(TestPeakMeterPlugin, TestInstantiation)

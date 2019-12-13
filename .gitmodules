@@ -1,18 +1,15 @@
-[submodule "third-party/EASTL"]
-	path = third-party/EASTL
-	url = https://github.com/electronicarts/EASTL.git
 [submodule "vst3_pluginterfaces"]
-	path = third-party/vstsdk3/pluginterfaces
+	path = third-party/vst3sdk/pluginterfaces
 	url = git://github.com/steinbergmedia/vst3_pluginterfaces.git
 [submodule "vst3_cmake"]
-	path = third-party/vstsdk3/cmake
+	path = third-party/vst3sdk/cmake
 	url = git://github.com/steinbergmedia/vst3_cmake.git
 [submodule "vst3_base"]
-	path = third-party/vstsdk3/base
+	path = third-party/vst3sdk/base
 	url = git://github.com/steinbergmedia/vst3_base.git
 [submodule "vst3_public_sdk"]
-	path = third-party/vstsdk3/public.sdk
-	url = git@bitbucket.org:mindswteam/vst3_public_sdk_fork.git
+	path = third-party/vst3sdk/public.sdk
+	url = git://github.com/steinbergmedia/vst3_public_sdk
 [submodule "third-party/rapidjson"]
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
@@ -25,7 +22,7 @@
 	url = git@bitbucket.org:mindswteam/raspalib.git
 [submodule "twine"]
 	path = twine
-	url = git@bitbucket.org:mindswteam/twine.git
+	url = git://github.com/elk-audio/twine.git
 [submodule "Ableton Link"]
 	path = third-party/link
 	url = git://github.com/Ableton/link.git

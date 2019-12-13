@@ -110,9 +110,6 @@ void print_version_and_build_info()
     std::cout << std::endl;
 
     std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    std::cout << "Audio in/out channels: " << RASPA_N_CHANNELS << std::endl;
-#endif
     std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
     std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
 }
@@ -168,6 +165,7 @@ int main(int argc, char* argv[])
     std::string jack_server_name = std::string("");
     int osc_server_port = SUSHI_OSC_SERVER_PORT;
     int osc_send_port = SUSHI_OSC_SEND_PORT;
+    std::string grpc_listening_address = std::string(SUSHI_GRPC_LISTENING_PORT);
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
@@ -267,6 +265,10 @@ int main(int argc, char* argv[])
             osc_send_port = atoi(opt.arg);
             break;
 
+        case OPT_IDX_GRPC_LISTEN_ADDRESS:
+            grpc_listening_address = opt.arg;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -307,13 +309,25 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_midi_outputs(1);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(sushi_rpc::DEFAULT_LISTENING_ADDRESS, engine->controller());
+    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
 #endif
 
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>         midi_frontend;
     std::unique_ptr<sushi::control_frontend::OSCFrontend>           osc_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>       audio_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config;
+
+    auto [audio_config_status, audio_config] = configurator->load_audio_config();
+    if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
+        {
+            error_exit("Error reading config file, invalid file: " + config_filename);
+        }
+        error_exit("Error reading host config, check logs for details.");
+    }
+    int cv_inputs = audio_config.cv_inputs.value_or(0);
+    int cv_outputs = audio_config.cv_outputs.value_or(0);
 
     switch (frontend_type)
     {
@@ -322,7 +336,9 @@ int main(int argc, char* argv[])
             SUSHI_LOG_INFO("Setting up Jack audio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
                                                                                                  jack_server_name,
-                                                                                                 connect_ports);
+                                                                                                 connect_ports,
+                                                                                                 cv_inputs,
+                                                                                                 cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
             break;
         }
@@ -330,7 +346,9 @@ int main(int argc, char* argv[])
         case FrontendType::XENOMAI_RASPA:
         {
             SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches);
+            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches,
+                                                                                                         cv_inputs,
+                                                                                                         cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
             break;
         }
@@ -350,7 +368,9 @@ int main(int argc, char* argv[])
             }
             frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
                                                                                                     output_filename,
-                                                                                                    dummy);
+                                                                                                    dummy,
+                                                                                                    cv_inputs,
+                                                                                                    cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(engine.get());
             break;
         }
@@ -371,14 +391,19 @@ int main(int argc, char* argv[])
         error_exit("Failed to load host configuration from config file");
     }
     status = configurator->load_tracks();
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load tracks from Json config file");
     }
     status = configurator->load_midi();
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
     {
         error_exit("Failed to load MIDI mapping from Json config file");
+    }
+    status = configurator->load_cv_gate();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
+    {
+        error_exit("Failed to load CV and Gate configuration");
     }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
@@ -396,7 +421,7 @@ int main(int argc, char* argv[])
     else
     {
         status = configurator->load_events();
-        if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
         {
             error_exit("Failed to load Events from Json config file");
         }
@@ -441,6 +466,7 @@ int main(int argc, char* argv[])
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    SUSHI_LOG_INFO("Starting gRPC server with address: {}", grpc_listening_address);
     rpc_server->start();
 #endif
 

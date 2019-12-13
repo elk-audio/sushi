@@ -23,6 +23,7 @@
 #define SUSHI_PROCESSOR_H
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "library/sample_buffer.h"
@@ -57,7 +58,7 @@ public:
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
-     * all of the initialization that can fail, should be done here. See also deinit() for deallocating
+     * all of the initialization that can fail, should be done here.
      * any resources reserved here.
      * @param sample_rate Host sample rate
      */
@@ -74,11 +75,12 @@ public:
     {
         return;
     }
+
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
      * @param event Event to process.
      */
-    virtual void process_event(RtEvent event) = 0;
+    virtual void process_event(const RtEvent& event) = 0;
 
     /**
      * @brief Process a chunk of audio.
@@ -115,7 +117,7 @@ public:
      * @brief Returns a unique 32 bit identifier for this processor
      * @return A unique 32 bit identifier
      */
-    ObjectId id() {return _id;}
+    ObjectId id() const {return _id;}
 
     /**
      * @brief Set an output pipe for events.
@@ -297,9 +299,27 @@ public:
     /**
      * @brief Set a new program to the processor. Called from a non-rt thread
      * @param program The id of the new program to use
-     * @return OK if the operation was succesfull, error code otherwise
+     * @return OK if the operation was successful, error code otherwise
      */
     virtual ProcessorReturnCode set_program(int /*program*/) {return ProcessorReturnCode::UNSUPPORTED_OPERATION;}
+
+    /**
+     * @brief Connect a parameter of the processor to a cv out so that rt updates of
+     *        the parameter will be sent to the cv output
+     * @param parameter_id The id of the parameter to connect from
+     * @param cv_input_id The id of the cv output
+     * @return ProcessorReturnCode::OK on success, error code on failure
+     */
+    virtual ProcessorReturnCode connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id);
+    /**
+     * @brief Connect note on and off events with a particular channel and note number
+     *        from this processor to a gate output.
+     * @param gate_output_id The gate output to output to.
+     * @param channel Only events with this channel will be routed.
+     * @param note_no The note number that will be used for this gate output.
+     * @return ProcessorReturnCode::OK on success, error code on failure
+     */
+    virtual ProcessorReturnCode connect_gate_from_processor(int gate_output_id, int channel, int note_no);
 
 protected:
 
@@ -319,28 +339,39 @@ protected:
      * @param id The unique id to give to the parameter
      * @return true if the parameter was successfully registered, false otherwise
      */
-    bool register_parameter(ParameterDescriptor* parameter, ObjectId id)
-    {
-        for (auto& p : _parameters_by_index)
-        {
-            if (p->id() == id) return false; // Don't allow duplicate parameter id:s
-        }
-        bool inserted = true;
-        std::tie(std::ignore, inserted) = _parameters.insert(std::pair<std::string, std::unique_ptr<ParameterDescriptor>>(parameter->name(), std::unique_ptr<ParameterDescriptor>(parameter)));
-        if (!inserted)
-        {
-            return false;
-        }
-        parameter->set_id(id);
-        _parameters_by_index.push_back(parameter);
-        return true;
-    }
+    bool register_parameter(ParameterDescriptor* parameter, ObjectId id);
 
-    void output_event(RtEvent event)
+    /**
+     * @brief Convert midi data and output as an internal event, taking account any gate
+     *        routing configurations active on the processor.
+     * @param midi_data raw midi data from the plugin
+     * @param sample_offset Intra-buffer offset in samples
+     */
+    void output_midi_event_as_internal(MidiDataByte midi_data, int sample_offset);
+
+    void output_event(const RtEvent& event)
     {
         if (_output_pipe)
             _output_pipe->send_event(event);
     }
+
+    /**
+     * @brief Handle parameter updates if connected to cv outputs and send cv output event if
+     *        the parameter is connected to a cv output
+     * @param parameter_id The id of the parameter
+     * @param value The new value of the parameter change
+     * @return true If there is an active outgoing connection from this parameter, false otherwise
+     */
+    bool maybe_output_cv_value(ObjectId parameter_id, float value);
+
+    /**
+     * @brief Handle gate outputs if note on or note off events are mapped to gate outputs
+     * @param channel The channel id of the event
+     * @param note The midi note number of the event
+     * @param note_on True if this is a note on event, false if it is a note off event
+     * @return true if there is an active outgoing connection from this note/channel combination, false otherwise
+     */
+    bool maybe_output_gate_event(int channel, int note, bool note_on);
 
     /**
     * @brief Utility function do to general bypass/passthrough audio processing.
@@ -348,24 +379,15 @@ protected:
     * @param in_buffer Input SampleBuffer
     * @param out_buffer Output SampleBuffer
     */
-    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
-    {
-        if (_current_input_channels == 0)
-        {
-            out_buffer.clear();
-        }
-        else if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
-        {
-            out_buffer = in_buffer;
-        }
-        else
-        {
-            for (int c = 0; c < _current_output_channels; ++c)
-            {
-                out_buffer.replace(c, c % _current_input_channels, in_buffer);
-            }
-        }
-    }
+    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+
+    /**
+     * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
+     *        index will be added in case of duplicates
+     * @param name The name of the parameter
+     * @return An std::string containing a unique parameter name
+     */
+    std::string _make_unique_parameter_name(std::string name) const;
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     int _max_input_channels{0};
@@ -389,6 +411,28 @@ private:
 
     std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
     std::vector<ParameterDescriptor*> _parameters_by_index;
+
+    struct CvOutConnection
+    {
+        ObjectId parameter_id;
+        int cv_id;
+    };
+
+    std::array<CvOutConnection, MAX_ENGINE_CV_IO_PORTS> _cv_out_connections;
+    int _outgoing_cv_connections{0};
+
+    using GateKey = int;
+    GateKey to_gate_key(int8_t channel, int8_t note)
+    {
+        return channel + (note << sizeof(note));
+    }
+    struct GateOutConnection
+    {
+        int8_t note;
+        int8_t channel;
+        int gate_id;
+    };
+    std::unordered_map<GateKey, GateOutConnection> _outgoing_gate_connections;
 };
 
 constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);
@@ -469,19 +513,7 @@ public:
      * @param output_channels The current number of output channels of the processor
      */
     void crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,
-                          int input_channels, int output_channels)
-    {
-        auto [start, end] = get_ramp();
-        output_buffer.ramp(start, end);
-        if (input_channels > 0)
-        {
-            for (int c = 0; c < output_channels; ++c)
-            {
-                // Add the input with an inverse ramp to crossfade between input and output
-                output_buffer.add_with_ramp(c, c % input_channels, input_buffer, 1.0f - start, 1.0f - end);
-            }
-        }
-    }
+                          int input_channels, int output_channels);
 
 private:
     enum class BypassState
@@ -492,32 +524,7 @@ private:
         RAMPING_UP
     };
 
-    std::pair<float, float> get_ramp()
-    {
-        int prev_count = 0;
-        if (_state == BypassState::RAMPING_DOWN)
-        {
-            prev_count = _ramp_count--;
-            if (_ramp_count == 0)
-            {
-                _state = BypassState::BYPASSED;
-            }
-        }
-        else if (_state == BypassState::RAMPING_UP)
-        {
-            prev_count = _ramp_count++;
-            if (_ramp_count == _ramp_chunks)
-            {
-                _state = BypassState::NOT_BYPASSED;
-            }
-        }
-        else
-        {
-            return {1.0f, 1.0f};
-        }
-        return {static_cast<float>(prev_count) / _ramp_chunks,
-                static_cast<float>(_ramp_count) / _ramp_chunks};
-    }
+    std::pair<float, float> get_ramp();
 
     BypassState _state{BypassState::NOT_BYPASSED};
     int _ramp_chunks{0};

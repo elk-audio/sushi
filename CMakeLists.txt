@@ -49,10 +49,9 @@ option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
-set(XENOMAI_AUDIO_CHANNELS 8 CACHE STRING "Set the number of audio channels in Raspa")
 
 if (${WITH_XENOMAI})
-    message("Building with Xenomai support, ${XENOMAI_AUDIO_CHANNELS} channels")
+    message("Building with Xenomai support")
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
@@ -80,7 +79,7 @@ message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 # Build the given Vst3 host implementation into a separate library to
 # Avoid littering our own code with ugly defines
 
-set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
@@ -98,7 +97,7 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 else()
     set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
 endif()
-target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
 
 ####################
@@ -127,16 +126,21 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/midi_encoder.cpp
                       src/library/internal_plugin.cpp
                       src/library/performance_timer.cpp
+                      src/library/processor.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
+                      src/plugins/control_to_cv_plugin.cpp
+                      src/plugins/cv_to_control_plugin.cpp
                       src/plugins/gain_plugin.cpp
+                      src/plugins/lfo_plugin.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/peak_meter_plugin.cpp
                       src/plugins/transposer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
+                      src/plugins/step_sequencer_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
         )
 
@@ -150,6 +154,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
+                        src/control_frontends/osc_utils.h
                         src/control_frontends/base_midi_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
@@ -168,6 +173,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/rt_event_fifo.h
                         src/library/rt_event_pipe.h
                         src/library/spinlock.h
+                        src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
@@ -186,13 +192,17 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/plugins/arpeggiator_plugin.h
+                        src/plugins/control_to_cv_plugin.h
+                        src/plugins/cv_to_control_plugin.h
                         src/plugins/gain_plugin.h
+                        src/plugins/lfo_plugin.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/peak_meter_plugin.h
                         src/plugins/transposer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
+                        src/plugins/step_sequencer_plugin.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
         )
@@ -249,9 +259,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3"
-                 "${PROJECT_SOURCE_DIR}/third-party/link/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vstsdk3")
+                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -262,20 +271,28 @@ endif()
 #  Subdirectory configuration  #
 ################################
 
-if (${AUDIO_BUFFER_SIZE})
-    set(RASPA_N_FRAMES_PER_BUFFER  ${AUDIO_BUFFER_SIZE} CACHE STRING "" FORCE)
-endif()
-
-if (${XENOMAI_AUDIO_CHANNELS})
-    set(RASPA_N_AUDIO_CHANNELS ${XENOMAI_AUDIO_CHANNELS} CACHE STRING "" FORCE)
-endif()
 
 if (${WITH_XENOMAI})
-    set(RASPA_WITH_APPS OFF CACHE BOOL "" FORCE)
-    set(RASPA_WITH_TESTS OFF CACHE BOOL "" FORCE)
+    # explicitly link with cobalt lib
+    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+
+    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+    endif()
+    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
+        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+    endif()
+
+    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+
     set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    add_subdirectory(raspalib)
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound raspa)
+    find_library(RASPA_LIB
+                 NAMES raspa
+                 PATHS /usr/lib /usr/local/lib
+                 )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
 else()
     set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
@@ -302,7 +319,6 @@ if (${WITH_RPC_INTERFACE})
 endif()
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
-
 
 #################################
 #  Linked libraries             #
@@ -391,7 +407,7 @@ endif()
 #  Install         #
 ####################
 set(DOC_FILES_INSTALL
-    "${PROJECT_SOURCE_DIR}/LICENSE"
+    "${PROJECT_SOURCE_DIR}/LICENSE.md"
     "${PROJECT_SOURCE_DIR}/README.md"
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )

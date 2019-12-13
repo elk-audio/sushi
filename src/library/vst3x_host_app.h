@@ -25,7 +25,7 @@
 #include "library/constants.h"
 
 #include <pluginterfaces/vst/ivsteditcontroller.h>
-#include <third-party/vstsdk3/pluginterfaces/vst/ivstunits.h>
+#include <pluginterfaces/vst/ivstunits.h>
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"

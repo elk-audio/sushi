@@ -78,7 +78,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
@@ -156,6 +156,8 @@ private:
      * @param data A ProcessData container
      */
     void _forward_events(Steinberg::Vst::ProcessData& data);
+
+    void _forward_params(Steinberg::Vst::ProcessData& data);
 
     void _fill_processing_context();
 
@@ -239,7 +241,7 @@ public:
     Vst3xWrapper(HostControl host_control, const std::string& /* vst_plugin_path */, const std::string& /* plugin_name */) :
         Processor(host_control) {}
     ProcessorReturnCode init(float sample_rate) override;
-    void process_event(RtEvent /*event*/) override {}
+    void process_event(const RtEvent& /*event*/) override {}
     void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
 };
 

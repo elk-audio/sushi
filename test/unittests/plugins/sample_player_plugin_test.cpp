@@ -110,7 +110,7 @@ protected:
 
 TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
 {
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     std::string* path = new std::string(test_utils::get_data_dir_path());
     path->append(SAMPLE_FILE);

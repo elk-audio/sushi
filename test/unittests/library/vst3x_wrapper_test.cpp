@@ -81,7 +81,7 @@ protected:
     }
     HostControlMockup _host_control;
     Vst3xWrapper* _module_under_test;
-    RtEventFifo _event_queue;
+    RtSafeRtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
@@ -159,7 +159,7 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;
@@ -250,6 +250,64 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     std::tie(status, string_repr) = _module_under_test->parameter_value_formatted(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_EQ("0.5000", string_repr);
+}
+
+TEST_F(TestVst3xWrapper, TestGateOutput)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    RtEventFifo<10> queue;
+    _module_under_test->set_enabled(true);
+    _module_under_test->set_event_output(&queue);
+
+    auto status = _module_under_test->connect_gate_from_processor(2, 0, 46);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    Steinberg::Vst::Event note_on_event;
+    note_on_event.type = Steinberg::Vst::Event::EventTypes::kNoteOnEvent;
+    note_on_event.sampleOffset = 5;
+    note_on_event.noteOn.velocity = 1.0f;
+    note_on_event.noteOn.channel = 0;
+    note_on_event.noteOn.pitch = 46;
+
+    _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
+    _module_under_test->_forward_events(_module_under_test->_process_data);
+
+    ASSERT_FALSE(queue.empty());
+    RtEvent event;
+    ASSERT_TRUE(queue.pop(event));
+    ASSERT_EQ(RtEventType::GATE_EVENT, event.type());
+    ASSERT_EQ(0, event.sample_offset());
+    ASSERT_EQ(2, event.gate_event()->gate_no());
+    ASSERT_TRUE(event.gate_event()->value());
+
+    ASSERT_TRUE(queue.empty());
+}
+
+TEST_F(TestVst3xWrapper, TestCVOutput)
+{
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    RtEventFifo<10> queue;
+    _module_under_test->set_enabled(true);
+    _module_under_test->set_event_output(&queue);
+
+    auto status = _module_under_test->connect_cv_from_parameter(DELAY_PARAM_ID, 1);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);;
+
+    int index_unused;
+    auto param_queue = _module_under_test->_process_data.outputParameterChanges->addParameterData(DELAY_PARAM_ID, index_unused);
+    ASSERT_TRUE(param_queue);
+    param_queue->addPoint(5, 0.75, index_unused);
+
+    _module_under_test->_forward_params(_module_under_test->_process_data);
+
+    ASSERT_FALSE(queue.empty());
+    RtEvent event;
+    ASSERT_TRUE(queue.pop(event));
+    ASSERT_EQ(RtEventType::CV_EVENT, event.type());
+    ASSERT_EQ(0, event.sample_offset());
+    ASSERT_EQ(1, event.cv_event()->cv_id());
+    ASSERT_FLOAT_EQ(0.75f, event.cv_event()->value());
+
+    ASSERT_TRUE(queue.empty());
 }
 
 class TestVst3xUtils : public ::testing::Test
