@@ -25,7 +25,7 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
 #include "library/parameter_dump.h"
-#include "control_frontends/osc_frontend.h"
+#include "control_frontends/osc_utils.h"
 
 namespace sushi {
 
@@ -65,7 +65,7 @@ rapidjson::Document generate_processor_parameter_document(const sushi::ext::Sush
                 parameter_obj.AddMember(rapidjson::Value("label", allocator).Move(),
                                         rapidjson::Value(parameter.label.c_str(), allocator).Move(), allocator);
 
-                std::string osc_path("/parameter/" + control_frontend::spaces_to_underscore(processor.name) + "/" + control_frontend::spaces_to_underscore(parameter.name));
+                std::string osc_path("/parameter/" + osc::make_safe_path(processor.name) + "/" + osc::make_safe_path(parameter.name));
                 parameter_obj.AddMember(rapidjson::Value("osc_path", allocator).Move(),
                                         rapidjson::Value(osc_path.c_str(), allocator).Move(), allocator);
 
