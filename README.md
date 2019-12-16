@@ -24,6 +24,8 @@ Configuration files are used for global host configs, track and plugins configur
 ## Building Sushi
 Sushi uses CMake as its build system. A generate script is also provided for convenient setup. Simply running `./generate` with no arguments in the root of Sushi will setup a build folder containing a Release configuration and a Debug configuration. CMake arguments can be passed through the generate script using the `--cmake-args` flag. Those arguments will then be added to both configurations.
 
+Make sure that Sushi is cloned with the `--recursive` flag to fetch all required submodules for building. Alternatively run `git submodule update --init --recursive` after cloning.
+
 Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 7.3 or higher.
 
 ### Building for native Linux
