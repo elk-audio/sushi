@@ -317,7 +317,7 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
 
 Event* AsynchronousBlobDeleteEvent::execute()
 {
-    delete (_data.data);
+    delete(_data.data);
     return nullptr;
 }
 

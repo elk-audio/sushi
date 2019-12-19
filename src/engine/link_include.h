@@ -41,7 +41,7 @@
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
 
-namespace sushi {
+namespace sushi::link {
 
 class RtSafeClock
 {
@@ -53,13 +53,13 @@ public:
     }
 };
 
-} // sushi
+} // sushi::link
 
 namespace ableton::link::platform {
 
 #ifdef LINK_PLATFORM_LINUX
 #define LINK_PLATFORM_LINUX_CACHED LINK_PLATFORM_LINUX
-using Clock = ::sushi::RtSafeClock;
+using Clock = ::sushi::link::RtSafeClock;
 using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 #endif
 
