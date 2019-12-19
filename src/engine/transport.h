@@ -13,11 +13,6 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
-/**
- * @brief Main entry point to Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
- */
-
  /**
  * @Brief Handles time, tempo and start/stop inside the engine
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm

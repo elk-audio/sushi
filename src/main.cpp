@@ -69,6 +69,9 @@ constexpr std::array SUSHI_ENABLED_BUILD_OPTIONS = {
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
         "rpc control",
 #endif
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+        "ableton link",
+#endif
 };
 
 bool                    exit_flag = false;

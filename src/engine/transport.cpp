@@ -21,11 +21,7 @@
 #include <cassert>
 #include <cmath>
 
-#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
-#include "ableton/Link.hpp"
-#else
-#include "link_dummy.h"
-#endif
+#include "link_include.h"
 
 #include <library/rt_event.h>
 #include "library/constants.h"
@@ -53,9 +49,9 @@ void start_stop_callback(bool playing)
 }
 
 
-Transport::Transport(float sample_rate) : _samplerate(sample_rate)
+Transport::Transport(float sample_rate) : _samplerate(sample_rate),
+                                           _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
 {
-    _link_controller.reset(new ableton::Link(sample_rate));
     _link_controller->setNumPeersCallback(peer_callback);
     _link_controller->setTempoCallback(tempo_callback);
     _link_controller->setStartStopCallback(start_stop_callback);
