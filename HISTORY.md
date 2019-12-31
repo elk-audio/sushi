@@ -1,3 +1,13 @@
+## 0.9.1
+
+New Features:
+  * Plugin information dump with CL switch
+  * Updated VST 3 SDK to latest 3.14
+
+Fixes:
+  * Allows plugin parameters with duplicate names
+  * Events section not required anymore with any frontend
+
 ## 0.9.0
 
 New Features:
