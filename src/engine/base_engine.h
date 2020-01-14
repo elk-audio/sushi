@@ -217,11 +217,19 @@ public:
 
     virtual void set_output_latency(Time /*latency*/) = 0;
 
+    virtual float tempo() = 0;
+
     virtual void set_tempo(float /*tempo*/) = 0;
+
+    virtual TimeSignature time_signature() = 0;
 
     virtual void set_time_signature(TimeSignature /*signature*/) = 0;
 
+    virtual PlayingMode transport_mode() = 0;
+
     virtual void set_transport_mode(PlayingMode /*mode*/) = 0;
+
+    virtual SyncMode tempo_sync_mode() = 0;
 
     virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
 

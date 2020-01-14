@@ -307,16 +307,43 @@ public:
     }
 
     /**
+     * @brief Return the current tempo of the engine
+     * @return The tempo in beat per minute
+     */
+    float tempo() override
+    {
+        return _transport.current_tempo();
+    }
+
+    /**
      * @brief Set the tempo of the engine. Intended to be called from a non-thread.
      * @param tempo The new tempo in beats (quarter notes) per minute
      */
     void set_tempo(float tempo) override;
 
     /**
+     * @brief Return the current time signature of the engine
+     * @return A TimeSignature object with the current time signature
+     */
+    TimeSignature time_signature() override
+    {
+        return _transport.current_time_signature();
+    }
+
+    /**
      * @brief Set the time signature of the engine. Intended to be called from a non-thread.
      * @param signature A TimeSignature object describing the new time signature to use
      */
     void set_time_signature(TimeSignature signature) override;
+
+    /**
+     * @brief Return the current playing mode (stopped, playing, etc).
+     * @return A PlayingMode enum value with the current mode
+     */
+    PlayingMode transport_mode() override
+    {
+        return _transport.playing_mode();
+    }
 
     /**
      * @brief Set the current transport mode, i.e stopped, playing, recording. This will be
@@ -326,6 +353,15 @@ public:
      * @param mode A TransportMode mode with the current state
      */
     void set_transport_mode(PlayingMode mode) override;
+
+    /**
+     * @brief  Return the current mode of tempo synchronisation
+     * @return A SyncMode enum with the current mode
+     */
+    SyncMode tempo_sync_mode() override
+    {
+        return _transport.sync_mode();
+    }
 
     /**
      * @brief Set the current mode of synchronising the engine tempo and beats. Default is

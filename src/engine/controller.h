@@ -95,7 +95,6 @@ protected:
 
     engine::BaseEngine*                 _engine;
     dispatcher::BaseEventDispatcher*    _event_dispatcher;
-    engine::Transport*                  _transport;
     performance::BasePerformanceTimer*  _performance_timer;
 };
 
