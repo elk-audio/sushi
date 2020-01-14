@@ -108,6 +108,7 @@ inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 Controller::Controller(engine::BaseEngine* engine) : _engine{engine}
 {
     _event_dispatcher = _engine->event_dispatcher();
+    _transport = _engine->transport();
     _performance_timer = engine->performance_timer();
 }
 
@@ -122,7 +123,7 @@ float Controller::get_samplerate() const
 ext::PlayingMode Controller::get_playing_mode() const
 {
     SUSHI_LOG_DEBUG("get_playing_mode called");
-    return to_external(_engine->transport_mode());
+    return to_external(_transport->playing_mode());
 }
 
 void Controller::set_playing_mode(ext::PlayingMode playing_mode)
@@ -135,7 +136,7 @@ void Controller::set_playing_mode(ext::PlayingMode playing_mode)
 ext::SyncMode Controller::get_sync_mode() const
 {
     SUSHI_LOG_DEBUG("get_sync_mode called");
-    return to_external(_engine->tempo_sync_mode());
+    return to_external(_transport->sync_mode());
 }
 
 void Controller::set_sync_mode(ext::SyncMode sync_mode)
@@ -148,7 +149,7 @@ void Controller::set_sync_mode(ext::SyncMode sync_mode)
 float Controller::get_tempo() const
 {
     SUSHI_LOG_DEBUG("get_tempo called");
-    return _engine->tempo();
+    return _transport->current_tempo();
 }
 
 ext::ControlStatus Controller::set_tempo(float tempo)
@@ -162,7 +163,7 @@ ext::ControlStatus Controller::set_tempo(float tempo)
 ext::TimeSignature Controller::get_time_signature() const
 {
     SUSHI_LOG_DEBUG("get_time_signature called");
-    return to_external(_engine->time_signature());
+    return to_external(_transport->current_time_signature());
 }
 
 ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)

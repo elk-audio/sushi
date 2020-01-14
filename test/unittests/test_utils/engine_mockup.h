@@ -89,21 +89,13 @@ public:
 
     void set_output_latency(Time /*latency*/) override {}
 
-    float tempo() override {return _tempo;}
+    void set_tempo(float /*tempo*/) override {}
 
-    void set_tempo(float tempo) override {_tempo = tempo;}
+    void set_time_signature(TimeSignature /*signature*/) override {}
 
-    TimeSignature time_signature() override {return _time_signature;}
+    void set_transport_mode(PlayingMode /*mode*/) override {}
 
-    void set_time_signature(TimeSignature signature) override {_time_signature = signature;}
-
-    PlayingMode transport_mode() override {return _playing_mode;}
-
-    void set_transport_mode(PlayingMode mode) override {_playing_mode = mode;}
-
-    SyncMode tempo_sync_mode() override {return _sync_mode;}
-
-    void set_tempo_sync_mode(SyncMode mode) override {_sync_mode = mode;}
+    void set_tempo_sync_mode(SyncMode /*mode*/) override {}
 
     EngineReturnStatus send_rt_event(RtEvent& /*event*/) override
     {
@@ -127,10 +119,6 @@ public:
     bool got_rt_event{false};
 private:
     EventDispatcherMockup _event_dispatcher;
-    float _tempo{120};
-    TimeSignature _time_signature{4,4};
-    PlayingMode _playing_mode{PlayingMode::STOPPED};
-    SyncMode _sync_mode{SyncMode::INTERNAL};
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H
