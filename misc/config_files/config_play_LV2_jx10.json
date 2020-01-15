@@ -1,0 +1,40 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uri" : "http://moddevices.com/plugins/mda/JX10",
+                    "name" : "Synth",
+                    "type"   : "lv2"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "track": "main",
+                "raw_midi": false
+            }
+        ]
+    }
+}
