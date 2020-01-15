@@ -27,34 +27,32 @@ namespace lv2 {
 // This one has a footprint as required by lilv.
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
-    LV2Model* model = (LV2Model*)user_data;
-
-	Port* port = port_by_symbol(model, port_symbol);
+    auto model = static_cast<LV2Model*>(user_data);
+	auto port = port_by_symbol(model, port_symbol);
 
 	if (port && port->getFlow() == FLOW_INPUT && port->getType() == TYPE_CONTROL)
 	{
 		*size = sizeof(float);
-		*type = model->forge.Float;
+		*type = model->get_forge().Float;
 		return &port->control;
 	}
 
 	*size = *type = 0;
 
-	return NULL;
+	return nullptr;
 }
 
 void save(LV2Model* model, const char* dir)
 {
 	model->save_dir = std::string(dir) + "/";
 
-	LilvState* const state = lilv_state_new_from_instance(
-		model->plugin, model->instance, &model->map,
+	auto state = lilv_state_new_from_instance(
+		model->get_plugin_class(), model->get_plugin_instance(), &model->get_map(),
 		model->temp_dir.c_str(), dir, dir, dir,
 		get_port_value, model,
-		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, NULL);
+		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
-	lilv_state_save(model->world, &model->map, &model->unmap, state, NULL,
-	                dir, "state.ttl");
+	lilv_state_save(model->get_world(), &model->get_map(), &model->get_unmap(), state, nullptr, dir, "state.ttl");
 
 	lilv_state_free(state);
 
@@ -63,21 +61,23 @@ void save(LV2Model* model, const char* dir)
 
 int load_presets(LV2Model* model, PresetSink sink, void* data)
 {
-	LilvNodes* presets = lilv_plugin_get_related(model->plugin, model->nodes.pset_Preset);
+	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
+
 	LILV_FOREACH(nodes, i, presets)
 	{
-		const LilvNode* preset = lilv_nodes_get(presets, i);
-		lilv_world_load_resource(model->world, preset);
+		auto preset = lilv_nodes_get(presets, i);
+		lilv_world_load_resource(model->get_world(), preset);
+
 		if (!sink)
 		{
 			continue;
 		}
 
-		LilvNodes* labels = lilv_world_find_nodes(model->world, preset, model->nodes.rdfs_label, NULL);
+		auto labels = lilv_world_find_nodes(model->get_world(), preset, model->get_nodes().rdfs_label, NULL);
 
 		if (labels)
 		{
-			const LilvNode* label = lilv_nodes_get_first(labels);
+			auto label = lilv_nodes_get_first(labels);
 			sink(model, preset, label, data);
 			lilv_nodes_free(labels);
 		}
@@ -87,6 +87,7 @@ int load_presets(LV2Model* model, PresetSink sink, void* data)
 			        lilv_node_as_string(lilv_nodes_get(presets, i)));
 		}
 	}
+
 	lilv_nodes_free(presets);
 
 	return 0;
@@ -94,11 +95,12 @@ int load_presets(LV2Model* model, PresetSink sink, void* data)
 
 int unload_presets(LV2Model* model)
 {
-	LilvNodes* presets = lilv_plugin_get_related(model->plugin, model->nodes.pset_Preset);
+	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
+
 	LILV_FOREACH(nodes, i, presets)
 	{
-		const LilvNode* preset = lilv_nodes_get(presets, i);
-		lilv_world_unload_resource(model->world, preset);
+		auto preset = lilv_nodes_get(presets, i);
+		lilv_world_unload_resource(model->get_world(), preset);
 	}
 	lilv_nodes_free(presets);
 
@@ -112,7 +114,8 @@ void set_port_value(const char* port_symbol,
                uint32_t type)
 {
     auto model = static_cast<LV2Model*>(user_data);
-	struct Port* port = port_by_symbol(model, port_symbol);
+	auto port = port_by_symbol(model, port_symbol);
+
 	if (!port)
 	{
 		fprintf(stderr, "error: Preset port `%s' is missing\n", port_symbol);
@@ -120,30 +123,33 @@ void set_port_value(const char* port_symbol,
 	}
 
 	float fvalue;
-	if (type == model->forge.Float)
+
+	auto forge = model->get_forge();
+
+	if (type == forge.Float)
 	{
 		fvalue = *(const float*)value;
 	}
-	else if (type == model->forge.Double)
+	else if (type == forge.Double)
 	{
 		fvalue = *(const double*)value;
 	}
-	else if (type == model->forge.Int)
+	else if (type == forge.Int)
 	{
 		fvalue = *(const int32_t*)value;
 	}
-	else if (type == model->forge.Long)
+	else if (type == forge.Long)
 	{
 		fvalue = *(const int64_t*)value;
 	}
 	else
 	{
 		fprintf(stderr, "error: Preset `%s' value has bad type <%s>\n",
-                port_symbol, model->unmap.unmap(model->unmap.handle, type));
+                port_symbol, model->get_unmap().unmap(model->get_unmap().handle, type));
 		return;
 	}
 
-	if (model->play_state != LV2_RUNNING)
+	if (model->play_state != PlayState::RUNNING)
 	{
 		// Set value on port directly
 		port->control = fvalue;
@@ -171,78 +177,66 @@ void set_port_value(const char* port_symbol,
 
 void apply_state(LV2Model* model, LilvState* state)
 {
-	bool must_pause = !model->safe_restore && model->play_state == LV2_RUNNING;
+	bool must_pause = !model->is_restore_thread_safe() && model->play_state == PlayState::RUNNING;
+
 	if (state)
 	{
 		if (must_pause)
 		{
-            model->play_state = LV2_PAUSE_REQUESTED;
+            model->play_state = PlayState::PAUSE_REQUESTED;
 
             model->paused.wait();
 		}
 
-		const LV2_Feature* state_features[7] = {
-			&model->_features.map_feature,
-			&model->_features.unmap_feature,
-			&model->_features.make_path_feature,
-			&model->_features.state_sched_feature,
-			&model->_features.safe_restore_feature,
-			&model->_features.log_feature,
-// TODO: Implement Options Extension
-//			&model->_features.options_feature,
-			NULL
-		};
+        auto feature_list = model->get_feature_list();
 
-        lilv_state_restore(state, model->instance, set_port_value, model, 0, state_features);
+        lilv_state_restore(state, model->get_plugin_instance(), set_port_value, model, 0, feature_list->data());
 
 		if (must_pause)
 		{
-            model->request_update = true;
-            model->play_state = LV2_RUNNING;
+            model->request_update();
+            model->play_state = PlayState::RUNNING;
 		}
 	}
 }
 
 int apply_preset(LV2Model* model, const LilvNode* preset)
 {
-	lilv_state_free(model->preset);
-    model->preset = lilv_state_new_from_world(model->world, &model->map, preset);
-    apply_state(model, model->preset);
+    model->set_preset(lilv_state_new_from_world(model->get_world(), &model->get_map(), preset));
+    apply_state(model, model->get_preset());
 	return 0;
 }
 
 int save_preset(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename)
 {
-	LilvState* const state = lilv_state_new_from_instance(
-            model->plugin, model->instance, &model->map,
+	auto state = lilv_state_new_from_instance(
+            model->get_plugin_class(), model->get_plugin_instance(), &model->get_map(),
             model->temp_dir.c_str(), dir, dir, dir,
             get_port_value, model,
-		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, NULL);
+		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
 	if (label)
 	{
 		lilv_state_set_label(state, label);
 	}
 
-	int ret = lilv_state_save(model->world, &model->map, &model->unmap, state, uri, dir, filename);
+	int ret = lilv_state_save(model->get_world(), &model->get_map(), &model->get_unmap(), state, uri, dir, filename);
 
-	lilv_state_free(model->preset);
-    model->preset = state;
+    model->set_preset(state);
 
 	return ret;
 }
 
 int delete_current_preset(LV2Model* model)
 {
-	if (!model->preset)
+	if (!model->get_preset())
 	{
 		return 1;
 	}
 
-	lilv_world_unload_resource(model->world, lilv_state_get_uri(model->preset));
-	lilv_state_delete(model->world, model->preset);
-	lilv_state_free(model->preset);
-    model->preset = NULL;
+	lilv_world_unload_resource(model->get_world(), lilv_state_get_uri(model->get_preset()));
+	lilv_state_delete(model->get_world(), model->get_preset());
+    model->set_preset(nullptr);
 	return 0;
 }
 

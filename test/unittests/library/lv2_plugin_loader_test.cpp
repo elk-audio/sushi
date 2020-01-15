@@ -3,6 +3,7 @@
 #include "library/lv2/lv2_symap.cpp"
 #include "library/lv2/lv2_evbuf.cpp"
 #include "library/lv2/zix/ring.cpp"
+#include "library/lv2/lv2_control.cpp"
 #include "library/lv2/lv2_worker.cpp"
 #include "library/lv2/lv2_plugin_loader.cpp"
 
@@ -46,11 +47,11 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     loader.load_plugin(plugin_handle, SAMPLE_RATE, feature_list);
 
-    auto instance = loader.getModel()->instance;
+    auto instance = loader.getModel()->get_plugin_instance();
 
     ASSERT_NE(nullptr, instance);
 
     loader.close_plugin_instance();
 
-    ASSERT_EQ(nullptr, loader.getModel()->instance);
+    ASSERT_EQ(nullptr, loader.getModel()->get_plugin_instance());
 }

@@ -25,7 +25,7 @@
 #include "lv2_features.h"
 #include "library/rt_event_fifo.h"
 #include "lv2_ui_io.h"
-
+#include "lv2_control.h"
 #include "logging.h"
 
 namespace sushi {
@@ -114,29 +114,35 @@ void Lv2_UI_IO::set_buffer_size(uint32_t buffer_size)
 // TODO: Currently unused
 void Lv2_UI_IO::set_control(const ControlID* control, uint32_t size, LV2_URID type, const void* body)
 {
-    LV2Model* model = control->model;
-    if (control->type == PORT && type == model->forge.Float) {
-        Port* port = control->model->ports[control->index].get();
+    auto model = control->model;
+
+    if (control->type == ControlType::PORT && type == model->get_forge().Float)
+    {
+        auto port = control->model->get_port(control->index);
         port->control = *static_cast<const float*>(body);
-    } else if (control->type == PROPERTY) {
+    }
+    else if (control->type == ControlType::PROPERTY)
+    {
         // Copy forge since it is used by process thread
-        LV2_Atom_Forge forge = model->forge;
+        LV2_Atom_Forge forge = model->get_forge();
         LV2_Atom_Forge_Frame frame;
         uint8_t buf[1024];
         lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
 
-        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Set);
-        lv2_atom_forge_key(&forge, model->urids.patch_property);
+        auto urids = model->get_urids();
+
+        lv2_atom_forge_object(&forge, &frame, 0, urids.patch_Set);
+        lv2_atom_forge_key(&forge, urids.patch_property);
         lv2_atom_forge_urid(&forge, control->property);
-        lv2_atom_forge_key(&forge, model->urids.patch_value);
+        lv2_atom_forge_key(&forge, urids.patch_value);
         lv2_atom_forge_atom(&forge, size, type);
         lv2_atom_forge_write(&forge, body, size);
 
-        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+        auto atom = lv2_atom_forge_deref(&forge, frame.ref);
         ui_write(model,
-                 model->control_in,
+                 model->get_control_input_index(),
                  lv2_atom_total_size(atom),
-                 model->urids.atom_eventTransfer,
+                 urids.atom_eventTransfer,
                  atom);
     }
 }
@@ -200,13 +206,16 @@ bool Lv2_UI_IO::ui_is_resizable(LV2Model* model)
         return false;
     }
 
-    const LilvNode* s = lilv_ui_get_uri(_ui);
-    LilvNode* p = lilv_new_uri(model->world, LV2_CORE__optionalFeature);
-    LilvNode* fs = lilv_new_uri(model->world, LV2_UI__fixedSize);
-    LilvNode* nrs = lilv_new_uri(model->world, LV2_UI__noUserResize);
+    auto s = lilv_ui_get_uri(_ui);
 
-    LilvNodes* fs_matches = lilv_world_find_nodes(model->world, s, p, fs);
-    LilvNodes* nrs_matches = lilv_world_find_nodes(model->world, s, p, nrs);
+    auto world = model->get_world();
+
+    auto p = lilv_new_uri(world, LV2_CORE__optionalFeature);
+    auto fs = lilv_new_uri(world, LV2_UI__fixedSize);
+    auto nrs = lilv_new_uri(world, LV2_UI__noUserResize);
+
+    auto fs_matches = lilv_world_find_nodes(world, s, p, fs);
+    auto nrs_matches = lilv_world_find_nodes(world, s, p, nrs);
 
     lilv_nodes_free(nrs_matches);
     lilv_nodes_free(fs_matches);
@@ -219,16 +228,16 @@ bool Lv2_UI_IO::ui_is_resizable(LV2Model* model)
 
 void Lv2_UI_IO::ui_write(void* const jalv_handle, uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer)
 {
-    LV2Model* const model = (LV2Model*)jalv_handle;
+    auto model  = static_cast<LV2Model*>(jalv_handle);
 
-    if (protocol != 0 && protocol != model->urids.atom_eventTransfer)
+    if (protocol != 0 && protocol != model->get_urids().atom_eventTransfer)
     {
         fprintf(stderr, "UI write with unsupported protocol %d (%s)\n",
                 protocol, unmap_uri(model, protocol));
         return;
     }
 
-    if (port_index >= model->num_ports)
+    if (port_index >= model->get_port_count())
     {
         fprintf(stderr, "UI write to out of range port index %d\n",
                 port_index);
@@ -276,28 +285,31 @@ void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
 
     ControlChange ev;
     const size_t space = zix_ring_read_space(_ui_events);
+
     for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
     {
         zix_ring_read(_ui_events, (char*)&ev, sizeof(ev));
         char body[ev.size];
+
         if (zix_ring_read(_ui_events, body, ev.size) != ev.size)
         {
             fprintf(stderr, "error: Error reading from UI ring buffer\n");
             break;
         }
-        assert(ev.index < model->num_ports);
-        Port* port = model->ports[ev.index].get();
+
+        assert(ev.index < model->get_port_count());
+        auto port = model->get_port(ev.index);
+
         if (ev.protocol == 0)
         {
             assert(ev.size == sizeof(float));
             port->control = *(float*)body;
         }
-        else if (ev.protocol == model->urids.atom_eventTransfer)
+        else if (ev.protocol == model->get_urids().atom_eventTransfer)
         {
             LV2_Evbuf_Iterator e = lv2_evbuf_end(port->_evbuf);
-            const LV2_Atom* const atom = (const LV2_Atom*)body;
-            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
-                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+            auto atom = reinterpret_cast<const LV2_Atom*>(body);
+            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size, reinterpret_cast<const uint8_t*>(LV2_ATOM_BODY_CONST(atom)));
         }
         else
         {
@@ -310,8 +322,8 @@ void Lv2_UI_IO::apply_ui_events(LV2Model* model, uint32_t nframes)
 // TODO: Essentially unused passed as reference to commented code
 uint32_t Lv2_UI_IO::ui_port_index(void* const controller, const char* symbol)
 {
-    LV2Model* const model = (LV2Model*)controller;
-    struct Port* port = port_by_symbol(model, symbol);
+    auto model = static_cast<LV2Model*>(controller);
+    auto port = port_by_symbol(model, symbol);
 
     return port ? port->getIndex() : LV2UI_INVALID_PORT_INDEX;
 }
@@ -320,30 +332,28 @@ uint32_t Lv2_UI_IO::ui_port_index(void* const controller, const char* symbol)
 void Lv2_UI_IO::init_ui(LV2Model* model)
 {
     // Set initial control port values
-    for (uint32_t i = 0; i < model->num_ports; ++i)
+    for (uint32_t i = 0; i < model->get_port_count(); ++i)
     {
-        if (model->ports[i]->getType() == TYPE_CONTROL)
+        if (model->get_port(i)->getType() == TYPE_CONTROL)
         {
-            ui_port_event(model, i,
-                          sizeof(float), 0,
-                          &model->ports[i]->control);
+            ui_port_event(model, i, sizeof(float),0, &model->get_port(i)->control);
         }
     }
 
-    if (model->control_in != (uint32_t)-1)
+    if (model->get_control_input_index() != (uint32_t)-1)
     {
         // Send patch:Get message for initial parameters/etc
-        LV2_Atom_Forge forge = model->forge;
+        auto forge = model->get_forge();
         LV2_Atom_Forge_Frame frame;
         uint8_t buf[1024];
         lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
-        lv2_atom_forge_object(&forge, &frame, 0, model->urids.patch_Get);
+        lv2_atom_forge_object(&forge, &frame, 0, model->get_urids().patch_Get);
 
-        const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+        auto atom = lv2_atom_forge_deref(&forge, frame.ref);
         ui_write(model,
-                 model->control_in,
+                 model->get_control_input_index(),
                  lv2_atom_total_size(atom),
-                 model->urids.atom_eventTransfer,
+                 model->get_urids().atom_eventTransfer,
                  atom);
 
         lv2_atom_forge_pop(&forge, &frame);
@@ -410,7 +420,7 @@ bool Lv2_UI_IO::send_to_ui(LV2Model* model, uint32_t port_index, uint32_t type, 
     char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
     ControlChange* ev = (ControlChange*)evbuf;
     ev->index = port_index;
-    ev->protocol = model->urids.atom_eventTransfer;
+    ev->protocol = model->get_urids().atom_eventTransfer;
     ev->size = sizeof(LV2_Atom) + size;
 
     LV2_Atom* atom = (LV2_Atom*)ev->body;
@@ -487,7 +497,7 @@ ControlID* Lv2_UI_IO::control_by_symbol(LV2Model* model, const char* sym)
             return model->controls[i].get();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 } // namespace lv2

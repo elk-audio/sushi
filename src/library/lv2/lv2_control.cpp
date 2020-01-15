@@ -22,18 +22,18 @@ namespace lv2 {
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index)
 {
     const auto lilvPort = port->get_lilv_port();
-    const auto plugin = model->plugin;
-    const auto nodes = &model->nodes;
+    const auto plugin = model->get_plugin_class();
+    const auto nodes = &model->get_nodes();
 
     auto id = std::make_unique<ControlID>();
     id->model = model;
-    id->type = PORT;
+    id->type = ControlType::PORT;
     id->node = lilv_node_duplicate(lilv_port_get_node(plugin, lilvPort));
     id->symbol = lilv_node_duplicate(lilv_port_get_symbol(plugin, lilvPort));
     id->label = lilv_port_get_name(plugin, lilvPort);
     id->index = index;
-    id->group = lilv_port_get(plugin, lilvPort, model->nodes.pg_group);
-    id->value_type = model->forge.Float;
+    id->group = lilv_port_get(plugin, lilvPort, nodes->pg_group);
+    id->value_type = model->get_forge().Float;
     id->is_writable = lilv_port_is_a(plugin, lilvPort, nodes->lv2_InputPort);
     id->is_readable = lilv_port_is_a(plugin, lilvPort, nodes->lv2_OutputPort);
     id->is_toggle = lilv_port_has_property(plugin, lilvPort, nodes->lv2_toggled);
@@ -42,20 +42,20 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
     id->is_logarithmic = lilv_port_has_property(plugin, lilvPort, nodes->pprops_logarithmic);
 
     lilv_port_get_range(plugin, lilvPort, &id->def, &id->min, &id->max);
-    if (lilv_port_has_property(plugin, lilvPort, model->nodes.lv2_sampleRate))
+    if (lilv_port_has_property(plugin, lilvPort, nodes->lv2_sampleRate))
     {
         /* Adjust range for lv2:sampleRate controls */
         if (lilv_node_is_float(id->min) || lilv_node_is_int(id->min))
         {
-            const float min = lilv_node_as_float(id->min) * model->sample_rate;
+            const float min = lilv_node_as_float(id->min) * model->get_sample_rate();
             lilv_node_free(id->min);
-            id->min = lilv_new_float(model->world, min);
+            id->min = lilv_new_float(model->get_world(), min);
         }
         if (lilv_node_is_float(id->max) || lilv_node_is_int(id->max))
         {
-            const float max = lilv_node_as_float(id->max) * model->sample_rate;
+            const float max = lilv_node_as_float(id->max) * model->get_sample_rate();
             lilv_node_free(id->max);
-            id->max = lilv_new_float(model->world, max);
+            id->max = lilv_new_float(model->get_world(), max);
         }
     }
 
@@ -93,43 +93,48 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
 
 bool has_range(LV2Model* model, const LilvNode* subject, const char* range_uri)
 {
-    auto range = lilv_new_uri(model->world, range_uri);
-    const bool result = lilv_world_ask(model->world, subject, model->nodes.rdfs_range, range);
+    auto world = model->get_world();
+    auto range = lilv_new_uri(world, range_uri);
+    const bool result = lilv_world_ask(world, subject, model->get_nodes().rdfs_range, range);
     lilv_node_free(range);
     return result;
 }
 
 std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode *property)
 {
+    auto world = model->get_world();
+
     auto id = std::make_unique<ControlID>();
     id->model = model;
-    id->type = PROPERTY;
+    id->type = ControlType::PROPERTY;
     id->node = lilv_node_duplicate(property);
-    id->symbol = lilv_world_get_symbol(model->world, property);
-    id->label = lilv_world_get(model->world, property, model->nodes.rdfs_label, NULL);
-    id->property = model->map.map(model, lilv_node_as_uri(property));
+    id->symbol = lilv_world_get_symbol(world, property);
+    id->label = lilv_world_get(world, property, model->get_nodes().rdfs_label, nullptr);
+    id->property = model->get_map().map(model, lilv_node_as_uri(property));
 
-    id->min = lilv_world_get(model->world, property, model->nodes.lv2_minimum, NULL);
-    id->max = lilv_world_get(model->world, property, model->nodes.lv2_maximum, NULL);
-    id->def = lilv_world_get(model->world, property, model->nodes.lv2_default, NULL);
+    id->min = lilv_world_get(world, property, model->get_nodes().lv2_minimum, nullptr);
+    id->max = lilv_world_get(world, property, model->get_nodes().lv2_maximum, nullptr);
+    id->def = lilv_world_get(world, property, model->get_nodes().lv2_default, nullptr);
 
     const char *const types[] = {
             LV2_ATOM__Int, LV2_ATOM__Long, LV2_ATOM__Float, LV2_ATOM__Double,
-            LV2_ATOM__Bool, LV2_ATOM__String, LV2_ATOM__Path, NULL
+            LV2_ATOM__Bool, LV2_ATOM__String, LV2_ATOM__Path, nullptr
     };
 
     for (const char *const *t = types; *t; ++t)
     {
         if (has_range(model, property, *t))
         {
-            id->value_type = model->map.map(model, *t);
+            id->value_type = model->get_map().map(model, *t);
             break;
         }
     }
 
-    id->is_toggle = (id->value_type == model->forge.Bool);
-    id->is_integer = (id->value_type == model->forge.Int ||
-                      id->value_type == model->forge.Long);
+    auto forge = model->get_forge();
+
+    id->is_toggle = (id->value_type == forge.Bool);
+    id->is_integer = (id->value_type == forge.Int ||
+                      id->value_type == forge.Long);
 
     if (!id->value_type)
     {
@@ -151,7 +156,7 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 */
 }

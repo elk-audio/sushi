@@ -39,6 +39,7 @@
 
 #include "lv2_worker.h"
 #include "lv2_state.h"
+#include "lv2_control.h"
 
 #include "logging.h"
 
@@ -55,7 +56,7 @@ PluginLoader::PluginLoader()
 
 PluginLoader::~PluginLoader()
 {
-    lilv_world_free(_model->world);
+    lilv_world_free(_model->get_world());
 }
 
 const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &plugin_URI_string)
@@ -67,8 +68,8 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         // program, which can cause an infinite loop.
     }
 
-    auto plugins = lilv_world_get_all_plugins(_model->world);
-    auto plugin_uri = lilv_new_uri(_model->world, plugin_URI_string.c_str());
+    auto plugins = lilv_world_get_all_plugins(_model->get_world());
+    auto plugin_uri = lilv_new_uri(_model->get_world(), plugin_URI_string.c_str());
 
     if (!plugin_uri)
     {
@@ -95,51 +96,53 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
     /* Instantiate the plugin */
-    _model->instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
+    _model->set_plugin_instance(lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list));
 
-    if (_model->instance == nullptr)
+    if (_model->get_plugin_instance() == nullptr)
     {
         SUSHI_LOG_ERROR("Failed instantiating LV2 plugin.");
         return;
     }
 
-    _model->_features.ext_data.data_access = lilv_instance_get_descriptor(_model->instance)->extension_data;
+    _model->get_features().ext_data.data_access = lilv_instance_get_descriptor(_model->get_plugin_instance())->extension_data;
 
     /* Create workers if necessary */
-    if (lilv_plugin_has_extension_data(plugin_handle, _model->nodes.work_interface))
+    if (lilv_plugin_has_extension_data(plugin_handle, _model->get_nodes().work_interface))
     {
-        auto iface = reinterpret_cast<const LV2_Worker_Interface*>
-                (lilv_instance_get_extension_data(_model->instance, LV2_WORKER__interface));
+        auto interface = reinterpret_cast<const LV2_Worker_Interface*>
+                (lilv_instance_get_extension_data(_model->get_plugin_instance(), LV2_WORKER__interface));
 
-        lv2_worker_init(_model, &_model->worker, iface, true);
+        lv2_worker_init(_model, _model->get_worker(), interface, true);
 
-        if (_model->safe_restore)
+        if (_model->is_restore_thread_safe())
         {
-            lv2_worker_init(_model, &_model->state_worker, iface, false);
+            lv2_worker_init(_model, _model->get_state_worker(), interface, false);
         }
     }
 
-    auto state_threadSafeRestore = lilv_new_uri(_model->world, LV2_STATE__threadSafeRestore);
+    auto state_threadSafeRestore = lilv_new_uri(_model->get_world(), LV2_STATE__threadSafeRestore);
+
     if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
     {
-        _model->safe_restore = true;
+        _model->set_restore_thread_safe(true);
     }
+
     lilv_node_free(state_threadSafeRestore);
 }
 
 void PluginLoader::close_plugin_instance()
 {
-    if (_model->instance != nullptr)
+    if (auto instance = _model->get_plugin_instance())
     {
-        _model->exit = true;
+        _model->trigger_exit();
 
         /* Terminate the worker */
-        lv2_worker_finish(&_model->worker);
+        lv2_worker_finish(_model->get_worker());
 
-        lilv_instance_deactivate(_model->instance);
-        lilv_instance_free(_model->instance);
+        lilv_instance_deactivate(instance);
+        lilv_instance_free(instance);
 
-        lv2_worker_destroy(&_model->worker);
+        lv2_worker_destroy(_model->get_worker());
 
         for (unsigned i = 0; i < _model->controls.size(); ++i)
         {
@@ -154,7 +157,7 @@ void PluginLoader::close_plugin_instance()
             free(control);
         }
 
-        _model->instance = nullptr;
+        _model->set_plugin_instance(nullptr);
     }
 }
 

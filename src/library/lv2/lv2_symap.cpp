@@ -183,13 +183,13 @@ const char* symap_unmap(Symap *map, uint32_t id)
 {
     if (id == 0)
     {
-        return NULL;
+        return nullptr;
     }
     else if (id <= map->size)
     {
         return map->symbols[id - 1];
     }
-    return NULL;
+    return nullptr;
 }
 
 #ifdef STANDALONE

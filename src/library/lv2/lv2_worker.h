@@ -14,21 +14,80 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#ifndef SUSHI_LV2_WORKER_H
+#define SUSHI_LV2_WORKER_H
+
+#ifdef SUSHI_BUILD_WITH_LV2
+
 #include "lv2/worker/worker.h"
-#include "lv2_model.h"
+
+#include "lv2_semaphore.h"
+#include "zix/ring.h"
+#include "zix/thread.h"
+#include <lilv-0/lilv/lilv.h>
 
 namespace sushi {
-    namespace lv2 {
+namespace lv2 {
 
-void lv2_worker_init(LV2Model *model, Lv2_Worker *worker, const LV2_Worker_Interface *iface, bool threaded);
+class LV2Model;
 
-void lv2_worker_finish(Lv2_Worker *worker);
+struct Lv2_Worker
+{
+    LV2Model* model; // TODO: Is this needed?
 
-void lv2_worker_destroy(Lv2_Worker *worker);
+    ZixRing* requests = nullptr; ///< Requests to the worker
+    ZixRing* responses = nullptr; ///< Responses from the worker
+
+// TODO: Introduce std::thread instead - to remove Zix dependency.
+    ZixThread thread; ///< Worker thread
+
+    void* response = nullptr; ///< Worker response buffer
+    Semaphore sem;
+
+    const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
+    bool threaded = false; ///< Run work in another thread
+};
+
+void lv2_worker_init(LV2Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded);
+
+void lv2_worker_finish(Lv2_Worker* worker);
+
+void lv2_worker_destroy(Lv2_Worker* worker);
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
-void lv2_worker_emit_responses(Lv2_Worker *worker, LilvInstance *instance);
+void lv2_worker_emit_responses(Lv2_Worker* worker, LilvInstance* instance);
 
-    }
 }
+}
+
+#endif //SUSHI_BUILD_WITH_LV2
+#ifndef SUSHI_BUILD_WITH_LV2
+
+#include "library/processor.h"
+
+namespace sushi {
+namespace lv2 {
+/* If LV2 support is disabled in the build, the wrapper is replaced with this
+   minimal dummy processor whose purpose is to log an error message if a user
+   tries to load an LV2 plugin */
+class Lv2Wrapper : public Processor
+{
+public:
+    Lv2Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
+        Processor(host_control) {}
+
+    ProcessorReturnCode init(float sample_rate) override
+    {
+        return ProcessorReturnCode::ERROR;
+    }
+
+    void process_event(RtEvent /*event*/) override {}
+    void process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& /*out*/) override {}
+};
+
+}// end namespace lv2
+}// end namespace sushi
+#endif
+
+#endif //SUSHI_LV2_WORKER_H

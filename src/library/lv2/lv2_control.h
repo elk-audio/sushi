@@ -14,10 +14,53 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#ifndef SUSHI_LV2_CONTROL_H
+#define SUSHI_LV2_CONTROL_H
+
+#ifdef SUSHI_BUILD_WITH_LV2
+
 #include "lv2_model.h"
 
 namespace sushi {
 namespace lv2 {
+
+struct ScalePoint
+{
+    float value;
+    std::string label;
+};
+
+/** Type of plugin control. */
+enum class ControlType
+{
+    PORT, ///< Control port
+    PROPERTY ///< Property (set via atom message)
+};
+
+/** Plugin control. */
+struct ControlID
+{
+    LV2Model* model; // TODO: Is this needed?
+    ControlType type;
+    LilvNode* node;
+    LilvNode* symbol; ///< Symbol
+    LilvNode* label; ///< Human readable label
+    LV2_URID property; ///< Iff type == PROPERTY
+    int index; ///< Iff type == PORT
+    LilvNode* group; ///< Port/control group, or NULL
+//  void* widget; ///< Control Widget
+    std::vector<std::unique_ptr<ScalePoint>> points; ///< Scale points
+    LV2_URID value_type; ///< Type of control value
+    LilvNode* min; ///< Minimum value
+    LilvNode* max; ///< Maximum value
+    LilvNode* def; ///< Default value
+    bool is_toggle; ///< Boolean (0 and 1 only)
+    bool is_integer; ///< Integer values only
+    bool is_enumeration; ///< Point values only
+    bool is_logarithmic; ///< Logarithmic scale
+    bool is_writable; ///< Writable (input)
+    bool is_readable; ///< Readable (output)
+};
 
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index);
 
@@ -28,5 +71,14 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
 // TODO: Re-introduce if needed.
 // ControlID* get_property_control(std::vector<std::unique_ptr<ControlID>>* controls, LV2_URID property);
 
-}
-}
+} // end namespace lv2
+} // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_LV2
+#ifndef SUSHI_BUILD_WITH_LV2
+
+// (...)
+
+#endif
+
+#endif //SUSHI_LV2_CONTROL_H

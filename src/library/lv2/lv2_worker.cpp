@@ -15,12 +15,13 @@
 */
 
 #include "lv2_worker.h"
+#include "lv2_model.h"
 
 #include "zix/ring.h"
 #include "zix/thread.h"
 
 namespace sushi {
-    namespace lv2 {
+namespace lv2 {
 
 static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
@@ -32,15 +33,15 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
 
 static void* worker_func(void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)data;
-    LV2Model* model = worker->model;
+    auto worker = static_cast<Lv2_Worker*>(data);
+    auto model = worker->model;
 
-	void* buf = NULL;
+	void* buf = nullptr;
 	while (true)
 	{
         worker->sem.wait();
 
-		if (model->exit)
+		if (model->get_exit())
 		{
 			break;
 		}
@@ -52,19 +53,19 @@ static void* worker_func(void* data)
 		{
 			fprintf(stderr, "error: realloc() failed\n");
 			free(buf);
-			return NULL;
+			return nullptr;
 		}
 
 		zix_ring_read(worker->requests, (char*)buf, size);
 
-        std::unique_lock<std::mutex> lock(model->work_lock);
+        std::unique_lock<std::mutex> lock(model->get_work_lock());
 		worker->iface->work(
-			model->instance->lv2_handle, lv2_worker_respond, worker, size, buf);
+			model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, buf);
 	}
 
 	free(buf);
 
-	return NULL;
+	return nullptr;
 }
 
 // TODO: what is ZIX_UNUSED?
@@ -91,7 +92,7 @@ void lv2_worker_finish(Lv2_Worker* worker)
 	if (worker->threaded)
 	{
         worker->sem.notify();
-		zix_thread_join(worker->thread, NULL);
+		zix_thread_join(worker->thread, nullptr);
 	}
 }
 
@@ -114,8 +115,8 @@ void lv2_worker_destroy(Lv2_Worker* worker)
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)handle;
-    LV2Model* model = worker->model;
+    auto worker = static_cast<Lv2_Worker*>(handle);
+    auto model = worker->model;
 
 	if (worker->threaded)
 	{
@@ -128,9 +129,9 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
 	    {
 		// Execute work immediately in this thread
 
-		std::unique_lock<std::mutex> lock(model->work_lock);
+		std::unique_lock<std::mutex> lock(model->get_work_lock());
 		worker->iface->work(
-                model->instance->lv2_handle, lv2_worker_respond, worker, size, data);
+                model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
 	}
 	return LV2_WORKER_SUCCESS;
 }

@@ -41,14 +41,14 @@ _index(port_index)
 {
     lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
-    const bool optional = lilv_port_has_property(plugin, lilv_port, model->nodes.lv2_connectionOptional);
+    const bool optional = lilv_port_has_property(plugin, lilv_port, model->get_nodes().lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
-    if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_InputPort))
+    if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_InputPort))
     {
         _flow = FLOW_INPUT;
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_OutputPort))
+    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_OutputPort))
     {
         _flow = FLOW_OUTPUT;
     }
@@ -60,10 +60,10 @@ _index(port_index)
     }
 
     const bool hidden = !_show_hidden &&
-                        lilv_port_has_property(plugin, lilv_port, model->nodes.pprops_notOnGUI);
+                        lilv_port_has_property(plugin, lilv_port, model->get_nodes().pprops_notOnGUI);
 
     /* Set control values */
-    if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_ControlPort))
+    if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_ControlPort))
     {
         _type = TYPE_CONTROL;
 
@@ -94,7 +94,7 @@ _index(port_index)
             model->controls.emplace_back(new_port_control(this, model, _index));
         }
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->nodes.lv2_AudioPort))
+    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_AudioPort))
     {
         _type = TYPE_AUDIO;
 
@@ -106,7 +106,7 @@ _index(port_index)
 //#endif
 
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->nodes.atom_AtomPort))
+    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().atom_AtomPort))
     {
         _type = TYPE_EVENT;
     }
@@ -136,17 +136,19 @@ void Port::_allocate_port_buffers(LV2Model* model)
 {
     switch (_type)
     {
-        case TYPE_EVENT: {
+        case TYPE_EVENT:
+        {
             lv2_evbuf_free(_evbuf);
-            const size_t buf_size = model->midi_buf_size;
+
+            auto handle = model->get_map().handle;
+
             _evbuf = lv2_evbuf_new(
-                    buf_size,
-                    model->map.map(model->map.handle,
-                                   lilv_node_as_string(model->nodes.atom_Chunk)),
-                    model->map.map(model->map.handle,
-                                   lilv_node_as_string(model->nodes.atom_Sequence)));
+                    model->get_midi_buffer_size(),
+                    model->get_map().map(handle, lilv_node_as_string(model->get_nodes().atom_Chunk)),
+                    model->get_map().map(handle, lilv_node_as_string(model->get_nodes().atom_Sequence)));
+
             lilv_instance_connect_port(
-                    model->instance, _index, lv2_evbuf_get_buffer(_evbuf));
+                    model->get_plugin_instance(), _index, lv2_evbuf_get_buffer(_evbuf));
         }
         default:
             break;

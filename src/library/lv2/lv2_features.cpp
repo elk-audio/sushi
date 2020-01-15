@@ -31,10 +31,10 @@ namespace lv2 {
 
 Port* port_by_symbol(LV2Model* model, const char* sym)
 {
-    for (int i = 0; i < model->num_ports; ++i)
+    for (int i = 0; i < model->get_port_count(); ++i)
     {
-        auto port = model->ports[i].get();
-        const auto port_symbol = lilv_port_get_symbol(model->plugin, port->get_lilv_port());
+        auto port = model->get_port(i);
+        const auto port_symbol = lilv_port_get_symbol(model->get_plugin_class(), port->get_lilv_port());
 
         if (!strcmp(lilv_node_as_string(port_symbol), sym))
         {
@@ -50,28 +50,30 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 const char* fmt,
                 va_list ap)
 {
-    auto model  = static_cast<LV2Model*>(handle);
-    if (type == model->urids.log_Trace && TRACE_OPTION)
+    auto model = static_cast<LV2Model*>(handle);
+    auto urids = model->get_urids();
+
+    if (type == urids.log_Trace && TRACE_OPTION)
     {
         SUSHI_LOG_WARNING("LV2 trace: {}", fmt);
     }
-    else if (type == model->urids.log_Error)
+    else if (type == urids.log_Error)
     {
         SUSHI_LOG_ERROR("LV2 Error: {}", fmt);
     }
-    else if (type == model->urids.log_Warning)
+    else if (type == urids.log_Warning)
     {
         SUSHI_LOG_WARNING("LV2 warning: {}", fmt);
     }
-    else if (type == model->urids.log_Entry)
+    else if (type == urids.log_Entry)
     {
         SUSHI_LOG_WARNING("LV2 Entry: {}", fmt);
     }
-    else if (type == model->urids.log_Note)
+    else if (type == urids.log_Note)
     {
         SUSHI_LOG_WARNING("LV2 Note: {}", fmt);
     }
-    else if (type == model->urids.log_log)
+    else if (type == urids.log_log)
     {
         SUSHI_LOG_WARNING("LV2 log: {}", fmt);
     }
@@ -112,18 +114,13 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 {
     auto model = static_cast<LV2Model*>(handle);
-    std::unique_lock<std::mutex> lock(model->symap_lock);
-    const LV2_URID id = symap_map(model->symap, uri);
-
-    return id;
+    return model->map(uri);
 }
 
 const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
 {
     auto model = static_cast<LV2Model*>(handle);
-    std::unique_lock<std::mutex> lock(model->symap_lock);
-    const char* uri = symap_unmap(model->symap, urid);
-    return uri;
+    return model->unmap(urid);
 }
 
 void init_feature(LV2_Feature* const dest, const char* const URI, void* data)

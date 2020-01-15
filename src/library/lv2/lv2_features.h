@@ -62,9 +62,6 @@ static const bool TRACE_OPTION = true;
 
 /**
    Get a port structure by symbol.
-
-   (Inherited) TODO: Build an index to make this faster, currently O(n) which may be
-   a problem when restoring the state of plugins with many ports.
 */
 Port* port_by_symbol(LV2Model* model, const char* sym);
 
