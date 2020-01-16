@@ -31,32 +31,41 @@ namespace lv2 {
 
 class LV2Model;
 
-struct Lv2_Worker
+class Lv2_Worker
 {
+public:
     LV2Model* model; // TODO: Is this needed?
-
-    ZixRing* requests = nullptr; ///< Requests to the worker
-    ZixRing* responses = nullptr; ///< Responses from the worker
-
-// TODO: Introduce std::thread instead - to remove Zix dependency.
-    ZixThread thread; ///< Worker thread
-
-    void* response = nullptr; ///< Worker response buffer
     Semaphore sem;
 
-    const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
-    bool threaded = false; ///< Run work in another thread
+    void init(LV2Model* model, const LV2_Worker_Interface* iface, bool threaded);
+
+    void finish();
+
+    void destroy();
+
+    void emit_responses(LilvInstance* instance);
+
+    ZixRing* get_requests();
+    ZixRing* get_responses();
+
+    const LV2_Worker_Interface* get_iface();
+
+    bool is_threaded();
+
+private:
+    ZixRing* _requests = nullptr; ///< Requests to the worker
+    ZixRing* _responses = nullptr; ///< Responses from the worker
+
+// TODO: Introduce std::thread instead - to remove Zix dependency.
+    ZixThread _thread; ///< Worker thread
+
+    void* _response = nullptr; ///< Worker response buffer
+
+    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
+    bool _threaded = false; ///< Run work in another thread
 };
 
-void lv2_worker_init(LV2Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded);
-
-void lv2_worker_finish(Lv2_Worker* worker);
-
-void lv2_worker_destroy(Lv2_Worker* worker);
-
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
-
-void lv2_worker_emit_responses(Lv2_Worker* worker, LilvInstance* instance);
 
 }
 }

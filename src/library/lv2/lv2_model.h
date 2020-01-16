@@ -54,8 +54,6 @@
 #include "../processor.h"
 #include "../../engine/base_event_dispatcher.h"
 
-#include "zix/ring.h"
-#include "zix/thread.h"
 #include "lv2_symap.h"
 #include "lv2_port.h"
 #include "lv2_evbuf.h"
@@ -68,7 +66,7 @@ namespace sushi {
 namespace lv2 {
 
 class LV2Model;
-struct Lv2_Worker;
+class Lv2_Worker;
 struct ControlID;
 
 /**

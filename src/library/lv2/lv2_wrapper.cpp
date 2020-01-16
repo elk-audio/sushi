@@ -558,13 +558,14 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         lilv_instance_run(_model->get_plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
-        lv2_worker_emit_responses(_model->get_state_worker(), _model->get_plugin_instance());
-        lv2_worker_emit_responses(_model->get_worker(), _model->get_plugin_instance());
+        _model->get_state_worker()->emit_responses(_model->get_plugin_instance());
+        _model->get_worker()->emit_responses(_model->get_plugin_instance());
 
         /* Notify the plugin the run() cycle is finished */
-        if (_model->get_worker()->iface && _model->get_worker()->iface->end_run)
+        // TODO: Make this a member of Lv2_worker
+        if (_model->get_worker()->get_iface() && _model->get_worker()->get_iface()->end_run)
         {
-            _model->get_worker()->iface->end_run(_model->get_plugin_instance()->lv2_handle);
+            _model->get_worker()->get_iface()->end_run(_model->get_plugin_instance()->lv2_handle);
         }
 
 // TODO: Reintroduce when implementing 'GUI'.

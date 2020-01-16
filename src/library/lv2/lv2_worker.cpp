@@ -25,9 +25,9 @@ namespace lv2 {
 
 static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)handle;
-	zix_ring_write(worker->responses, (const char*)&size, sizeof(size));
-	zix_ring_write(worker->responses, (const char*)data, size);
+    auto worker = static_cast<Lv2_Worker*>(handle);
+	zix_ring_write(worker->get_responses(), (const char*)&size, sizeof(size));
+	zix_ring_write(worker->get_responses(), (const char*)data, size);
 	return LV2_WORKER_SUCCESS;
 }
 
@@ -47,7 +47,7 @@ static void* worker_func(void* data)
 		}
 
 		uint32_t size = 0;
-		zix_ring_read(worker->requests, (char*)&size, sizeof(size));
+		zix_ring_read(worker->get_requests(), (char*)&size, sizeof(size));
 
 		if (!(buf = realloc(buf, size)))
 		{
@@ -56,10 +56,10 @@ static void* worker_func(void* data)
 			return nullptr;
 		}
 
-		zix_ring_read(worker->requests, (char*)buf, size);
+		zix_ring_read(worker->get_requests(), (char*)buf, size);
 
         std::unique_lock<std::mutex> lock(model->get_work_lock());
-		worker->iface->work(
+		worker->get_iface()->work(
 			model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, buf);
 	}
 
@@ -68,49 +68,86 @@ static void* worker_func(void* data)
 	return nullptr;
 }
 
-// TODO: what is ZIX_UNUSED?
-void lv2_worker_init(ZIX_UNUSED LV2Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded)
+void Lv2_Worker::init(LV2Model* model, const LV2_Worker_Interface* iface, bool threaded)
 {
-	worker->iface = iface;
-	worker->threaded = threaded;
+	_iface = iface;
+	_threaded = threaded;
 
-	if (threaded)
+	if (_threaded)
 	{
-		zix_thread_create(&worker->thread, 4096, worker_func, worker);
-		worker->requests = zix_ring_new(4096);
-		zix_ring_mlock(worker->requests);
+		zix_thread_create(&_thread, 4096, worker_func, this);
+        _requests = zix_ring_new(4096);
+		zix_ring_mlock(_requests);
 	}
 
-
-	worker->responses = zix_ring_new(4096);
-	worker->response  = malloc(4096);
-	zix_ring_mlock(worker->responses);
+    _responses = zix_ring_new(4096);
+    _response  = malloc(4096);
+	zix_ring_mlock(_responses);
 }
 
-void lv2_worker_finish(Lv2_Worker* worker)
+void Lv2_Worker::finish()
 {
-	if (worker->threaded)
+	if (_threaded)
 	{
-        worker->sem.notify();
-		zix_thread_join(worker->thread, nullptr);
+        sem.notify();
+		zix_thread_join(_thread, nullptr);
 	}
 }
 
-void lv2_worker_destroy(Lv2_Worker* worker)
+void Lv2_Worker::destroy()
 {
-	if (worker->requests)
+	if (_requests)
 	{
-		if (worker->threaded)
+		if (_threaded)
 		{
-			zix_ring_free(worker->requests);
+			zix_ring_free(_requests);
 		}
 
-		if(worker->responses)
+		if(_responses)
 		{
-            zix_ring_free(worker->responses);
-            free(worker->response);
+            zix_ring_free(_responses);
+            free(_response);
         }
 	}
+}
+
+void Lv2_Worker::emit_responses(LilvInstance* instance)
+{
+    if (_responses)
+    {
+        uint32_t read_space = zix_ring_read_space(_responses);
+        while (read_space)
+        {
+            uint32_t size = 0;
+            zix_ring_read(_responses, (char*)&size, sizeof(size));
+
+            zix_ring_read(_responses, (char*)_response, size);
+
+            _iface->work_response(instance->lv2_handle, size, _response);
+
+            read_space -= sizeof(size) + size;
+        }
+    }
+}
+
+ZixRing* Lv2_Worker::get_requests()
+{
+    return _requests;
+}
+
+ZixRing* Lv2_Worker::get_responses()
+{
+    return _responses;
+}
+
+const LV2_Worker_Interface* Lv2_Worker::get_iface()
+{
+    return _iface;
+}
+
+bool Lv2_Worker::is_threaded()
+{
+    return _threaded;
 }
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
@@ -118,11 +155,11 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
     auto worker = static_cast<Lv2_Worker*>(handle);
     auto model = worker->model;
 
-	if (worker->threaded)
+	if (worker->is_threaded())
 	{
 		// Schedule a request to be executed by the worker thread
-		zix_ring_write(worker->requests, (const char*)&size, sizeof(size));
-		zix_ring_write(worker->requests, (const char*)data, size);
+		zix_ring_write(worker->get_requests(), (const char*)&size, sizeof(size));
+		zix_ring_write(worker->get_requests(), (const char*)data, size);
         worker->sem.notify();
 	}
 	else
@@ -130,30 +167,10 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
 		// Execute work immediately in this thread
 
 		std::unique_lock<std::mutex> lock(model->get_work_lock());
-		worker->iface->work(
+		worker->get_iface()->work(
                 model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
 	}
 	return LV2_WORKER_SUCCESS;
-}
-
-void lv2_worker_emit_responses(Lv2_Worker* worker, LilvInstance* instance)
-{
-	if (worker->responses)
-	{
-		uint32_t read_space = zix_ring_read_space(worker->responses);
-		while (read_space)
-		{
-			uint32_t size = 0;
-			zix_ring_read(worker->responses, (char*)&size, sizeof(size));
-
-			zix_ring_read(worker->responses, (char*)worker->response, size);
-
-			worker->iface->work_response(
-				instance->lv2_handle, size, worker->response);
-
-			read_space -= sizeof(size) + size;
-		}
-	}
 }
 
 }

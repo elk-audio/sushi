@@ -38,7 +38,7 @@ int unload_presets(LV2Model* model);
 void set_port_value(const char* port_symbol,
                void* user_data,
                const void* value,
-               ZIX_UNUSED uint32_t size,
+               uint32_t size,
                uint32_t type);
 
 void apply_state(LV2Model* model, LilvState* state);

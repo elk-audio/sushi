@@ -112,11 +112,11 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
         auto interface = reinterpret_cast<const LV2_Worker_Interface*>
                 (lilv_instance_get_extension_data(_model->get_plugin_instance(), LV2_WORKER__interface));
 
-        lv2_worker_init(_model, _model->get_worker(), interface, true);
+        _model->get_worker()->init(_model, interface, true);
 
         if (_model->is_restore_thread_safe())
         {
-            lv2_worker_init(_model, _model->get_state_worker(), interface, false);
+            _model->get_state_worker()->init(_model, interface, false);
         }
     }
 
@@ -137,12 +137,12 @@ void PluginLoader::close_plugin_instance()
         _model->trigger_exit();
 
         /* Terminate the worker */
-        lv2_worker_finish(_model->get_worker());
+        _model->get_worker()->finish();
 
         lilv_instance_deactivate(instance);
         lilv_instance_free(instance);
 
-        lv2_worker_destroy(_model->get_worker());
+        _model->get_worker()->destroy();
 
         for (unsigned i = 0; i < _model->controls.size(); ++i)
         {
