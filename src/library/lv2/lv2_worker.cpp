@@ -17,9 +17,6 @@
 #include "lv2_worker.h"
 #include "lv2_model.h"
 
-#include "zix/ring.h"
-#include "zix/thread.h"
-
 namespace sushi {
 namespace lv2 {
 
@@ -31,41 +28,57 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
 	return LV2_WORKER_SUCCESS;
 }
 
-static void* worker_func(void* data)
+LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
-    auto worker = static_cast<Lv2_Worker*>(data);
+    auto worker = static_cast<Lv2_Worker*>(handle);
     auto model = worker->get_model();
 
+    if (worker->is_threaded())
+    {
+        // Schedule a request to be executed by the worker thread
+        zix_ring_write(worker->get_requests(), (const char*)&size, sizeof(size));
+        zix_ring_write(worker->get_requests(), (const char*)data, size);
+        worker->get_semaphore().notify();
+    }
+    else
+    {
+        // Execute work immediately in this thread
+
+        std::unique_lock<std::mutex> lock(model->get_work_lock());
+        worker->get_iface()->work(
+                model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
+    }
+    return LV2_WORKER_SUCCESS;
+}
+
+void Lv2_Worker::worker_func()
+{
 	void* buf = nullptr;
 	while (true)
 	{
-        worker->get_semaphore().wait();
+        _semaphore.wait();
 
-		if (model->get_exit())
+		if (_model->get_exit())
 		{
 			break;
 		}
 
 		uint32_t size = 0;
-		zix_ring_read(worker->get_requests(), (char*)&size, sizeof(size));
+		zix_ring_read(_requests, (char*)&size, sizeof(size));
 
 		if (!(buf = realloc(buf, size)))
 		{
 			fprintf(stderr, "error: realloc() failed\n");
 			free(buf);
-			return nullptr;
 		}
 
-		zix_ring_read(worker->get_requests(), (char*)buf, size);
+		zix_ring_read(_requests, (char*)buf, size);
 
-        std::unique_lock<std::mutex> lock(model->get_work_lock());
-		worker->get_iface()->work(
-			model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, buf);
+        std::unique_lock<std::mutex> lock(_model->get_work_lock());
+		_iface->work(_model->get_plugin_instance()->lv2_handle, lv2_worker_respond, this, size, buf);
 	}
 
 	free(buf);
-
-	return nullptr;
 }
 
 Lv2_Worker::Lv2_Worker(LV2Model* model, bool threaded)
@@ -76,7 +89,8 @@ Lv2_Worker::Lv2_Worker(LV2Model* model, bool threaded)
 
 	if (_threaded)
 	{
-		zix_thread_create(&_thread, 4096, worker_func, this);
+        _thread = std::thread(&Lv2_Worker::worker_func, this);
+
         _requests = zix_ring_new(4096);
 		zix_ring_mlock(_requests);
 	}
@@ -97,8 +111,8 @@ void Lv2_Worker::finish()
 	if (_threaded)
 	{
         _semaphore.notify();
-		zix_thread_join(_thread, nullptr);
-	}
+        _thread.join();
+    }
 }
 
 void Lv2_Worker::destroy()
@@ -170,29 +184,6 @@ LV2Model* Lv2_Worker::get_model()
 Semaphore& Lv2_Worker::get_semaphore()
 {
     return _semaphore;
-}
-
-LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
-{
-    auto worker = static_cast<Lv2_Worker*>(handle);
-    auto model = worker->get_model();
-
-	if (worker->is_threaded())
-	{
-		// Schedule a request to be executed by the worker thread
-		zix_ring_write(worker->get_requests(), (const char*)&size, sizeof(size));
-		zix_ring_write(worker->get_requests(), (const char*)data, size);
-        worker->get_semaphore().notify();
-	}
-	else
-	    {
-		// Execute work immediately in this thread
-
-		std::unique_lock<std::mutex> lock(model->get_work_lock());
-		worker->get_iface()->work(
-                model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
-	}
-	return LV2_WORKER_SUCCESS;
 }
 
 }

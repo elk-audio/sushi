@@ -23,7 +23,8 @@
 
 #include "lv2_semaphore.h"
 #include "zix/ring.h"
-#include "zix/thread.h"
+#include <thread>
+
 #include <lilv-0/lilv/lilv.h>
 
 namespace sushi {
@@ -56,14 +57,15 @@ public:
     Semaphore& get_semaphore();
 
 private:
+    void worker_func();
+
     LV2Model* _model;
     Semaphore _semaphore;
 
     ZixRing* _requests = nullptr; ///< Requests to the worker
     ZixRing* _responses = nullptr; ///< Responses from the worker
 
-// TODO: Introduce std::thread instead - to remove Zix dependency.
-    ZixThread _thread; ///< Worker thread
+    std::thread _thread;
 
     void* _response = nullptr; ///< Worker response buffer
 
