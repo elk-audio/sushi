@@ -87,6 +87,15 @@ void LV2Model::initialize_host_feature_list()
     _feature_list = std::move(features);
 }
 
+void LV2Model::set_worker_interface(const LV2_Worker_Interface* iface)
+{
+    if(_worker)
+        _worker->set_iface(iface);
+
+    if(_state_worker)
+        _state_worker->set_iface(iface);
+}
+
 void LV2Model::_initialize_urid_symap()
 {
     lv2_atom_forge_init(&this->_forge, &_map);
@@ -150,11 +159,13 @@ void LV2Model::_initialize_unmap_feature()
 
 void LV2Model::_initialize_worker_feature()
 {
-    _worker = std::make_unique<Lv2_Worker>();
-    _state_worker = std::make_unique<Lv2_Worker>();
+    _worker = std::make_unique<Lv2_Worker>(this, true);
 
-    this->_worker->model = this;
-    this->_state_worker->model = this;
+    // TODO: Should I really inherit this check? Why not just always create it?
+    if (_safe_restore)
+    {
+        _state_worker = std::make_unique<Lv2_Worker>(this, true);
+    }
 
     this->_features.sched.handle = &this->_worker;
     this->_features.sched.schedule_work = lv2_worker_schedule;
@@ -167,6 +178,23 @@ void LV2Model::_initialize_worker_feature()
 
     init_feature(&this->_features.state_sched_feature,
                  LV2_WORKER__schedule, &this->_features.ssched);
+}
+
+void LV2Model::process_worker_replies()
+{
+    if(_state_worker.get())
+        _state_worker->emit_responses(_plugin_instance);
+
+    if(_worker.get())
+    {
+        _worker->emit_responses(_plugin_instance);
+
+        /* Notify the plugin the run() cycle is finished */
+        // TODO: Make this a member of Lv2_worker? If not move back to wrapper.
+        if (_worker->get_iface() && _worker->get_iface()->end_run) {
+            _worker->get_iface()->end_run(_plugin_instance->lv2_handle);
+        }
+    }
 }
 
 void LV2Model::_initialize_safe_restore_feature()
@@ -331,6 +359,13 @@ bool LV2Model::get_exit()
 void LV2Model::trigger_exit()
 {
     _exit = true;
+
+    /* Terminate the worker */
+    if(_worker)
+    {
+        _worker->finish();
+        _worker->destroy();
+    }
 }
 
 int LV2Model::get_control_input_index()

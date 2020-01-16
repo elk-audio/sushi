@@ -34,10 +34,8 @@ class LV2Model;
 class Lv2_Worker
 {
 public:
-    LV2Model* model; // TODO: Is this needed?
-    Semaphore sem;
-
-    void init(LV2Model* model, const LV2_Worker_Interface* iface, bool threaded);
+    Lv2_Worker(LV2Model* model, bool threaded);
+    ~Lv2_Worker();
 
     void finish();
 
@@ -49,10 +47,18 @@ public:
     ZixRing* get_responses();
 
     const LV2_Worker_Interface* get_iface();
+    void set_iface(const LV2_Worker_Interface* iface);
 
     bool is_threaded();
 
+    LV2Model* get_model();
+
+    Semaphore& get_semaphore();
+
 private:
+    LV2Model* _model;
+    Semaphore _semaphore;
+
     ZixRing* _requests = nullptr; ///< Requests to the worker
     ZixRing* _responses = nullptr; ///< Responses from the worker
 

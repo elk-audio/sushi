@@ -222,9 +222,12 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {
     /* Check that any required features are supported */
     auto required_features = lilv_plugin_get_required_features(plugin);
+
     LILV_FOREACH(nodes, f, required_features)
     {
-        const char* uri = lilv_node_as_uri(lilv_nodes_get(required_features, f));
+        auto node = lilv_nodes_get(required_features, f);
+        const char* uri = lilv_node_as_uri(node);
+
         if (!feature_is_supported(_model, uri))
         {
             SUSHI_LOG_ERROR("LV2 feature {} is not supported\n", uri);
@@ -558,15 +561,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         lilv_instance_run(_model->get_plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
-        _model->get_state_worker()->emit_responses(_model->get_plugin_instance());
-        _model->get_worker()->emit_responses(_model->get_plugin_instance());
-
-        /* Notify the plugin the run() cycle is finished */
-        // TODO: Make this a member of Lv2_worker
-        if (_model->get_worker()->get_iface() && _model->get_worker()->get_iface()->end_run)
-        {
-            _model->get_worker()->get_iface()->end_run(_model->get_plugin_instance()->lv2_handle);
-        }
+        _model->process_worker_replies();
 
 // TODO: Reintroduce when implementing 'GUI'.
         /* Check if it's time to send updates to the UI */

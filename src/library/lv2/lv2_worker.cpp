@@ -34,12 +34,12 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
 static void* worker_func(void* data)
 {
     auto worker = static_cast<Lv2_Worker*>(data);
-    auto model = worker->model;
+    auto model = worker->get_model();
 
 	void* buf = nullptr;
 	while (true)
 	{
-        worker->sem.wait();
+        worker->get_semaphore().wait();
 
 		if (model->get_exit())
 		{
@@ -68,9 +68,10 @@ static void* worker_func(void* data)
 	return nullptr;
 }
 
-void Lv2_Worker::init(LV2Model* model, const LV2_Worker_Interface* iface, bool threaded)
+Lv2_Worker::Lv2_Worker(LV2Model* model, bool threaded)
 {
-	_iface = iface;
+    _model = model;
+
 	_threaded = threaded;
 
 	if (_threaded)
@@ -85,11 +86,17 @@ void Lv2_Worker::init(LV2Model* model, const LV2_Worker_Interface* iface, bool t
 	zix_ring_mlock(_responses);
 }
 
+Lv2_Worker::~Lv2_Worker()
+{
+    finish();
+    destroy();
+}
+
 void Lv2_Worker::finish()
 {
 	if (_threaded)
 	{
-        sem.notify();
+        _semaphore.notify();
 		zix_thread_join(_thread, nullptr);
 	}
 }
@@ -145,22 +152,37 @@ const LV2_Worker_Interface* Lv2_Worker::get_iface()
     return _iface;
 }
 
+void Lv2_Worker::set_iface(const LV2_Worker_Interface* iface)
+{
+    _iface = iface;
+}
+
 bool Lv2_Worker::is_threaded()
 {
     return _threaded;
 }
 
+LV2Model* Lv2_Worker::get_model()
+{
+    return _model;
+}
+
+Semaphore& Lv2_Worker::get_semaphore()
+{
+    return _semaphore;
+}
+
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
     auto worker = static_cast<Lv2_Worker*>(handle);
-    auto model = worker->model;
+    auto model = worker->get_model();
 
 	if (worker->is_threaded())
 	{
 		// Schedule a request to be executed by the worker thread
 		zix_ring_write(worker->get_requests(), (const char*)&size, sizeof(size));
 		zix_ring_write(worker->get_requests(), (const char*)data, size);
-        worker->sem.notify();
+        worker->get_semaphore().notify();
 	}
 	else
 	    {

@@ -221,12 +221,17 @@ public:
     bool has_ui; ///< True iff a control UI is present
     std::vector<std::unique_ptr<ControlID>> controls; ///< Available plugin controls
 
+    void set_worker_interface(const LV2_Worker_Interface* iface);
+
+    void process_worker_replies();
+
 private:
+    void _initialize_worker_feature();
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();
     void _initialize_urid_symap();
-    void _initialize_worker_feature();
+
     void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
 
