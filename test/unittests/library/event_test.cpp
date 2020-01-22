@@ -109,7 +109,7 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_TRUE(rt_event.processor_command_event()->value());
     EXPECT_EQ(10u, rt_event.processor_command_event()->processor_id());
 
-    auto tempo_event = SetEngineTempoEvent(135, IMMEDIATE_PROCESS);
+    /*auto tempo_event = SetEngineTempoEvent(135, IMMEDIATE_PROCESS);
     EXPECT_TRUE(tempo_event.maps_to_rt_event());
     rt_event = tempo_event.to_rt_event(13);
     EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
@@ -136,7 +136,7 @@ TEST(EventTest, TestToRtEvent)
     rt_event = sync_mode_event.to_rt_event(16);
     EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
     EXPECT_EQ(16, rt_event.sample_offset());
-    EXPECT_EQ(SyncMode::ABLETON_LINK, rt_event.sync_mode_event()->mode());
+    EXPECT_EQ(SyncMode::ABLETON_LINK, rt_event.sync_mode_event()->mode());*/
 }
 
 TEST(EventTest, TestFromRtEvent)

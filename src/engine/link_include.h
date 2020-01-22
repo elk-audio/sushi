@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -65,12 +65,12 @@ using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util
 
 } // platform::link::ableton
 
-/* Ugly preprocessor hack to prevent Link from adding its own definition of
+/* Preprocessor hack to prevent Link from adding its own definition of
  * Clock when including platforms/linux/Clock.hpp from link.hpp */
 #undef LINK_PLATFORM_LINUX
 #include "ableton/Link.hpp"
 #ifdef LINK_PLATFORM_LINUX_CACHED
-#define LINK_PLATFORM_LINUX_CACHED LINK_PLATFORM_LINUX
+#define LINK_PLATFORM_LINUX LINK_PLATFORM_LINUX_CACHED
 #endif
 
 #else //SUSHI_BUILD_WITH_ABLETON_LINK

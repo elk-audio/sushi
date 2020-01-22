@@ -56,13 +56,9 @@ Transport::Transport(float sample_rate) : _samplerate(sample_rate),
     _link_controller->setTempoCallback(tempo_callback);
     _link_controller->setStartStopCallback(start_stop_callback);
     _link_controller->enableStartStopSync(true);
-    _link_controller->enable(true);
 }
 
-Transport::~Transport()
-{
-
-}
+Transport::~Transport() = default;
 
 void Transport::set_time(Time timestamp, int64_t samples)
 {
@@ -72,34 +68,115 @@ void Transport::set_time(Time timestamp, int64_t samples)
 
     _update_internals();
 
-    switch (_sync_mode)
+    switch (_syncmode)
     {
-        case SyncMode::MIDI_SLAVE: // Not implemented, so treat like master
+        case SyncMode::MIDI: // Not implemented, so treat like master
+        case SyncMode::GATE_INPUT:
         case SyncMode::INTERNAL:
             _update_internal_sync(samples - prev_samples);
             break;
 
         case SyncMode::ABLETON_LINK:
         {
-            //if (_new_playmode || _new_tempo || ++_link_update_count < LINK_UPDATE_RATE)
-            //{
-                _update_link_sync(_time);
-                _link_update_count = 0;
-            //}
+            _update_link_sync(_time);
+            break;
         }
     }
-    _new_tempo = false;
-    _new_playmode = false;
+
     //static int logg = 0;
     //logg = ++logg % 1000;
     //SUSHI_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
 }
 
-void Transport::set_time_signature(TimeSignature signature)
+void Transport::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+        case RtEventType::TEMPO:
+            _set_tempo = event.tempo_event()->tempo();
+            break;
+
+        case RtEventType::TIME_SIGNATURE:
+            _time_signature = event.time_signature_event()->time_signature();
+            break;
+
+        case RtEventType::PLAYING_MODE:
+            _set_playmode = event.playing_mode_event()->mode();
+            break;
+
+        case RtEventType::SYNC_MODE:
+            _syncmode = event.sync_mode_event()->mode();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void Transport::set_time_signature(TimeSignature signature, bool update_via_event)
 {
     assert(signature.numerator > 0);
     assert(signature.denominator > 0);
-    _time_signature = signature;
+    if (update_via_event == false)
+    {
+        _time_signature = signature;
+    }
+}
+
+void Transport::set_tempo(float tempo, bool update_via_event)
+{
+    if (update_via_event == false)
+    {
+        _set_tempo = tempo;
+        _tempo = tempo;
+    }
+    _set_link_tempo(tempo);
+}
+
+void Transport::set_playing_mode(PlayingMode mode, bool update_via_event)
+{
+    bool playing = mode != PlayingMode::STOPPED;
+    bool update = this->playing() == playing;
+    if (update)
+    {
+        if (_link_controller->isEnabled())
+        {
+            _set_link_playing(playing);
+        }
+    }
+
+    if (update_via_event == false)
+    {
+        _set_playmode = mode;
+    }
+}
+
+void Transport::set_sync_mode(SyncMode mode, bool update_via_event)
+{
+#ifndef SUSHI_BUILD_WITH_ABLETON_LINK
+    if (mode == SyncMode::ABLETON_LINK)
+    {
+        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+        return;
+    }
+#endif
+    switch (mode)
+    {
+        case SyncMode::INTERNAL:
+        case SyncMode::MIDI:
+        case SyncMode::GATE_INPUT:
+            _link_controller->enable(false);
+            break;
+
+        case SyncMode::ABLETON_LINK:
+            _link_controller->enable(true);
+            _set_link_playing(_set_playmode != PlayingMode::STOPPED);
+            break;
+    }
+    if (update_via_event == false)
+    {
+        _syncmode = mode;
+    }
 }
 
 double Transport::current_bar_beats(int samples) const
@@ -124,7 +201,6 @@ double Transport::current_beats(int samples) const
 void Transport::_update_internals()
 {
     assert(_samplerate > 0.0f);
-    _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     /* Time signatures are seen in relation to 4/4 and remapped to quarter notes
      * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically and
      * they will play beatsynched with 4/4, i.e. not on triplets. */
@@ -137,12 +213,13 @@ void Transport::_update_internal_sync(int64_t samples)
     /* Assume that if there are missed callbacks, the numbers of samples
      * will still be a multiple of AUDIO_CHUNK_SIZE */
     auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
-    if (chunks_passed < 1)
+    /*if (chunks_passed < 1)
     {
         //chunks_passed = 1;
         SUSHI_LOG_INFO("First time {}", chunks_passed);
-    }
+    }*/
 
+    _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (_playmode != PlayingMode::STOPPED)
     {
         _current_bar_beat_count += chunks_passed * _beats_per_chunk;
@@ -162,49 +239,45 @@ void Transport::_update_internal_sync(int64_t samples)
 void Transport::_update_link_sync(Time timestamp)
 {
     auto session = _link_controller->captureAudioSessionState();
-    bool currently_playing = this->playing();
-    if (_new_playmode)
+    _tempo = static_cast<float>(session.isPlaying());
+    _playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
+            _set_playmode : PlayingMode::PLAYING) : PlayingMode::STOPPED;
+
+    _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+
+    if (session.isPlaying())
     {
-        bool playing = _set_playmode == PlayingMode::PLAYING || _set_playmode == PlayingMode::RECORDING;
-        session.setIsPlaying(playing, timestamp);
-    }
-    if (!currently_playing && session.isPlaying()) // Start playing
-    {
-        /* Request beat at the start of next bar */
-        session.requestBeatAtStartPlayingTime(_bar_start_beat_count + _beats_per_bar, _beats_per_bar);
-        _playmode = (_set_playmode == PlayingMode::STOPPED)? PlayingMode::PLAYING : _set_playmode;
-    }
-    if (currently_playing && !session.isPlaying()) // Link stopped playing
-    {
-        _playmode = PlayingMode::STOPPED;
-    }
-    if (_new_tempo)
-    {
-        session.setTempo(_set_tempo, timestamp);
-    }
-    _tempo = static_cast<float>(session.tempo());
-    _link_controller->commitAudioSessionState(session);
-    //if (this->playing())
-    //{
         _beat_count = session.beatAtTime(timestamp, _beats_per_bar);
         _current_bar_beat_count = session.phaseAtTime(timestamp, _beats_per_bar);
         _bar_start_beat_count = _beat_count - _current_bar_beat_count;
-    //}
-}
-
-void Transport::set_sync_mode(SyncMode mode)
-{
-#ifndef SUSHI_BUILD_WITH_ABLETON_LINK
-    if (mode == SyncMode::ABLETON_LINK)
-    {
-        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
-        return;
     }
-#endif
-    _sync_mode = mode;
-    _new_playmode = true;
+    /* Due to the nature of the Xenomai RT architecture we cannot commit changes to
+     * the session here as that would cause a mode switch. Instead all changes need
+     * to be made from the non rt thread */
 }
 
+void Transport::_set_link_playing(bool playing)
+{
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+    auto state = _link_controller->captureAppSessionState();
+    state.setIsPlaying(playing, _time);
+    if (playing)
+    {
+        /* Request beat at the start of next bar for synchronised launch*/
+        state.requestBeatAtStartPlayingTime(_bar_start_beat_count + _beats_per_bar, _beats_per_bar);
+    }
+    _link_controller->commitAppSessionState(state);
+#endif
+}
+
+void Transport::_set_link_tempo(float tempo)
+{
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+    auto state = _link_controller->captureAppSessionState();
+    state.setTempo(tempo, this->current_process_time());
+    _link_controller->commitAudioSessionState(state);
+#endif
+}
 
 } // namespace engine
 } // namespace sushi

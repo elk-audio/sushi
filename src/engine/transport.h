@@ -22,8 +22,12 @@
 #define SUSHI_TRANSPORT_H
 
 #include <memory>
+#include <atomic>
+
+#include <cassert>
 
 #include <library/constants.h>
+#include <library/event_interface.h>
 #include "library/time.h"
 #include "library/types.h"
 #include "library/rt_event.h"
@@ -65,16 +69,26 @@ public:
     }
 
     /**
-     * @brief Set the time signature used in the engine
-     * @param signature The new time signature to use
+     * @brief Process a single realtime event that is to take place during the current audio
+     * interrupt
+     * @param event Event to process.
      */
-    void set_time_signature(TimeSignature signature);
+    void process_event(const RtEvent& event);
 
     /**
-     * @brief Set the tempo of the engine in beats (quarter notes) per minute
-     * @param tempo The new tempo in beats per minute
+     * @brief Set the time signature used in the engine. Called from a non-realtime thread.
+     * @param signature The new time signature to use
+     * @param update_via_event true true if the engine passes the update as an RtEvent
      */
-    void set_tempo(float tempo) {_set_tempo = tempo; _new_tempo = true;}
+    void set_time_signature(TimeSignature signature, bool update_via_event);
+
+    /**
+     * @brief Set the tempo of the engine in beats (quarter notes) per minute. Called from
+     *        a non-realtime thread.
+     * @param tempo The new tempo in beats per minute
+     * @param update_via_event true if the engine passes the update as an RtEvent
+     */
+    void set_tempo(float tempo, bool update_via_event);
 
     /**
      * @brief Return the current set playing mode
@@ -83,22 +97,26 @@ public:
     PlayingMode playing_mode() const {return _playmode;}
 
     /**
-     * @brief Set the playing mode, i.e. playing, stopped, recording etc..
+     * @brief Set the playing mode, i.e. playing, stopped, recording etc.. Called from
+     *        a non-realtime thread.
      * @param mode The new playing mode.
+     * @param update_via_event true if the engine passes the update as an RtEvent
      */
-    void set_playing_mode(PlayingMode mode) {_set_playmode = mode; _new_playmode = true;}
+    void set_playing_mode(PlayingMode mode, bool update_via_event);
 
     /**
      * @brief Return the current current mode of synchronising tempo and beats
      * @return the current set mode of synchronisation
      */
-    SyncMode sync_mode() const {return _sync_mode;}
+    SyncMode sync_mode() const {return _syncmode;}
 
     /**
-     * @brief Set the current mode of synchronising tempo and beats
+     * @brief Set the current mode of synchronising tempo and beats. Called from
+     *        a non-realtime thread.
      * @param mode The mode of synchronisation to use
+     * @param update_via_event true if the engine passes the update as an RtEvent
      */
-    void set_sync_mode(SyncMode mode);
+    void set_sync_mode(SyncMode mode, bool update_via_event);
 
     /**
      * @return Set the sample rate.
@@ -134,7 +152,7 @@ public:
      * @brief Query the current time signature being used
      * @return A TimeSignature struct describing the current time signature
      */
-    TimeSignature current_time_signature() const {return _time_signature;}
+    TimeSignature time_signature() const {return _time_signature;}
 
     /**
      * @brief Query the current tempo. Safe to call from rt and non-rt context but will
@@ -181,26 +199,26 @@ private:
     void _update_internals();
     void _update_internal_sync(int64_t samples);
     void _update_link_sync(Time timestamp);
-
+    void _set_link_playing(bool playing);
+    void _set_link_tempo(float tempo);
 
     int64_t         _sample_count{0};
     Time            _time{0};
     Time            _latency{0};
-    float           _set_tempo{DEFAULT_TEMPO};
-    float           _tempo{DEFAULT_TEMPO};
     double          _current_bar_beat_count{0.0};
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
     double          _beats_per_bar;
     float           _samplerate;
+
+    float           _tempo{DEFAULT_TEMPO};
+    float           _set_tempo{_tempo};
     PlayingMode     _playmode{PlayingMode::PLAYING};
-    PlayingMode     _set_playmode{PlayingMode::PLAYING};
-    bool            _new_tempo{false};
-    bool            _new_playmode{false};
-    SyncMode        _sync_mode{SyncMode::INTERNAL};
+    PlayingMode     _set_playmode{_playmode};
+    SyncMode        _syncmode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    int             _link_update_count{0};
+
     std::unique_ptr<ableton::Link>  _link_controller;
 };
 

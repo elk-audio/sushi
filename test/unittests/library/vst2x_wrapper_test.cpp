@@ -199,8 +199,8 @@ TEST_F(TestVst2xWrapper, TestBypassProcessing)
 TEST_F(TestVst2xWrapper, TestTimeInfo)
 {
     SetUp("libvst2_test_plugin.so");
-    _host_control._transport.set_tempo(60);
-    _host_control._transport.set_time_signature({4, 4});
+    _host_control._transport.set_tempo(60, false);
+    _host_control._transport.set_time_signature({4, 4}, false);
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
     auto time_info = _module_under_test->time_info();
     EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);

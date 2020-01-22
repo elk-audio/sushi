@@ -388,7 +388,7 @@ bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
 VstTimeInfo* Vst2xWrapper::time_info()
 {
     auto transport = _host_control.transport();
-    auto ts = transport->current_time_signature();
+    auto ts = transport->time_signature();
 
     _time_info.samplePos          = transport->current_samples();
     _time_info.sampleRate         = _sample_rate;

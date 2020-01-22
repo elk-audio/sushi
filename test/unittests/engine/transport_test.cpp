@@ -32,13 +32,13 @@ TEST_F(TestTransport, TestBasicQuerying)
 
     EXPECT_EQ(std::chrono::microseconds(1001500), _module_under_test.current_process_time());
 
-    _module_under_test.set_tempo(130);
+    _module_under_test.set_tempo(130, false);
     _module_under_test.set_time(std::chrono::seconds(0), 0);
     EXPECT_FLOAT_EQ(130, _module_under_test.current_tempo());
 
-    _module_under_test.set_time_signature({5, 8});
-    EXPECT_EQ(5, _module_under_test.current_time_signature().numerator);
-    EXPECT_EQ(8, _module_under_test.current_time_signature().denominator);
+    _module_under_test.set_time_signature({5, 8}, false);
+    EXPECT_EQ(5, _module_under_test.time_signature().numerator);
+    EXPECT_EQ(8, _module_under_test.time_signature().denominator);
 }
 
 TEST_F(TestTransport, TestTimeline44Time)
@@ -48,8 +48,8 @@ TEST_F(TestTransport, TestTimeline44Time)
      * as bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
      * a power of 2*/
     _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
-    _module_under_test.set_time_signature({4, 4});
-    _module_under_test.set_tempo(120);
+    _module_under_test.set_time_signature({4, 4}, false);
+    _module_under_test.set_tempo(120, false);
     _module_under_test.set_time(std::chrono::seconds(0), 0);
 
     /* Check that the starting point is 0 */
@@ -81,12 +81,12 @@ TEST_F(TestTransport, TestTimeline68Time)
 {
     /* Test the above but with different time signature and samplerate */
     _module_under_test.set_sample_rate(TEST_SAMPLERATE);
-    _module_under_test.set_tempo(180);
-    _module_under_test.set_time_signature({6, 8});
+    _module_under_test.set_tempo(180, false);
+    _module_under_test.set_time_signature({6, 8}, false);
     constexpr float precision = 3.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLERATE;
 
     /* Check that the starting point is 0 */
-    _module_under_test.set_playing_mode(PlayingMode::PLAYING);
+    _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
     _module_under_test.set_time(std::chrono::seconds(0), 0);
     EXPECT_DOUBLE_EQ(0.0f, _module_under_test.current_bar_beats());
     EXPECT_DOUBLE_EQ(0.0f, _module_under_test.current_beats());

@@ -335,5 +335,31 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
     return EventStatus::NOT_HANDLED;
 }
 
+int SetEngineTempoEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo(_tempo);
+    return 0;
+}
+
+int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_time_signature(_signature);
+    return 0;
+}
+
+int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_transport_mode(_mode);
+    return 0;
+}
+
+int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo_sync_mode(_mode);
+    return 0;
+}
+
 #pragma GCC diagnostic pop
+
+
 } // end namespace sushi

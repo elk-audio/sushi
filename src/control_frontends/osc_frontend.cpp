@@ -276,7 +276,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
     }
     else if (mode_str == "midi")
     {
-        mode = SyncMode::MIDI_SLAVE;
+        mode = SyncMode::MIDI;
     }
     else
     {

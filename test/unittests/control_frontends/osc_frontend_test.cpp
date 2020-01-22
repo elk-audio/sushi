@@ -222,7 +222,7 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     ASSERT_TRUE(event->maps_to_rt_event());
     auto rt_event = event->to_rt_event(0);
     EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
-    EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
+    EXPECT_EQ(SyncMode::MIDI, rt_event.sync_mode_event()->mode());
 }
 
 TEST(TestOSCFrontendInternal, TestMakeSafePath)
