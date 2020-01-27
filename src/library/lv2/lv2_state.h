@@ -25,13 +25,11 @@
 namespace sushi {
 namespace lv2 {
 
-char* make_path(LV2_State_Make_Path_Handle handle, const char* path);
+const void* get_port_value(const char *port_symbol, void *user_data, uint32_t *size, uint32_t *type);
 
-const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type);
+void set_port_value(const char *port_symbol, void *user_data, const void *value, uint32_t size, uint32_t type);
 
-void save(LV2Model* model, const char* dir);
-
-static int populate_preset_list(LV2Model* model, const LilvNode* node, const LilvNode* title, void* data)
+static int populate_preset_list(LV2Model *model, const LilvNode *node, const LilvNode *title, void *data)
 {
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
@@ -42,25 +40,30 @@ static int populate_preset_list(LV2Model* model, const LilvNode* node, const Lil
     return 0;
 }
 
-int load_programs(LV2Model* model, PresetSink sink, void* data);
+class LV2_State
+{
+public:
+    LV2_State();
+    ~LV2_State();
 
-int unload_programs(LV2Model* model);
+    char *make_path(LV2_State_Make_Path_Handle handle, const char *path);
 
-void set_port_value(const char* port_symbol,
-               void* user_data,
-               const void* value,
-               uint32_t size,
-               uint32_t type);
+    void save(LV2Model *model, const char *dir);
 
-void apply_state(LV2Model* model, LilvState* state);
+    int load_programs(LV2Model *model, PresetSink sink, void *data);
 
-int apply_program(LV2Model* model, const int program_index);
+    int unload_programs(LV2Model *model);
 
-int apply_program(LV2Model* model, const LilvNode* preset);
+    void apply_state(LV2Model *model, LilvState *state);
 
-int save_program(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename);
+    int apply_program(LV2Model *model, const int program_index);
 
-int delete_current_program(LV2Model* model);
+    int apply_program(LV2Model *model, const LilvNode *preset);
+
+    int save_program(LV2Model *model, const char *dir, const char *uri, const char *label, const char *filename);
+
+    int delete_current_program(LV2Model *model);
+};
 
 }
 }

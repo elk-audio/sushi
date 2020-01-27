@@ -28,21 +28,101 @@ namespace lv2 {
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
     auto model = static_cast<LV2Model*>(user_data);
-	auto port = port_by_symbol(model, port_symbol);
+    auto port = port_by_symbol(model, port_symbol);
 
-	if (port && port->getFlow() == FLOW_INPUT && port->getType() == TYPE_CONTROL)
-	{
-		*size = sizeof(float);
-		*type = model->get_forge().Float;
-		return &port->control;
-	}
+    if (port && port->getFlow() == FLOW_INPUT && port->getType() == TYPE_CONTROL)
+    {
+        *size = sizeof(float);
+        *type = model->get_forge().Float;
+        return &port->control;
+    }
 
-	*size = *type = 0;
+    *size = *type = 0;
 
-	return nullptr;
+    return nullptr;
 }
 
-void save(LV2Model* model, const char* dir)
+void set_port_value(const char* port_symbol,
+                    void* user_data,
+                    const void* value,
+                    uint32_t size,
+                    uint32_t type)
+{
+    auto model = static_cast<LV2Model*>(user_data);
+    auto port = port_by_symbol(model, port_symbol);
+
+    if (!port)
+    {
+        fprintf(stderr, "error: Preset port `%s' is missing\n", port_symbol);
+        return;
+    }
+
+    float fvalue;
+
+    auto forge = model->get_forge();
+
+    if (type == forge.Float)
+    {
+        fvalue = *(const float*)value;
+    }
+    else if (type == forge.Double)
+    {
+        fvalue = *(const double*)value;
+    }
+    else if (type == forge.Int)
+    {
+        fvalue = *(const int32_t*)value;
+    }
+    else if (type == forge.Long)
+    {
+        fvalue = *(const int64_t*)value;
+    }
+    else
+    {
+        fprintf(stderr, "error: Preset `%s' value has bad type <%s>\n",
+                port_symbol, model->get_unmap().unmap(model->get_unmap().handle, type));
+        return;
+    }
+
+    if (model->play_state != PlayState::RUNNING)
+    {
+        // Set value on port directly
+        port->control = fvalue;
+    }
+    else
+    {
+        // Send value to running plugin
+// TODO: Reintroduce eventually
+// Currently in lv2_ui_io.
+//		ui_write(model, port->index, sizeof(fvalue), 0, &fvalue);
+    }
+
+    if (model->has_ui)
+    {
+        // Update UI
+//		char buf[sizeof(ControlChange) + sizeof(fvalue)];
+//		ControlChange* ev = (ControlChange*)buf;
+//		ev->index = port->index;
+//		ev->protocol = 0;
+//		ev->size = sizeof(fvalue);
+//		*(float*)ev->body = fvalue;
+//		zix_ring_write(model->_plugin_events, buf, sizeof(buf));
+    }
+}
+
+// --------------------------------------
+
+LV2_State::LV2_State()
+{
+
+}
+
+LV2_State::~LV2_State()
+{
+
+}
+
+void LV2_State::save(LV2Model* model, const char* dir)
 {
 	model->save_dir = std::string(dir) + "/";
 
@@ -59,7 +139,7 @@ void save(LV2Model* model, const char* dir)
 	model->save_dir.clear();
 }
 
-int load_programs(LV2Model* model, PresetSink sink, void* data)
+int LV2_State::load_programs(LV2Model* model, PresetSink sink, void* data)
 {
 	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
 
@@ -93,7 +173,7 @@ int load_programs(LV2Model* model, PresetSink sink, void* data)
 	return 0;
 }
 
-int unload_programs(LV2Model* model)
+int LV2_State::unload_programs(LV2Model* model)
 {
 	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
 
@@ -108,75 +188,7 @@ int unload_programs(LV2Model* model)
 	return 0;
 }
 
-void set_port_value(const char* port_symbol,
-               void* user_data,
-               const void* value,
-               uint32_t size,
-               uint32_t type)
-{
-    auto model = static_cast<LV2Model*>(user_data);
-	auto port = port_by_symbol(model, port_symbol);
-
-	if (!port)
-	{
-		fprintf(stderr, "error: Preset port `%s' is missing\n", port_symbol);
-		return;
-	}
-
-	float fvalue;
-
-	auto forge = model->get_forge();
-
-	if (type == forge.Float)
-	{
-		fvalue = *(const float*)value;
-	}
-	else if (type == forge.Double)
-	{
-		fvalue = *(const double*)value;
-	}
-	else if (type == forge.Int)
-	{
-		fvalue = *(const int32_t*)value;
-	}
-	else if (type == forge.Long)
-	{
-		fvalue = *(const int64_t*)value;
-	}
-	else
-	{
-		fprintf(stderr, "error: Preset `%s' value has bad type <%s>\n",
-                port_symbol, model->get_unmap().unmap(model->get_unmap().handle, type));
-		return;
-	}
-
-	if (model->play_state != PlayState::RUNNING)
-	{
-		// Set value on port directly
-		port->control = fvalue;
-	}
-	else
-	{
-		// Send value to running plugin
-// TODO: Reintroduce eventually
-// Currently in lv2_ui_io.
-//		ui_write(model, port->index, sizeof(fvalue), 0, &fvalue);
-	}
-
-	if (model->has_ui)
-	{
-		// Update UI
-//		char buf[sizeof(ControlChange) + sizeof(fvalue)];
-//		ControlChange* ev = (ControlChange*)buf;
-//		ev->index = port->index;
-//		ev->protocol = 0;
-//		ev->size = sizeof(fvalue);
-//		*(float*)ev->body = fvalue;
-//		zix_ring_write(model->_plugin_events, buf, sizeof(buf));
-	}
-}
-
-void apply_state(LV2Model* model, LilvState* state)
+void LV2_State::apply_state(LV2Model* model, LilvState* state)
 {
 	bool must_pause = !model->is_restore_thread_safe() && model->play_state == PlayState::RUNNING;
 
@@ -203,7 +215,7 @@ void apply_state(LV2Model* model, LilvState* state)
 	}
 }
 
-int apply_program(LV2Model* model, const int program_index)
+int LV2_State::apply_program(LV2Model* model, const int program_index)
 {
     if (program_index < model->_number_of_programs)
     {
@@ -222,14 +234,14 @@ int apply_program(LV2Model* model, const int program_index)
     return -1;
 }
 
-int apply_program(LV2Model* model, const LilvNode* preset)
+int LV2_State::apply_program(LV2Model* model, const LilvNode* preset)
 {
     model->set_preset(lilv_state_new_from_world(model->get_world(), &model->get_map(), preset));
     apply_state(model, model->get_preset());
 	return 0;
 }
 
-int save_program(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename)
+int LV2_State::save_program(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename)
 {
 	auto state = lilv_state_new_from_instance(
             model->get_plugin_class(), model->get_plugin_instance(), &model->get_map(),
@@ -249,7 +261,7 @@ int save_program(LV2Model* model, const char* dir, const char* uri, const char* 
 	return ret;
 }
 
-int delete_current_program(LV2Model* model)
+int LV2_State::delete_current_program(LV2Model* model)
 {
 	if (!model->get_preset())
 	{

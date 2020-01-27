@@ -125,7 +125,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     /* Apply loaded state to plugin instance if necessary */
     if (state)
     {
-        apply_state(_model, state);
+        _lv2_state.apply_state(_model, state);
     }
 
     /* Activate plugin */
@@ -372,7 +372,7 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatte
 
 void Lv2Wrapper::_populate_program_list()
 {
-    load_programs(_model, populate_preset_list, nullptr);
+    _lv2_state.load_programs(_model, populate_preset_list, nullptr);
 
     _model->_number_of_programs = _model->_program_names.size();
 }
@@ -438,7 +438,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 {
     if (this->supports_programs() && program < _model->_number_of_programs)
     {
-        int return_code = apply_program(_model, program);
+        int return_code = _lv2_state.apply_program(_model, program);
 
         if(return_code == 0)
             return ProcessorReturnCode::OK;
@@ -451,7 +451,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    unload_programs(_model);
+    _lv2_state.unload_programs(_model);
 
     // Tell plugin to stop and shutdown
     set_enabled(false);

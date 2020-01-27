@@ -33,6 +33,7 @@
 #include "library/rt_event_fifo.h"
 #include "../midi_encoder.h"
 #include "../midi_decoder.h"
+#include "lv2_state.h"
 
 namespace sushi {
 namespace lv2 {
@@ -160,6 +161,8 @@ private:
     // They are parsed and converted to lv2_evbuf content for LV2 in
     // process_audio.
     RtEventFifo _incoming_event_queue;
+
+    LV2_State _lv2_state;
 
     PluginLoader _loader;
     Lv2_UI_IO _UI_IO;
