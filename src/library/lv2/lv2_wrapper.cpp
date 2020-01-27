@@ -125,7 +125,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     /* Apply loaded state to plugin instance if necessary */
     if (state)
     {
-        _lv2_state.apply_state(_model, state);
+        _model->get_state()->apply_state(state);
     }
 
     /* Activate plugin */
@@ -372,19 +372,17 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatte
 
 void Lv2Wrapper::_populate_program_list()
 {
-    _lv2_state.load_programs(_model, populate_preset_list, nullptr);
-
-    _model->_number_of_programs = _model->_program_names.size();
+    _model->get_state()->populate_program_list();
 }
 
 bool Lv2Wrapper::supports_programs() const
 {
-    return _model->_number_of_programs > 0;
+    return _model->get_state()->get_number_of_programs() > 0;
 }
 
 int Lv2Wrapper::program_count() const
 {
-    return _model->_number_of_programs;
+    return _model->get_state()->get_number_of_programs();
 }
 
 int Lv2Wrapper::current_program() const
@@ -392,7 +390,7 @@ int Lv2Wrapper::current_program() const
     // TODO: Does LV2 have a current program concept?
     if (this->supports_programs())
     {
-        return _model->_current_program_index;
+        return _model->get_state()->get_current_program_index();
     }
 
     return -1;
@@ -400,21 +398,16 @@ int Lv2Wrapper::current_program() const
 
 std::string Lv2Wrapper::current_program_name() const
 {
-    if (this->supports_programs() && _model->_current_program_index < _model->_program_names.size())
-    {
-        return _model->_program_names[_model->_current_program_index];
-    }
-
-    return "";
+   return _model->get_state()->get_current_program_name();
 }
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program) const
 {
     if (this->supports_programs())
     {
-        if (program < _model->_program_names.size())
+        if (program < _model->get_state()->get_number_of_programs())
         {
-            std::string name = _model->_program_names[program];
+            std::string name = _model->get_state()->program_name(program);
             return {ProcessorReturnCode::OK, name};
         }
     }
@@ -429,16 +422,16 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
 
-    std::vector<std::string> programs(_model->_program_names.begin(), _model->_program_names.end());
+    std::vector<std::string> programs(_model->get_state()->get_program_names().begin(), _model->get_state()->get_program_names().end());
 
     return {ProcessorReturnCode::OK, programs};
 }
 
 ProcessorReturnCode Lv2Wrapper::set_program(int program)
 {
-    if (this->supports_programs() && program < _model->_number_of_programs)
+    if (this->supports_programs() && program < _model->get_state()->get_number_of_programs())
     {
-        int return_code = _lv2_state.apply_program(_model, program);
+        int return_code = _model->get_state()->apply_program(program);
 
         if(return_code == 0)
             return ProcessorReturnCode::OK;
@@ -451,7 +444,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    _lv2_state.unload_programs(_model);
+    _model->get_state()->unload_programs();
 
     // Tell plugin to stop and shutdown
     set_enabled(false);

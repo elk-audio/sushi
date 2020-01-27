@@ -66,6 +66,7 @@ namespace sushi {
 namespace lv2 {
 
 class LV2Model;
+class LV2_State;
 class Lv2_Worker;
 struct ControlID;
 
@@ -225,11 +226,7 @@ public:
 
     void process_worker_replies();
 
-
-    // TODO: Make these private - perhaps move to State class!?
-    std::vector<std::string> _program_names;
-    int _number_of_programs{0}; // TODO: Eventually remove this entirely.
-    int _current_program_index; // TODO: Is this stored by LV2? OR should I manage it?
+    LV2_State* get_state();
 
 private:
     void _initialize_worker_feature();
@@ -241,8 +238,9 @@ private:
     void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
 
-    bool _safe_restore; ///< Plugin restore() is thread-safe
+    std::unique_ptr<LV2_State> _lv2_state;
 
+    bool _safe_restore; ///< Plugin restore() is thread-safe
 
     bool _request_update{false}; ///< True iff a plugin update is needed
 
@@ -274,8 +272,6 @@ private:
     int _midi_buffer_size{4096}; ///< Size of MIDI port buffers
 
     const LilvPlugin* _plugin_class{nullptr};
-
-    LilvState* _preset{nullptr};
 
     LilvInstance* _plugin_instance {nullptr}; ///< Plugin instance (shared library)
 

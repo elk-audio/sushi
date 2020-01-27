@@ -59,6 +59,8 @@ _world(worldIn)
     _initialize_log_feature();
     _initialize_safe_restore_feature();
     _initialize_make_path_feature();
+
+    _lv2_state = std::make_unique<LV2_State>(this);
 }
 
 LV2Model::~LV2Model()
@@ -197,6 +199,11 @@ void LV2Model::process_worker_replies()
     }
 }
 
+LV2_State* LV2Model::get_state()
+{
+    return _lv2_state.get();
+}
+
 void LV2Model::_initialize_safe_restore_feature()
 {
     init_feature(&this->_features.safe_restore_feature,
@@ -245,21 +252,6 @@ const LilvPlugin* LV2Model::get_plugin_class()
 void LV2Model::set_plugin_class(const LilvPlugin* new_plugin)
 {
     _plugin_class = new_plugin;
-}
-
-LilvState* LV2Model::get_preset()
-{
-    return _preset;
-}
-
-void LV2Model::set_preset(LilvState* new_preset)
-{
-    if (_preset != nullptr)
-    {
-        lilv_state_free(_preset);
-    }
-
-    _preset = new_preset;
 }
 
 int LV2Model::get_midi_buffer_size()

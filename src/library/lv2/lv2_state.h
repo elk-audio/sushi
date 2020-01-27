@@ -25,45 +25,55 @@
 namespace sushi {
 namespace lv2 {
 
-const void* get_port_value(const char *port_symbol, void *user_data, uint32_t *size, uint32_t *type);
-
-void set_port_value(const char *port_symbol, void *user_data, const void *value, uint32_t size, uint32_t type);
-
-static int populate_preset_list(LV2Model *model, const LilvNode *node, const LilvNode *title, void *data)
-{
-    std::string node_string = lilv_node_as_string(node);
-    std::string title_string = lilv_node_as_string(title);
-    printf("%s (%s)\n", node_string.c_str(), title_string.c_str());
-
-    model->_program_names.emplace_back(std::move(node_string));
-
-    return 0;
-}
-
 class LV2_State
 {
 public:
-    LV2_State();
+    LV2_State(LV2Model* model);
     ~LV2_State();
 
-    char *make_path(LV2_State_Make_Path_Handle handle, const char *path);
+    void save(const char *dir);
 
-    void save(LV2Model *model, const char *dir);
+    int unload_programs();
 
-    int load_programs(LV2Model *model, PresetSink sink, void *data);
+    void apply_state(LilvState* state);
 
-    int unload_programs(LV2Model *model);
+    int apply_program(const int program_index);
 
-    void apply_state(LV2Model *model, LilvState *state);
+    int apply_program(const LilvNode* preset);
 
-    int apply_program(LV2Model *model, const int program_index);
+    int save_program(const char* dir, const char* uri, const char* label, const char* filename);
 
-    int apply_program(LV2Model *model, const LilvNode *preset);
+    int delete_current_program();
 
-    int save_program(LV2Model *model, const char *dir, const char *uri, const char *label, const char *filename);
+    std::vector<std::string>&  get_program_names();
 
-    int delete_current_program(LV2Model *model);
+    void populate_program_list();
+
+    int get_number_of_programs();
+
+    int get_current_program_index();
+
+    std::string get_current_program_name();
+
+    std::string program_name(int program_index);
+    
+private:
+    void set_preset(LilvState* new_preset);
+
+    int _load_programs(PresetSink sink, void* data);
+
+    // TODO: Make these private - perhaps move to State class!?
+    std::vector<std::string> _program_names;
+    int _current_program_index {0}; // TODO: Is this stored by LV2? OR should I manage it?
+
+    LilvState* _preset {nullptr};
+
+    LV2Model* _model;
 };
+
+const void* get_port_value(const char* port_symbol, void* user_data, uint32_t *size, uint32_t* type);
+
+void set_port_value(const char* port_symbol, void* user_data, const void* value, uint32_t size, uint32_t type);
 
 }
 }
