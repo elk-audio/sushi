@@ -225,6 +225,12 @@ public:
 
     void process_worker_replies();
 
+
+    // TODO: Make these private - perhaps move to State class!?
+    std::vector<std::string> _program_names;
+    int _number_of_programs{0}; // TODO: Eventually remove this entirely.
+    int _current_program_index; // TODO: Is this stored by LV2? OR should I manage it?
+
 private:
     void _initialize_worker_feature();
     void _initialize_map_feature();

@@ -24,7 +24,7 @@
 namespace sushi {
 namespace lv2 {
 
-// This one has a footprint as required by lilv.
+// This one has a signature as required by lilv.
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
     auto model = static_cast<LV2Model*>(user_data);
@@ -59,7 +59,7 @@ void save(LV2Model* model, const char* dir)
 	model->save_dir.clear();
 }
 
-int load_presets(LV2Model* model, PresetSink sink, void* data)
+int load_programs(LV2Model* model, PresetSink sink, void* data)
 {
 	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
 
@@ -93,7 +93,7 @@ int load_presets(LV2Model* model, PresetSink sink, void* data)
 	return 0;
 }
 
-int unload_presets(LV2Model* model)
+int unload_programs(LV2Model* model)
 {
 	auto presets = lilv_plugin_get_related(model->get_plugin_class(), model->get_nodes().pset_Preset);
 
@@ -102,6 +102,7 @@ int unload_presets(LV2Model* model)
 		auto preset = lilv_nodes_get(presets, i);
 		lilv_world_unload_resource(model->get_world(), preset);
 	}
+
 	lilv_nodes_free(presets);
 
 	return 0;
@@ -185,7 +186,9 @@ void apply_state(LV2Model* model, LilvState* state)
 		{
             model->play_state = PlayState::PAUSE_REQUESTED;
 
-            model->paused.wait();
+// TODO: REINTRODUCE / FIX!
+// I should only be pausing when process_audio is running, otherwise this freezes here.
+//            model->paused.wait();
 		}
 
         auto feature_list = model->get_feature_list();
@@ -200,14 +203,33 @@ void apply_state(LV2Model* model, LilvState* state)
 	}
 }
 
-int apply_preset(LV2Model* model, const LilvNode* preset)
+int apply_program(LV2Model* model, const int program_index)
+{
+    if (program_index < model->_number_of_programs)
+    {
+        auto presetNode = lilv_new_uri(model->get_world(), model->_program_names[program_index].c_str());
+        apply_program(model, presetNode);
+        lilv_node_free(presetNode);
+
+        // TODO: Do I care?
+        // jalv_print_controls(model, true, false);
+
+        model->_current_program_index = program_index;
+
+        return 0;
+    }
+
+    return -1;
+}
+
+int apply_program(LV2Model* model, const LilvNode* preset)
 {
     model->set_preset(lilv_state_new_from_world(model->get_world(), &model->get_map(), preset));
     apply_state(model, model->get_preset());
 	return 0;
 }
 
-int save_preset(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename)
+int save_program(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename)
 {
 	auto state = lilv_state_new_from_instance(
             model->get_plugin_class(), model->get_plugin_instance(), &model->get_map(),
@@ -227,7 +249,7 @@ int save_preset(LV2Model* model, const char* dir, const char* uri, const char* l
 	return ret;
 }
 
-int delete_current_preset(LV2Model* model)
+int delete_current_program(LV2Model* model)
 {
 	if (!model->get_preset())
 	{

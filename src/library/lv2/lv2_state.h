@@ -31,9 +31,20 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
 
 void save(LV2Model* model, const char* dir);
 
-int load_presets(LV2Model* model, PresetSink sink, void* data);
+static int populate_preset_list(LV2Model* model, const LilvNode* node, const LilvNode* title, void* data)
+{
+    std::string node_string = lilv_node_as_string(node);
+    std::string title_string = lilv_node_as_string(title);
+    printf("%s (%s)\n", node_string.c_str(), title_string.c_str());
 
-int unload_presets(LV2Model* model);
+    model->_program_names.emplace_back(std::move(node_string));
+
+    return 0;
+}
+
+int load_programs(LV2Model* model, PresetSink sink, void* data);
+
+int unload_programs(LV2Model* model);
 
 void set_port_value(const char* port_symbol,
                void* user_data,
@@ -43,11 +54,13 @@ void set_port_value(const char* port_symbol,
 
 void apply_state(LV2Model* model, LilvState* state);
 
-int apply_preset(LV2Model* model, const LilvNode* preset);
+int apply_program(LV2Model* model, const int program_index);
 
-int save_preset(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename);
+int apply_program(LV2Model* model, const LilvNode* preset);
 
-int delete_current_preset(LV2Model* model);
+int save_program(LV2Model* model, const char* dir, const char* uri, const char* label, const char* filename);
+
+int delete_current_program(LV2Model* model);
 
 }
 }

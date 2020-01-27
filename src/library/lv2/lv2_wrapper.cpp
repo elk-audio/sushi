@@ -105,7 +105,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _fetch_plugin_name_and_label();
 
 // TODO: Re-introduce when program management is implemented for LV2.
-    //_number_of_programs = _plugin_handle->numPrograms;
+    _populate_program_list();
 
     _UI_IO.init(_model->get_plugin_class(), _sample_rate, _model->get_midi_buffer_size());
 
@@ -370,45 +370,56 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatte
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
 }
 
+void Lv2Wrapper::_populate_program_list()
+{
+    load_programs(_model, populate_preset_list, nullptr);
+
+    _model->_number_of_programs = _model->_program_names.size();
+}
+
 bool Lv2Wrapper::supports_programs() const
 {
-    return _number_of_programs > 0;
+    return _model->_number_of_programs > 0;
 }
 
 int Lv2Wrapper::program_count() const
 {
-    return _number_of_programs;
+    return _model->_number_of_programs;
 }
 
 int Lv2Wrapper::current_program() const
 {
-    /*if (this->supports_programs())
+    // TODO: Does LV2 have a current program concept?
+    if (this->supports_programs())
     {
-        return _vst_dispatcher(effGetProgram, 0, 0, nullptr, 0);
-    }*/
-    return 0;
+        return _model->_current_program_index;
+    }
+
+    return -1;
 }
 
 std::string Lv2Wrapper::current_program_name() const
 {
-    /*if (this->supports_programs())
+    if (this->supports_programs() && _model->_current_program_index < _model->_program_names.size())
     {
-        char buffer[kVstMaxProgNameLen] = "";
-        _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
-        return std::string(buffer);
+        return _model->_program_names[_model->_current_program_index];
     }
-*/    return "";
+
+    return "";
 }
 
 std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program) const
 {
-    /*if (this->supports_programs())
+    if (this->supports_programs())
     {
-        char buffer[kVstMaxProgNameLen] = "";
-        auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
-        return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
-    }*/
-    return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
+        if (program < _model->_program_names.size())
+        {
+            std::string name = _model->_program_names[program];
+            return {ProcessorReturnCode::OK, name};
+        }
+    }
+
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
 }
 
 std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program_names() const
@@ -417,33 +428,31 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program
     {
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
-    std::vector<std::string> programs;
-// TODO: return all program names!
-    /*for (int i = 0; i < _number_of_programs; ++i)
-    {
-        char buffer[kVstMaxProgNameLen] = "";
-        _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
-        programs.push_back(buffer);
-    }*/
+
+    std::vector<std::string> programs(_model->_program_names.begin(), _model->_program_names.end());
+
     return {ProcessorReturnCode::OK, programs};
 }
 
 ProcessorReturnCode Lv2Wrapper::set_program(int program)
 {
-    if (this->supports_programs() && program < _number_of_programs)
+    if (this->supports_programs() && program < _model->_number_of_programs)
     {
-// TODO: Actually DO set program!
-       /* _vst_dispatcher(effBeginSetProgram, 0, 0, nullptr, 0);
-        *//* Vst2 lacks a mechanism for signaling that the program change was successful *//*
-        _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
-        _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
-        return ProcessorReturnCode::OK;*/
+        int return_code = apply_program(_model, program);
+
+        if(return_code == 0)
+            return ProcessorReturnCode::OK;
+
+        return ProcessorReturnCode::ERROR;
     }
+
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
 void Lv2Wrapper::_cleanup()
 {
+    unload_programs(_model);
+
     // Tell plugin to stop and shutdown
     set_enabled(false);
 

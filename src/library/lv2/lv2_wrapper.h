@@ -140,6 +140,8 @@ private:
 
     void _create_controls(bool writable);
 
+    void _populate_program_list();
+
     float _sample_rate{0};
 
     /** Wrappers for preparing data to pass to processReplacing */
@@ -149,7 +151,6 @@ private:
     ChunkSampleBuffer _dummy_output{1};
 
     bool _double_mono_input{false};
-    int _number_of_programs{0};
 
     std::string _plugin_path;
 
