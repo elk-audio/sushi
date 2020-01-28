@@ -280,11 +280,6 @@ private:
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;
 
-    //  TODO: This is a separate library. Only used once for logging, I could include that later.
-    //  Sratom* sratom;         ///< Atom serialiser
-    //  Sratom* ui_sratom;      ///< Atom serialiser for UI thread
-    //  SerdEnv* env; ///< Environment for RDF printing
-
     uint32_t position; ///< Transport position in frames
     float bpm; ///< Transport tempo in beats per minute
     bool rolling; ///< Transport speed (0=stop, 1=play)

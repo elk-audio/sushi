@@ -62,10 +62,10 @@ private:
 
     int _load_programs(PresetSink sink, void* data);
 
-    // TODO: Make these private - perhaps move to State class!?
     std::vector<std::string> _program_names;
     int _current_program_index {0}; // TODO: Is this stored by LV2? OR should I manage it?
 
+    // Naked pointer because Lilv mmanages lifetime.
     LilvState* _preset {nullptr};
 
     LV2Model* _model;

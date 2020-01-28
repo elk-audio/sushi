@@ -31,7 +31,6 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-// TODO: Pass model as const eventually
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
 control(0.0f),
 _flow(FLOW_UNKNOWN),

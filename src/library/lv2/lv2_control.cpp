@@ -15,9 +15,12 @@
 */
 
 #include "lv2_control.h"
+#include "logging.h"
 
 namespace sushi {
 namespace lv2 {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index)
 {
@@ -138,8 +141,7 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
 
     if (!id->value_type)
     {
-// TODO: Use ELK error log.
-        fprintf(stderr, "Unknown value type for property <%s>\n", lilv_node_as_string(property));
+        SUSHI_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
     }
 
     return id;

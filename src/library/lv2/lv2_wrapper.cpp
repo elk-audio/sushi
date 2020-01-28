@@ -104,7 +104,6 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _fetch_plugin_name_and_label();
 
-// TODO: Re-introduce when program management is implemented for LV2.
     _populate_program_list();
 
     _UI_IO.init(_model->get_plugin_class(), _sample_rate, _model->get_midi_buffer_size());
@@ -534,7 +533,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
             case PlayState::PAUSED:
                 for (int p = 0; p < _model->get_port_count(); ++p)
                 {
-// TODO: Implement the below pause functionality:
+// TODO: Implement the below pause functionality when transport is enabled:
 //                    jack_port_t* jport = _model->ports[p].sys_port;
 //                    if (jport && _model->ports[p].flow == FLOW_OUTPUT)
 //                    {

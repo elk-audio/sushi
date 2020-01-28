@@ -182,9 +182,6 @@ int LV2_State::apply_program(const int program_index)
         apply_program(presetNode);
         lilv_node_free(presetNode);
 
-        // TODO: Do I care?
-        // jalv_print_controls(model, true, false);
-
         _current_program_index = program_index;
 
         return 0;
