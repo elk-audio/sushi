@@ -3,6 +3,7 @@
 
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
+#include "test_utils/control_mockup.h"
 
 using namespace sushi;
 using namespace sushi::engine;
@@ -97,6 +98,8 @@ public:
 
     void set_tempo_sync_mode(SyncMode /*mode*/) override {}
 
+    ext::SushiControl* controller() override { return &_controller; }
+
     EngineReturnStatus send_rt_event(RtEvent& /*event*/) override
     {
         got_rt_event = true;
@@ -119,6 +122,7 @@ public:
     bool got_rt_event{false};
 private:
     EventDispatcherMockup _event_dispatcher;
+    ext::ControlMockup _controller;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H
