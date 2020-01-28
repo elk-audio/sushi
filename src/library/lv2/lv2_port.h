@@ -28,6 +28,8 @@
 #include <map>
 #include <mutex>
 
+#include <lilv-0/lilv/lilv.h>
+
 #include "lv2_evbuf.h"
 
 namespace sushi {
