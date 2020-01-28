@@ -294,7 +294,8 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
                                           _server_port(server_port),
-                                          _send_port(send_port)
+                                          _send_port(send_port),
+                                          _controller(engine->controller())
 {}
 
 ControlFrontendStatus OSCFrontend::init()
@@ -333,13 +334,12 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
-    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
-    if (processor_status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return false;
     }
-    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (parameter_status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
     {
         return false;
     }
@@ -358,13 +358,13 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                               const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
-    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
-    if (processor_status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return false;
     }
-    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (parameter_status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
+    if (parameter_status != ext::ControlStatus::OK)
     {
         return false;
     }
@@ -381,13 +381,13 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
 
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
-    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
-    if (processor_status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return false;
     }
-    auto [parameter_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (parameter_status != engine::EngineReturnStatus::OK)
+    auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
+    if (parameter_status != ext::ControlStatus::OK)
     {
         return false;
     }
@@ -401,8 +401,8 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
     std::string osc_path = "/keyboard_event/";
-    auto [status, processor_id] = _engine->processor_id_from_name(track_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto [status, processor_id] = _controller->get_processor_id(track_name);
+    if (status != ext::ControlStatus::OK)
     {
         return false;
     }
@@ -420,8 +420,8 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
     std::string osc_path = "/program/";
-    auto [processor_status, processor_id] = _engine->processor_id_from_name(processor_name);
-    if (processor_status != engine::EngineReturnStatus::OK)
+    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return false;
     }
@@ -438,31 +438,39 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 
 void OSCFrontend::connect_all()
 {
-    auto& processors = _engine->all_processors();
-    for (auto& processor : processors)
-    {
-        auto parameters = processor.second->all_parameters();
-        for (auto& param : parameters)
-        {
-            if (param->type() == ParameterType::FLOAT || param->type() == ParameterType::INT || param->type() == ParameterType::BOOL)
-            {
-                connect_to_parameter(processor.second->name(), param->name());
-                connect_from_parameter(processor.second->name(), param->name());
-            }
-            if (param->type() == ParameterType::STRING)
-            {
-                connect_to_string_parameter(processor.second->name(), param->name());
-            }
-        }
-        if (processor.second->supports_programs())
-        {
-            connect_to_program_change(processor.second->name());
-        }
-    }
-    auto& tracks = _engine->all_tracks();
+    auto tracks = _controller->get_tracks();
     for (auto& track : tracks)
     {
-        connect_kb_to_track(track->name());
+        auto [processors_status, processors] = _controller->get_track_processors(track.id);
+        if (processors_status != ext::ControlStatus::OK)
+        {
+            return;
+        }
+        for (auto& processor : processors)
+        {
+            auto [parameters_status, parameters] = _controller->get_processor_parameters(processor.id);
+            if (parameters_status != ext::ControlStatus::OK)
+            {
+                return;
+            }
+            for (auto& param : parameters)
+            {
+                if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+                {
+                    connect_to_parameter(processor.name, param.name);
+                    connect_from_parameter(processor.name, param.name);
+                }
+                if (param.type == ext::ParameterType::STRING_PROPERTY)
+                {
+                    connect_to_string_parameter(processor.name, param.name);
+                }
+            }
+            if (processor.program_count > 0)
+            {
+                connect_to_program_change(processor.name);
+            }
+        }
+        connect_kb_to_track(track.name);
     }
 }
 

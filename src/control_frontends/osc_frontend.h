@@ -30,6 +30,7 @@
 
 #include "lo/lo.h"
 
+#include "control_interface.h"
 #include "base_control_frontend.h"
 
 namespace sushi {
@@ -126,6 +127,8 @@ private:
     lo_address _osc_out_address;
 
     std::atomic_bool _running;
+
+    sushi::ext::SushiControl* _controller;
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
