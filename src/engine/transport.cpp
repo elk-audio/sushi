@@ -65,12 +65,13 @@ void Transport::set_time(Time timestamp, int64_t samples)
     _time = timestamp + _latency;
     int64_t prev_samples = _sample_count;
     _sample_count = samples;
+    _state_change = PlayStateChange::UNCHANGED;
 
     _update_internals();
 
     switch (_syncmode)
     {
-        case SyncMode::MIDI: // Not implemented, so treat like master
+        case SyncMode::MIDI:       // Midi and Gate not implemented, so treat like internal
         case SyncMode::GATE_INPUT:
         case SyncMode::INTERNAL:
             _update_internal_sync(samples - prev_samples);
@@ -239,7 +240,7 @@ void Transport::_update_internal_sync(int64_t samples)
 void Transport::_update_link_sync(Time timestamp)
 {
     auto session = _link_controller->captureAudioSessionState();
-    _tempo = static_cast<float>(session.isPlaying());
+    _tempo = static_cast<float>(session.tempo());
     _playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
             _set_playmode : PlayingMode::PLAYING) : PlayingMode::STOPPED;
 

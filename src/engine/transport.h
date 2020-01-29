@@ -38,11 +38,17 @@
 namespace ableton {class Link;}
 
 namespace sushi {
+
+enum class PlayStateChange
+{
+    UNCHANGED,
+    STARTING,
+    STOPPING,
+};
+
 namespace engine {
 
 constexpr float DEFAULT_TEMPO = 120;
-/* Ableton recomends this to be around 10 Hz */
-constexpr int LINK_UPDATE_RATE = 1;// = 48000 / (10 * AUDIO_CHUNK_SIZE);
 
 class Transport
 {
@@ -141,9 +147,7 @@ public:
     int64_t current_samples() const {return _sample_count;}
 
     /**
-     * @brief If the transport is currently playing or not. If in master mode, this always
-     *        returns true as we don't really have a concept of stop and start yet and
-     *        as sushi as of now is mostly intended for live use.
+     * @brief If the transport is currently playing or not.
      * @return true if the transport is currently playing, false if stopped
      */
     bool playing() const {return _playmode != PlayingMode::STOPPED;}
@@ -157,7 +161,7 @@ public:
     /**
      * @brief Query the current tempo. Safe to call from rt and non-rt context but will
      *        only return approximate value if called from a non-rt context. If sync is
-     *        not set to INTERNAL, this might be different then what was previously used
+     *        not set to INTERNAL, this might be different than what was previously used
      *        as an argument to set_tempo()
      * @return A float representing the tempo in beats per minute
      */
@@ -195,6 +199,16 @@ public:
      */
     double current_bar_start_beats() const {return _bar_start_beat_count;}
 
+    /**
+     * @brief Query any playing state changes occuring during the current processing chunk.
+     *        For instance, if Transport is starting, during the first chunk, Transport
+     *        will report playing() as true and current_state_change() as STARTING.
+     *        Subsequent chunks Transport will report playing() as true and
+     *        current_state_change() as UNCHANGED.
+     * @return A PlayStateChange enum with the current state change, if any.
+     */
+    PlayStateChange current_state_change() const {return _state_change;}
+
 private:
     void _update_internals();
     void _update_internal_sync(int64_t samples);
@@ -218,6 +232,7 @@ private:
     PlayingMode     _set_playmode{_playmode};
     SyncMode        _syncmode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
+    PlayStateChange _state_change{PlayStateChange::UNCHANGED};
 
     std::unique_ptr<ableton::Link>  _link_controller;
 };
