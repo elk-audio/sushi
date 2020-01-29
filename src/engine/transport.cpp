@@ -103,6 +103,12 @@ void Transport::process_event(const RtEvent& event)
 
         case RtEventType::SYNC_MODE:
             _syncmode = event.sync_mode_event()->mode();
+#ifndef SUSHI_BUILD_WITH_ABLETON_LINK
+        if (_syncmode == SyncMode::ABLETON_LINK)
+            {
+                _syncmode = SyncMode::INTERNAL;
+            }
+#endif
             break;
 
         default:
