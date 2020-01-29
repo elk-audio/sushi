@@ -42,6 +42,7 @@ struct OscConnection
     ObjectId processor;
     ObjectId parameter;
     OSCFrontend* instance;
+    ext::SushiControl* controller;
 };
 
 class OSCFrontend : public BaseControlFrontend

@@ -50,7 +50,7 @@ static int osc_send_parameter_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     float value = argv[0]->f;
-    connection->instance->send_parameter_change_event(connection->processor, connection->parameter, value);
+    connection->controller->set_parameter_value(connection->parameter, connection->processor, value);
     SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
@@ -64,7 +64,7 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
-    connection->instance->send_string_parameter_change_event(connection->processor, connection->parameter, value);
+    connection->controller->set_string_property_value(connection->processor, connection->parameter, value);
     SUSHI_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
@@ -76,6 +76,7 @@ static int osc_send_keyboard_event(const char* /*path*/,
                                    void* /*data*/,
                                    void* user_data)
 {
+    // TODO: Enable aftertouch message and midi channel
     auto connection = static_cast<OscConnection*>(user_data);
     std::string event(&argv[0]->s);
     int note = argv[1]->i;
@@ -83,15 +84,11 @@ static int osc_send_keyboard_event(const char* /*path*/,
 
     if (event == "note_on")
     {
-        connection->instance->send_note_on_event(connection->processor, 0, note, value);
+        connection->controller->send_note_on(connection->processor, 0, note, value);
     }
     else if (event == "note_off")
     {
-        connection->instance->send_note_off_event(connection->processor, 0, note, value);
-    }
-    else if (event == "program_change")
-    {
-        connection->instance->send_program_change_event(connection->processor, note);
+        connection->controller->send_note_off(connection->processor, 0, note, value);
     }
     else
     {
@@ -111,7 +108,7 @@ static int osc_send_program_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     int program_id = argv[0]->i;
-    connection->instance->send_program_change_event(connection->processor, program_id);
+    connection->controller->set_processor_program(connection->processor, program_id);
     return 0;
 }
 
@@ -204,10 +201,10 @@ static int osc_set_tempo(const char* /*path*/,
                                 void* /*data*/,
                                 void* user_data)
 {
-    auto instance = static_cast<OSCFrontend*>(user_data);
+    auto instance = static_cast<ext::SushiControl*>(user_data);
     float tempo = argv[0]->f;
     SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
-    instance->send_set_tempo_event(tempo);
+    instance->set_tempo(tempo);
     return 0;
 }
 
@@ -218,11 +215,11 @@ static int osc_set_time_signature(const char* /*path*/,
                                   void* /*data*/,
                                   void* user_data)
 {
-    auto instance = static_cast<OSCFrontend*>(user_data);
+    auto instance = static_cast<ext::SushiControl*>(user_data);
     int numerator = argv[0]->i;
     int denominator = argv[1]->i;
     SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
-    instance->send_set_time_signature_event({numerator, denominator});
+    instance->set_time_signature({numerator, denominator});
     return 0;
 }
 
@@ -233,16 +230,16 @@ static int osc_set_playing_mode(const char* /*path*/,
                                 void* /*data*/,
                                 void* user_data)
 {
-    auto instance = static_cast<OSCFrontend*>(user_data);
+    auto instance = static_cast<ext::SushiControl*>(user_data);
     std::string mode_str(&argv[0]->s);
-    PlayingMode mode;
+    ext::PlayingMode mode;
     if (mode_str == "playing")
     {
-        mode = PlayingMode::PLAYING;
+        mode = ext::PlayingMode::PLAYING;
     }
     else if (mode_str == "stopped")
     {
-        mode = PlayingMode::STOPPED;
+        mode = ext::PlayingMode::STOPPED;
     }
     else
     {
@@ -251,7 +248,7 @@ static int osc_set_playing_mode(const char* /*path*/,
     }
 
     SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
-    instance->send_set_playing_mode_event(mode);
+    instance->set_playing_mode(mode);
     return 0;
 }
 
@@ -262,20 +259,20 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
                                    void* /*data*/,
                                    void* user_data)
 {
-    auto instance = static_cast<OSCFrontend*>(user_data);
+    auto instance = static_cast<ext::SushiControl*>(user_data);
     std::string mode_str(&argv[0]->s);
-    SyncMode mode;
+    ext::SyncMode mode;
     if (mode_str == "internal")
     {
-        mode = SyncMode::INTERNAL;
+        mode = ext::SyncMode::INTERNAL;
     }
     else if (mode_str == "ableton_link")
     {
-        mode = SyncMode::ABLETON_LINK;
+        mode = ext::SyncMode::LINK;
     }
     else if (mode_str == "midi")
     {
-        mode = SyncMode::MIDI_SLAVE;
+        mode = ext::SyncMode::MIDI;
     }
     else
     {
@@ -283,7 +280,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
         return 0;
     }
     SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
-    instance->send_set_sync_mode_event(mode);
+    instance->set_sync_mode(mode);
     return 0;
 }
 
@@ -340,6 +337,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
         return false;
     }
     auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
+    if (parameter_status != ext::ControlStatus::OK)
     {
         return false;
     }
@@ -348,6 +346,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     connection->processor = processor_id;
     connection->parameter = parameter_id;
     connection->instance = this;
+    connection->controller = _controller;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -373,6 +372,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
     connection->processor = processor_id;
     connection->parameter = parameter_id;
     connection->instance = this;
+    connection->controller = _controller;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -411,6 +411,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
     connection->processor = processor_id;
     connection->parameter = 0;
     connection->instance = this;
+    connection->controller = _controller;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -430,6 +431,7 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     connection->processor = processor_id;
     connection->parameter = 0;
     connection->instance = this;
+    connection->controller = _controller;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -501,10 +503,10 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_track", "s", osc_delete_track, this);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
-    lo_server_thread_add_method(_osc_server, "/engine/set_tempo", "f", osc_set_tempo, this);
-    lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this);
-    lo_server_thread_add_method(_osc_server, "/engine/set_playing_mode", "s", osc_set_playing_mode, this);
-    lo_server_thread_add_method(_osc_server, "/engine/set_sync_mode", "s", osc_set_tempo_sync_mode, this);
+    lo_server_thread_add_method(_osc_server, "/engine/set_tempo", "f", osc_set_tempo, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/set_playing_mode", "s", osc_set_playing_mode, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/set_sync_mode", "s", osc_set_tempo_sync_mode, this->_controller);
 }
 
 int OSCFrontend::process(Event* event)
