@@ -2,6 +2,7 @@
 #define SUSHI_CONTROL_MOCKUP_H
 
 #include "control_interface.h"
+#include "engine/base_engine.h"
 
 namespace sushi {
 namespace ext {
@@ -34,27 +35,107 @@ constexpr int default_program_id = 1;
 constexpr auto default_program_name = "program 1";
 const std::vector<std::string> default_programs = {default_program_name, "program 2"};
 
+// Convenience functions
+
+inline sushi::TimeSignature to_internal(sushi::ext::TimeSignature time_signature)
+{
+    return sushi::TimeSignature{time_signature.numerator, time_signature.denominator};
+}
+
+inline sushi::PlayingMode to_internal(sushi::ext::PlayingMode mode)
+{
+    switch (mode)
+    {
+        case sushi::ext::PlayingMode::PLAYING:      return sushi::PlayingMode::PLAYING;
+        case sushi::ext::PlayingMode::RECORDING:    return sushi::PlayingMode::RECORDING;
+        case sushi::ext::PlayingMode::STOPPED:      return sushi::PlayingMode::STOPPED;
+        default:                                    return sushi::PlayingMode::PLAYING;
+    }
+}
+
+inline sushi::SyncMode to_internal(sushi::ext::SyncMode mode)
+{
+    switch (mode)
+    {
+        case sushi::ext::SyncMode::GATE:        return sushi::SyncMode::GATE_INPUT;
+        case sushi::ext::SyncMode::INTERNAL:    return sushi::SyncMode::INTERNAL;
+        case sushi::ext::SyncMode::LINK:        return sushi::SyncMode::ABLETON_LINK;
+        case sushi::ext::SyncMode::MIDI:        return sushi::SyncMode::MIDI_SLAVE;
+        default:                                return sushi::SyncMode::INTERNAL;
+    }
+}
+
 class ControlMockup : public SushiControl
 {
 public:
 
+    ControlMockup(engine::BaseEngine* engine) : _engine(engine) {}
+
      // Main engine controls
     virtual float                               get_samplerate() const override { return default_samplerate; };
     virtual PlayingMode                         get_playing_mode() const override { return default_playing_mode; };
-    virtual void                                set_playing_mode(PlayingMode /* playing_mode */) override {};
+    virtual void                                set_playing_mode(PlayingMode playing_mode) override 
+    {
+        if (_engine != nullptr)
+        {
+            auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+    };
     virtual SyncMode                            get_sync_mode() const override { return default_sync_mode; };
-    virtual void                                set_sync_mode(SyncMode /* sync_mode */) override {};
+    virtual void                                set_sync_mode(SyncMode sync_mode) override 
+    {
+        if (_engine != nullptr)
+        {
+            auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+    };
     virtual float                               get_tempo() const override { return default_tempo; };
-    virtual ControlStatus                       set_tempo(float /* tempo */) override { return default_control_status; };
+    virtual ControlStatus                       set_tempo(float tempo) override 
+    { 
+        if (_engine != nullptr)
+        {
+            auto event = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+        return default_control_status; 
+    };
     virtual TimeSignature                       get_time_signature() const override { return default_time_signature; };
-    virtual ControlStatus                       set_time_signature(TimeSignature /* signature */) override { return default_control_status; };
+    virtual ControlStatus                       set_time_signature(TimeSignature signature) override 
+    { 
+        if (_engine != nullptr)
+        {
+            auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+        return default_control_status; 
+    };
     virtual bool                                get_timing_statistics_enabled() override { return default_timing_statistics_enabled; };
     virtual void                                set_timing_statistics_enabled(bool /* enabled */) const override {};
     virtual std::vector<TrackInfo>              get_tracks() const override { return tracks; };
 
     // Keyboard control
-    virtual ControlStatus                       send_note_on(int /* track_id */, int /* channel */, int /* note */, float /* velocity */) override { return default_control_status; };
-    virtual ControlStatus                       send_note_off(int /* track_id */, int /* channel */, int /* note */, float /* velocity */) override { return default_control_status; };
+    virtual ControlStatus                       send_note_on(int track_id, int channel, int note, float velocity) override 
+    { 
+        if (_engine != nullptr)
+        {
+            auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
+                                   channel, note, velocity, IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);;
+        }
+        return default_control_status; 
+    };
+    virtual ControlStatus                       send_note_off(int track_id, int channel, int note, float velocity) override 
+    { 
+        if (_engine != nullptr)
+        {
+            auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
+                                    channel, note, velocity, IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+        return default_control_status; 
+    };
     virtual ControlStatus                       send_note_aftertouch(int /* track_id */, int /* channel */, int /* note */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                       send_aftertouch(int /* track_id */, int /* channel */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                       send_pitch_bend(int /* track_id */, int /* channel */, float /* value */) override { return default_control_status; };
@@ -156,9 +237,23 @@ public:
     {
         return std::pair<ControlStatus, std::string>(default_control_status, default_string_property);
     };
-    virtual ControlStatus                              set_parameter_value(int /* processor_id */, int /* parameter_id */, float /* value */) override { return default_control_status; };
+    virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) override 
+    { 
+        if (_engine != nullptr)
+        {
+            auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                          static_cast<ObjectId>(processor_id),
+                                          static_cast<ObjectId>(parameter_id),
+                                          value, IMMEDIATE_PROCESS);
+            _engine->event_dispatcher()->post_event(event);
+        }
+        return default_control_status; 
+    };
     virtual ControlStatus                              set_parameter_value_normalised(int /* processor_id */, int /* parameter_id */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                              set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override { return default_control_status; };
+
+private:
+    engine::BaseEngine* _engine;
 };
 
 } // ext

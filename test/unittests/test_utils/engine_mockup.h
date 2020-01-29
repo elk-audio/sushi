@@ -122,7 +122,7 @@ public:
     bool got_rt_event{false};
 private:
     EventDispatcherMockup _event_dispatcher;
-    ext::ControlMockup _controller;
+    sushi::ext::ControlMockup _controller{this};
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H
