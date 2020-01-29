@@ -50,7 +50,7 @@ static int osc_send_parameter_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     float value = argv[0]->f;
-    connection->controller->set_parameter_value(connection->parameter, connection->processor, value);
+    connection->controller->set_parameter_value(connection->processor, connection->parameter, value);
     SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
