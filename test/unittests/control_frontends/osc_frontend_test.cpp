@@ -185,10 +185,7 @@ TEST_F(TestOSCFrontend, TestSetTempo)
 
     auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
-    EXPECT_FLOAT_EQ(136.0f, rt_event.tempo_event()->tempo());
+    EXPECT_TRUE(event->is_engine_event());
 }
 
 TEST_F(TestOSCFrontend, TestSetTimeSignature)
@@ -196,11 +193,7 @@ TEST_F(TestOSCFrontend, TestSetTimeSignature)
     lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
     auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::TIME_SIGNATURE, rt_event.type());
-    EXPECT_EQ(7, rt_event.time_signature_event()->time_signature().numerator);
-    EXPECT_EQ(8, rt_event.time_signature_event()->time_signature().denominator);
+    EXPECT_TRUE(event->is_engine_event());
 }
 
 TEST_F(TestOSCFrontend, TestSetPlayingMode)
@@ -208,10 +201,7 @@ TEST_F(TestOSCFrontend, TestSetPlayingMode)
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
     auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
-    EXPECT_EQ(PlayingMode::PLAYING, rt_event.playing_mode_event()->mode());
+    EXPECT_TRUE(event->is_engine_event());
 }
 
 TEST_F(TestOSCFrontend, TestSetSyncMode)
@@ -219,10 +209,7 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
     auto event = wait_for_event();
     ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
-    EXPECT_EQ(SyncMode::MIDI, rt_event.sync_mode_event()->mode());
+    EXPECT_TRUE(event->is_engine_event());
 }
 
 TEST(TestOSCFrontendInternal, TestMakeSafePath)

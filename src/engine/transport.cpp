@@ -33,17 +33,17 @@ namespace engine {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
 
-void peer_callback(size_t peers)
+void peer_callback([[maybe_unused]] size_t peers)
 {
     SUSHI_LOG_INFO("Ableton link reports {} peers connected ", peers);
 }
 
-void tempo_callback(double tempo)
+void tempo_callback([[maybe_unused]] double tempo)
 {
     SUSHI_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
 }
 
-void start_stop_callback(bool playing)
+void start_stop_callback([[maybe_unused]] bool playing)
 {
     SUSHI_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
@@ -83,10 +83,6 @@ void Transport::set_time(Time timestamp, int64_t samples)
             break;
         }
     }
-
-    //static int logg = 0;
-    //logg = ++logg % 1000;
-    //SUSHI_LOG_INFO_IF(logg== 0, "Current beats: {}, bar: {}, bar start: {}", _beat_count, _current_bar_beat_count, _bar_start_beat_count);
 }
 
 void Transport::process_event(const RtEvent& event)
@@ -214,11 +210,6 @@ void Transport::_update_internal_sync(int64_t samples)
     /* Assume that if there are missed callbacks, the numbers of samples
      * will still be a multiple of AUDIO_CHUNK_SIZE */
     auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
-    /*if (chunks_passed < 1)
-    {
-        //chunks_passed = 1;
-        SUSHI_LOG_INFO("First time {}", chunks_passed);
-    }*/
 
     _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (_playmode != PlayingMode::STOPPED)
@@ -228,38 +219,47 @@ void Transport::_update_internal_sync(int64_t samples)
         {
             _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
             _bar_start_beat_count += _beats_per_bar;
-            //_bar_start_beat_count += _beats_per_bar * std::floor(_current_bar_beat_count / _beats_per_bar);
-
         }
         _beat_count += chunks_passed * _beats_per_chunk;
     }
+
     _tempo = _set_tempo;
-    _playmode = _set_playmode;
+    if (_playmode != _set_playmode)
+    {
+        _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = _set_playmode;
+    }
 }
 
 void Transport::_update_link_sync(Time timestamp)
 {
     auto session = _link_controller->captureAudioSessionState();
     _tempo = static_cast<float>(session.tempo());
-    _playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
+
+    auto new_playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
             _set_playmode : PlayingMode::PLAYING) : PlayingMode::STOPPED;
 
-    _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    if (new_playmode != _playmode)
+    {
+        _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = new_playmode;
+    }
 
+    _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (session.isPlaying())
     {
         _beat_count = session.beatAtTime(timestamp, _beats_per_bar);
         _current_bar_beat_count = session.phaseAtTime(timestamp, _beats_per_bar);
         _bar_start_beat_count = _beat_count - _current_bar_beat_count;
     }
+
     /* Due to the nature of the Xenomai RT architecture we cannot commit changes to
      * the session here as that would cause a mode switch. Instead all changes need
      * to be made from the non rt thread */
 }
-
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 void Transport::_set_link_playing(bool playing)
 {
-#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
     auto state = _link_controller->captureAppSessionState();
     state.setIsPlaying(playing, _time);
     if (playing)
@@ -268,17 +268,21 @@ void Transport::_set_link_playing(bool playing)
         state.requestBeatAtStartPlayingTime(_bar_start_beat_count + _beats_per_bar, _beats_per_bar);
     }
     _link_controller->commitAppSessionState(state);
-#endif
 }
 
 void Transport::_set_link_tempo(float tempo)
 {
-#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
     auto state = _link_controller->captureAppSessionState();
     state.setTempo(tempo, this->current_process_time());
     _link_controller->commitAudioSessionState(state);
-#endif
 }
+#else
+void Transport::_set_link_playing(bool /*playing*/) {}
+void Transport::_set_link_tempo(float /*tempo*/) {}
+#endif
+
+
+
 
 } // namespace engine
 } // namespace sushi
