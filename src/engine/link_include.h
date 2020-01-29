@@ -21,7 +21,7 @@
  *       but injects another Clock implementation based on Twine into it. This is
  *       neccesary as calling clock_get_time() is not safe from a Xenomai thread
  *       context.
-* @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+* @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
 */
 
 
@@ -34,7 +34,7 @@
 #include <cmath>
 #include <ctime>
 
-#include "twine/twine.h"
+#include <twine/twine.h>
 
 #include <ableton/link/Controller.hpp>
 #include <ableton/util/Log.hpp>

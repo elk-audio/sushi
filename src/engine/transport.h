@@ -23,11 +23,10 @@
 
 #include <memory>
 #include <atomic>
-
 #include <cassert>
 
-#include <library/constants.h>
-#include <library/event_interface.h>
+#include "library/constants.h"
+#include "library/event_interface.h"
 #include "library/time.h"
 #include "library/types.h"
 #include "library/rt_event.h"

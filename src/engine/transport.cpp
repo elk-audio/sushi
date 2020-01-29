@@ -23,7 +23,7 @@
 
 #include "link_include.h"
 
-#include <library/rt_event.h>
+#include "library/rt_event.h"
 #include "library/constants.h"
 #include "transport.h"
 #include "logging.h"
@@ -50,7 +50,7 @@ void start_stop_callback([[maybe_unused]] bool playing)
 
 
 Transport::Transport(float sample_rate) : _samplerate(sample_rate),
-                                           _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
+                                          _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
 {
     _link_controller->setNumPeersCallback(peer_callback);
     _link_controller->setTempoCallback(tempo_callback);
