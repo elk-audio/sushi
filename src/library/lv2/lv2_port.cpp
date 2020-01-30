@@ -111,12 +111,12 @@ _index(port_index)
     }
 }
 
-void Port::resetInputBuffer()
+void Port::reset_input_buffer()
 {
     lv2_evbuf_reset(_evbuf, true);
 }
 
-void Port::resetOutputBuffer()
+void Port::reset_output_buffer()
 {
     lv2_evbuf_reset(_evbuf, false);
 }
@@ -144,22 +144,22 @@ void Port::_allocate_port_buffers(LV2Model* model)
     }
 }
 
-float Port::getMin()
+float Port::get_min()
 {
     return _min;
 }
 
-float Port::getMax()
+float Port::get_max()
 {
     return _max;
 }
 
-PortFlow Port::getFlow()
+PortFlow Port::get_flow()
 {
     return _flow;
 }
 
-PortType Port::getType()
+PortType Port::get_type()
 {
     return _type;
 }

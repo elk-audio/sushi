@@ -14,10 +14,9 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-// This file has been copied from the Jalv LV2 plugin host example - no refactoring has been carried out
+// This file has been copied from the Jalv LV2 plugin host example - no refactoring has been carried out.
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,7 +61,7 @@ struct SymapImpl
 
 Symap* symap_new(void)
 {
-    Symap *map = (Symap *) malloc(sizeof(Symap));
+    auto map = (Symap*) malloc(sizeof(Symap));
     map->symbols = NULL;
     map->index = NULL;
     map->size = 0;
@@ -101,6 +100,7 @@ or the index where a new entry for `sym` should be inserted.
 static uint32_t symap_search(const Symap *map, const char *sym, bool *exact)
 {
     *exact = false;
+
     if (map->size == 0)
     {
         return 0;  // Empty map, insert at 0
@@ -120,15 +120,22 @@ static uint32_t symap_search(const Symap *map, const char *sym, bool *exact)
         i = lower + ((upper - lower) / 2);
         cmp = strcmp(map->symbols[map->index[i] - 1], sym);
 
-        if (cmp == 0) {
+        if (cmp == 0)
+        {
             *exact = true;
             return i;
-        } else if (cmp > 0) {
-            if (i == 0) {
+        }
+        else if (cmp > 0)
+        {
+            if (i == 0)
+            {
                 break;  // Avoid underflow
             }
+
             upper = i - 1;
-        } else {
+        }
+        else
+        {
             lower = ++i;
         }
     }
@@ -141,6 +148,7 @@ uint32_t symap_try_map(Symap *map, const char *sym)
 {
     bool exact;
     const uint32_t index = symap_search(map, sym, &exact);
+
     if (exact)
     {
         assert(!strcmp(map->symbols[map->index[index]], sym));
@@ -154,7 +162,9 @@ uint32_t symap_map(Symap *map, const char *sym)
 {
     bool exact;
     const uint32_t index = symap_search(map, sym, &exact);
-    if (exact) {
+
+    if (exact)
+    {
         assert(!strcmp(map->symbols[map->index[index] - 1], sym));
         return map->index[index];
     }
@@ -168,7 +178,9 @@ uint32_t symap_map(Symap *map, const char *sym)
 
     /* Insert new index element into sorted index */
     map->index = (uint32_t *) realloc(map->index, map->size * sizeof(uint32_t));
-    if (index < map->size - 1) {
+
+    if (index < map->size - 1)
+    {
         memmove(map->index + index + 1,
                 map->index + index,
                 (map->size - index - 1) * sizeof(uint32_t));
@@ -189,57 +201,9 @@ const char* symap_unmap(Symap *map, uint32_t id)
     {
         return map->symbols[id - 1];
     }
+
     return nullptr;
 }
 
-#ifdef STANDALONE
-
-#include <stdio.h>
-
-    static void
-    symap_dump(Symap* map)
-    {
-        fprintf(stderr, "{\n");
-        for (uint32_t i = 0; i < map->size; ++i) {
-            fprintf(stderr, "\t%u = %s\n",
-                    map->index[i], map->symbols[map->index[i] - 1]);
-        }
-        fprintf(stderr, "}\n");
-    }
-
-    int
-    main()
-    {
-#define N_SYMS 5
-        char* syms[N_SYMS] = {
-            "hello", "bonjour", "goodbye", "aloha", "salut"
-        };
-
-        Symap* map = symap_new();
-        for (int i = 0; i < N_SYMS; ++i) {
-            if (symap_try_map(map, syms[i])) {
-                fprintf(stderr, "error: Symbol already mapped\n");
-                return 1;
-            }
-
-            const uint32_t id = symap_map(map, syms[i]);
-            if (strcmp(map->symbols[id - 1], syms[i])) {
-                fprintf(stderr, "error: Corrupt symbol table\n");
-                return 1;
-            }
-
-            if (symap_map(map, syms[i]) != id) {
-                fprintf(stderr, "error: Remapped symbol to a different ID\n");
-                return 1;
-            }
-
-            symap_dump(map);
-        }
-
-        symap_free(map);
-        return 0;
-    }
-
-#endif /* STANDALONE */
 }
 }

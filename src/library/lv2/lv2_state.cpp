@@ -16,6 +16,8 @@
 
 #include <lilv-0/lilv/lilv.h>
 
+#include "logging.h"
+
 #include "lv2_state.h"
 #include "lv2_model.h"
 #include "lv2_port.h"
@@ -24,11 +26,12 @@
 namespace sushi {
 namespace lv2 {
 
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+
 static int populate_preset_list(LV2Model* model, const LilvNode *node, const LilvNode* title, void* data)
 {
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
-    //printf("%s (%s)\n", node_string.c_str(), title_string.c_str());
 
     model->get_state()->get_program_names().emplace_back(std::move(node_string));
 
@@ -122,8 +125,7 @@ int LV2_State::_load_programs(PresetSink sink, void* data)
 		}
 		else
 		{
-			fprintf(stderr, "Preset <%s> has no rdfs:label\n",
-			        lilv_node_as_string(lilv_nodes_get(presets, i)));
+            SUSHI_LOG_ERROR("Preset {} has no rdfs:label", lilv_node_as_string(lilv_nodes_get(presets, i)));
 		}
 	}
 
@@ -234,6 +236,7 @@ int LV2_State::delete_current_program()
 	lilv_world_unload_resource(_model->get_world(), lilv_state_get_uri(_preset));
 	lilv_state_delete(_model->get_world(), _preset);
     set_preset(nullptr);
+
 	return 0;
 }
 
@@ -243,7 +246,7 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
     auto model = static_cast<LV2Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
-    if (port && port->getFlow() == FLOW_INPUT && port->getType() == TYPE_CONTROL)
+    if (port && port->get_flow() == FLOW_INPUT && port->get_type() == TYPE_CONTROL)
     {
         *size = sizeof(float);
         *type = model->get_forge().Float;
@@ -266,7 +269,7 @@ void set_port_value(const char* port_symbol,
 
     if (!port)
     {
-        fprintf(stderr, "error: Preset port `%s' is missing\n", port_symbol);
+        SUSHI_LOG_ERROR("error: Preset port `{}' is missing", port_symbol);
         return;
     }
 
@@ -276,30 +279,32 @@ void set_port_value(const char* port_symbol,
 
     if (type == forge.Float)
     {
-        fvalue = *(const float*)value;
+        fvalue = *static_cast<const float*>(value);
     }
     else if (type == forge.Double)
     {
-        fvalue = *(const double*)value;
+        fvalue = *static_cast<const double*>(value);
     }
     else if (type == forge.Int)
     {
-        fvalue = *(const int32_t*)value;
+        fvalue = *static_cast<const int32_t*>(value);
     }
     else if (type == forge.Long)
     {
-        fvalue = *(const int64_t*)value;
+        fvalue = *static_cast<const int64_t*>(value);
     }
     else
     {
-        fprintf(stderr, "error: Preset `%s' value has bad type <%s>\n",
-                port_symbol, model->get_unmap().unmap(model->get_unmap().handle, type));
+        SUSHI_LOG_ERROR("error: Preset {} value has bad type {}",
+                port_symbol,
+                model->get_unmap().unmap(model->get_unmap().handle, type));
+
         return;
     }
 
     if (model->get_play_state() != PlayState::RUNNING)
     {
-        // Set value on port directly
+        // Set value on port directly:
         port->set_control_value(fvalue);
     }
 }

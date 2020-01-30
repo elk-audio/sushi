@@ -69,9 +69,11 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _sample_rate = sample_rate;
 
     auto library_handle = _loader.get_plugin_handle_from_URI(_plugin_path.c_str());
+
     if (library_handle == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
+
         _cleanup();
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
@@ -94,6 +96,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     if (_model->get_plugin_instance() == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
+
         _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
@@ -106,22 +109,22 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _create_controls(true);
     _create_controls(false);
 
-    // Register internal parameters
-    if (!_register_parameters())
+    if (!_register_parameters()) // Register internal parameters
     {
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
+
         _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
     auto state = lilv_state_new_from_world(_model->get_world(), &_model->get_map(), lilv_plugin_get_uri(library_handle));
-    /* Apply loaded state to plugin instance if necessary */
-    if (state)
+
+    if (state) // Apply loaded state to plugin instance if necessary
     {
         _model->get_state()->apply_state(state);
     }
 
-    /* Activate plugin */
+    // Activate plugin
     lilv_instance_activate(_model->get_plugin_instance());
 
     _model->set_play_state(PlayState::RUNNING);
@@ -172,6 +175,7 @@ void Lv2Wrapper::_create_controls(bool writable)
         }
 
         auto record = new_property_control(_model, property);
+
         if (writable)
         {
             record->is_writable = true;
@@ -187,8 +191,7 @@ void Lv2Wrapper::_create_controls(bool writable)
         }
         else
         {
-            fprintf(stderr, "Parameter <%s> has unknown value type, ignored\n",
-                    lilv_node_as_string(record->node));
+            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record->node));
         }
     }
 
@@ -212,7 +215,7 @@ void Lv2Wrapper::_fetch_plugin_name_and_label()
 
 bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {
-    /* Check that any required features are supported */
+    // Check that any required features are supported
     auto required_features = lilv_plugin_get_required_features(plugin);
 
     LILV_FOREACH(nodes, f, required_features)
@@ -222,10 +225,12 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 
         if (!feature_is_supported(_model, uri))
         {
-            SUSHI_LOG_ERROR("LV2 feature {} is not supported\n", uri);
+            SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
+
             return false;
         }
     }
+
     lilv_nodes_free(required_features);
     return true;
 }
@@ -260,7 +265,6 @@ void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     // though typically it is best to have one.
     if (control_input)
     {
-// control_in in Jalv seems to only be used in UI code.
         _model->set_control_input_index(lilv_port_get_index(plugin, control_input));
     }
 
@@ -282,12 +286,16 @@ std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int por
     {
         port = std::make_unique<Port>(plugin, port_index, default_value, _model);
 
-        if(port->getType() == TYPE_AUDIO)
+        if (port->get_type() == TYPE_AUDIO)
         {
-            if (port->getFlow() == FLOW_INPUT)
+            if (port->get_flow() == FLOW_INPUT)
+            {
                 _max_input_channels++;
-            else if (port->getFlow() == FLOW_OUTPUT)
+            }
+            else if (port->get_flow() == FLOW_OUTPUT)
+            {
                 _max_output_channels++;
+            }
         }
     }
     catch(Port::FailedCreation& e)
@@ -320,15 +328,18 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
 {
     float value = 0.0;
     const int index = static_cast<int>(parameter_id);
+
     if (index < _model->get_port_count())
     {
         auto port = _model->get_port(index);
+
         if (port)
         {
             value = port->get_control_value();
             return {ProcessorReturnCode::OK, value};
         }
     }
+
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
 }
 
@@ -406,7 +417,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
     {
         int return_code = _model->get_state()->apply_program(program);
 
-        if(return_code == 0)
+        if (return_code == 0)
             return ProcessorReturnCode::OK;
 
         return ProcessorReturnCode::ERROR;
@@ -433,7 +444,7 @@ bool Lv2Wrapper::_register_parameters()
     {
         auto currentPort = _model->get_port(_pi);
 
-        if (currentPort->getType() == TYPE_CONTROL)
+        if (currentPort->get_type() == TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
             auto nameNode = lilv_port_get_name(_model->get_plugin_class(), currentPort->get_lilv_port());
@@ -442,8 +453,8 @@ bool Lv2Wrapper::_register_parameters()
 
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(nameAsString, // name
                     nameAsString, // label
-                    currentPort->getMin(), // range min
-                    currentPort->getMax(), // range max
+                                                                                currentPort->get_min(), // range min
+                                                                                currentPort->get_max(), // range max
                     nullptr), // ParameterPreProcessor
                     static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
 
@@ -528,27 +539,27 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
     {
         auto current_port = _model->get_port(p);
 
-        switch(current_port->getType())
+        switch(current_port->get_type())
         {
             case TYPE_CONTROL:
                 lilv_instance_connect_port(instance, p, current_port->get_control_pointer());
                 break;
             case TYPE_AUDIO:
-                if (current_port->getFlow() == FLOW_INPUT)
+                if (current_port->get_flow() == FLOW_INPUT)
                     lilv_instance_connect_port(instance, p, _process_inputs[i++]);
                 else
                     lilv_instance_connect_port(instance, p, _process_outputs[o++]);
                 break;
             case TYPE_EVENT:
-                if (current_port->getFlow() == FLOW_INPUT)
+                if (current_port->get_flow() == FLOW_INPUT)
                 {
-                    current_port->resetInputBuffer();
+                    current_port->reset_input_buffer();
                     _process_midi_input(current_port);
 
                 }
-                else if (current_port->getFlow() == FLOW_OUTPUT) // Clear event output for plugin to write to.
+                else if (current_port->get_flow() == FLOW_OUTPUT) // Clear event output for plugin to write to.
                 {
-                    current_port->resetOutputBuffer();
+                    current_port->reset_output_buffer();
                 }
                 break;
             case TYPE_CV: // CV Support not yet implemented.
@@ -559,6 +570,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
                 lilv_instance_connect_port(instance, p, nullptr);
         }
     }
+
     _model->clear_update_request();
 }
 
@@ -567,9 +579,10 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
     for (int p = 0; p < _model->get_port_count(); ++p)
     {
         auto current_port = _model->get_port(p);
-        if(current_port->getFlow() == FLOW_OUTPUT)
+
+        if(current_port->get_flow() == FLOW_OUTPUT)
         {
-            switch(current_port->getType())
+            switch(current_port->get_type())
             {
                 case TYPE_CONTROL:
                     if (lilv_port_has_property(_model->get_plugin_class(),
@@ -795,7 +808,7 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
     }
     else
     {
-        assert(false);
+        assert(false); // All cases should have been catered for.
     }
 
     return MidiDataByte();
@@ -804,6 +817,7 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
 void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
+
     if (_double_mono_input)
     {
         _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
@@ -815,15 +829,18 @@ void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSam
         {
             _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
         }
+
         for (; i <= _max_input_channels; ++i)
         {
             _process_inputs[i] = (_dummy_input.channel(0));
         }
     }
+
     for (i = 0; i < _current_output_channels; i++)
     {
         _process_outputs[i] = out_buffer.channel(i);
     }
+
     for (; i <= _max_output_channels; ++i)
     {
         _process_outputs[i] = _dummy_output.channel(0);
@@ -833,10 +850,12 @@ void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSam
 void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
 {
     _double_mono_input = false;
+
     if (speaker_arr_status)
     {
         return;
     }
+
     if (_current_input_channels == 1 && _max_input_channels == 2)
     {
         _double_mono_input = true;
@@ -846,6 +865,7 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
 void Lv2Wrapper::pause()
 {
     _previous_play_state = _model->get_play_state();
+
     if(_previous_play_state != PlayState::PAUSED)
         _model->set_play_state(PlayState::PAUSED);
 }

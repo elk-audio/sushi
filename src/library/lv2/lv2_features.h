@@ -65,6 +65,7 @@ static const bool TRACE_OPTION = true;
 */
 Port* port_by_symbol(LV2Model* model, const char* sym);
 
+// These two are callbacks for the LV2 logging macro.
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,
             const char *fmt,

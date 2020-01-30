@@ -66,12 +66,7 @@ public:
     ~PluginLoader();
 
     const LilvPlugin* get_plugin_handle_from_URI(const std::string &plugin_URI_string);
-
-    // Not yet implemented - may never be.
-    // The LV2 standard does not encourage absolute paths to plugins,
-    // but instead expects them to be in the global paths it defines.
-    // static LibraryHandle get_library_handle_for_plugin_from_filepath(const std::string& plugin_absolute_path);
-
+    
     void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
 
     void close_plugin_instance();

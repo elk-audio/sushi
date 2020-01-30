@@ -73,7 +73,7 @@ void LV2Model::initialize_host_feature_list()
             &_features.unmap_feature,
             &_features.log_feature,
             &_features.make_path_feature,
-// TODO: Re-introduce options extension!
+// TODO: Re-introduce options extension.
             //&_features.options_feature,
             &static_features[0],
             &static_features[1],

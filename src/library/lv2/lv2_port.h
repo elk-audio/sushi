@@ -60,17 +60,17 @@ public:
 
     ~Port() {}
 
-    void resetInputBuffer();
-    void resetOutputBuffer();
+    void reset_input_buffer();
+    void reset_output_buffer();
 
-    PortFlow getFlow();
+    PortFlow get_flow();
 
-    PortType getType();
+    PortType get_type();
 
     const LilvPort* get_lilv_port();
 
-    float getMin();
-    float getMax();
+    float get_min();
+    float get_max();
 
     LV2_Evbuf* get_evbuf();
 

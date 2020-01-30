@@ -97,7 +97,6 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
     void pause();
-
     void resume();
 
 private:
@@ -142,23 +141,23 @@ private:
 
     void _populate_program_list();
 
-    float _sample_rate{0};
+    float _sample_rate {0};
 
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
-    ChunkSampleBuffer _dummy_input{1};
-    ChunkSampleBuffer _dummy_output{1};
+    ChunkSampleBuffer _dummy_input {1};
+    ChunkSampleBuffer _dummy_output {1};
 
     bool _double_mono_input{false};
 
     std::string _plugin_path;
 
-    //  VstTimeInfo _time_info;
+    // VstTimeInfo _time_info;
 
     // This queue holds incoming midi events.
     // They are parsed and converted to lv2_evbuf content for LV2 in
-    // process_audio.
+    // process_audio(...).
     RtEventFifo _incoming_event_queue;
 
     PluginLoader _loader;

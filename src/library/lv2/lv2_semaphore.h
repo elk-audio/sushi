@@ -21,6 +21,9 @@
 #include <mutex>
 #include <condition_variable>
 
+// This class is only used for pausing or continuing playback, so even if a mode switch occurs,
+// it will coincide with audio stopping/starting.
+
 namespace sushi {
 namespace lv2 {
 
@@ -52,7 +55,6 @@ private:
     std::condition_variable cv;
     int count;
 };
-
 
 } // end namespace lv2
 } // end namespace sushi

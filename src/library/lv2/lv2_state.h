@@ -45,7 +45,7 @@ public:
 
     int delete_current_program();
 
-    std::vector<std::string>&  get_program_names();
+    std::vector<std::string>& get_program_names();
 
     void populate_program_list();
 
