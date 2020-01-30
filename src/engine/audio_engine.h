@@ -281,21 +281,15 @@ public:
      * @param out_buffer output audio buffer
      * @param in_controls input control voltage and gate data
      * @param out_controls output control voltage and gate data
-     */
-    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
-                       SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
-                       ControlBuffer* in_controls,
-                       ControlBuffer* out_controls) override;
-
-    /**
-     * @brief Set the current time for the start of the current audio chunk
      * @param timestamp Current time in microseconds
-     * @param samples Current number of samples processed
+     * @param samplecount Current number of samples processed
      */
-    void update_time(Time timestamp, int64_t samples) override
-    {
-        _transport.set_time(timestamp, samples);
-    }
+    void process_chunk(SampleBuffer <AUDIO_CHUNK_SIZE>*in_buffer,
+                       SampleBuffer <AUDIO_CHUNK_SIZE>*out_buffer,
+                       ControlBuffer*in_controls,
+                       ControlBuffer*out_controls,
+                       Time timestamp,
+                       int64_t samplecount) override;
 
     /**
      * @brief Inform the engine of the current system latency

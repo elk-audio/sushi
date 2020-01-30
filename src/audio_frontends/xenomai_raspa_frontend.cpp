@@ -110,7 +110,6 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     Time timestamp = Time(raspa_get_time());
     set_flush_denormals_to_zero();
     int64_t samplecount = raspa_get_samplecount();
-    _engine->update_time(timestamp, samplecount);
 
     // Gate in signals from the Sika board are inverted, hence invert all bits
     _in_controls.gate_values = ~engine::BitSet32(raspa_get_gate_values());
@@ -122,7 +121,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
         _in_controls.cv_values[i] = map_audio_to_cv(input[(_audio_input_channels + i + 1) * AUDIO_CHUNK_SIZE - 1] * CV_IN_CORR);
     }
     out_buffer.clear();
-    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls);
+    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
     raspa_set_gate_values(static_cast<uint32_t>(_out_controls.gate_values.to_ulong()));
     /* Sika board outputs only positive cv */
     for (int i = 0; i < _cv_output_channels; ++i)

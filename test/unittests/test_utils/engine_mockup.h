@@ -76,16 +76,14 @@ public:
     ~EngineMockup()
     {}
 
-    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE> *in_buffer,
-                       SampleBuffer<AUDIO_CHUNK_SIZE> *out_buffer,
-                       ControlBuffer* /*in_controls*/ = 0,
-                       ControlBuffer* /*out_controls*/ = 0) override
+    void
+    process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                  SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                  ControlBuffer*, ControlBuffer*, Time, int64_t) override
     {
         *out_buffer = *in_buffer;
         process_called = true;
     }
-
-    void update_time(Time /*timestamp*/, int64_t /*samples*/) override {}
 
     void set_output_latency(Time /*latency*/) override {}
 

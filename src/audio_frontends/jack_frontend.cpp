@@ -286,8 +286,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
-        _engine->update_time(start_time + delta_time, current_frames + frame);
-        process_audio(frame, AUDIO_CHUNK_SIZE);
+        process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame);
     }
     return 0;
 }
@@ -328,30 +327,30 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
     }
 }
 
-void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count)
+void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t framecount, Time timestamp, int64_t samplecount)
 {
     /* Copy jack buffer data to internal buffers */
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        float* in_data = static_cast<float*>(jack_port_get_buffer(_input_ports[i], frame_count)) + start_frame;
+        float* in_data = static_cast<float*>(jack_port_get_buffer(_input_ports[i], framecount)) + start_frame;
         std::copy(in_data, in_data + AUDIO_CHUNK_SIZE, _in_buffer.channel(i));
     }
     for (int i = 0; i < _no_cv_input_ports; ++i)
     {
-        float* in_data = static_cast<float*>(jack_port_get_buffer(_cv_input_ports[i], frame_count)) + start_frame;
+        float* in_data = static_cast<float*>(jack_port_get_buffer(_cv_input_ports[i], framecount)) + start_frame;
         _in_controls.cv_values[i] = map_audio_to_cv(in_data[AUDIO_CHUNK_SIZE - 1]);
     }
     _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls);
+    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
-        float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], frame_count)) + start_frame;
+        float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], framecount)) + start_frame;
         std::copy(_out_buffer.channel(i), _out_buffer.channel(i) + AUDIO_CHUNK_SIZE, out_data);
     }
     /* The jack frontend both inputs and outputs cv in audio range [-1, 1] */
     for (int i = 0; i < _no_cv_output_ports; ++i)
     {
-        float* out_data = static_cast<float*>(jack_port_get_buffer(_cv_output_ports[i], frame_count)) + start_frame;
+        float* out_data = static_cast<float*>(jack_port_get_buffer(_cv_output_ports[i], framecount)) + start_frame;
         _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], map_cv_to_audio(_out_controls.cv_values[i]));
     }
 }
