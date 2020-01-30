@@ -72,8 +72,8 @@ message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 
 if (${WITH_VST3})
 
-# Build the given Vst3 host implementation into a separate library to
-# Avoid littering our own code with ugly defines
+# Build the given Vst3 host implementation into a separate library to avoid
+# Vst specific defines leaking into our code.
 
 set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 set(VST3_HOST_SOURCES
