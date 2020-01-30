@@ -51,11 +51,11 @@ void Lv2_UI_IO::init(const LilvPlugin* plugin, float sample_rate, int midi_buf_s
     {
         auto ui_uri = lilv_ui_get_uri(_ui);
         auto ui_name = lilv_node_as_uri(ui_uri);
-        fprintf(stderr, "UI: %s\n", ui_name);
+//        fprintf(stderr, "UI: %s\n", ui_name);
     }
     else
     {
-        fprintf(stderr, "UI: None\n");
+//        fprintf(stderr, "UI: None\n");
     }
 
     if (_buffer_size == 0)
@@ -85,8 +85,8 @@ void Lv2_UI_IO::init(const LilvPlugin* plugin, float sample_rate, int midi_buf_s
     /* The UI can only go so fast, clamp to reasonable limits */
     ui_update_hz = std::min(60.0f, ui_update_hz);
     _buffer_size = std::max(4096, static_cast<int>(_buffer_size));
-    fprintf(stderr, "Comm buffers: %d bytes\n", _buffer_size);
-    fprintf(stderr, "Update rate:  %.01f Hz\n", ui_update_hz);
+//    fprintf(stderr, "Comm buffers: %d bytes\n", _buffer_size);
+//    fprintf(stderr, "Update rate:  %.01f Hz\n", ui_update_hz);
 
     /* Create Plugin <=> UI communication buffers */
 

@@ -30,11 +30,14 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
-    auto worker = static_cast<Lv2_Worker*>(handle);
+    auto worker = reinterpret_cast<Lv2_Worker*>(handle);
     auto model = worker->get_model();
 
     if (worker->is_threaded())
     {
+        /*auto e = RtEvent::make_async_work_event(&Vst3xWrapper::parameter_update_callback, model->id(), this);
+        output_event(e);*/
+
         // Schedule a request to be executed by the worker thread
         zix_ring_write(worker->get_requests(), (const char*)&size, sizeof(size));
         zix_ring_write(worker->get_requests(), (const char*)data, size);
@@ -43,10 +46,8 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
     else
     {
         // Execute work immediately in this thread
-
         std::unique_lock<std::mutex> lock(model->get_work_lock());
-        worker->get_iface()->work(
-                model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
+        worker->get_iface()->work(model->get_plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
     }
     return LV2_WORKER_SUCCESS;
 }

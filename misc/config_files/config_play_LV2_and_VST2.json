@@ -1,0 +1,71 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "organTrack",
+            "mode" : "stereo",
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uri" : "http://calf.sourceforge.net/plugins/Organ",
+                    "name" : "organ",
+                    "type"   : "lv2"
+                }
+            ]
+        },
+        {
+            "name" : "jx10Track",
+            "mode" : "stereo",
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "/usr/lib/lxvst/mdaJX10.so",
+                    "name" : "jx10",
+                    "type"   : "vst2x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections": [
+            {
+                "port": 0,
+                "channel": 0,
+                "track": "organTrack",
+                "raw_midi": false
+            },
+            {
+                "port": 0,
+                "channel": 1,
+                "track": "jx10Track",
+                "raw_midi": true
+            }
+        ],
+        "program_change_connections": [
+            {
+                "port": 0,
+                "channel": 0,
+                "plugin": "organ"
+            },
+            {
+                "port": 0,
+                "channel": 1,
+                "plugin": "jx10"
+            }
+        ]
+    }
+}

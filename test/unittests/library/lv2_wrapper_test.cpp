@@ -283,10 +283,11 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-// TODO: Re-instate
+// TODO : None of the plugins included for testing LV2 support presets.
+// I could run the below also with the Organ eventually.
 /*TEST_F(TestLv2Wrapper, TestProgramManagement)
 {
-    SetUp("libvstxsynth.so");
+    SetUp("http://lv2plug.in/plugins/eg-fifths");
     ASSERT_TRUE(_module_under_test->supports_programs());
     ASSERT_EQ(128, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
