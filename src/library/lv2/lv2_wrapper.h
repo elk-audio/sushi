@@ -96,6 +96,10 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    void pause();
+
+    void resume();
+
 private:
     void _create_ports(const LilvPlugin* plugin);
     std::unique_ptr<Port> _create_port(const LilvPlugin* plugin, int port_index, float default_value);
@@ -159,6 +163,8 @@ private:
 
     PluginLoader _loader;
     LV2Model* _model {nullptr};
+
+    PlayState _previous_play_state {PlayState::PAUSED};
 };
 
 } // end namespace lv2

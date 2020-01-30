@@ -149,17 +149,14 @@ int LV2_State::unload_programs()
 
 void LV2_State::apply_state(LilvState* state)
 {
-	bool must_pause = !_model->is_restore_thread_safe() && _model->play_state == PlayState::RUNNING;
+	bool must_pause = !_model->is_restore_thread_safe() && _model->get_play_state() == PlayState::RUNNING;
 
 	if (state)
 	{
 		if (must_pause)
 		{
-            _model->play_state = PlayState::PAUSE_REQUESTED;
-
-// TODO: REINTRODUCE / FIX!
-// I should only be pausing when process_audio is running, otherwise this freezes here.
-//            model->paused.wait();
+            _model->set_play_state(PlayState::PAUSE_REQUESTED);
+            _model->paused.wait();
 		}
 
         auto feature_list = _model->get_feature_list();
@@ -169,7 +166,7 @@ void LV2_State::apply_state(LilvState* state)
 		if (must_pause)
 		{
             _model->request_update();
-            _model->play_state = PlayState::RUNNING;
+            _model->set_play_state(PlayState::RUNNING);
 		}
 	}
 }
@@ -300,7 +297,7 @@ void set_port_value(const char* port_symbol,
         return;
     }
 
-    if (model->play_state != PlayState::RUNNING)
+    if (model->get_play_state() != PlayState::RUNNING)
     {
         // Set value on port directly
         port->set_control_value(fvalue);

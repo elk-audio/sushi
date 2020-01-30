@@ -110,8 +110,6 @@ struct HostFeatures
     LV2_Feature unmap_feature;
     LV2_State_Make_Path make_path;
     LV2_Feature make_path_feature;
-//    LV2_Feature sched_feature;
-//    LV2_Feature state_sched_feature;
     LV2_Log_Log llog;
     LV2_Feature log_feature;
     LV2_Options_Option options[6];
@@ -176,12 +174,9 @@ public:
     void set_restore_thread_safe(bool safe);
     bool is_restore_thread_safe();
 
-    Semaphore done; ///< Exit semaphore
     Semaphore paused; ///< Paused signal from process thread
 
     bool buf_size_set{false}; ///< True iff buffer size callback fired
-
-    PlayState play_state; ///< Current play state
 
     std::string temp_dir; ///< Temporary plugin state directory
     std::string save_dir; ///< Plugin save directory
@@ -189,6 +184,9 @@ public:
     std::vector<std::unique_ptr<ControlID>> controls; ///< Available plugin controls
 
     LV2_State* get_state();
+
+    void set_play_state(PlayState play_state);
+    PlayState get_play_state();
 
 private:
     void _initialize_map_feature();
@@ -198,6 +196,8 @@ private:
 
     void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
+
+    PlayState _play_state; ///< Current play state
 
     std::unique_ptr<LV2_State> _lv2_state;
 

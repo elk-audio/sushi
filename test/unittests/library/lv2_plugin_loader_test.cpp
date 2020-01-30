@@ -8,9 +8,6 @@
 using namespace sushi;
 using namespace sushi::lv2;
 
-// Ilias TODO: Check this also for LV2, maybe it is no longer the case.
-// Empty fixture as PluginLoader has only static methods so far
-
 static constexpr double SAMPLE_RATE = 44000.0;
 
 class TestLv2PluginLoader : public ::testing::Test

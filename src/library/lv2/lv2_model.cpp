@@ -310,6 +310,16 @@ bool LV2Model::is_restore_thread_safe()
     return _safe_restore;
 }
 
+void LV2Model::set_play_state(PlayState play_state)
+{
+    _play_state = play_state;
+}
+
+PlayState LV2Model::get_play_state()
+{
+    return _play_state;
+}
+
 }
 }
 

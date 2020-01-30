@@ -79,7 +79,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     _model = _loader.getModel();
     _model->set_plugin_class(library_handle);
 
-    _model->play_state = PlayState::PAUSED;
+    _model->set_play_state(PlayState::PAUSED);
 
     _model->initialize_host_feature_list();
 
@@ -124,7 +124,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     /* Activate plugin */
     lilv_instance_activate(_model->get_plugin_instance());
 
-    _model->play_state = PlayState::RUNNING;
+    _model->set_play_state(PlayState::RUNNING);
 
     return ProcessorReturnCode::OK;
 }
@@ -498,10 +498,10 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
     else
     {
-        switch (_model->play_state)
+        switch (_model->get_play_state())
         {
             case PlayState::PAUSE_REQUESTED:
-                _model->play_state = PlayState::PAUSED;
+                _model->set_play_state(PlayState::PAUSED);
                 _model->paused.notify();
                 break;
             case PlayState::PAUSED:
@@ -546,7 +546,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
                     _process_midi_input(current_port);
 
                 }
-                else if (current_port->getFlow() == FLOW_OUTPUT)// Clear event output for plugin to write to.
+                else if (current_port->getFlow() == FLOW_OUTPUT) // Clear event output for plugin to write to.
                 {
                     current_port->resetOutputBuffer();
                 }
@@ -841,6 +841,18 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     {
         _double_mono_input = true;
     }
+}
+
+void Lv2Wrapper::pause()
+{
+    _previous_play_state = _model->get_play_state();
+    if(_previous_play_state != PlayState::PAUSED)
+        _model->set_play_state(PlayState::PAUSED);
+}
+
+void Lv2Wrapper::resume()
+{
+    _model->set_play_state(_previous_play_state);
 }
 
 /*VstTimeInfo* Lv2Wrapper::time_info()
