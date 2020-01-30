@@ -17,48 +17,6 @@
 using namespace sushi;
 using namespace sushi::lv2;
 
-static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_ON[1][64] = {
-    {
-        8.593750e-02f, 1.562500e-01f, 2.109375e-01f, 2.812500e-01f,
-        3.359375e-01f, 3.906250e-01f, 4.531250e-01f, 5.078125e-01f,
-        5.546875e-01f, 6.093750e-01f, 6.562500e-01f, 7.031250e-01f,
-        7.421875e-01f, 7.890625e-01f, 8.203125e-01f, 8.593750e-01f,
-        8.828125e-01f, 9.140625e-01f, 9.375000e-01f, 9.531250e-01f,
-        9.765625e-01f, 9.765625e-01f, 9.921875e-01f, 9.921875e-01f,
-        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.687500e-01f,
-        9.453125e-01f, 9.375000e-01f, 9.062500e-01f, 8.828125e-01f,
-        8.515625e-01f, 8.203125e-01f, 7.890625e-01f, 7.343750e-01f,
-        7.031250e-01f, 6.484375e-01f, 6.093750e-01f, 5.546875e-01f,
-        5.000000e-01f, 4.531250e-01f, 3.828125e-01f, 3.359375e-01f,
-        2.734375e-01f, 2.187500e-01f, 1.562500e-01f, 9.375000e-02f,
-        3.125000e-02f, -3.906250e-02f, -9.375000e-02f, -1.640625e-01f,
-        -2.187500e-01f, -2.890625e-01f, -3.437500e-01f, -4.062500e-01f,
-        -4.531250e-01f, -5.078125e-01f, -5.625000e-01f, -6.171875e-01f,
-        -6.640625e-01f, -7.187500e-01f, -7.500000e-01f, -7.890625e-01f
-    }
-};
-
-static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[1][64] = {
-    {
-        -8.281250e-01f, -8.671875e-01f, -8.906250e-01f, -9.296875e-01f,
-        -9.531250e-01f, -9.609375e-01f, -9.843750e-01f, -9.921875e-01f,
-        -1.000000e+00f, -1.000000e+00f, -1.000000e+00f, -1.000000e+00f,
-        -1.000000e+00f, -9.843750e-01f, -9.687500e-01f, -9.531250e-01f,
-        -9.218750e-01f, -9.062500e-01f, -8.671875e-01f, -8.437500e-01f,
-        -7.968750e-01f, -7.578125e-01f, -7.265625e-01f, -6.718750e-01f,
-        -6.328125e-01f, -5.703125e-01f, -5.234375e-01f, -4.609375e-01f,
-        -4.062500e-01f, -3.515625e-01f, -2.890625e-01f, -2.343750e-01f,
-        -1.718750e-01f, -1.171875e-01f, -4.687500e-02f, 1.562500e-02f,
-        7.031250e-02f, 1.406250e-01f, 1.953125e-01f, 2.656250e-01f,
-        3.203125e-01f, 3.828125e-01f, 4.375000e-01f, 5.000000e-01f,
-        5.390625e-01f, 6.015625e-01f, 6.406250e-01f, 6.953125e-01f,
-        7.343750e-01f, 7.812500e-01f, 8.125000e-01f, 8.515625e-01f,
-        8.750000e-01f, 9.062500e-01f, 9.218750e-01f, 9.531250e-01f,
-        9.609375e-01f, 9.843750e-01f, 9.921875e-01f, 9.921875e-01f,
-        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.765625e-01f
-    }
-};
-
 static const float LV2_ORGAN_EXPECTED_OUT_NOTE_ON[2][64] = {
     {
         -1.9887361676e-02f, 9.0109853772e-04f, 2.0839706063e-02f, 3.8966707885e-02f,
@@ -98,7 +56,7 @@ static const float LV2_ORGAN_EXPECTED_OUT_NOTE_ON[2][64] = {
     }
 };
 
-static const float LV2_ORGAN_EXPECTED_OUT_NOTE_OFF[2][64] = {
+static const float LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
     {
         2.0371690392e-02f, 9.0013474226e-02f, 1.6183511913e-01f, 1.6419105232e-01f,
         1.3438189030e-01f, 1.3016086817e-01f, 1.3418957591e-01f, 1.3125473261e-01f,
@@ -283,6 +241,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 }
 
 // TODO : None of the plugins included for testing LV2 support presets.
+// Make this use organ for now.
 // I could run the below also with the Organ eventually.
 /*TEST_F(TestLv2Wrapper, TestProgramManagement)
 {
@@ -325,7 +284,7 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
+    compare_buffers(LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -369,27 +328,6 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_EQ(67, e.keyboard_event()->note());
 
     ASSERT_TRUE(_fifo.empty());
-}
-
-// TODO: Currently this runs it, and checks the output from a MIDI on and then off. IT should also test changing the sample file.
-TEST_F(TestLv2Wrapper, TestPluginWithStateAndWorkerThreads)
-{
-    SetUp("http://lv2plug.in/plugins/eg-sampler");
-
-    ChunkSampleBuffer in_buffer(1);
-    ChunkSampleBuffer out_buffer(1);
-
-    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_audio(in_buffer, out_buffer);
-
-    // Increment to 2 when supporting stereo loading of mono plugins.
-    compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_ON, out_buffer, 1);
-
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_audio(in_buffer, out_buffer);
-
-    // Increment to 2 when supporting stereo loading of mono plugins.
-    compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF, out_buffer, 1);
 }
 
 // TODO: Currently crashes, due to update speaker arrangement not being populated.
@@ -436,30 +374,4 @@ TEST_F(TestLv2Wrapper, TestPluginWithStateAndWorkerThreads)
 
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
-}*/
-
-// TODO: Re-instate
-/*TEST_F(TestLv2Wrapper, TestParameterChangeNotifications)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    ASSERT_FALSE(_host_control._dummy_dispatcher.got_event());
-    _module_under_test->notify_parameter_change(0, 0.5f);
-    auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
-    ASSERT_FALSE(event == nullptr);
-    ASSERT_TRUE(event->is_parameter_change_notification());
-}*/
-
-// TODO: Re-instate
-/*TEST_F(TestLv2Wrapper, TestRTParameterChangeNotifications)
-{
-    SetUp("libagain.so");
-    RtEventFifo queue;
-    _module_under_test->set_event_output(&queue);
-    ASSERT_TRUE(queue.empty());
-    _module_under_test->notify_parameter_change_rt(0, 0.5f);
-    RtEvent event;
-    auto received = queue.pop(event);
-    ASSERT_TRUE(received);
-    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
 }*/

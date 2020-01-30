@@ -22,9 +22,8 @@
 
 #include <math.h>
 
-#include "lv2_model.h"
-#include "lv2_worker.h"
 #include "logging.h"
+#include "lv2_model.h"
 
 namespace sushi {
 namespace lv2 {

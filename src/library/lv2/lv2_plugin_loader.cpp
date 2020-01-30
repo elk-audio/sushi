@@ -37,7 +37,6 @@
 
 #include "lv2_plugin_loader.h"
 
-#include "lv2_worker.h"
 #include "lv2_state.h"
 #include "lv2_control.h"
 
@@ -105,15 +104,6 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
     }
 
     _model->get_features().ext_data.data_access = lilv_instance_get_descriptor(_model->get_plugin_instance())->extension_data;
-
-    /* Initialize workers if necessary */
-    if (lilv_plugin_has_extension_data(plugin_handle, _model->get_nodes().work_interface))
-    {
-        auto interface = reinterpret_cast<const LV2_Worker_Interface*>
-                (lilv_instance_get_extension_data(_model->get_plugin_instance(), LV2_WORKER__interface));
-
-        _model->set_worker_interface(interface);
-    }
 
     auto state_threadSafeRestore = lilv_new_uri(_model->get_world(), LV2_STATE__threadSafeRestore);
 

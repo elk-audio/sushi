@@ -305,25 +305,6 @@ void set_port_value(const char* port_symbol,
         // Set value on port directly
         port->control = fvalue;
     }
-    else
-    {
-        // Send value to running plugin
-// TODO: Reintroduce eventually
-// Currently in lv2_ui_io.
-//		ui_write(model, port->index, sizeof(fvalue), 0, &fvalue);
-    }
-
-    if (model->has_ui)
-    {
-        // Update UI
-//		char buf[sizeof(ControlChange) + sizeof(fvalue)];
-//		ControlChange* ev = (ControlChange*)buf;
-//		ev->index = port->index;
-//		ev->protocol = 0;
-//		ev->size = sizeof(fvalue);
-//		*(float*)ev->body = fvalue;
-//		zix_ring_write(model->_plugin_events, buf, sizeof(buf));
-    }
 }
 
 }

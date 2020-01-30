@@ -48,7 +48,6 @@ namespace lv2 {
 
 class LV2Model;
 class LV2_State;
-class Lv2_Worker;
 struct ControlID;
 
 /**
@@ -111,10 +110,8 @@ struct HostFeatures
     LV2_Feature unmap_feature;
     LV2_State_Make_Path make_path;
     LV2_Feature make_path_feature;
-    LV2_Worker_Schedule sched;
-    LV2_Feature sched_feature;
-    LV2_Worker_Schedule ssched;
-    LV2_Feature state_sched_feature;
+//    LV2_Feature sched_feature;
+//    LV2_Feature state_sched_feature;
     LV2_Log_Log llog;
     LV2_Feature log_feature;
     LV2_Options_Option options[6];
@@ -171,10 +168,6 @@ public:
     int get_plugin_latency();
     void set_plugin_latency(int latency);
 
-    std::mutex& get_work_lock();
-    Lv2_Worker* get_worker();
-    Lv2_Worker* get_state_worker();
-
     bool get_exit();
     void trigger_exit();
 
@@ -198,19 +191,11 @@ public:
     std::string temp_dir; ///< Temporary plugin state directory
     std::string save_dir; ///< Plugin save directory
 
-
-    // TODO: Move to ui_io?
-    bool has_ui; ///< True iff a control UI is present
     std::vector<std::unique_ptr<ControlID>> controls; ///< Available plugin controls
-
-    void set_worker_interface(const LV2_Worker_Interface* iface);
-
-    void process_worker_replies();
 
     LV2_State* get_state();
 
 private:
-    void _initialize_worker_feature();
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();
@@ -228,10 +213,6 @@ private:
     int _control_input_index; ///< Index of control input port
 
     bool _exit; ///< True iff execution is finished
-
-    std::mutex _work_lock; ///< Lock for plugin work() method
-    std::unique_ptr<Lv2_Worker> _state_worker; ///< Synchronous worker for state restore
-    std::unique_ptr<Lv2_Worker> _worker; ///< Worker thread implementation
 
     int _plugin_latency{0}; ///< Latency reported by plugin (if any)
 

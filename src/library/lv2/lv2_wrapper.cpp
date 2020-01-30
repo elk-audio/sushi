@@ -24,13 +24,12 @@
 #include <math.h>
 #include <iostream>
 
+#include "logging.h"
+
 #include "lv2_wrapper.h"
 #include "lv2_port.h"
-#include "lv2_worker.h"
 #include "lv2_state.h"
 #include "lv2_control.h"
-
-#include "logging.h"
 
 namespace
 {
@@ -546,9 +545,6 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
         lilv_instance_run(_model->get_plugin_instance(), AUDIO_CHUNK_SIZE);
 
-        /* Process any worker replies. */
-        _model->process_worker_replies();
-
         _deliver_outputs_from_plugin(false);
     }
 }
@@ -712,13 +708,6 @@ void Lv2Wrapper::_process_midi_output(const Port* port)
                                                                   outgoing_midi_data));
                     break;
             }
-        }
-
-        if (_model->has_ui)
-        {
-// TODO: Ugly - _p is changed outside this method but there's no communicating that.
-            // Forward event to UI
-//            _UI_IO.send_to_ui(_model, _p, _midi_type, _midi_size, _midi_body);
         }
     }
 }

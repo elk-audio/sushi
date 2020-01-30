@@ -22,7 +22,6 @@
 
 #include "lv2_model.h"
 #include "lv2_features.h"
-#include "lv2_worker.h"
 #include "lv2_state.h"
 #include "logging.h"
 
@@ -53,7 +52,6 @@ _world(worldIn)
     lilv_world_load_all(_world);
 
     _initialize_map_feature();
-    _initialize_worker_feature();
     _initialize_unmap_feature();
     _initialize_urid_symap();
     _initialize_log_feature();
@@ -75,7 +73,6 @@ void LV2Model::initialize_host_feature_list()
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
-            &_features.sched_feature,
             &_features.make_path_feature,
 // TODO: Re-introduce options extension!
             //&_features.options_feature,
@@ -87,15 +84,6 @@ void LV2Model::initialize_host_feature_list()
     });
 
     _feature_list = std::move(features);
-}
-
-void LV2Model::set_worker_interface(const LV2_Worker_Interface* iface)
-{
-    if(_worker)
-        _worker->set_iface(iface);
-
-    if(_state_worker)
-        _state_worker->set_iface(iface);
 }
 
 void LV2Model::_initialize_urid_symap()
@@ -157,46 +145,6 @@ void LV2Model::_initialize_unmap_feature()
     this->_unmap.handle = this;
     this->_unmap.unmap = unmap_uri;
     init_feature(&this->_features.unmap_feature, LV2_URID__unmap, &this->_unmap);
-}
-
-void LV2Model::_initialize_worker_feature()
-{
-    _worker = std::make_unique<Lv2_Worker>(this, true);
-
-    // TODO: Should I really inherit this check? Why not just always create it?
-    if (_safe_restore)
-    {
-        _state_worker = std::make_unique<Lv2_Worker>(this, true);
-    }
-
-    this->_features.sched.handle = &this->_worker;
-    this->_features.sched.schedule_work = lv2_worker_schedule;
-
-    init_feature(&this->_features.sched_feature,
-                 LV2_WORKER__schedule, &this->_features.sched);
-
-    this->_features.ssched.handle = &this->_state_worker;
-    this->_features.ssched.schedule_work = lv2_worker_schedule;
-
-    init_feature(&this->_features.state_sched_feature,
-                 LV2_WORKER__schedule, &this->_features.ssched);
-}
-
-void LV2Model::process_worker_replies()
-{
-    if(_state_worker.get())
-        _state_worker->emit_responses(_plugin_instance);
-
-    if(_worker.get())
-    {
-        _worker->emit_responses(_plugin_instance);
-
-        /* Notify the plugin the run() cycle is finished */
-        // TODO: Make this a member of Lv2_worker? If not move back to wrapper.
-        if (_worker->get_iface() && _worker->get_iface()->end_run) {
-            _worker->get_iface()->end_run(_plugin_instance->lv2_handle);
-        }
-    }
 }
 
 LV2_State* LV2Model::get_state()
@@ -328,21 +276,6 @@ void LV2Model::set_plugin_latency(int latency)
     _plugin_latency = latency;
 }
 
-std::mutex& LV2Model::get_work_lock()
-{
-    return _work_lock;
-}
-
-Lv2_Worker* LV2Model::get_worker()
-{
-    return _worker.get();
-}
-
-Lv2_Worker* LV2Model::get_state_worker()
-{
-    return _state_worker.get();
-}
-
 bool LV2Model::get_exit()
 {
     return _exit;
@@ -351,13 +284,6 @@ bool LV2Model::get_exit()
 void LV2Model::trigger_exit()
 {
     _exit = true;
-
-    /* Terminate the worker */
-    if(_worker)
-    {
-        _worker->finish();
-        _worker->destroy();
-    }
 }
 
 int LV2Model::get_control_input_index()
