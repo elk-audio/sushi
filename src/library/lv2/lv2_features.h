@@ -51,8 +51,6 @@
 #include "../processor.h"
 #include "../../engine/base_event_dispatcher.h"
 
-#include "lv2_symap.h"
-#include "lv2_evbuf.h"
 #include "lv2_model.h"
 
 namespace sushi {

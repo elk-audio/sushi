@@ -218,8 +218,8 @@ if (${WITH_VST3})
 endif()
 
 if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_evbuf.cpp
-                               src/library/lv2/lv2_symap.cpp
+    set(ADDITIONAL_LV2_SOURCES third-party/lv2/lv2_evbuf.cpp
+                               third-party/lv2/lv2_symap.cpp
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_wrapper.cpp

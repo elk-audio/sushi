@@ -30,7 +30,7 @@
 
 #include <lilv-0/lilv/lilv.h>
 
-#include "lv2_evbuf.h"
+#include "../../third-party/lv2/lv2_evbuf.h"
 
 namespace sushi {
 namespace lv2 {

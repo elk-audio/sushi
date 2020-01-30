@@ -45,7 +45,9 @@
 
 #include "../processor.h"
 #include "lv2_plugin_loader.h"
-#include "lv2_evbuf.h"
+
+#include "../../third-party/lv2/lv2_evbuf.h"
+
 #include "../../engine/base_event_dispatcher.h"
 #include "library/rt_event_fifo.h"
 #include "../midi_encoder.h"

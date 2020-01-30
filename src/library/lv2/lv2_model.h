@@ -36,9 +36,10 @@
 #include "../processor.h"
 #include "../../engine/base_event_dispatcher.h"
 
-#include "lv2_symap.h"
+#include "../../third-party/lv2/lv2_symap.h"
+#include "../../third-party/lv2/lv2_evbuf.h"
+
 #include "lv2_port.h"
-#include "lv2_evbuf.h"
 #include "lv2_host_nodes.h"
 #include "lv2_control.h"
 #include "lv2_semaphore.h"
