@@ -8,6 +8,7 @@
 #pragma GCC diagnostic pop
 
 #include "test_utils/engine_mockup.h"
+#include "test_utils/control_mockup.h"
 
 using namespace sushi;
 using namespace sushi::control_frontend;
@@ -65,7 +66,8 @@ protected:
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
-    OSCFrontend _module_under_test{&_test_engine, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
+    sushi::ext::ControlMockup _controller;
+    OSCFrontend _module_under_test{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
     EventDispatcherMockup* _test_dispatcher;
 };
 
@@ -74,54 +76,55 @@ TEST_F(TestOSCFrontend, TestSendParameterChangeEvent)
     ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
 
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_parameter_change_event());
-    auto typed_event = static_cast<ParameterChangeEvent*>(event.get());
-    EXPECT_EQ(0u, typed_event->processor_id());
-    EXPECT_EQ(0u, typed_event->parameter_id());
-    EXPECT_EQ(5.0f, typed_event->float_value());
-    EXPECT_EQ(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, typed_event->subtype());
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor id"]));
+    EXPECT_EQ(0, std::stoi(args["parameter id"]));
+    EXPECT_FLOAT_EQ(5.0f, std::stof(args["value"]));
 
     /* Test with a not registered path */
     lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_test_dispatcher->got_event());
+    ASSERT_FALSE(_controller.was_recently_called());
 }
 
 TEST_F(TestOSCFrontend, TestSendNoteOnEvent)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_on", 46, 0.8f);
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["track id"]));
+    EXPECT_EQ(0, std::stoi(args["channel"]));
+    EXPECT_EQ(46, std::stoi(args["note"]));
+    EXPECT_FLOAT_EQ(0.8f, std::stof(args["velocity"]));
 
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_keyboard_event());
-    auto typed_event = static_cast<KeyboardEvent*>(event.get());
-    EXPECT_EQ(0u, typed_event->processor_id());
-    EXPECT_EQ(46, typed_event->note());
-    EXPECT_EQ(0.8f, typed_event->velocity());
-    EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
+     // Test with a path not registered
+    lo_send(_address, "/keyboard_event/drums", "sif", "note_off", 37, 0.8f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_FALSE(_controller.was_recently_called());
 }
 
 TEST_F(TestOSCFrontend, TestSendNoteOffEvent)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "note_off", 52, 0.7f);
-
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_keyboard_event());
-    auto typed_event = static_cast<KeyboardEvent*>(event.get());
-    EXPECT_EQ(0u, typed_event->processor_id());
-    EXPECT_EQ(52, typed_event->note());
-    EXPECT_EQ(0.7f, typed_event->velocity());
-    EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["track id"]));
+    EXPECT_EQ(0, std::stoi(args["channel"]));
+    EXPECT_EQ(52, std::stoi(args["note"]));
+    EXPECT_FLOAT_EQ(0.7f, std::stof(args["velocity"]));
 
     // Test with a path not registered
     lo_send(_address, "/keyboard_event/drums", "sif", "note_off", 46, 0.8f);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_test_dispatcher->got_event());
+    ASSERT_FALSE(_controller.was_recently_called());
 }
 
 TEST_F(TestOSCFrontend, TestAddTrack)
@@ -183,46 +186,41 @@ TEST_F(TestOSCFrontend, TestSetTempo)
 {
     lo_send(_address, "/engine/set_tempo", "f", 136.0f);
 
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::TEMPO, rt_event.type());
-    EXPECT_FLOAT_EQ(136.0f, rt_event.tempo_event()->tempo());
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_FLOAT_EQ(136.0, std::stof(args["tempo"]));
 }
 
 TEST_F(TestOSCFrontend, TestSetTimeSignature)
 {
     lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::TIME_SIGNATURE, rt_event.type());
-    EXPECT_EQ(7, rt_event.time_signature_event()->time_signature().numerator);
-    EXPECT_EQ(8, rt_event.time_signature_event()->time_signature().denominator);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(7, std::stoi(args["numerator"]));
+    EXPECT_EQ(8, std::stoi(args["denominator"]));
 }
 
 TEST_F(TestOSCFrontend, TestSetPlayingMode)
 {
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::PLAYING_MODE, rt_event.type());
-    EXPECT_EQ(PlayingMode::PLAYING, rt_event.playing_mode_event()->mode());
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ("PLAYING", args["playing mode"]);
 }
 
 TEST_F(TestOSCFrontend, TestSetSyncMode)
 {
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-    auto rt_event = event->to_rt_event(0);
-    EXPECT_EQ(RtEventType::SYNC_MODE, rt_event.type());
-    EXPECT_EQ(SyncMode::MIDI_SLAVE, rt_event.sync_mode_event()->mode());
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_TRUE(_controller.was_recently_called());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ("MIDI", args["sync mode"]);
 }
 
 TEST(TestOSCFrontendInternal, TestMakeSafePath)

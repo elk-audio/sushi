@@ -1,8 +1,9 @@
 #ifndef SUSHI_CONTROL_MOCKUP_H
 #define SUSHI_CONTROL_MOCKUP_H
 
+#include <bits/stdc++.h> 
+
 #include "control_interface.h"
-#include "engine/base_engine.h"
 
 namespace sushi {
 namespace ext {
@@ -35,80 +36,54 @@ constexpr int default_program_id = 1;
 constexpr auto default_program_name = "program 1";
 const std::vector<std::string> default_programs = {default_program_name, "program 2"};
 
-// Convenience functions
-
-inline sushi::TimeSignature to_internal(sushi::ext::TimeSignature time_signature)
-{
-    return sushi::TimeSignature{time_signature.numerator, time_signature.denominator};
-}
-
-inline sushi::PlayingMode to_internal(sushi::ext::PlayingMode mode)
-{
-    switch (mode)
-    {
-        case sushi::ext::PlayingMode::PLAYING:      return sushi::PlayingMode::PLAYING;
-        case sushi::ext::PlayingMode::RECORDING:    return sushi::PlayingMode::RECORDING;
-        case sushi::ext::PlayingMode::STOPPED:      return sushi::PlayingMode::STOPPED;
-        default:                                    return sushi::PlayingMode::PLAYING;
-    }
-}
-
-inline sushi::SyncMode to_internal(sushi::ext::SyncMode mode)
-{
-    switch (mode)
-    {
-        case sushi::ext::SyncMode::GATE:        return sushi::SyncMode::GATE_INPUT;
-        case sushi::ext::SyncMode::INTERNAL:    return sushi::SyncMode::INTERNAL;
-        case sushi::ext::SyncMode::LINK:        return sushi::SyncMode::ABLETON_LINK;
-        case sushi::ext::SyncMode::MIDI:        return sushi::SyncMode::MIDI_SLAVE;
-        default:                                return sushi::SyncMode::INTERNAL;
-    }
-}
-
 class ControlMockup : public SushiControl
 {
 public:
-
-    ControlMockup(engine::BaseEngine* engine) : _engine(engine) {}
 
      // Main engine controls
     virtual float                               get_samplerate() const override { return default_samplerate; };
     virtual PlayingMode                         get_playing_mode() const override { return default_playing_mode; };
     virtual void                                set_playing_mode(PlayingMode playing_mode) override 
     {
-        if (_engine != nullptr)
+        _args_from_last_call.clear();
+        switch (playing_mode)
         {
-            auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
+            case ext::PlayingMode::STOPPED:         _args_from_last_call["playing mode"] = "STOPPED"; break;
+            case ext::PlayingMode::RECORDING:       _args_from_last_call["playing mode"] = "RECORDING"; break;
+            case ext::PlayingMode::PLAYING:         _args_from_last_call["playing mode"] = "PLAYING"; break;
+            default:                                _args_from_last_call["playing mode"] = "ERROR";
         }
+        _recently_called = true;
     };
     virtual SyncMode                            get_sync_mode() const override { return default_sync_mode; };
     virtual void                                set_sync_mode(SyncMode sync_mode) override 
     {
-        if (_engine != nullptr)
+        _args_from_last_call.clear();
+        switch (sync_mode)
         {
-            auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
+            case ext::SyncMode::GATE:       _args_from_last_call["sync mode"] = "GATE"; break;
+            case ext::SyncMode::INTERNAL:   _args_from_last_call["sync mode"] = "INTERNAL"; break;
+            case ext::SyncMode::LINK:       _args_from_last_call["sync mode"] = "LINK"; break;
+            case ext::SyncMode::MIDI:       _args_from_last_call["sync mode"] = "MIDI"; break;
+            default:                        _args_from_last_call["sync mode"] = "ERROR";
         }
+        _recently_called = true;
     };
     virtual float                               get_tempo() const override { return default_tempo; };
     virtual ControlStatus                       set_tempo(float tempo) override 
     { 
-        if (_engine != nullptr)
-        {
-            auto event = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
-        }
+        _args_from_last_call.clear();
+        _args_from_last_call["tempo"] = std::to_string(tempo);
+        _recently_called = true;
         return default_control_status; 
     };
     virtual TimeSignature                       get_time_signature() const override { return default_time_signature; };
     virtual ControlStatus                       set_time_signature(TimeSignature signature) override 
     { 
-        if (_engine != nullptr)
-        {
-            auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
-        }
+        _args_from_last_call.clear();
+        _args_from_last_call["numerator"] = std::to_string(signature.numerator);
+        _args_from_last_call["denominator"] = std::to_string(signature.denominator);
+        _recently_called = true;
         return default_control_status; 
     };
     virtual bool                                get_timing_statistics_enabled() override { return default_timing_statistics_enabled; };
@@ -118,22 +93,22 @@ public:
     // Keyboard control
     virtual ControlStatus                       send_note_on(int track_id, int channel, int note, float velocity) override 
     { 
-        if (_engine != nullptr)
-        {
-            auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
-                                   channel, note, velocity, IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);;
-        }
+        _args_from_last_call.clear();
+        _args_from_last_call["track id"] = std::to_string(track_id);
+        _args_from_last_call["channel"] = std::to_string(channel);
+        _args_from_last_call["note"] = std::to_string(note);
+        _args_from_last_call["velocity"] = std::to_string(velocity);
+        _recently_called = true;
         return default_control_status; 
     };
     virtual ControlStatus                       send_note_off(int track_id, int channel, int note, float velocity) override 
     { 
-        if (_engine != nullptr)
-        {
-            auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
-                                    channel, note, velocity, IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
-        }
+        _args_from_last_call.clear();
+        _args_from_last_call["track id"] = std::to_string(track_id);
+        _args_from_last_call["channel"] = std::to_string(channel);
+        _args_from_last_call["note"] = std::to_string(note);
+        _args_from_last_call["velocity"] = std::to_string(velocity);
+        _recently_called = true;
         return default_control_status; 
     };
     virtual ControlStatus                       send_note_aftertouch(int /* track_id */, int /* channel */, int /* note */, float /* value */) override { return default_control_status; };
@@ -239,21 +214,31 @@ public:
     };
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) override 
     { 
-        if (_engine != nullptr)
-        {
-            auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                          static_cast<ObjectId>(processor_id),
-                                          static_cast<ObjectId>(parameter_id),
-                                          value, IMMEDIATE_PROCESS);
-            _engine->event_dispatcher()->post_event(event);
-        }
+        _args_from_last_call.clear();
+        _args_from_last_call["processor id"] = std::to_string(processor_id);
+        _args_from_last_call["parameter id"] = std::to_string(parameter_id);
+        _args_from_last_call["value"] = std::to_string(value);
+        _recently_called = true;
         return default_control_status; 
     };
     virtual ControlStatus                              set_parameter_value_normalised(int /* processor_id */, int /* parameter_id */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                              set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override { return default_control_status; };
 
+    std::unordered_map<std::string,std::string> get_args_from_last_call()
+    {
+        return _args_from_last_call;
+    }
+
+    bool was_recently_called()
+    {
+        bool out = _recently_called;
+        _recently_called = false;
+        return out;
+    }
+
 private:
-    engine::BaseEngine* _engine;
+    std::unordered_map<std::string,std::string> _args_from_last_call;
+    bool _recently_called{false};
 };
 
 } // ext
