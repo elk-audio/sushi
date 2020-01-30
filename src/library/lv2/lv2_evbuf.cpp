@@ -1,20 +1,19 @@
 /*
-  Copyright 2008-2018 David Robillard <http://drobilla.net>
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
 
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-
-// This file has been copied from the Jalv LV2 plugin host example - no refactoring has been carried out
+// This file has been copied from the Jalv LV2 plugin host example - little refactoring has been carried out
 
 #include <assert.h>
 #include <stdlib.h>
@@ -42,8 +41,7 @@ static inline uint32_t lv2_evbuf_pad_size(uint32_t size)
 LV2_Evbuf* lv2_evbuf_new(uint32_t capacity, uint32_t atom_Chunk, uint32_t atom_Sequence)
 {
     // TODO: (inherited from JALV): memory must be 64-bit aligned
-    LV2_Evbuf *evbuf = (LV2_Evbuf *) malloc(
-            sizeof(LV2_Evbuf) + sizeof(LV2_Atom_Sequence) + capacity);
+    LV2_Evbuf* evbuf = (LV2_Evbuf*) malloc(sizeof(LV2_Evbuf) + sizeof(LV2_Atom_Sequence) + capacity);
     evbuf->capacity = capacity;
     evbuf->atom_Chunk = atom_Chunk;
     evbuf->atom_Sequence = atom_Sequence;
@@ -62,7 +60,9 @@ void lv2_evbuf_reset(LV2_Evbuf *evbuf, bool input)
     {
         evbuf->buf.atom.size = sizeof(LV2_Atom_Sequence_Body);
         evbuf->buf.atom.type = evbuf->atom_Sequence;
-    } else {
+    }
+    else
+    {
         evbuf->buf.atom.size = evbuf->capacity;
         evbuf->buf.atom.type = evbuf->atom_Chunk;
     }
@@ -110,8 +110,8 @@ LV2_Evbuf_Iterator lv2_evbuf_next(LV2_Evbuf_Iterator iter)
     LV2_Evbuf *evbuf = iter.evbuf;
     uint32_t offset = iter.offset;
     uint32_t size;
-    size = ((LV2_Atom_Event *)
-            ((char *) LV2_ATOM_CONTENTS(LV2_Atom_Sequence, &evbuf->buf.atom)
+    size = ((LV2_Atom_Event*)
+            ((char*) LV2_ATOM_CONTENTS(LV2_Atom_Sequence, &evbuf->buf.atom)
              + offset))->body.size;
     offset += lv2_evbuf_pad_size(sizeof(LV2_Atom_Event) + size);
 
@@ -133,9 +133,9 @@ bool lv2_evbuf_get(LV2_Evbuf_Iterator iter,
         return false;
     }
 
-    LV2_Atom_Sequence *aseq = &iter.evbuf->buf;
-    LV2_Atom_Event *aev = (LV2_Atom_Event *) (
-            (char *) LV2_ATOM_CONTENTS(LV2_Atom_Sequence, aseq) + iter.offset);
+    LV2_Atom_Sequence* aseq = &iter.evbuf->buf;
+    LV2_Atom_Event* aev = (LV2_Atom_Event *) (
+            (char*) LV2_ATOM_CONTENTS(LV2_Atom_Sequence, aseq) + iter.offset);
 
     *frames = aev->time.frames;
     *subframes = 0;
@@ -154,6 +154,7 @@ bool lv2_evbuf_write(LV2_Evbuf_Iterator *iter,
                 const uint8_t *data)
                 {
     auto aseq = &iter->evbuf->buf;
+
     if (iter->evbuf->capacity - sizeof(LV2_Atom) - aseq->atom.size <
         sizeof(LV2_Atom_Event) + size)
     {
