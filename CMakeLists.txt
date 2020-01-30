@@ -70,6 +70,8 @@ message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 # Vst3 Host #
 #############
 
+if (${WITH_VST3})
+
 # Build the given Vst3 host implementation into a separate library to
 # Avoid littering our own code with ugly defines
 
@@ -93,6 +95,7 @@ else()
 endif()
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
+endif()
 
 ####################
 #  Main Target     #
