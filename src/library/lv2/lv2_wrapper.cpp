@@ -106,8 +106,6 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _populate_program_list();
 
-    _UI_IO.init(_model->get_plugin_class(), _sample_rate, _model->get_midi_buffer_size());
-
     _create_ports(library_handle);
     _create_controls(true);
     _create_controls(false);
@@ -297,17 +295,6 @@ std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int por
             else if (port->getFlow() == FLOW_OUTPUT)
                 _max_output_channels++;
         }
-
-        // TODO: This is always returned NULL for eg-amp output, should it be?
-        auto min_size_node = lilv_port_get(plugin, port->get_lilv_port(), _model->get_nodes().rsz_minimumSize);
-
-        if(min_size_node && lilv_node_is_int(min_size_node))
-        {
-            int buf_size = lilv_node_as_int(min_size_node);
-            _UI_IO.set_buffer_size(buf_size);
-        }
-
-        lilv_node_free(min_size_node);
     }
     catch(Port::FailedCreation& e)
     {
@@ -557,24 +544,12 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
         _deliver_inputs_to_plugin();
 
-        _UI_IO.apply_ui_events(_model, AUDIO_CHUNK_SIZE);
-
         lilv_instance_run(_model->get_plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
         _model->process_worker_replies();
 
-// TODO: Reintroduce when implementing 'GUI'.
-        /* Check if it's time to send updates to the UI */
-//        _model->event_delta_t += nframes;
-          bool send_ui_updates = false;
-//        float update_frames   = _model->sample_rate / _model->ui_update_hz;
-//        if (_model->has_ui && (_model->event_delta_t > update_frames)) {
-//            send_ui_updates = true;
-//            _model->event_delta_t = 0;
-//        }
-
-        _deliver_outputs_from_plugin(send_ui_updates);
+        _deliver_outputs_from_plugin(false);
     }
 }
 
@@ -640,18 +615,6 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
                             _model->set_plugin_latency(current_port->control);
 // TODO: Introduce latency compensation reporting to Sushi
                         }
-                    }
-                    else if (send_ui_updates)
-                    {
-                        char buf[sizeof(ControlChange) + sizeof(float)];
-                        auto ev = reinterpret_cast<ControlChange*>(buf);
-                        ev->index = p;
-                        ev->protocol = 0;
-                        ev->size = sizeof(float);
-                        *(float*)ev->body = current_port->control;
-
-                        // TODO Untested.
-                        _UI_IO.write_ui_event(buf);
                     }
                     break;
                 case TYPE_EVENT:

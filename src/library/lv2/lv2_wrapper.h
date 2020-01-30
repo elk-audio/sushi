@@ -28,7 +28,6 @@
 #include "../processor.h"
 #include "lv2_plugin_loader.h"
 #include "lv2_evbuf.h"
-#include "lv2_ui_io.h"
 #include "../../engine/base_event_dispatcher.h"
 #include "library/rt_event_fifo.h"
 #include "../midi_encoder.h"
@@ -162,7 +161,6 @@ private:
     RtEventFifo _incoming_event_queue;
 
     PluginLoader _loader;
-    Lv2_UI_IO _UI_IO;
     LV2Model* _model {nullptr};
 };
 

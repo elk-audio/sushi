@@ -225,8 +225,7 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_wrapper.cpp
-                               src/library/lv2/lv2_ui_io.cpp
-                               src/library/lv2/lv2_model.cpp
+            src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp
                                src/library/lv2/lv2_control.cpp
                                src/library/lv2/lv2_plugin_loader.cpp)
