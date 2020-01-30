@@ -27,7 +27,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-static int populate_preset_list(LV2Model* model, const LilvNode *node, const LilvNode* title, void* data)
+static int populate_preset_list(LV2Model* model, const LilvNode *node, const LilvNode* title, void* /*data*/)
 {
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
@@ -85,11 +85,11 @@ void LV2_State::populate_program_list()
 
 void LV2_State::save(const char* dir)
 {
-	_model->save_dir = std::string(dir) + "/";
+	_model->set_save_dir(std::string(dir) + "/");
 
 	auto state = lilv_state_new_from_instance(
 		_model->get_plugin_class(), _model->get_plugin_instance(), &_model->get_map(),
-		_model->temp_dir.c_str(), dir, dir, dir,
+		_model->get_temp_dir().c_str(), dir, dir, dir,
 		get_port_value, _model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
@@ -97,7 +97,7 @@ void LV2_State::save(const char* dir)
 
 	lilv_state_free(state);
 
-	_model->save_dir.clear();
+	_model->set_save_dir(std::string(""));
 }
 
 int LV2_State::_load_programs(PresetSink sink, void* data)
@@ -209,7 +209,7 @@ int LV2_State::save_program(const char* dir, const char* uri, const char* label,
 {
 	auto state = lilv_state_new_from_instance(
             _model->get_plugin_class(), _model->get_plugin_instance(), &_model->get_map(),
-            _model->temp_dir.c_str(), dir, dir, dir,
+            _model->get_temp_dir().c_str(), dir, dir, dir,
             get_port_value, _model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
@@ -260,7 +260,7 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
 void set_port_value(const char* port_symbol,
                     void* user_data,
                     const void* value,
-                    uint32_t size,
+                    uint32_t /*size*/,
                     uint32_t type)
 {
     auto model = static_cast<LV2Model*>(user_data);

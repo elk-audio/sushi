@@ -105,9 +105,9 @@ void PluginLoader::close_plugin_instance()
         lilv_instance_deactivate(instance);
         lilv_instance_free(instance);
 
-        for (unsigned i = 0; i < _model->controls.size(); ++i)
+        for (unsigned i = 0; i < _model->get_controls().size(); ++i)
         {
-            auto control = _model->controls[i].get();
+            auto control = _model->get_controls()[i].get();
             lilv_node_free(control->node);
             lilv_node_free(control->symbol);
             lilv_node_free(control->label);

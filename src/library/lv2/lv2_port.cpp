@@ -88,7 +88,7 @@ _index(port_index)
 
         if (!hidden)
         {
-            model->controls.emplace_back(new_port_control(this, model, _index));
+            model->get_controls().emplace_back(new_port_control(this, model, _index));
         }
     }
     else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_AudioPort))
@@ -106,7 +106,7 @@ _index(port_index)
         throw Port::FailedCreation();
     }
 
-    if (!model->buf_size_set) {
+    if (!model->get_buf_size_set()) {
         _allocate_port_buffers(model);
     }
 }

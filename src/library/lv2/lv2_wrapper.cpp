@@ -158,12 +158,12 @@ void Lv2Wrapper::_create_controls(bool writable)
                                         property))
         {
             // Find existing writable control
-            for (size_t i = 0; i < _model->controls.size(); ++i)
+            for (size_t i = 0; i < _model->get_controls().size(); ++i)
             {
-                if (lilv_node_equals(_model->controls[i]->node, property))
+                if (lilv_node_equals(_model->get_controls()[i]->node, property))
                 {
                     found = true;
-                    _model->controls[i]->is_readable = true;
+                    _model->get_controls()[i]->is_readable = true;
                     break;
                 }
             }
@@ -187,7 +187,7 @@ void Lv2Wrapper::_create_controls(bool writable)
 
         if (record->value_type)
         {
-            _model->controls.emplace_back(std::move(record));
+            _model->get_controls().emplace_back(std::move(record));
         }
         else
         {
@@ -349,7 +349,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(Obj
     return this->parameter_value(parameter_id);
 }
 
-std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
 {
 // TODO: Populate parameter_value_formatted
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
@@ -574,7 +574,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
     _model->clear_update_request();
 }
 
-void Lv2Wrapper::_deliver_outputs_from_plugin(bool send_ui_updates)
+void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
 {
     for (int p = 0; p < _model->get_port_count(); ++p)
     {

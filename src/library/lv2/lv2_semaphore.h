@@ -29,31 +29,32 @@ namespace lv2 {
 
 class Semaphore {
 public:
-    Semaphore (int count_ = 0)
-            : count(count_) {}
+    Semaphore (int count = 0)
+            : _count(count) {}
 
     inline void notify()
     {
-        std::unique_lock<std::mutex> lock(mtx);
-        count++;
-        cv.notify_one();
+        std::unique_lock<std::mutex> lock(_mtx);
+        _count++;
+        _cv.notify_one();
     }
 
     inline void wait()
     {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock<std::mutex> lock(_mtx);
 
-        while(count == 0)
+        while (_count == 0)
         {
-            cv.wait(lock);
+            _cv.wait(lock);
         }
-        count--;
+
+        _count--;
     }
 
 private:
-    std::mutex mtx;
-    std::condition_variable cv;
-    int count;
+    std::mutex _mtx;
+    std::condition_variable _cv;
+    int _count;
 };
 
 } // end namespace lv2

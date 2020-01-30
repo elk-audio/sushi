@@ -320,6 +320,31 @@ PlayState LV2Model::get_play_state()
     return _play_state;
 }
 
+std::string LV2Model::get_temp_dir()
+{
+    return _temp_dir;
+}
+
+std::string LV2Model::get_save_dir()
+{
+    return _save_dir;
+}
+
+void LV2Model::set_save_dir(const std::string& save_dir)
+{
+    _save_dir = save_dir;
+}
+
+bool LV2Model::get_buf_size_set()
+{
+    return _buf_size_set;
+}
+
+std::vector<std::unique_ptr<ControlID>>& LV2Model::get_controls()
+{
+    return _controls;
+}
+
 }
 }
 

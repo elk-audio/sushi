@@ -175,19 +175,21 @@ public:
     void set_restore_thread_safe(bool safe);
     bool is_restore_thread_safe();
 
-    Semaphore paused; ///< Paused signal from process thread
-
-    bool buf_size_set{false}; ///< True iff buffer size callback fired
-
-    std::string temp_dir; ///< Temporary plugin state directory
-    std::string save_dir; ///< Plugin save directory
-
-    std::vector<std::unique_ptr<ControlID>> controls; ///< Available plugin controls
-
     LV2_State* get_state();
 
     void set_play_state(PlayState play_state);
     PlayState get_play_state();
+
+    std::string get_temp_dir();
+
+    std::string get_save_dir();
+    void set_save_dir(const std::string& save_dir);
+
+    bool get_buf_size_set();
+
+    std::vector<std::unique_ptr<ControlID>>& get_controls();
+
+    Semaphore paused; // Paused signal from process thread
 
 private:
     void _initialize_map_feature();
@@ -198,49 +200,56 @@ private:
     void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
 
-    PlayState _play_state; ///< Current play state
+    std::vector<std::unique_ptr<ControlID>> _controls; // Available plugin controls
+
+    bool _buf_size_set {false}; // True iff buffer size callback fired
+
+    std::string _temp_dir; // Temporary plugin state directory
+    std::string _save_dir; // Plugin save directory
+
+    PlayState _play_state; // Current play state
 
     std::unique_ptr<LV2_State> _lv2_state;
 
-    bool _safe_restore; ///< Plugin restore() is thread-safe
+    bool _safe_restore; // Plugin restore() is thread-safe
 
-    bool _request_update{false}; ///< True iff a plugin update is needed
+    bool _request_update{false}; // True iff a plugin update is needed
 
-    int _control_input_index; ///< Index of control input port
+    int _control_input_index; // Index of control input port
 
-    bool _exit; ///< True iff execution is finished
+    bool _exit; // True iff execution is finished
 
-    int _plugin_latency{0}; ///< Latency reported by plugin (if any)
+    int _plugin_latency{0}; // Latency reported by plugin (if any)
 
-    LV2_Atom_Forge _forge; ///< Atom forge
+    LV2_Atom_Forge _forge; // Atom forge
 
-    LV2_URID_Map _map; ///< URI => Int map
-    LV2_URID_Unmap _unmap; ///< Int => URI map
+    LV2_URID_Map _map; // URI => Int map
+    LV2_URID_Unmap _unmap; // Int => URI map
 
-    Symap* _symap; ///< URI map
-    std::mutex _symap_lock; ///< Lock for URI map
+    Symap* _symap; // URI map
+    std::mutex _symap_lock; // Lock for URI map
 
-    LV2_URIDs _urids;  ///< URIDs
+    LV2_URIDs _urids;  // URIDs
 
-    Lv2_Host_Nodes _nodes; ///< Nodes
+    Lv2_Host_Nodes _nodes; // Nodes
 
-    std::vector<std::unique_ptr<Port>> _ports; ///< Port array of size num_ports
+    std::vector<std::unique_ptr<Port>> _ports; // Port array of size num_ports
 
-    float _sample_rate; ///< Sample rate
-    int _midi_buffer_size {4096}; ///< Size of MIDI port buffers
+    float _sample_rate; // Sample rate
+    int _midi_buffer_size {4096}; // Size of MIDI port buffers
 
     const LilvPlugin* _plugin_class {nullptr};
 
-    LilvInstance* _plugin_instance {nullptr}; ///< Plugin instance (shared library)
+    LilvInstance* _plugin_instance {nullptr}; // Plugin instance (shared library)
 
-    LilvWorld* _world {nullptr}; ///< Lilv World
+    LilvWorld* _world {nullptr}; // Lilv World
 
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;
 
-    uint32_t position; ///< Transport position in frames
-    float bpm; ///< Transport tempo in beats per minute
-    bool rolling; ///< Transport speed (0=stop, 1=play)
+    uint32_t position; // Transport position in frames
+    float bpm; // Transport tempo in beats per minute
+    bool rolling; // Transport speed (0=stop, 1=play)
 };
 
 } // end namespace lv2

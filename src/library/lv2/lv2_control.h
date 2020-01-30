@@ -32,8 +32,8 @@ struct ScalePoint
 /** Type of plugin control. */
 enum class ControlType
 {
-    PORT, ///< Control port
-    PROPERTY ///< Property (set via atom message)
+    PORT, // Control port
+    PROPERTY // Property (set via atom message)
 };
 
 /** Plugin control. */
@@ -42,24 +42,24 @@ struct ControlID
     LV2Model* model;
     ControlType type;
     LilvNode* node;
-    LilvNode* symbol; ///< Symbol
-    LilvNode* label; ///< Human readable label
-    LV2_URID property; ///< Iff type == PROPERTY
-    int index; ///< Iff type == PORT
-    LilvNode* group; ///< Port/control group, or NULL
+    LilvNode* symbol; // Symbol
+    LilvNode* label; // Human readable label
+    LV2_URID property; // Iff type == PROPERTY
+    int index; // Iff type == PORT
+    LilvNode* group; // Port/control group, or NULL
 
-    std::vector<std::unique_ptr<ScalePoint>> points; ///< Scale points
-    LV2_URID value_type; ///< Type of control value
-    LilvNode* min; ///< Minimum value
-    LilvNode* max; ///< Maximum value
-    LilvNode* def; ///< Default value
+    std::vector<std::unique_ptr<ScalePoint>> points; // Scale points
+    LV2_URID value_type; // Type of control value
+    LilvNode* min; // Minimum value
+    LilvNode* max; // Maximum value
+    LilvNode* def; // Default value
 
-    bool is_toggle; ///< Boolean (0 and 1 only)
-    bool is_integer; ///< Integer values only
-    bool is_enumeration; ///< Point values only
-    bool is_logarithmic; ///< Logarithmic scale
-    bool is_writable; ///< Writable (input)
-    bool is_readable; ///< Readable (output)
+    bool is_toggle; // Boolean (0 and 1 only)
+    bool is_integer; // Integer values only
+    bool is_enumeration; // Point values only
+    bool is_logarithmic; // Logarithmic scale
+    bool is_writable; // Writable (input)
+    bool is_readable; // Readable (output)
 };
 
 std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index);

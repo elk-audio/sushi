@@ -166,6 +166,7 @@ private:
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
+    
     ChunkSampleBuffer _dummy_input {1};
     ChunkSampleBuffer _dummy_output {1};
 

@@ -48,7 +48,7 @@ Port* port_by_symbol(LV2Model* model, const char* sym)
 int lv2_vprintf(LV2_Log_Handle handle,
                 LV2_URID type,
                 const char* fmt,
-                va_list ap)
+                va_list /*ap*/)
 {
     auto model = static_cast<LV2Model*>(handle);
     auto urids = model->get_urids();
@@ -100,10 +100,14 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 
     std::string made_path;
 
-    if(!model->save_dir.empty())
-        made_path = model->save_dir + path;
+    if(!model->get_save_dir().empty())
+    {
+        made_path = model->get_save_dir() + path;
+    }
     else
-        made_path = model->temp_dir + path;
+    {
+        made_path = model->get_temp_dir() + path;
+    }
 
     const std::string::size_type size = made_path.size();
     char *buffer = new char[size + 1]; // Extra char for null

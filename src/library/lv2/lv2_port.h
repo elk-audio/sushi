@@ -82,7 +82,7 @@ public:
 
     struct FailedCreation : public std::exception
     {
-        const char * what () const throw ()
+        const char* what () const throw ()
         {
             return "Failed to Create LV2 Port";
         }
@@ -96,15 +96,15 @@ private:
 
     float _control; ///< For control ports, otherwise 0.0f
 
-    LV2_Evbuf* _evbuf; ///< For MIDI ports, otherwise NULL
+    const LilvPort* lilv_port; // LV2 port
+    enum PortType _type; // Data type
+    enum PortFlow _flow; // Data flow direction
 
-    const LilvPort* lilv_port; ///< LV2 port
-    enum PortType _type; ///< Data type
-    enum PortFlow _flow; ///< Data flow direction
+    LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
 
-    void* widget; ///< Control widget, if applicable
-    int _buf_size; ///< Custom buffer size, or 0
-    int _index; ///< Port index
+    void* widget; // Control widget, if applicable
+    int _buf_size; // Custom buffer size, or 0
+    int _index; // Port index
 
     // For ranges. Only used in control ports.
     float _def {1.0f};
