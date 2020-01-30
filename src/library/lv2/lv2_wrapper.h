@@ -72,11 +72,11 @@ public:
      */
     Lv2Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
             Processor(host_control),
-            _sample_rate{0},
-            _process_inputs{},
-            _process_outputs{},
-            _double_mono_input{false},
-            _plugin_path{lv2_plugin_uri}
+            _sample_rate {0},
+            _process_inputs {},
+            _process_outputs {},
+            _double_mono_input {false},
+            _plugin_path {lv2_plugin_uri}
     {
         _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
@@ -166,7 +166,7 @@ private:
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
-    
+
     ChunkSampleBuffer _dummy_input {1};
     ChunkSampleBuffer _dummy_output {1};
 

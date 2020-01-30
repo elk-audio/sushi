@@ -428,10 +428,13 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    _model->get_state()->unload_programs();
+    if (_model)
+    {
+        _model->get_state()->unload_programs();
 
-    // Tell plugin to stop and shutdown
-    set_enabled(false);
+        // Tell plugin to stop and shutdown
+        set_enabled(false);
+    }
 
     _loader.close_plugin_instance();
 }

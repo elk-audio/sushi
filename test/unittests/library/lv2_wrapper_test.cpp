@@ -56,6 +56,45 @@ static const float LV2_ORGAN_EXPECTED_OUT_NOTE_ON[2][64] = {
     }
 };
 
+static const float LV2_ORGAN_EXPECTED_OUT_NOTE_OFF[2][64] = {
+    {
+        1.7881659791e-02f, 2.1721476689e-02f, 2.8853684664e-02f, 3.8684703410e-02f,
+        5.0424069166e-02f, 6.3141867518e-02f, 7.5836457312e-02f, 8.7507508695e-02f,
+        9.7228780389e-02f, 1.0421558470e-01f, 1.0788147897e-01f, 1.0788055509e-01f,
+        1.0413187742e-01f, 9.6824221313e-02f, 8.6400978267e-02f, 7.3526442051e-02f,
+        5.9035707265e-02f, 4.3872114271e-02f, 2.9016954824e-02f, 1.5416422859e-02f,
+        3.9113699459e-03f, -4.8247324303e-03f, -1.0335511528e-02f, -1.2414798141e-02f,
+        -1.1121401563e-02f, -6.7735435441e-03f, 7.5477364589e-05f, 8.6797121912e-03f,
+        1.8157035112e-02f, 2.7556037530e-02f, 3.5927888006e-02f, 4.2398385704e-02f,
+        4.6234156936e-02f, 4.6898778528e-02f, 4.4094085693e-02f, 3.7783939391e-02f,
+        2.8198553249e-02f, 1.5819150954e-02f, 1.3437479502e-03f, -1.4362812042e-02f,
+        -3.0331481248e-02f, -4.5559264719e-02f, -5.9082139283e-02f, -7.0045031607e-02f,
+        -7.7763967216e-02f, -8.1775456667e-02f, -8.1869937479e-02f, -7.8106127679e-02f,
+        -7.0806145668e-02f, -6.0530900955e-02f, -4.8038166016e-02f, -3.4226257354e-02f,
+        -2.0067496225e-02f, -6.5364628099e-03f, 5.4617957212e-03f, 1.5157972462e-02f,
+        2.1974716336e-02f, 2.5568073615e-02f, 2.5851685554e-02f, 2.3001641035e-02f,
+        1.7441695556e-02f, 9.8100304604e-03f, 9.1005861759e-04f, -8.3511536941e-03f
+    },
+    {
+        9.1590367258e-02f, 9.4289809465e-02f, 9.9458612502e-02f, 1.0693941265e-01f,
+        1.1637654155e-01f, 1.2723566592e-01f, 1.3883808255e-01f, 1.5040819347e-01f,
+        1.6113007069e-01f, 1.7020900548e-01f, 1.7693307996e-01f, 1.8072973192e-01f,
+        1.8121278286e-01f, 1.7821559310e-01f, 1.7180767655e-01f, 1.6229356825e-01f,
+        1.5019322932e-01f, 1.3620585203e-01f, 1.2115979195e-01f, 1.0595214367e-01f,
+        9.1482840478e-02f, 7.8588657081e-02f, 6.7981503904e-02f, 6.0196351260e-02f,
+        5.5552419275e-02f, 5.4130889475e-02f, 5.5770248175e-02f, 6.0080390424e-02f,
+        6.6473536193e-02f, 7.4210308492e-02f, 8.2456864417e-02f, 9.0349331498e-02f,
+        9.7060017288e-02f, 1.0186109692e-01f, 1.0418038815e-01f, 1.0364528000e-01f,
+        1.0011153668e-01f, 9.3674950302e-02f, 8.4664218128e-02f, 7.3616817594e-02f,
+        6.1238475144e-02f, 4.8350155354e-02f, 3.5825949162e-02f, 2.4527007714e-02f,
+        1.5236089006e-02f, 8.5978982970e-03f, 5.0696432590e-03f, 4.8854770139e-03f,
+        8.0376062542e-03f, 1.4275408350e-02f, 2.3122791201e-02f, 3.3912342042e-02f,
+        4.5833855867e-02f, 5.7993568480e-02f, 6.9479763508e-02f, 7.9429633915e-02f,
+        8.7092712522e-02f, 9.1885775328e-02f, 9.3435429037e-02f, 9.1605030000e-02f,
+        8.6503803730e-02f, 7.8477859497e-02f, 6.8083383143e-02f, 5.6044187397e-02f
+    }
+};
+
 static const float LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
     {
         2.0371690392e-02f, 9.0013474226e-02f, 1.6183511913e-01f, 1.6419105232e-01f,
@@ -140,9 +179,16 @@ protected:
 
     void SetUp(const std::string& plugin_URI)
     {
-        _module_under_test = new lv2::Lv2Wrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
+        _module_under_test = std::make_unique<lv2::Lv2Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
+
+        if (ret == ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR)
+        {
+            _module_under_test = nullptr;
+            return;
+        }
+
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_event_output(&_fifo);
         _module_under_test->set_enabled(true);
@@ -150,13 +196,13 @@ protected:
 
     void TearDown()
     {
-        delete _module_under_test;
+
     }
 
     RtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    Lv2Wrapper* _module_under_test{nullptr};
+    std::unique_ptr<Lv2Wrapper> _module_under_test {nullptr};
 };
 
 TEST_F(TestLv2Wrapper, TestSetName)
@@ -240,35 +286,46 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
-// TODO : None of the plugins included for testing LV2 support presets.
-// Make this use organ for now.
-// I could run the below also with the Organ eventually.
-/*TEST_F(TestLv2Wrapper, TestProgramManagement)
-{
-    SetUp("http://lv2plug.in/plugins/eg-fifths");
-    ASSERT_TRUE(_module_under_test->supports_programs());
-    ASSERT_EQ(128, _module_under_test->program_count());
-    ASSERT_EQ(0, _module_under_test->current_program());
-    ASSERT_EQ("Basic", _module_under_test->current_program_name());
-    auto [status, program_name] = _module_under_test->program_name(2);
-    ASSERT_EQ(ProcessorReturnCode::OK, status);
-    ASSERT_EQ("Basic", program_name);
-    // Access with an invalid program number
-    std::tie(status, program_name) = _module_under_test->program_name(2000);
-    ASSERT_NE(ProcessorReturnCode::OK, status);
-    // Get all programs, all programs are named "Basic" in VstXSynth
-    auto [res, programs] = _module_under_test->all_program_names();
-    ASSERT_EQ(ProcessorReturnCode::OK, res);
-    ASSERT_EQ("Basic", programs[50]);
-    ASSERT_EQ(128u, programs.size());
-}*/
-
+/*
+ * Depends on the CALF Organ plugin, which uses Fluidsynth internally.
+ * Since this is relatively heavy to load, several tests are done in one method.
+ * 1. Basic program management calls
+ * 2. Audio check after note on
+ * 3. Audio check after note off
+ * 4. Different audio after program change message.
+ *
+ * If the Calf plugin is not found, the test just returns after printing a message to the console.
+ */
 TEST_F(TestLv2Wrapper, TestOrgan)
 {
     SetUp("http://calf.sourceforge.net/plugins/Organ");
 
+    if (_module_under_test == nullptr)
+    {
+        std::cout << "Calf Organ plugin not installed - please install it to ensure full suite of unit tests has run." << std::endl;
+        return;
+    }
+
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
+
+    ASSERT_TRUE(_module_under_test->supports_programs());
+    ASSERT_EQ(29, _module_under_test->program_count());
+    ASSERT_EQ(0, _module_under_test->current_program());
+    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_12Sqr", _module_under_test->current_program_name());
+    auto [status, program_name] = _module_under_test->program_name(2);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_CriticalBass", program_name);
+
+    // Access with an invalid program number
+    std::tie(status, program_name) = _module_under_test->program_name(2000);
+    ASSERT_NE(ProcessorReturnCode::OK, status);
+
+    // Get all programs, all programs are named "Basic" in VstXSynth
+    auto [res, programs] = _module_under_test->all_program_names();
+    ASSERT_EQ(ProcessorReturnCode::OK, res);
+    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_RoyalewithCheese", programs[15]);
+    ASSERT_EQ(29u, programs.size());
 
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -277,6 +334,8 @@ TEST_F(TestLv2Wrapper, TestOrgan)
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
+
+    compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
     _module_under_test->pause();
@@ -336,25 +395,13 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_TRUE(_fifo.empty());
 }
 
-// TODO: Currently crashes, due to update speaker arrangement not being populated.
-/*TEST_F(TestLv2Wrapper, TestMonoProcess)
+TEST_F(TestLv2Wrapper, TestConfigurationChange)
 {
     SetUp("http://lv2plug.in/plugins/eg-amp");
-    ChunkSampleBuffer mono_buffer(1);
-    ChunkSampleBuffer stereo_buffer(2);
 
-    _module_under_test->set_input_channels(1);
-    EXPECT_TRUE(_module_under_test->_double_mono_input);
-    test_utils::fill_sample_buffer(mono_buffer, 1.0f);
-    _module_under_test->process_audio(mono_buffer, stereo_buffer);
-    test_utils::assert_buffer_value(1.0f, stereo_buffer);
-
-    _module_under_test->set_output_channels(1);
-    _module_under_test->set_input_channels(2);
-    test_utils::fill_sample_buffer(stereo_buffer, 2.0f);
-    _module_under_test->process_audio(stereo_buffer, mono_buffer);
-    test_utils::assert_buffer_value(2.0f, mono_buffer);
-}*/
+    _module_under_test->configure(44100.0f);
+    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+}
 
 // TODO: Re-instate once time info is implemented.
 /*TEST_F(TestLv2Wrapper, TestTimeInfo)
@@ -371,13 +418,4 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
     EXPECT_EQ(4, time_info->timeSigNumerator);
     EXPECT_EQ(4, time_info->timeSigDenominator);
-}*/
-
-// TODO: Re-instate
-/*TEST_F(TestLv2Wrapper, TestConfigurationChange)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    _module_under_test->configure(44100.0f);
-    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
 }*/
