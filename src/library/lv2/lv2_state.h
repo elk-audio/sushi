@@ -63,7 +63,7 @@ private:
     int _load_programs(PresetSink sink, void* data);
 
     std::vector<std::string> _program_names;
-    int _current_program_index {0}; // TODO: Is this stored by LV2? OR should I manage it?
+    int _current_program_index {0};
 
     // Naked pointer because Lilv mmanages lifetime.
     LilvState* _preset {nullptr};

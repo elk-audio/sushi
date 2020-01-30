@@ -131,11 +131,8 @@ private:
 
     MidiDataByte _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();
-    void _process_midi_input(const Port* port);
-    void _process_midi_output(const Port* port);
-
-    void _notify_parameter_change_rt(int parameter_index, float value);
-    void _notify_parameter_change(int parameter_index, float value);
+    void _process_midi_input(Port* port);
+    void _process_midi_output(Port* port);
 
     void _create_controls(bool writable);
 

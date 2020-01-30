@@ -58,65 +58,27 @@ class Port
 public:
     Port(const LilvPlugin* plugin, int port_index, float default_value, LV2Model* model);
 
-    ~Port()
-    {
-
-    }
-
-    void setFlow(PortFlow flow)
-    {
-        _flow = flow;
-    }
-
-    PortFlow getFlow()
-    {
-        return _flow;
-    }
-
-    void setType(PortType type)
-    {
-        _type = type;
-    }
-
-    PortType getType()
-    {
-        return _type;
-    }
+    ~Port() {}
 
     void resetInputBuffer();
-
     void resetOutputBuffer();
 
-    void setBufSize(int buf_size)
-    {
-        _buf_size = buf_size;
-    }
+    PortFlow getFlow();
 
-    const LilvPort* get_lilv_port()
-    {
-        return lilv_port;
-    }
+    PortType getType();
 
-    float getMin()
-    {
-        return min;
-    }
+    const LilvPort* get_lilv_port();
 
-    float getMax()
-    {
-        return max;
-    }
+    float getMin();
+    float getMax();
 
-    int getIndex()
-    {
-        return _index;
-    }
+    LV2_Evbuf* get_evbuf();
 
-// TODO: Lilv requires a pointer to this, so as to set it.
-    float control; ///< For control ports, otherwise 0.0f
+    void set_control_value(float c);
 
-// TODO: Make private after next refactor!
-    LV2_Evbuf* _evbuf; ///< For MIDI ports, otherwise NULL
+    float get_control_value();
+
+    float* get_control_pointer();
 
     struct FailedCreation : public std::exception
     {
@@ -132,6 +94,10 @@ private:
     */
     void _allocate_port_buffers(LV2Model *model);
 
+    float _control; ///< For control ports, otherwise 0.0f
+
+    LV2_Evbuf* _evbuf; ///< For MIDI ports, otherwise NULL
+
     const LilvPort* lilv_port; ///< LV2 port
     enum PortType _type; ///< Data type
     enum PortFlow _flow; ///< Data flow direction
@@ -141,9 +107,9 @@ private:
     int _index; ///< Port index
 
     // For ranges. Only used in control ports.
-    float def {1.0f};
-    float max {1.0f};
-    float min {0.0f};
+    float _def {1.0f};
+    float _max {1.0f};
+    float _min {0.0f};
 
     bool _show_hidden{true};
 };

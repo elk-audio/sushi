@@ -26,7 +26,6 @@
 #include "logging.h"
 
 namespace {
-// TODO: verify that these LV2 features work as intended:
 /** These features have no data */
 static const LV2_Feature static_features[] = {
         { LV2_STATE__loadDefaultState, nullptr },
@@ -276,19 +275,9 @@ void LV2Model::set_plugin_latency(int latency)
     _plugin_latency = latency;
 }
 
-bool LV2Model::get_exit()
-{
-    return _exit;
-}
-
 void LV2Model::trigger_exit()
 {
     _exit = true;
-}
-
-int LV2Model::get_control_input_index()
-{
-    return _control_input_index;
 }
 
 void LV2Model::set_control_input_index(int index)

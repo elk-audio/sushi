@@ -138,13 +138,10 @@ public:
     LilvWorld* get_world();
 
     LilvInstance* get_plugin_instance();
-    void set_plugin_instance(LilvInstance* new_instance); // TODO: Pair this with the freeing of the old instance.
+    void set_plugin_instance(LilvInstance* new_instance);
 
     const LilvPlugin* get_plugin_class();
-    void set_plugin_class(const LilvPlugin* new_plugin); // TODO: Pair this with the freeing of the old class.
-
-    LilvState* get_preset();
-    void set_preset(LilvState* new_preset);
+    void set_plugin_class(const LilvPlugin* new_plugin);
 
     int get_midi_buffer_size();
     float get_sample_rate();
@@ -168,10 +165,8 @@ public:
     int get_plugin_latency();
     void set_plugin_latency(int latency);
 
-    bool get_exit();
     void trigger_exit();
 
-    int get_control_input_index();
     void set_control_input_index(int index);
 
     bool update_requested();
@@ -231,13 +226,13 @@ private:
     std::vector<std::unique_ptr<Port>> _ports; ///< Port array of size num_ports
 
     float _sample_rate; ///< Sample rate
-    int _midi_buffer_size{4096}; ///< Size of MIDI port buffers
+    int _midi_buffer_size {4096}; ///< Size of MIDI port buffers
 
-    const LilvPlugin* _plugin_class{nullptr};
+    const LilvPlugin* _plugin_class {nullptr};
 
     LilvInstance* _plugin_instance {nullptr}; ///< Plugin instance (shared library)
 
-    LilvWorld* _world{nullptr}; ///< Lilv World
+    LilvWorld* _world {nullptr}; ///< Lilv World
 
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;

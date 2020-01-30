@@ -250,7 +250,7 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
     {
         *size = sizeof(float);
         *type = model->get_forge().Float;
-        return &port->control;
+        return port->get_control_pointer();
     }
 
     *size = *type = 0;
@@ -303,7 +303,7 @@ void set_port_value(const char* port_symbol,
     if (model->play_state != PlayState::RUNNING)
     {
         // Set value on port directly
-        port->control = fvalue;
+        port->set_control_value(fvalue);
     }
 }
 

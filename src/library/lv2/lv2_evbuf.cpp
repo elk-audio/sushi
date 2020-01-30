@@ -41,7 +41,7 @@ static inline uint32_t lv2_evbuf_pad_size(uint32_t size)
 
 LV2_Evbuf* lv2_evbuf_new(uint32_t capacity, uint32_t atom_Chunk, uint32_t atom_Sequence)
 {
-    // FIXME: memory must be 64-bit aligned
+    // TODO: (inherited from JALV): memory must be 64-bit aligned
     LV2_Evbuf *evbuf = (LV2_Evbuf *) malloc(
             sizeof(LV2_Evbuf) + sizeof(LV2_Atom_Sequence) + capacity);
     evbuf->capacity = capacity;

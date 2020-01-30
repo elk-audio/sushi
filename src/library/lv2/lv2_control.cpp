@@ -78,7 +78,6 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
                 sp->label = lilv_node_as_string(lilv_scale_point_get_label(scale_point));
                 id->points.emplace_back(std::move(sp));
             }
-            /* TODO inherited: Non-float scale points? */
         }
 
         std::sort(id->points.begin(), id->points.end(),
@@ -147,19 +146,5 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
     return id;
 }
 
-/* TODO: Re-introduce if needed.
- * ControlID* get_property_control(std::vector<std::unique_ptr<ControlID>>* controls, LV2_URID property)
-{
-    for (size_t i = 0; i < controls->size(); ++i)
-    {
-        if (controls[i]->property == property)
-        {
-            return controls[i]->get();
-        }
-    }
-
-    return nullptr;
-}
-*/
 }
 }

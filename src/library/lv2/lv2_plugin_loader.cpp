@@ -87,8 +87,6 @@ const LilvPlugin* PluginLoader::get_plugin_handle_from_URI(const std::string &pl
         return nullptr;
     }
 
-// TODO: Introduce necessary UI code from Jalv?
-
     return plugin;
 }
 

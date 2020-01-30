@@ -31,7 +31,7 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
-control(0.0f),
+_control(0.0f),
 _flow(FLOW_UNKNOWN),
 _evbuf(nullptr), // For MIDI ports, otherwise NULL
 _buf_size(0), // Custom buffer size, or 0
@@ -65,7 +65,6 @@ _index(port_index)
     {
         _type = TYPE_CONTROL;
 
-// TODO: min max def are used also in the Jalv control structure. Remove these eventually?
         LilvNode* minNode;
         LilvNode* maxNode;
         LilvNode* defNode;
@@ -73,15 +72,15 @@ _index(port_index)
         lilv_port_get_range(plugin, lilv_port, &defNode, &minNode, &maxNode);
 
         if(defNode != nullptr)
-            def = lilv_node_as_float(defNode);
+            _def = lilv_node_as_float(defNode);
 
         if(maxNode != nullptr)
-            max = lilv_node_as_float(maxNode);
+            _max = lilv_node_as_float(maxNode);
 
         if(minNode != nullptr)
-            min = lilv_node_as_float(minNode);
+            _min = lilv_node_as_float(minNode);
 
-        control = isnan(default_value) ? def : default_value;
+        _control = isnan(default_value) ? _def : default_value;
 
         lilv_node_free(minNode);
         lilv_node_free(maxNode);
@@ -95,14 +94,6 @@ _index(port_index)
     else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_AudioPort))
     {
         _type = TYPE_AUDIO;
-
-// TODO: CV port(s).
-//#ifdef HAVE_JACK_METADATA
-//        } else if (lilv_port_is_a(model->plugin, port->lilv_port,
-//                      model->nodes.lv2_CVPort)) {
-//port->type = TYPE_CV;
-//#endif
-
     }
     else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().atom_AtomPort))
     {
@@ -151,6 +142,51 @@ void Port::_allocate_port_buffers(LV2Model* model)
         default:
             break;
     }
+}
+
+float Port::getMin()
+{
+    return _min;
+}
+
+float Port::getMax()
+{
+    return _max;
+}
+
+PortFlow Port::getFlow()
+{
+    return _flow;
+}
+
+PortType Port::getType()
+{
+    return _type;
+}
+
+const LilvPort* Port::get_lilv_port()
+{
+    return lilv_port;
+}
+
+LV2_Evbuf* Port::get_evbuf()
+{
+    return _evbuf;
+}
+
+void Port::set_control_value(float c)
+{
+    _control = c;
+}
+
+float Port::get_control_value()
+{
+    return _control;
+}
+
+float* Port::get_control_pointer()
+{
+    return &_control;
 }
 
 }
