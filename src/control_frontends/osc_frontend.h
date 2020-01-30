@@ -48,7 +48,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, int server_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int server_port, int send_port);
 
     ~OSCFrontend();
 

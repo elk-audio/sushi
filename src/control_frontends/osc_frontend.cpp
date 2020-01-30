@@ -287,12 +287,13 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
+                         ext::SushiControl* controller,
                          int server_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
                                           _server_port(server_port),
                                           _send_port(send_port),
-                                          _controller(engine->controller())
+                                          _controller(controller)
 {}
 
 ControlFrontendStatus OSCFrontend::init()
