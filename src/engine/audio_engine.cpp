@@ -488,8 +488,9 @@ void AudioEngine::process_chunk(SampleBuffer <AUDIO_CHUNK_SIZE>*in_buffer,
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
-    _transport.set_time(timestamp, samplecount);
     auto engine_timestamp = _process_timer.start_timer();
+
+    _transport.set_time(timestamp, samplecount);
 
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
