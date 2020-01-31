@@ -199,7 +199,7 @@ protected:
 
     }
 
-    RtEventFifo _fifo;
+    RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
     std::unique_ptr<Lv2Wrapper> _module_under_test {nullptr};

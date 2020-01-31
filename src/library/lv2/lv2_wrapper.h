@@ -92,7 +92,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    void process_event(RtEvent event) override;
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
@@ -179,7 +179,7 @@ private:
     // This queue holds incoming midi events.
     // They are parsed and converted to lv2_evbuf content for LV2 in
     // process_audio(...).
-    RtEventFifo _incoming_event_queue;
+    RtSafeRtEventFifo _incoming_event_queue;
 
     PluginLoader _loader;
     LV2Model* _model {nullptr};

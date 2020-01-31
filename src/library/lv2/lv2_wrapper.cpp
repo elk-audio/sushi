@@ -452,22 +452,24 @@ bool Lv2Wrapper::_register_parameters()
             // Here I need to get the name of the port.
             auto nameNode = lilv_port_get_name(_model->get_plugin_class(), currentPort->get_lilv_port());
 
-            std::string nameAsString = lilv_node_as_string(nameNode);
+            const std::string name_as_string = lilv_node_as_string(nameNode);
+            const std::string param_unit = "";
 
-            param_inserted_ok = register_parameter(new FloatParameterDescriptor(nameAsString, // name
-                    nameAsString, // label
-                                                                                currentPort->get_min(), // range min
-                                                                                currentPort->get_max(), // range max
+            param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
+                    name_as_string, // label
+                    param_unit, // PARAMETER UNIT
+                    currentPort->get_min(), // range min
+                    currentPort->get_max(), // range max
                     nullptr), // ParameterPreProcessor
                     static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
 
             if (param_inserted_ok)
             {
-                SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), nameAsString);
+                SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), name_as_string);
             }
             else
             {
-                SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), nameAsString);
+                SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), name_as_string);
             }
 
             lilv_node_free(nameNode);
@@ -477,7 +479,7 @@ bool Lv2Wrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Lv2Wrapper::process_event(RtEvent event)
+void Lv2Wrapper::process_event(const RtEvent& event)
 {
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
