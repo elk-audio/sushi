@@ -47,6 +47,15 @@ void fill_buffer_with_noise(ChunkSampleBuffer& buffer, random_device& dev, rando
     }
 }
 
+template<class random_device, class random_dist>
+void fill_cv_buffer_with_noise(engine::ControlBuffer& buffer, random_device& dev, random_dist& dist)
+{
+    for (auto& cv : buffer.cv_values)
+    {
+        cv = map_audio_to_cv(dist(dev));
+    }
+}
+
 AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto ret_code = BaseAudioFrontend::init(config);
@@ -84,9 +93,27 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
             SUSHI_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
+        _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
+        _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
     }
-    _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
+    else
+    {
+        _engine->set_audio_input_channels(DUMMY_FRONTEND_CHANNELS);
+        _engine->set_audio_output_channels(DUMMY_FRONTEND_CHANNELS);
+    }
+    
+    auto status = _engine->set_cv_input_channels(off_config->cv_inputs);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    status = _engine->set_cv_output_channels(off_config->cv_outputs);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
     _engine->set_output_latency(std::chrono::microseconds(0));
 
     return ret_code;
@@ -179,7 +206,8 @@ void OfflineFrontend::_process_dummy()
         _process_events(chunk_end_time);
 
         fill_buffer_with_noise(_buffer, rand_gen, normal_dist);
-        _engine->process_chunk(&_buffer, &_buffer);
+        fill_cv_buffer_with_noise(_control_buffer, rand_gen, normal_dist);
+        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer);
     }
 }
 
@@ -213,9 +241,11 @@ void OfflineFrontend::_run_blocking()
         }
         else
         {
-            _buffer.from_interleaved(file_buffer);
+            auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_buffer, 0, 2);
+            buffer.from_interleaved(file_buffer);
         }
-        _engine->process_chunk(&_buffer, &_buffer);
+        /* Gate and CV are ignored when using file frontend */
+        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer);
 
         if (_mono)
         {
@@ -223,7 +253,8 @@ void OfflineFrontend::_run_blocking()
         }
         else
         {
-            _buffer.to_interleaved(file_buffer);
+            auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_buffer, 0, 2);
+            buffer.to_interleaved(file_buffer);
         }
 
         // Write to file

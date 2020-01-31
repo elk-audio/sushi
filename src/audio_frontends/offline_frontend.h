@@ -36,13 +36,17 @@ namespace sushi {
 namespace audio_frontend {
 
 constexpr int OFFLINE_FRONTEND_CHANNELS = 2;
+constexpr int DUMMY_FRONTEND_CHANNELS = 10;
 
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
 
     OfflineFrontendConfiguration(const std::string input_filename,
                                  const std::string output_filename,
-                                 bool dummy_mode) :
+                                 bool dummy_mode,
+                                 int cv_inputs,
+                                 int cv_outputs) :
+            BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
             input_filename(input_filename),
             output_filename(output_filename),
             dummy_mode(dummy_mode)
@@ -95,7 +99,8 @@ private:
     std::atomic_bool    _running;
     std::thread         _worker;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{OFFLINE_FRONTEND_CHANNELS};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{DUMMY_FRONTEND_CHANNELS};
+    engine::ControlBuffer _control_buffer;
 
     std::vector<Event*> _event_queue;
 };

@@ -2,8 +2,8 @@
 #define __version_h__
 
 #define SUSHI__VERSION_MAJ  0
-#define SUSHI__VERSION_MIN  8
-#define SUSHI__VERSION_REV  0
+#define SUSHI__VERSION_MIN  9
+#define SUSHI__VERSION_REV  1
 
 #define SUSHI_VERSION_STRING #SUSHI__VERSION_MAJ "." #SUSHI__VERSION_MIN "." #SUSHI__VERSION_REV
 

@@ -95,6 +95,9 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
+    EXPECT_EQ("Gain", gain_param->name());
+    EXPECT_EQ("Gain", gain_param->label());
+    EXPECT_EQ("dB", gain_param->unit());
 }
 
 TEST_F(TestVst2xWrapper, TestPluginCanDos)
@@ -251,7 +254,7 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 {
     SetUp("libvst2_test_plugin.so");
-    RtEventFifo queue;
+    RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
     _module_under_test->notify_parameter_change_rt(0, 0.5f);

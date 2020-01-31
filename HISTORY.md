@@ -1,3 +1,27 @@
+## 0.9.1
+
+New Features:
+  * Plugin information dump with CL switch
+  * Updated VST 3 SDK to latest 3.14
+
+Fixes:
+  * Allows plugin parameters with duplicate names
+  * Events section not required anymore with any frontend
+
+## 0.9.0
+
+New Features:
+  * CV and Gate support + related example plugins
+  * Step sequencer example plugin
+  * gRPC listening address configurable through command line
+
+Fixes:
+  * Parameter Units now passed correctly
+  * Faster Json file loading
+  * Better Json parsing error printing
+  * Removed Raspalib submodule
+  * Unit test fixes
+
 ## 0.8.0
 
 New Features:

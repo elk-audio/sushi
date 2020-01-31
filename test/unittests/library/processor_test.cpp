@@ -7,7 +7,7 @@
 #define private public
 #define protected public
 
-#include "library/processor.h"
+#include "library/processor.cpp"
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
@@ -26,7 +26,7 @@ public:
     virtual ~ProcessorTest() {}
     virtual void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
                                ChunkSampleBuffer& /*out_buffer*/) override {}
-    virtual void process_event(RtEvent /*event*/) override {}
+    virtual void process_event(const RtEvent& /*event*/) override {}
 };
 
 
@@ -45,6 +45,7 @@ protected:
         delete(_module_under_test);
     }
     HostControlMockup _host_control;
+    RtEventFifo<10> _event_queue;
     Processor* _module_under_test;
 };
 
@@ -64,7 +65,7 @@ TEST_F(TestProcessor, TestBasicProperties)
 TEST_F(TestProcessor, TestParameterHandling)
 {
     /* Register a single parameter and verify accessor functions */
-    auto p = new FloatParameterDescriptor("param", "Float", 0, 1, nullptr);
+    auto p = new FloatParameterDescriptor("param", "Float", "fl", 0, 1, nullptr);
     _module_under_test->register_parameter(p);
 
     auto param = _module_under_test->parameter_from_name("not_found");
@@ -80,6 +81,14 @@ TEST_F(TestProcessor, TestParameterHandling)
 
     auto param_list = _module_under_test->all_parameters();
     EXPECT_EQ(1u, param_list.size());
+}
+
+TEST_F(TestProcessor, TestDuplicateParameterNames)
+{
+    _module_under_test->register_parameter(new FloatParameterDescriptor("param", "Float", "fl", 0, 1, nullptr));
+    // Test uniqueness by entering an already existing parameter name
+    EXPECT_EQ("param_2", _module_under_test->_make_unique_parameter_name("param"));
+    EXPECT_EQ("parameter", _module_under_test->_make_unique_parameter_name(""));
 }
 
 TEST_F(TestProcessor, TestBypassProcessing)
@@ -105,6 +114,54 @@ TEST_F(TestProcessor, TestBypassProcessing)
     _module_under_test->set_input_channels(0);
     _module_under_test->bypass_process(buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
+}
+
+TEST_F(TestProcessor, TestCvOutput)
+{
+    auto p = new FloatParameterDescriptor("param", "Float", "", 0, 1, nullptr);
+    _module_under_test->register_parameter(p);
+    _module_under_test->set_event_output(&_event_queue);
+    auto param = _module_under_test->parameter_from_name("param");
+    ASSERT_TRUE(param);
+
+    // Output parameter update
+    _module_under_test->maybe_output_cv_value(param->id(), 0.5f);
+    ASSERT_TRUE(_event_queue.empty());
+
+    // Connect parameter to CV output and send update
+    auto res = _module_under_test->connect_cv_from_parameter(param->id(), 1);
+    ASSERT_EQ(ProcessorReturnCode::OK, res);
+    auto success = _module_under_test->maybe_output_cv_value(param->id(), 0.25f);
+    ASSERT_TRUE(success);
+    ASSERT_FALSE(_event_queue.empty());
+    auto cv_event = _event_queue.pop();
+    EXPECT_EQ(RtEventType::CV_EVENT, cv_event.type());
+    EXPECT_EQ(1, cv_event.cv_event()->cv_id());
+    EXPECT_FLOAT_EQ(0.25f, cv_event.cv_event()->value());
+}
+
+TEST_F(TestProcessor, TestGateOutput)
+{
+    _module_under_test->set_event_output(&_event_queue);
+
+    // Output gate update with no connections
+    auto success = _module_under_test->maybe_output_gate_event(5, 10, true);
+    ASSERT_FALSE(success);
+
+    // Connect to gate output and send update with another note/channel combo
+    auto res = _module_under_test->connect_gate_from_processor(1, 5, 10);
+    ASSERT_EQ(ProcessorReturnCode::OK, res);
+    success = _module_under_test->maybe_output_gate_event(4, 9, true);
+    ASSERT_FALSE(success);
+
+    // Output gate event
+    success = _module_under_test->maybe_output_gate_event(5, 10, true);
+    ASSERT_TRUE(success);
+    ASSERT_FALSE(_event_queue.empty());
+    auto event = _event_queue.pop();
+    EXPECT_EQ(RtEventType::GATE_EVENT, event.type());
+    EXPECT_EQ(1, event.gate_event()->gate_no());
+    EXPECT_TRUE(event.gate_event()->value());
 }
 
 TEST(TestProcessorUtils, TestSetBypassRampTime)

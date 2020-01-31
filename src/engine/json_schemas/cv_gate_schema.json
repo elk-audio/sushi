@@ -1,0 +1,205 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi MIDI JSON Schema",
+  "description": "JSON Schema to validate MIDI definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "cv_control":
+    {
+      "type": "object",
+      "properties":
+      {
+        "cv_inputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "cv":
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              "processor":
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameter":
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["cv", "processor", "parameter"]
+          }
+        },
+        "cv_outputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "cv":
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              "processor":
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameter":
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["cv", "processor", "parameter"]
+          }
+        },
+        "gate_inputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "type" : "object",
+            "oneOf":
+            [
+              {
+              "type": "object",
+              "properties":
+              {
+                "gate":
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode":
+                {
+                  "enum": ["note_event"]
+                },
+                "note_no" :
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 127
+                },
+                "channel" :
+                {
+                  "type" : "integer",
+                  "minimum": 0,
+                  "maximum": 15
+                },
+                "processor" :
+                {
+                  "type": "string",
+                  "minLength" : 1
+                },
+                "required": ["gate", "mode", "processor", "note_no", "channel"]
+              }
+            },
+              {
+                "type": "object",
+                "properties":
+                {
+                  "gate":
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "mode":
+                  {
+                    "enum": ["sync"]
+                  },
+                  "ppq_ticks" :
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "required": ["gate", "mode", "ppq_ticks"]
+                }
+              }
+            ]
+          }
+        },
+        "gate_outputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "type" : "object",
+            "oneOf":
+            [
+              {
+                "type": "object",
+                "properties":
+                {
+                  "gate":
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "mode":
+                  {
+                    "enum": ["note_event"]
+                  },
+                  "note_no" :
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 127
+                  },
+                  "channel" :
+                  {
+                    "type" : "integer",
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "processor" :
+                  {
+                    "type": "string",
+                    "minLength" : 1
+                  },
+                  "required": ["gate", "mode", "processor", "note_no", "channel"]
+                }
+              },
+              {
+                "type": "object",
+                "properties":
+                {
+                  "gate":
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "mode":
+                  {
+                    "enum": ["sync"]
+                  },
+                  "ppq_ticks" :
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "required": ["gate", "mode", "ppq_ticks"]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+)"

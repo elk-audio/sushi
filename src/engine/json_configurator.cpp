@@ -37,6 +37,27 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
 constexpr int ERROR_DISPLAY_CHARS = 50;
 
+std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_config()
+{
+    AudioConfig audio_config;
+    auto [status, host_config] = _parse_section(JsonSection::HOST_CONFIG);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return {status, audio_config};
+    }
+
+    if (host_config.HasMember("cv_inputs"))
+    {
+        audio_config.cv_inputs = host_config["cv_inputs"].GetInt();
+    }
+    if (host_config.HasMember("cv_outputs"))
+    {
+        audio_config.cv_outputs = host_config["cv_outputs"].GetInt();
+    }
+
+    return {JsonConfigReturnStatus::OK, audio_config};
+}
+
 JsonConfigReturnStatus JsonConfigurator::load_host_config()
 {
     auto [status, host_config] = _parse_section(JsonSection::HOST_CONFIG);
@@ -44,6 +65,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
     {
         return status;
     }
+
     float sample_rate = host_config["samplerate"].GetFloat();
     SUSHI_LOG_INFO("Setting engine sample rate to {}", sample_rate);
     _engine->set_sample_rate(sample_rate);
@@ -91,12 +113,17 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         {
             mode = SyncMode::MIDI_SLAVE;
         }
+        else if (host_config["tempo_sync"] == "gate")
+        {
+            mode = SyncMode::GATE_INPUT;
+        }
         else
         {
             mode = SyncMode::INTERNAL;
         }
-        SUSHI_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK ? "Ableton Link" : (
-                                                              mode == SyncMode::MIDI_SLAVE? "external Midi" : "internal"));
+        SUSHI_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
+                                                               mode == SyncMode::MIDI_SLAVE? "external Midi" : (
+                                                               mode == SyncMode::GATE_INPUT? "Gate input" : "internal")));
         _engine->set_tempo_sync_mode(mode);
     }
 
@@ -256,13 +283,114 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                     return JsonConfigReturnStatus::INVALID_TRACK_NAME;
                 }
                 SUSHI_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
-                                cc_map["parameter_name"].GetString(),
-                                cc_map["plugin_name"].GetString());
+                                                                            cc_map["parameter_name"].GetString(),
+                                                                            cc_map["plugin_name"].GetString());
                 return JsonConfigReturnStatus::INVALID_PARAMETER;
             }
         }
     }
 
+    return JsonConfigReturnStatus::OK;
+}
+
+
+JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
+{
+    auto [status, cv_config] = _parse_section(JsonSection::CV_GATE);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    if (cv_config.HasMember("cv_inputs"))
+    {
+        for (const auto& cv_in : cv_config["cv_inputs"].GetArray())
+        {
+            auto res = _engine->connect_cv_to_parameter(cv_in["processor"].GetString(),
+                                                        cv_in["parameter"].GetString(),
+                                                        cv_in["cv"].GetInt());
+            if (res != EngineReturnStatus::OK)
+            {
+                SUSHI_LOG_ERROR("Failed to connect cv input {} to parameter {} on processor {}",
+                               cv_in["cv"].GetInt(),
+                               cv_in["parameter"].GetString(),
+                               cv_in["processor"].GetString());
+            }
+        }
+    }
+    if (cv_config.HasMember("cv_outputs"))
+    {
+        for (const auto& cv_out : cv_config["cv_outputs"].GetArray())
+        {
+            auto res = _engine->connect_cv_from_parameter(cv_out["processor"].GetString(),
+                                                          cv_out["parameter"].GetString(),
+                                                          cv_out["cv"].GetInt());
+            if (res != EngineReturnStatus::OK)
+            {
+                SUSHI_LOG_ERROR("Failed to connect cv output {} to parameter {} on processor {}",
+                               cv_out["cv"].GetInt(),
+                               cv_out["parameter"].GetString(),
+                               cv_out["processor"].GetString());
+            }
+        }
+    }
+    if (cv_config.HasMember("gate_inputs"))
+    {
+        for (const auto& gate_in : cv_config["gate_inputs"].GetArray())
+        {
+            if (gate_in["mode"] == "sync")
+            {
+                auto res = _engine->connect_gate_to_sync(gate_in["gate"].GetInt(),
+                                                         gate_in["ppq_ticks"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    SUSHI_LOG_ERROR("Failed to set gate {} as sync input", gate_in["gate"].GetInt());
+                }
+
+            }
+            else if (gate_in["mode"] == "note_event")
+            {
+                auto res = _engine->connect_gate_to_processor(gate_in["processor"].GetString(),
+                                                              gate_in["gate"].GetInt(),
+                                                              gate_in["note_no"].GetInt(),
+                                                              gate_in["channel"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    SUSHI_LOG_ERROR("Failed to connect gate {} to processor {}",
+                                   gate_in["gate"].GetInt(),
+                                   gate_in["processor"].GetInt());
+                }
+            }
+        }
+    }
+    if (cv_config.HasMember("gate_outputs"))
+    {
+        for (const auto& gate_out : cv_config["gate_outputs"].GetArray())
+        {
+            if (gate_out["mode"] == "sync")
+            {
+                auto res = _engine->connect_sync_to_gate(gate_out["gate"].GetInt(),
+                                                         gate_out["ppq_ticks"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    SUSHI_LOG_ERROR("Failed to set gate {} as sync output", gate_out["gate"].GetInt());
+                }
+
+            }
+            else if (gate_out["mode"] == "note_event")
+            {
+                auto res = _engine->connect_gate_from_processor(gate_out["processor"].GetString(),
+                                                                gate_out["gate"].GetInt(),
+                                                                gate_out["note_no"].GetInt(),
+                                                                gate_out["channel"].GetInt());
+                if (res != EngineReturnStatus::OK)
+                {
+                    SUSHI_LOG_ERROR("Failed to connect gate {} from processor {}",
+                                   gate_out["gate"].GetInt(),
+                                   gate_out["processor"].GetInt());
+                }
+            }
+        }
+    }
     return JsonConfigReturnStatus::OK;
 }
 
@@ -340,6 +468,14 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["midi"]};
+
+        case JsonSection::CV_GATE:
+            if(_json_data.HasMember("cv_control") == false)
+            {
+                SUSHI_LOG_INFO("Config file does not have CV/Gate definitions");
+                return {JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS, _json_data};
+            }
+            return {JsonConfigReturnStatus::OK, _json_data["cv_control"]};
 
         case JsonSection::EVENTS:
             if(_json_data.HasMember("events") == false)
@@ -556,13 +692,19 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
         case JsonSection::TRACKS:
             schema_char_array =
                 #include "json_schemas/tracks_schema.json"
-                                                                ;
+                                                        ;
             break;
 
         case JsonSection::MIDI:
             schema_char_array =
                 #include "json_schemas/midi_schema.json"
                                                        ;
+            break;
+
+        case JsonSection::CV_GATE:
+            schema_char_array =
+                #include "json_schemas/cv_gate_schema.json"
+                                                         ;
             break;
 
         case JsonSection::EVENTS:
@@ -607,9 +749,9 @@ JsonConfigReturnStatus JsonConfigurator::_load_data()
     {
         [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
         SUSHI_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
-                        rapidjson::GetParseError_En(_json_data.GetParseError()),
-                        err_offset,
-                        config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );
+                       rapidjson::GetParseError_En(_json_data.GetParseError()),
+                       err_offset,
+                       config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );
         return JsonConfigReturnStatus::INVALID_FILE;
     }
     return JsonConfigReturnStatus::OK;

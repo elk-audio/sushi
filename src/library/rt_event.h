@@ -49,6 +49,8 @@ enum class RtEventType
     AFTERTOUCH,
     MODULATION,
     WRAPPED_MIDI_EVENT,
+    GATE_EVENT,
+    CV_EVENT,
     INT_PARAMETER_CHANGE,
     FLOAT_PARAMETER_CHANGE,
     BOOL_PARAMETER_CHANGE,
@@ -184,6 +186,44 @@ public:
 protected:
     MidiDataByte _midi_data;
 };
+
+class GateRtEvent : public BaseRtEvent
+{
+public:
+    GateRtEvent(ObjectId target,
+                int offset,
+                int gate_id,
+                bool value) : BaseRtEvent(RtEventType::GATE_EVENT, target, offset),
+                                          _gate_id(gate_id),
+                                          _value(value) {}
+
+    int gate_no() const {return _gate_id;}
+    bool value() const {return _value;}
+
+protected:
+    int _gate_id;
+    bool _value;
+};
+
+class CvRtEvent : public BaseRtEvent
+{
+public:
+    CvRtEvent(ObjectId target,
+                int offset,
+                int cv_id,
+                float value) : BaseRtEvent(RtEventType::CV_EVENT, target, offset),
+                               _cv_id(cv_id),
+                               _value(value) {}
+
+    int cv_id() const {return _cv_id;}
+    float value() const {return _value;}
+
+protected:
+    int _cv_id;
+    float _value;
+};
+
+
 /**
  * @brief Baseclass for simple parameter changes
  */
@@ -336,7 +376,7 @@ public:
     ProcessorOperationRtEvent(RtEventType type,
                               Processor* instance) : ReturnableRtEvent(type, 0),
                                                      _instance{instance} {}
-    Processor* instance() {return _instance;}
+    Processor* instance() const {return _instance;}
 private:
     Processor* _instance;
 };
@@ -347,8 +387,8 @@ public:
     ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId track) : ReturnableRtEvent(type, 0),
                                                                                     _processor{processor},
                                                                                     _track{track} {}
-    ObjectId processor() {return _processor;}
-    ObjectId track() {return _track;}
+    ObjectId processor() const {return _processor;}
+    ObjectId track() const {return _track;}
 private:
     ObjectId _processor;
     ObjectId _track;
@@ -449,6 +489,7 @@ enum class SyncMode
 {
     INTERNAL,
     MIDI_SLAVE,
+    GATE_INPUT,
     ABLETON_LINK
 };
 
@@ -480,8 +521,8 @@ public:
                                                                                      _channel(channel),
                                                                                      _channel_type(channel_type) {}
 
-    int channel() {return _channel;}
-    ClipChannelType channel_type() {return _channel_type;}
+    int channel() const {return _channel;}
+    ClipChannelType channel_type() const {return _channel_type;}
 
 private:
     int _channel;
@@ -506,7 +547,7 @@ public:
     int sample_offset() const {return _base_event.sample_offset();}
 
     /* Access functions protected by asserts */
-    const KeyboardRtEvent* keyboard_event()
+    const KeyboardRtEvent* keyboard_event() const
     {
         assert(_keyboard_event.type() == RtEventType::NOTE_ON ||
                _keyboard_event.type() == RtEventType::NOTE_OFF ||
@@ -514,7 +555,7 @@ public:
         return &_keyboard_event;
     }
 
-    const KeyboardCommonRtEvent* keyboard_common_event()
+    const KeyboardCommonRtEvent* keyboard_common_event() const
     {
         assert(_keyboard_event.type() == RtEventType::AFTERTOUCH ||
                _keyboard_event.type() == RtEventType::PITCH_BEND ||
@@ -526,6 +567,18 @@ public:
     {
         assert(_wrapped_midi_event.type() == RtEventType::WRAPPED_MIDI_EVENT);
         return &_wrapped_midi_event;
+    }
+
+    const GateRtEvent* gate_event() const
+    {
+        assert(_gate_event.type() == RtEventType::GATE_EVENT);
+        return &_gate_event;
+    }
+
+    const CvRtEvent* cv_event() const
+    {
+        assert(_cv_event.type() == RtEventType::CV_EVENT);
+        return &_cv_event;
     }
 
     const ParameterChangeRtEvent* parameter_change_event() const
@@ -550,16 +603,42 @@ public:
         return &_processor_command_event;
     }
 
+    // ReturnableEvent and every event type that inherits from it
+    // needs a non-const accessor function as well
+
+    const ReturnableRtEvent* returnable_event() const
+    {
+        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        return &_returnable_event;
+    }
+
     ReturnableRtEvent* returnable_event()
     {
         assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
         return &_returnable_event;
     }
 
+    const ProcessorOperationRtEvent* processor_operation_event() const
+    {
+        assert(_processor_operation_event.type() == RtEventType::INSERT_PROCESSOR);
+        return &_processor_operation_event;
+    }
+
     ProcessorOperationRtEvent* processor_operation_event()
     {
         assert(_processor_operation_event.type() == RtEventType::INSERT_PROCESSOR);
         return &_processor_operation_event;
+    }
+
+    const ProcessorReorderRtEvent* processor_reorder_event() const
+    {
+        assert(_processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR ||
+               _processor_reorder_event.type() == RtEventType::ADD_PROCESSOR_TO_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_PROCESSOR_FROM_TRACK ||
+               _processor_reorder_event.type() == RtEventType::ADD_TRACK ||
+               _processor_reorder_event.type() == RtEventType::REMOVE_TRACK);
+        ;
+        return &_processor_reorder_event;
     }
 
     ProcessorReorderRtEvent* processor_reorder_event()
@@ -573,19 +652,25 @@ public:
         return &_processor_reorder_event;
     }
 
+    const AsyncWorkRtEvent* async_work_event() const
+    {
+        assert(_async_work_event.type() == RtEventType::ASYNC_WORK);
+        return &_async_work_event;
+    }
+
     AsyncWorkRtEvent* async_work_event()
     {
         assert(_async_work_event.type() == RtEventType::ASYNC_WORK);
         return &_async_work_event;
     }
 
-    AsyncWorkRtCompletionEvent* async_work_completion_event()
+    const AsyncWorkRtCompletionEvent* async_work_completion_event() const
     {
         assert(_async_work_completion_event.type() == RtEventType::ASYNC_WORK_NOTIFICATION);
         return &_async_work_completion_event;
     }
 
-    DataPayloadRtEvent* data_payload_event()
+    const DataPayloadRtEvent* data_payload_event() const
     {
         assert(_data_payload_event.type() == RtEventType::STRING_DELETE ||
                _data_payload_event.type() == RtEventType::BLOB_DELETE ||
@@ -594,37 +679,37 @@ public:
 
     }
 
-    SynchronisationRtEvent* syncronisation_event()
+    const SynchronisationRtEvent* syncronisation_event() const
     {
         assert(_synchronisation_event.type() == RtEventType::SYNC);
         return &_synchronisation_event;
     }
 
-    TempoRtEvent* tempo_event()
+    const TempoRtEvent* tempo_event() const
     {
         assert(_tempo_event.type() == RtEventType::TEMPO);
         return &_tempo_event;
     }
 
-    TimeSignatureRtEvent* time_signature_event()
+    const TimeSignatureRtEvent* time_signature_event() const
     {
         assert(_time_signature_event.type() == RtEventType::TIME_SIGNATURE);
         return &_time_signature_event;
     }
 
-    PlayingModeRtEvent* playing_mode_event()
+    const PlayingModeRtEvent* playing_mode_event() const
     {
         assert(_playing_mode_event.type() == RtEventType::PLAYING_MODE);
         return &_playing_mode_event;
     }
 
-    SyncModeRtEvent* sync_mode_event()
+    const SyncModeRtEvent* sync_mode_event() const
     {
         assert(_sync_mode_event.type() == RtEventType::SYNC_MODE);
         return &_sync_mode_event;
     }
 
-    ClipNotificationRtEvent* clip_notification_event()
+    const ClipNotificationRtEvent* clip_notification_event() const
     {
         assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
         return &_clip_notification_event;
@@ -671,6 +756,18 @@ public:
     static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, int channel, float value)
     {
         KeyboardCommonRtEvent typed_event(type, target, offset, channel, value);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_gate_event(ObjectId target, int offset, int gate_id, bool value)
+    {
+        GateRtEvent typed_event(target, offset, gate_id, value);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_cv_event(ObjectId target, int offset, int cv_id, float value)
+    {
+        CvRtEvent typed_event(target, offset, cv_id, value);
         return RtEvent(typed_event);
     }
 
@@ -817,8 +914,10 @@ private:
     /* Private constructors that are invoked automatically when using the make_xxx_event functions */
     RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
     RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
-    RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
     RtEvent(const WrappedMidiRtEvent& e) : _wrapped_midi_event(e) {}
+    RtEvent(const GateRtEvent& e) : _gate_event(e) {}
+    RtEvent(const CvRtEvent& e) : _cv_event(e) {}
+    RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
     RtEvent(const StringParameterChangeRtEvent& e) : _string_parameter_change_event(e) {}
     RtEvent(const DataParameterChangeRtEvent& e) : _data_parameter_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e) : _processor_command_event(e) {}
@@ -841,6 +940,8 @@ private:
         KeyboardRtEvent               _keyboard_event;
         KeyboardCommonRtEvent         _keyboard_common_event;
         WrappedMidiRtEvent            _wrapped_midi_event;
+        GateRtEvent                   _gate_event;
+        CvRtEvent                     _cv_event;
         ParameterChangeRtEvent        _parameter_change_event;
         StringParameterChangeRtEvent  _string_parameter_change_event;
         DataParameterChangeRtEvent    _data_parameter_change_event;
@@ -862,8 +963,8 @@ private:
 
 /* Compile time check that the event container fits withing given memory constraints and
  * they can be safely copied without side effects. Important for real-time performance*/
-static_assert(sizeof(RtEvent) == SUSHI_EVENT_CACHE_ALIGNMENT, "");
-static_assert(std::is_trivially_copyable<RtEvent>::value, "");
+static_assert(sizeof(RtEvent) == SUSHI_EVENT_CACHE_ALIGNMENT);
+static_assert(std::is_trivially_copyable<RtEvent>::value);
 
 /**
  * @brief Convenience function to encapsulate the logic to determine if it is a keyboard event

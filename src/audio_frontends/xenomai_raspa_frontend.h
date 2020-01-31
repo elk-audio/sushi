@@ -31,7 +31,10 @@ namespace audio_frontend {
 
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw) : break_on_mode_sw(break_on_mode_sw) {}
+    XenomaiRaspaFrontendConfiguration(bool break_on_mode_sw,
+                                      int cv_inputs,
+                                      int cv_outputs) : BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
+                                                        break_on_mode_sw(break_on_mode_sw) {}
 
     virtual ~XenomaiRaspaFrontendConfiguration() = default;
     bool break_on_mode_sw;
@@ -40,7 +43,7 @@ struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
-    XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    explicit XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     virtual ~XenomaiRaspaFrontend()
     {
@@ -87,7 +90,16 @@ private:
     /* Internal process callback function */
     void _internal_process_callback(float* input, float* output);
 
+    AudioFrontendStatus config_audio_channels(const XenomaiRaspaFrontendConfiguration* config);
+
     static bool _raspa_initialised;
+    int _audio_input_channels;
+    int _audio_output_channels;
+    int _cv_input_channels;
+    int _cv_output_channels;
+    engine::ControlBuffer _in_controls;
+    engine::ControlBuffer _out_controls;
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_hist{0};
 };
 
 }; // end namespace audio_frontend
@@ -102,7 +114,7 @@ namespace sushi {
 namespace audio_frontend {
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    XenomaiRaspaFrontendConfiguration(bool) {}
+    XenomaiRaspaFrontendConfiguration(bool, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class XenomaiRaspaFrontend : public BaseAudioFrontend

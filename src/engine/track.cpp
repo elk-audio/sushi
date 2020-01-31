@@ -182,7 +182,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
     _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
-void Track::process_event(RtEvent event)
+void Track::process_event(const RtEvent& event)
 {
     if (is_keyboard_event(event))
     {
@@ -205,7 +205,7 @@ void Track::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
-void Track::send_event(RtEvent event)
+void Track::send_event(const RtEvent& event)
 {
     if (is_keyboard_event(event))
     {
@@ -220,12 +220,12 @@ void Track::send_event(RtEvent event)
 void Track::_common_init()
 {
     _processors.reserve(TRACK_MAX_PROCESSORS);
-    _gain_parameters.at(0)  = register_float_parameter("gain", "Gain", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
-    _pan_parameters.at(0)  = register_float_parameter("pan", "Pan", 0.0f, -1.0f, 1.0f, nullptr);
+    _gain_parameters.at(0)  = register_float_parameter("gain", "Gain", "dB", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
+    _pan_parameters.at(0)  = register_float_parameter("pan", "Pan", "", 0.0f, -1.0f, 1.0f, nullptr);
     for (int bus = 1 ; bus < _output_busses; ++bus)
     {
-        _gain_parameters.at(bus)  = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
-        _pan_parameters.at(bus)  = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", 0.0f, -1.0f, 1.0f, new FloatParameterPreProcessor(-1.0f, 1.0f));
+        _gain_parameters.at(bus)  = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
+        _pan_parameters.at(bus)  = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "", 0.0f, -1.0f, 1.0f, new FloatParameterPreProcessor(-1.0f, 1.0f));
     }
     for (auto& i : _pan_gain_smoothers_right)
     {

@@ -42,8 +42,11 @@ enable_testing()
 
 SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/arpeggiator_plugin_test.cpp
+               unittests/plugins/control_to_cv_plugin_test.cpp
+               unittests/plugins/cv_to_control_plugin_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
+               unittests/plugins/step_sequencer_test.cpp
                unittests/engine/track_test.cpp
                unittests/engine/engine_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
@@ -63,11 +66,13 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
                unittests/library/midi_encoder_test.cpp
+               unittests/library/parameter_dump_test.cpp
                unittests/library/performance_timer_test.cpp
                unittests/library/plugin_parameters_test.cpp
                unittests/library/internal_plugin_test.cpp
                unittests/library/rt_event_test.cpp
-               unittests/library/id_generator_test.cpp)
+               unittests/library/id_generator_test.cpp
+               unittests/library/simple_fifo_test.cpp)
 
 if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)

@@ -8,27 +8,31 @@
 using namespace sushi;
 using namespace sushi::performance;
 
-constexpr auto TEST_PERIOD = std::chrono::microseconds(10);
+constexpr auto TEST_PERIOD = std::chrono::microseconds(100);
 
-void wait()
+performance::TimePoint virtual_wait(const performance::TimePoint& tp, int n)
 {
-    std::this_thread::sleep_for(TEST_PERIOD / 10);
+    /* "Wait" by rewinding the timestamp, makes the test robust against
+     * threading and scheduling issues */
+    return tp - n * (TEST_PERIOD / 10);
 }
 
 void run_test_scenario(PerformanceTimer& timer)
 {
     auto start = timer.start_timer();
-    wait();
+    start = virtual_wait(start, 1);
     timer.stop_timer(start, 1);
+
     start = timer.start_timer();
-    wait();
+    start = virtual_wait(start, 1);
     timer.stop_timer(start, 1);
+
     start = timer.start_timer();
-    wait();
-    wait();
+    start = virtual_wait(start, 5);
     timer.stop_timer(start, 2);
+
     start = timer.start_timer();
-    wait();
+    start = virtual_wait(start, 3);
     timer.stop_timer(start, 2);
 }
 
@@ -64,13 +68,13 @@ TEST_F(TestPerformanceTimer, TestOperation)
 
     ASSERT_TRUE(t1.min_case > 0);
     ASSERT_TRUE(t1.avg_case > 0);
-    ASSERT_TRUE(t1.max_case < 100);
+    ASSERT_GE(t1.max_case, t1.min_case);
     ASSERT_TRUE(t2.min_case > 0);
     ASSERT_TRUE(t2.avg_case > 0);
-    ASSERT_TRUE(t2.max_case < 100);
+    ASSERT_GE(t2.max_case, t2.min_case);
 
-    ASSERT_TRUE(t2.max_case > t1.max_case);
-    ASSERT_TRUE(t2.avg_case > t1.avg_case);
+    ASSERT_GE(t2.max_case, t1.max_case);
+    ASSERT_GE(t2.avg_case, t1.avg_case);
 }
 
 TEST_F(TestPerformanceTimer, TestClearRecords)

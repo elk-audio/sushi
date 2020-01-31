@@ -49,6 +49,7 @@ enum class SyncMode
 {
     INTERNAL,
     MIDI,
+    GATE,
     LINK
 };
 
