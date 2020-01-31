@@ -617,6 +617,7 @@ void OSCFrontend::connect_all()
             {
                 connect_to_program_change(processor.name);
             }
+            connect_to_bypass_state(processor.name);
         }
         connect_kb_to_track(track.name);
     }
