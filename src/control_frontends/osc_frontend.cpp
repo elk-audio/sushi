@@ -69,26 +69,77 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
     return 0;
 }
 
-static int osc_send_keyboard_event(const char* /*path*/,
+static int osc_send_bypass_state_event(const char* /*path*/,
+                                       const char* /*types*/,
+                                       lo_arg** argv,
+                                       int /*argc*/,
+                                       void* /*data*/,
+                                       void* user_data)
+{
+    auto connection = static_cast<OscConnection*>(user_data);
+    bool isBypassed = (argv[0]->i == 0) ? false : true;
+    connection->controller->set_processor_bypass_state(connection->processor, isBypassed);
+    SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
+    return 0;
+}                            
+
+static int osc_send_keyboard_note_event(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
                                    int /*argc*/,
                                    void* /*data*/,
                                    void* user_data)
 {
-    // TODO: Enable aftertouch message and midi channel
     auto connection = static_cast<OscConnection*>(user_data);
     std::string event(&argv[0]->s);
-    int note = argv[1]->i;
-    float value = argv[2]->f;
+    int channel = argv[1]->i;
+    int note = argv[2]->i;
+    float value = argv[3]->f;
 
     if (event == "note_on")
     {
-        connection->controller->send_note_on(connection->processor, 0, note, value);
+        connection->controller->send_note_on(connection->processor, channel, note, value);
     }
     else if (event == "note_off")
     {
-        connection->controller->send_note_off(connection->processor, 0, note, value);
+        connection->controller->send_note_off(connection->processor, channel, note, value);
+    }
+    else if (event == "note_aftertouch")
+    {
+        connection->controller->send_note_aftertouch(connection->processor, channel, note, value);
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Unrecognized event: {}.", event);
+        return 0;
+    }
+    SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
+    return 0;
+}
+
+static int osc_send_keyboard_modulation_event(const char* /*path*/,
+                                   const char* /*types*/,
+                                   lo_arg** argv,
+                                   int /*argc*/,
+                                   void* /*data*/,
+                                   void* user_data)
+{
+    auto connection = static_cast<OscConnection*>(user_data);
+    std::string event(&argv[0]->s);
+    int channel = argv[1]->i;
+    float value = argv[2]->f;
+
+    if (event == "modulation")
+    {
+        connection->controller->send_modulation(connection->processor, channel, value);
+    }
+    else if (event == "pitch_bend")
+    {
+        connection->controller->send_pitch_bend(connection->processor, channel, value);
+    }
+    else if (event == "aftertouch")
+    {
+        connection->controller->send_aftertouch(connection->processor, channel, value);
     }
     else
     {
@@ -193,6 +244,78 @@ static int osc_delete_processor(const char* /*path*/,
     instance->send_remove_processor_event(track, name);
     return 0;
 }
+
+static int osc_set_timing_statistics_enabled(const char* /*path*/,
+                                             const char* /*types*/,
+                                             lo_arg** argv,
+                                             int /*argc*/,
+                                             void* /*data*/,
+                                             void* user_data)
+{
+    auto instance = static_cast<ext::SushiControl*>(user_data);
+    bool is_enabled = (argv[0]->i == 0) ? false : true;
+    SUSHI_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
+    instance->set_timing_statistics_enabled(is_enabled);
+    return 0;
+}
+
+static int osc_reset_timing_statistics(const char* /*path*/,
+                                       const char* /*types*/,
+                                       lo_arg** argv,
+                                       int /*argc*/,
+                                       void* /*data*/,
+                                       void* user_data)
+{
+    auto instance = static_cast<ext::SushiControl*>(user_data);
+    std::string type = std::string(&argv[0]->s);
+    std::string output_text = type;
+    if (type == "all")
+    {
+        auto status = instance->reset_all_timings();
+        if (status != ext::ControlStatus::OK)
+        {
+            SUSHI_LOG_WARNING("Failed to reset track timings of all tracks and processors");
+            return 0;
+        }
+    }
+    else if (type == "track")
+    {
+        std::string track_name = std::string(&argv[1]->s);
+        auto [track_status, track_id] = instance->get_track_id(track_name);
+        if (track_status == ext::ControlStatus::OK)
+        {
+            output_text += " " + track_name;
+            instance->reset_track_timings(track_id);
+        }
+        else
+        {
+            SUSHI_LOG_WARNING("No track with name {} available", track_name);
+            return 0;
+        }
+    }
+    else if (type == "processor")
+    {
+        std::string processor_name = std::string(&argv[1]->s);
+        auto [processor_status, processor_id] = instance->get_processor_id(processor_name);
+        if (processor_status == ext::ControlStatus::OK)
+        {
+            output_text += " " + processor_name;
+            instance->reset_processor_timings(processor_id);
+        }
+        else
+        {
+            SUSHI_LOG_WARNING("No processor with name {} available", processor_name);
+            return 0;
+        }
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Unrecognized reset target");
+        return 0;
+    }
+    SUSHI_LOG_DEBUG("Resetting {} timing statistics", output_text);
+    return 0;
+}                                            
 
 static int osc_set_tempo(const char* /*path*/,
                                 const char* /*types*/,
@@ -399,6 +522,27 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     return true;
 }
 
+bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
+{
+    std::string osc_path = "/bypass/";
+    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    osc_path = osc_path + osc::make_safe_path(processor_name);
+    OscConnection* connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = 0;
+    connection->instance = this;
+    connection->controller = _controller;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_bypass_state_event, connection);
+    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    return true;
+}
+
+
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
     std::string osc_path = "/keyboard_event/";
@@ -414,7 +558,8 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
     connection->instance = this;
     connection->controller = _controller;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_event, connection);
+    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "siif", osc_send_keyboard_note_event, connection);
+    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_modulation_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
@@ -508,6 +653,9 @@ void OSCFrontend::setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/set_playing_mode", "s", osc_set_playing_mode, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/set_sync_mode", "s", osc_set_tempo_sync_mode, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/set_timing_statistics_enabled", "i", osc_set_timing_statistics_enabled, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "s", osc_reset_timing_statistics, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
 }
 
 int OSCFrontend::process(Event* event)
