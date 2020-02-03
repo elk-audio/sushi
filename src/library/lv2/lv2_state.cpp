@@ -105,7 +105,7 @@ int LV2_State::_load_programs(PresetSink sink, void* data)
 		auto preset = lilv_nodes_get(presets, i);
 		lilv_world_load_resource(_model->lilv_world(), preset);
 
-		if (sink == false)
+		if (sink == nullptr)
 		{
 			continue;
 		}
