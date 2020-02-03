@@ -39,16 +39,16 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     _buf_size(0), // Custom buffer size, or 0
     _index(port_index)
 {
-    lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
+    _lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
-    const bool optional = lilv_port_has_property(plugin, lilv_port, model->get_nodes().lv2_connectionOptional);
+    const bool optional = lilv_port_has_property(plugin, _lilv_port, model->nodes().lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
-    if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_InputPort))
+    if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_InputPort))
     {
         _flow = FLOW_INPUT;
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_OutputPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_OutputPort))
     {
         _flow = FLOW_OUTPUT;
     }
@@ -60,10 +60,10 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     }
 
     const bool hidden = !_show_hidden &&
-                        lilv_port_has_property(plugin, lilv_port, model->get_nodes().pprops_notOnGUI);
+                        lilv_port_has_property(plugin, _lilv_port, model->nodes().pprops_notOnGUI);
 
     /* Set control values */
-    if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_ControlPort))
+    if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_ControlPort))
     {
         _type = TYPE_CONTROL;
 
@@ -71,7 +71,7 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
         LilvNode* maxNode;
         LilvNode* defNode;
 
-        lilv_port_get_range(plugin, lilv_port, &defNode, &minNode, &maxNode);
+        lilv_port_get_range(plugin, _lilv_port, &defNode, &minNode, &maxNode);
 
         if(defNode != nullptr)
         {
@@ -96,14 +96,14 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
 
         if (!hidden)
         {
-            model->get_controls().emplace_back(new_port_control(this, model, _index));
+            model->controls().emplace_back(new_port_control(this, model, _index));
         }
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().lv2_AudioPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_AudioPort))
     {
         _type = TYPE_AUDIO;
     }
-    else if (lilv_port_is_a(plugin, lilv_port, model->get_nodes().atom_AtomPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().atom_AtomPort))
     {
         _type = TYPE_EVENT;
     }
@@ -114,7 +114,7 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
         throw Port::FailedCreation();
     }
 
-    if (!model->get_buf_size_set()) {
+    if (!model->buf_size()) {
         _allocate_port_buffers(model);
     }
 }
@@ -140,59 +140,59 @@ void Port::_allocate_port_buffers(LV2Model* model)
             auto handle = model->get_map().handle;
 
             _evbuf = lv2_evbuf_new(
-                    model->get_midi_buffer_size(),
-                    model->get_map().map(handle, lilv_node_as_string(model->get_nodes().atom_Chunk)),
-                    model->get_map().map(handle, lilv_node_as_string(model->get_nodes().atom_Sequence)));
+                    model->midi_buffer_size(),
+                    model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Chunk)),
+                    model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Sequence)));
 
             lilv_instance_connect_port(
-                    model->get_plugin_instance(), _index, lv2_evbuf_get_buffer(_evbuf));
+                    model->plugin_instance(), _index, lv2_evbuf_get_buffer(_evbuf));
         }
         default:
             break;
     }
 }
 
-float Port::get_min()
+float Port::min()
 {
     return _min;
 }
 
-float Port::get_max()
+float Port::max()
 {
     return _max;
 }
 
-PortFlow Port::get_flow()
+PortFlow Port::flow()
 {
     return _flow;
 }
 
-PortType Port::get_type()
+PortType Port::type()
 {
     return _type;
 }
 
-const LilvPort* Port::get_lilv_port()
+const LilvPort* Port::lilv_port()
 {
-    return lilv_port;
+    return _lilv_port;
 }
 
-LV2_Evbuf* Port::get_evbuf()
+LV2_Evbuf* Port::evbuf()
 {
     return _evbuf;
 }
 
-void Port::set_control_value(float c)
+void Port::control_value(float c)
 {
     _control = c;
 }
 
-float Port::get_control_value()
+float Port::control_value()
 {
     return _control;
 }
 
-float* Port::get_control_pointer()
+float* Port::control_pointer()
 {
     return &_control;
 }

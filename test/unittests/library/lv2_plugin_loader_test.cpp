@@ -32,7 +32,7 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     PluginLoader loader;
 
-    auto plugin_handle = loader.get_plugin_handle_from_URI(plugin_URI.c_str());
+    auto plugin_handle = loader.plugin_handle_from_URI(plugin_URI.c_str());
 
     ASSERT_NE(nullptr, plugin_handle);
 
@@ -42,11 +42,11 @@ TEST_F(TestLv2PluginLoader, TestLoadPlugin)
 
     loader.load_plugin(plugin_handle, SAMPLE_RATE, feature_list);
 
-    auto instance = loader.getModel()->get_plugin_instance();
+    auto instance = loader.model()->plugin_instance();
 
     ASSERT_NE(nullptr, instance);
 
     loader.close_plugin_instance();
 
-    ASSERT_EQ(nullptr, loader.getModel()->get_plugin_instance());
+    ASSERT_EQ(nullptr, loader.model()->plugin_instance());
 }

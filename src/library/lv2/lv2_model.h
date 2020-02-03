@@ -131,27 +131,27 @@ public:
 
     void initialize_host_feature_list();
 
-    HostFeatures& get_features();
-    std::vector<const LV2_Feature*>* get_feature_list();
+    HostFeatures& host_features();
+    std::vector<const LV2_Feature*>* host_feature_list();
 
-    LilvWorld* get_world();
+    LilvWorld* lilv_world();
 
-    LilvInstance* get_plugin_instance();
-    void set_plugin_instance(LilvInstance* new_instance);
+    LilvInstance* plugin_instance();
+    void plugin_instance(LilvInstance* new_instance);
 
-    const LilvPlugin* get_plugin_class();
-    void set_plugin_class(const LilvPlugin* new_plugin);
+    const LilvPlugin* plugin_class();
+    void plugin_class(const LilvPlugin* new_plugin);
 
-    int get_midi_buffer_size();
-    float get_sample_rate();
+    int midi_buffer_size();
+    float sample_rate();
 
     Port* get_port(int index);
     void add_port(std::unique_ptr<Port>&& port);
-    int get_port_count();
+    int port_count();
 
-    const Lv2_Host_Nodes& get_nodes();
+    const Lv2_Host_Nodes& nodes();
 
-    const LV2_URIDs& get_urids();
+    const LV2_URIDs& urids();
 
     LV2_URID_Map& get_map();
     LV2_URID_Unmap& get_unmap();
@@ -159,35 +159,35 @@ public:
     LV2_URID map(const char* uri);
     const char* unmap(LV2_URID urid);
 
-    const LV2_Atom_Forge& get_forge();
+    const LV2_Atom_Forge& forge();
 
-    int get_plugin_latency();
-    void set_plugin_latency(int latency);
+    int plugin_latency();
+    void plugin_latency(int latency);
 
     void trigger_exit();
 
-    void set_control_input_index(int index);
+    void control_input_index(int index);
 
     bool update_requested();
     void request_update();
     void clear_update_request();
 
-    void set_restore_thread_safe(bool safe);
-    bool is_restore_thread_safe();
+    void restore_thread_safe(bool safe);
+    bool restore_thread_safe();
 
-    LV2_State* get_state();
+    LV2_State* state();
 
-    void set_play_state(PlayState play_state);
-    PlayState get_play_state();
+    void play_state(PlayState play_state);
+    PlayState play_state();
 
-    std::string get_temp_dir();
+    std::string temp_dir();
 
-    std::string get_save_dir();
-    void set_save_dir(const std::string& save_dir);
+    std::string save_dir();
+    void save_dir(const std::string& save_dir);
 
-    bool get_buf_size_set();
+    bool buf_size();
 
-    std::vector<std::unique_ptr<ControlID>>& get_controls();
+    std::vector<std::unique_ptr<ControlID>>& controls();
 
     Semaphore paused; // Paused signal from process thread
 

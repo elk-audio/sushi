@@ -33,7 +33,7 @@ static int populate_preset_list(LV2Model* model, const LilvNode *node, const Lil
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
 
-    model->get_state()->get_program_names().emplace_back(std::move(node_string));
+    model->state()->program_names().emplace_back(std::move(node_string));
 
     return 0;
 }
@@ -44,29 +44,29 @@ LV2_State::LV2_State(LV2Model* model):
 
 }
 
-std::vector<std::string>& LV2_State::get_program_names()
+std::vector<std::string>& LV2_State::program_names()
 {
     return _program_names;
 }
 
-int LV2_State::get_number_of_programs()
+int LV2_State::number_of_programs()
 {
     return _program_names.size();
 }
 
-int LV2_State::get_current_program_index()
+int LV2_State::current_program_index()
 {
     return _current_program_index;
 }
 
-std::string LV2_State::get_current_program_name()
+std::string LV2_State::current_program_name()
 {
     return program_name(_current_program_index);
 }
 
 std::string LV2_State::program_name(int program_index)
 {
-    if (program_index >= 0 && program_index < get_number_of_programs())
+    if (program_index >= 0 && program_index < number_of_programs())
     {
         return _program_names[program_index];
     }
@@ -81,36 +81,36 @@ void LV2_State::populate_program_list()
 
 void LV2_State::save(const char* dir)
 {
-	_model->set_save_dir(std::string(dir) + "/");
+    _model->save_dir(std::string(dir) + "/");
 
 	auto state = lilv_state_new_from_instance(
-		_model->get_plugin_class(), _model->get_plugin_instance(), &_model->get_map(),
-		_model->get_temp_dir().c_str(), dir, dir, dir,
-		get_port_value, _model,
+            _model->plugin_class(), _model->plugin_instance(), &_model->get_map(),
+            _model->temp_dir().c_str(), dir, dir, dir,
+            get_port_value, _model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
-	lilv_state_save(_model->get_world(), &_model->get_map(), &_model->get_unmap(), state, nullptr, dir, "state.ttl");
+	lilv_state_save(_model->lilv_world(), &_model->get_map(), &_model->get_unmap(), state, nullptr, dir, "state.ttl");
 
 	lilv_state_free(state);
 
-	_model->set_save_dir(std::string(""));
+    _model->save_dir(std::string(""));
 }
 
 int LV2_State::_load_programs(PresetSink sink, void* data)
 {
-	auto presets = lilv_plugin_get_related(_model->get_plugin_class(), _model->get_nodes().pset_Preset);
+	auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
 	LILV_FOREACH(nodes, i, presets)
 	{
 		auto preset = lilv_nodes_get(presets, i);
-		lilv_world_load_resource(_model->get_world(), preset);
+		lilv_world_load_resource(_model->lilv_world(), preset);
 
 		if (!sink)
 		{
 			continue;
 		}
 
-		auto labels = lilv_world_find_nodes(_model->get_world(), preset, _model->get_nodes().rdfs_label, NULL);
+		auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes().rdfs_label, NULL);
 
 		if (labels)
 		{
@@ -131,12 +131,12 @@ int LV2_State::_load_programs(PresetSink sink, void* data)
 
 int LV2_State::unload_programs()
 {
-	auto presets = lilv_plugin_get_related(_model->get_plugin_class(), _model->get_nodes().pset_Preset);
+	auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
 	LILV_FOREACH(nodes, i, presets)
 	{
 		auto preset = lilv_nodes_get(presets, i);
-		lilv_world_unload_resource(_model->get_world(), preset);
+		lilv_world_unload_resource(_model->lilv_world(), preset);
 	}
 
 	lilv_nodes_free(presets);
@@ -146,33 +146,33 @@ int LV2_State::unload_programs()
 
 void LV2_State::apply_state(LilvState* state)
 {
-	bool must_pause = !_model->is_restore_thread_safe() && _model->get_play_state() == PlayState::RUNNING;
+	bool must_pause = !_model->restore_thread_safe() && _model->play_state() == PlayState::RUNNING;
 
 	if (state)
 	{
 		if (must_pause)
 		{
-            _model->set_play_state(PlayState::PAUSE_REQUESTED);
+            _model->play_state(PlayState::PAUSE_REQUESTED);
             _model->paused.wait();
 		}
 
-        auto feature_list = _model->get_feature_list();
+        auto feature_list = _model->host_feature_list();
 
-        lilv_state_restore(state, _model->get_plugin_instance(), set_port_value, _model, 0, feature_list->data());
+        lilv_state_restore(state, _model->plugin_instance(), set_port_value, _model, 0, feature_list->data());
 
 		if (must_pause)
 		{
             _model->request_update();
-            _model->set_play_state(PlayState::RUNNING);
+            _model->play_state(PlayState::RUNNING);
 		}
 	}
 }
 
 int LV2_State::apply_program(const int program_index)
 {
-    if (program_index < get_number_of_programs())
+    if (program_index < number_of_programs())
     {
-        auto presetNode = lilv_new_uri(_model->get_world(), _program_names[program_index].c_str());
+        auto presetNode = lilv_new_uri(_model->lilv_world(), _program_names[program_index].c_str());
         apply_program(presetNode);
         lilv_node_free(presetNode);
 
@@ -186,12 +186,12 @@ int LV2_State::apply_program(const int program_index)
 
 int LV2_State::apply_program(const LilvNode* preset)
 {
-    set_preset(lilv_state_new_from_world(_model->get_world(), &_model->get_map(), preset));
+    _set_preset(lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), preset));
     apply_state(_preset);
 	return 0;
 }
 
-void LV2_State::set_preset(LilvState* new_preset)
+void LV2_State::_set_preset(LilvState* new_preset)
 {
     if (_preset != nullptr)
     {
@@ -204,8 +204,8 @@ void LV2_State::set_preset(LilvState* new_preset)
 int LV2_State::save_program(const char* dir, const char* uri, const char* label, const char* filename)
 {
 	auto state = lilv_state_new_from_instance(
-            _model->get_plugin_class(), _model->get_plugin_instance(), &_model->get_map(),
-            _model->get_temp_dir().c_str(), dir, dir, dir,
+            _model->plugin_class(), _model->plugin_instance(), &_model->get_map(),
+            _model->temp_dir().c_str(), dir, dir, dir,
             get_port_value, _model,
 		LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
 
@@ -214,9 +214,9 @@ int LV2_State::save_program(const char* dir, const char* uri, const char* label,
 		lilv_state_set_label(state, label);
 	}
 
-	int ret = lilv_state_save(_model->get_world(), &_model->get_map(), &_model->get_unmap(), state, uri, dir, filename);
+	int ret = lilv_state_save(_model->lilv_world(), &_model->get_map(), &_model->get_unmap(), state, uri, dir, filename);
 
-    set_preset(state);
+    _set_preset(state);
 
 	return ret;
 }
@@ -228,9 +228,9 @@ int LV2_State::delete_current_program()
 		return 1;
 	}
 
-	lilv_world_unload_resource(_model->get_world(), lilv_state_get_uri(_preset));
-	lilv_state_delete(_model->get_world(), _preset);
-    set_preset(nullptr);
+	lilv_world_unload_resource(_model->lilv_world(), lilv_state_get_uri(_preset));
+	lilv_state_delete(_model->lilv_world(), _preset);
+    _set_preset(nullptr);
 
 	return 0;
 }
@@ -241,11 +241,11 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
     auto model = static_cast<LV2Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
-    if (port && port->get_flow() == FLOW_INPUT && port->get_type() == TYPE_CONTROL)
+    if (port && port->flow() == FLOW_INPUT && port->type() == TYPE_CONTROL)
     {
         *size = sizeof(float);
-        *type = model->get_forge().Float;
-        return port->get_control_pointer();
+        *type = model->forge().Float;
+        return port->control_pointer();
     }
 
     *size = *type = 0;
@@ -253,6 +253,7 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
     return nullptr;
 }
 
+// This one has a signature as required by lilv.
 void set_port_value(const char* port_symbol,
                     void* user_data,
                     const void* value,
@@ -270,7 +271,7 @@ void set_port_value(const char* port_symbol,
 
     float fvalue;
 
-    auto forge = model->get_forge();
+    auto forge = model->forge();
 
     if (type == forge.Float)
     {
@@ -292,15 +293,15 @@ void set_port_value(const char* port_symbol,
     {
         SUSHI_LOG_ERROR("error: Preset {} value has bad type {}",
                 port_symbol,
-                model->get_unmap().unmap(model->get_unmap().handle, type));
+                        model->get_unmap().unmap(model->get_unmap().handle, type));
 
         return;
     }
 
-    if (model->get_play_state() != PlayState::RUNNING)
+    if (model->play_state() != PlayState::RUNNING)
     {
         // Set value on port directly:
-        port->set_control_value(fvalue);
+        port->control_value(fvalue);
     }
 }
 

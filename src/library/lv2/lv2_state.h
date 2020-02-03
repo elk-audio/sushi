@@ -44,20 +44,20 @@ public:
 
     int delete_current_program();
 
-    std::vector<std::string>& get_program_names();
+    std::vector<std::string>& program_names();
 
     void populate_program_list();
 
-    int get_number_of_programs();
+    int number_of_programs();
 
-    int get_current_program_index();
+    int current_program_index();
 
-    std::string get_current_program_name();
+    std::string current_program_name();
 
     std::string program_name(int program_index);
     
 private:
-    void set_preset(LilvState* new_preset);
+    void _set_preset(LilvState* new_preset);
 
     int _load_programs(PresetSink sink, void* data);
 
@@ -69,8 +69,8 @@ private:
     LV2Model* _model;
 };
 
+// LV2 callbacks:
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t *size, uint32_t* type);
-
 void set_port_value(const char* port_symbol, void* user_data, const void* value, uint32_t size, uint32_t type);
 
 }

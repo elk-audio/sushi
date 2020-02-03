@@ -42,17 +42,17 @@ struct ControlID
     LV2Model* model;
     ControlType type;
     LilvNode* node;
-    LilvNode* symbol; // Symbol
+    LilvNode* symbol;
     LilvNode* label; // Human readable label
     LV2_URID property; // Iff type == PROPERTY
     int index; // Iff type == PORT
     LilvNode* group; // Port/control group, or NULL
 
-    std::vector<std::unique_ptr<ScalePoint>> points; // Scale points
+    std::vector<std::unique_ptr<ScalePoint>> scale_points;
     LV2_URID value_type; // Type of control value
-    LilvNode* min; // Minimum value
-    LilvNode* max; // Maximum value
-    LilvNode* def; // Default value
+    LilvNode* min;
+    LilvNode* max;
+    LilvNode* def;
 
     bool is_toggle; // Boolean (0 and 1 only)
     bool is_integer; // Integer values only

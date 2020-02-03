@@ -63,22 +63,22 @@ public:
     void reset_input_buffer();
     void reset_output_buffer();
 
-    PortFlow get_flow();
+    PortFlow flow();
 
-    PortType get_type();
+    PortType type();
 
-    const LilvPort* get_lilv_port();
+    const LilvPort* lilv_port();
 
-    float get_min();
-    float get_max();
+    float min();
+    float max();
 
-    LV2_Evbuf* get_evbuf();
+    LV2_Evbuf* evbuf();
 
-    void set_control_value(float c);
+    void control_value(float c);
 
-    float get_control_value();
+    float control_value();
 
-    float* get_control_pointer();
+    float* control_pointer();
 
     struct FailedCreation : public std::exception
     {
@@ -96,22 +96,22 @@ private:
 
     float _control; ///< For control ports, otherwise 0.0f
 
-    const LilvPort* lilv_port; // LV2 port
-    enum PortType _type; // Data type
-    enum PortFlow _flow; // Data flow direction
+    const LilvPort* _lilv_port;
+    enum PortType _type;
+    enum PortFlow _flow;
 
     LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
 
-    void* widget; // Control widget, if applicable
+    void* _widget; // Control widget, if applicable
     int _buf_size; // Custom buffer size, or 0
-    int _index; // Port index
+    int _index;
 
     // For ranges. Only used in control ports.
     float _def {1.0f};
     float _max {1.0f};
     float _min {0.0f};
 
-    bool _show_hidden{true};
+    bool _show_hidden {true};
 };
 
 } // end namespace lv2

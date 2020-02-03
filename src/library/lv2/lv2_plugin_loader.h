@@ -41,13 +41,13 @@ public:
     PluginLoader();
     ~PluginLoader();
 
-    const LilvPlugin* get_plugin_handle_from_URI(const std::string &plugin_URI_string);
+    const LilvPlugin* plugin_handle_from_URI(const std::string &plugin_URI_string);
 
     void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
 
     void close_plugin_instance();
 
-    LV2Model* getModel();
+    LV2Model* model();
 
 private:
     LV2Model* _model;

@@ -31,10 +31,10 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port* port_by_symbol(LV2Model* model, const char* sym)
 {
-    for (int i = 0; i < model->get_port_count(); ++i)
+    for (int i = 0; i < model->port_count(); ++i)
     {
         auto port = model->get_port(i);
-        const auto port_symbol = lilv_port_get_symbol(model->get_plugin_class(), port->get_lilv_port());
+        const auto port_symbol = lilv_port_get_symbol(model->plugin_class(), port->lilv_port());
 
         if (!strcmp(lilv_node_as_string(port_symbol), sym))
         {
@@ -51,7 +51,7 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 va_list /*ap*/)
 {
     auto model = static_cast<LV2Model*>(handle);
-    auto urids = model->get_urids();
+    auto urids = model->urids();
 
     if (type == urids.log_Trace && TRACE_OPTION)
     {
@@ -100,13 +100,13 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 
     std::string made_path;
 
-    if(!model->get_save_dir().empty())
+    if(!model->save_dir().empty())
     {
-        made_path = model->get_save_dir() + path;
+        made_path = model->save_dir() + path;
     }
     else
     {
-        made_path = model->get_temp_dir() + path;
+        made_path = model->temp_dir() + path;
     }
 
     const std::string::size_type size = made_path.size();
