@@ -338,12 +338,12 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
-    _module_under_test->pause();
+    _module_under_test->_pause();
 
     _module_under_test->set_program(1);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
-    _module_under_test->resume();
+    _module_under_test->_resume();
 
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);

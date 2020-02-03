@@ -885,7 +885,7 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     }
 }
 
-void Lv2Wrapper::pause()
+void Lv2Wrapper::_pause()
 {
     _previous_play_state = _model->play_state();
 
@@ -895,7 +895,7 @@ void Lv2Wrapper::pause()
     }
 }
 
-void Lv2Wrapper::resume()
+void Lv2Wrapper::_resume()
 {
     _model->play_state(_previous_play_state);
 }

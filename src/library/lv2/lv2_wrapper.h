@@ -43,6 +43,8 @@
 
 #include <map>
 
+#include <gtest/gtest_prod.h>
+
 #include "engine/base_event_dispatcher.h"
 #include "library/processor.h"
 #include "library/rt_event_fifo.h"
@@ -115,9 +117,6 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
-    void pause();
-    void resume();
-
 private:
     bool _create_ports(const LilvPlugin* plugin);
     std::unique_ptr<Port> _create_port(const LilvPlugin* plugin, int port_index, float default_value);
@@ -168,7 +167,7 @@ private:
     ChunkSampleBuffer _dummy_input {1};
     ChunkSampleBuffer _dummy_output {1};
 
-    bool _double_mono_input{false};
+    bool _double_mono_input {false};
 
     std::string _plugin_path;
 
@@ -182,7 +181,12 @@ private:
     PluginLoader _loader;
     LV2Model* _model {nullptr};
 
+    // There are not used for other than the Unit tests,
+    // to simulate how the wrapper behaves if multi-threaded.
     PlayState _previous_play_state {PlayState::PAUSED};
+    void _pause();
+    void _resume();
+    FRIEND_TEST(TestLv2Wrapper, TestOrgan);
 };
 
 } // end namespace lv2
