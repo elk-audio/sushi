@@ -263,7 +263,7 @@ void set_port_value(const char* port_symbol,
     auto model = static_cast<LV2Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
-    if (!port)
+    if (port == nullptr)
     {
         SUSHI_LOG_ERROR("error: Preset port `{}' is missing", port_symbol);
         return;

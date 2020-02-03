@@ -53,7 +53,7 @@ const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string &plugin
     auto plugins = lilv_world_get_all_plugins(_model->lilv_world());
     auto plugin_uri = lilv_new_uri(_model->lilv_world(), plugin_URI_string.c_str());
 
-    if (!plugin_uri)
+    if (plugin_uri == nullptr)
     {
         SUSHI_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
         return nullptr;
@@ -64,7 +64,7 @@ const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string &plugin
     const auto plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
-    if (!plugin)
+    if (plugin == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to find LV2 plugin.");
         return nullptr;
@@ -75,7 +75,6 @@ const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string &plugin
 
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
-    /* Instantiate the plugin */
     _model->plugin_instance(lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list));
 
     if (_model->plugin_instance() == nullptr)

@@ -114,7 +114,8 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
         throw Port::FailedCreation();
     }
 
-    if (!model->buf_size()) {
+    if (!model->buf_size())
+    {
         _allocate_port_buffers(model);
     }
 }

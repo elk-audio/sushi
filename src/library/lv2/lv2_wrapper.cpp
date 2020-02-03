@@ -120,7 +120,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     auto state = lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), lilv_plugin_get_uri(library_handle));
 
-    if (state) // Apply loaded state to plugin instance if necessary
+    if (state != nullptr) // Apply loaded state to plugin instance if necessary
     {
         _model->state()->apply_state(state);
     }
@@ -222,7 +222,7 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
     LILV_FOREACH(nodes, f, required_features)
     {
         auto node = lilv_nodes_get(required_features, f);
-        const char* uri = lilv_node_as_uri(node);
+        auto uri = lilv_node_as_uri(node);
 
         if (!feature_is_supported(_model, uri))
         {
@@ -264,7 +264,7 @@ void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     // it expects to configure the plugin, for example changing the MIDI program.
     // This is necessary since it is possible to have several MIDI input ports,
     // though typically it is best to have one.
-    if (control_input)
+    if (control_input != nullptr)
     {
         _model->control_input_index(lilv_port_get_index(plugin, control_input));
     }
@@ -299,7 +299,7 @@ std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int por
             }
         }
     }
-    catch(Port::FailedCreation& e)
+    catch (Port::FailedCreation& e)
     {
         _cleanup();
     }
@@ -334,7 +334,7 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
     {
         auto port = _model->get_port(index);
 
-        if (port)
+        if (port != nullptr)
         {
             value = port->control_value();
             return {ProcessorReturnCode::OK, value};
@@ -430,7 +430,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 
 void Lv2Wrapper::_cleanup()
 {
-    if (_model)
+    if (_model != nullptr)
     {
         _model->state()->unload_programs();
 
@@ -874,7 +874,9 @@ void Lv2Wrapper::pause()
     _previous_play_state = _model->play_state();
 
     if(_previous_play_state != PlayState::PAUSED)
+    {
         _model->play_state(PlayState::PAUSED);
+    }
 }
 
 void Lv2Wrapper::resume()

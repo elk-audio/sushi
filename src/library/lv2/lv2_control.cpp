@@ -69,6 +69,7 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
         LILV_FOREACH(scale_points, s, scale_points)
         {
             const auto scale_point = lilv_scale_points_get(scale_points, s);
+
             if (lilv_node_is_float(lilv_scale_point_get_value(scale_point)) ||
                 lilv_node_is_int(lilv_scale_point_get_value(scale_point)))
             {
@@ -81,10 +82,10 @@ std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_
         }
 
         std::sort(id->scale_points.begin(), id->scale_points.end(),
-                  [](const std::unique_ptr<ScalePoint>& a, const std::unique_ptr<ScalePoint>& b)
-                        {
-                            return a->value < b->value;
-                        }
+      [](const std::unique_ptr<ScalePoint>& a, const std::unique_ptr<ScalePoint>& b)
+            {
+                return a->value < b->value;
+            }
          );
 
         lilv_scale_points_free(scale_points);
