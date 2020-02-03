@@ -233,61 +233,6 @@ TEST_F(TestOSCFrontend, TestSetBypassState)
     ASSERT_FALSE(_controller.was_recently_called());
 }
 
-TEST_F(TestOSCFrontend, TestAddTrack)
-{
-    lo_send(_address, "/engine/add_track", "si", "NewTrack", 2);
-
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_engine_event());
-    auto typed_event = static_cast<AddTrackEvent*>(event.get());
-    EXPECT_EQ("NewTrack", typed_event->_name);
-    EXPECT_EQ(2, typed_event->_channels);
-}
-
-TEST_F(TestOSCFrontend, TestDeleteTrack)
-{
-    lo_send(_address, "/engine/delete_track", "s", "NewTrack");
-
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_engine_event());
-    auto typed_event = static_cast<RemoveTrackEvent*>(event.get());
-    EXPECT_EQ("NewTrack", typed_event->_name);
-}
-
-TEST_F(TestOSCFrontend, TestAddProcessor)
-{
-    lo_send(_address, "/engine/add_processor", "sssss", "track", "uid", "plugin_name", "file_path", "internal");
-
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_engine_event());
-    auto typed_event = static_cast<AddProcessorEvent*>(event.get());
-    EXPECT_EQ("track", typed_event->_track);
-    EXPECT_EQ("uid", typed_event->_uid);
-    EXPECT_EQ("plugin_name", typed_event->_name);
-    EXPECT_EQ("file_path", typed_event->_file);
-    EXPECT_EQ(AddProcessorEvent::ProcessorType::INTERNAL, typed_event->_processor_type);
-
-    // Test with an invalid processor type, should result in no event being sent
-    lo_send(_address, "/engine/add_processor", "sssss", "track", "uid", "plugin_name", "file_path", "ladspa");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_FALSE(_test_dispatcher->got_event());
-}
-
-TEST_F(TestOSCFrontend, TestDeleteProcessor)
-{
-    lo_send(_address, "/engine/delete_processor", "ss", "track", "processor");
-
-    auto event = wait_for_event();
-    ASSERT_NE(nullptr, event);
-    EXPECT_TRUE(event->is_engine_event());
-    auto typed_event = static_cast<RemoveProcessorEvent*>(event.get());
-    EXPECT_EQ("track", typed_event->_track);
-    EXPECT_EQ("processor", typed_event->_name);
-}
-
 TEST_F(TestOSCFrontend, TestSetTempo)
 {
     lo_send(_address, "/engine/set_tempo", "f", 136.0f);

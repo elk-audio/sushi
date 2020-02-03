@@ -163,88 +163,6 @@ static int osc_send_program_change_event(const char* /*path*/,
     return 0;
 }
 
-static int osc_add_track(const char* /*path*/,
-                         const char* /*types*/,
-                         lo_arg** argv,
-                         int /*argc*/,
-                         void* /*data*/,
-                         void* user_data)
-{
-    auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string name(&argv[0]->s);
-    int channels = argv[1]->i;
-    SUSHI_LOG_DEBUG("Got an osc_add_track request {} {}", name, channels);
-    instance->send_add_track_event(name, channels);
-    return 0;
-}
-
-static int osc_delete_track(const char* /*path*/,
-                            const char* /*types*/,
-                            lo_arg** argv,
-                            int /*argc*/,
-                            void* /*data*/,
-                            void* user_data)
-{
-    auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string name(&argv[0]->s);
-    SUSHI_LOG_DEBUG("Got an osc_delete_track request {}", name);
-    instance->send_remove_track_event(name);
-    return 0;
-}
-
-static int osc_add_processor(const char* /*path*/,
-                             const char* /*types*/,
-                             lo_arg** argv,
-                             int /*argc*/,
-                             void* /*data*/,
-                             void* user_data)
-{
-    auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string track(&argv[0]->s);
-    std::string uid(&argv[1]->s);
-    std::string name(&argv[2]->s);
-    std::string file(&argv[3]->s);
-    std::string type(&argv[4]->s);
-    // TODO If these are eventually to be accessed by a user we must sanitize
-    // the input and disallow supplying a direct library path for loading.
-    SUSHI_LOG_DEBUG("Got an add_processor request {}", name);
-    AddProcessorEvent::ProcessorType processor_type;
-    if (type == "internal")
-    {
-        processor_type = AddProcessorEvent::ProcessorType::INTERNAL;
-    }
-    else if (type == "vst2x")
-    {
-        processor_type = AddProcessorEvent::ProcessorType::VST2X;
-    }
-    else if (type == "vst3x")
-    {
-        processor_type = AddProcessorEvent::ProcessorType::VST3X;
-    }
-    else
-    {
-        SUSHI_LOG_WARNING("Unrecognized plugin type \"{}\"", type);
-        return 0;
-    }
-    instance->send_add_processor_event(track, uid, name, file, processor_type);
-    return 0;
-}
-
-static int osc_delete_processor(const char* /*path*/,
-                                const char* /*types*/,
-                                lo_arg** argv,
-                                int /*argc*/,
-                                void* /*data*/,
-                                void* user_data)
-{
-    auto instance = static_cast<OSCFrontend*>(user_data);
-    std::string track(&argv[0]->s);
-    std::string name(&argv[1]->s);
-    SUSHI_LOG_DEBUG("Got a delete_processor request {} from {}", name, track);
-    instance->send_remove_processor_event(track, name);
-    return 0;
-}
-
 static int osc_set_timing_statistics_enabled(const char* /*path*/,
                                              const char* /*types*/,
                                              lo_arg** argv,
@@ -646,10 +564,6 @@ void OSCFrontend::_stop_server()
 
 void OSCFrontend::setup_engine_control()
 {
-    lo_server_thread_add_method(_osc_server, "/engine/add_track", "si", osc_add_track, this);
-    lo_server_thread_add_method(_osc_server, "/engine/delete_track", "s", osc_delete_track, this);
-    lo_server_thread_add_method(_osc_server, "/engine/add_processor", "sssss", osc_add_processor, this);
-    lo_server_thread_add_method(_osc_server, "/engine/delete_processor", "ss", osc_delete_processor, this);
     lo_server_thread_add_method(_osc_server, "/engine/set_tempo", "f", osc_set_tempo, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/set_playing_mode", "s", osc_set_playing_mode, this->_controller);
