@@ -139,7 +139,7 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
     id->is_integer = (id->value_type == forge.Int ||
                       id->value_type == forge.Long);
 
-    if (!id->value_type)
+    if (id->value_type == false)
     {
         SUSHI_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
     }

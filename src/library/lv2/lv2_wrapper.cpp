@@ -23,7 +23,7 @@
 #include "lv2_wrapper.h"
 
 #include <exception>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 #include "logging.h"
@@ -211,7 +211,7 @@ void Lv2Wrapper::_fetch_plugin_name_and_label()
     auto label_node = lilv_plugin_get_name(_model->plugin_class());
     const std::string label_as_string = lilv_node_as_string(label_node);
     set_label(label_as_string);
-    lilv_free(label_node); // Why do I free this but not uri_node? Remember...
+    lilv_free(label_node);
 }
 
 bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
@@ -378,7 +378,7 @@ int Lv2Wrapper::current_program() const
         return _model->state()->current_program_index();
     }
 
-    return -1;
+    return 0;
 }
 
 std::string Lv2Wrapper::current_program_name() const
@@ -397,12 +397,12 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program
         }
     }
 
-    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    return {ProcessorReturnCode::ERROR, "Index does not correspond to program."};
 }
 
 std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program_names() const
 {
-    if (!this->supports_programs())
+    if (this->supports_programs() == false)
     {
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }

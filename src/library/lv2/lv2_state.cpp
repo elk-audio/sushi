@@ -105,7 +105,7 @@ int LV2_State::_load_programs(PresetSink sink, void* data)
 		auto preset = lilv_nodes_get(presets, i);
 		lilv_world_load_resource(_model->lilv_world(), preset);
 
-		if (!sink)
+		if (sink == false)
 		{
 			continue;
 		}
@@ -257,6 +257,8 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
 void set_port_value(const char* port_symbol,
                     void* user_data,
                     const void* value,
+// size was unused also in the JALV equivalent of this method.
+// Seems unneeded, but required by callback signature.
                     uint32_t /*size*/,
                     uint32_t type)
 {
@@ -293,7 +295,7 @@ void set_port_value(const char* port_symbol,
     {
         SUSHI_LOG_ERROR("error: Preset {} value has bad type {}",
                 port_symbol,
-                        model->get_unmap().unmap(model->get_unmap().handle, type));
+                model->get_unmap().unmap(model->get_unmap().handle, type));
 
         return;
     }

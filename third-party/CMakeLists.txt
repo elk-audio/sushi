@@ -26,8 +26,6 @@ set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
 #  External Projects definitions (non-Cmake based)  #
 #####################################################
 
-include(ExternalProject)
-
 # Add here custom build steps for third-party libraries
 # that need to be linked statically,
 # example:

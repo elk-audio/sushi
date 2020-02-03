@@ -52,14 +52,14 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     {
         _flow = PortFlow::FLOW_OUTPUT;
     }
-    else if (!optional)
+    else if (optional == false)
     {
         assert(false);
         SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
         throw Port::FailedCreation();
     }
 
-    const bool hidden = !_show_hidden &&
+    const bool hidden = (_show_hidden == false) &&
                         lilv_port_has_property(plugin, _lilv_port, model->nodes().pprops_notOnGUI);
 
     /* Set control values */
@@ -94,7 +94,7 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
         lilv_node_free(maxNode);
         lilv_node_free(defNode);
 
-        if (!hidden)
+        if (hidden == false)
         {
             model->controls().emplace_back(new_port_control(this, model, _index));
         }
@@ -107,14 +107,14 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     {
         _type = PortType::TYPE_EVENT;
     }
-    else if (!optional)
+    else if (optional == false)
     {
         assert(false);
         SUSHI_LOG_ERROR("Mandatory LV2 port has unknown data type");
         throw Port::FailedCreation();
     }
 
-    if (!model->buf_size())
+    if (model->buf_size() == false)
     {
         _allocate_port_buffers(model);
     }
