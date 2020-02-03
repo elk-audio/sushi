@@ -41,7 +41,8 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     if (is_input)
     {
         capabilities = SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE;
-    } else
+    }
+    else
     {
         capabilities = SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ;
     }
