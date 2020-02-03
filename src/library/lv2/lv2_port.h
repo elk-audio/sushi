@@ -37,14 +37,14 @@ namespace lv2 {
 
 class LV2Model;
 
-enum PortFlow
+enum class PortFlow
 {
     FLOW_UNKNOWN,
     FLOW_INPUT,
     FLOW_OUTPUT
 };
 
-enum PortType
+enum class PortType
 {
     TYPE_UNKNOWN,
     TYPE_CONTROL,
@@ -97,8 +97,8 @@ private:
     float _control; ///< For control ports, otherwise 0.0f
 
     const LilvPort* _lilv_port;
-    enum PortType _type;
-    enum PortFlow _flow;
+    PortType _type;
+    PortFlow _flow;
 
     LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
 

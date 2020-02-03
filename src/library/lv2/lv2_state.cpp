@@ -241,7 +241,7 @@ const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* s
     auto model = static_cast<LV2Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
-    if (port && port->flow() == FLOW_INPUT && port->type() == TYPE_CONTROL)
+    if (port && port->flow() == PortFlow::FLOW_INPUT && port->type() == PortType::TYPE_CONTROL)
     {
         *size = sizeof(float);
         *type = model->forge().Float;

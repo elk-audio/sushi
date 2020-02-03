@@ -34,7 +34,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
     _control(0.0f),
-    _flow(FLOW_UNKNOWN),
+    _flow(PortFlow::FLOW_UNKNOWN),
     _evbuf(nullptr), // For MIDI ports, otherwise NULL
     _buf_size(0), // Custom buffer size, or 0
     _index(port_index)
@@ -46,11 +46,11 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     /* Set the port flow (input or output) */
     if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_InputPort))
     {
-        _flow = FLOW_INPUT;
+        _flow = PortFlow::FLOW_INPUT;
     }
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_OutputPort))
     {
-        _flow = FLOW_OUTPUT;
+        _flow = PortFlow::FLOW_OUTPUT;
     }
     else if (!optional)
     {
@@ -65,7 +65,7 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     /* Set control values */
     if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_ControlPort))
     {
-        _type = TYPE_CONTROL;
+        _type = PortType::TYPE_CONTROL;
 
         LilvNode* minNode;
         LilvNode* maxNode;
@@ -101,11 +101,11 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     }
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_AudioPort))
     {
-        _type = TYPE_AUDIO;
+        _type = PortType::TYPE_AUDIO;
     }
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().atom_AtomPort))
     {
-        _type = TYPE_EVENT;
+        _type = PortType::TYPE_EVENT;
     }
     else if (!optional)
     {
@@ -134,7 +134,7 @@ void Port::_allocate_port_buffers(LV2Model* model)
 {
     switch (_type)
     {
-        case TYPE_EVENT:
+        case PortType::TYPE_EVENT:
         {
             lv2_evbuf_free(_evbuf);
 

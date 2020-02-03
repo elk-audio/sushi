@@ -110,7 +110,7 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
     }
 
     const std::string::size_type size = made_path.size();
-    char *buffer = new char[size + 1]; // Extra char for null
+    char* buffer = new char[size + 1]; // Extra char for null
     memcpy(buffer, made_path.c_str(), size + 1);
     return buffer;
 }

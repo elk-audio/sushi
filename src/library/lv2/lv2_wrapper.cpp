@@ -287,13 +287,13 @@ std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int por
     {
         port = std::make_unique<Port>(plugin, port_index, default_value, _model);
 
-        if (port->type() == TYPE_AUDIO)
+        if (port->type() == PortType::TYPE_AUDIO)
         {
-            if (port->flow() == FLOW_INPUT)
+            if (port->flow() == PortFlow::FLOW_INPUT)
             {
                 _max_input_channels++;
             }
-            else if (port->flow() == FLOW_OUTPUT)
+            else if (port->flow() == PortFlow::FLOW_OUTPUT)
             {
                 _max_output_channels++;
             }
@@ -449,7 +449,7 @@ bool Lv2Wrapper::_register_parameters()
     {
         auto currentPort = _model->get_port(_pi);
 
-        if (currentPort->type() == TYPE_CONTROL)
+        if (currentPort->type() == PortType::TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
             auto nameNode = lilv_port_get_name(_model->plugin_class(), currentPort->lilv_port());
@@ -548,29 +548,29 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
 
         switch(current_port->type())
         {
-            case TYPE_CONTROL:
+            case PortType::TYPE_CONTROL:
                 lilv_instance_connect_port(instance, p, current_port->control_pointer());
                 break;
-            case TYPE_AUDIO:
-                if (current_port->flow() == FLOW_INPUT)
+            case PortType::TYPE_AUDIO:
+                if (current_port->flow() == PortFlow::FLOW_INPUT)
                     lilv_instance_connect_port(instance, p, _process_inputs[i++]);
                 else
                     lilv_instance_connect_port(instance, p, _process_outputs[o++]);
                 break;
-            case TYPE_EVENT:
-                if (current_port->flow() == FLOW_INPUT)
+            case PortType::TYPE_EVENT:
+                if (current_port->flow() == PortFlow::FLOW_INPUT)
                 {
                     current_port->reset_input_buffer();
                     _process_midi_input(current_port);
 
                 }
-                else if (current_port->flow() == FLOW_OUTPUT) // Clear event output for plugin to write to.
+                else if (current_port->flow() == PortFlow::FLOW_OUTPUT) // Clear event output for plugin to write to.
                 {
                     current_port->reset_output_buffer();
                 }
                 break;
-            case TYPE_CV: // CV Support not yet implemented.
-            case TYPE_UNKNOWN:
+            case PortType::TYPE_CV: // CV Support not yet implemented.
+            case PortType::TYPE_UNKNOWN:
                 assert(false);
                 break;
             default:
@@ -587,11 +587,11 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
     {
         auto current_port = _model->get_port(p);
 
-        if(current_port->flow() == FLOW_OUTPUT)
+        if(current_port->flow() == PortFlow::FLOW_OUTPUT)
         {
             switch(current_port->type())
             {
-                case TYPE_CONTROL:
+                case PortType::TYPE_CONTROL:
                     if (lilv_port_has_property(_model->plugin_class(),
                                                current_port->lilv_port(),
                                                _model->nodes().lv2_reportsLatency))
@@ -603,12 +603,12 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                         }
                     }
                     break;
-                case TYPE_EVENT:
+                case PortType::TYPE_EVENT:
                     _process_midi_output(current_port);
                     break;
-                case TYPE_UNKNOWN:
-                case TYPE_AUDIO:
-                case TYPE_CV:
+                case PortType::TYPE_UNKNOWN:
+                case PortType::TYPE_AUDIO:
+                case PortType::TYPE_CV:
                     break;
             }
         }
