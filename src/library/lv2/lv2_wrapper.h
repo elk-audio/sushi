@@ -205,19 +205,14 @@ class Lv2Wrapper : public Processor
 {
 public:
     Lv2Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
-        Processor(host_control) {}
+            Processor(host_control) {}
 
-    ProcessorReturnCode init(float sample_rate) override
-    {
-        return ProcessorReturnCode::ERROR;
-    }
-
-    void process_event(RtEvent /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& /*out*/) override {}
+    ProcessorReturnCode init(float sample_rate) override;
+    void process_event(const RtEvent& /*event*/) override {}
+    void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
 };
 
 }// end namespace lv2
 }// end namespace sushi
 #endif
-
 #endif //SUSHI_LV2_PLUGIN_H

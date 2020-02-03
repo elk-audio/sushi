@@ -43,7 +43,7 @@ option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
-option(WITH_LV2 "Enable LV 2 support" OFF)
+option(WITH_LV2 "Enable LV 2 support" ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
@@ -128,6 +128,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
+                      src/library/lv2/lv2_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -177,6 +178,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
                         src/library/vst3x_wrapper.h
+                        src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/audio_engine.h
                         src/engine/controller.h
@@ -233,7 +235,6 @@ if (${WITH_LV2})
                                third-party/lv2/lv2_symap.cpp
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_features.cpp
-                               src/library/lv2/lv2_wrapper.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp
                                src/library/lv2/lv2_control.cpp

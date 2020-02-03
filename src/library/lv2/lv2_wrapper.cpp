@@ -902,15 +902,17 @@ void Lv2Wrapper::resume()
 
 #endif //SUSHI_BUILD_WITH_LV2
 #ifndef SUSHI_BUILD_WITH_LV2
-#include "lv2_wrapper.h"
+#include "library/lv2/lv2_wrapper.h"
 #include "logging.h"
 namespace sushi {
 namespace lv2 {
-MIND_GET_LOGGER;
+
+SUSHI_GET_LOGGER;
+
 ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");
-    return ProcessorReturnCode::ERROR;
+    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }}}
 #endif
