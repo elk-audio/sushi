@@ -28,16 +28,16 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "lv2/log/log.h"
-#include "lv2/options/options.h"
-#include "lv2/data-access/data-access.h"
-#include "lv2/atom/forge.h"
+#include <lv2/log/log.h>
+#include <lv2/options/options.h>
+#include <lv2/data-access/data-access.h>
+#include <lv2/atom/forge.h>
 
-#include "../processor.h"
-#include "../../engine/base_event_dispatcher.h"
+#include "library/processor.h"
+#include "engine/base_event_dispatcher.h"
 
-#include "../../third-party/lv2/lv2_symap.h"
-#include "../../third-party/lv2/lv2_evbuf.h"
+#include "third-party/lv2/lv2_symap.h"
+#include "third-party/lv2/lv2_evbuf.h"
 
 #include "lv2_port.h"
 #include "lv2_host_nodes.h"

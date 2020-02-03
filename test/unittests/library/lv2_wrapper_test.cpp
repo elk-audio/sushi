@@ -340,7 +340,6 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
     _module_under_test->pause();
 
-    int program_count = _module_under_test->program_count();
     _module_under_test->set_program(1);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.

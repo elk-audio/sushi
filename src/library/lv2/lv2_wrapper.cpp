@@ -20,13 +20,14 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include "lv2_wrapper.h"
+
 #include <exception>
 #include <math.h>
 #include <iostream>
 
 #include "logging.h"
 
-#include "lv2_wrapper.h"
 #include "lv2_port.h"
 #include "lv2_state.h"
 #include "lv2_control.h"

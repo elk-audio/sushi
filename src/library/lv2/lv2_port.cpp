@@ -20,6 +20,8 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include "lv2_port.h"
+
 #include <math.h>
 
 #include "logging.h"

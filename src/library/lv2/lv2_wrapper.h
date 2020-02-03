@@ -43,15 +43,14 @@
 
 #include <map>
 
-#include "../processor.h"
-#include "lv2_plugin_loader.h"
-
-#include "../../third-party/lv2/lv2_evbuf.h"
-
-#include "../../engine/base_event_dispatcher.h"
+#include "engine/base_event_dispatcher.h"
+#include "library/processor.h"
 #include "library/rt_event_fifo.h"
-#include "../midi_encoder.h"
-#include "../midi_decoder.h"
+#include "library/midi_encoder.h"
+#include "library/midi_decoder.h"
+
+#include "lv2_plugin_loader.h"
+#include "third-party/lv2/lv2_evbuf.h"
 
 namespace sushi {
 namespace lv2 {

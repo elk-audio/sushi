@@ -13,8 +13,8 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
-
 #include "lv2_control.h"
+
 #include "logging.h"
 
 namespace sushi {

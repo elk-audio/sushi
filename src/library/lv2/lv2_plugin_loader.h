@@ -26,16 +26,9 @@
 
 #include <string>
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-//#define VST_FORCE_DEPRECATED 0
+#include "library/constants.h"
 
 #include "lv2_model.h"
-
-#include "../constants.h"
-
-#pragma GCC diagnostic pop
-
-#include <dlfcn.h>
 
 namespace sushi {
 namespace lv2 {
