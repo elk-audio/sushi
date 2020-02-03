@@ -154,8 +154,3 @@ public:
 } // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif

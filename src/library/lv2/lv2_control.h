@@ -72,10 +72,5 @@ std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode 
 } // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif
 
 #endif //SUSHI_LV2_CONTROL_H

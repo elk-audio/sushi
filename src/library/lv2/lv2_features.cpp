@@ -27,7 +27,7 @@
 namespace sushi {
 namespace lv2 {
 
-    SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port* port_by_symbol(LV2Model* model, const char* sym)
 {

@@ -33,11 +33,11 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
-_control(0.0f),
-_flow(FLOW_UNKNOWN),
-_evbuf(nullptr), // For MIDI ports, otherwise NULL
-_buf_size(0), // Custom buffer size, or 0
-_index(port_index)
+    _control(0.0f),
+    _flow(FLOW_UNKNOWN),
+    _evbuf(nullptr), // For MIDI ports, otherwise NULL
+    _buf_size(0), // Custom buffer size, or 0
+    _index(port_index)
 {
     lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
@@ -74,13 +74,19 @@ _index(port_index)
         lilv_port_get_range(plugin, lilv_port, &defNode, &minNode, &maxNode);
 
         if(defNode != nullptr)
+        {
             _def = lilv_node_as_float(defNode);
+        }
 
         if(maxNode != nullptr)
+        {
             _max = lilv_node_as_float(maxNode);
+        }
 
         if(minNode != nullptr)
+        {
             _min = lilv_node_as_float(minNode);
+        }
 
         _control = isnan(default_value) ? _def : default_value;
 

@@ -28,7 +28,7 @@ class LV2_State
 {
 public:
     LV2_State(LV2Model* model);
-    ~LV2_State();
+    ~LV2_State() = default;
 
     void save(const char *dir);
 

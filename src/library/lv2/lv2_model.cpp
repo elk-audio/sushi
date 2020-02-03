@@ -43,8 +43,8 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 LV2Model::LV2Model(LilvWorld* worldIn):
-_nodes(worldIn),
-_world(worldIn)
+    _nodes(worldIn),
+    _world(worldIn)
 {
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.

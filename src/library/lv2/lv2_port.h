@@ -58,7 +58,7 @@ class Port
 public:
     Port(const LilvPlugin* plugin, int port_index, float default_value, LV2Model* model);
 
-    ~Port() {}
+    ~Port() = default;
 
     void reset_input_buffer();
     void reset_output_buffer();
@@ -119,10 +119,5 @@ private:
 
 
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif
 
 #endif //SUSHI_LV2_MODEL_H

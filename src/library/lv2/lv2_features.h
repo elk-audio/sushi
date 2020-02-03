@@ -89,10 +89,5 @@ void init_feature(LV2_Feature* const dest, const char* const URI, void* data);
 } // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif
 
 #endif //SUSHI_LV2_FEATURES_H

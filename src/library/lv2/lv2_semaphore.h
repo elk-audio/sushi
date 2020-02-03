@@ -32,6 +32,8 @@ public:
     Semaphore (int count = 0)
             : _count(count) {}
 
+    ~Semaphore() = default;
+
     inline void notify()
     {
         std::unique_lock<std::mutex> lock(_mtx);
@@ -60,12 +62,6 @@ private:
 } // end namespace lv2
 } // end namespace sushi
 
-
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif
 
 #endif //SUSHI_LV2_SEMAPHORE_H

@@ -178,6 +178,14 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
                         src/library/vst3x_wrapper.h
+                        src/library/lv2/lv2_control.h
+                        src/library/lv2/lv2_features.h
+                        src/library/lv2/lv2_host_nodes.h
+                        src/library/lv2/lv2_model.h
+                        src/library/lv2/lv2_plugin_loader.h
+                        src/library/lv2/lv2_port.h
+                        src/library/lv2/lv2_semaphore.h
+                        src/library/lv2/lv2_state.h
                         src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/audio_engine.h

@@ -200,67 +200,62 @@ private:
     void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
 
-    std::vector<std::unique_ptr<ControlID>> _controls; // Available plugin controls
+    std::vector<std::unique_ptr<ControlID>> _controls;
 
-    bool _buf_size_set {false}; // True iff buffer size callback fired
+    bool _buf_size_set {false};
 
-    std::string _temp_dir; // Temporary plugin state directory
-    std::string _save_dir; // Plugin save directory
+    std::string _temp_dir;
+    std::string _save_dir;
 
-    PlayState _play_state; // Current play state
+    PlayState _play_state;
 
     std::unique_ptr<LV2_State> _lv2_state;
 
-    bool _safe_restore; // Plugin restore() is thread-safe
+    bool _safe_restore;
 
-    bool _request_update{false}; // True iff a plugin update is needed
+    bool _request_update {false};
 
-    int _control_input_index; // Index of control input port
+    int _control_input_index;
 
-    bool _exit; // True iff execution is finished
+    bool _exit;
 
-    int _plugin_latency{0}; // Latency reported by plugin (if any)
+    int _plugin_latency {0};
 
-    LV2_Atom_Forge _forge; // Atom forge
+    LV2_Atom_Forge _forge;
 
-    LV2_URID_Map _map; // URI => Int map
-    LV2_URID_Unmap _unmap; // Int => URI map
+    LV2_URID_Map _map;
+    LV2_URID_Unmap _unmap;
 
-    Symap* _symap; // URI map
-    std::mutex _symap_lock; // Lock for URI map
+    Symap* _symap;
+    std::mutex _symap_lock;
 
-    LV2_URIDs _urids;  // URIDs
+    LV2_URIDs _urids;
 
-    Lv2_Host_Nodes _nodes; // Nodes
+    Lv2_Host_Nodes _nodes;
 
-    std::vector<std::unique_ptr<Port>> _ports; // Port array of size num_ports
+    std::vector<std::unique_ptr<Port>> _ports;
 
-    float _sample_rate; // Sample rate
-    int _midi_buffer_size {4096}; // Size of MIDI port buffers
+    float _sample_rate;
+    int _midi_buffer_size {4096};
 
     const LilvPlugin* _plugin_class {nullptr};
 
-    LilvInstance* _plugin_instance {nullptr}; // Plugin instance (shared library)
+    LilvInstance* _plugin_instance {nullptr};
 
-    LilvWorld* _world {nullptr}; // Lilv World
+    LilvWorld* _world {nullptr};
 
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;
 
-    uint32_t position; // Transport position in frames
-    float bpm; // Transport tempo in beats per minute
-    bool rolling; // Transport speed (0=stop, 1=play)
+    uint32_t _position;
+
+    float _bpm;
+    bool _rolling;
 };
 
 } // end namespace lv2
 } // end namespace sushi
 
-
 #endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-// (...)
-
-#endif
 
 #endif //SUSHI_LV2_MODEL_H

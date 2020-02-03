@@ -44,11 +44,6 @@ LV2_State::LV2_State(LV2Model* model):
 
 }
 
-LV2_State::~LV2_State()
-{
-
-}
-
 std::vector<std::string>& LV2_State::get_program_names()
 {
     return _program_names;
