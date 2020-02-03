@@ -119,7 +119,7 @@ public:
     void resume();
 
 private:
-    void _create_ports(const LilvPlugin* plugin);
+    bool _create_ports(const LilvPlugin* plugin);
     std::unique_ptr<Port> _create_port(const LilvPlugin* plugin, int port_index, float default_value);
 
     /**

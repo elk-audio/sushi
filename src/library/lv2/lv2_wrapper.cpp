@@ -106,11 +106,18 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _populate_program_list();
 
-    _create_ports(library_handle);
+    if (_create_ports(library_handle) == false)
+    {
+        SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
+
+        _cleanup();
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+
     _create_controls(true);
     _create_controls(false);
 
-    if (!_register_parameters()) // Register internal parameters
+    if (_register_parameters() == false) // Register internal parameters
     {
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
 
@@ -236,7 +243,7 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
+bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
 {
     _max_input_channels = 0;
     _max_output_channels = 0;
@@ -250,6 +257,13 @@ void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     for (int i = 0; i < port_count; ++i)
     {
         auto newPort = _create_port(plugin, i, default_values[i]);
+
+        // If it fails to create a new port, loading has failed, and the host shuts down.
+        if(newPort.get() == nullptr)
+        {
+            return false;
+        }
+
         _model->add_port(std::move(newPort));
     }
 
@@ -272,6 +286,8 @@ void Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     // Channel setup derived from ports:
     _current_input_channels = _max_input_channels;
     _current_output_channels = _max_output_channels;
+
+    return true;
 }
 
 /**
@@ -301,7 +317,7 @@ std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int por
     }
     catch (Port::FailedCreation& e)
     {
-        _cleanup();
+        port = nullptr;
     }
 
     return port;
