@@ -478,15 +478,19 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
     return true;
 }
 
-void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
-                                SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
-                                ControlBuffer* in_controls,
-                                ControlBuffer* out_controls)
+void AudioEngine::process_chunk(SampleBuffer <AUDIO_CHUNK_SIZE>*in_buffer,
+                                SampleBuffer <AUDIO_CHUNK_SIZE>*out_buffer,
+                                ControlBuffer*in_controls,
+                                ControlBuffer*out_controls,
+                                Time timestamp,
+                                int64_t samplecount)
 {
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
     auto engine_timestamp = _process_timer.start_timer();
+
+    _transport.set_time(timestamp, samplecount);
 
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
