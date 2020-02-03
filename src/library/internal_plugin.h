@@ -28,7 +28,6 @@
 
 namespace sushi {
 
-// TODO: This description seems stale! Is it really only used in stompbox...? Should it only...?
 /**
  * @brief internal base class for processors that keeps track of all host-related
  * configuration and provides basic parameter and event handling.
