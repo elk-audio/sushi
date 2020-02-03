@@ -75,7 +75,7 @@ Sushi listens on port 24024 by default for the following OSC commands:
 Path                                   | Typespec | Arguments
 ---------------------------------------|----------|--------------------------------------
 /parameter/plugin_name/parameter_name  |  f       | parameter value
-/bypass/plugin_id/                     |  i       | bypass state (1 = bypassed, 0 = enabled)
+/bypass/plugin_name/                     |  i       | bypass state (1 = bypassed, 0 = enabled)
 /keyboard_event/track_name             |  siif    | event type ("note_on", "note_off", "aftertouch"), channel, note index, norm. value
 /keyboard_event/track_name             |  sif     | event type ("modulation", "pitch_bend", "aftertouch"), channel, norm. value
 /program/plugin_name                   |  i       | program id
