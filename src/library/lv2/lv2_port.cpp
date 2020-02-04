@@ -183,7 +183,7 @@ LV2_Evbuf* Port::evbuf()
     return _evbuf;
 }
 
-void Port::control_value(float c)
+void Port::set_control_value(float c)
 {
     _control = c;
 }

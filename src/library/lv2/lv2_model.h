@@ -137,10 +137,10 @@ public:
     LilvWorld* lilv_world();
 
     LilvInstance* plugin_instance();
-    void plugin_instance(LilvInstance* new_instance);
+    void set_plugin_instance(LilvInstance* new_instance);
 
     const LilvPlugin* plugin_class();
-    void plugin_class(const LilvPlugin* new_plugin);
+    void set_plugin_class(const LilvPlugin* new_plugin);
 
     int midi_buffer_size();
     float sample_rate();
@@ -162,28 +162,28 @@ public:
     const LV2_Atom_Forge& forge();
 
     int plugin_latency();
-    void plugin_latency(int latency);
+    void set_plugin_latency(int latency);
 
     void trigger_exit();
 
-    void control_input_index(int index);
+    void set_control_input_index(int index);
 
     bool update_requested();
     void request_update();
     void clear_update_request();
 
-    void restore_thread_safe(bool safe);
+    void set_restore_thread_safe(bool safe);
     bool restore_thread_safe();
 
     LV2_State* state();
 
-    void play_state(PlayState play_state);
+    void set_play_state(PlayState play_state);
     PlayState play_state();
 
     std::string temp_dir();
 
     std::string save_dir();
-    void save_dir(const std::string& save_dir);
+    void set_save_dir(const std::string& save_dir);
 
     bool buf_size();
 

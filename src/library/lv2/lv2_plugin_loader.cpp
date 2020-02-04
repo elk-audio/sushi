@@ -75,7 +75,7 @@ const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string &plugin
 
 void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
 {
-    _model->plugin_instance(lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list));
+    _model->set_plugin_instance(lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list));
 
     if (_model->plugin_instance() == nullptr)
     {
@@ -89,7 +89,7 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
 
     if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
     {
-        _model->restore_thread_safe(true);
+        _model->set_restore_thread_safe(true);
     }
 
     lilv_node_free(state_threadSafeRestore);
@@ -117,7 +117,7 @@ void PluginLoader::close_plugin_instance()
             free(control);
         }
 
-        _model->plugin_instance(nullptr);
+        _model->set_plugin_instance(nullptr);
     }
 }
 

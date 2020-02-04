@@ -74,7 +74,7 @@ public:
 
     LV2_Evbuf* evbuf();
 
-    void control_value(float c);
+    void set_control_value(float c);
 
     float control_value();
 

@@ -181,7 +181,7 @@ private:
     PluginLoader _loader;
     LV2Model* _model {nullptr};
 
-    // There are not used for other than the Unit tests,
+    // These are not used for other than the Unit tests,
     // to simulate how the wrapper behaves if multi-threaded.
     PlayState _previous_play_state {PlayState::PAUSED};
     void _pause();

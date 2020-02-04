@@ -187,7 +187,7 @@ LilvInstance* LV2Model::plugin_instance()
     return _plugin_instance;
 }
 
-void LV2Model::plugin_instance(LilvInstance* new_instance)
+void LV2Model::set_plugin_instance(LilvInstance* new_instance)
 {
     _plugin_instance = new_instance;
 }
@@ -197,7 +197,7 @@ const LilvPlugin* LV2Model::plugin_class()
     return _plugin_class;
 }
 
-void LV2Model::plugin_class(const LilvPlugin* new_plugin)
+void LV2Model::set_plugin_class(const LilvPlugin* new_plugin)
 {
     _plugin_class = new_plugin;
 }
@@ -271,7 +271,7 @@ int LV2Model::plugin_latency()
     return _plugin_latency;
 }
 
-void LV2Model::plugin_latency(int latency)
+void LV2Model::set_plugin_latency(int latency)
 {
     _plugin_latency = latency;
 }
@@ -281,7 +281,7 @@ void LV2Model::trigger_exit()
     _exit = true;
 }
 
-void LV2Model::control_input_index(int index)
+void LV2Model::set_control_input_index(int index)
 {
     _control_input_index = index;
 }
@@ -301,7 +301,7 @@ void LV2Model::clear_update_request()
     _request_update = false;
 }
 
-void LV2Model::restore_thread_safe(bool safe)
+void LV2Model::set_restore_thread_safe(bool safe)
 {
     _safe_restore = safe;
 }
@@ -311,7 +311,7 @@ bool LV2Model::restore_thread_safe()
     return _safe_restore;
 }
 
-void LV2Model::play_state(PlayState play_state)
+void LV2Model::set_play_state(PlayState play_state)
 {
     _play_state = play_state;
 }
@@ -331,7 +331,7 @@ std::string LV2Model::save_dir()
     return _save_dir;
 }
 
-void LV2Model::save_dir(const std::string& save_dir)
+void LV2Model::set_save_dir(const std::string& save_dir)
 {
     _save_dir = save_dir;
 }

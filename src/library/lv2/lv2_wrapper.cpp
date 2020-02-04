@@ -24,7 +24,6 @@
 
 #include <exception>
 #include <cmath>
-#include <iostream>
 
 #include "logging.h"
 
@@ -80,9 +79,9 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     }
 
     _model = _loader.model();
-    _model->plugin_class(library_handle);
+    _model->set_plugin_class(library_handle);
 
-    _model->play_state(PlayState::PAUSED);
+    _model->set_play_state(PlayState::PAUSED);
 
     _model->initialize_host_feature_list();
 
@@ -135,7 +134,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     // Activate plugin
     lilv_instance_activate(_model->plugin_instance());
 
-    _model->play_state(PlayState::RUNNING);
+    _model->set_play_state(PlayState::RUNNING);
 
     return ProcessorReturnCode::OK;
 }
@@ -280,7 +279,7 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     // though typically it is best to have one.
     if (control_input != nullptr)
     {
-        _model->control_input_index(lilv_port_get_index(plugin, control_input));
+        _model->set_control_input_index(lilv_port_get_index(plugin, control_input));
     }
 
     // Channel setup derived from ports:
@@ -476,8 +475,8 @@ bool Lv2Wrapper::_register_parameters()
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
                     name_as_string, // label
                     param_unit, // PARAMETER UNIT
-                                                                                currentPort->min(), // range min
-                                                                                currentPort->max(), // range max
+                    currentPort->min(), // range min
+                    currentPort->max(), // range max
                     nullptr), // ParameterPreProcessor
                     static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
 
@@ -508,7 +507,7 @@ void Lv2Wrapper::process_event(const RtEvent& event)
         assert(portIndex < _model->port_count());
 
         auto port = _model->get_port(portIndex);
-        port->control_value(typed_event->value());
+        port->set_control_value(typed_event->value());
     }
     else if (is_keyboard_event(event))
     {
@@ -535,7 +534,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         switch (_model->play_state())
         {
             case PlayState::PAUSE_REQUESTED:
-                _model->play_state(PlayState::PAUSED);
+                _model->set_play_state(PlayState::PAUSED);
                 _model->paused.notify();
                 break;
             case PlayState::PAUSED:
@@ -614,7 +613,7 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                     {
                         if (_model->plugin_latency() != current_port->control_value())
                         {
-                            _model->plugin_latency(current_port->control_value());
+                            _model->set_plugin_latency(current_port->control_value());
                             // TODO: Introduce latency compensation reporting to Sushi
                         }
                     }
@@ -638,7 +637,7 @@ void Lv2Wrapper::_process_midi_output(Port* port)
         uint32_t midi_frames, midi_subframes, midi_type, midi_size;
         uint8_t* midi_body;
 
-        // Get event from LV2 buffer
+        // Get event from LV2 buffer.
         lv2_evbuf_get(buf_i, &midi_frames, &midi_subframes, &midi_type, &midi_size, &midi_body);
 
         midi_size--;
@@ -891,13 +890,13 @@ void Lv2Wrapper::_pause()
 
     if(_previous_play_state != PlayState::PAUSED)
     {
-        _model->play_state(PlayState::PAUSED);
+        _model->set_play_state(PlayState::PAUSED);
     }
 }
 
 void Lv2Wrapper::_resume()
 {
-    _model->play_state(_previous_play_state);
+    _model->set_play_state(_previous_play_state);
 }
 
 /*VstTimeInfo* Lv2Wrapper::time_info()
