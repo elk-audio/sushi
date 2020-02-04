@@ -438,28 +438,28 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 
 void OSCFrontend::connect_all()
 {
-    auto& processors = _engine->all_processors();
+    auto processors = _engine->all_processors();
     for (auto& processor : processors)
     {
-        auto parameters = processor.second->all_parameters();
+        auto parameters = processor->all_parameters();
         for (auto& param : parameters)
         {
             if (param->type() == ParameterType::FLOAT || param->type() == ParameterType::INT || param->type() == ParameterType::BOOL)
             {
-                connect_to_parameter(processor.second->name(), param->name());
-                connect_from_parameter(processor.second->name(), param->name());
+                connect_to_parameter(processor->name(), param->name());
+                connect_from_parameter(processor->name(), param->name());
             }
             if (param->type() == ParameterType::STRING)
             {
-                connect_to_string_parameter(processor.second->name(), param->name());
+                connect_to_string_parameter(processor->name(), param->name());
             }
         }
-        if (processor.second->supports_programs())
+        if (processor->supports_programs())
         {
-            connect_to_program_change(processor.second->name());
+            connect_to_program_change(processor->name());
         }
     }
-    auto& tracks = _engine->all_tracks();
+    auto tracks = _engine->all_tracks();
     for (auto& track : tracks)
     {
         connect_kb_to_track(track->name());

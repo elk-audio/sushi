@@ -166,10 +166,10 @@ public:
         return _parameters_by_index;
     }
 
-    int max_input_channels() {return _max_input_channels;}
-    int max_output_channels() {return _max_output_channels;}
-    int input_channels() {return  _current_input_channels;}
-    int output_channels() {return _current_output_channels;}
+    int max_input_channels() const {return _max_input_channels;}
+    int max_output_channels() const {return _max_output_channels;}
+    int input_channels() const {return  _current_input_channels;}
+    int output_channels() const {return _current_output_channels;}
 
     /**
      * @brief Set the number of input audio channels of the Processor.

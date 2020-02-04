@@ -240,13 +240,13 @@ public:
         return std::make_pair(EngineReturnStatus::OK, 0);
     };
 
-    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId /*id*/)
+    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
 
     virtual std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& /*processor_name*/,
-                                                                                    const ObjectId /*id*/)
+                                                                                    ObjectId /*id*/)
     {
         return std::make_pair(EngineReturnStatus::OK, "");
     };
@@ -281,20 +281,25 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual const Processor* processor(ObjectId /*processor_id*/) const {return nullptr;}
+    virtual std::shared_ptr<const Processor> processor(ObjectId /*processor_id*/) const {return nullptr;}
 
-    virtual Processor* mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
+    virtual std::shared_ptr<const Processor> processor(const std::string& /*processor_name*/) const {return nullptr;}
 
-    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
+    virtual std::shared_ptr<Processor> mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
+
+    virtual std::vector<std::shared_ptr<const Processor>> all_processors() const
     {
-        static std::map<std::string, std::unique_ptr<Processor>> tmp;
-        return tmp;
+        return std::vector<std::shared_ptr<const Processor>>();
     }
 
-    virtual const std::vector<Track*>& all_tracks()
+    virtual std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId /*track_id*/) const
     {
-        static std::vector<Track*> tmp;
-        return tmp;
+        return std::vector<std::shared_ptr<const Processor>>();
+    }
+
+    virtual std::vector<std::shared_ptr<const Track>> all_tracks() const
+    {
+        return std::vector<std::shared_ptr<const Track>>();
     }
 
     virtual dispatcher::BaseEventDispatcher* event_dispatcher()

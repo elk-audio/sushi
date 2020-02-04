@@ -190,7 +190,7 @@ void Controller::set_timing_statistics_enabled(bool enabled) const
 std::vector<ext::TrackInfo> Controller::get_tracks() const
 {
     SUSHI_LOG_DEBUG("get_tracks called");
-    auto& tracks = _engine->all_tracks();
+    auto tracks = _engine->all_tracks();
     std::vector<ext::TrackInfo> returns;
     for (const auto& t : tracks)
     {
@@ -202,7 +202,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
         info.input_channels = t->input_channels();
         info.output_busses = t->output_busses();
         info.output_channels = t->output_channels();
-        info.processor_count = static_cast<int>(t->process_chain().size());
+        info.processor_count = 0; //static_cast<int>(t->process_chain().size()); // TODO - fix this eventually
         returns.push_back(info);
     }
     return returns;
@@ -231,7 +231,8 @@ ext::ControlStatus Controller::send_note_aftertouch(int track_id, int channel, i
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    channel, note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;}
+    return ext::ControlStatus::OK;
+}
 
 ext::ControlStatus Controller::send_aftertouch(int track_id, int channel, float value)
 {
@@ -320,7 +321,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
             info.input_busses = track->input_busses();
             info.output_channels = track->output_channels();
             info.output_busses = track->output_busses();
-            info.processor_count = static_cast<int>(track->process_chain().size());
+            info.processor_count = 0 ; //static_cast<int>(track->process_chain().size());
             return {ext::ControlStatus::OK, info};
         }
     }
@@ -330,27 +331,23 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
 std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_track_processors(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_track_processors called for track: {}", track_id);
-    const auto& tracks = _engine->all_tracks();
-    for (const auto& track : tracks)
+    const auto& tracks = _engine->processors_on_track(track_id);
+    std::vector<ext::ProcessorInfo> infos;
+    if (tracks.empty())
     {
-        if (static_cast<int>(track->id()) == track_id)
-        {
-            std::vector<ext::ProcessorInfo> infos;
-            const auto& procs = track->process_chain();
-            for (const auto& processor : procs)
-            {
-                ext::ProcessorInfo info;
-                info.label = processor->label();
-                info.name = processor->name();
-                info.id = processor->id();
-                info.parameter_count = processor->parameter_count();
-                info.program_count = processor->supports_programs()? processor->program_count() : 0;
-                infos.push_back(info);
-            }
-            return {ext::ControlStatus::OK, infos};
-        }
+        return {ext::ControlStatus::NOT_FOUND, infos};
     }
-    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::ProcessorInfo>()};
+    for (const auto& processor : tracks)
+    {
+        ext::ProcessorInfo info;
+        info.label = processor->label();
+        info.name = processor->name();
+        info.id = processor->id();
+        info.parameter_count = processor->parameter_count();
+        info.program_count = processor->supports_programs()? processor->program_count() : 0;
+        infos.push_back(info);
+    }
+    return {ext::ControlStatus::OK, infos};
 }
 
 std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_track_parameters(int track_id) const
@@ -514,27 +511,24 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>>
 Controller::get_processor_parameters(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_parameters called with processor {}", processor_id);
-    const auto& procs = _engine->all_processors();
-    for (const auto& proc : procs)
+    const auto proc = _engine->processor(processor_id);
+    if (proc)
     {
-        if (static_cast<int>(proc.second->id()) == processor_id)
+        std::vector<ext::ParameterInfo> infos;
+        const auto& params = proc->all_parameters();
+        for (const auto& param : params)
         {
-            std::vector<ext::ParameterInfo> infos;
-            const auto& params = proc.second->all_parameters();
-            for (const auto& param : params)
-            {
-                ext::ParameterInfo info;
-                info.label = param->label();
-                info.name = param->name();
-                info.unit = param->unit();
-                info.id = param->id();
-                info.type = ext::ParameterType::FLOAT;
-                info.min_range = param->min_range();
-                info.max_range = param->max_range();
-                infos.push_back(info);
-            }
-            return {ext::ControlStatus::OK, infos};
+            ext::ParameterInfo info;
+            info.label = param->label();
+            info.name = param->name();
+            info.unit = param->unit();
+            info.id = param->id();
+            info.type = ext::ParameterType::FLOAT;
+            info.min_range = param->min_range();
+            info.max_range = param->max_range();
+            infos.push_back(info);
         }
+        return {ext::ControlStatus::OK, infos};
     }
     return {ext::ControlStatus::NOT_FOUND, std::vector<ext::ParameterInfo>()};
 }

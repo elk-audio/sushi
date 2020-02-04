@@ -152,7 +152,7 @@ public:
      * @brief Return the number of input busses of the track.
      * @return The number of input busses on the track.
      */
-    int input_busses()
+    int input_busses() const
     {
         return _input_busses;
     }
@@ -161,7 +161,7 @@ public:
      * @brief Return the number of input busses of the track.
      * @return The number of input busses on the track.
      */
-    int output_busses()
+    int output_busses() const
     {
         return _output_busses;
     }

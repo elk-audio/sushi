@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <mutex>
@@ -362,7 +363,7 @@ public:
      * @param uid The unique id of the processor
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
+    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
 
     /**
      * @brief Get the unique name of a parameter with a known unique id
@@ -371,7 +372,7 @@ public:
      * @return The name of the processor, only valid if status is EngineReturnStatus::OK
      */
     std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
-                                                                            const ObjectId id) override;
+                                                                            ObjectId id) override;
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
@@ -422,9 +423,18 @@ public:
     /**
      * @brief Access a particular processor by its unique id for querying
      * @param processor_id The id of the processor
-     * @return A const pointer to the processor instance if found, nullptr otherwise
+     * @return A std::shared_ptr<const Processor> to the processor instance if found,
+     *         nullptr otherwise
      */
-    const Processor* processor(ObjectId processor_id) const override;
+    std::shared_ptr<const Processor> processor(ObjectId id) const override;
+
+    /**
+     * @brief Access a particular processor by its unique name for querying
+     * @param processor_name The name of the processor
+     * @return A std::shared_ptr<const Processor> to the processor instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Processor> processor(const std::string& name) const override;
 
     /**
      * @brief Access a particular processor by its unique id for editing,
@@ -432,28 +442,27 @@ public:
      * @param processor_id The id of the processor
      * @return A mutable pointer to the processor instance if found, nullptr otherwise
      */
-    Processor* mutable_processor(ObjectId processor_id) override;
+    std::shared_ptr<Processor> mutable_processor(ObjectId processor_id) override;
 
     /**
-     * @brief Return all processors. Potentially dangerous so use with care and eventually
-     *        there should be better and safer ways of accessing processors.
-     * @return An std::map containing all registered processors.
+     * @brief Return all processors.
+     * @return An std::vector containing all registered processors.
      */
-    const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
-    {
-        return _processors;
-    };
+    std::vector<std::shared_ptr<const Processor>> all_processors() const override;
+
+    /**
+     * @brief Return all processors on a Track.
+     * @return An std::vector containing all processors on a track in order of processing.
+     */
+    std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId track_id) const override;
 
     /**
      * @brief Return all tracks. Potentially unsafe so use with care. Should
-     *        eventually be replaces with a better way of accessing tracks/processors
+     *        eventually be replaced with a better way of accessing tracks/processors
      *        from outside the engine.
      * @return An std::vector of containing all Tracks
      */
-    const std::vector<Track*>& all_tracks() override
-    {
-        return _audio_graph;
-    }
+    std::vector<std::shared_ptr<const Track>> all_tracks() const override;
 
     /**
      * @brief Enable audio clip detection on engine inputs
@@ -504,14 +513,14 @@ private:
      * @param uid String unique id
      * @return Pointer to plugin instance if uid is valid, nullptr otherwise
      */
-    Processor* _make_internal_plugin(const std::string& uid);
+    std::shared_ptr<Processor> _make_internal_plugin(const std::string& uid);
 
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
-    EngineReturnStatus _register_processor(Processor* processor, const std::string& name);
+    EngineReturnStatus _register_processor(std::shared_ptr<Processor> processor, const std::string& name);
 
     /**
      * @breif Remove a processor from the engine and delete it.
@@ -540,7 +549,7 @@ private:
      * @param track Pointer to the track
      * @return OK if succesfull, error code otherwise
      */
-    EngineReturnStatus _register_new_track(const std::string& name, Track* track);
+    EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
 
     /**
      * @brief Checks whether a processor exists in the engine.
@@ -554,10 +563,18 @@ private:
      * @param uid The unique id of the processor.
      * @return Returns true if exists, false if it does not.
      */
-    bool _processor_exists(ObjectId uid);
+    bool _processor_exists(ObjectId id);
 
     /**
-     * @brief Process events that are to be handles by the engine directly and
+     * @brief Get the instance of a processor by its unique name
+     * @param name The unique name of the processor
+     * @return A std::shared_ptr with a pointer to the processor if found
+     *         or a nullptr if the processor is not found
+     */
+    std::shared_ptr<Processor> _mutable_processor(const std::string& name);
+
+    /**
+     * @brief Process events that are to be handled by the engine directly and
      *        not by a particular processor.
      * @param event The event to handle
      * @return true if handled, false if not an engine event
@@ -581,14 +598,20 @@ private:
 
     std::unique_ptr<twine::WorkerPool> _worker_pool;
 
-    std::vector<Track*> _audio_graph;
+    // Containers for processors, should only be accessed from a non-rt thread and using
+    // their respective mutex
+    std::unordered_map<std::string, std::shared_ptr<Processor>>           _processors_by_name;
+    std::unordered_map<ObjectId, std::shared_ptr<Processor>>              _processors_by_id;
+    std::unordered_map<ObjectId, std::vector<std::shared_ptr<Processor>>> _processors_by_track;
 
-    // All registered processors indexed by their unique name
-    std::map<std::string, std::unique_ptr<Processor>> _processors;
+    mutable std::mutex _processors_by_name_lock;
+    mutable std::mutex _processors_by_id_lock;
+    mutable std::mutex _processors_by_track_lock;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    std::vector<Track*>     _audio_graph;
 
     struct AudioConnection
     {
@@ -596,6 +619,7 @@ private:
         int track_channel;
         ObjectId track;
     };
+
     std::vector<AudioConnection> _in_audio_connections;
     std::vector<AudioConnection> _out_audio_connections;
 
