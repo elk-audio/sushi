@@ -129,6 +129,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     if (state != nullptr) // Apply loaded state to plugin instance if necessary
     {
         _model->state()->apply_state(state);
+        lilv_state_free(state);
     }
 
     // Activate plugin

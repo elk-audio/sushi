@@ -54,7 +54,6 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Mod
     }
     else if (optional == false)
     {
-        assert(false);
         SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
         throw Port::FailedCreation();
     }
