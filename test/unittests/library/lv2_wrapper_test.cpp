@@ -12,8 +12,6 @@
 #include "library/lv2/lv2_port.cpp"
 #include "library/lv2/lv2_model.cpp"
 
-#include <iomanip>
-
 using namespace sushi;
 using namespace sushi::lv2;
 
@@ -133,40 +131,6 @@ static const float LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
         -2.8904944658e-02f, -3.7753723562e-02f, -3.6063570529e-02f, -3.3155035228e-02f
     }
 };
-
-// Utility for creating the above static buffers by copying values from console.
-void print_buffer(ChunkSampleBuffer& buffer, int channels)
-{
-    std::cout << std::scientific << std::setprecision(10);
-    int print_i = 0;
-    for (int i = 0; i < channels; i++)
-    {
-        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
-        {
-            std::cout << buffer.channel(i)[j] << "f, ";
-            print_i++;
-
-            if(print_i == 4)
-            {
-                std::cout << std::endl;
-                print_i = 0;
-            }
-        }
-
-        std::cout << std::endl;
-    }
-}
-
-void compare_buffers(const float static_array[][64], ChunkSampleBuffer& buffer, int channels)
-{
-    for (int i = 0; i < channels; i++)
-    {
-        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
-        {
-            ASSERT_FLOAT_EQ(static_array[i][j], buffer.channel(i)[j]);
-        }
-    }
-}
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 
@@ -330,12 +294,12 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_ON, out_buffer, 2);
+    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_ON, out_buffer, 2);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
+    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
     _module_under_test->_pause();
@@ -348,7 +312,7 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    compare_buffers(LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
+    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
