@@ -132,6 +132,12 @@ private:
 
     void setup_engine_control();
 
+    std::pair<OscConnection*, std::string> create_parameter_connection(const std::string& processor_name,
+                                                                       const std::string& parameter_name);
+
+    std::pair<OscConnection*, std::string> create_processor_connection(const std::string& processor_name,
+                                                                       const std::string& osc_path_prefix);
+
     lo_server_thread _osc_server;
     int _server_port;
     int _send_port;
