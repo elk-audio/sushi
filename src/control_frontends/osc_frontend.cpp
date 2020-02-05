@@ -91,7 +91,7 @@ static int osc_send_keyboard_note_event(const char* /*path*/,
                                    void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
-    std::string event(&argv[0]->s);
+    std::string_view event(&argv[0]->s);
     int channel = argv[1]->i;
     int note = argv[2]->i;
     float value = argv[3]->f;
@@ -125,7 +125,7 @@ static int osc_send_keyboard_modulation_event(const char* /*path*/,
                                    void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
-    std::string event(&argv[0]->s);
+    std::string_view event(&argv[0]->s);
     int channel = argv[1]->i;
     float value = argv[2]->f;
 
@@ -185,8 +185,8 @@ static int osc_reset_timing_statistics(const char* /*path*/,
                                        void* user_data)
 {
     auto instance = static_cast<ext::SushiControl*>(user_data);
-    std::string type = std::string(&argv[0]->s);
-    std::string output_text = type;
+    std::string output_text = std::string(&argv[0]->s);
+    std::string_view type = output_text;
     if (type == "all")
     {
         auto status = instance->reset_all_timings();
@@ -272,7 +272,7 @@ static int osc_set_playing_mode(const char* /*path*/,
                                 void* user_data)
 {
     auto instance = static_cast<ext::SushiControl*>(user_data);
-    std::string mode_str(&argv[0]->s);
+    std::string_view mode_str(&argv[0]->s);
     ext::PlayingMode mode;
     if (mode_str == "playing")
     {
@@ -301,7 +301,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
                                    void* user_data)
 {
     auto instance = static_cast<ext::SushiControl*>(user_data);
-    std::string mode_str(&argv[0]->s);
+    std::string_view mode_str(&argv[0]->s);
     ext::SyncMode mode;
     if (mode_str == "internal")
     {
