@@ -28,6 +28,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
+// Callback method - signature as required by Lilv
 static int populate_preset_list(LV2Model* model, const LilvNode *node, const LilvNode* title, void* /*data*/)
 {
     std::string node_string = lilv_node_as_string(node);
@@ -96,7 +97,7 @@ void LV2_State::save(const char* dir)
     _model->set_save_dir(std::string(""));
 }
 
-int LV2_State::_load_programs(PresetSink sink, void* data)
+void LV2_State::_load_programs(PresetSink sink, void* data)
 {
    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
@@ -125,11 +126,9 @@ int LV2_State::_load_programs(PresetSink sink, void* data)
    }
 
    lilv_nodes_free(presets);
-
-   return 0;
 }
 
-int LV2_State::unload_programs()
+void LV2_State::unload_programs()
 {
    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
@@ -140,8 +139,6 @@ int LV2_State::unload_programs()
    }
 
    lilv_nodes_free(presets);
-
-   return 0;
 }
 
 void LV2_State::apply_state(LilvState* state)
@@ -168,7 +165,7 @@ void LV2_State::apply_state(LilvState* state)
    }
 }
 
-int LV2_State::apply_program(const int program_index)
+bool LV2_State::apply_program(const int program_index)
 {
     if (program_index < number_of_programs())
     {
@@ -178,17 +175,16 @@ int LV2_State::apply_program(const int program_index)
 
         _current_program_index = program_index;
 
-        return 0;
+        return true;
     }
 
-    return -1;
+    return false;
 }
 
-int LV2_State::apply_program(const LilvNode* preset)
+void LV2_State::apply_program(const LilvNode* preset)
 {
     _set_preset(lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), preset));
     apply_state(_preset);
-   return 0;
 }
 
 void LV2_State::_set_preset(LilvState* new_preset)
@@ -221,18 +217,18 @@ int LV2_State::save_program(const char* dir, const char* uri, const char* label,
    return ret;
 }
 
-int LV2_State::delete_current_program()
+bool LV2_State::delete_current_program()
 {
-   if (!_preset)
+   if (_preset == nullptr)
    {
-      return 1;
+      return false;
    }
 
    lilv_world_unload_resource(_model->lilv_world(), lilv_state_get_uri(_preset));
    lilv_state_delete(_model->lilv_world(), _preset);
     _set_preset(nullptr);
 
-   return 0;
+   return true;
 }
 
 // This one has a signature as required by lilv.

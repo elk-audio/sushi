@@ -85,7 +85,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 
     _model->initialize_host_feature_list();
 
-    if(!_check_for_required_features(_model->plugin_class()))
+    if (_check_for_required_features(_model->plugin_class()) == false)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
@@ -160,7 +160,7 @@ void Lv2Wrapper::_create_controls(bool writable)
         const auto property = lilv_nodes_get(properties, p);
 
         bool found = false;
-        if (!writable && lilv_world_ask(world,
+        if ((writable == false) && lilv_world_ask(world,
                                         uri_node,
                                         patch_writable,
                                         property))
@@ -231,7 +231,7 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
         auto node = lilv_nodes_get(required_features, f);
         auto uri = lilv_node_as_uri(node);
 
-        if (!feature_is_supported(_model, uri))
+        if (feature_is_supported(_model, uri) == false)
         {
             SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
 
@@ -428,12 +428,12 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
 {
     if (this->supports_programs() && program < _model->state()->number_of_programs())
     {
-        int return_code = _model->state()->apply_program(program);
+        bool succeeded = _model->state()->apply_program(program);
 
-        if (return_code == 0)
+        if (succeeded)
             return ProcessorReturnCode::OK;
-
-        return ProcessorReturnCode::ERROR;
+        else
+            return ProcessorReturnCode::ERROR;
     }
 
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
@@ -742,7 +742,7 @@ void Lv2Wrapper::_process_midi_input(Port* port)
 
     // MIDI transfer, from incoming RT event queue into LV2 event buffers:
     RtEvent rt_event;
-    while (!_incoming_event_queue.empty())
+    while (_incoming_event_queue.empty() == false)
     {
         if (_incoming_event_queue.pop(rt_event))
         {
@@ -761,7 +761,7 @@ void Lv2Wrapper::_process_midi_input(Port* port)
 void Lv2Wrapper::_flush_event_queue()
 {
     RtEvent rt_event;
-    while (!_incoming_event_queue.empty())
+    while (_incoming_event_queue.empty() == false)
     {
         _incoming_event_queue.pop(rt_event);
     }

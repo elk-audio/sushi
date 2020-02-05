@@ -35,17 +35,17 @@ public:
 
     void save(const char *dir);
 
-    int unload_programs();
+    void unload_programs();
 
     void apply_state(LilvState* state);
 
-    int apply_program(const int program_index);
+    bool apply_program(const int program_index);
 
-    int apply_program(const LilvNode* preset);
+    void apply_program(const LilvNode* preset);
 
     int save_program(const char* dir, const char* uri, const char* label, const char* filename);
 
-    int delete_current_program();
+    bool delete_current_program();
 
     std::vector<std::string>& program_names();
 
@@ -62,7 +62,7 @@ public:
 private:
     void _set_preset(LilvState* new_preset);
 
-    int _load_programs(PresetSink sink, void* data);
+    void _load_programs(PresetSink sink, void* data);
 
     std::vector<std::string> _program_names;
     int _current_program_index {0};
