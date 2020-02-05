@@ -39,21 +39,21 @@ protected:
         _address = lo_address_new("localhost", port_str.c_str());
         ASSERT_EQ(ControlFrontendStatus::OK, _module_under_test.init());
         _module_under_test.run();
-        _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
     }
 
-    std::unique_ptr<Event> wait_for_event()
+    bool wait_for_event()
     {
         for (int i = 0; i < EVENT_WAIT_RETRIES; ++i)
         {
-            auto event = _test_dispatcher->retrieve_event();
+            auto event = _controller.was_recently_called();
             if (event)
             {
-                return std::move(event);
+                _controller.clear_recent_call();
+                return event;
             }
             std::this_thread::sleep_for(EVENT_WAIT_TIME);
         }
-        return nullptr;
+        return false;
     }
 
     void TearDown()
@@ -68,7 +68,6 @@ protected:
     lo_address _address;
     sushi::ext::ControlMockup _controller;
     OSCFrontend _module_under_test{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
-    EventDispatcherMockup* _test_dispatcher;
 };
 
 
@@ -77,8 +76,7 @@ TEST_F(TestOSCFrontend, TestSendParameterChange)
     ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ(0, std::stoi(args["parameter id"]));
@@ -95,8 +93,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOn)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_on", 0, 46, 0.8f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(0, std::stoi(args["channel"]));
@@ -114,8 +111,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOff)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_off", 1, 52, 0.7f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(1, std::stoi(args["channel"]));
@@ -133,8 +129,7 @@ TEST_F(TestOSCFrontend, TestSendNoteAftertouch)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_aftertouch", 10, 36, 0.1f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(10, std::stoi(args["channel"]));
@@ -152,8 +147,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardModulation)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "modulation", 9, 0.5f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(9, std::stoi(args["channel"]));
@@ -170,8 +164,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardPitchBend)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "pitch_bend", 3, 0.3f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(3, std::stoi(args["channel"]));
@@ -188,8 +181,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardAftertouch)
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "aftertouch", 11, 0.11f);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(11, std::stoi(args["channel"]));
@@ -206,8 +198,7 @@ TEST_F(TestOSCFrontend, TestSendProgramChange)
     ASSERT_TRUE(_module_under_test.connect_to_program_change("sampler"));
     lo_send(_address, "/program/sampler", "i", 1);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ(1, std::stoi(args["program id"]));
@@ -222,8 +213,7 @@ TEST_F(TestOSCFrontend, TestSetBypassState)
     ASSERT_TRUE(_module_under_test.connect_to_bypass_state("sampler"));
     lo_send(_address, "/bypass/sampler", "i", 1);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ("1", args["bypass enabled"]);
@@ -237,8 +227,7 @@ TEST_F(TestOSCFrontend, TestSetTempo)
 {
     lo_send(_address, "/engine/set_tempo", "f", 136.0f);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_FLOAT_EQ(136.0, std::stof(args["tempo"]));
 }
@@ -247,8 +236,7 @@ TEST_F(TestOSCFrontend, TestSetTimeSignature)
 {
     lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(7, std::stoi(args["numerator"]));
     EXPECT_EQ(8, std::stoi(args["denominator"]));
@@ -258,8 +246,7 @@ TEST_F(TestOSCFrontend, TestSetPlayingMode)
 {
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ("PLAYING", args["playing mode"]);
 }
@@ -268,8 +255,7 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
 {
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ("MIDI", args["sync mode"]);
 }
@@ -278,8 +264,7 @@ TEST_F(TestOSCFrontend, TestSetTimingStatisticsEnabled)
 {
     lo_send(_address, "/engine/set_timing_statistics_enabled", "i", 1);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ("1", args["enabled"]);
 }
@@ -288,16 +273,14 @@ TEST_F(TestOSCFrontend, TestResetAllTimings)
 {
     lo_send(_address, "/engine/reset_timing_statistics", "s", "all");
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
 }
 
 TEST_F(TestOSCFrontend, TestResetTrackTimings)
 {
     lo_send(_address, "/engine/reset_timing_statistics", "ss", "track", "main");
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
 }
@@ -306,8 +289,7 @@ TEST_F(TestOSCFrontend, TestResetProcessorTimings)
 {
     lo_send(_address, "/engine/reset_timing_statistics", "ss", "processor", "sampler");
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    ASSERT_TRUE(_controller.was_recently_called());
+    ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
 }

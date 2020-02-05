@@ -307,9 +307,12 @@ public:
 
     bool was_recently_called()
     {
-        bool out = _recently_called;
+        return _recently_called;
+    }
+
+    void clear_recent_call()
+    {
         _recently_called = false;
-        return out;
     }
 
 private:
