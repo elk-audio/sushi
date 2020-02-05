@@ -36,6 +36,8 @@ namespace lv2 {
 class Lv2_Host_Nodes
 {
 public:
+    SUSHI_DECLARE_NON_COPYABLE(Lv2_Host_Nodes);
+
     Lv2_Host_Nodes(LilvWorld* world)
     {
         /* Cache URIs for concepts we'll use */

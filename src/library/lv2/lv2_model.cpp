@@ -214,12 +214,12 @@ float LV2Model::sample_rate()
 
 Port* LV2Model::get_port(int index)
 {
-    return _ports[index].get();
+    return &_ports[index];
 }
 
-void LV2Model::add_port(std::unique_ptr<Port>&& port)
+void LV2Model::add_port(Port&& port)
 {
-    _ports.emplace_back(std::move(port));
+    _ports.push_back(std::move(port));
 }
 
 int LV2Model::port_count()

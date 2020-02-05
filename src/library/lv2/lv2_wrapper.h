@@ -67,7 +67,7 @@ constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
 class Lv2Wrapper : public Processor
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(Lv2Wrapper)
+    SUSHI_DECLARE_NON_COPYABLE(Lv2Wrapper);
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
@@ -119,7 +119,7 @@ public:
 
 private:
     bool _create_ports(const LilvPlugin* plugin);
-    std::unique_ptr<Port> _create_port(const LilvPlugin* plugin, int port_index, float default_value);
+    Port&& _create_port(const LilvPlugin* plugin, int port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources

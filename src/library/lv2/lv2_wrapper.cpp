@@ -254,17 +254,19 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
 
     lilv_plugin_get_port_ranges_float(plugin, nullptr, nullptr, default_values.data());
 
-    for (int i = 0; i < port_count; ++i)
+    try
     {
-        auto newPort = _create_port(plugin, i, default_values[i]);
-
-        // If it fails to create a new port, loading has failed, and the host shuts down.
-        if(newPort.get() == nullptr)
+        for (int i = 0; i < port_count; ++i)
         {
-            return false;
-        }
+            auto newPort = std::move( _create_port(plugin, i, default_values[i]) );
 
-        _model->add_port(std::move(newPort));
+            _model->add_port(std::move(newPort));
+        }
+    }
+    catch (Port::FailedCreation& e)
+    {
+        // If it fails to create a new port, loading has failed, and the host shuts down.
+        return false;
     }
 
     const auto control_input = lilv_plugin_get_port_by_designation(
@@ -294,33 +296,26 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
    Create a port from data description. This is called before plugin
    and Jack instantiation. The remaining instance-specific setup
    (e.g. buffers) is done later in activate_port().
+
+   Exception Port::FailedCreation can be thrown in the port constructor!
 */
-std::unique_ptr<Port> Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
+Port&& Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
-    std::unique_ptr<Port> port = nullptr;
+    Port port(plugin, port_index, default_value, _model);
 
-    try
+    if (port.type() == PortType::TYPE_AUDIO)
     {
-        port = std::make_unique<Port>(plugin, port_index, default_value, _model);
-
-        if (port->type() == PortType::TYPE_AUDIO)
+        if (port.flow() == PortFlow::FLOW_INPUT)
         {
-            if (port->flow() == PortFlow::FLOW_INPUT)
-            {
-                _max_input_channels++;
-            }
-            else if (port->flow() == PortFlow::FLOW_OUTPUT)
-            {
-                _max_output_channels++;
-            }
+            _max_input_channels++;
+        }
+        else if (port.flow() == PortFlow::FLOW_OUTPUT)
+        {
+            _max_output_channels++;
         }
     }
-    catch (Port::FailedCreation& e)
-    {
-        port = nullptr;
-    }
 
-    return port;
+    return std::move(port);
 }
 
 void Lv2Wrapper::configure(float sample_rate)

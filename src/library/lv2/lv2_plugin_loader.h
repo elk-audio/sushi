@@ -36,7 +36,7 @@ namespace lv2 {
 class PluginLoader
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(PluginLoader)
+    SUSHI_DECLARE_NON_COPYABLE(PluginLoader);
 
     PluginLoader();
     ~PluginLoader();

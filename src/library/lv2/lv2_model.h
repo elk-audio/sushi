@@ -126,6 +126,8 @@ struct HostFeatures
 class LV2Model
 {
 public:
+    SUSHI_DECLARE_NON_COPYABLE(LV2Model);
+
     LV2Model(LilvWorld* worldIn);
     ~LV2Model();
 
@@ -146,7 +148,7 @@ public:
     float sample_rate();
 
     Port* get_port(int index);
-    void add_port(std::unique_ptr<Port>&& port);
+    void add_port(Port&& port);
     int port_count();
 
     const Lv2_Host_Nodes& nodes();
@@ -233,7 +235,7 @@ private:
 
     Lv2_Host_Nodes _nodes;
 
-    std::vector<std::unique_ptr<Port>> _ports;
+    std::vector<Port> _ports;
 
     float _sample_rate;
     int _midi_buffer_size {4096};

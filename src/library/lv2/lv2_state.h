@@ -17,6 +17,7 @@
 #define SUSHI_LV2_STATE_H
 
 #include "lv2/lv2plug.in/ns/ext/state/state.h"
+#include "library/constants.h"
 #include "lv2/state/state.h"
 #include "lv2_model.h"
 #include "lv2_features.h"
@@ -27,6 +28,8 @@ namespace lv2 {
 class LV2_State
 {
 public:
+    SUSHI_DECLARE_NON_COPYABLE(LV2_State);
+
     LV2_State(LV2Model* model);
     ~LV2_State() = default;
 
