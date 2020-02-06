@@ -164,8 +164,8 @@ if (${WITH_JACK})
 endif()
 
 if (${WITH_LV2})
-    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0)
-    set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} lv2)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0 lv2_host)
+    add_dependencies(unit_tests lv2_host)
 endif()
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")

@@ -139,7 +139,7 @@ void Port::_allocate_port_buffers(LV2Model* model)
 
             auto handle = model->get_map().handle;
 
-            _evbuf = lv2_evbuf_new(
+            _evbuf = lv2_host::lv2_evbuf_new(
                     model->midi_buffer_size(),
                     model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Chunk)),
                     model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Sequence)));
@@ -177,7 +177,7 @@ const LilvPort* Port::lilv_port()
     return _lilv_port;
 }
 
-LV2_Evbuf* Port::evbuf()
+lv2_host::LV2_Evbuf* Port::evbuf()
 {
     return _evbuf;
 }

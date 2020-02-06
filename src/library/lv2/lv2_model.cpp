@@ -134,7 +134,7 @@ void LV2Model::_initialize_log_feature()
 
 void LV2Model::_initialize_map_feature()
 {
-    this->_symap = symap_new();
+    this->_symap = lv2_host::symap_new();
     this->_map.handle = this;
     this->_map.map = map_uri;
     init_feature(&this->_features.map_feature, LV2_URID__map, &this->_map);

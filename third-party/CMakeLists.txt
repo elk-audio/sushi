@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 add_subdirectory(fifo EXCLUDE_FROM_ALL)
 
+add_subdirectory(lv2_host)
+
 ##########################
 #  VST3SDK and examples  #
 ##########################

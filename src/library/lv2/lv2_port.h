@@ -32,7 +32,7 @@
 
 #include "library/constants.h"
 
-#include "third-party/lv2/lv2_evbuf.h"
+#include "lv2_host/lv2_evbuf.h"
 
 namespace sushi {
 namespace lv2 {
@@ -78,7 +78,7 @@ public:
     float min();
     float max();
 
-    LV2_Evbuf* evbuf();
+    lv2_host::LV2_Evbuf* evbuf();
 
     void set_control_value(float c);
 
@@ -106,7 +106,7 @@ private:
     PortType _type;
     PortFlow _flow;
 
-    LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
+    lv2_host::LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
 
     void* _widget; // Control widget, if applicable
     int _buf_size; // Custom buffer size, or 0

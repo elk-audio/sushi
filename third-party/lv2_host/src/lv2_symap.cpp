@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lv2_symap.h"
+#include "lv2_host/lv2_symap.h"
 
 /**
   @file symap.c Implementation of Symap, a basic symbol map (string interner).
@@ -37,8 +37,8 @@
   tree-based implementation (and the associated space cost, especially if you
   need reverse mapping).
 */
-namespace sushi {
-namespace lv2 {
+
+namespace lv2_host {
 
 struct SymapImpl
 {
@@ -51,12 +51,12 @@ struct SymapImpl
     /**
        Array of IDs, sorted by corresponding string in `symbols`.
     */
-    uint32_t *index;
+    u_int32_t *index;
 
     /**
        Number of symbols (number of items in `symbols` and `index`).
     */
-    uint32_t size;
+    u_int32_t size;
 };
 
 Symap* symap_new(void)
@@ -205,5 +205,4 @@ const char* symap_unmap(Symap *map, uint32_t id)
     return nullptr;
 }
 
-}
 }

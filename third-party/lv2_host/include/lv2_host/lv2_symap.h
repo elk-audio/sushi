@@ -26,12 +26,9 @@
 #ifndef SYMAP_H
 #define SYMAP_H
 
-#ifdef SUSHI_BUILD_WITH_LV2
+#include <cstdint>
 
-#include <stdint.h>
-
-namespace sushi {
-namespace lv2 {
+namespace lv2_host {
 
 struct SymapImpl;
 
@@ -67,7 +64,5 @@ Note that 0 is never a valid symbol ID.
 const char* symap_unmap(Symap* map, uint32_t id);
 
 }
-}
-#endif /* SYMAP_H */
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif /* SYMAP_H */

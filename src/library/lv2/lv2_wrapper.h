@@ -52,7 +52,6 @@
 #include "library/midi_decoder.h"
 
 #include "lv2_plugin_loader.h"
-#include "third-party/lv2/lv2_evbuf.h"
 
 namespace sushi {
 namespace lv2 {

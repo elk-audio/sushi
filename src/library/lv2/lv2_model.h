@@ -33,11 +33,10 @@
 #include <lv2/data-access/data-access.h>
 #include <lv2/atom/forge.h>
 
+#include "lv2_host/lv2_symap.h"
+
 #include "library/processor.h"
 #include "engine/base_event_dispatcher.h"
-
-#include "third-party/lv2/lv2_symap.h"
-#include "third-party/lv2/lv2_evbuf.h"
 
 #include "lv2_port.h"
 #include "lv2_host_nodes.h"
@@ -228,7 +227,7 @@ private:
     LV2_URID_Map _map;
     LV2_URID_Unmap _unmap;
 
-    Symap* _symap;
+    lv2_host::Symap* _symap;
     std::mutex _symap_lock;
 
     LV2_URIDs _urids;

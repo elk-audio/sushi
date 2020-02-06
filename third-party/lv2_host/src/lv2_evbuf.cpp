@@ -15,15 +15,15 @@
 
 // This file has been copied from the Jalv LV2 plugin host example - little refactoring has been carried out
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 #include "lv2/atom/atom.h"
 
-#include "lv2_evbuf.h"
-namespace sushi {
-namespace lv2 {
+#include "lv2_host/lv2_evbuf.h"
+
+namespace lv2_host {
 
 struct LV2_Evbuf_Impl
 {
@@ -175,5 +175,4 @@ bool lv2_evbuf_write(LV2_Evbuf_Iterator *iter,
     return true;
 }
 
-}
 }

@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-#include "third-party/lv2/lv2_symap.cpp"
-#include "third-party/lv2/lv2_evbuf.cpp"
 #include "library/lv2/lv2_control.cpp"
 #include "library/lv2/lv2_plugin_loader.cpp"
 

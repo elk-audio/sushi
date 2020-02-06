@@ -18,11 +18,9 @@
 #ifndef LV2_EVBUF_H
 #define LV2_EVBUF_H
 
-#ifdef SUSHI_BUILD_WITH_LV2
-
 #include <stdint.h>
-namespace sushi {
-namespace lv2 {
+
+namespace lv2_host {
 
 extern "C" {
 
@@ -123,8 +121,6 @@ bool lv2_evbuf_write(LV2_Evbuf_Iterator *iter,
                 const uint8_t *data);
 }
 
-}}
+}
 
 #endif /* LV2_EVBUF_H */
-
-#endif //SUSHI_BUILD_WITH_LV2

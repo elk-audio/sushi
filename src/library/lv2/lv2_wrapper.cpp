@@ -408,7 +408,7 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program
         }
     }
 
-    return {ProcessorReturnCode::ERROR, "Index does not correspond to program."};
+    return {ProcessorReturnCode::ERROR, ""};
 }
 
 std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program_names() const
