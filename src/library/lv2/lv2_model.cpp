@@ -217,9 +217,9 @@ Port* LV2Model::get_port(int index)
     return &_ports[index];
 }
 
-void LV2Model::add_port(Port&& port)
+void LV2Model::add_port(Port port)
 {
-    _ports.push_back(std::move(port));
+    _ports.push_back(port);
 }
 
 int LV2Model::port_count()

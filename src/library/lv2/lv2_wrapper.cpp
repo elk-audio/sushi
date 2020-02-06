@@ -258,9 +258,9 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
     {
         for (int i = 0; i < port_count; ++i)
         {
-            auto newPort = std::move( _create_port(plugin, i, default_values[i]) );
+            auto newPort = _create_port(plugin, i, default_values[i]);
 
-            _model->add_port(std::move(newPort));
+            _model->add_port(newPort);
         }
     }
     catch (Port::FailedCreation& e)
@@ -299,7 +299,7 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
 
    Exception Port::FailedCreation can be thrown in the port constructor!
 */
-Port&& Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
+Port Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
     Port port(plugin, port_index, default_value, _model);
 
@@ -315,7 +315,7 @@ Port&& Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float 
         }
     }
 
-    return std::move(port);
+    return port;
 }
 
 void Lv2Wrapper::configure(float sample_rate)
@@ -793,6 +793,8 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                             keyboard_event_ptr->note(),
                                                             keyboard_event_ptr->velocity());
             }
+            default:
+                return MidiDataByte();
         }
     }
     else if (event.type() >= RtEventType::PITCH_BEND && event.type() <= RtEventType::MODULATION)
@@ -817,6 +819,8 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                          midi::MOD_WHEEL_CONTROLLER_NO,
                                                          keyboard_common_event_ptr->value());
             }
+            default:
+                return MidiDataByte();
         }
     }
     else if (event.type() == RtEventType::WRAPPED_MIDI_EVENT)
@@ -824,11 +828,8 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
         auto wrapped_midi_event_ptr = event.wrapped_midi_event();
         return wrapped_midi_event_ptr->midi_data();
     }
-    else
-    {
-        assert(false); // All cases should have been catered for.
-    }
 
+    assert(false); // All cases should have been catered for.
     return MidiDataByte();
 }
 

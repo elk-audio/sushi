@@ -58,13 +58,9 @@ enum class PortType
 class Port
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(Port);
-
     Port(const LilvPlugin* plugin, int port_index, float default_value, LV2Model* model);
 
     ~Port() = default;
-
-    Port(Port &&) = default;
 
     void reset_input_buffer();
     void reset_output_buffer();

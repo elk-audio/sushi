@@ -147,7 +147,7 @@ public:
     float sample_rate();
 
     Port* get_port(int index);
-    void add_port(Port&& port);
+    void add_port(Port port);
     int port_count();
 
     const Lv2_Host_Nodes& nodes();

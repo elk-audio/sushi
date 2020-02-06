@@ -47,7 +47,7 @@ Port* port_by_symbol(LV2Model* model, const char* sym)
 
 int lv2_vprintf(LV2_Log_Handle handle,
                 LV2_URID type,
-                const char* fmt,
+                [[maybe_unused]] const char* fmt,
                 va_list /*ap*/)
 {
     auto model = static_cast<LV2Model*>(handle);
@@ -55,7 +55,7 @@ int lv2_vprintf(LV2_Log_Handle handle,
 
     if (type == urids.log_Trace && TRACE_OPTION)
     {
-        SUSHI_LOG_WARNING("LV2 trace: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 Trace: {}", fmt);
     }
     else if (type == urids.log_Error)
     {
@@ -63,7 +63,7 @@ int lv2_vprintf(LV2_Log_Handle handle,
     }
     else if (type == urids.log_Warning)
     {
-        SUSHI_LOG_WARNING("LV2 warning: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 Warning: {}", fmt);
     }
     else if (type == urids.log_Entry)
     {
@@ -75,7 +75,11 @@ int lv2_vprintf(LV2_Log_Handle handle,
     }
     else if (type == urids.log_log)
     {
-        SUSHI_LOG_WARNING("LV2 log: {}", fmt);
+        SUSHI_LOG_WARNING("LV2 Log: {}", fmt);
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("LV2 unknown error: {}", fmt);
     }
 
     return 0;

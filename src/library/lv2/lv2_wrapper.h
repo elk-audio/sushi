@@ -118,7 +118,7 @@ public:
 
 private:
     bool _create_ports(const LilvPlugin* plugin);
-    Port&& _create_port(const LilvPlugin* plugin, int port_index, float default_value);
+    Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
 
     /**
      * @brief Tell the plugin that we're done with it and release all resources
