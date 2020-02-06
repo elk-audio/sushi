@@ -15,120 +15,120 @@
 using namespace sushi;
 using namespace sushi::lv2;
 
-static const float LV2_ORGAN_EXPECTED_OUT_NOTE_ON[2][64] = {
+static const float LV2_JX10_EXPECTED_OUT_NOTE_ON[2][64] = {
     {
-        -1.9887361676e-02f, 9.0109853772e-04f, 2.0839706063e-02f, 3.8966707885e-02f,
-        5.4478537291e-02f, 6.6768631339e-02f, 7.5469307601e-02f, 8.0477617681e-02f,
-        8.1962041557e-02f, 8.0348283052e-02f, 7.6286055148e-02f, 7.0598401129e-02f,
-        6.4218170941e-02f, 5.8116056025e-02f, 5.3226333112e-02f, 5.0374895334e-02f,
-        5.0216168165e-02f, 5.3182411939e-02f, 5.9450294822e-02f, 6.8926192820e-02f,
-        8.1251896918e-02f, 9.5830298960e-02f, 1.1186864227e-01f, 1.2843678892e-01f,
-        1.4453560114e-01f, 1.5917070210e-01f, 1.7142613232e-01f, 1.8053224683e-01f,
-        1.8592296541e-01f, 1.8727806211e-01f, 1.8454769254e-01f, 1.7795649171e-01f,
-        1.6798810661e-01f, 1.5535037220e-01f, 1.4092400670e-01f, 1.2569887936e-01f,
-        1.1070217937e-01f, 9.6924163401e-02f, 8.5246242583e-02f, 7.6378263533e-02f,
-        7.0807389915e-02f, 6.8764515221e-02f, 7.0209108293e-02f, 7.4834592640e-02f,
-        8.2092970610e-02f, 9.1237813234e-02f, 1.0138138384e-01f, 1.1156232655e-01f,
-        1.2081874907e-01f, 1.2826091051e-01f, 1.3313876092e-01f, 1.3489858806e-01f,
-        1.3322512805e-01f, 1.2806573510e-01f, 1.1963484436e-01f, 1.0839867592e-01f,
-        9.5040790737e-02f, 8.0411612988e-02f, 6.5465413034e-02f, 5.1189281046e-02f,
-        3.8529783487e-02f, 2.8322366998e-02f, 2.1228877828e-02f, 1.7687896267e-02f
+        0.0000000000e+00f, -1.3231920004e-09f, -5.8071242259e-11f, 7.4176806919e-09f,
+        1.6889693200e-08f, 2.0939033618e-08f, 6.3323604138e-09f, -4.3704385888e-08f,
+        -1.5136777165e-07f, -3.4226587786e-07f, -6.4724713411e-07f, -1.1003317013e-06f,
+        -1.7406666757e-06f, -2.6102886750e-06f, -3.7562799662e-06f, -5.2283103287e-06f,
+        -7.0810297075e-06f, -9.3713651950e-06f, -1.2161169252e-05f, -1.5514257029e-05f,
+        -1.9499317204e-05f, -2.4186683731e-05f, -2.9651528166e-05f, -3.5970344470e-05f,
+        -4.3224412366e-05f, -5.1496041124e-05f, -6.0872265749e-05f, -7.1440852480e-05f,
+        -8.3294245997e-05f, -9.6525320259e-05f, -1.1123159493e-04f, -1.2751069153e-04f,
+        -1.4546485909e-04f, -1.6561846132e-04f, -1.8773633929e-04f, -2.1193045541e-04f,
+        -2.3831747239e-04f, -2.6701329625e-04f, -2.9813844594e-04f, -3.3181239269e-04f,
+        -3.6815920612e-04f, -4.0730155888e-04f, -4.4936660561e-04f, -4.9448001664e-04f,
+        -5.4277182790e-04f, -5.9437012533e-04f, -6.4940738957e-04f, -7.0801418042e-04f,
+        -7.7032501576e-04f, -8.3647237625e-04f, -9.0659258422e-04f, -9.8081969190e-04f,
+        -1.0592915351e-03f, -1.1421436211e-03f, -1.2295149500e-03f, -1.3215418439e-03f,
+        -1.4183644671e-03f, -1.5201196074e-03f, -1.6269480111e-03f, -1.7389869317e-03f,
+        -1.8563776975e-03f, -1.9792574458e-03f, -2.1077671554e-03f, -2.2420443129e-03f
     },
     {
-        1.9887385890e-02f, 3.1153870746e-02f, 4.1664179415e-02f, 5.0943803042e-02f,
-        5.8579005301e-02f, 6.4260825515e-02f, 6.7806936800e-02f, 6.9174423814e-02f,
-        6.8462260067e-02f, 6.5903387964e-02f, 6.1847079545e-02f, 5.6732773781e-02f,
-        5.1057439297e-02f, 4.5338720083e-02f, 4.0076959878e-02f, 3.5718422383e-02f,
-        3.2623004168e-02f, 3.1038269401e-02f, 3.1082302332e-02f, 3.2736111432e-02f,
-        3.5846497864e-02f, 4.0139075369e-02f, 4.5240271837e-02f, 5.0706971437e-02f,
-        5.6061267853e-02f, 6.0827869922e-02f, 6.4571462572e-02f, 6.6930904984e-02f,
-        6.7648090422e-02f, 6.6589057446e-02f, 6.3755989075e-02f, 5.9289049357e-02f,
-        5.3458150476e-02f, 4.6645279974e-02f, 3.9318550378e-02f, 3.2000318170e-02f,
-        2.5231275707e-02f, 1.9533682615e-02f, 1.5375670977e-02f, 1.3139910065e-02f,
-        1.3097739778e-02f, 1.5391272493e-02f, 2.0023778081e-02f, 2.6859069243e-02f,
-        3.5629525781e-02f, 4.5952223241e-02f, 5.7351749390e-02f, 6.9288566709e-02f,
-        8.1191159785e-02f, 9.2490255833e-02f, 1.0265340656e-01f, 1.1121802777e-01f,
-        1.1782121658e-01f, 1.2222464383e-01f, 1.2433256954e-01f, 1.2420214713e-01f,
-        1.2204400450e-01f, 1.1821295321e-01f, 1.1318840832e-01f, 1.0754481703e-01f,
-        1.0191382468e-01f, 9.6939742565e-02f, 9.3231752515e-02f, 9.1315768659e-02f
+        0.0000000000e+00f, -1.3231920004e-09f, -5.8071242259e-11f, 7.4176806919e-09f,
+        1.6889693200e-08f, 2.0939033618e-08f, 6.3323604138e-09f, -4.3704385888e-08f,
+        -1.5136777165e-07f, -3.4226587786e-07f, -6.4724713411e-07f, -1.1003317013e-06f,
+        -1.7406666757e-06f, -2.6102886750e-06f, -3.7562799662e-06f, -5.2283103287e-06f,
+        -7.0810297075e-06f, -9.3713651950e-06f, -1.2161169252e-05f, -1.5514257029e-05f,
+        -1.9499317204e-05f, -2.4186683731e-05f, -2.9651528166e-05f, -3.5970344470e-05f,
+        -4.3224412366e-05f, -5.1496041124e-05f, -6.0872265749e-05f, -7.1440852480e-05f,
+        -8.3294245997e-05f, -9.6525320259e-05f, -1.1123159493e-04f, -1.2751069153e-04f,
+        -1.4546485909e-04f, -1.6561846132e-04f, -1.8773633929e-04f, -2.1193045541e-04f,
+        -2.3831747239e-04f, -2.6701329625e-04f, -2.9813844594e-04f, -3.3181239269e-04f,
+        -3.6815920612e-04f, -4.0730155888e-04f, -4.4936660561e-04f, -4.9448001664e-04f,
+        -5.4277182790e-04f, -5.9437012533e-04f, -6.4940738957e-04f, -7.0801418042e-04f,
+        -7.7032501576e-04f, -8.3647237625e-04f, -9.0659258422e-04f, -9.8081969190e-04f,
+        -1.0592915351e-03f, -1.1421436211e-03f, -1.2295149500e-03f, -1.3215418439e-03f,
+        -1.4183644671e-03f, -1.5201196074e-03f, -1.6269480111e-03f, -1.7389869317e-03f,
+        -1.8563776975e-03f, -1.9792574458e-03f, -2.1077671554e-03f, -2.2420443129e-03f
     }
 };
 
-static const float LV2_ORGAN_EXPECTED_OUT_NOTE_OFF[2][64] = {
+static const float LV2_JX10_EXPECTED_OUT_NOTE_OFF[2][64] = {
     {
-        1.7881659791e-02f, 2.1721476689e-02f, 2.8853684664e-02f, 3.8684703410e-02f,
-        5.0424069166e-02f, 6.3141867518e-02f, 7.5836457312e-02f, 8.7507508695e-02f,
-        9.7228780389e-02f, 1.0421558470e-01f, 1.0788147897e-01f, 1.0788055509e-01f,
-        1.0413187742e-01f, 9.6824221313e-02f, 8.6400978267e-02f, 7.3526442051e-02f,
-        5.9035707265e-02f, 4.3872114271e-02f, 2.9016954824e-02f, 1.5416422859e-02f,
-        3.9113699459e-03f, -4.8247324303e-03f, -1.0335511528e-02f, -1.2414798141e-02f,
-        -1.1121401563e-02f, -6.7735435441e-03f, 7.5477364589e-05f, 8.6797121912e-03f,
-        1.8157035112e-02f, 2.7556037530e-02f, 3.5927888006e-02f, 4.2398385704e-02f,
-        4.6234156936e-02f, 4.6898778528e-02f, 4.4094085693e-02f, 3.7783939391e-02f,
-        2.8198553249e-02f, 1.5819150954e-02f, 1.3437479502e-03f, -1.4362812042e-02f,
-        -3.0331481248e-02f, -4.5559264719e-02f, -5.9082139283e-02f, -7.0045031607e-02f,
-        -7.7763967216e-02f, -8.1775456667e-02f, -8.1869937479e-02f, -7.8106127679e-02f,
-        -7.0806145668e-02f, -6.0530900955e-02f, -4.8038166016e-02f, -3.4226257354e-02f,
-        -2.0067496225e-02f, -6.5364628099e-03f, 5.4617957212e-03f, 1.5157972462e-02f,
-        2.1974716336e-02f, 2.5568073615e-02f, 2.5851685554e-02f, 2.3001641035e-02f,
-        1.7441695556e-02f, 9.8100304604e-03f, 9.1005861759e-04f, -8.3511536941e-03f
+        -2.3517450318e-03f, -2.4647361133e-03f, -2.5843831245e-03f, -2.7075796388e-03f,
+        -2.8343601152e-03f, -2.9647541232e-03f, -3.0987935606e-03f, -3.2365065999e-03f,
+        -3.3779235091e-03f, -3.5230703652e-03f, -3.6719755735e-03f, -3.8246638142e-03f,
+        -3.9811609313e-03f, -4.1414904408e-03f, -4.3056765571e-03f, -4.4737402350e-03f,
+        -4.6457038261e-03f, -4.8215868883e-03f, -5.0014094450e-03f, -5.1851901226e-03f,
+        -5.3729466163e-03f, -5.5646947585e-03f, -5.7604517788e-03f, -5.9602307156e-03f,
+        -6.1640464701e-03f, -6.3719111495e-03f, -6.5838382579e-03f, -6.7998361774e-03f,
+        -7.0199179463e-03f, -7.2440896183e-03f, -7.4723623693e-03f, -7.7047408558e-03f,
+        -7.9412339255e-03f, -8.1818439066e-03f, -8.4265777841e-03f, -8.6825294420e-03f,
+        -8.9428499341e-03f, -9.2075373977e-03f, -9.4765927643e-03f, -9.7500113770e-03f,
+        -1.0027793236e-02f, -1.0309931822e-02f, -1.0596422479e-02f, -1.0887259617e-02f,
+        -1.1182436720e-02f, -1.1481943540e-02f, -1.1785773560e-02f, -1.2093913741e-02f,
+        -1.2406354770e-02f, -1.2723082677e-02f, -1.3044086285e-02f, -1.3369349763e-02f,
+        -1.3698859140e-02f, -1.4032597654e-02f, -1.4370549470e-02f, -1.4712693170e-02f,
+        -1.5059012920e-02f, -1.5409486368e-02f, -1.5764094889e-02f, -1.6122814268e-02f,
+        -1.6485624015e-02f, -1.6852496192e-02f, -1.7223412171e-02f, -1.7598342150e-02f
     },
     {
-        9.1590367258e-02f, 9.4289809465e-02f, 9.9458612502e-02f, 1.0693941265e-01f,
-        1.1637654155e-01f, 1.2723566592e-01f, 1.3883808255e-01f, 1.5040819347e-01f,
-        1.6113007069e-01f, 1.7020900548e-01f, 1.7693307996e-01f, 1.8072973192e-01f,
-        1.8121278286e-01f, 1.7821559310e-01f, 1.7180767655e-01f, 1.6229356825e-01f,
-        1.5019322932e-01f, 1.3620585203e-01f, 1.2115979195e-01f, 1.0595214367e-01f,
-        9.1482840478e-02f, 7.8588657081e-02f, 6.7981503904e-02f, 6.0196351260e-02f,
-        5.5552419275e-02f, 5.4130889475e-02f, 5.5770248175e-02f, 6.0080390424e-02f,
-        6.6473536193e-02f, 7.4210308492e-02f, 8.2456864417e-02f, 9.0349331498e-02f,
-        9.7060017288e-02f, 1.0186109692e-01f, 1.0418038815e-01f, 1.0364528000e-01f,
-        1.0011153668e-01f, 9.3674950302e-02f, 8.4664218128e-02f, 7.3616817594e-02f,
-        6.1238475144e-02f, 4.8350155354e-02f, 3.5825949162e-02f, 2.4527007714e-02f,
-        1.5236089006e-02f, 8.5978982970e-03f, 5.0696432590e-03f, 4.8854770139e-03f,
-        8.0376062542e-03f, 1.4275408350e-02f, 2.3122791201e-02f, 3.3912342042e-02f,
-        4.5833855867e-02f, 5.7993568480e-02f, 6.9479763508e-02f, 7.9429633915e-02f,
-        8.7092712522e-02f, 9.1885775328e-02f, 9.3435429037e-02f, 9.1605030000e-02f,
-        8.6503803730e-02f, 7.8477859497e-02f, 6.8083383143e-02f, 5.6044187397e-02f
+        -2.3517450318e-03f, -2.4647361133e-03f, -2.5843831245e-03f, -2.7075796388e-03f,
+        -2.8343601152e-03f, -2.9647541232e-03f, -3.0987935606e-03f, -3.2365065999e-03f,
+        -3.3779235091e-03f, -3.5230703652e-03f, -3.6719755735e-03f, -3.8246638142e-03f,
+        -3.9811609313e-03f, -4.1414904408e-03f, -4.3056765571e-03f, -4.4737402350e-03f,
+        -4.6457038261e-03f, -4.8215868883e-03f, -5.0014094450e-03f, -5.1851901226e-03f,
+        -5.3729466163e-03f, -5.5646947585e-03f, -5.7604517788e-03f, -5.9602307156e-03f,
+        -6.1640464701e-03f, -6.3719111495e-03f, -6.5838382579e-03f, -6.7998361774e-03f,
+        -7.0199179463e-03f, -7.2440896183e-03f, -7.4723623693e-03f, -7.7047408558e-03f,
+        -7.9412339255e-03f, -8.1818439066e-03f, -8.4265777841e-03f, -8.6825294420e-03f,
+        -8.9428499341e-03f, -9.2075373977e-03f, -9.4765927643e-03f, -9.7500113770e-03f,
+        -1.0027793236e-02f, -1.0309931822e-02f, -1.0596422479e-02f, -1.0887259617e-02f,
+        -1.1182436720e-02f, -1.1481943540e-02f, -1.1785773560e-02f, -1.2093913741e-02f,
+        -1.2406354770e-02f, -1.2723082677e-02f, -1.3044086285e-02f, -1.3369349763e-02f,
+        -1.3698859140e-02f, -1.4032597654e-02f, -1.4370549470e-02f, -1.4712693170e-02f,
+        -1.5059012920e-02f, -1.5409486368e-02f, -1.5764094889e-02f, -1.6122814268e-02f,
+        -1.6485624015e-02f, -1.6852496192e-02f, -1.7223412171e-02f, -1.7598342150e-02f
     }
 };
 
-static const float LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
+static const float LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
     {
-        -4.0559459478e-02f, -1.2670414150e-01f, -1.6014342010e-01f, -1.3931660354e-01f,
-        -1.0104077309e-01f, -4.3121892959e-02f, -2.6207653806e-02f, -2.3199958727e-02f,
-        -6.7270337604e-03f, -7.1769892238e-03f, 1.6412626952e-02f, 6.5241619945e-02f,
-        7.2027243674e-02f, 4.1552502662e-02f, 4.9767918885e-02f, 5.0462573767e-02f,
-        9.7279725596e-03f, 1.8221000209e-02f, 3.5446345806e-02f, 9.9497539923e-03f,
-        1.7544374568e-03f, 1.5812514350e-02f, 1.9179783762e-02f, 9.7139133140e-03f,
-        9.6436059102e-03f, 9.7721070051e-03f, -2.9934497434e-04f, -1.2593343854e-03f,
-        -4.9335660879e-04f, 2.5154934265e-03f, 1.3092795387e-02f, 2.3186910897e-02f,
-        3.2880228013e-02f, 3.7889908999e-02f, 3.6271773279e-02f, 3.0448844656e-02f,
-        2.4073433131e-02f, 2.2794701159e-02f, 2.9039207846e-02f, 3.9371751249e-02f,
-        4.4091433287e-02f, 3.1205622479e-02f, -5.2744448185e-03f, -5.7064604014e-02f,
-        -1.0211383551e-01f, -1.1757943779e-01f, -1.0098508745e-01f, -7.8470312059e-02f,
-        -8.2318276167e-02f, -1.0812826455e-01f, -1.1286567897e-01f, -8.7147615850e-02f,
-        -8.7160207331e-02f, -9.9829167128e-02f, -4.9523893744e-02f, 7.3941829614e-03f,
-        2.1289000288e-02f, 3.4531883895e-02f, 2.9814595357e-02f, 2.8686856851e-02f,
-        6.4323723316e-02f, 8.3953127265e-02f, 5.7771116495e-02f, 2.5712912902e-02f
+        -1.8251772970e-02f, -1.8858999014e-02f, -1.9479092211e-02f, -2.0112285390e-02f,
+        -2.0495397970e-02f, -2.0881604403e-02f, -2.1270930767e-02f, -2.1663406864e-02f,
+        -2.2059064358e-02f, -2.2457933053e-02f, -2.2860042751e-02f, -2.3265430704e-02f,
+        -2.3674124852e-02f, -2.4086162448e-02f, -2.4501578882e-02f, -2.4920403957e-02f,
+        -2.5342678651e-02f, -2.5768432766e-02f, -2.6197709143e-02f, -2.6630543172e-02f,
+        -2.7066973969e-02f, -2.7507038787e-02f, -2.7950776741e-02f, -2.8398228809e-02f,
+        -2.8849432245e-02f, -2.9304428026e-02f, -2.9763258994e-02f, -3.0225966126e-02f,
+        -3.0692586675e-02f, -3.1163167208e-02f, -3.1637746841e-02f, -3.2116372138e-02f,
+        -3.2599080354e-02f, -3.3085912466e-02f, -3.3576924354e-02f, -3.4072149545e-02f,
+        -3.4571636468e-02f, -3.5082843155e-02f, -3.5598631948e-02f, -3.6119010299e-02f,
+        -3.6644104868e-02f, -3.7173725665e-02f, -3.7703011185e-02f, -3.8227867335e-02f,
+        -3.8748357445e-02f, -3.9264310151e-02f, -3.9775639772e-02f, -4.0282223374e-02f,
+        -4.0783967823e-02f, -4.1280753911e-02f, -4.1772484779e-02f, -4.2259056121e-02f,
+        -4.2740367353e-02f, -4.3216321617e-02f, -4.3686818331e-02f, -4.4151764363e-02f,
+        -4.4611062855e-02f, -4.5064624399e-02f, -4.5512352139e-02f, -4.5954164118e-02f,
+        -4.6389967203e-02f, -4.6819675714e-02f, -4.7243207693e-02f, -4.7660473734e-02f
     },
     {
-        -4.1594504728e-04f, 6.0177445412e-03f, 3.5308238119e-02f, 7.0668801665e-02f,
-        6.8747535348e-02f, 4.5336712152e-02f, 4.7007802874e-02f, 5.2566956729e-02f,
-        3.1826283783e-02f, 1.9984606653e-02f, 2.7318730950e-02f, 2.4265950546e-02f,
-        2.4262389168e-02f, 2.4067681283e-02f, 8.3705848083e-03f, 1.5788340941e-02f,
-        4.2923163623e-02f, 3.1943585724e-02f, -1.8917510286e-02f, -5.1602017134e-02f,
-        -4.9048338085e-02f, -4.1848506778e-02f, -2.5306237862e-02f, -1.3802642003e-02f,
-        -3.4754935652e-02f, -4.7641962767e-02f, -3.3736333251e-02f, -3.5233095288e-02f,
-        -5.7496655732e-02f, -4.4349476695e-02f, -9.2654824257e-03f, -6.3623310998e-03f,
-        -8.7197721004e-03f, -1.5063190833e-02f, -2.4213692173e-02f, -9.8235614132e-04f,
-        2.4544438347e-02f, 1.6821755096e-02f, -6.3254060224e-03f, -1.1017292272e-03f,
-        1.0261813179e-02f, -9.6444161609e-03f, -9.0680299327e-03f, 6.1845094897e-03f,
-        -2.9426216497e-04f, -3.1293779612e-03f, -1.2182801962e-02f, -2.7193233371e-02f,
-        -2.7497438714e-02f, -2.2942436859e-02f, -2.0740259439e-02f, -2.2964352742e-02f,
-        -1.8179310486e-02f, -8.2391826436e-03f, -1.4105647802e-02f, -2.1977031603e-02f,
-        -2.0145220682e-02f, -1.9941106439e-02f, -1.7214599997e-02f, -1.7495656386e-02f,
-        -2.8904944658e-02f, -3.7753723562e-02f, -3.6063570529e-02f, -3.3155035228e-02f
+        -1.8251772970e-02f, -1.8858999014e-02f, -1.9479092211e-02f, -2.0112285390e-02f,
+        -2.0495397970e-02f, -2.0881604403e-02f, -2.1270930767e-02f, -2.1663406864e-02f,
+        -2.2059064358e-02f, -2.2457933053e-02f, -2.2860042751e-02f, -2.3265430704e-02f,
+        -2.3674124852e-02f, -2.4086162448e-02f, -2.4501578882e-02f, -2.4920403957e-02f,
+        -2.5342678651e-02f, -2.5768432766e-02f, -2.6197709143e-02f, -2.6630543172e-02f,
+        -2.7066973969e-02f, -2.7507038787e-02f, -2.7950776741e-02f, -2.8398228809e-02f,
+        -2.8849432245e-02f, -2.9304428026e-02f, -2.9763258994e-02f, -3.0225966126e-02f,
+        -3.0692586675e-02f, -3.1163167208e-02f, -3.1637746841e-02f, -3.2116372138e-02f,
+        -3.2599080354e-02f, -3.3085912466e-02f, -3.3576924354e-02f, -3.4072149545e-02f,
+        -3.4571636468e-02f, -3.5082843155e-02f, -3.5598631948e-02f, -3.6119010299e-02f,
+        -3.6644104868e-02f, -3.7173725665e-02f, -3.7703011185e-02f, -3.8227867335e-02f,
+        -3.8748357445e-02f, -3.9264310151e-02f, -3.9775639772e-02f, -4.0282223374e-02f,
+        -4.0783967823e-02f, -4.1280753911e-02f, -4.1772484779e-02f, -4.2259056121e-02f,
+        -4.2740367353e-02f, -4.3216321617e-02f, -4.3686818331e-02f, -4.4151764363e-02f,
+        -4.4611062855e-02f, -4.5064624399e-02f, -4.5512352139e-02f, -4.5954164118e-02f,
+        -4.6389967203e-02f, -4.6819675714e-02f, -4.7243207693e-02f, -4.7660473734e-02f
     }
 };
 
@@ -169,45 +169,24 @@ protected:
     std::unique_ptr<Lv2Wrapper> _module_under_test {nullptr};
 };
 
-TEST_F(TestLv2Wrapper, TestSetName)
+TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
 {
     SetUp("http://lv2plug.in/plugins/eg-amp");
 
+    // TestSetName
     EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
     EXPECT_EQ("Simple Amplifier", _module_under_test->label());
-}
 
-TEST_F(TestLv2Wrapper, TestParameterInitialization)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
+    // TestParameterInitialization
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
-}
 
-TEST_F(TestLv2Wrapper, TestParameterSetViaEvent)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
-    _module_under_test->process_event(event);
+    // TestParameterSetViaEvent
+    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
+    _module_under_test->process_event(parameter_change_event);
     auto value = _module_under_test->parameter_value(0);
     EXPECT_EQ(0.123f, value.second);
-}
-
-TEST_F(TestLv2Wrapper, TestProcessing)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    ChunkSampleBuffer in_buffer(1);
-    ChunkSampleBuffer out_buffer(1);
-
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-
-    _module_under_test->process_audio(in_buffer, out_buffer);
-
-    test_utils::assert_buffer_value(1.0f, out_buffer);
 }
 
 TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
@@ -217,22 +196,23 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
 
+    // TestProcessingWithParameterChanges
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Verify that a parameter change affects the sound.
     // eg-amp plugins Gain parameter range is from -90 to 24
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
-    _module_under_test->process_event(event);
+    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
+    _module_under_test->process_event(lower_gain_Event);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
 
     test_utils::assert_buffer_value(0.0f, out_buffer);
 
-    auto [status, value] = _module_under_test->parameter_value(0);
+    auto [status, parameter_value] = _module_under_test->parameter_value(0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(-90.0f, value);
+    EXPECT_EQ(-90.0f, parameter_value);
 }
 
 TEST_F(TestLv2Wrapper, TestBypassProcessing)
@@ -251,7 +231,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 }
 
 /*
- * Depends on the CALF Organ plugin, which uses Fluidsynth internally.
+ * Depends on the MDA JX10 Synth plugin, as ported by drobilla (there are more ports).
  * Since this is relatively heavy to load, several tests are done in one method.
  * 1. Basic program management calls
  * 2. Audio check after note on
@@ -260,13 +240,13 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
  *
  * If the Calf plugin is not found, the test just returns after printing a message to the console.
  */
-TEST_F(TestLv2Wrapper, TestOrgan)
+TEST_F(TestLv2Wrapper, TestSynth)
 {
-    SetUp("http://calf.sourceforge.net/plugins/Organ");
+    SetUp("http://drobilla.net/plugins/mda/JX10");
 
-    if (_module_under_test == nullptr)
-    {
-        std::cout << "Calf Organ plugin not installed - please install it to ensure full suite of unit tests has run." << std::endl;
+    if (_module_under_test == nullptr) {
+        std::cout << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run."
+                  << std::endl;
         return;
     }
 
@@ -274,32 +254,32 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     ChunkSampleBuffer out_buffer(2);
 
     ASSERT_TRUE(_module_under_test->supports_programs());
-    ASSERT_EQ(29, _module_under_test->program_count());
+    ASSERT_EQ(52, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
-    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_12Sqr", _module_under_test->current_program_name());
-    auto [status, program_name] = _module_under_test->program_name(2);
+    ASSERT_EQ("http://drobilla.net/plugins/mda/presets#JX10-303-saw-bass", _module_under_test->current_program_name());
+    auto[status, program_name] = _module_under_test->program_name(2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_CriticalBass", program_name);
+    ASSERT_EQ("http://drobilla.net/plugins/mda/presets#JX10-5th-sweep-pad", program_name);
 
     // Access with an invalid program number
     std::tie(status, program_name) = _module_under_test->program_name(2000);
     ASSERT_NE(ProcessorReturnCode::OK, status);
 
     // Get all programs, all programs are named "Basic" in VstXSynth
-    auto [res, programs] = _module_under_test->all_program_names();
+    auto[res, programs] = _module_under_test->all_program_names();
     ASSERT_EQ(ProcessorReturnCode::OK, res);
-    ASSERT_EQ("http://calf.sourceforge.net/factory_presets#organ_RoyalewithCheese", programs[15]);
-    ASSERT_EQ(29u, programs.size());
+    ASSERT_EQ("http://drobilla.net/plugins/mda/presets#JX10-fretless-bass", programs[15]);
+    ASSERT_EQ(52u, programs.size());
 
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_ON, out_buffer, 2);
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_ON, out_buffer, 2);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
 
     // A compromise, for the unit tests to be able to run, while still having a sempaphore in the live multithreaded program.
     _module_under_test->_pause();
@@ -312,7 +292,9 @@ TEST_F(TestLv2Wrapper, TestOrgan)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_ORGAN_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
+    //test_utils::print_buffer(out_buffer, 2);
+
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
