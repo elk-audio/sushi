@@ -118,7 +118,7 @@ TEST_F(TestEngine, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     test_utils::fill_sample_buffer(out_buffer, 0.5f);
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer,  &control_buffer, &control_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
 
     /* Separate the first 2 channels, which should pass through unprocessed
      * and the 2 last, which should be set to 0 since they are not connected to anything */
@@ -132,7 +132,7 @@ TEST_F(TestEngine, TestProcess)
     res = _module_under_test->add_plugin_to_track("test_track", "sushi.testing.gain",
                                                   "gain", "", PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, res);
-    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
     main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
     test_utils::assert_buffer_value(1.0f, main_bus);
 }
@@ -151,7 +151,7 @@ TEST_F(TestEngine, TestOutputMixing)
     ControlBuffer control_buffer;
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
 
     /* Both track's outputs are routed to bus 0, so they should sum to 2 */
     auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
@@ -317,7 +317,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
         SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
         ControlBuffer control_buffer;
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        e->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer);
+        e->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
     };
     // Add a track, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
     _module_under_test->enable_realtime(true);
@@ -401,8 +401,8 @@ TEST_F(TestEngine, TestCvRouting)
     ControlBuffer out_controls;
 
     in_controls.cv_values[1] = 0.5;
-    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
-    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls, Time(0), 0);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls, Time(0), 0);
 
     // We should have a non-zero value in this slot
     ASSERT_NE(0.0f, out_controls.cv_values[1]);
@@ -443,7 +443,7 @@ TEST_F(TestEngine, TestGateRouting)
     in_controls.gate_values.reset();
     in_controls.gate_values[1] = true;
 
-    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &in_controls, &out_controls, Time(0), 0);
     // A gate high event on gate input 1 should result in a gate high on gate output 0
     ASSERT_TRUE(out_controls.gate_values[0]);
     ASSERT_EQ(1u, out_controls.gate_values.count());

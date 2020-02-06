@@ -267,12 +267,12 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     }
     OutputConnection connection;
     connection.channel = channel;
-    connection.output = 0;
+    connection.output = midi_output;
     connection.min_range = 1.234f;
     connection.max_range = 4.5678f;
     connection.cc_number = 123;
     _kb_routes_out[id].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", midi_output, track_name, channel);
+    SUSHI_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", track_name, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 

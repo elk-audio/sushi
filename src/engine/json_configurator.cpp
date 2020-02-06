@@ -54,6 +54,14 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
     {
         audio_config.cv_outputs = host_config["cv_outputs"].GetInt();
     }
+    if (host_config.HasMember("midi_inputs"))
+    {
+        audio_config.midi_inputs = host_config["midi_inputs"].GetInt();
+    }
+    if (host_config.HasMember("midi_outputs"))
+    {
+        audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
+    }
 
     return {JsonConfigReturnStatus::OK, audio_config};
 }
