@@ -87,10 +87,10 @@ public:
         _cleanup();
     }
 
-    /* Inherited from Processor */
     ProcessorReturnCode init(float sample_rate) override;
 
-    void configure(float sample_rate) override;
+    // LV2 does not support changing the sample rate after initialization.
+    void configure(float /*sample_rate*/) override;
 
     void process_event(const RtEvent& event) override;
 

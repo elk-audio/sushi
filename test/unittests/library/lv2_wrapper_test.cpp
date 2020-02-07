@@ -340,14 +340,6 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_TRUE(_fifo.empty());
 }
 
-TEST_F(TestLv2Wrapper, TestConfigurationChange)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    _module_under_test->configure(44100.0f);
-    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
-}
-
 // TODO: Re-instate once time info is implemented.
 /*TEST_F(TestLv2Wrapper, TestTimeInfo)
 {

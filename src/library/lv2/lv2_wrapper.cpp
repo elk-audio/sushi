@@ -318,22 +318,9 @@ Port Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
     return port;
 }
 
-void Lv2Wrapper::configure(float sample_rate)
+void Lv2Wrapper::configure(float /*sample_rate*/)
 {
-    _sample_rate = sample_rate;
-    bool reset_enabled = enabled();
-
-    if (reset_enabled)
-    {
-        set_enabled(false);
-    }
-
-    if (reset_enabled)
-    {
-        set_enabled(true);
-    }
-
-    return;
+    SUSHI_LOG_ERROR("LV2 does not support altering the sample rate after initialization.");
 }
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId parameter_id) const

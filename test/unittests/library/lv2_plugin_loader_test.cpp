@@ -6,7 +6,7 @@
 using namespace sushi;
 using namespace sushi::lv2;
 
-static constexpr double SAMPLE_RATE = 44000.0;
+static constexpr double SAMPLE_RATE = 48000.0;
 
 class TestLv2PluginLoader : public ::testing::Test
 {
