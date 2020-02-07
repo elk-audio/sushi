@@ -96,6 +96,12 @@ public:
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
+    void set_enabled(bool enabled) override;
+
+    void set_bypassed(bool bypassed) override;
+
+    bool bypassed() const override;
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
@@ -158,17 +164,19 @@ private:
 
     void _populate_program_list();
 
-    float _sample_rate {0};
+    float _sample_rate{0};
 
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS];
 
-    ChunkSampleBuffer _dummy_input {1};
-    ChunkSampleBuffer _dummy_output {1};
+    ChunkSampleBuffer _dummy_input{1};
+    ChunkSampleBuffer _dummy_output{1};
 
     bool _double_mono_input {false};
 
     std::string _plugin_path;
+
+    BypassManager _bypass_manager{_bypassed};
 
     // VstTimeInfo _time_info;
 
@@ -178,7 +186,7 @@ private:
     RtSafeRtEventFifo _incoming_event_queue;
 
     PluginLoader _loader;
-    LV2Model* _model {nullptr};
+    LV2Model* _model{nullptr};
 
     // These are not used for other than the Unit tests,
     // to simulate how the wrapper behaves if multi-threaded.

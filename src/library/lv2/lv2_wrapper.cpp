@@ -25,6 +25,8 @@
 #include <exception>
 #include <cmath>
 
+#include <twine/twine.h>
+
 #include "logging.h"
 
 #include "lv2_port.h"
@@ -499,6 +501,11 @@ void Lv2Wrapper::process_event(const RtEvent& event)
             SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
+    else if(event.type() == RtEventType::SET_BYPASS)
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+    }
     else
     {
         SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
@@ -507,7 +514,7 @@ void Lv2Wrapper::process_event(const RtEvent& event)
 
 void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_bypassed)
+    if (_bypass_manager.should_process() == false)
     {
          bypass_process(in_buffer, out_buffer);
         _flush_event_queue();
@@ -533,7 +540,36 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
 
         _deliver_outputs_from_plugin(false);
+
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
+        }
     }
+}
+
+void Lv2Wrapper::set_enabled(bool enabled)
+{
+    Processor::set_enabled(enabled);
+    if (enabled)
+    {
+// TODO: Finish this.
+    }
+    else
+    {
+
+    }
+}
+
+void Lv2Wrapper::set_bypassed(bool bypassed)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+bool Lv2Wrapper::bypassed() const
+{
+    return _bypass_manager.bypassed();
 }
 
 void Lv2Wrapper::_deliver_inputs_to_plugin()

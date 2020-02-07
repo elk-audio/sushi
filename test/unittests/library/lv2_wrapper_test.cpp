@@ -221,13 +221,27 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -45.0f);
+    _module_under_test->process_event(event);
+
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
+    // Set bypass and manually feed the generated RtEvent back to the
+    // wrapper processor as event dispatcher is not running
     _module_under_test->set_bypassed(true);
-    _module_under_test->process_event(event);
+    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
+    EXPECT_TRUE(bypass_event.get());
+    _module_under_test->process_event(bypass_event->to_rt_event(0));
+    EXPECT_TRUE(_module_under_test->bypassed());
     _module_under_test->process_audio(in_buffer, out_buffer);
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Test that we are ramping up the audio to the bypass value
+    float prev_value = 0;
+    for (int i = 1; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        EXPECT_GT(out_buffer.channel(0)[i], prev_value);
+        prev_value = out_buffer.channel(0)[i];
+    }
 }
 
 /*

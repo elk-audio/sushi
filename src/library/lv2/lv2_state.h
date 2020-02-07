@@ -65,7 +65,7 @@ private:
     void _load_programs(PresetSink sink, void* data);
 
     std::vector<std::string> _program_names;
-    int _current_program_index {0};
+    int _current_program_index{0};
 
     LilvState* _preset {nullptr}; // Naked pointer because Lilv manages lifetime.
 

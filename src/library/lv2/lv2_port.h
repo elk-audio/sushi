@@ -109,11 +109,11 @@ private:
     int _index;
 
     // For ranges. Only used in control ports.
-    float _def {1.0f};
-    float _max {1.0f};
-    float _min {0.0f};
+    float _def{1.0f};
+    float _max{1.0f};
+    float _min{0.0f};
 
-    bool _show_hidden {true};
+    bool _show_hidden{true};
 };
 
 } // end namespace lv2

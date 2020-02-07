@@ -203,7 +203,7 @@ private:
 
     std::vector<std::unique_ptr<ControlID>> _controls;
 
-    bool _buf_size_set {false};
+    bool _buf_size_set{false};
 
     std::string _temp_dir;
     std::string _save_dir;
@@ -214,13 +214,13 @@ private:
 
     bool _safe_restore;
 
-    bool _request_update {false};
+    bool _request_update{false};
 
     int _control_input_index;
 
     bool _exit;
 
-    int _plugin_latency {0};
+    int _plugin_latency{0};
 
     LV2_Atom_Forge _forge;
 
@@ -237,13 +237,13 @@ private:
     std::vector<Port> _ports;
 
     float _sample_rate;
-    int _midi_buffer_size {4096};
+    int _midi_buffer_size{4096};
 
-    const LilvPlugin* _plugin_class {nullptr};
+    const LilvPlugin* _plugin_class{nullptr};
 
-    LilvInstance* _plugin_instance {nullptr};
+    LilvInstance* _plugin_instance{nullptr};
 
-    LilvWorld* _world {nullptr};
+    LilvWorld* _world{nullptr};
 
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;
