@@ -130,12 +130,12 @@ private:
 
     void _stop_server();
 
-    void setup_engine_control();
+    void _setup_engine_control();
 
-    std::pair<OscConnection*, std::string> create_parameter_connection(const std::string& processor_name,
+    std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
                                                                        const std::string& parameter_name);
 
-    std::pair<OscConnection*, std::string> create_processor_connection(const std::string& processor_name,
+    std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
                                                                        const std::string& osc_path_prefix);
 
     lo_server_thread _osc_server;

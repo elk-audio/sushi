@@ -351,7 +351,7 @@ ControlFrontendStatus OSCFrontend::init()
     std::stringstream send_port_stream;
     send_port_stream << _send_port;
     _osc_out_address = lo_address_new(nullptr, send_port_stream.str().c_str());
-    setup_engine_control();
+    _setup_engine_control();
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
     return ControlFrontendStatus::OK;
@@ -369,7 +369,7 @@ OSCFrontend::~OSCFrontend()
     _event_dispatcher->unsubscribe_from_engine_notifications(this);
 }
 
-std::pair<OscConnection*, std::string> OSCFrontend::create_parameter_connection(const std::string& processor_name,
+std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection(const std::string& processor_name,
                                                                       const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
@@ -395,7 +395,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::create_parameter_connection(
 bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
 {
-    auto [connection, osc_path] = create_parameter_connection(processor_name, parameter_name);
+    auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
     if (connection == nullptr)
     {
         return false;
@@ -408,7 +408,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
 bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                               const std::string& parameter_name)
 {
-    auto [connection, osc_path] = create_parameter_connection(processor_name, parameter_name);
+    auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
     if (connection == nullptr)
     {
         return false;
@@ -437,7 +437,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     return true;
 }
 
-std::pair<OscConnection*, std::string> OSCFrontend::create_processor_connection(const std::string& processor_name,
+std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
                                                                                 const std::string& osc_path_prefix)
 {
     std::string osc_path = osc_path_prefix;
@@ -457,7 +457,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::create_processor_connection(
 
 bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 {
-    auto [connection, osc_path] = create_processor_connection(processor_name, "/bypass/");
+    auto [connection, osc_path] = _create_processor_connection(processor_name, "/bypass/");
     if (connection == nullptr)
     {
         return false;
@@ -471,7 +471,7 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
-    auto [connection, osc_path] = create_processor_connection(track_name, "/keyboard_event/");
+    auto [connection, osc_path] = _create_processor_connection(track_name, "/keyboard_event/");
     if (connection == nullptr)
     {
         return false;
@@ -485,7 +485,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 
 bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
-    auto [connection, osc_path] = create_processor_connection(processor_name, "/program/");
+    auto [connection, osc_path] = _create_processor_connection(processor_name, "/program/");
     if (connection == nullptr)
     {
         return false;
@@ -556,7 +556,7 @@ void OSCFrontend::_stop_server()
     }
 }
 
-void OSCFrontend::setup_engine_control()
+void OSCFrontend::_setup_engine_control()
 {
     lo_server_thread_add_method(_osc_server, "/engine/set_tempo", "f", osc_set_tempo, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/set_time_signature", "ii", osc_set_time_signature, this->_controller);
