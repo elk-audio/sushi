@@ -553,11 +553,11 @@ void Lv2Wrapper::set_enabled(bool enabled)
     Processor::set_enabled(enabled);
     if (enabled)
     {
-// TODO: Finish this.
+        lilv_instance_activate(_model->plugin_instance());
     }
     else
     {
-
+        lilv_instance_deactivate(_model->plugin_instance());
     }
 }
 
