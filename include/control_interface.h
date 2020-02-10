@@ -129,8 +129,8 @@ public:
     virtual ControlStatus                       set_tempo(float tempo) = 0;
     virtual TimeSignature                       get_time_signature() const = 0;
     virtual ControlStatus                       set_time_signature(TimeSignature signature) = 0;
-    virtual bool                                get_timing_statistics_enabled() = 0;
-    virtual void                                set_timing_statistics_enabled(bool enabled) const = 0;
+    virtual bool                                get_timing_statistics_enabled() const = 0;
+    virtual void                                set_timing_statistics_enabled(bool enabled) = 0;
     virtual std::vector<TrackInfo>              get_tracks() const = 0;
 
     // Keyboard control
