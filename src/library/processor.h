@@ -321,6 +321,25 @@ public:
      */
     virtual ProcessorReturnCode connect_gate_from_processor(int gate_output_id, int channel, int note_no);
 
+    /**
+     * @brief Set the on Track status. Call with true when adding a Processor to a track
+     *        and false when removing it.
+     * @param active True if Processor is being added to a Track, False otherwise.
+     */
+    void set_on_track(bool active)
+    {
+        _on_track = active;
+    }
+
+    /**
+     * @brief Query whether the processor is currently in the processing chain of a Track
+     * @return true if the Processor is on a track, false otherwise.
+     */
+    bool currently_on_track()
+    {
+        return _on_track;
+    }
+
 protected:
 
     /**
@@ -398,6 +417,8 @@ protected:
 
     bool _enabled{false};
     bool _bypassed{false};
+    bool _in_processing{false};
+    bool _on_track{false};
 
     HostControl _host_control;
 

@@ -54,39 +54,30 @@ TEST_F(ControllerTest, TestMainEngineControls)
     auto tracks = _module_under_test->get_tracks();
     ASSERT_EQ(3u, tracks.size());
 
-    // Tracks can be returned in any order
-    for (const auto& track : tracks)
-    {
-        if (track.name == "main")
-        {
-            EXPECT_EQ("", track.label);
-            EXPECT_EQ(2, track.input_channels);
-            EXPECT_EQ(1, track.input_busses);
-            EXPECT_EQ(2, track.output_channels);
-            EXPECT_EQ(1, track.output_busses);
-            EXPECT_EQ(3, track.processor_count);
-        }
+    EXPECT_EQ(3u, tracks.size());
+    EXPECT_EQ("main", tracks[0].name);
+    EXPECT_EQ("", tracks[0].label);
+    EXPECT_EQ(2, tracks[0].input_channels);
+    EXPECT_EQ(1, tracks[0].input_busses);
+    EXPECT_EQ(2, tracks[0].output_channels);
+    EXPECT_EQ(1, tracks[0].output_busses);
+    EXPECT_EQ(3, tracks[0].processor_count);
 
-        else if (track.name == "monotrack")
-        {
-            EXPECT_EQ("", track.label);
-            EXPECT_EQ(1, track.input_channels);
-            EXPECT_EQ(1, track.input_busses);
-            EXPECT_EQ(1, track.output_channels);
-            EXPECT_EQ(1, track.output_busses);
-            EXPECT_EQ(3, track.processor_count);
-        }
+    EXPECT_EQ("monotrack", tracks[1].name);
+    EXPECT_EQ("", tracks[1].label);
+    EXPECT_EQ(1, tracks[1].input_channels);
+    EXPECT_EQ(1, tracks[1].input_busses);
+    EXPECT_EQ(1, tracks[1].output_channels);
+    EXPECT_EQ(1, tracks[1].output_busses);
+    EXPECT_EQ(3, tracks[1].processor_count);
 
-        else if (track.name == "multi")
-        {
-            EXPECT_EQ("", track.label);
-            EXPECT_EQ(4, track.input_channels);
-            EXPECT_EQ(2, track.input_busses);
-            EXPECT_EQ(4, track.output_channels);
-            EXPECT_EQ(2, track.output_busses);
-            EXPECT_EQ(0, track.processor_count);
-        }
-    }
+    EXPECT_EQ("multi", tracks[2].name);
+    EXPECT_EQ("", tracks[2].label);
+    EXPECT_EQ(4, tracks[2].input_channels);
+    EXPECT_EQ(2, tracks[2].input_busses);
+    EXPECT_EQ(4, tracks[2].output_channels);
+    EXPECT_EQ(2, tracks[2].output_busses);
+    EXPECT_EQ(0, tracks[2].processor_count);
 }
 
 TEST_F(ControllerTest, TestKeyboardControls)

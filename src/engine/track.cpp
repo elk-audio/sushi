@@ -109,8 +109,10 @@ bool Track::add(Processor* processor)
         // If a track adds itself to its process chain, endless loops can arrise
         return false;
     }
+    assert(processor->currently_on_track() == false);
     _processors.push_back(processor);
     processor->set_event_output(this);
+    processor->set_on_track(true);
     _update_channel_config();
     return true;
 }
@@ -122,6 +124,7 @@ bool Track::remove(ObjectId processor)
         if ((*plugin)->id() == processor)
         {
             (*plugin)->set_event_output(nullptr);
+            (*plugin)->set_on_track(false);
             _processors.erase(plugin);
             _update_channel_config();
             return true;

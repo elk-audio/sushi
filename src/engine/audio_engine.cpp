@@ -822,6 +822,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
         if (!inserted || !added)
         {
             SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
+            _deregister_processor(plugin_name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -831,6 +832,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
         _insert_processor_in_realtime_part(plugin.get());
         if (track->add(plugin.get()) == false)
         {
+            _deregister_processor(plugin_name);
             return EngineReturnStatus::ERROR;
         }
     }
@@ -957,6 +959,8 @@ std::vector<std::shared_ptr<const Track>> AudioEngine::all_tracks() const
             tracks.push_back(std::static_pointer_cast<const Track, Processor>(processor_node->second));
         }
     }
+    /* Sort the list so tracks are listed in the order they were created */
+    std::sort(tracks.begin(), tracks.end(), [](auto a, auto b) {return a->id() > b->id();});
     return tracks;
 }
 
