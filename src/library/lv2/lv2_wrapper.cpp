@@ -578,14 +578,18 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     {
         _update_transport();
 
-        switch (_model->play_state())
-        {
+        switch (_model->play_state()) {
             case PlayState::PAUSE_REQUESTED:
-                _model->set_play_state(PlayState::PAUSED);
-                _model->paused.notify();
-                break;
+                {
+                    _model->set_play_state(PlayState::PAUSED);
+                    SUSHI_LOG_DEBUG("WRAPPER: NOTIFYING");
+                    //_model->paused.notify();
+                    break;
+                }
             case PlayState::PAUSED:
-                return/* 0*/;
+                // JALV cleared MIDI buffer here.
+                _flush_event_queue();
+                return;
             default:
                 break;
         }
@@ -796,8 +800,7 @@ void Lv2Wrapper::_process_midi_input(Port* port)
 {
     auto lv2_evbuf_iterator = lv2_evbuf_begin(port->evbuf());
 
-// TODO: Re-introduce transport support.
-    /* Write transport change event if applicable */
+    // Write transport change event if applicable:
     if (_xport_changed)
     {
         lv2_evbuf_write(&lv2_evbuf_iterator,
@@ -959,21 +962,6 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     {
         _double_mono_input = true;
     }
-}
-
-void Lv2Wrapper::_pause()
-{
-    _previous_play_state = _model->play_state();
-
-    if(_previous_play_state != PlayState::PAUSED)
-    {
-        _model->set_play_state(PlayState::PAUSED);
-    }
-}
-
-void Lv2Wrapper::_resume()
-{
-    _model->set_play_state(_previous_play_state);
 }
 
 } // namespace lv2

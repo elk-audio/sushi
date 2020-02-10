@@ -237,7 +237,6 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_model.h
                                src/library/lv2/lv2_plugin_loader.h
                                src/library/lv2/lv2_port.h
-                               src/library/lv2/lv2_semaphore.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_features.cpp

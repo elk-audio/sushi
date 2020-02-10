@@ -183,7 +183,6 @@ private:
 
     BypassManager _bypass_manager{_bypassed};
 
-
     // This queue holds incoming midi events.
     // They are parsed and converted to lv2_evbuf content for LV2 in
     // process_audio(...).
@@ -191,13 +190,6 @@ private:
 
     PluginLoader _loader;
     LV2Model* _model{nullptr};
-
-    // These are not used for other than the Unit tests,
-    // to simulate how the wrapper behaves if multi-threaded.
-    PlayState _previous_play_state {PlayState::PAUSED};
-    void _pause();
-    void _resume();
-    FRIEND_TEST(TestLv2Wrapper, TestOrgan);
 };
 
 } // end namespace lv2

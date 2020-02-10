@@ -41,7 +41,6 @@
 #include "lv2_port.h"
 #include "lv2_host_nodes.h"
 #include "lv2_control.h"
-#include "lv2_semaphore.h"
 
 namespace sushi {
 namespace lv2 {
@@ -173,9 +172,6 @@ public:
     void request_update();
     void clear_update_request();
 
-    void set_restore_thread_safe(bool safe);
-    bool restore_thread_safe();
-
     LV2_State* state();
 
     void set_play_state(PlayState play_state);
@@ -199,15 +195,12 @@ public:
     bool rolling();
     void set_rolling(bool rolling);
 
-    Semaphore paused; // Paused signal from process thread.
-
 private:
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();
     void _initialize_urid_symap();
 
-    void _initialize_safe_restore_feature();
     void _initialize_make_path_feature();
 
     std::vector<std::unique_ptr<ControlID>> _controls;
@@ -220,8 +213,6 @@ private:
     PlayState _play_state;
 
     std::unique_ptr<LV2_State> _lv2_state;
-
-    bool _safe_restore;
 
     bool _request_update{false};
 

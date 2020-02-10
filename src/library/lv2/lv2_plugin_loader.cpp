@@ -84,15 +84,6 @@ void PluginLoader::load_plugin(const LilvPlugin* plugin_handle, double sample_ra
     }
 
     _model->host_features().ext_data.data_access = lilv_instance_get_descriptor(_model->plugin_instance())->extension_data;
-
-    auto state_threadSafeRestore = lilv_new_uri(_model->lilv_world(), LV2_STATE__threadSafeRestore);
-
-    if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
-    {
-        _model->set_restore_thread_safe(true);
-    }
-
-    lilv_node_free(state_threadSafeRestore);
 }
 
 void PluginLoader::close_plugin_instance()

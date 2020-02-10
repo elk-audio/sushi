@@ -20,7 +20,7 @@
             ],
             "plugins" : [
                 {
-                    "uri" : "http://moddevices.com/plugins/mda/JX10",
+                    "uri" : "http://drobilla.net/plugins/mda/JX10",
                     "name" : "Synth",
                     "type"   : "lv2"
                 }

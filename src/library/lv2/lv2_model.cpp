@@ -48,14 +48,14 @@ LV2Model::LV2Model(LilvWorld* worldIn):
 {
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
-    /* Find all installed plugins */
+
+    // Find all installed plugins.
     lilv_world_load_all(_world);
 
     _initialize_map_feature();
     _initialize_unmap_feature();
     _initialize_urid_symap();
     _initialize_log_feature();
-    _initialize_safe_restore_feature();
     _initialize_make_path_feature();
 
     _lv2_state = std::make_unique<LV2_State>(this);
@@ -68,7 +68,7 @@ LV2Model::~LV2Model()
 
 void LV2Model::initialize_host_feature_list()
 {
-    /* Build feature list for passing to plugins */
+    // Build feature list for passing to plugins.
     std::vector<const LV2_Feature*> features({
             &_features.map_feature,
             &_features.unmap_feature,
@@ -150,13 +150,6 @@ void LV2Model::_initialize_unmap_feature()
 LV2_State* LV2Model::state()
 {
     return _lv2_state.get();
-}
-
-void LV2Model::_initialize_safe_restore_feature()
-{
-    init_feature(&this->_features.safe_restore_feature,
-                 LV2_STATE__threadSafeRestore,
-                 nullptr);
 }
 
 void LV2Model::_initialize_make_path_feature()
@@ -299,16 +292,6 @@ void LV2Model::request_update()
 void LV2Model::clear_update_request()
 {
     _request_update = false;
-}
-
-void LV2Model::set_restore_thread_safe(bool safe)
-{
-    _safe_restore = safe;
-}
-
-bool LV2Model::restore_thread_safe()
-{
-    return _safe_restore;
 }
 
 void LV2Model::set_play_state(PlayState play_state)
