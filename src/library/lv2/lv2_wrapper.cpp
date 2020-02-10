@@ -70,6 +70,8 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
 
+    _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
+
     auto library_handle = _loader.plugin_handle_from_URI(_plugin_path.c_str());
 
     if (library_handle == nullptr)
@@ -322,7 +324,7 @@ Port Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
 
 void Lv2Wrapper::configure(float /*sample_rate*/)
 {
-    SUSHI_LOG_ERROR("LV2 does not support altering the sample rate after initialization.");
+    SUSHI_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
 }
 
 std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId parameter_id) const
@@ -512,6 +514,59 @@ void Lv2Wrapper::process_event(const RtEvent& event)
     }
 }
 
+void Lv2Wrapper::_update_transport()
+{
+    auto transport = _host_control.transport();
+
+    const bool rolling = transport->playing();
+    const float beats_per_minute = transport->current_tempo();
+    const auto ts = transport->current_time_signature();
+    const int beats_per_bar = ts.numerator;
+    const int beat_type = ts.denominator;
+    const double current_bar_beats = transport->current_bar_beats();
+    const int32_t bar = transport->current_bar_start_beats() / current_bar_beats;
+    const uint32_t frame = transport->current_samples() / AUDIO_CHUNK_SIZE;
+
+    // If transport state is not as expected, then something has changed.
+    _xport_changed = (rolling != _model->rolling() ||
+                      frame != _model->position() ||
+                      beats_per_minute != _model->bpm());
+
+    if (_xport_changed)
+    {
+        // Build an LV2 position object to report change to plugin.
+        lv2_atom_forge_set_buffer(&_model->forge(), pos_buf, sizeof(pos_buf));
+        LV2_Atom_Forge* forge = &_model->forge();
+
+        LV2_Atom_Forge_Frame frame_atom;
+        lv2_atom_forge_object(forge, &frame_atom, 0, _model->urids().time_Position);
+        lv2_atom_forge_key(forge, _model->urids().time_frame);
+        lv2_atom_forge_long(forge, frame);
+        lv2_atom_forge_key(forge, _model->urids().time_speed);
+        lv2_atom_forge_float(forge, rolling ? 1.0 : 0.0);
+
+        lv2_atom_forge_key(forge, _model->urids().time_barBeat);
+        lv2_atom_forge_float(forge, current_bar_beats);
+
+        lv2_atom_forge_key(forge, _model->urids().time_bar);
+        lv2_atom_forge_long(forge, bar - 1);
+
+        lv2_atom_forge_key(forge, _model->urids().time_beatUnit);
+        lv2_atom_forge_int(forge, beat_type);
+
+        lv2_atom_forge_key(forge, _model->urids().time_beatsPerBar);
+        lv2_atom_forge_float(forge, beats_per_bar);
+
+        lv2_atom_forge_key(forge, _model->urids().time_beatsPerMinute);
+        lv2_atom_forge_float(forge, beats_per_minute);
+    }
+
+    // Update model transport state to expected values for next cycle.
+    _model->set_position(rolling ? frame + AUDIO_CHUNK_SIZE : frame);
+    _model->set_bpm(beats_per_minute);
+    _model->set_rolling(rolling);
+}
+
 void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     if (_bypass_manager.should_process() == false)
@@ -521,6 +576,8 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
     else
     {
+        _update_transport();
+
         switch (_model->play_state())
         {
             case PlayState::PAUSE_REQUESTED:
@@ -741,13 +798,13 @@ void Lv2Wrapper::_process_midi_input(Port* port)
 
 // TODO: Re-introduce transport support.
     /* Write transport change event if applicable */
-    /*
-    if (xport_changed)
+    if (_xport_changed)
     {
-        lv2_evbuf_write(&_lv2_evbuf_iterator, 0, 0,
-                        lv2_pos->type, lv2_pos->size,
-                        (const uint8_t*)LV2_ATOM_BODY(lv2_pos));
-    }*/
+        lv2_evbuf_write(&lv2_evbuf_iterator,
+                        0, 0, _lv2_pos->type,
+                        _lv2_pos->size,
+                        (const uint8_t *) LV2_ATOM_BODY(_lv2_pos));
+    }
 
     auto urids = _model->urids();
 
@@ -772,7 +829,7 @@ void Lv2Wrapper::_process_midi_input(Port* port)
             MidiDataByte midi_data = _convert_event_to_midi_buffer(rt_event);
 
             lv2_evbuf_write(&lv2_evbuf_iterator,
-                            rt_event.sample_offset(), // Is sample_offset the timestamp?
+                            rt_event.sample_offset(), // Assuming sample_offset is the timestamp
                             0, // Subframes
                             urids.midi_MidiEvent,
                             midi_data.size(),
@@ -918,23 +975,6 @@ void Lv2Wrapper::_resume()
 {
     _model->set_play_state(_previous_play_state);
 }
-
-/*VstTimeInfo* Lv2Wrapper::time_info()
-{
-    auto transport = _host_control.transport();
-    auto ts = transport->current_time_signature();
-
-    _time_info.samplePos          = transport->current_samples();
-    _time_info.sampleRate         = _sample_rate;
-    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
-    _time_info.ppqPos             = transport->current_beats();
-    _time_info.tempo              = transport->current_tempo();
-    _time_info.barStartPos        = transport->current_bar_start_beats();
-    _time_info.timeSigNumerator   = ts.numerator;
-    _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
-    return &_time_info;
-}*/
 
 } // namespace lv2
 } // namespace sushi

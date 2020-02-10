@@ -160,7 +160,7 @@ public:
     LV2_URID map(const char* uri);
     const char* unmap(LV2_URID urid);
 
-    const LV2_Atom_Forge& forge();
+    LV2_Atom_Forge& forge();
 
     int plugin_latency();
     void set_plugin_latency(int latency);
@@ -186,11 +186,20 @@ public:
     std::string save_dir();
     void set_save_dir(const std::string& save_dir);
 
-    bool buf_size();
+    bool buf_size_set();
 
     std::vector<std::unique_ptr<ControlID>>& controls();
 
-    Semaphore paused; // Paused signal from process thread
+    uint32_t position();
+    void set_position(uint32_t position);
+
+    float bpm();
+    void set_bpm(float bpm);
+
+    bool rolling();
+    void set_rolling(bool rolling);
+
+    Semaphore paused; // Paused signal from process thread.
 
 private:
     void _initialize_map_feature();
@@ -249,7 +258,6 @@ private:
     std::vector<const LV2_Feature*> _feature_list;
 
     uint32_t _position;
-
     float _bpm;
     bool _rolling;
 };

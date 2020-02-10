@@ -354,13 +354,22 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ASSERT_TRUE(_fifo.empty());
 }
 
-// TODO: Re-instate once time info is implemented.
-/*TEST_F(TestLv2Wrapper, TestTimeInfo)
+/* TODO: Currently incomplete.
+ * Complete this with fetching of transport info from LV2 plugin, to compare states.
+ * As it is now, it demonstrates that an LV2 plugin that reguires the time extension,
+ * successfully loads.
+*/
+TEST_F(TestLv2Wrapper, TestTimeInfo)
 {
-    SetUp("libagain.so");
+    SetUp("http://lv2plug.in/plugins/eg-metro");
+
     _host_control._transport.set_tempo(60);
     _host_control._transport.set_time_signature({4, 4});
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
+
+    // Currently My LV2 host does not get time info from plugin - it only sets.
+    // So I cannot directly replicate the below.
+    /*
     auto time_info = _module_under_test->time_info();
     EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);
     EXPECT_EQ(1'000'000'000, time_info->nanoSeconds);
@@ -369,4 +378,5 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
     EXPECT_EQ(4, time_info->timeSigNumerator);
     EXPECT_EQ(4, time_info->timeSigDenominator);
-}*/
+     */
+}

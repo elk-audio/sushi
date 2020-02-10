@@ -261,7 +261,7 @@ const char* LV2Model::unmap(LV2_URID urid)
     return uri;
 }
 
-const LV2_Atom_Forge& LV2Model::forge()
+LV2_Atom_Forge& LV2Model::forge()
 {
     return _forge;
 }
@@ -336,7 +336,7 @@ void LV2Model::set_save_dir(const std::string& save_dir)
     _save_dir = save_dir;
 }
 
-bool LV2Model::buf_size()
+bool LV2Model::buf_size_set()
 {
     return _buf_size_set;
 }
@@ -344,6 +344,36 @@ bool LV2Model::buf_size()
 std::vector<std::unique_ptr<ControlID>>& LV2Model::controls()
 {
     return _controls;
+}
+
+uint32_t LV2Model::position()
+{
+    return _position;
+}
+
+void LV2Model::set_position(uint32_t position)
+{
+    _position = position;
+}
+
+float LV2Model::bpm()
+{
+    return _bpm;
+}
+
+void LV2Model::set_bpm(float bpm)
+{
+    _bpm = bpm;
+}
+
+bool LV2Model::rolling()
+{
+    return _rolling;
+}
+
+void LV2Model::set_rolling(bool rolling)
+{
+    _rolling = rolling;
 }
 
 }

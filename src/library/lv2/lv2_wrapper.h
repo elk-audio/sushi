@@ -123,6 +123,11 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
 private:
+    void _update_transport();
+    uint8_t pos_buf[256];
+    LV2_Atom* _lv2_pos{nullptr};
+    bool _xport_changed{false};
+
     bool _create_ports(const LilvPlugin* plugin);
     Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
 
@@ -178,7 +183,6 @@ private:
 
     BypassManager _bypass_manager{_bypassed};
 
-    // VstTimeInfo _time_info;
 
     // This queue holds incoming midi events.
     // They are parsed and converted to lv2_evbuf content for LV2 in
