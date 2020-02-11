@@ -68,10 +68,22 @@ public:
     void configure(float sample_rate) override;
 
     /**
-     * @brief Adds a plugin to the end of the track.
-     * @param The plugin to add.
+     * @brief Add a processor to the track's processing chain at the position before
+     *        The processor with id before_position.
+     *        Should be called from the audio thread or when the track is not processing.
+     * @param A pointer to the plugin instance to add.
+     * @param before_position The ObjectId of the succeeding plugin
+     * @return true if the insertion was successful, false otherwise
      */
-    bool add(Processor* processor);
+    bool add_before(Processor* processor, ObjectId before_position);
+
+    /**
+     * @brief Add a processor to the end of the track's processing chain.
+     *        Should be called from the audio thread or when the track is not processing.
+     * @param A pointer to the plugin instance to add.
+     * @return true if the insertion was successful, false otherwise
+     */
+    bool add_back(Processor* processor);
 
     /**
      * @brief Remove a plugin from the track.
@@ -200,7 +212,8 @@ public:
         _update_channel_config();
     }
 
-    const std::vector<Processor*> process_chain()
+    // TODO - remove direct access to this
+    const std::vector<Processor*> process_chain() const
     {
         return _processors;
     }

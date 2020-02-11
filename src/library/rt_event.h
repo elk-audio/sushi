@@ -386,12 +386,27 @@ class ProcessorReorderRtEvent : public ReturnableRtEvent
 public:
     ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId track) : ReturnableRtEvent(type, 0),
                                                                                     _processor{processor},
-                                                                                    _track{track} {}
+                                                                                    _track{track},
+                                                                                    _before_processor{0},
+                                                                                    _add_to_back{true} {}
+
+    ProcessorReorderRtEvent(RtEventType type,
+                            ObjectId processor,
+                            ObjectId track,
+                            ObjectId before_processor) : ReturnableRtEvent(type, 0),
+                                                        _processor{processor},
+                                                        _track{track},
+                                                        _before_processor{before_processor},
+                                                        _add_to_back{false} {}
     ObjectId processor() const {return _processor;}
     ObjectId track() const {return _track;}
+    ObjectId before_processor() const {return _before_processor;}
+    bool     add_to_back() const {return _add_to_back;}
 private:
     ObjectId _processor;
     ObjectId _track;
+    ObjectId _before_processor;
+    bool     _add_to_back;
 };
 
 typedef int (*AsyncWorkCallback)(void* data, EventId id);
@@ -819,7 +834,13 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_add_processor_to_track_event(ObjectId processor, ObjectId track)
+    static RtEvent make_add_processor_to_track_event(ObjectId processor, ObjectId track, ObjectId before_processor)
+    {
+        ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_TRACK, processor, track, before_processor);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_add_processor_to_track_back_event(ObjectId processor, ObjectId track)
     {
         ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_TRACK, processor, track);
         return RtEvent(typed_event);

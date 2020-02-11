@@ -121,10 +121,18 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
     EXPECT_EQ(0u, event.processor_reorder_event()->track());
 
-    event = RtEvent::make_add_processor_to_track_event(ObjectId(123), ObjectId(456));
+    event = RtEvent::make_add_processor_to_track_back_event(ObjectId(123), ObjectId(456));
     EXPECT_EQ(RtEventType::ADD_PROCESSOR_TO_TRACK, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
     EXPECT_EQ(456u, event.processor_reorder_event()->track());
+    EXPECT_TRUE(event.processor_reorder_event()->add_to_back());
+
+    event = RtEvent::make_add_processor_to_track_event(ObjectId(123), ObjectId(456), ObjectId(789));
+    EXPECT_EQ(RtEventType::ADD_PROCESSOR_TO_TRACK, event.type());
+    EXPECT_EQ(123u, event.processor_reorder_event()->processor());
+    EXPECT_EQ(456u, event.processor_reorder_event()->track());
+    EXPECT_EQ(789u, event.processor_reorder_event()->before_processor());
+    EXPECT_FALSE(event.processor_reorder_event()->add_to_back());
 
     event = RtEvent::make_remove_processor_from_track_event(ObjectId(123), ObjectId(456));
     EXPECT_EQ(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, event.type());

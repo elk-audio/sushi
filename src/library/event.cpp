@@ -267,12 +267,9 @@ int AddProcessorEvent::execute(engine::BaseEngine*engine)
     }
 
     // TODO where to do validation?
-    auto status = engine->add_plugin_to_track(_track, _uid, _name, _file, plugin_type);
+    auto [status, id] = engine->load_plugin(_uid, _name, _file, plugin_type);
     switch (status)
     {
-        case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
-
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
             return AddProcessorEvent::Status::INVALID_NAME;
 
@@ -283,8 +280,14 @@ int AddProcessorEvent::execute(engine::BaseEngine*engine)
             return AddProcessorEvent::Status::INVALID_UID;
 
         default:
-            return AddProcessorEvent::Status::INVALID_PLUGIN;
+            break;
     }
+    status = engine->add_plugin_to_track_back(_track, _name);
+    if (status != engine::EngineReturnStatus::OK)
+    {
+        return AddProcessorEvent::Status::INVALID_CHAIN;
+    }
+    return EventStatus::HANDLED_OK;
 }
 
 int RemoveProcessorEvent::execute(engine::BaseEngine*engine)

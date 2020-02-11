@@ -266,17 +266,34 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus add_plugin_to_track(const std::string & /*track_id*/,
-                                                   const std::string & /*uid*/,
-                                                   const std::string & /*name*/,
-                                                   const std::string & /*file*/,
-                                                   PluginType /*plugin_type*/)
+    virtual std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string& /*uid*/,
+                                                                 const std::string& /*name*/,
+                                                                 const std::string& /*file*/,
+                                                                 PluginType /*plugin_type*/)
+    {
+        return {EngineReturnStatus::OK, ObjectId(0)};
+    }
+
+    virtual EngineReturnStatus add_plugin_to_track_before(const std::string& /*track_name*/,
+                                                          const std::string& /*plugin_name*/,
+                                                          const std::string& /*before_plugin*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus remove_plugin_from_track(const std::string & /*track_id*/,
-                                                        const std::string & /*plugin_id*/)
+    virtual EngineReturnStatus add_plugin_to_track_back(const std::string& /*track_name*/,
+                                                        const std::string& /*plugin_name*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus remove_plugin_from_track(const std::string& /*track_id*/,
+                                                        const std::string& /*plugin_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus delete_plugin(const std::string& /*plugin_name*/)
     {
         return EngineReturnStatus::OK;
     }

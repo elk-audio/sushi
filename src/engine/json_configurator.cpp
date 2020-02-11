@@ -591,7 +591,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_type = PluginType::VST3X;
         }
 
-        status = _engine->add_plugin_to_track(name, plugin_uid, plugin_name, plugin_path, plugin_type);
+        auto [status, plugin_id] = _engine->load_plugin(plugin_uid, plugin_name, plugin_path, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
@@ -601,6 +601,11 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             }
             SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+        }
+        status = _engine->add_plugin_to_track_back(name, plugin_name);
+        if (status != EngineReturnStatus::OK)
+        {
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
         SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to"
                                " Chain \"{}\"", plugin_name, name);
