@@ -122,7 +122,16 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    static int non_rt_callback(void* data, EventId id)
+    {
+        reinterpret_cast<Lv2Wrapper*>(data)->_non_rt_callback(id);
+        return 1;
+    }
+
 private:
+    void _non_rt_callback(EventId id);
+    EventId _pending_event_id{0};
+
     void _update_transport();
     uint8_t pos_buf[256];
     LV2_Atom* _lv2_pos{nullptr};
@@ -190,6 +199,13 @@ private:
 
     PluginLoader _loader;
     LV2Model* _model{nullptr};
+
+    // These are not used for other than the Unit tests,
+    // to simulate how the wrapper behaves if multi-threaded.
+    PlayState _previous_play_state {PlayState::PAUSED};
+    void _pause_audio_processing();
+    void _resume_audio_processing();
+    FRIEND_TEST(TestLv2Wrapper, TestSynth);
 };
 
 } // end namespace lv2

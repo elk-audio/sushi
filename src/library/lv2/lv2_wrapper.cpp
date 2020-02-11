@@ -576,23 +576,28 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
     else
     {
-        _update_transport();
-
-        switch (_model->play_state()) {
+        switch (_model->play_state())
+        {
             case PlayState::PAUSE_REQUESTED:
-                {
-                    _model->set_play_state(PlayState::PAUSED);
-                    SUSHI_LOG_DEBUG("WRAPPER: NOTIFYING");
-                    //_model->paused.notify();
-                    break;
-                }
+            {
+                _model->set_play_state(PlayState::PAUSED);
+
+                auto e = RtEvent::make_async_work_event(&Lv2Wrapper::non_rt_callback, this->id(), this);
+                _pending_event_id = e.async_work_event()->event_id();
+                output_event(e);
+                break;
+            }
             case PlayState::PAUSED:
+            {
                 // JALV cleared MIDI buffer here.
                 _flush_event_queue();
                 return;
+            }
             default:
                 break;
         }
+
+        _update_transport();
 
         _map_audio_buffers(in_buffer, out_buffer);
 
@@ -606,6 +611,32 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
         {
             _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         }
+    }
+}
+
+void Lv2Wrapper::_non_rt_callback(EventId id)
+{
+    if (id == _pending_event_id)
+    {
+        /* Note that this doesn't handle multiple requests at once. Currently for the Pause functionality it is fine,
+         * but if extended to support other use it may note be. */
+        if(_model->state_to_set() != nullptr)
+        {
+            auto feature_list = _model->host_feature_list();
+
+            lilv_state_restore(_model->state_to_set(), _model->plugin_instance(), set_port_value, _model, 0,
+                               feature_list->data());
+
+            lilv_state_free(_model->state_to_set());
+            _model->set_state_to_set(nullptr);
+
+            _model->request_update();
+            _model->set_play_state(PlayState::RUNNING);
+        }
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
     }
 }
 
@@ -962,6 +993,21 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     {
         _double_mono_input = true;
     }
+}
+
+void Lv2Wrapper::_pause_audio_processing()
+{
+    _previous_play_state = _model->play_state();
+
+    if(_previous_play_state != PlayState::PAUSED)
+    {
+        _model->set_play_state(PlayState::PAUSED);
+    }
+}
+
+void Lv2Wrapper::_resume_audio_processing()
+{
+    _model->set_play_state(_previous_play_state);
 }
 
 } // namespace lv2

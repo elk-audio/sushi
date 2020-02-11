@@ -113,7 +113,7 @@ struct HostFeatures
     LV2_Feature log_feature;
     LV2_Options_Option options[6];
     LV2_Feature options_feature;
-    LV2_Feature safe_restore_feature;
+
     LV2_Extension_Data_Feature ext_data;
 };
 
@@ -195,6 +195,9 @@ public:
     bool rolling();
     void set_rolling(bool rolling);
 
+    LilvState* state_to_set();
+    void set_state_to_set(LilvState* state_to_set);
+
 private:
     void _initialize_map_feature();
     void _initialize_unmap_feature();
@@ -251,6 +254,8 @@ private:
     uint32_t _position;
     float _bpm;
     bool _rolling;
+
+    LilvState* _state_to_set{nullptr};
 };
 
 } // end namespace lv2

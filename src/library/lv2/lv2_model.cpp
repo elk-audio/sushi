@@ -359,6 +359,16 @@ void LV2Model::set_rolling(bool rolling)
     _rolling = rolling;
 }
 
+LilvState* LV2Model::state_to_set()
+{
+    return _state_to_set;
+}
+
+void LV2Model::set_state_to_set(LilvState* state_to_set)
+{
+    _state_to_set = state_to_set;
+}
+
 }
 }
 

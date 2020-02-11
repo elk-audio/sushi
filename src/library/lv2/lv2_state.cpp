@@ -148,16 +148,13 @@ void LV2_State::apply_state(LilvState* state)
         if (must_pause)
         {
             _model->set_play_state(PlayState::PAUSE_REQUESTED);
+            _model->set_state_to_set(state);
         }
-
-        auto feature_list = _model->host_feature_list();
-
-        lilv_state_restore(state, _model->plugin_instance(), set_port_value, _model, 0, feature_list->data());
-
-        if (must_pause)
+        else
         {
+            auto feature_list = _model->host_feature_list();
+            lilv_state_restore(state, _model->plugin_instance(), set_port_value, _model, 0, feature_list->data());
             _model->request_update();
-            _model->set_play_state(PlayState::RUNNING);
         }
     }
 }
