@@ -43,8 +43,6 @@
 
 #include <map>
 
-#include <gtest/gtest_prod.h>
-
 #include "engine/base_event_dispatcher.h"
 #include "library/processor.h"
 #include "library/rt_event_fifo.h"
@@ -52,6 +50,9 @@
 #include "library/midi_decoder.h"
 
 #include "lv2_plugin_loader.h"
+
+// Needed for unit tests to access private utility methods.
+#define private public
 
 namespace sushi {
 namespace lv2 {
@@ -205,7 +206,6 @@ private:
     PlayState _previous_play_state {PlayState::PAUSED};
     void _pause_audio_processing();
     void _resume_audio_processing();
-    FRIEND_TEST(TestLv2Wrapper, TestSynth);
 };
 
 } // end namespace lv2
