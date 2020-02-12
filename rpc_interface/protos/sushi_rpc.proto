@@ -65,6 +65,7 @@ service SushiController {
     rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
     rpc SetParameterValueNormalised(ParameterSetRequest) returns (GenericVoidValue) {}
     rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
+    rpc SubscribeToParameterUpdates (GenericVoidValue) returns (stream ParameterSetRequest) {}
 }
 
 

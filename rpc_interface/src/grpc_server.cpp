@@ -24,10 +24,11 @@
 namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listenAddress,
-                       sushi::ext::SushiControl*controller) : _listenAddress{listenAddress},
-                                                              _service{new SushiControlService(controller)},
-                                                              _server_builder{new grpc::ServerBuilder()},
-                                                              _controller{controller}
+                       sushi::ext::SushiControl* controller,
+                       sushi::dispatcher::BaseEventDispatcher* event_dispatcher) : _listenAddress{listenAddress},
+                                                                                _service{new SushiControlService(controller, event_dispatcher)},
+                                                                                _server_builder{new grpc::ServerBuilder()},
+                                                                                _controller{controller}
 {
 
 }
@@ -43,7 +44,7 @@ void GrpcServer::start()
 
 void GrpcServer::stop()
 {
-    // Maybe redundant
+    _service->prepare_exit();
 }
 
 void GrpcServer::waitForCompletion()

@@ -29,13 +29,27 @@
 #pragma GCC diagnostic pop
 
 #include "../../include/control_interface.h"
+#include "library/event_interface.h"
+#include "library/event.h"
+#include "engine/event_dispatcher.h"
 
 namespace sushi_rpc {
 
-class SushiControlService : public sushi_rpc::SushiController::Service
+template <typename T>
+struct ServerWriterWrapper
+{
+    std::string token;
+    grpc::ServerWriter<T>* writer;
+};
+
+class SushiControlService : public sushi_rpc::SushiController::Service, sushi::EventPoster
 {
 public:
-    SushiControlService(sushi::ext::SushiControl* controller) : _controller{controller} {};
+    SushiControlService(sushi::ext::SushiControl* controller, sushi::dispatcher::BaseEventDispatcher* event_dispatcher) : _controller{controller}, _event_dispatcher{event_dispatcher} 
+    {
+        _event_dispatcher->subscribe_to_parameter_change_notifications(this);
+        _event_dispatcher->subscribe_to_engine_notifications(this);
+    };
 
     virtual ~SushiControlService() = default;
 
@@ -90,10 +104,24 @@ public:
      grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetParameterValueNormalised(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status SubscribeToParameterUpdates(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, grpc::ServerWriter<sushi_rpc::ParameterSetRequest>* response) override;
+
+     /* Inherited from EventPoster */
+     int process(sushi::Event* event) override;
+     int poster_id() override { return sushi::EventPosterId::GRPC_FRONTEND; }
+     void prepare_exit() { _exiting = true; std::cout << "Exiting gRPC" << std::endl; }
 
 private:
 
+    void _reset_writer_pointers();
+    void _set_writer_pointer(const std::string& token, grpc::ServerWriter<ParameterSetRequest>* writer);
+    void _write_to_all(const ParameterSetRequest& message);
+    void _remove_writer(const std::string& token);
+
+    std::vector<ServerWriterWrapper<ParameterSetRequest>> _writers;
     sushi::ext::SushiControl* _controller;
+    sushi::dispatcher::BaseEventDispatcher* _event_dispatcher;
+    bool _exiting = false;
 };
 
 }// sushi_rpc

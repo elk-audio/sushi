@@ -649,4 +649,79 @@ grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*
     return to_grpc_status(status);
 }
 
+grpc::Status SushiControlService::SubscribeToParameterUpdates(grpc::ServerContext* context, 
+                                         const sushi_rpc::GenericVoidValue* /* request */, 
+                                         grpc::ServerWriter<sushi_rpc::ParameterSetRequest>* response)
+{
+    std::string token = std::to_string(rand());
+    _writers.push_back({token, nullptr});
+    // while (std::find_if(_writers.begin(), _writers.end(),
+    //                     [&](const ServerWriterWrapper<ParameterSetRequest>& writer_wrapper)
+    //                     { return (writer_wrapper.token == token); }) != _writers.end())
+    while (context->IsCancelled() == false && _exiting == false)
+    {
+        // update the pointers if they changed somehow
+        _set_writer_pointer(token, response);
+    }
+    _remove_writer(token);
+    std::cout << "Stream for client " << token << " exited." << std::endl;
+    return grpc::Status::OK;
+}                                         
+
+int SushiControlService::process(sushi::Event* event)
+{
+    if (event->is_parameter_change_notification())
+    {
+        auto typed_event = static_cast<sushi::ParameterChangeNotificationEvent*>(event);
+        ParameterSetRequest notification_content;
+        notification_content.set_value(typed_event->float_value());
+        notification_content.mutable_parameter()->set_parameter_id(typed_event->parameter_id());
+        notification_content.mutable_parameter()->set_processor_id(typed_event->processor_id());
+        // std::cout << "Receiving param id: " << notification_content.parameter().parameter_id();
+        // std::cout << " proc id: " << notification_content.parameter().processor_id();
+        // std::cout << " value: " << notification_content.value() << std::endl;
+        _write_to_all(notification_content);
+        return sushi::EventStatus::HANDLED_OK;
+    }
+    return sushi::EventStatus::NOT_HANDLED;
+}
+
+void SushiControlService::_reset_writer_pointers()
+{
+    for (auto& writer_wrapper : _writers)
+    {
+        _set_writer_pointer(writer_wrapper.token, nullptr);
+    }
+}
+
+void SushiControlService::_set_writer_pointer(const std::string& token, grpc::ServerWriter<ParameterSetRequest>* writer)
+{
+    auto iterator = std::find_if(_writers.begin(), _writers.end(), 
+                                     [&](const ServerWriterWrapper<ParameterSetRequest>& writer)
+                                     { return (writer.token == token); });
+    if (iterator != _writers.end() && iterator->writer != writer)
+    {
+        std::cout << token << " stream changed from " << iterator->writer << " to " << writer << std::endl;
+        iterator->writer = writer;
+    }
+}
+
+void SushiControlService::_write_to_all(const ParameterSetRequest& message)
+{
+    for (auto& writer_wrapper : _writers)
+    {
+        if (writer_wrapper.writer != nullptr)
+        {
+            writer_wrapper.writer->Write(message);
+        }
+    }
+}
+
+void SushiControlService::_remove_writer(const std::string& token)
+{
+    _writers.erase(std::remove_if(_writers.begin(), _writers.end(), 
+                   [&](const ServerWriterWrapper<ParameterSetRequest>& writer_wrapper)
+                   { return (writer_wrapper.token == token); }), _writers.end());
+}
+
 } // sushi_rpc

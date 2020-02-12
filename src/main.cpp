@@ -318,10 +318,6 @@ int main(int argc, char* argv[])
                                                                               midi_dispatcher.get(),
                                                                               config_filename);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
-#endif
-
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>                 midi_frontend;
     std::unique_ptr<sushi::control_frontend::OSCFrontend>                   osc_frontend;
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>               audio_frontend;
@@ -490,6 +486,10 @@ int main(int argc, char* argv[])
     }
     midi_dispatcher->set_frontend(midi_frontend.get());
 
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+        auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller(), engine->event_dispatcher());
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////
     // Start everything! //
     ////////////////////////////////////////////////////////////////////////////////
@@ -523,6 +523,10 @@ int main(int argc, char* argv[])
         osc_frontend->stop();
         midi_frontend->stop();
     }
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    rpc_server->stop();
+#endif
 
     audio_frontend->cleanup();
     SUSHI_LOG_INFO("Sushi exited normally.");
