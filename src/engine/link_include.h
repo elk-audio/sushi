@@ -19,7 +19,7 @@
  *       "dummy" implementation of Link, just to satisfy compiler requirements.
  *       2. If Sushi is compiled with Link support, this includes all the Link headers
  *       but injects another Clock implementation based on Twine into it. This is
- *       neccesary as calling clock_get_time() is not safe from a Xenomai thread
+ *       necessary as calling clock_get_time() is not safe from a Xenomai thread
  *       context.
 * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
 */
