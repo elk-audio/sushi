@@ -173,13 +173,13 @@ ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
     return ext::ControlStatus::OK;
 }
 
-bool Controller::get_timing_statistics_enabled()
+bool Controller::get_timing_statistics_enabled() const
 {
     SUSHI_LOG_DEBUG("get_timing_statistics_enabled called");
     return _performance_timer->enabled();
 }
 
-void Controller::set_timing_statistics_enabled(bool enabled) const
+void Controller::set_timing_statistics_enabled(bool enabled)
 {
     SUSHI_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
     // TODO - do this by events instead.
