@@ -119,6 +119,7 @@ private:
     void _remove_writer(const std::string& token);
 
     std::vector<ServerWriterWrapper<ParameterSetRequest>> _writers;
+    std::mutex _writer_mutex;
     sushi::ext::SushiControl* _controller;
     sushi::dispatcher::BaseEventDispatcher* _event_dispatcher;
     bool _exiting = false;
