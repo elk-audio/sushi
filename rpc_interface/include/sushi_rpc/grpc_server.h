@@ -32,12 +32,6 @@ namespace grpc {
     class ServerBuilder;
 }
 
-namespace sushi {
-    namespace dispatcher {
-        class BaseEventDispatcher;
-    }
-}
-
 namespace sushi_rpc {
 
 class SushiControlService;
@@ -45,7 +39,7 @@ class SushiControlService;
 class GrpcServer
 {
 public:
-    GrpcServer(const std::string& listenAddress, sushi::ext::SushiControl* controller, sushi::dispatcher::BaseEventDispatcher* event_dispatcher);
+    GrpcServer(const std::string& listenAddress, sushi::ext::SushiControl* controller);
 
     ~GrpcServer();
 

@@ -487,7 +487,7 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_frontend(midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-        auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller(), engine->event_dispatcher());
+        auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////

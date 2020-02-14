@@ -48,8 +48,8 @@ public:
     virtual ControlStatus                       set_tempo(float /* tempo */) override { return default_control_status; };
     virtual TimeSignature                       get_time_signature() const override { return default_time_signature; };
     virtual ControlStatus                       set_time_signature(TimeSignature /* signature */) override { return default_control_status; };
-    virtual bool                                get_timing_statistics_enabled() override { return default_timing_statistics_enabled; };
-    virtual void                                set_timing_statistics_enabled(bool /* enabled */) const override {};
+    virtual bool                                get_timing_statistics_enabled() const override { return default_timing_statistics_enabled; };
+    virtual void                                set_timing_statistics_enabled(bool /* enabled */) override {};
     virtual std::vector<TrackInfo>              get_tracks() const override { return tracks; };
 
     // Keyboard control
@@ -159,6 +159,8 @@ public:
     virtual ControlStatus                              set_parameter_value(int /* processor_id */, int /* parameter_id */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                              set_parameter_value_normalised(int /* processor_id */, int /* parameter_id */, float /* value */) override { return default_control_status; };
     virtual ControlStatus                              set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override { return default_control_status; };
+
+    virtual ControlStatus                              subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override { return default_control_status; };
 };
 
 } // ext

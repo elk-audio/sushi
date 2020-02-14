@@ -18,6 +18,8 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+
+#include "../../include/control_notifications.h"
 #include "control_service.h"
 
 namespace sushi_rpc {
@@ -653,31 +655,38 @@ grpc::Status SushiControlService::SubscribeToParameterUpdates(grpc::ServerContex
                                          const sushi_rpc::GenericVoidValue* /* request */, 
                                          grpc::ServerWriter<sushi_rpc::ParameterSetRequest>* response)
 {
+    _notify_all_writers();
     std::string token = std::to_string(rand());
-    _writers.push_back({token, nullptr});
-    while (context->IsCancelled() == false && _exiting == false)
-    {
-        // update the pointers if they changed somehow
-        _set_writer_pointer(token, response);
-    }
+    std::condition_variable _exit_condition;
+    std::unique_lock<std::mutex> lck(_writer_mutex);
+    _writers.push_back({token, response, &_exit_condition});
+    _exit_condition.wait(lck, [&]
+    { 
+        // std::cout << "Checking lock condition for client " << token << std::endl;
+        bool condition_1 = _exiting.load();
+        bool condition_2 = context->IsCancelled();
+        // std::cout << "_exiting.load() = " << condition_1 << " context->IsCancelled() = " << condition_2 << std::endl;
+        bool exit_condition = condition_1 || condition_2;
+        // std::cout << "Total exit condition = " << exit_condition << std::endl; 
+        return exit_condition; 
+    });
     _remove_writer(token);
     std::cout << "Stream for client " << token << " exited." << std::endl;
     return grpc::Status::OK;
 }                                         
 
-int SushiControlService::process(sushi::Event* event)
+void SushiControlService::notification(const sushi::ext::ControlNotification* notification)
 {
-    if (event->is_parameter_change_notification())
+    _notify_all_writers();
+    if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
     {
-        auto typed_event = static_cast<sushi::ParameterChangeNotificationEvent*>(event);
+        auto typed_notification = reinterpret_cast<const sushi::ext::ParameterChangeNotification*>(notification);
         ParameterSetRequest notification_content;
-        notification_content.set_value(typed_event->float_value());
-        notification_content.mutable_parameter()->set_parameter_id(typed_event->parameter_id());
-        notification_content.mutable_parameter()->set_processor_id(typed_event->processor_id());
+        notification_content.set_value(typed_notification->value());
+        notification_content.mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+        notification_content.mutable_parameter()->set_processor_id(typed_notification->processor_id());
         _write_to_all(notification_content);
-        return sushi::EventStatus::HANDLED_OK;
     }
-    return sushi::EventStatus::NOT_HANDLED;
 }
 
 void SushiControlService::_reset_writer_pointers()
@@ -690,7 +699,7 @@ void SushiControlService::_reset_writer_pointers()
 
 void SushiControlService::_set_writer_pointer(const std::string& token, grpc::ServerWriter<ParameterSetRequest>* writer)
 {
-    _writer_mutex.lock();
+    std::scoped_lock<std::mutex> lck(_writer_mutex);
     auto iterator = std::find_if(_writers.begin(), _writers.end(), 
                                      [&](const ServerWriterWrapper<ParameterSetRequest>& writer)
                                      { return (writer.token == token); });
@@ -699,12 +708,11 @@ void SushiControlService::_set_writer_pointer(const std::string& token, grpc::Se
         std::cout << token << " stream changed from " << iterator->writer << " to " << writer << std::endl;
         iterator->writer = writer;
     }
-    _writer_mutex.unlock();
 }
 
 void SushiControlService::_write_to_all(const ParameterSetRequest& message)
 {
-    _writer_mutex.lock();
+    std::scoped_lock<std::mutex> lck(_writer_mutex);
     for (auto& writer_wrapper : _writers)
     {
         if (writer_wrapper.writer != nullptr)
@@ -712,17 +720,24 @@ void SushiControlService::_write_to_all(const ParameterSetRequest& message)
             writer_wrapper.writer->Write(message);
         }
     }
-    _writer_mutex.unlock();
+}
+
+void SushiControlService::_notify_all_writers()
+{
+    //std::scoped_lock<std::mutex> lck(_writer_mutex);
+    for (auto& writer_wrapper : _writers)
+    {
+        writer_wrapper.exit_condition->notify_one();
+    }
 }
 
 void SushiControlService::_remove_writer(const std::string& token)
 {
     // _reset_writer_pointers();
-    _writer_mutex.lock();
+    // std::scoped_lock<std::mutex> lck(_writer_mutex);
     _writers.erase(std::remove_if(_writers.begin(), _writers.end(), 
                    [&](const ServerWriterWrapper<ParameterSetRequest>& writer_wrapper)
                    { return (writer_wrapper.token == token); }), _writers.end());
-    _writer_mutex.unlock();
 }
 
 } // sushi_rpc

@@ -22,6 +22,7 @@
 #include "engine/base_engine.h"
 
 #include "logging.h"
+#include "control_notifications.h"
 
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
@@ -108,6 +109,7 @@ inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 Controller::Controller(engine::BaseEngine* engine) : _engine{engine}
 {
     _event_dispatcher = _engine->event_dispatcher();
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _transport = _engine->transport();
     _performance_timer = engine->performance_timer();
 }
@@ -174,13 +176,13 @@ ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
     return ext::ControlStatus::OK;
 }
 
-bool Controller::get_timing_statistics_enabled()
+bool Controller::get_timing_statistics_enabled() const
 {
     SUSHI_LOG_DEBUG("get_timing_statistics_enabled called");
     return _performance_timer->enabled();
 }
 
-void Controller::set_timing_statistics_enabled(bool enabled) const
+void Controller::set_timing_statistics_enabled(bool enabled)
 {
     SUSHI_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
     // TODO - do this by events instead.
@@ -661,6 +663,16 @@ ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, i
     return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
+ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener)
+{
+    switch (type)
+    {
+        case ext::NotificationType::PARAMETER_CHANGE: _parameter_change_listeners.push_back(listener);
+    }
+
+    return ext::ControlStatus::OK;
+}
+
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const
 {
     if (_performance_timer->enabled())
@@ -673,6 +685,25 @@ std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node
         return {ext::ControlStatus::NOT_FOUND, {0,0,0}};
     }
     return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
+}
+
+int Controller::process(Event* event)
+{
+    if (event->is_parameter_change_notification())
+    {
+        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
+        ext::ParameterChangeNotification notification((int)typed_event->processor_id(), 
+                                                      (int)typed_event->parameter_id(), 
+                                                      typed_event->float_value(), 
+                                                      std::chrono::milliseconds());
+        for (auto& listener : _parameter_change_listeners)
+        {
+            listener->notification(&notification);
+        }
+        return EventStatus::HANDLED_OK;
+    }
+
+    return EventStatus::NOT_HANDLED;
 }
 
 }// namespace sushi
