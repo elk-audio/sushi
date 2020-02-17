@@ -139,7 +139,7 @@ void Transport::set_tempo(float tempo, bool update_via_event)
 void Transport::set_playing_mode(PlayingMode mode, bool update_via_event)
 {
     bool playing = mode != PlayingMode::STOPPED;
-    bool update = this->playing() == playing;
+    bool update = this->playing() != playing;
     if (update)
     {
         if (_link_controller->isEnabled())
@@ -217,6 +217,12 @@ void Transport::_update_internal_sync(int64_t samples)
      * will still be a multiple of AUDIO_CHUNK_SIZE */
     auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
 
+    if (_playmode != _set_playmode)
+    {
+        _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = _set_playmode;
+    }
+
     _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (_playmode != PlayingMode::STOPPED)
     {
@@ -230,17 +236,13 @@ void Transport::_update_internal_sync(int64_t samples)
     }
 
     _tempo = _set_tempo;
-    if (_playmode != _set_playmode)
-    {
-        _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
-        _playmode = _set_playmode;
-    }
 }
 
 void Transport::_update_link_sync(Time timestamp)
 {
     auto session = _link_controller->captureAudioSessionState();
     _tempo = static_cast<float>(session.tempo());
+    _set_tempo = _tempo;
 
     auto new_playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
             _set_playmode : PlayingMode::PLAYING) : PlayingMode::STOPPED;
