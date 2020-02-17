@@ -268,14 +268,13 @@ void Transport::_update_link_sync(Time timestamp)
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 void Transport::_set_link_playing(bool playing)
 {
-    auto state = _link_controller->captureAppSessionState();
-    state.setIsPlaying(playing, _time);
+    auto session = _link_controller->captureAppSessionState();
+    session.setIsPlaying(playing, _time);
     if (playing)
     {
-        /* Request beat at the start of next bar for synchronised launch*/
-        state.requestBeatAtStartPlayingTime(_bar_start_beat_count + _beats_per_bar, _beats_per_bar);
+        session.requestBeatAtTime(_beat_count, _time, _beats_per_bar);
     }
-    _link_controller->commitAppSessionState(state);
+    _link_controller->commitAppSessionState(session);
 }
 
 void Transport::_set_link_tempo(float tempo)

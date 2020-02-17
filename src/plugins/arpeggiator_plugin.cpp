@@ -96,6 +96,10 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
 {
     if (_host_control.transport()->playing())
     {
+        if (_host_control.transport()->current_state_change() == PlayStateChange::STARTING)
+        {
+            _last_note_beat = _host_control.transport()->current_beats();
+        }
         double beat = _host_control.transport()->current_beats();
         double last_beat_this_chunk = _host_control.transport()->current_beats(AUDIO_CHUNK_SIZE);
         double beat_period = last_beat_this_chunk - beat;
