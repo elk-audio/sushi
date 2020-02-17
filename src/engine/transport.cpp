@@ -104,7 +104,7 @@ void Transport::process_event(const RtEvent& event)
         case RtEventType::SYNC_MODE:
             _syncmode = event.sync_mode_event()->mode();
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
-        if (_syncmode == SyncMode::ABLETON_LINK)
+            if (_syncmode == SyncMode::ABLETON_LINK)
             {
                 _syncmode = SyncMode::INTERNAL;
             }
@@ -244,13 +244,12 @@ void Transport::_update_link_sync(Time timestamp)
     _tempo = static_cast<float>(session.tempo());
     _set_tempo = _tempo;
 
-    auto new_playmode = session.isPlaying() ? (_set_playmode != PlayingMode::STOPPED?
-            _set_playmode : PlayingMode::PLAYING) : PlayingMode::STOPPED;
-
-    if (new_playmode != _playmode)
+    if (session.isPlaying() != this->playing())
     {
+        auto new_playmode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
         _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = new_playmode;
+        _set_playmode = new_playmode;
     }
 
     _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
