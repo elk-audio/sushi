@@ -50,6 +50,7 @@ TEST_F(TestTransport, TestTimeline44Time)
     _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
     _module_under_test.set_time_signature({4, 4}, false);
     _module_under_test.set_tempo(120, false);
+    _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
     _module_under_test.set_time(std::chrono::seconds(0), 0);
 
     /* Check that the starting point is 0 */
@@ -117,7 +118,7 @@ TEST_F(TestTransport, TestPlayStateChange)
     _module_under_test.set_time(std::chrono::seconds(0), 0);
 
     EXPECT_FALSE(_module_under_test.playing());
-    EXPECT_EQ(PlayStateChange::STOPPING, _module_under_test.current_state_change());
+    EXPECT_EQ(PlayStateChange::UNCHANGED, _module_under_test.current_state_change());
 
     _module_under_test.set_time(std::chrono::seconds(1), 44000);
     EXPECT_FALSE(_module_under_test.playing());

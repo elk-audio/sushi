@@ -207,6 +207,7 @@ TEST_F(TestVst3xWrapper, TestConfigurationChange)
 TEST_F(TestVst3xWrapper, TestTimeInfo)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
+    _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(120, false);
     _host_control._transport.set_time_signature({3, 4}, false);
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));

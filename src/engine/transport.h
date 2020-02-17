@@ -227,11 +227,11 @@ private:
 
     float           _tempo{DEFAULT_TEMPO};
     float           _set_tempo{_tempo};
-    PlayingMode     _playmode{PlayingMode::PLAYING};
+    PlayingMode     _playmode{PlayingMode::STOPPED};
     PlayingMode     _set_playmode{_playmode};
     SyncMode        _syncmode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    PlayStateChange _state_change{PlayStateChange::UNCHANGED};
+    PlayStateChange _state_change{PlayStateChange::STARTING};
 
     std::unique_ptr<ableton::Link>  _link_controller;
 };
