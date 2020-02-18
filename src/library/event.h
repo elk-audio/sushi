@@ -392,15 +392,16 @@ private:
     std::string _name;
 };
 
-class AddProcessorEvent : public EngineEvent
+class AddProcessorToTrackEvent : public EngineEvent
 {
 public:
     enum Status : int
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC,
-        INVALID_CHAIN,
+        INVALID_TRACK,
         INVALID_UID,
-        INVALID_PLUGIN
+        INVALID_PLUGIN,
+        INVALID_POSITION
     };
     enum class ProcessorType
     {
@@ -408,23 +409,45 @@ public:
         VST2X,
         VST3X
     };
-    AddProcessorEvent(const std::string& track, const std::string& uid,
-                      const std::string& name, const std::string& file,
-                      ProcessorType processor_type, Time timestamp) : EngineEvent(timestamp),
-                                                                      _track(track),
-                                                                      _uid(uid),
-                                                                      _name(name),
-                                                                      _file(file),
-                                                                      _processor_type(processor_type) {}
+    AddProcessorToTrackEvent(const std::string& name,
+                             const std::string& uid,
+                             const std::string& file,
+                             ProcessorType processor_type,
+                             ObjectId track,
+                             ObjectId before_processor,
+                             Time timestamp) : EngineEvent(timestamp) ,
+                                               _name(name),
+                                               _uid(uid),
+                                               _file(file),
+                                               _processor_type(processor_type),
+                                               _track(track),
+                                               _add_to_back(true),
+                                               _before_processor(before_processor) {}
+
+    AddProcessorToTrackEvent(const std::string& name,
+                             const std::string& uid,
+                             const std::string& file,
+                             ProcessorType processor_type,
+                             ObjectId track,
+                             Time timestamp) : EngineEvent(timestamp) ,
+                                               _name(name),
+                                               _uid(uid),
+                                               _file(file),
+                                               _processor_type(processor_type),
+                                               _track(track),
+                                               _add_to_back(false),
+                                               _before_processor(0) {}
+
     int execute(engine::BaseEngine* engine) override;
 
 private:
-    std::string     _track;
-    std::string     _uid;
     std::string     _name;
+    std::string     _uid;
     std::string     _file;
     ProcessorType   _processor_type;
-
+    ObjectId        _track;
+    bool            _add_to_back;
+    ObjectId        _before_processor;
 };
 
 class RemoveProcessorEvent : public EngineEvent

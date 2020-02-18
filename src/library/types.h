@@ -39,7 +39,7 @@ constexpr size_t MIDI_DATA_BYTE_SIZE = 4;
  * @brief Convenience type for passing midi messages by value
  */
 typedef std::array<uint8_t, MIDI_DATA_BYTE_SIZE> MidiDataByte;
-static_assert(sizeof(MidiDataByte) == MIDI_DATA_BYTE_SIZE, "");
+static_assert(sizeof(MidiDataByte) == MIDI_DATA_BYTE_SIZE);
 
 /**
  * @brief Struct to represent a defined time signature

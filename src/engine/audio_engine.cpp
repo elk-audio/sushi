@@ -790,7 +790,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
     }
 
     auto processor_status = plugin->init(_sample_rate);
-    if(processor_status != ProcessorReturnCode::OK)
+    if (processor_status != ProcessorReturnCode::OK)
     {
         SUSHI_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
         return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
@@ -801,6 +801,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
         SUSHI_LOG_ERROR("Failed to register plugin {}", plugin_name);
         return {status, ObjectId(0)};
     }
+
     plugin->set_enabled(true);
     if (this->realtime())
     {

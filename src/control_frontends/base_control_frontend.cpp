@@ -96,10 +96,11 @@ void BaseControlFrontend::send_remove_track_event(const std::string &name)
 
 void BaseControlFrontend::send_add_processor_event(const std::string &track, const std::string &uid,
                                                    const std::string &name, const std::string &file,
-                                                   AddProcessorEvent::ProcessorType type)
+                                                   AddProcessorToTrackEvent::ProcessorType type)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new AddProcessorEvent(track, uid, name, file, type, timestamp);
+    // TODO - deprecate This entire class
+    auto e = new AddProcessorToTrackEvent(uid, name, file, type, 0, timestamp);
     send_with_callback(e);
 }
 

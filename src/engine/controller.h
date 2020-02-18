@@ -90,6 +90,11 @@ public:
     ext::ControlStatus                                  set_parameter_value_normalised(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
+    ext::ControlStatus                                  create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                                                                  ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
+    ext::ControlStatus                                  move_processor(int processor_id, int source_track_id, int target_track_id, std::optional<int> before_processor) override;
+    ext::ControlStatus                                  delete_processor(int processor_id) override;
+
 protected:
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 

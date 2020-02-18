@@ -242,22 +242,24 @@ int RemoveTrackEvent::execute(engine::BaseEngine*engine)
     }
 }
 
-int AddProcessorEvent::execute(engine::BaseEngine*engine)
+int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
 {
     engine::PluginType plugin_type;
     switch (_processor_type)
     {
-        case AddProcessorEvent::ProcessorType::INTERNAL:
+        case AddProcessorToTrackEvent::ProcessorType::INTERNAL:
             plugin_type = engine::PluginType::INTERNAL;
             break;
 
-        case AddProcessorEvent::ProcessorType::VST2X:
+        case AddProcessorToTrackEvent::ProcessorType::VST2X:
             plugin_type = engine::PluginType::VST2X;
             break;
 
-        case AddProcessorEvent::ProcessorType::VST3X:
+        case AddProcessorToTrackEvent::ProcessorType::VST3X:
             plugin_type = engine::PluginType::VST3X;
             break;
+
+            // TODO - add LV2 once it has been merged
 
         default:
             /* GCC is overzealous and warns even with a class enum that plugin_type
@@ -271,21 +273,45 @@ int AddProcessorEvent::execute(engine::BaseEngine*engine)
     switch (status)
     {
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
-            return AddProcessorEvent::Status::INVALID_NAME;
+            return AddProcessorToTrackEvent::Status::INVALID_NAME;
 
         case engine::EngineReturnStatus::INVALID_TRACK:
-            return AddProcessorEvent::Status::INVALID_CHAIN;
+            return AddProcessorToTrackEvent::Status::INVALID_TRACK;
 
         case engine::EngineReturnStatus::INVALID_PLUGIN_UID:
-            return AddProcessorEvent::Status::INVALID_UID;
+            return AddProcessorToTrackEvent::Status::INVALID_UID;
 
         default:
             break;
     }
-    status = engine->add_plugin_to_track_back(_track, _name);
+
+    // TODO - Use ID over name in event eventually
+
+    auto [track_status, track] = engine->processor_name_from_id(_track);
+    if (track_status != engine::EngineReturnStatus::OK)
+    {
+        engine->delete_plugin(_name);
+        return Status::INVALID_TRACK;
+    }
+
+    if (_add_to_back)
+    {
+        status = engine->add_plugin_to_track_back(track, _name);
+    }
+    else
+    {
+        auto [before_status, before_processor] = engine->processor_name_from_id(_before_processor);
+        if (before_status != engine::EngineReturnStatus::OK)
+        {
+            engine->delete_plugin(_name);
+            return Status::INVALID_POSITION;
+        }
+        status = engine->add_plugin_to_track_before(track, _name, before_processor);
+    }
     if (status != engine::EngineReturnStatus::OK)
     {
-        return AddProcessorEvent::Status::INVALID_CHAIN;
+        engine->delete_plugin(_name);
+        return AddProcessorToTrackEvent::Status::INVALID_TRACK;
     }
     return EventStatus::HANDLED_OK;
 }

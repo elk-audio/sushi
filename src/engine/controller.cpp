@@ -90,6 +90,18 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
     }
 }
 
+inline sushi::AddProcessorToTrackEvent::ProcessorType to_event_type(ext::PluginType type)
+{
+    switch (type)
+    {
+        case ext::PluginType::INTERNAL: return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
+        case ext::PluginType::VST2X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST2X;
+        case ext::PluginType::VST3X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST3X;
+        case ext::PluginType::LV2:      return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL; //TODO - Fix when LV2 is merged
+        default:                        return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
+    }
+}
+
 inline ext::TimeSignature to_external(sushi::TimeSignature internal)
 {
     return {internal.numerator, internal.denominator};
@@ -667,6 +679,35 @@ std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node
         return {ext::ControlStatus::NOT_FOUND, {0,0,0}};
     }
     return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
+}
+
+ext::ControlStatus Controller::create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                                         ext::PluginType type, int track_id, std::optional<int> before_processor_id)
+{
+
+    if (before_processor_id.has_value())
+    {
+        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id),
+                                                  ObjectId(before_processor_id.value()), IMMEDIATE_PROCESS);
+        _event_dispatcher->post_event(event);
+    }
+    else
+    {
+        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id), IMMEDIATE_PROCESS);
+        _event_dispatcher->post_event(event);
+
+    }
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::move_processor(int processor_id, int source_track_id, int target_track_id, std::optional<int> before_processor)
+{
+    return ext::ControlStatus::INVALID_ARGUMENTS;
+}
+
+ext::ControlStatus Controller::delete_processor(int processor_id)
+{
+    return ext::ControlStatus::INVALID_ARGUMENTS;
 }
 
 }// namespace sushi
