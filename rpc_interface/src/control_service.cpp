@@ -580,11 +580,11 @@ grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*conte
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetParameterValueNormalised(grpc::ServerContext* /*context*/,
-                                                              const sushi_rpc::ParameterIdentifier* request,
-                                                              sushi_rpc::GenericFloatValue* response)
+grpc::Status SushiControlService::GetParameterValueUnNormalized(grpc::ServerContext* /*context*/,
+                                                                const sushi_rpc::ParameterIdentifier* request,
+                                                                sushi_rpc::GenericFloatValue* response)
 {
-    auto [status, value] = _controller->get_parameter_value_normalised(request->processor_id(), request->parameter_id());
+    auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
@@ -626,16 +626,6 @@ grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext* /*conte
     auto status = _controller->set_parameter_value(request->parameter().processor_id(),
                                                    request->parameter().parameter_id(),
                                                    request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SetParameterValueNormalised(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterSetRequest* request,
-                                                    sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->set_parameter_value_normalised(request->parameter().processor_id(),
-                                                              request->parameter().parameter_id(),
-                                                              request->value());
     return to_grpc_status(status);
 }
 

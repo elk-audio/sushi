@@ -83,11 +83,10 @@ public:
     std::pair<ext::ControlStatus, int>                  get_parameter_id(int processor_id, const std::string& parameter) const override;
     std::pair<ext::ControlStatus, ext::ParameterInfo>   get_parameter_info(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, float>                get_parameter_value(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, float>                get_parameter_value_normalised(int processor_id, int parameter_id) const override;
+    std::pair<ext::ControlStatus, float>                get_parameter_value_un_normalized(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, std::string>          get_parameter_value_as_string(int processor_id, int parameter_id) const override;
     std::pair<ext::ControlStatus, std::string>          get_string_property_value(int processor_id, int parameter_id) const override;
     ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
-    ext::ControlStatus                                  set_parameter_value_normalised(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
 protected:

@@ -82,9 +82,9 @@ struct ParameterInfo
     std::string     label;
     std::string     name;
     std::string     unit;
-    bool            automatable;
-    float           min_range;
-    float           max_range;
+    bool            automatable; // TODO Ilias:
+    float           min_range; // These should communicate the internal range,
+    float           max_range; // for display purposes only?
 };
 
 struct ProcessorInfo
@@ -171,11 +171,10 @@ public:
     virtual std::pair<ControlStatus, int>              get_parameter_id(int processor_id, const std::string& parameter) const = 0;
     virtual std::pair<ControlStatus, ParameterInfo>    get_parameter_info(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, float>            get_parameter_value(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, float>            get_parameter_value_normalised(int processor_id, int parameter_id) const = 0;
+    virtual std::pair<ControlStatus, float>            get_parameter_value_un_normalized(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_parameter_value_as_string(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_string_property_value(int processor_id, int parameter_id) const = 0;
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) = 0;
-    virtual ControlStatus                              set_parameter_value_normalised(int processor_id, int parameter_id, float value) = 0;
     virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
 

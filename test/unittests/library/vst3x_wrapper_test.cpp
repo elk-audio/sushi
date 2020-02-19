@@ -233,7 +233,7 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     _module_under_test->set_enabled(true);
 
-    auto [status, value] = _module_under_test->parameter_value_normalised(DELAY_PARAM_ID);
+    auto [status, value] = _module_under_test->parameter_value(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(1.0f, value);
 

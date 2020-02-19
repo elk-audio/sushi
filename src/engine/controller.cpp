@@ -596,13 +596,13 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int process
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, float> Controller::get_parameter_value_normalised(int processor_id, int parameter_id) const
+std::pair<ext::ControlStatus, float> Controller::get_parameter_value_un_normalized(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
+    SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
-        auto[status, value] = processor->parameter_value_normalised(static_cast<ObjectId>(parameter_id));
+        auto[status, value] = processor->parameter_value(static_cast<ObjectId>(parameter_id));
         if (status == ProcessorReturnCode::OK)
         {
             return {ext::ControlStatus::OK, value};
@@ -634,18 +634,6 @@ std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
-    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                          static_cast<ObjectId>(processor_id),
-                                          static_cast<ObjectId>(parameter_id),
-                                          value, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
-}
-
-ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, int parameter_id, float value)
-{
-    // TODO - this is exactly the same as set_parameter_value_now
     SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),

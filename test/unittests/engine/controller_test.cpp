@@ -207,6 +207,9 @@ TEST_F(ControllerTest, TestProcessorControls)
 }
 
 
+// TODO: Ilias - change this to use normalized values.
+// Also: When I try to run this with the CLion debugger separately, test_utils get_data_dir_path fails.
+// I could try to fix that...
 TEST_F(ControllerTest, TestParameterControls)
 {
     auto [status, proc_id] = _module_under_test->get_processor_id("equalizer_0_l");
@@ -230,7 +233,7 @@ TEST_F(ControllerTest, TestParameterControls)
     ASSERT_EQ(ext::ControlStatus::OK, value_status);
     EXPECT_FLOAT_EQ(1000.0f, value);
 
-    auto [norm_value_status,norm_value] = _module_under_test->get_parameter_value_normalised(proc_id, id);
+    auto [norm_value_status,norm_value] = _module_under_test->get_parameter_value(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, norm_value_status);
     EXPECT_GE(norm_value, 0.0f);
     EXPECT_LE(norm_value, 1.0f);

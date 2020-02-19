@@ -85,7 +85,7 @@ public:
     void set_id(ObjectId id) {_id = id;}
 
     /**
-     * @brief Whether or not the parameter is automatable or not.
+     * @brief Whether the parameter is automatable or not.
      * @return true if the parameter can be automated, false otherwise
      */
     virtual bool automatable() const {return true;}
@@ -313,6 +313,7 @@ public:
 
     void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
     void set(bool value) {_value = value;}
+
 private:
     ParameterType _type{ParameterType::BOOL};
     ParameterDescriptor* _descriptor{nullptr};
@@ -374,6 +375,7 @@ public:
         BoolParameterValue value(default_value, descriptor);
         return ParameterStorage(value);
     }
+
     static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
                                                        int default_value,
                                                        IntParameterPreProcessor* pre_processor)
@@ -381,6 +383,7 @@ public:
         IntParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
+
     static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
                                                          float default_value,
                                                          FloatParameterPreProcessor* pre_processor)
@@ -388,6 +391,7 @@ public:
         FloatParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
+
 private:
     ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
     ParameterStorage(IntParameterValue value) : _int_value(value) {}
@@ -400,6 +404,7 @@ private:
         FloatParameterValue _float_value;
     };
 };
+
 /* We need this to be able to copy the ParameterValues by value into a container */
 static_assert(std::is_trivially_copyable<ParameterStorage>::value, "");
 

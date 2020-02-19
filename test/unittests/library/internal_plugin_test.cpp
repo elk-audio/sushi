@@ -102,6 +102,7 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     DECLARE_UNUSED(unused_value);
 }
 
+// TODO: Ilias - change this to use normalized values.
 TEST_F(InternalPluginTest, TestIntParameterHandling)
 {
     IntParameterValue* value = _module_under_test->register_int_parameter("param_1", "Param 1", "", 0, 0, 10,
@@ -117,7 +118,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(6.0f, ext_value);
-    auto [status_1, norm_value] = _module_under_test->parameter_value_normalised(value->descriptor()->id());
+    auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.6f, norm_value);
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
@@ -126,6 +127,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     DECLARE_UNUSED(unused_value);
 }
 
+// TODO: Ilias - change this to use normalized values.
 TEST_F(InternalPluginTest, TestFloatParameterHandling)
 {
     FloatParameterValue* value = _module_under_test->register_float_parameter("param_1", "Param 1", "", 1.0f, 0.0f, 10.f,
@@ -141,7 +143,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(5.0f, ext_value);
-    auto [status_1, norm_value] = _module_under_test->parameter_value_normalised(value->descriptor()->id());
+    auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.5f, norm_value);
     [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);

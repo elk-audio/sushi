@@ -525,9 +525,9 @@ async def GetParameterValue(context, processor_id, parameter_id):
 
 
 @methods.add
-async def GetParameterValueNormalised(context, processor_id, parameter_id):
+async def GetParameterValue(context, processor_id, parameter_id):
     try:
-        response = context.stub.GetParameterValueNormalised(sushi_rpc_pb2.ParameterIdentifier( \
+        response = context.stub.GetParameterValue(sushi_rpc_pb2.ParameterIdentifier( \
             processor_id = processor_id, parameter_id = parameter_id))
         return response.value
 
@@ -562,7 +562,7 @@ async def SetParameterValue(context, processor_id, parameter_id, value):
     try:
         context.stub.SetParameterValue(sushi_rpc_pb2.ParameterSetRequest( \
             parameter = sushi_rpc_pb2.ParameterIdentifier(processor_id = processor_id, \
-            parameter_id = parameter_id), value = value))
+                                                          parameter_id = parameter_id), value = value))
         return None
 
     except grpc.RpcError as e:
@@ -570,9 +570,9 @@ async def SetParameterValue(context, processor_id, parameter_id, value):
 
 
 @methods.add
-async def SetParameterValueNormalised(context, processor_id, parameter_id, value):
+async def SetParameterValueUnNormalized(context, processor_id, parameter_id, value):
     try:
-        context.stub.SetParameterValueNormalised(sushi_rpc_pb2.ParameterSetRequest( \
+        context.stub.SetParameterValue(sushi_rpc_pb2.ParameterSetRequest( \
             parameter = sushi_rpc_pb2.ParameterIdentifier(processor_id = processor_id, \
             parameter_id = parameter_id), value = value))
         return None

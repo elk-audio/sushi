@@ -357,7 +357,7 @@ bool Vst3xWrapper::bypassed() const
     if (_bypass_parameter.supported)
     {
         float value;
-        std::tie(std::ignore, value) = this->parameter_value_normalised(_bypass_parameter.id);
+        std::tie(std::ignore, value) = this->parameter_value(_bypass_parameter.id);
         return value > 0.5;
     }
     return _bypass_manager.bypassed();
@@ -377,15 +377,17 @@ std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value(ObjectId par
 {
     /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
     auto controller = const_cast<PluginInstance*>(&_instance)->controller();
-    auto value = controller->normalizedParamToPlain(parameter_id, controller->getParamNormalized(parameter_id));
+    auto value = controller->getParamNormalized(parameter_id);
     return {ProcessorReturnCode::OK, static_cast<float>(value)};
 }
 
-std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_normalised(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_un_normalized(ObjectId parameter_id) const
 {
+    // TODO: Ilias populate
+
     /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
     auto controller = const_cast<PluginInstance*>(&_instance)->controller();
-    auto value = controller->getParamNormalized(parameter_id);
+    auto value = controller->normalizedParamToPlain(parameter_id, controller->getParamNormalized(parameter_id));
     return {ProcessorReturnCode::OK, static_cast<float>(value)};
 }
 
