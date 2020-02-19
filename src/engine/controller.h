@@ -92,10 +92,15 @@ public:
 
     ext::ControlStatus                                  create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                                                   ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
-    ext::ControlStatus                                  move_processor(int processor_id, int source_track_id, int target_track_id, std::optional<int> before_processor) override;
-    ext::ControlStatus                                  delete_processor(int processor_id) override;
+    ext::ControlStatus                                  move_processor(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) override;
+    ext::ControlStatus                                  delete_processor_from_track(int processor_id, int track_id) override;
 
-protected:
+    static void                                         completion_callback(void *arg, Event* event, int status);
+
+private:
+
+    void _completion_callback(Event* event, int status);
+
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
     engine::BaseEngine*                 _engine;

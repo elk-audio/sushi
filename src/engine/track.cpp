@@ -141,13 +141,13 @@ bool Track::add_back(Processor* processor)
 
 bool Track::remove(ObjectId processor)
 {
-    for (auto plugin = _processors.begin(); plugin != _processors.end(); ++plugin)
+    for (auto i = _processors.begin(); i != _processors.end(); ++i)
     {
-        if ((*plugin)->id() == processor)
+        if ((*i)->id() == processor)
         {
-            (*plugin)->set_event_output(nullptr);
-            (*plugin)->set_active_rt_processing(false);
-            _processors.erase(plugin);
+            (*i)->set_event_output(nullptr);
+            (*i)->set_active_rt_processing(false);
+            _processors.erase(i);
             _update_channel_config();
             return true;
         }

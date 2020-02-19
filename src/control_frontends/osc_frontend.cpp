@@ -325,6 +325,159 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
     return 0;
 }
 
+static int osc_add_processor_to_track(const char* /*path*/,
+                                      const char* /*types*/,
+                                      lo_arg** argv,
+                                      int argc,
+                                      void* /*data*/,
+                                      void* user_data)
+{
+    auto instance = static_cast<ext::SushiControl*>(user_data);
+    std::string name(&argv[0]->s);
+    std::string uid(&argv[1]->s);
+    std::string file(&argv[2]->s);
+    std::string type_str(&argv[3]->s);
+    std::string track(&argv[4]->s);
+    std::string before;
+    bool add_to_back = true;
+
+    if (argc > 5)
+    {
+        before = std::string(&argv[5]->s);
+        add_to_back = false;
+    }
+
+    auto type = ext::PluginType::INTERNAL;
+    if (type_str == "vst2x")
+    {
+        type = ext::PluginType::VST2X;
+    }
+    else if (type_str == "vst3x")
+    {
+        type = ext::PluginType::VST3X;
+    }
+    else if (type_str == "lv2")
+    {
+        type = ext::PluginType::LV2;
+    }
+    else if (type_str != "internal")
+    {
+        SUSHI_LOG_INFO("Unrecognised Plugin type \"{}\" received", type_str);
+        return 0;
+    }
+    SUSHI_LOG_DEBUG("Got a create processor on track request");
+    auto [status, track_id] = instance->get_processor_id(track);
+    if (status != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up Track {}", track);
+        return 0;
+    }
+    if (add_to_back)
+    {
+        instance->create_processor_on_track(name, uid, file, type, track_id, std::nullopt);
+    }
+    else
+    {
+        auto [status, before_id] = instance->get_processor_id(before);
+        if (status != ext::ControlStatus::OK)
+        {
+            SUSHI_LOG_WARNING("Error looking up processor {}", before);
+            return 0;
+        }
+        instance->create_processor_on_track(name, uid, file, type, track_id, before_id);
+    }
+    return 0;
+}
+
+static int osc_move_processor(const char* /*path*/,
+                              const char* /*types*/,
+                              lo_arg** argv,
+                              int argc,
+                              void* /*data*/,
+                              void* user_data)
+{
+    auto instance = static_cast<ext::SushiControl*>(user_data);
+    std::string processor(&argv[0]->s);
+    std::string source_track(&argv[1]->s);
+    std::string dest_track(&argv[2]->s);
+    std::string before;
+    bool add_to_back = true;
+
+    if (argc > 3)
+    {
+        before = std::string_view(&argv[3]->s);
+        add_to_back = false;
+    }
+
+    SUSHI_LOG_DEBUG("Got a move processor on track request");
+
+    auto [status_proc, proc_id] = instance->get_processor_id(processor);
+    if (status_proc != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up processor {}", processor);
+        return 0;
+    }
+
+    auto [status_src, src_id] = instance->get_processor_id(source_track);
+    if (status_src != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up source track {}", source_track);
+        return 0;
+    }
+
+    auto [status_dest, dest_id] = instance->get_processor_id(dest_track);
+    if (status_dest != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up destination track {}", source_track);
+        return 0;
+    }
+
+
+    if (add_to_back)
+    {
+        instance->move_processor(proc_id, src_id, dest_id, std::nullopt);
+    }
+    else
+    {
+        auto [status, before_id] = instance->get_processor_id(before);
+        if (status != ext::ControlStatus::OK)
+        {
+            SUSHI_LOG_WARNING("Error looking up processor {}", before);
+            return 0;
+        }
+        instance->move_processor(proc_id, src_id, dest_id, before_id);
+    }
+    return 0;
+}
+
+static int osc_delete_processor(const char* /*path*/,
+                                const char* /*types*/,
+                                lo_arg** argv,
+                                int argc,
+                                void* /*data*/,
+                                void* user_data)
+{
+    auto instance = static_cast<ext::SushiControl*>(user_data);
+    std::string name(&argv[0]->s);
+    std::string track(&argv[1]->s);
+
+    SUSHI_LOG_DEBUG("Got a delete processor on track request");
+    auto [status, proc_id] = instance->get_processor_id(name);
+    if (status != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up Processor {}", name);
+        return 0;
+    }
+    auto [track_status, track_id] = instance->get_processor_id(track);
+    if (track_status != ext::ControlStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Error looking up Track {}", name);
+        return 0;
+    }
+    instance->delete_processor_from_track(proc_id, track_id);
+    return 0;
+}
+
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
@@ -565,6 +718,14 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/set_timing_statistics_enabled", "i", osc_set_timing_statistics_enabled, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "s", osc_reset_timing_statistics, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "sssss", osc_add_processor_to_track, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "ssssss", osc_add_processor_to_track, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/move_processor", "sss", osc_move_processor, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/move_processor", "ssss", osc_move_processor, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/delete_processor_from_track", "ss", osc_delete_processor, this->_controller);
+
+
+
 }
 
 int OSCFrontend::process(Event* event)

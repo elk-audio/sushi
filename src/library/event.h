@@ -421,7 +421,7 @@ public:
                                                _file(file),
                                                _processor_type(processor_type),
                                                _track(track),
-                                               _add_to_back(true),
+                                               _add_to_back(false),
                                                _before_processor(before_processor) {}
 
     AddProcessorToTrackEvent(const std::string& name,
@@ -435,7 +435,7 @@ public:
                                                _file(file),
                                                _processor_type(processor_type),
                                                _track(track),
-                                               _add_to_back(false),
+                                               _add_to_back(true),
                                                _before_processor(0) {}
 
     int execute(engine::BaseEngine* engine) override;

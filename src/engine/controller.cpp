@@ -689,6 +689,24 @@ ext::ControlStatus Controller::create_processor_on_track(const std::string& name
     {
         auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id),
                                                   ObjectId(before_processor_id.value()), IMMEDIATE_PROCESS);
+        event->set_completion_cb(Controller::completion_callback, this);
+        _event_dispatcher->post_event(event);
+    }
+    else
+    {
+        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id), IMMEDIATE_PROCESS);
+        event->set_completion_cb(Controller::completion_callback, this);
+        _event_dispatcher->post_event(event);
+    }
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::move_processor(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
+{
+    /*if (before_processor_id.has_value())
+    {
+        auto event = new (name, uid, file, to_event_type(type), ObjectId(track_id),
+                                                  ObjectId(before_processor_id.value()), IMMEDIATE_PROCESS);
         _event_dispatcher->post_event(event);
     }
     else
@@ -697,17 +715,44 @@ ext::ControlStatus Controller::create_processor_on_track(const std::string& name
         _event_dispatcher->post_event(event);
 
     }
+    return ext::ControlStatus::OK;*/
+}
+
+ext::ControlStatus Controller::delete_processor_from_track(int processor_id, int track_id)
+{
+    auto [proc_status, proc_name] = _engine->processor_name_from_id(processor_id);
+    if (proc_status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Processor {} not found", processor_id);
+        return ext::ControlStatus::NOT_FOUND;
+    }
+    auto [track_status, track_name] = _engine->processor_name_from_id(track_id);
+    if (track_status != engine::EngineReturnStatus::OK)
+    {
+        SUSHI_LOG_WARNING("Track {} not found", track_id);
+        return ext::ControlStatus::NOT_FOUND;
+    }
+    auto event = new RemoveProcessorEvent(proc_name, track_name, IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::move_processor(int processor_id, int source_track_id, int target_track_id, std::optional<int> before_processor)
+void Controller::_completion_callback(Event* event, int status)
 {
-    return ext::ControlStatus::INVALID_ARGUMENTS;
+    if (status == EventStatus::HANDLED_OK)
+    {
+        SUSHI_LOG_INFO("Event {}, handled OK", event->id());
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
+    }
 }
 
-ext::ControlStatus Controller::delete_processor(int processor_id)
+void Controller::completion_callback(void*arg, Event*event, int status)
 {
-    return ext::ControlStatus::INVALID_ARGUMENTS;
+    reinterpret_cast<Controller*>(arg)->_completion_callback(event, status);
 }
 
 }// namespace sushi

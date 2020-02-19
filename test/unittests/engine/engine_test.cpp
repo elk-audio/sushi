@@ -262,6 +262,10 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Test removal of plugin */
     status = _module_under_test->remove_plugin_from_track("left", "gain");
     ASSERT_EQ(status, EngineReturnStatus::OK);
+    auto processors = _module_under_test->processors_on_track(_module_under_test->processor_id_from_name("left").second);
+    ASSERT_EQ(1u, processors.size());
+    ASSERT_EQ("synth", processors.front()->name());
+
     status = _module_under_test->delete_plugin("gain");
     ASSERT_EQ(status, EngineReturnStatus::OK);
 

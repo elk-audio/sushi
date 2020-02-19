@@ -20,6 +20,9 @@
 
 #include "library/event.h"
 #include "engine/base_engine.h"
+#include "logging.h"
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 
 /* GCC does not seem to get when a switch case handles all cases */
 #pragma GCC diagnostic ignored "-Wreturn-type"
@@ -272,6 +275,9 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
     auto [status, id] = engine->load_plugin(_uid, _name, _file, plugin_type);
     switch (status)
     {
+        case engine::EngineReturnStatus::OK:
+            break;
+
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
             return AddProcessorToTrackEvent::Status::INVALID_NAME;
 
@@ -282,7 +288,7 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
             return AddProcessorToTrackEvent::Status::INVALID_UID;
 
         default:
-            break;
+            return EventStatus::ERROR;
     }
 
     // TODO - Use ID over name in event eventually
@@ -296,10 +302,12 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
 
     if (_add_to_back)
     {
+        SUSHI_LOG_DEBUG("Adding plugin {} to back of track {}", _name, _track);
         status = engine->add_plugin_to_track_back(track, _name);
     }
     else
     {
+        SUSHI_LOG_DEBUG("Adding plugin {} to track {}, before processor {}", _name, _track, _before_processor);
         auto [before_status, before_processor] = engine->processor_name_from_id(_before_processor);
         if (before_status != engine::EngineReturnStatus::OK)
         {
@@ -316,13 +324,20 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
     return EventStatus::HANDLED_OK;
 }
 
-int RemoveProcessorEvent::execute(engine::BaseEngine*engine)
+int RemoveProcessorEvent::execute(engine::BaseEngine* engine)
 {
     auto status = engine->remove_plugin_from_track(_track, _name);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
+        {
+            status = engine->delete_plugin(_name);
+            if (status == engine::EngineReturnStatus::OK)
+            {
+                return EventStatus::HANDLED_OK;
+            }
+            return RemoveProcessorEvent::Status::INVALID_NAME;
+        }
 
         case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
             return RemoveProcessorEvent::Status::INVALID_NAME;
@@ -344,7 +359,7 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
     return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
 
-Event*AsynchronousBlobDeleteEvent::execute()
+Event* AsynchronousBlobDeleteEvent::execute()
 {
     delete(_data.data);
     return nullptr;

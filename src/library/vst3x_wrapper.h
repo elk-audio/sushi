@@ -61,10 +61,7 @@ public:
         _enabled = false;
     }
 
-    virtual ~Vst3xWrapper()
-    {
-        _cleanup();
-    }
+    virtual ~Vst3xWrapper();
 
     /**
      * @brief Entry point for parameter changes from the plugin editor.

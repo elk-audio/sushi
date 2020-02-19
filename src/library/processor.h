@@ -418,7 +418,6 @@ protected:
 
     bool _enabled{false};
     bool _bypassed{false};
-    bool _in_processing{false};
     bool _on_track{false};
 
     HostControl _host_control;

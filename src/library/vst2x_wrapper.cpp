@@ -41,6 +41,12 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosVal
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
+Vst2xWrapper::~Vst2xWrapper()
+{
+    SUSHI_LOG_DEBUG("Unloading plugin {}", this->name());
+    _cleanup();
+}
+
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {
     // TODO: sanity checks on sample_rate,

@@ -968,6 +968,9 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &trac
             return EngineReturnStatus::ERROR;
         }
     }
+    std::unique_lock<std::mutex> track_lock(_processors_by_track_lock);
+    auto& track_processors = _processors_by_track[track->id()];
+    track_processors.erase(std::remove(track_processors.begin(), track_processors.end(), processor_node->second), track_processors.end());
     return EngineReturnStatus::OK;
 }
 

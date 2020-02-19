@@ -303,7 +303,8 @@ public:
     ControlStatus   create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                               PluginType type, int track_id, std::optional<int> before_processor_id) {};
     ControlStatus   move_processor(int processor_id, int source_track_id, int target_track_id, std::optional<int> before_processor) {};
-    ControlStatus   delete_processor(int processor_id) {}
+    ext::ControlStatus delete_processor_from_track(int processor_id, int track_id)
+    {}
 
 
     std::unordered_map<std::string,std::string> get_args_from_last_call()

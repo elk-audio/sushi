@@ -63,10 +63,7 @@ public:
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
     }
 
-    virtual ~Vst2xWrapper()
-    {
-        _cleanup();
-    }
+    virtual ~Vst2xWrapper();
 
     /* Inherited from Processor */
     ProcessorReturnCode init(float sample_rate) override;
