@@ -20,6 +20,7 @@
 
 #include "sushi_rpc/grpc_server.h"
 #include "control_service.h"
+#include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
@@ -34,11 +35,30 @@ GrpcServer::GrpcServer(const std::string& listenAddress,
 
 GrpcServer::~GrpcServer() = default;
 
+void HandleRpcs(SushiControlService* service, grpc::ServerCompletionQueue* cq)
+{
+    new SubscribeToParameterUpdatesCallData(service, cq, service->parameter_notifications());
+
+    void* tag;
+    bool ok;
+    while (true)
+    {
+        // GPR_ASSERT(cq->Next(&tag, &ok));
+        assert(cq->Next(&tag, &ok));
+        // GPR_ASSERT(ok);
+        assert(ok);
+        static_cast<CallDataBase*>(tag)->Proceed();
+    }
+}
+
 void GrpcServer::start()
 {
     _server_builder->AddListeningPort(_listenAddress, grpc::InsecureServerCredentials());
     _server_builder->RegisterService(_service.get());
+     auto cq = _server_builder->AddCompletionQueue();
     _server = _server_builder->BuildAndStart();
+
+    _async_process = std::thread(HandleRpcs, _service.get(), cq.get());
 }
 
 void GrpcServer::stop()
@@ -49,6 +69,7 @@ void GrpcServer::stop()
 void GrpcServer::waitForCompletion()
 {
     _server->Wait();
+    _async_process.join();
 }
 
 }// sushi_rpc

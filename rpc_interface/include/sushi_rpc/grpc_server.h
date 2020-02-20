@@ -24,6 +24,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "../../include/control_interface.h"
 
@@ -56,6 +57,7 @@ private:
     std::unique_ptr<grpc::ServerBuilder> _server_builder;
     std::unique_ptr<grpc::Server>        _server;
     sushi::ext::SushiControl*            _controller;
+    std::thread                          _async_process;
 };
 
 

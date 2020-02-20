@@ -33,15 +33,43 @@
 
 namespace sushi_rpc {
 
-template <typename T>
-struct ServerWriterWrapper
+constexpr int NOTIFICATION_BUFFER_SIZE = 16;
+
+template<typename T>
+class NotificationContainer
 {
-    std::string token;
-    grpc::ServerWriter<T>* writer;
-    std::condition_variable* exit_condition;
+public:
+    void set_content(T content)
+    {
+        _latest_index = (_latest_index + 1) % NOTIFICATION_BUFFER_SIZE;
+        _content[_latest_index] = content;
+        _counter++;
+    }
+
+    const T &latest_content() const
+    {
+        return this[_latest_index];
+    }
+
+    const T &operator[] (std::size_t idx) const
+    {
+        return _content[idx % NOTIFICATION_BUFFER_SIZE];
+    }
+
+    unsigned int counter() const
+    {
+        return _counter;
+    }
+
+private:
+    T _content[NOTIFICATION_BUFFER_SIZE];
+    unsigned int _counter;
+    unsigned int _latest_index;
 };
 
-class SushiControlService : public sushi_rpc::SushiController::Service, sushi::ext::ControlListener
+typedef sushi_rpc::SushiController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::SushiController::Service> AsyncService;
+
+class SushiControlService : public AsyncService, sushi::ext::ControlListener
 {
 public:
     SushiControlService(sushi::ext::SushiControl* controller) : _controller{controller}
@@ -102,25 +130,20 @@ public:
      grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetParameterValueNormalised(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
-     grpc::Status SubscribeToParameterUpdates(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, grpc::ServerWriter<sushi_rpc::ParameterSetRequest>* response) override;
 
      /* Inherited from ControlListener */
 
      void notification(const sushi::ext::ControlNotification* notification) override;
-     void prepare_exit() { _exiting = true; std::cout << "Exiting gRPC" << std::endl; _notify_all_writers(); }
+     void prepare_exit() { std::cout << "Exiting gRPC" << std::endl; }
+
+     const NotificationContainer<ParameterSetRequest>* parameter_notifications() const
+     {
+         return &_parameter_notifications;
+     }
 
 private:
-
-    void _reset_writer_pointers();
-    void _set_writer_pointer(const std::string& token, grpc::ServerWriter<ParameterSetRequest>* writer);
-    void _write_to_all(const ParameterSetRequest& message);
-    void _notify_all_writers();
-    void _remove_writer(const std::string& token);
-
-    std::vector<ServerWriterWrapper<ParameterSetRequest>> _writers;
-    std::mutex _writer_mutex;
+    NotificationContainer<ParameterSetRequest> _parameter_notifications;
     sushi::ext::SushiControl* _controller;
-    std::atomic<bool> _exiting = false;
 };
 
 }// sushi_rpc
