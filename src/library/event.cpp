@@ -346,6 +346,7 @@ int RemoveProcessorEvent::execute(engine::BaseEngine* engine)
         default:
             return RemoveProcessorEvent::Status::INVALID_CHAIN;
     }
+
 }
 
 Event* AsynchronousProcessorWorkEvent::execute()

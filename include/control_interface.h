@@ -197,9 +197,6 @@ protected:
 
 };
 
-
-
-
 } // ext
 } // sushi
 

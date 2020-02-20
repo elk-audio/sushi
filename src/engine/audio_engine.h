@@ -475,6 +475,22 @@ public:
     std::shared_ptr<Processor> mutable_processor(ObjectId processor_id) override;
 
     /**
+     * @brief Access a particular track by its unique id for querying
+     * @param track_id The id of the track
+     * @return A std::shared_ptr<const Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Track> track(ObjectId track_id) const override;
+
+    /**
+     * @brief Access a particular track by its unique name for querying
+     * @param track_name The name of the track
+     * @return A std::shared_ptr<const Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Track> track(const std::string& track_name) const override;
+
+    /**
      * @brief Return all processors.
      * @return An std::vector containing all registered processors.
      */
@@ -602,6 +618,13 @@ private:
      *         or a nullptr if the processor is not found
      */
     std::shared_ptr<Processor> _mutable_processor(const std::string& name);
+
+    /**
+     * @brief Get the instance of a Track by its unique id
+     * @return A std::shared_ptr with a pointer to the track if found
+     *         or a nullptr if the track is not found
+     */
+    std::shared_ptr<Track> _mutable_track(ObjectId);
 
     /**
      * @brief Process events that are to be handled by the engine directly and

@@ -151,12 +151,11 @@ EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
 {
-    auto processor = _mutable_processor(track_name);
-    if(processor == nullptr)
+    auto track = this->track(track_name);
+    if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto track = static_cast<Track*>(processor.get());
     if (input_channel >= _audio_inputs || track_channel >= track->input_channels())
     {
         return EngineReturnStatus::INVALID_CHANNEL;
@@ -170,12 +169,11 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
 EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel, int track_channel,
                                                              const std::string& track_name)
 {
-    auto processor = _mutable_processor(track_name);
-    if(processor == nullptr)
+    auto track = this->track(track_name);
+    if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto track = static_cast<Track*>(processor.get());
     if (output_channel >= _audio_outputs || track_channel >= track->output_channels())
     {
         return EngineReturnStatus::INVALID_CHANNEL;
@@ -451,23 +449,13 @@ EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
 bool AudioEngine::_processor_exists(const std::string& processor_name)
 {
     std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(processor_name);
-    if(processor_node == _processors_by_name.end())
-    {
-        return false;
-    }
-    return true;
+    return _processors_by_name.count(processor_name) > 0;
 }
 
 bool AudioEngine::_processor_exists(ObjectId id)
 {
     std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-    auto processor_node = _processors_by_id.find(id);
-    if(processor_node == _processors_by_id.end())
-    {
-        return false;
-    }
-    return true;
+    return _processors_by_id.count(id) > 0;
 }
 
 bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
@@ -648,7 +636,6 @@ EngineReturnStatus AudioEngine::send_async_event(RtEvent& event)
     }
     return EngineReturnStatus::QUEUE_FULL;
 }
-
 
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
 {
@@ -929,7 +916,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_back(const std::string& trac
             return EngineReturnStatus::ERROR;
         }
     }
-
+    SUSHI_LOG_INFO("Adding proc to track {}", track->name());
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
     _processors_by_track[track->id()].push_back(plugin);
     return EngineReturnStatus::OK;
@@ -1034,6 +1021,40 @@ std::shared_ptr<Processor> AudioEngine::mutable_processor(ObjectId processor_id)
     return processor_node->second;
 }
 
+std::shared_ptr<const Track> AudioEngine::track(ObjectId track_id) const
+{
+    /* Check if there is an entry for the ObjectId in the list of track processor
+     * In that case we can safely look up the processor by its id and cast it */
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    if (_processors_by_track.count(track_id) > 0)
+    {
+        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        auto track_node = _processors_by_id.find(track_id);
+        if (track_node != _processors_by_id.end())
+        {
+            return std::static_pointer_cast<const Track, Processor>(track_node->second);
+        }
+    }
+    return nullptr;
+}
+
+std::shared_ptr<const Track> AudioEngine::track(const std::string& track_name) const
+{
+    std::unique_lock<std::mutex> _lock(_processors_by_id_lock);
+    auto track_node = _processors_by_name.find(track_name);
+    if (track_node != _processors_by_name.end())
+    {
+        /* Check if there is an entry for the ObjectId in the list of track processor
+         * In that case we can safely look up the processor by its id and cast it */
+        std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+        if (_processors_by_track.count(track_node->second->id()) > 0)
+        {
+            return std::static_pointer_cast<const Track, Processor>(track_node->second);
+        }
+    }
+    return nullptr;
+}
+
 std::vector<std::shared_ptr<const Processor>> AudioEngine::all_processors() const
 {
     std::vector<std::shared_ptr<const Processor>> processors;
@@ -1134,6 +1155,23 @@ std::shared_ptr<Processor> AudioEngine::_mutable_processor(const std::string& na
         return nullptr;
     }
     return processor_node->second;
+}
+
+std::shared_ptr<Track> AudioEngine::_mutable_track(ObjectId track_id)
+{
+    /* Check if there is an entry for the ObjectId in the list of track processor
+     * In that case we can safely look up the processor by its id and cast it */
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    if (_processors_by_track.count(track_id) > 0)
+    {
+        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        auto track_node = _processors_by_id.find(track_id);
+        if (track_node != _processors_by_id.end())
+        {
+            return std::static_pointer_cast<Track, Processor>(track_node->second);
+        }
+    }
+    return nullptr;
 }
 
 bool AudioEngine::_handle_internal_events(RtEvent& event)

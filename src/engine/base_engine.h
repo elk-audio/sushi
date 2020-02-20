@@ -304,6 +304,10 @@ public:
 
     virtual std::shared_ptr<Processor> mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
 
+    virtual std::shared_ptr<const Track> track(ObjectId /*track_id*/) const {return nullptr;}
+
+    virtual std::shared_ptr<const Track> track(const std::string& /*track_name*/) const {return nullptr;}
+
     virtual std::vector<std::shared_ptr<const Processor>> all_processors() const
     {
         return std::vector<std::shared_ptr<const Processor>>();
