@@ -117,7 +117,6 @@ public:
                                   const std::string& label,
                                   const std::string& unit);
 
-
     /**
      * @brief Register a data property that can be updated through events
      * @param name Unique name of the property
@@ -128,7 +127,6 @@ public:
     bool register_data_property(const std::string& name,
                                 const std::string& label,
                                 const std::string& unit);
-
 
 protected:
     /**

@@ -119,17 +119,30 @@ template<typename T>
 class ParameterPreProcessor
 {
 public:
-    ParameterPreProcessor(T min, T max): _min_range(min), _max_range(max) {}
-    virtual T process(T raw_value) {return clip(raw_value);}
+    ParameterPreProcessor(T min, T max):
+            _min_range(min), _max_range(max) {}
+
+    virtual T process(T raw_value)
+    {
+        return clip(lerp(raw_value));
+    }
 
 protected:
     T clip(T raw_value)
     {
-        return (raw_value > _max_range? _max_range : (raw_value < _min_range? _min_range : raw_value));
+        return (raw_value > _max_range ? _max_range : (raw_value < _min_range ? _min_range : raw_value));
     }
 
     T _min_range;
     T _max_range;
+
+    float lerp(float raw_value)
+    {
+        return _max_range + (_min_range - _max_range) / (_min_external - _max_external) * (raw_value - _max_external);
+    }
+
+    const float _min_external{0.0f};
+    const float _max_external{1.0f};
 };
 
 /**
@@ -149,10 +162,12 @@ template <> inline std::string ParameterFormatPolicy<bool>::format(bool value) c
 {
     return value? "True": "False";
 }
+
 template <> inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value) const
 {
     return *value;
 }
+
 template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/) const
 {
     /* This parameter type is intended to transfer opaque binary data, and
@@ -250,9 +265,10 @@ class dBToLinPreProcessor : public FloatParameterPreProcessor
 {
 public:
     dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+
     float process(float raw_value) override
     {
-        return powf(10.0f, this->clip(raw_value) / 20.0f);
+        return powf(10.0f, clip(lerp(raw_value)) / 20.0f);
     }
 };
 
@@ -263,9 +279,10 @@ class LinTodBPreProcessor : public FloatParameterPreProcessor
 {
 public:
     LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+
     float process(float raw_value) override
     {
-        return 20.0f * log10(this->clip(raw_value));
+        return 20.0f * log10(clip(lerp(raw_value)));
     }
 };
 
@@ -290,6 +307,7 @@ public:
         _raw_value = value;
         _value = _pre_processor->process(value);
     }
+
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
@@ -322,7 +340,7 @@ private:
 
 typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
 typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
-typedef ParameterValue<float,ParameterType::FLOAT> FloatParameterValue;
+typedef ParameterValue<float, ParameterType::FLOAT> FloatParameterValue;
 
 
 class ParameterStorage

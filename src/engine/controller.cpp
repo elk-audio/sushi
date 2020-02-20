@@ -639,6 +639,7 @@ ext::ControlStatus Controller::set_parameter_value(int processor_id, int paramet
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
                                           value, IMMEDIATE_PROCESS);
+
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }

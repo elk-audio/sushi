@@ -150,6 +150,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
      * _input_buffer  */
     ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(_input_buffer);
     ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
+
     for (auto &processor : _processors)
     {
         auto processor_timestamp = _timer->start_timer();
@@ -167,7 +168,9 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
         std::swap(aliased_in, aliased_out);
         _timer->stop_timer_rt_safe(processor_timestamp, processor->id());
     }
+
     int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
+
     if (output_channels > 0)
     {
         aliased_out.replace(aliased_in);
@@ -202,6 +205,7 @@ void Track::set_bypassed(bool bypassed)
     {
         processor->set_bypassed(bypassed);
     }
+
     Processor::set_bypassed(bypassed);
 }
 
@@ -220,17 +224,27 @@ void Track::send_event(const RtEvent& event)
 void Track::_common_init()
 {
     _processors.reserve(TRACK_MAX_PROCESSORS);
-    _gain_parameters.at(0)  = register_float_parameter("gain", "Gain", "dB", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
-    _pan_parameters.at(0)  = register_float_parameter("pan", "Pan", "", 0.0f, -1.0f, 1.0f, nullptr);
+
+    _gain_parameters.at(0)  = register_float_parameter("gain", "Gain", "dB",
+            0.75f, 0.0f, 1.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
+
+    _pan_parameters.at(0)  = register_float_parameter("pan", "Pan", "",
+            0.5f, 0.0f, 1.0f, nullptr);
+
     for (int bus = 1 ; bus < _output_busses; ++bus)
     {
-        _gain_parameters.at(bus)  = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB", 0.0f, -120.0f, 24.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
-        _pan_parameters.at(bus)  = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "", 0.0f, -1.0f, 1.0f, new FloatParameterPreProcessor(-1.0f, 1.0f));
+        _gain_parameters.at(bus)  = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB",
+                0.75f, 0.0f, 1.0f, new dBToLinPreProcessor(-120.0f, 24.0f));
+
+        _pan_parameters.at(bus)  = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "",
+                0.5f, 0.0f, 1.0f, new FloatParameterPreProcessor(-1.0f, 1.0f));
     }
+
     for (auto& i : _pan_gain_smoothers_right)
     {
         i.set_direct(DEFAULT_TRACK_GAIN);
     }
+
     for (auto& i : _pan_gain_smoothers_left)
     {
         i.set_direct(DEFAULT_TRACK_GAIN);
@@ -245,10 +259,12 @@ void Track::_update_channel_config()
     for (unsigned int i = 0; i < _processors.size(); ++i)
     {
         input_channels = std::min(input_channels, _processors[i]->max_input_channels());
+
         if (input_channels != _processors[i]->input_channels())
         {
             _processors[i]->set_input_channels(input_channels);
         }
+
         if (i < _processors.size() - 1)
         {
             output_channels = std::min(_max_output_channels, std::min(_processors[i]->max_output_channels(),
@@ -259,10 +275,12 @@ void Track::_update_channel_config()
             output_channels = std::min(_max_output_channels, std::min(_processors[i]->max_output_channels(),
                                                                       _current_output_channels));
         }
+
         if (output_channels != _processors[i]->output_channels())
         {
             _processors[i]->set_output_channels(output_channels);
         }
+
         input_channels = output_channels;
     }
 
@@ -270,6 +288,7 @@ void Track::_update_channel_config()
     {
         auto last = _processors.back();
         int track_outputs = std::min(_current_output_channels, last->output_channels());
+
         if (track_outputs != last->output_channels())
         {
             last->set_output_channels(track_outputs);

@@ -145,6 +145,7 @@ public:
         MODULATION,
         WRAPPED_MIDI
     };
+
     KeyboardEvent(Subtype subtype,
                   ObjectId processor_id,
                   int channel,
@@ -241,6 +242,7 @@ public:
 
 private:
     Subtype             _subtype;
+
 protected:
     ObjectId            _processor_id;
     ObjectId            _parameter_id;
@@ -317,10 +319,10 @@ public:
 
     bool maps_to_rt_event() override {return false;}
 
-    Subtype             subtype() {return _subtype;}
+    Subtype subtype() {return _subtype;}
 
 private:
-    Subtype     _subtype;
+    Subtype _subtype;
 };
 
 class SetProcessorBypassEvent : public Event

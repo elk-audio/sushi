@@ -155,12 +155,14 @@ void InternalPlugin::process_event(const RtEvent& event)
             /* These are "managed events" where this function provides a default
              * implementation for handling these and setting parameter values */
             auto typed_event = event.parameter_change_event();
+
             if (typed_event->param_id() >= _parameter_values.size())
             {
                 break;
             }
 
             auto storage = &_parameter_values[typed_event->param_id()];
+
             switch (storage->type())
             {
                 case ParameterType::FLOAT:
@@ -200,14 +202,14 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
     }
 }
 
-void InternalPlugin::set_parameter_and_notify(IntParameterValue*storage, int new_value)
+void InternalPlugin::set_parameter_and_notify(IntParameterValue* storage, int new_value)
 {
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
     output_event(e);
 }
 
-void InternalPlugin::set_parameter_and_notify(BoolParameterValue*storage, bool new_value)
+void InternalPlugin::set_parameter_and_notify(BoolParameterValue* storage, bool new_value)
 {
     storage->set(new_value);
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
@@ -227,6 +229,8 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
     {
         auto desc = static_cast<FloatParameterDescriptor*>(value_storage.float_parameter_value()->descriptor());
         float value = value_storage.float_parameter_value()->raw_value();
+
+        // TODO Ilias: It seems to be doing normalization/lerping here - should it?
         float norm_value = (value - desc->min_value()) / (desc->max_value() - desc->min_value());
         return {ProcessorReturnCode::OK, norm_value};
     }
@@ -234,6 +238,8 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
     {
         auto desc = static_cast<IntParameterDescriptor*>(value_storage.int_parameter_value()->descriptor());
         float value = value_storage.int_parameter_value()->raw_value();
+
+        // TODO Ilias: It seems to be doing normalization/lerping here - should it?
         float norm_value = (value - desc->min_value()) / static_cast<float>((desc->max_value() - desc->min_value()));
         return {ProcessorReturnCode::OK, norm_value};
     }
