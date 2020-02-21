@@ -21,6 +21,7 @@ protected:
     ControllerTest()
     {
     }
+
     void SetUp()
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
@@ -36,6 +37,7 @@ protected:
     void TearDown()
     {
     }
+
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
@@ -151,7 +153,6 @@ TEST_F(ControllerTest, TestTrackControls)
     DECLARE_UNUSED(id_unused);
 }
 
-
 TEST_F(ControllerTest, TestProcessorControls)
 {
     auto [not_found_status, id_unused] = _module_under_test->get_processor_id("not_found");
@@ -206,10 +207,8 @@ TEST_F(ControllerTest, TestProcessorControls)
     DECLARE_UNUSED(prog_unused);
 }
 
-
-// TODO: Ilias - change this to use normalized values.
-// Also: When I try to run this with the CLion debugger separately, test_utils get_data_dir_path fails.
-// I could try to fix that...
+// TODO Ilias these should pass when I implement getting un-normalized:
+// TODO: When this is run with the CLion debugger individually, test_utils get_data_dir_path fails.
 TEST_F(ControllerTest, TestParameterControls)
 {
     auto [status, proc_id] = _module_under_test->get_processor_id("equalizer_0_l");
@@ -228,8 +227,7 @@ TEST_F(ControllerTest, TestParameterControls)
     EXPECT_FLOAT_EQ(20.0f, info.min_range);
     EXPECT_FLOAT_EQ(20000.0f, info.max_range);
 
-
-    auto [value_status, value] = _module_under_test->get_parameter_value(proc_id, id);
+    auto [value_status, value] = _module_under_test->get_parameter_value_un_normalized(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, value_status);
     EXPECT_FLOAT_EQ(1000.0f, value);
 

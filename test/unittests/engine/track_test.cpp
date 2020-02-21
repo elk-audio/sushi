@@ -134,7 +134,7 @@ TEST_F(TrackTest, TestEmptyChainRendering)
     test_utils::fill_sample_buffer(in_bus, 1.0f);
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
-    test_utils::assert_buffer_value(1.0f, out);
+    test_utils::assert_buffer_value(1.0f, out, test_utils::DECIBEL_ERROR);
 }
 
 TEST_F(TrackTest, TestRenderingWithProcessors)
@@ -147,7 +147,7 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
     test_utils::fill_sample_buffer(in_bus, 1.0f);
     _module_under_test.render();
     auto out = _module_under_test.output_bus(0);
-    test_utils::assert_buffer_value(1.0f, out);
+    test_utils::assert_buffer_value(1.0f, out, test_utils::DECIBEL_ERROR);
 }
 
 TEST_F(TrackTest, TestPanAndGain)

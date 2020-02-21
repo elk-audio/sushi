@@ -41,9 +41,12 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     _max_output_channels = MAX_CHANNELS;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _left_level = register_float_parameter("left", "Left", "dB", OUTPUT_MIN, OUTPUT_MIN, 1.0f,
-                                                new LinTodBPreProcessor(OUTPUT_MIN, 1.0f));
-    _right_level = register_float_parameter("right", "Right", "dB", OUTPUT_MIN, OUTPUT_MIN, 1.0f,
+    _left_level = register_float_parameter("left", "Left", "dB",
+                                           0.0f, OUTPUT_MIN, 1.0f,
+                                           new LinTodBPreProcessor(OUTPUT_MIN, 1.0f));
+
+    _right_level = register_float_parameter("right", "Right", "dB",
+                                            0.0f, OUTPUT_MIN, 1.0f,
                                             new LinTodBPreProcessor(OUTPUT_MIN, 1.0f));
     assert(_left_level && _right_level);
 }

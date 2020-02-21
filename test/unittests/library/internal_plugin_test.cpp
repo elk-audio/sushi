@@ -57,10 +57,13 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
     EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
     EXPECT_TRUE(_module_under_test->register_string_property("string", "String", ""));
     EXPECT_TRUE(_module_under_test->register_data_property("data", "Data", ""));
-    EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers", 3, 0, 10,
-                                                            new IntParameterPreProcessor(0, 10)));
-    EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", "fl", 5.0f, 0.0f, 10.0f,
-                                                             new FloatParameterPreProcessor(0.0, 10.0)));
+    EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
+                                                                    0.3f, 0, 10,
+                                                                    new IntParameterPreProcessor(0, 10)));
+
+    EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", "fl",
+                                                                      0.5f, 0.0f, 10.0f,
+                                                                      new FloatParameterPreProcessor(0.0, 10.0)));
 
     // Verify all parameter/properties were registered and their order match
     auto parameter_list = _module_under_test->all_parameters();
@@ -102,50 +105,61 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     DECLARE_UNUSED(unused_value);
 }
 
-// TODO: Ilias - change this to use normalized values.
+// TODO: Ilias - This should no longer fail when parameter getting is implemented
 TEST_F(InternalPluginTest, TestIntParameterHandling)
 {
-    IntParameterValue* value = _module_under_test->register_int_parameter("param_1", "Param 1", "", 0, 0, 10,
-                                                                          new IntParameterPreProcessor(0, 10));
+    auto value = _module_under_test->register_int_parameter("param_1", "Param 1", "",
+                                                            0, 0, 10,
+                                                            new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(value);
 
     // Access the parameter through its id, verify type and that you can set its value.
     EXPECT_EQ(ParameterType::INT, _module_under_test->parameter_from_name("param_1")->type());
-    RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 6.0f);
+
+    RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 0.6f);
+
     _module_under_test->process_event(event);
     EXPECT_FLOAT_EQ(6.0f, value->value());
+
     // Access the parameter from the external interface
-    auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
+    auto [status, ext_value] = _module_under_test->parameter_value_un_normalized(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(6.0f, ext_value);
+
     auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.6f, norm_value);
+
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
     DECLARE_UNUSED(unused_value);
 }
 
-// TODO: Ilias - change this to use normalized values.
+// TODO: Ilias - This should no longer fail when parameter getting is implemented
 TEST_F(InternalPluginTest, TestFloatParameterHandling)
 {
-    FloatParameterValue* value = _module_under_test->register_float_parameter("param_1", "Param 1", "", 1.0f, 0.0f, 10.f,
-                                                                              new FloatParameterPreProcessor(0.0, 10.0));
+    auto value = _module_under_test->register_float_parameter("param_1", "Param 1", "",
+                                                              0.1f, 0.0f, 10.f,
+                                                              new FloatParameterPreProcessor(0.0, 10.0));
     EXPECT_TRUE(value);
 
     // Access the parameter through its id, verify type and that you can set its value.
     EXPECT_EQ(ParameterType::FLOAT, _module_under_test->parameter_from_name("param_1")->type());
-    RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 5);
+
+    RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 0.5f);
     _module_under_test->process_event(event);
     EXPECT_EQ(5, value->value());
+
     // Access the parameter from the external interface
-    auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
+    auto [status, ext_value] = _module_under_test->parameter_value_un_normalized(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(5.0f, ext_value);
+
     auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.5f, norm_value);
+
     [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 

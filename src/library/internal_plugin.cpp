@@ -35,7 +35,7 @@ InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_contro
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
                                                               const std::string& unit,
-                                                              float default_value,
+                                                              float default_value_normalized,
                                                               float min_value,
                                                               float max_value,
                                                               FloatParameterPreProcessor* pre_proc)
@@ -52,7 +52,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
         return nullptr;
     }
 
-    auto value = ParameterStorage::make_float_parameter_storage(param, default_value, pre_proc);
+    auto value = ParameterStorage::make_float_parameter_storage(param, default_value_normalized, pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
@@ -63,7 +63,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
 IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           const std::string& label,
                                                           const std::string& unit,
-                                                          int default_value,
+                                                          float default_value_normalized,
                                                           int min_value,
                                                           int max_value,
                                                           IntParameterPreProcessor* pre_proc)
@@ -80,7 +80,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
         return nullptr;
     }
 
-    auto value = ParameterStorage::make_int_parameter_storage(param, default_value,  pre_proc);
+    auto value = ParameterStorage::make_int_parameter_storage(param, default_value_normalized, pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);

@@ -15,11 +15,11 @@ protected:
 
 TEST_F(TestParameterPreProcessor, TestClipping)
 {
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.process(1.0f));
-    EXPECT_FLOAT_EQ(10.0f, _module_under_test.process(10.0f));
-    EXPECT_FLOAT_EQ(-4.0, _module_under_test.process(-4.0f));
+    EXPECT_FLOAT_EQ(1.0f, _module_under_test.process(0.55f));
+    EXPECT_FLOAT_EQ(10.0f, _module_under_test.process(1.0f));
+    EXPECT_FLOAT_EQ(-4.0, _module_under_test.process(0.3f));
 
-    EXPECT_FLOAT_EQ(-10.0, _module_under_test.process(-14.0f));
+    EXPECT_FLOAT_EQ(-10.0, _module_under_test.process(-1.0f));
     EXPECT_FLOAT_EQ(10.0, _module_under_test.process(267890.5f));
 }
 
@@ -34,9 +34,9 @@ protected:
 
 TEST_F(TestdBToLinPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(1.0, _module_under_test.process(0.0f), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(2.0, _module_under_test.process(6.0f), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(0.25, _module_under_test.process(-12.0f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(1.0, _module_under_test.process(0.5f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(2.0, _module_under_test.process(0.625f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.25, _module_under_test.process(0.25f), test_utils::DECIBEL_ERROR);
 }
 
 class TestLinTodBPreProcessor : public ::testing::Test
@@ -49,9 +49,9 @@ protected:
 
 TEST_F(TestLinTodBPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(0.0f, _module_under_test.process(1.0f), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(6.02f, _module_under_test.process(2.0f), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(-12.04f, _module_under_test.process(0.25f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.0f, _module_under_test.process(0.1f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(6.02f, _module_under_test.process(0.2f), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(-12.04f, _module_under_test.process(0.025f), test_utils::DECIBEL_ERROR);
 }
 
 /*
@@ -104,11 +104,11 @@ TEST_F(TestParameter, TestTypeNameAndLabel)
 TEST(TestParameterValue, TestSet)
 {
     dBToLinPreProcessor pre_processor(-6.0f, 6.0f);
-    auto value = ParameterStorage::make_float_parameter_storage(nullptr, 0, &pre_processor);
+    auto value = ParameterStorage::make_float_parameter_storage(nullptr, 0.5f, &pre_processor);
     /* Check correct defaults */
     EXPECT_EQ(ParameterType::FLOAT, value.float_parameter_value()->type());
     EXPECT_FLOAT_EQ(1.0f, value.float_parameter_value()->value());
-    EXPECT_FLOAT_EQ(0.0f, value.float_parameter_value()->raw_value());
+    EXPECT_FLOAT_EQ(0.5f, value.float_parameter_value()->raw_value());
 
     /* Test set */
     value.float_parameter_value()->set(6.0f);

@@ -122,7 +122,7 @@ public:
     ParameterPreProcessor(T min, T max):
             _min_range(min), _max_range(max) {}
 
-    virtual T process(T raw_value)
+    virtual T process(float raw_value)
     {
         return clip(lerp(raw_value));
     }
@@ -291,28 +291,29 @@ class ParameterValue
 {
 public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
-                   T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
-                                                               _pre_processor(pre_processor),
-                                                               _raw_value(value),
-                                                               _value(pre_processor->process(value)){}
+                   float raw_value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                                       _pre_processor(pre_processor),
+                                                                       _raw_value(raw_value),
+                                                                       _value(pre_processor->process(raw_value)){}
 
     ParameterType type() const {return _type;}
     T value() const {return _value;}
-    T raw_value() const {return _raw_value;}
+    float raw_value() const {return _raw_value;}
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
-    void set(T value)
+    void set_values(T value, float raw_value) {_value = value; _raw_value = raw_value;}
+
+    void set(float raw_value)
     {
-        _raw_value = value;
-        _value = _pre_processor->process(value);
+        _raw_value = raw_value;
+        _value = _pre_processor->process(raw_value);
     }
 
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
-    T _raw_value;
+    float _raw_value;
     T _value;
 };
 
@@ -395,18 +396,18 @@ public:
     }
 
     static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
-                                                       int default_value,
+                                                       float default_value_normalized,
                                                        IntParameterPreProcessor* pre_processor)
     {
-        IntParameterValue value(pre_processor, default_value, descriptor);
+        IntParameterValue value(pre_processor, default_value_normalized, descriptor);
         return ParameterStorage(value);
     }
 
     static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
-                                                         float default_value,
+                                                         float default_value_normalized,
                                                          FloatParameterPreProcessor* pre_processor)
     {
-        FloatParameterValue value(pre_processor, default_value, descriptor);
+        FloatParameterValue value(pre_processor, default_value_normalized, descriptor);
         return ParameterStorage(value);
     }
 
