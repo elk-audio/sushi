@@ -134,7 +134,6 @@ public:
      /* Inherited from ControlListener */
 
      void notification(const sushi::ext::ControlNotification* notification) override;
-     void prepare_exit() { std::cout << "Exiting gRPC" << std::endl; }
 
      const NotificationContainer<ParameterSetRequest>* parameter_notifications() const
      {

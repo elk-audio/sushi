@@ -25,12 +25,14 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <atomic>
 
 #include "../../include/control_interface.h"
 
 namespace grpc {
     class Server;
     class ServerBuilder;
+    class ServerCompletionQueue;
 }
 
 namespace sushi_rpc {
@@ -50,14 +52,18 @@ public:
 
     void waitForCompletion();
 
+    void HandleRpcs();
+
 private:
 
-    std::string                          _listenAddress;
-    std::unique_ptr<SushiControlService> _service;
-    std::unique_ptr<grpc::ServerBuilder> _server_builder;
-    std::unique_ptr<grpc::Server>        _server;
-    sushi::ext::SushiControl*            _controller;
-    std::thread                          _async_process;
+    std::string                                  _listenAddress;
+    std::unique_ptr<SushiControlService>         _service;
+    std::unique_ptr<grpc::ServerBuilder>         _server_builder;
+    std::unique_ptr<grpc::Server>                _server;
+    std::unique_ptr<grpc::ServerCompletionQueue> _cq;
+    sushi::ext::SushiControl*                    _controller;
+    std::thread                                  _worker;
+    std::atomic<bool>                            _running;
 };
 
 

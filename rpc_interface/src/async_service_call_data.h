@@ -2,7 +2,6 @@
 #define SUSHI_ASYNCSERVICECALLDATA_H
 
 #include <grpcpp/alarm.h>
-// #include <grpc/support/log.h>
 
 #include "control_service.h"
 

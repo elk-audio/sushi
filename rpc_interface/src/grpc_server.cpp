@@ -28,25 +28,31 @@ GrpcServer::GrpcServer(const std::string& listenAddress,
                        sushi::ext::SushiControl* controller) : _listenAddress{listenAddress},
                                                                _service{new SushiControlService(controller)},
                                                                _server_builder{new grpc::ServerBuilder()},
-                                                               _controller{controller}
+                                                               _controller{controller},
+                                                               _running{false}
 {
 
 }
 
 GrpcServer::~GrpcServer() = default;
 
-void HandleRpcs(SushiControlService* service, grpc::ServerCompletionQueue* cq)
+void GrpcServer::HandleRpcs()
 {
-    new SubscribeToParameterUpdatesCallData(service, cq, service->parameter_notifications());
+    new SubscribeToParameterUpdatesCallData(_service.get(), _cq.get(), _service->parameter_notifications());
 
     void* tag;
     bool ok;
-    while (true)
+    while (_running.load())
     {
         // GPR_ASSERT(cq->Next(&tag, &ok));
-        assert(cq->Next(&tag, &ok));
         // GPR_ASSERT(ok);
-        assert(ok);
+        assert(_cq->Next(&tag, &ok));
+        // assert(ok);
+        if (ok != true)
+        {
+            static_cast<CallDataBase*>(tag)->Stop();
+            continue;
+        }
         static_cast<CallDataBase*>(tag)->Proceed();
     }
 }
@@ -55,21 +61,31 @@ void GrpcServer::start()
 {
     _server_builder->AddListeningPort(_listenAddress, grpc::InsecureServerCredentials());
     _server_builder->RegisterService(_service.get());
-     auto cq = _server_builder->AddCompletionQueue();
+    _cq = _server_builder->AddCompletionQueue();
     _server = _server_builder->BuildAndStart();
-
-    _async_process = std::thread(HandleRpcs, _service.get(), cq.get());
+    _running.store(true);
+    _worker = std::thread(&GrpcServer::HandleRpcs, this);
 }
 
 void GrpcServer::stop()
 {
-    _service->prepare_exit();
+    _running.store(false);
+    std::chrono::system_clock::time_point shutdown_deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(50);
+    _server->Shutdown(shutdown_deadline);
+    _cq->Shutdown();
+    void* tag;
+    bool ok;
+    while(_cq->Next(&tag, &ok));
+    
+    if (_worker.joinable())
+    {
+        _worker.join();
+    }
 }
 
 void GrpcServer::waitForCompletion()
 {
     _server->Wait();
-    _async_process.join();
 }
 
 }// sushi_rpc
