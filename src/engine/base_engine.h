@@ -56,7 +56,7 @@ enum class EngineReturnStatus
     ERROR,
     INVALID_N_CHANNELS,
     INVALID_PLUGIN_UID,
-    INVALID_PLUGIN_NAME,
+    INVALID_PLUGIN,
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
@@ -274,26 +274,26 @@ public:
         return {EngineReturnStatus::OK, ObjectId(0)};
     }
 
-    virtual EngineReturnStatus add_plugin_to_track_before(const std::string& /*track_name*/,
-                                                          const std::string& /*plugin_name*/,
-                                                          const std::string& /*before_plugin*/)
+    virtual EngineReturnStatus add_plugin_to_track_before(ObjectId /*plugin_id*/,
+                                                          ObjectId /*track_id*/,
+                                                          ObjectId /*before_plugin_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus add_plugin_to_track_back(const std::string& /*track_name*/,
-                                                        const std::string& /*plugin_name*/)
+    virtual EngineReturnStatus add_plugin_to_track_back(ObjectId /*plugin_id*/,
+                                                        ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus remove_plugin_from_track(const std::string& /*track_id*/,
-                                                        const std::string& /*plugin_id*/)
+    virtual EngineReturnStatus remove_plugin_from_track(ObjectId /*plugin_id*/,
+                                                        ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus delete_plugin(const std::string& /*plugin_name*/)
+    virtual EngineReturnStatus delete_plugin(ObjectId /*plugin_id*/)
     {
         return EngineReturnStatus::OK;
     }

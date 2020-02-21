@@ -225,7 +225,7 @@ int AddTrackEvent::execute(engine::BaseEngine*engine)
         case engine::EngineReturnStatus::OK:
             return EventStatus::HANDLED_OK;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
         default:
             return AddTrackEvent::Status::INVALID_NAME;
     }
@@ -271,14 +271,13 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
             __builtin_unreachable();
     }
 
-    // TODO where to do validation?
-    auto [status, id] = engine->load_plugin(_uid, _name, _file, plugin_type);
+    auto [status, plugin_id] = engine->load_plugin(_uid, _name, _file, plugin_type);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
             break;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
             return AddProcessorToTrackEvent::Status::INVALID_NAME;
 
         case engine::EngineReturnStatus::INVALID_TRACK:
@@ -291,42 +290,90 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
             return EventStatus::ERROR;
     }
 
-    // TODO - Use ID over name in event eventually
-
-    auto [track_status, track] = engine->processor_name_from_id(_track);
-    if (track_status != engine::EngineReturnStatus::OK)
-    {
-        engine->delete_plugin(_name);
-        return Status::INVALID_TRACK;
-    }
-
     if (_add_to_back)
     {
         SUSHI_LOG_DEBUG("Adding plugin {} to back of track {}", _name, _track);
-        status = engine->add_plugin_to_track_back(track, _name);
+        status = engine->add_plugin_to_track_back(plugin_id, _track);
     }
     else
     {
         SUSHI_LOG_DEBUG("Adding plugin {} to track {}, before processor {}", _name, _track, _before_processor);
-        auto [before_status, before_processor] = engine->processor_name_from_id(_before_processor);
-        if (before_status != engine::EngineReturnStatus::OK)
-        {
-            engine->delete_plugin(_name);
-            return Status::INVALID_POSITION;
-        }
-        status = engine->add_plugin_to_track_before(track, _name, before_processor);
+        status = engine->add_plugin_to_track_before(plugin_id, _track, _before_processor);
     }
-    if (status != engine::EngineReturnStatus::OK)
+    switch (status)
     {
-        engine->delete_plugin(_name);
-        return AddProcessorToTrackEvent::Status::INVALID_TRACK;
+        case engine::EngineReturnStatus::OK:
+            return EventStatus::HANDLED_OK;
+
+        case engine::EngineReturnStatus::INVALID_TRACK:
+            return AddProcessorToTrackEvent::Status::INVALID_TRACK;
+
+        default:
+            return EventStatus::ERROR;
     }
-    return EventStatus::HANDLED_OK;
+}
+
+int MoveProcessorEvent::execute(engine::BaseEngine* engine)
+{
+    auto old_plugin_order = engine->processors_on_track(_source_track);
+
+    auto status = engine->remove_plugin_from_track(_processor, _source_track);
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            break;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
+            return MoveProcessorEvent::Status::INVALID_NAME;
+
+        case engine::EngineReturnStatus::INVALID_TRACK:
+            return MoveProcessorEvent::Status::INVALID_SOURCE_TRACK;
+
+        default:
+            return EventStatus::ERROR;
+    }
+
+    if (_add_to_back)
+    {
+        status = engine->add_plugin_to_track_back(_processor, _dest_track);
+    }
+    else
+    {
+        status = engine->add_plugin_to_track_before(_processor, _dest_track, _before_processor);
+    }
+    if (status == engine::EngineReturnStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+
+    /* If the insertion operation failed, we must put the processor back in the source track */
+    if (old_plugin_order.back()->id() == _processor)
+    {
+        auto replace_status = engine->add_plugin_to_track_back(_processor, _source_track);
+        SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
+                "Failed to replace processor {} on track {}", _processor, _source_track);
+    }
+    else
+    {
+        for (auto i = old_plugin_order.begin(); i != old_plugin_order.end(); ++i)
+        {
+            if ((*i)->id() == _processor)
+            {
+                i++;
+                ObjectId before = (*i)->id();
+                auto replace_status = engine->add_plugin_to_track_before(_processor, _source_track, before);
+                SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
+                           "Failed to replace processor {} on track {} before pos {}", _processor, _source_track, before);
+                break;
+            }
+        }
+    }
+    return MoveProcessorEvent::Status::INVALID_DEST_TRACK;
 }
 
 int RemoveProcessorEvent::execute(engine::BaseEngine* engine)
 {
-    auto status = engine->remove_plugin_from_track(_track, _name);
+    auto status = engine->remove_plugin_from_track(_name, _track);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -339,14 +386,13 @@ int RemoveProcessorEvent::execute(engine::BaseEngine* engine)
             return RemoveProcessorEvent::Status::INVALID_NAME;
         }
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
             return RemoveProcessorEvent::Status::INVALID_NAME;
 
         case engine::EngineReturnStatus::INVALID_TRACK:
         default:
-            return RemoveProcessorEvent::Status::INVALID_CHAIN;
+            return RemoveProcessorEvent::Status::INVALID_TRACK;
     }
-
 }
 
 Event* AsynchronousProcessorWorkEvent::execute()
@@ -381,4 +427,5 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
 }
 
 #pragma GCC diagnostic pop
+
 } // end namespace sushi

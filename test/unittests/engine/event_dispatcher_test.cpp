@@ -235,7 +235,7 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
 {
     completed = false;
     completion_status = 0;
-    auto event = new RemoveProcessorEvent("plugin", "track", IMMEDIATE_PROCESS);
+    auto event = new RemoveProcessorEvent(ObjectId(123), ObjectId(234), IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
     auto status = _module_under_test->process(event);
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);

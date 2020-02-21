@@ -413,42 +413,37 @@ public:
     /**
      * @brief Add a plugin to a track at the position before plugin with the name given in
      *        before_plugin. The plugin must not currently be active on any track.
-     * @param track_name The name of the track to add the plugin to.
-     * @param plugin_name The unique name of the plugin
-     * @param before_plugin The plugin will be inserted after this plugin
+     * @param track_id The id of the track to add the plugin to.
+     * @param plugin_id The id of the plugin to add.
+     * @param before_plugin_id The plugin will be inserted after this plugin
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_track_before(const std::string& track_name,
-                                                  const std::string& plugin_name,
-                                                  const std::string& before_plugin) override;
+    EngineReturnStatus add_plugin_to_track_before(ObjectId plugin_id, ObjectId track_id, ObjectId before_plugin_id) override;
 
     /**
      * @brief Add a plugin to the end of a Track's processing chain. The plugin must
      *        not currently be active on any track.
-     * @param track_name The unique name of the track to add the plugin to.
-     * @param plugin_name plugin_name The unique name of the plugin.
+     * @param track_id The id of the track to add the plugin to.
+     * @param plugin_id The id of the plugin.
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_track_back(const std::string& track_name,
-                                                const std::string& plugin_name) override;
+    EngineReturnStatus add_plugin_to_track_back(ObjectId plugin_id, ObjectId track_id) override;
 
     /**
      * @brief Remove a given plugin from a track and delete it
-     * @param track_name The unique name of the track that contains the plugin
-     * @param plugin_name The unique name of the plugin
+     * @param track_id The id of the track that contains the plugin
+     * @param plugin_id The id of the plugin
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
-    EngineReturnStatus remove_plugin_from_track(const std::string &track_name,
-                                                const std::string &plugin_name) override;
+    EngineReturnStatus remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id) override;
 
     /**
      * @brief Delete and unload a plugin instance from Sushi. The plugin must
      *        not currently be active on any track.
-     * @param plugin_name plugin_name The unique name of the plugin to delete.
+     * @param plugin_id The id of the plugin to delete.
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus delete_plugin(const std::string& plugin_name) override;
-
+    EngineReturnStatus delete_plugin(ObjectId plugin_id) override;
 
     /**
      * @brief Access a particular processor by its unique id for querying
@@ -569,11 +564,12 @@ private:
     EngineReturnStatus _register_processor(std::shared_ptr<Processor> processor, const std::string& name);
 
     /**
-     * @breif Remove a processor from the engine and delete it.
-     * @param name The unique name of the processor to delete
-     * @return True if the processor existed and it was correctly deleted
+     * @brief Remove a processor from the engine. The processor must not be active
+     *        on any track when called. The engine does not hold any references
+     *        to the processor after this function has returned.
+     * @param processor A pointer to the instance of the processor to delete
      */
-    EngineReturnStatus _deregister_processor(const std::string& name);
+    void _deregister_processor(Processor* processor);
 
     /**
      * @brief Add a registered processor to the realtime processing part.
@@ -618,6 +614,14 @@ private:
      *         or a nullptr if the processor is not found
      */
     std::shared_ptr<Processor> _mutable_processor(const std::string& name);
+
+    /**
+     * @brief Get the instance of a processor by its unique id
+     * @param id The id of the processor
+     * @return A std::shared_ptr with a pointer to the processor if found
+     *         or a nullptr if the processor is not found
+     */
+    std::shared_ptr<Processor> _mutable_processor(ObjectId id);
 
     /**
      * @brief Get the instance of a Track by its unique id

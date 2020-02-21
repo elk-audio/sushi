@@ -404,7 +404,7 @@ EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> p
     if(name.empty())
     {
         SUSHI_LOG_ERROR("Plugin name is not specified");
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        return EngineReturnStatus::INVALID_PLUGIN;
     }
     if(_processor_exists(name))
     {
@@ -426,24 +426,24 @@ EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> p
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
+void AudioEngine::_deregister_processor(Processor* processor)
 {
-    SUSHI_LOG_DEBUG("Deregistering processor: {}", name);
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(name);
-    if (processor_node == _processors_by_name.end())
+    assert(processor);
+    assert(processor->active_rt_processing() == false);
+
+    SUSHI_LOG_DEBUG("Deregistering processor: {}", processor->name());
     {
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
     }
-    ObjectId id = processor_node->second->id();
-    _processors_by_name.erase(processor_node);
-    lock.unlock();
+    {
+        std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+        [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
+    }
 
-    std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
-    _processors_by_id.erase(id);
-
-    SUSHI_LOG_INFO("Successfully deregistered processor: {}", name);
-    return EngineReturnStatus::OK;
+    SUSHI_LOG_INFO("Successfully deregistered processor {}", processor->name());
 }
 
 bool AudioEngine::_processor_exists(const std::string& processor_name)
@@ -747,7 +747,9 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
     }
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
     _processors_by_track.erase(track->id());
-    return _deregister_processor(track_name);
+
+    _deregister_processor(track.get());
+    return EngineReturnStatus::OK;
 }
 
 std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::string &plugin_uid,
@@ -799,7 +801,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
         if (!inserted)
         {
             SUSHI_LOG_ERROR("Failed to insert plugin {} to processing part", plugin_name);
-            _deregister_processor(plugin_name);
+            _deregister_processor(plugin.get());
             return {EngineReturnStatus::INVALID_PROCESSOR, ObjectId(0)};
         }
     }
@@ -811,43 +813,43 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
     return {EngineReturnStatus::OK, plugin->id()};
 }
 
-EngineReturnStatus AudioEngine::add_plugin_to_track_before(const std::string& track_name,
-                                                           const std::string& plugin_name,
-                                                           const std::string& before_plugin)
+EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, ObjectId track_id, ObjectId before_plugin_id)
 {
-    auto track_processor = _mutable_processor(track_name);
-    if (track_processor == nullptr)
+    auto track = _mutable_track(track_id);
+    if (track == nullptr)
     {
-        SUSHI_LOG_ERROR("Track named {} does not exist in processor list", track_name);
+        SUSHI_LOG_ERROR("Track {} not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
     }
-    // TODO - Maybe unsafe as we're not checking that the processor is a track
-    auto track = static_cast<Track*>(track_processor.get());
 
-    auto plugin = _mutable_processor(plugin_name);
+    auto plugin = _mutable_processor(plugin_id);
     if (plugin == nullptr)
     {
-        SUSHI_LOG_ERROR("Plugin named {} does not exist in processor list", track_name);
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
+        return EngineReturnStatus::INVALID_PLUGIN;
     }
 
-    auto pos_plugin = _mutable_processor(before_plugin);
-    if (pos_plugin == nullptr)
+    if (_processor_exists(before_plugin_id) == false)
     {
-        SUSHI_LOG_ERROR("Plugin named {} does not exist in processor list", track_name);
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        SUSHI_LOG_ERROR("Plugin {} not found", before_plugin_id);
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+
+    if (plugin->active_rt_processing())
+    {
+        SUSHI_LOG_ERROR("Plugin {} is already active on a track");
+        return EngineReturnStatus::ERROR;
     }
 
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto add_event = RtEvent::make_add_processor_to_track_event(plugin->id(), track->id(), pos_plugin->id());
+        auto add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id);
         send_async_event(add_event);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
         {
-            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
-            _deregister_processor(plugin_name);
+            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin->name());
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -855,18 +857,18 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(const std::string& tr
     {
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin.get());
-        if (track->add_before(plugin.get(), pos_plugin->id()) == false)
+        if (track->add_before(plugin.get(), before_plugin_id) == false)
         {
-            _deregister_processor(plugin_name);
             return EngineReturnStatus::ERROR;
         }
     }
 
+    // Add it to the engine's mirror of track processing chains
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
     auto& plugins = _processors_by_track[track->id()];
     for (auto i = plugins.begin(); i != plugins.end(); ++i)
     {
-        if ((*i)->id() == pos_plugin->id())
+        if ((*i)->id() == before_plugin_id)
         {
             plugins.insert(i, plugin);
             break;
@@ -875,34 +877,36 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(const std::string& tr
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::add_plugin_to_track_back(const std::string& track_name, const std::string& plugin_name)
+EngineReturnStatus AudioEngine::add_plugin_to_track_back(ObjectId plugin_id, ObjectId track_id)
 {
-    auto track_processor = _mutable_processor(track_name);
-    if (track_processor == nullptr)
-    {
-        SUSHI_LOG_ERROR("Track named {} does not exist in processor list", track_name);
-        return EngineReturnStatus::INVALID_TRACK;
-    }
-    // TODO - Maybe unsafe as we're not checking that the processor is a track
-    auto track = static_cast<Track*>(track_processor.get());
-
-    auto plugin = _mutable_processor(plugin_name);
+    auto plugin = _mutable_processor(plugin_id);
+    auto track = _mutable_track(track_id);
     if (plugin == nullptr)
     {
-        SUSHI_LOG_ERROR("Plugin named {} does not exist in processor list", track_name);
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        SUSHI_LOG_ERROR("Plugin {} not found", track_id);
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+    if (track == nullptr)
+    {
+        SUSHI_LOG_ERROR("Track {} not found", track_id);
+        return EngineReturnStatus::INVALID_TRACK;
+    }
+
+    if (plugin->active_rt_processing())
+    {
+        SUSHI_LOG_ERROR("Plugin {} is already active on a track");
+        return EngineReturnStatus::ERROR;
     }
 
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto add_event = RtEvent::make_add_processor_to_track_back_event(plugin->id(), track->id());
+        auto add_event = RtEvent::make_add_processor_to_track_back_event(plugin_id, track_id);
         send_async_event(add_event);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
         {
-            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
-            _deregister_processor(plugin_name);
+            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_id);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -912,61 +916,60 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_back(const std::string& trac
         _insert_processor_in_realtime_part(plugin.get());
         if (track->add_back(plugin.get()) == false)
         {
-            _deregister_processor(plugin_name);
             return EngineReturnStatus::ERROR;
         }
     }
-    SUSHI_LOG_INFO("Adding proc to track {}", track->name());
+    SUSHI_LOG_INFO("Adding proc {} to track {}", plugin->name(), track->name());
+
+    // Add it to the engine's mirror of track processing chains
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    _processors_by_track[track->id()].push_back(plugin);
+    _processors_by_track[track_id].push_back(plugin);
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &track_name, const std::string &plugin_name)
+EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id)
 {
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto track_node = _processors_by_name.find(track_name);
-    if (track_node == _processors_by_name.end())
+    auto plugin = this->processor(plugin_id);
+    auto track = _mutable_track(track_id);
+    if (plugin == nullptr)
+    {
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+    if (track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto processor_node = _processors_by_name.find(plugin_name);
-    if (processor_node == _processors_by_name.end())
-    {
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
-    }
-    auto processor = processor_node->second.get();
-    Track* track = static_cast<Track*>(track_node->second.get());
-    lock.unlock();
 
     if (realtime())
     {
         // Send events to handle this in the rt domain
-        auto remove_event = RtEvent::make_remove_processor_from_track_event(processor->id(), track->id());
+        auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
         send_async_event(remove_event);
         [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        SUSHI_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_name);
+        SUSHI_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
     }
     else
     {
-        if (!track->remove(processor->id()))
+        if (!track->remove(plugin.get()->id()))
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from track {}", plugin_name, track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from track_id {}", plugin_id, track_id);
             return EngineReturnStatus::ERROR;
         }
     }
+
+    // Remove it from the engine's mirror of track processing chains
     std::unique_lock<std::mutex> track_lock(_processors_by_track_lock);
-    auto& track_processors = _processors_by_track[track->id()];
-    track_processors.erase(std::remove(track_processors.begin(), track_processors.end(), processor_node->second), track_processors.end());
+    auto& track_processors = _processors_by_track[track_id];
+    track_processors.erase(std::remove(track_processors.begin(), track_processors.end(), plugin), track_processors.end());
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::delete_plugin(const std::string& plugin_name)
+EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
 {
-    auto processor = this->processor(plugin_name);
+    auto processor = _mutable_processor(plugin_id);
     if (processor == nullptr)
     {
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        return EngineReturnStatus::INVALID_PLUGIN;
     }
     if (processor->active_rt_processing())
     {
@@ -979,13 +982,15 @@ EngineReturnStatus AudioEngine::delete_plugin(const std::string& plugin_name)
         auto delete_event = RtEvent::make_remove_processor_event(processor->id());
         send_async_event(delete_event);
         [[maybe_unused]] bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        SUSHI_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_name);
+        SUSHI_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
     }
     else
     {
         _remove_processor_from_realtime_part(processor->id());
     }
-    return _deregister_processor(plugin_name);
+
+    _deregister_processor(processor.get());
+    return EngineReturnStatus::OK;
 }
 
 std::shared_ptr<const Processor> AudioEngine::processor(ObjectId id) const
@@ -1151,6 +1156,17 @@ std::shared_ptr<Processor> AudioEngine::_mutable_processor(const std::string& na
     std::unique_lock<std::mutex> lock(_processors_by_name_lock);
     auto processor_node = _processors_by_name.find(name);
     if (processor_node == _processors_by_name.end())
+    {
+        return nullptr;
+    }
+    return processor_node->second;
+}
+
+std::shared_ptr<Processor> AudioEngine::_mutable_processor(ObjectId id)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    auto processor_node = _processors_by_id.find(id);
+    if (processor_node == _processors_by_id.end())
     {
         return nullptr;
     }

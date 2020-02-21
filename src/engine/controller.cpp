@@ -703,36 +703,24 @@ ext::ControlStatus Controller::create_processor_on_track(const std::string& name
 
 ext::ControlStatus Controller::move_processor(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
 {
-    /*if (before_processor_id.has_value())
+    MoveProcessorEvent* event;
+    if (before_processor_id.has_value())
     {
-        auto event = new (name, uid, file, to_event_type(type), ObjectId(track_id),
-                                                  ObjectId(before_processor_id.value()), IMMEDIATE_PROCESS);
-        _event_dispatcher->post_event(event);
+        event = new MoveProcessorEvent(ObjectId(processor_id), ObjectId(source_track_id), ObjectId(dest_track_id),
+                         ObjectId(before_processor_id.value()),IMMEDIATE_PROCESS);
     }
     else
     {
-        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id), IMMEDIATE_PROCESS);
-        _event_dispatcher->post_event(event);
-
+        event = new MoveProcessorEvent(ObjectId(processor_id), ObjectId(source_track_id), ObjectId(dest_track_id), IMMEDIATE_PROCESS);
     }
-    return ext::ControlStatus::OK;*/
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::delete_processor_from_track(int processor_id, int track_id)
 {
-    auto [proc_status, proc_name] = _engine->processor_name_from_id(processor_id);
-    if (proc_status != engine::EngineReturnStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Processor {} not found", processor_id);
-        return ext::ControlStatus::NOT_FOUND;
-    }
-    auto [track_status, track_name] = _engine->processor_name_from_id(track_id);
-    if (track_status != engine::EngineReturnStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Track {} not found", track_id);
-        return ext::ControlStatus::NOT_FOUND;
-    }
-    auto event = new RemoveProcessorEvent(proc_name, track_name, IMMEDIATE_PROCESS);
+    auto event = new RemoveProcessorEvent(ObjectId(processor_id), ObjectId(track_id), IMMEDIATE_PROCESS);
     event->set_completion_cb(Controller::completion_callback, this);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;

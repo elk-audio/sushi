@@ -399,9 +399,7 @@ public:
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC,
         INVALID_TRACK,
-        INVALID_UID,
-        INVALID_PLUGIN,
-        INVALID_POSITION
+        INVALID_UID
     };
     enum class ProcessorType
     {
@@ -450,15 +448,56 @@ private:
     ObjectId        _before_processor;
 };
 
+class MoveProcessorEvent : public EngineEvent
+{
+public:
+    enum Status : int
+    {
+        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
+        INVALID_SOURCE_TRACK,
+        INVALID_DEST_TRACK
+    };
+
+    MoveProcessorEvent(ObjectId processor,
+                       ObjectId source_track,
+                       ObjectId dest_track,
+                       Time timestamp) : EngineEvent(timestamp),
+                                         _processor(processor),
+                                         _source_track(source_track),
+                                         _dest_track(dest_track),
+                                         _before_processor(0),
+                                         _add_to_back(true) {}
+
+    MoveProcessorEvent(ObjectId processor,
+                       ObjectId source_track,
+                       ObjectId dest_track,
+                       ObjectId before_processor,
+                       Time timestamp) : EngineEvent(timestamp),
+                                         _processor(processor),
+                                         _source_track(source_track),
+                                         _dest_track(dest_track),
+                                         _before_processor(before_processor),
+                                         _add_to_back(false) {}
+
+    int execute(engine::BaseEngine* engine) override;
+
+private:
+    ObjectId _processor;
+    ObjectId _source_track;
+    ObjectId _dest_track;
+    ObjectId _before_processor;
+    bool     _add_to_back;
+};
+
 class RemoveProcessorEvent : public EngineEvent
 {
 public:
     enum Status : int
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC,
-        INVALID_CHAIN,
+        INVALID_TRACK,
     };
-    RemoveProcessorEvent(const std::string& name, const std::string& track,
+    RemoveProcessorEvent(ObjectId name, ObjectId track,
                          Time timestamp) : EngineEvent(timestamp),
                                            _name(name),
                                            _track(track) {}
@@ -466,8 +505,8 @@ public:
     int execute(engine::BaseEngine* engine) override;
 
 private:
-    std::string _name;
-    std::string _track;
+    ObjectId _name;
+    ObjectId _track;
 };
 
 class ProgramChangeEvent : public EngineEvent

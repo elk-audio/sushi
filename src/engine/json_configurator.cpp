@@ -519,7 +519,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
     }
 
-    if(status == EngineReturnStatus::INVALID_PLUGIN_NAME || status == EngineReturnStatus::INVALID_PROCESSOR)
+    if(status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
     {
         SUSHI_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
@@ -567,6 +567,12 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
     }
 
+    auto [id_status, track_id] = _engine->processor_id_from_name(name);
+    if (id_status != EngineReturnStatus::OK)
+    {
+        return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+    }
+
     for(const auto& def : track_def["plugins"].GetArray())
     {
         std::string plugin_uid;
@@ -602,7 +608,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
-        status = _engine->add_plugin_to_track_back(name, plugin_name);
+        status = _engine->add_plugin_to_track_back(plugin_id, track_id);
         if (status != EngineReturnStatus::OK)
         {
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;

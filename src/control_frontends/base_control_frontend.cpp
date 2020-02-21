@@ -104,10 +104,10 @@ void BaseControlFrontend::send_add_processor_event(const std::string &track, con
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_processor_event(const std::string &track, const std::string &name)
+void BaseControlFrontend::send_remove_processor_event(const std::string& /*track*/, const std::string& /*name*/)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveProcessorEvent(name, track, timestamp);
+    auto e = new RemoveProcessorEvent(0, 0, timestamp);
     send_with_callback(e);
 }
 
