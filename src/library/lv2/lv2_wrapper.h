@@ -51,9 +51,6 @@
 
 #include "lv2_plugin_loader.h"
 
-// Needed for unit tests to access private utility methods.
-#define private public
-
 namespace sushi {
 namespace lv2 {
 

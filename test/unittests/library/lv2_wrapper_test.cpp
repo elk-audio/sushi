@@ -1,16 +1,19 @@
 #include "gtest/gtest.h"
 
-#define private public
-
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
 #include "test_utils/engine_mockup.h"
 #include "library/lv2/lv2_state.cpp"
 #include "library/lv2/lv2_features.cpp"
-#include "library/lv2/lv2_wrapper.cpp"
+
 #include "library/lv2/lv2_port.cpp"
 #include "library/lv2/lv2_model.cpp"
+
+// Needed for unit tests to access private utility methods in lv2_wrapper.
+#define private public
+
+#include "library/lv2/lv2_wrapper.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
@@ -231,10 +234,11 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
     _module_under_test->set_bypassed(true);
     auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
     EXPECT_TRUE(bypass_event.get());
+
     _module_under_test->process_event(bypass_event->to_rt_event(0));
     EXPECT_TRUE(_module_under_test->bypassed());
-    _module_under_test->process_audio(in_buffer, out_buffer);
 
+    _module_under_test->process_audio(in_buffer, out_buffer);
     // Test that we are ramping up the audio to the bypass value
     float prev_value = 0;
     for (int i = 1; i < AUDIO_CHUNK_SIZE; ++i)
@@ -258,7 +262,8 @@ TEST_F(TestLv2Wrapper, TestSynth)
 {
     SetUp("http://drobilla.net/plugins/mda/JX10");
 
-    if (_module_under_test == nullptr) {
+    if (_module_under_test == nullptr)
+    {
         std::cout << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run."
                   << std::endl;
         return;

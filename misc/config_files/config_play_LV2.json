@@ -20,7 +20,7 @@
             ],
             "plugins" : [
                 {
-                "uri" : "http://lv2plug.in/plugins/eg-midigate",
+                    "uri" : "http://lv2plug.in/plugins/eg-midigate",
                     "name" : "midigate",
                     "type"   : "lv2"
                 }
