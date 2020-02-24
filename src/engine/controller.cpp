@@ -602,7 +602,7 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value_un_normaliz
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
-        auto[status, value] = processor->parameter_value(static_cast<ObjectId>(parameter_id));
+        auto[status, value] = processor->parameter_value_un_normalized(static_cast<ObjectId>(parameter_id));
         if (status == ProcessorReturnCode::OK)
         {
             return {ext::ControlStatus::OK, value};

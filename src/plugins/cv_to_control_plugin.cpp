@@ -40,15 +40,15 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
     _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false);
 
     _channel_parameter  = register_int_parameter("channel", "Channel", "",
-                                                 0.0f, 0, 16,
+                                                 0, 0, 16,
                                                  new IntParameterPreProcessor(0, 16));
 
     _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones",
-                                                     0.5f, -TUNE_RANGE, TUNE_RANGE,
+                                                     0, -TUNE_RANGE, TUNE_RANGE,
                                                      new IntParameterPreProcessor(-TUNE_RANGE, TUNE_RANGE));
 
     _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "",
-                                                   0.0f, 1, MAX_CV_VOICES,
+                                                   1, 1, MAX_CV_VOICES,
                                                    new IntParameterPreProcessor(1, MAX_CV_VOICES));
 
     assert(_pitch_bend_mode_parameter && _velocity_mode_parameter && _channel_parameter &&

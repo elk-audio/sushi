@@ -35,15 +35,15 @@ EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host
     Processor::set_label(DEFAULT_LABEL);
 
     _frequency = register_float_parameter("frequency", "Frequency", "Hz",
-                                          0.05, 20.0f, 20000.0f,
+                                          1000.0f, 20.0f, 20000.0f,
                                           new FloatParameterPreProcessor(20.0f, 20000.0f));
 
     _gain = register_float_parameter("gain", "Gain", "dB",
-                                     0.5f, -24.0f, 24.0f,
+                                     0.0f, -24.0f, 24.0f,
                                      new dBToLinPreProcessor(-24.0f, 24.0f));
 
     _q = register_float_parameter("q", "Q", "",
-                                  1, 0.0f, 10.0f,
+                                  1.0f, 0.0f, 10.0f,
                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     assert(_frequency);
     assert(_gain);

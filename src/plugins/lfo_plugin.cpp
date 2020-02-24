@@ -34,8 +34,11 @@ LfoPlugin::LfoPlugin(HostControl host_control) : InternalPlugin(host_control)
     _max_output_channels = 8;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _freq_parameter = register_float_parameter("freq", "Frequency", "Hz", 0.1009f, 0.001f, 10.0f);
-    _out_parameter = register_float_parameter("out", "Lfo Out", "", 0.5f, 0.0f, 1.0f);
+    _freq_parameter = register_float_parameter("freq", "Frequency", "Hz",
+                                               1.0f, 0.001f, 10.0f);
+
+    _out_parameter = register_float_parameter("out", "Lfo Out", "",
+                                              0.5f, 0.0f, 1.0f);
 
     assert(_freq_parameter && _out_parameter);
 }

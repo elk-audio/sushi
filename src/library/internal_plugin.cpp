@@ -35,7 +35,7 @@ InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_contro
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
                                                               const std::string& unit,
-                                                              float default_value_normalized,
+                                                              float default_value,
                                                               float min_value,
                                                               float max_value,
                                                               FloatParameterPreProcessor* pre_proc)
@@ -52,7 +52,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
         return nullptr;
     }
 
-    auto value = ParameterStorage::make_float_parameter_storage(param, default_value_normalized, pre_proc);
+    auto value = ParameterStorage::make_float_parameter_storage(param, default_value, pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
@@ -63,7 +63,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
 IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           const std::string& label,
                                                           const std::string& unit,
-                                                          float default_value_normalized,
+                                                          float default_value,
                                                           int min_value,
                                                           int max_value,
                                                           IntParameterPreProcessor* pre_proc)
@@ -80,7 +80,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
         return nullptr;
     }
 
-    auto value = ParameterStorage::make_int_parameter_storage(param, default_value_normalized, pre_proc);
+    auto value = ParameterStorage::make_int_parameter_storage(param, default_value, pre_proc);
     /* The parameter id must match the value storage index*/
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
@@ -230,7 +230,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
         auto desc = static_cast<FloatParameterDescriptor*>(value_storage.float_parameter_value()->descriptor());
         float value = value_storage.float_parameter_value()->raw_value();
 
-        // TODO Ilias: It seems to be doing normalization/lerping here - should it?
+        // TODO: This interpolation could instead be carried out using pre-processor methods, if these are exposed.
         float norm_value = (value - desc->min_value()) / (desc->max_value() - desc->min_value());
         return {ProcessorReturnCode::OK, norm_value};
     }
@@ -239,7 +239,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
         auto desc = static_cast<IntParameterDescriptor*>(value_storage.int_parameter_value()->descriptor());
         float value = value_storage.int_parameter_value()->raw_value();
 
-        // TODO Ilias: It seems to be doing normalization/lerping here - should it?
+        // TODO: This interpolation could instead be carried out using pre-processor methods, if these are exposed.
         float norm_value = (value - desc->min_value()) / static_cast<float>((desc->max_value() - desc->min_value()));
         return {ProcessorReturnCode::OK, norm_value};
     }

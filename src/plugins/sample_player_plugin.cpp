@@ -34,7 +34,7 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
-                                                  0.77f, -120.0f, 36.0f,
+                                                  0.0f, -120.0f, 36.0f,
                                                   new dBToLinPreProcessor(-120.0f, 36.0f));
 
     _attack_parameter  = register_float_parameter("attack", "Attack", "s",

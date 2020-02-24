@@ -43,19 +43,19 @@ ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(
     _retrigger_mode_parameter = register_bool_parameter("retrigger_enabled", "Retrigger enabled", "", false);
 
     _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones",
-                                                     0.5f, -TUNE_RANGE, TUNE_RANGE,
+                                                     0, -TUNE_RANGE, TUNE_RANGE,
                                                      new IntParameterPreProcessor(-24, 24));
 
     _fine_tune_parameter  = register_float_parameter("fine_tune", "Fine Tune", "semitone",
-                                                     0.5f, -1, 1,
+                                                     0.0f, -1, 1,
                                                      new FloatParameterPreProcessor(-1, 1));
 
     _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "",
-                                                   0.0f, 1, MAX_CV_VOICES, // TODO: This is weird, but correct. Normalized, the range 1-MAX would mean a value of 1 is 0.
+                                                   1, 1, MAX_CV_VOICES,
                                                    new IntParameterPreProcessor(1, MAX_CV_VOICES));
 
     _modulation_parameter  = register_float_parameter("modulation", "Modulation", "",
-                                                      0.5, -1, 1,
+                                                      0.0f, -1, 1,
                                                       new FloatParameterPreProcessor(-1, 1));
 
     assert(_send_velocity_parameter && _send_modulation_parameter && _coarse_tune_parameter &&

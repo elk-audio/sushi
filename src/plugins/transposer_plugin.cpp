@@ -43,7 +43,7 @@ TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(ho
     _transpose_parameter = register_float_parameter("transpose",
                                                     "Transpose",
                                                     "semitones",
-                                                    0.5f,
+                                                    0.0f,
                                                     -24.0f,
                                                     24.0f,
                                                     new FloatParameterPreProcessor(-24.0f, 24.0f) );

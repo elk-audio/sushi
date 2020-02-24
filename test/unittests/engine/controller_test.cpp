@@ -207,7 +207,6 @@ TEST_F(ControllerTest, TestProcessorControls)
     DECLARE_UNUSED(prog_unused);
 }
 
-// TODO Ilias these should pass when I implement getting un-normalized:
 // TODO: When this is run with the CLion debugger individually, test_utils get_data_dir_path fails.
 TEST_F(ControllerTest, TestParameterControls)
 {

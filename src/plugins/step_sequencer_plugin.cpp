@@ -44,7 +44,7 @@ StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlu
     {
         std::string str_nr = std::to_string(i);
         _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, "semitone",
-                                                      0.5f, -24, 24,
+                                                      0, -24, 24,
                                                       new IntParameterPreProcessor(-24, 24));
 
         _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, "", true);

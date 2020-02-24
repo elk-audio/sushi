@@ -122,9 +122,19 @@ public:
     ParameterPreProcessor(T min, T max):
             _min_range(min), _max_range(max) {}
 
-    virtual T process(float raw_value)
+    virtual T process(T value)
     {
-        return clip(lerp(raw_value));
+        return clip(value);
+    }
+
+    T lerp_to_domain(float value_normalized)
+    {
+        return _max_range + (_min_range - _max_range) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+    }
+
+    float lerp_to_normalized(T value)
+    {
+        return _max_normalized + (_min_normalized - _max_normalized) / (_min_range - _max_range) * (value - _max_range);
     }
 
 protected:
@@ -136,13 +146,8 @@ protected:
     T _min_range;
     T _max_range;
 
-    float lerp(float raw_value)
-    {
-        return _max_range + (_min_range - _max_range) / (_min_external - _max_external) * (raw_value - _max_external);
-    }
-
-    const float _min_external{0.0f};
-    const float _max_external{1.0f};
+    const float _min_normalized{0.0f};
+    const float _max_normalized{1.0f};
 };
 
 /**
@@ -266,9 +271,9 @@ class dBToLinPreProcessor : public FloatParameterPreProcessor
 public:
     dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
 
-    float process(float raw_value) override
+    float process(float value) override
     {
-        return powf(10.0f, clip(lerp(raw_value)) / 20.0f);
+        return powf(10.0f, clip(value) / 20.0f);
     }
 };
 
@@ -280,9 +285,9 @@ class LinTodBPreProcessor : public FloatParameterPreProcessor
 public:
     LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
 
-    float process(float raw_value) override
+    float process(float value) override
     {
-        return 20.0f * log10(clip(lerp(raw_value)));
+        return 20.0f * log10(clip(value));
     }
 };
 
@@ -291,29 +296,36 @@ class ParameterValue
 {
 public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
-                   float raw_value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
-                                                                       _pre_processor(pre_processor),
-                                                                       _raw_value(raw_value),
-                                                                       _value(pre_processor->process(raw_value)){}
+                   T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
+                                                               _pre_processor(pre_processor),
+                                                               _raw_value(value),
+                                                               _value(pre_processor->process(value)){}
 
     ParameterType type() const {return _type;}
+
     T value() const {return _value;}
-    float raw_value() const {return _raw_value;}
+
+    T raw_value() const {return _raw_value;}
+
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(T value, float raw_value) {_value = value; _raw_value = raw_value;}
-
-    void set(float raw_value)
+    void set_values(float value_normalized, float raw_value_normalized)
     {
-        _raw_value = raw_value;
-        _value = _pre_processor->process(raw_value);
+        _value = _pre_processor->lerp_to_domain(value_normalized);
+        _raw_value = _pre_processor->lerp_to_domain(raw_value_normalized);
+    }
+
+    void set(float value_normalized)
+    {
+        _raw_value = _pre_processor->lerp_to_domain(value_normalized);
+        _value = _pre_processor->process(_pre_processor->lerp_to_domain(value_normalized));
     }
 
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
-    float _raw_value;
+    T _raw_value;
     T _value;
 };
 
@@ -342,7 +354,6 @@ private:
 typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
 typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
 typedef ParameterValue<float, ParameterType::FLOAT> FloatParameterValue;
-
 
 class ParameterStorage
 {
@@ -396,18 +407,18 @@ public:
     }
 
     static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
-                                                       float default_value_normalized,
+                                                       float default_value,
                                                        IntParameterPreProcessor* pre_processor)
     {
-        IntParameterValue value(pre_processor, default_value_normalized, descriptor);
+        IntParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
 
     static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
-                                                         float default_value_normalized,
+                                                         float default_value,
                                                          FloatParameterPreProcessor* pre_processor)
     {
-        FloatParameterValue value(pre_processor, default_value_normalized, descriptor);
+        FloatParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
 
