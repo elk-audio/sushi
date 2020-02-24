@@ -155,7 +155,10 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     dest.set_input_busses(src.input_busses);
     dest.set_output_channels(src.output_channels);
     dest.set_output_busses(src.output_busses);
-    dest.set_processor_count(src.processor_count);
+    for (auto i : src.processors)
+    {
+        dest.mutable_processors()->Add()->set_id(i);
+    }
 }
 
 inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& src)
@@ -163,6 +166,18 @@ inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& s
     dest.set_average(src.avg);
     dest.set_min(src.min);
     dest.set_max(src.max);
+}
+
+inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
+{
+    switch (type)
+    {
+        case sushi_rpc::PluginType::INTERNAL:       return sushi::ext::PluginType::INTERNAL;
+        case sushi_rpc::PluginType::VST2X:          return sushi::ext::PluginType::VST2X;
+        case sushi_rpc::PluginType::VST3X:          return sushi::ext::PluginType::VST3X;
+        case sushi_rpc::PluginType::LV2:            return sushi::ext::PluginType::LV2;
+        default:                                    return sushi::ext::PluginType::INTERNAL;
+    }
 }
 
 grpc::Status SushiControlService::GetSamplerate(grpc::ServerContext* /*context*/,
@@ -646,6 +661,50 @@ grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*
     auto status = _controller->set_string_property_value(request->property().processor_id(),
                                                          request->property().parameter_id(),
                                                          request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::CreateProcessorRequest* request,
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> before_processor = std::nullopt;
+    if (request->position().add_to_back() == false)
+    {
+        before_processor = request->position().before_processor().id();
+    }
+    auto status = _controller->create_processor_on_track(request->name(),
+                                                         request->uid(),
+                                                         request->path(),
+                                                         to_sushi_ext(request->type().type()),
+                                                         request->track().id(),
+                                                         before_processor);
+    return to_grpc_status(status);
+}
+
+grpc::Status
+SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
+                                          sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> before_processor = std::nullopt;
+    if (request->position().add_to_back() == false)
+    {
+        before_processor = request->position().before_processor().id();
+    }
+    auto status = _controller->move_processor_on_track(request->processor().id(),
+                                                       request->source_track().id(),
+                                                       request->dest_track().id(),
+                                                       before_processor);
+    return to_grpc_status(status);
+
+}
+
+grpc::Status SushiControlService::DeleteProcessorFromTrack(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::DeleteProcessorRequest* request,
+                                                           sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->delete_processor_from_track(request->processor().id(),
+                                                           request->track().id());
     return to_grpc_status(status);
 }
 

@@ -435,7 +435,7 @@ static int osc_move_processor(const char* /*path*/,
 
     if (add_to_back)
     {
-        instance->move_processor(proc_id, src_id, dest_id, std::nullopt);
+        instance->move_processor_on_track(proc_id, src_id, dest_id, std::nullopt);
     }
     else
     {
@@ -445,7 +445,7 @@ static int osc_move_processor(const char* /*path*/,
             SUSHI_LOG_WARNING("Error looking up processor {}", before);
             return 0;
         }
-        instance->move_processor(proc_id, src_id, dest_id, before_id);
+        instance->move_processor_on_track(proc_id, src_id, dest_id, before_id);
     }
     return 0;
 }
@@ -453,7 +453,7 @@ static int osc_move_processor(const char* /*path*/,
 static int osc_delete_processor(const char* /*path*/,
                                 const char* /*types*/,
                                 lo_arg** argv,
-                                int argc,
+                                int /*argc*/,
                                 void* /*data*/,
                                 void* user_data)
 {
@@ -720,12 +720,9 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "sssss", osc_add_processor_to_track, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "ssssss", osc_add_processor_to_track, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/move_processor", "sss", osc_move_processor, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/move_processor", "ssss", osc_move_processor, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/move_processor_on_track", "sss", osc_move_processor, this->_controller);
+    lo_server_thread_add_method(_osc_server, "/engine/move_processor_on_track", "ssss", osc_move_processor, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor_from_track", "ss", osc_delete_processor, this->_controller);
-
-
-
 }
 
 int OSCFrontend::process(Event* event)

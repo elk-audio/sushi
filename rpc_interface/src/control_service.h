@@ -91,6 +91,11 @@ public:
      grpc::Status SetParameterValueNormalised(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
+    // Audio Graph Control
+     grpc::Status CreateProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::CreateProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status MoveProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::MoveProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status DeleteProcessorFromTrack(grpc::ServerContext* context, const sushi_rpc::DeleteProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
+
 private:
 
     sushi::ext::SushiControl* _controller;

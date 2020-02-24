@@ -119,7 +119,7 @@ struct TrackInfo
     int         input_busses;
     int         output_channels;
     int         output_busses;
-    int         processor_count;
+    std::vector<int> processors;
 };
 
 class SushiControl
@@ -189,8 +189,8 @@ public:
     // Audio graph control
     virtual ControlStatus               create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                                   PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
-    virtual ControlStatus               move_processor(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) = 0;
-    virtual ext::ControlStatus          delete_processor_from_track(int processor_id, int track_id) = 0;
+    virtual ControlStatus               move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) = 0;
+    virtual ControlStatus               delete_processor_from_track(int processor_id, int track_id) = 0;
 
 protected:
     SushiControl() = default;

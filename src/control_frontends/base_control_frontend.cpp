@@ -94,7 +94,7 @@ void BaseControlFrontend::send_remove_track_event(const std::string &name)
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_add_processor_event(const std::string &track, const std::string &uid,
+void BaseControlFrontend::send_add_processor_event(const std::string &/*track*/, const std::string &uid,
                                                    const std::string &name, const std::string &file,
                                                    AddProcessorToTrackEvent::ProcessorType type)
 {

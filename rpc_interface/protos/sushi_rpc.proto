@@ -65,6 +65,11 @@ service SushiController {
     rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
     rpc SetParameterValueNormalised(ParameterSetRequest) returns (GenericVoidValue) {}
     rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
+
+    // Audio Graph Control
+    rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
+    rpc MoveProcessorOnTrack(MoveProcessorRequest) returns (GenericVoidValue) {}
+    rpc DeleteProcessorFromTrack(DeleteProcessorRequest) returns (GenericVoidValue) {}
 }
 
 
@@ -195,7 +200,7 @@ message TrackInfo {
     int32  input_busses = 5;
     int32  output_channels = 6;
     int32  output_busses = 7;
-    int32  processor_count = 8;
+    repeated ProcessorIdentifier processors = 8;
 }
 
 message TrackInfoList {
@@ -270,4 +275,41 @@ message ParameterSetRequest {
 message StringPropertySetRequest {
     ParameterIdentifier property = 1;
     string value = 2;
+}
+
+message PluginType {
+    enum Type {
+        DUMMY = 0;
+        INTERNAL = 1;
+        VST2X = 2;
+        VST3X = 3;
+        LV2 = 4;
+    }
+    Type type = 1;
+}
+
+message ProcessorPosition {
+    bool add_to_back = 1;
+    ProcessorIdentifier before_processor = 2;
+}
+
+message CreateProcessorRequest {
+    string name = 1;
+    string uid = 2;
+    string path = 3;
+    PluginType type = 4;
+    TrackIdentifier track = 5;
+    ProcessorPosition position = 6;
+}
+
+message MoveProcessorRequest {
+    ProcessorIdentifier processor = 1;
+    TrackIdentifier     source_track = 2;
+    TrackIdentifier     dest_track = 3;
+    ProcessorPosition   position = 4;
+}
+
+message DeleteProcessorRequest {
+    ProcessorIdentifier processor = 1;
+    TrackIdentifier     track = 2;
 }

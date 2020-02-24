@@ -214,7 +214,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
         info.input_channels = t->input_channels();
         info.output_busses = t->output_busses();
         info.output_channels = t->output_channels();
-        info.processor_count = 0; //static_cast<int>(t->process_chain().size()); // TODO - fix this eventually
+        info.processors = _get_processor_ids(t->id());
         returns.push_back(info);
     }
     return returns;
@@ -333,7 +333,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
             info.input_busses = track->input_busses();
             info.output_channels = track->output_channels();
             info.output_busses = track->output_busses();
-            info.processor_count = 0 ; //static_cast<int>(track->process_chain().size());
+            info.processors = _get_processor_ids(track->id());
             return {ext::ControlStatus::OK, info};
         }
     }
@@ -701,7 +701,7 @@ ext::ControlStatus Controller::create_processor_on_track(const std::string& name
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus Controller::move_processor(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
+ext::ControlStatus Controller::move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
 {
     MoveProcessorEvent* event;
     if (before_processor_id.has_value())
@@ -726,7 +726,24 @@ ext::ControlStatus Controller::delete_processor_from_track(int processor_id, int
     return ext::ControlStatus::OK;
 }
 
-void Controller::_completion_callback(Event* event, int status)
+void Controller::completion_callback(void*arg, Event*event, int status)
+{
+    reinterpret_cast<Controller*>(arg)->_completion_callback(event, status);
+}
+
+std::vector<int> Controller::_get_processor_ids(int track_id) const
+{
+    std::vector<int> ids;
+    auto processors = _engine->processors_on_track(ObjectId(track_id));
+    ids.reserve(processors.size());
+    for (const auto& p : processors)
+    {
+        ids.push_back(p->id());
+    }
+    return ids;
+}
+
+void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
 {
     if (status == EventStatus::HANDLED_OK)
     {
@@ -736,11 +753,6 @@ void Controller::_completion_callback(Event* event, int status)
     {
         SUSHI_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
     }
-}
-
-void Controller::completion_callback(void*arg, Event*event, int status)
-{
-    reinterpret_cast<Controller*>(arg)->_completion_callback(event, status);
 }
 
 }// namespace sushi
