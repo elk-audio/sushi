@@ -58,12 +58,12 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
     {
         auto i_str = std::to_string(i);
         _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones",
-                                                        0, 0, 1,
-                                                        new FloatParameterPreProcessor(0, 1));
+                                                        0.0f, 0.0f, 1.0f,
+                                                        new FloatParameterPreProcessor(0.0f, 1.0f));
 
         _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "",
-                                                           0.5, 0, 1,
-                                                           new FloatParameterPreProcessor(0, 1));
+                                                           0.5f, 0.0f, 1.0f,
+                                                           new FloatParameterPreProcessor(0.0f, 1.0f));
 
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
     }

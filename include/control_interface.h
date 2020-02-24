@@ -82,9 +82,9 @@ struct ParameterInfo
     std::string     label;
     std::string     name;
     std::string     unit;
-    bool            automatable; // TODO Ilias:
-    float           min_range; // These should communicate the internal range,
-    float           max_range; // for display purposes only?
+    bool            automatable;
+    float           min_range;
+    float           max_range;
 };
 
 struct ProcessorInfo

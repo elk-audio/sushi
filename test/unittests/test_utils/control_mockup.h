@@ -43,7 +43,7 @@ public:
      // Main engine controls
     virtual float get_samplerate() const override { return default_samplerate; };
 
-     virtual PlayingMode get_playing_mode() const override { return default_playing_mode; };
+    virtual PlayingMode get_playing_mode() const override { return default_playing_mode; };
 
     virtual void set_playing_mode(PlayingMode playing_mode) override
     {

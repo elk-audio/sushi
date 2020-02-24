@@ -63,7 +63,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
 IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           const std::string& label,
                                                           const std::string& unit,
-                                                          float default_value,
+                                                          int default_value,
                                                           int min_value,
                                                           int max_value,
                                                           IntParameterPreProcessor* pre_proc)
@@ -245,7 +245,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
-        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->value()? 1.0f : 0.0f};
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_value()? 1.0f : 0.0f};
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, 0};

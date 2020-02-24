@@ -138,8 +138,8 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
 TEST_F(InternalPluginTest, TestFloatParameterHandling)
 {
     auto value = _module_under_test->register_float_parameter("param_1", "Param 1", "",
-                                                              0.1f, 0.0f, 10.f,
-                                                              new FloatParameterPreProcessor(0.0, 10.0));
+                                                              1.0f, 0.0f, 10.f,
+                                                              new FloatParameterPreProcessor(0.0f, 10.0f));
     EXPECT_TRUE(value);
 
     // Access the parameter through its id, verify type and that you can set its value.

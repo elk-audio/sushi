@@ -47,7 +47,7 @@ ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(
                                                      new IntParameterPreProcessor(-24, 24));
 
     _fine_tune_parameter  = register_float_parameter("fine_tune", "Fine Tune", "semitone",
-                                                     0.0f, -1, 1,
+                                                     0.0f, -1.0f, 1.0f,
                                                      new FloatParameterPreProcessor(-1, 1));
 
     _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "",
@@ -55,7 +55,7 @@ ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(
                                                    new IntParameterPreProcessor(1, MAX_CV_VOICES));
 
     _modulation_parameter  = register_float_parameter("modulation", "Modulation", "",
-                                                      0.0f, -1, 1,
+                                                      0.0f, -1.0f, 1.0f,
                                                       new FloatParameterPreProcessor(-1, 1));
 
     assert(_send_velocity_parameter && _send_modulation_parameter && _coarse_tune_parameter &&
@@ -65,12 +65,12 @@ ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(
     {
         auto i_str = std::to_string(i);
         _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones",
-                                                        0, 0, 1,
-                                                        new FloatParameterPreProcessor(0, 1));
+                                                        0.0f, 0.0f, 1.0f,
+                                                        new FloatParameterPreProcessor(0.0f, 1.0f));
 
         _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "",
-                                                           0.5, 0, 1,
-                                                           new FloatParameterPreProcessor(0, 1));
+                                                           0.5f, 0.0f, 1.0f,
+                                                           new FloatParameterPreProcessor(0.0f, 1.0f));
 
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
     }

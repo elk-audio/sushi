@@ -56,7 +56,7 @@ public:
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
      * @param unit The unit of the parameters display value
-     * @param default_value The default value the parameter should have, in the range 0.0-1.0
+     * @param default_value The default value the parameter should have.
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
      * @param pre_proc An optional preprocessor object used to clip/scale the set value
@@ -86,7 +86,7 @@ public:
     IntParameterValue* register_int_parameter(const std::string& name,
                                               const std::string& label,
                                               const std::string& unit,
-                                              float default_value,
+                                              int default_value,
                                               int min_value,
                                               int max_value,
                                               IntParameterPreProcessor* pre_proc = nullptr);
