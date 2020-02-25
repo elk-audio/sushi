@@ -312,13 +312,6 @@ public:
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(float value_normalized, float raw_value_normalized)
-    {
-        _value_normalized = value_normalized;
-        _value_in_domain = _pre_processor->lerp_to_domain(value_normalized);
-        _raw_value_in_domain = _pre_processor->lerp_to_domain(raw_value_normalized);
-    }
-
     void set(float value_normalized)
     {
         _raw_value_in_domain = _pre_processor->lerp_to_domain(value_normalized);
