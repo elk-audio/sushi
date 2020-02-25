@@ -120,7 +120,7 @@ class ParameterPreProcessor
 {
 public:
     ParameterPreProcessor(T min, T max):
-            _min_range(min), _max_range(max) {}
+            _min_domain_value(min), _max_domain_value(max) {}
 
     virtual T process(T value)
     {
@@ -129,22 +129,22 @@ public:
 
     T lerp_to_domain(float value_normalized)
     {
-        return _max_range + (_min_range - _max_range) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+        return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
     }
 
     float lerp_to_normalized(T value)
     {
-        return _max_normalized + (_min_normalized - _max_normalized) / (_min_range - _max_range) * (value - _max_range);
+        return _max_normalized + (_min_normalized - _max_normalized) / (_min_domain_value - _max_domain_value) * (value - _max_domain_value);
     }
 
 protected:
     T clip(T raw_value)
     {
-        return (raw_value > _max_range ? _max_range : (raw_value < _min_range ? _min_range : raw_value));
+        return (raw_value > _max_domain_value ? _max_domain_value : (raw_value < _min_domain_value ? _min_domain_value : raw_value));
     }
 
-    T _min_range;
-    T _max_range;
+    T _min_domain_value;
+    T _max_domain_value;
 
     const float _min_normalized{0.0f};
     const float _max_normalized{1.0f};
@@ -205,11 +205,14 @@ public:
 
     ~TypedParameterDescriptor() = default;
 
+    // TODO: This is weird, I don't see the point of having a method specifically for casting to float,
+    // Nor does the name make sense - it doesn't return a range.
     float min_range() const override {return static_cast<float>(_min);}
     float max_range() const override {return static_cast<float>(_max);}
 
     T min_value() const {return _min;}
     T max_value() const {return _max;}
+
 
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
@@ -304,6 +307,8 @@ public:
     ParameterType type() const {return _type;}
 
     T value() const {return _value;}
+
+    float value_normalized() const { return _pre_processor->lerp_to_normalized(_value); }
 
     T raw_value() const {return _raw_value;}
 

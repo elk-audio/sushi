@@ -227,20 +227,12 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
 
     if (value_storage.type() == ParameterType::FLOAT)
     {
-        auto desc = static_cast<FloatParameterDescriptor*>(value_storage.float_parameter_value()->descriptor());
-        float value = value_storage.float_parameter_value()->raw_value();
-
-        // TODO: This interpolation could instead be carried out using pre-processor methods, if these are exposed.
-        float norm_value = (value - desc->min_value()) / (desc->max_value() - desc->min_value());
+        float norm_value = value_storage.float_parameter_value()->value_normalized();
         return {ProcessorReturnCode::OK, norm_value};
     }
     else if (value_storage.type() == ParameterType::INT)
     {
-        auto desc = static_cast<IntParameterDescriptor*>(value_storage.int_parameter_value()->descriptor());
-        float value = value_storage.int_parameter_value()->raw_value();
-
-        // TODO: This interpolation could instead be carried out using pre-processor methods, if these are exposed.
-        float norm_value = (value - desc->min_value()) / static_cast<float>((desc->max_value() - desc->min_value()));
+        float norm_value = value_storage.int_parameter_value()->value_normalized();
         return {ProcessorReturnCode::OK, norm_value};
     }
     else if (value_storage.type() == ParameterType::BOOL)
