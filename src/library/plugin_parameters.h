@@ -119,8 +119,7 @@ template<typename T>
 class ParameterPreProcessor
 {
 public:
-    ParameterPreProcessor(T min, T max):
-            _min_domain_value(min), _max_domain_value(max) {}
+    ParameterPreProcessor(T min, T max): _min_domain_value(min), _max_domain_value(max) {}
 
     virtual T process(T value)
     {
@@ -146,8 +145,8 @@ protected:
     T _min_domain_value;
     T _max_domain_value;
 
-    const float _min_normalized{0.0f};
-    const float _max_normalized{1.0f};
+    static constexpr float _min_normalized{0.0f};
+    static constexpr float _max_normalized{1.0f};
 };
 
 /**
@@ -301,37 +300,41 @@ public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
                    T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
                                                                _pre_processor(pre_processor),
-                                                               _raw_value(value),
-                                                               _value(pre_processor->process(value)){}
+                                                               _raw_value_in_domain(value),
+                                                               _value_in_domain(pre_processor->process(value)),
+                                                               _value_normalized(pre_processor->lerp_to_normalized(_value_in_domain)) {}
 
     ParameterType type() const {return _type;}
 
-    T value() const {return _value;}
-
-    float value_normalized() const { return _pre_processor->lerp_to_normalized(_value); }
-
-    T raw_value() const {return _raw_value;}
+    T value() const {return _value_in_domain;}
+    T raw_value() const {return _raw_value_in_domain;}
+    float value_normalized() const { return _value_normalized; }
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set_values(float value_normalized, float raw_value_normalized)
     {
-        _value = _pre_processor->lerp_to_domain(value_normalized);
-        _raw_value = _pre_processor->lerp_to_domain(raw_value_normalized);
+        _value_normalized = value_normalized;
+        _value_in_domain = _pre_processor->lerp_to_domain(value_normalized);
+        _raw_value_in_domain = _pre_processor->lerp_to_domain(raw_value_normalized);
     }
 
     void set(float value_normalized)
     {
-        _raw_value = _pre_processor->lerp_to_domain(value_normalized);
-        _value = _pre_processor->process(_pre_processor->lerp_to_domain(value_normalized));
+        _raw_value_in_domain = _pre_processor->lerp_to_domain(value_normalized);
+        _value_in_domain = _pre_processor->process(_pre_processor->lerp_to_domain(value_normalized));
+
+        // 'process' has to always execute on the domain value, hence the additional conversion.
+        _value_normalized = _pre_processor->lerp_to_normalized(_value_in_domain);
     }
 
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
-    T _raw_value;
-    T _value;
+    T _raw_value_in_domain;
+    T _value_in_domain;
+    float _value_normalized;
 };
 
 /* Specialization for bool values, lack a pre_processor */
@@ -340,20 +343,20 @@ class ParameterValue<bool, ParameterType::BOOL>
 {
 public:
     ParameterValue(bool value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
-                                                                  _value(value) {}
+                                                                  _value_in_domain(value) {}
 
     ParameterType type() const {return _type;}
-    bool value() const {return _value;}
-    bool raw_value() const {return _value;}
+    bool value() const {return _value_in_domain;}
+    bool raw_value() const {return _value_in_domain;}
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
-    void set(bool value) {_value = value;}
+    void set_values(bool value, bool raw_value) { _value_in_domain = value; _value_in_domain = raw_value;}
+    void set(bool value) { _value_in_domain = value;}
 
 private:
     ParameterType _type{ParameterType::BOOL};
     ParameterDescriptor* _descriptor{nullptr};
-    bool _value;
+    bool _value_in_domain;
 };
 
 typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
