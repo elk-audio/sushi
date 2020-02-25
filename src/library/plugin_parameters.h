@@ -94,13 +94,13 @@ public:
      * @brief Returns the maximum value of the parameter
      * @return A float with the maximum representation of the parameter
      */
-    virtual float min_range() const {return 0;};
+    virtual float min_domain_value() const {return 0;};
 
     /**
      * @brief Returns the minimum value of the parameter
      * @return A float with the minimum representation of the parameter
      */
-    virtual float max_range() const {return 1;};
+    virtual float max_domain_value() const {return 1;};
 
 protected:
     std::string _label;
@@ -194,29 +194,23 @@ public:
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
                              const std::string& unit,
-                             T range_min,
-                             T range_max,
+                             T min_domain_value,
+                             T max_domain_Value,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
-                                        _min(range_min),
-                                        _max(range_max) {}
+                                        _min_domain_value(min_domain_value),
+                                        _max_domain_value(max_domain_Value) {}
 
     ~TypedParameterDescriptor() = default;
 
-    // TODO: This is weird, I don't see the point of having a method specifically for casting to float,
-    // Nor does the name make sense - it doesn't return a range.
-    float min_range() const override {return static_cast<float>(_min);}
-    float max_range() const override {return static_cast<float>(_max);}
-
-    T min_value() const {return _min;}
-    T max_value() const {return _max;}
-
+    float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
+    float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
-    T _min;
-    T _max;
+    T _min_domain_value;
+    T _max_domain_value;
 };
 
 /* Partial specialization for pointer type parameters */

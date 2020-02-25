@@ -371,8 +371,8 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
                 info.unit = param->unit();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
-                info.min_range = param->min_range();
-                info.max_range = param->max_range();
+                info.min_domain_value = param->min_domain_value();
+                info.max_domain_value = param->max_domain_value();
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -529,8 +529,8 @@ Controller::get_processor_parameters(int processor_id) const
                 info.unit = param->unit();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
-                info.min_range = param->min_range();
-                info.max_range = param->max_range();
+                info.min_domain_value = param->min_domain_value();
+                info.max_domain_value = param->max_domain_value();
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -570,8 +570,8 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.name = descr->name();
             info.unit = descr->unit();
             info.type = to_external(descr->type());
-            info.min_range = descr->min_range();
-            info.max_range = descr->max_range();
+            info.min_domain_value = descr->min_domain_value();
+            info.max_domain_value = descr->max_domain_value();
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
                                 descr->type() == ParameterType::INT   ||
                                 descr->type() == ParameterType::BOOL;

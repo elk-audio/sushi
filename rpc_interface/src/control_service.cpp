@@ -133,8 +133,8 @@ inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
     dest.set_name(src.name);
     dest.set_unit(src.unit);
     dest.set_automatable(src.automatable);
-    dest.set_min_range(src.min_range);
-    dest.set_max_range(src.max_range);
+    dest.set_min_domain_value(src.min_domain_value);
+    dest.set_max_domain_value(src.max_domain_value);
 }
 
 inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::ext::ProcessorInfo& src)

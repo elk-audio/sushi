@@ -248,8 +248,8 @@ message ParameterInfo {
     string name = 4;
     string unit = 5;
     bool   automatable = 6;
-    float  min_range = 7;
-    float  max_range = 8;
+    float  min_domain_value = 7;
+    float  max_domain_value = 8;
 }
 
 message ParameterInfoList {
