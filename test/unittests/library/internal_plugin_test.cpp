@@ -121,7 +121,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     EXPECT_FLOAT_EQ(6.0f, value->value());
 
     // Access the parameter from the external interface
-    auto [status, ext_value] = _module_under_test->parameter_value_un_normalized(value->descriptor()->id());
+    auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(6.0f, ext_value);
 
@@ -150,7 +150,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     EXPECT_EQ(5, value->value());
 
     // Access the parameter from the external interface
-    auto [status, ext_value] = _module_under_test->parameter_value_un_normalized(value->descriptor()->id());
+    auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(5.0f, ext_value);
 

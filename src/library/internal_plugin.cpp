@@ -251,7 +251,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
     return {ProcessorReturnCode::PARAMETER_ERROR, 0};
 }
 
-std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_un_normalized(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_in_domain(ObjectId parameter_id) const
 {
     if (parameter_id >= _parameter_values.size())
     {

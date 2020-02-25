@@ -226,7 +226,7 @@ TEST_F(ControllerTest, TestParameterControls)
     EXPECT_FLOAT_EQ(20.0f, info.min_range);
     EXPECT_FLOAT_EQ(20000.0f, info.max_range);
 
-    auto [value_status, value] = _module_under_test->get_parameter_value_un_normalized(proc_id, id);
+    auto [value_status, value] = _module_under_test->get_parameter_value_in_domain(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, value_status);
     EXPECT_FLOAT_EQ(1000.0f, value);
 

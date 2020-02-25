@@ -381,7 +381,7 @@ std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value(ObjectId par
     return {ProcessorReturnCode::OK, static_cast<float>(value)};
 }
 
-std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_un_normalized(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_in_domain(ObjectId parameter_id) const
 {
     // TODO: Ilias populate
 

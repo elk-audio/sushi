@@ -172,7 +172,7 @@ std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId par
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
 }
 
-std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value_un_normalized(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value_in_domain(ObjectId parameter_id) const
 {
     // Ilias TODO: populate
     return this->parameter_value(parameter_id);

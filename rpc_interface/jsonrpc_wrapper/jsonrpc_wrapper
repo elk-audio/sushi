@@ -570,7 +570,7 @@ async def SetParameterValue(context, processor_id, parameter_id, value):
 
 
 @methods.add
-async def SetParameterValueUnNormalized(context, processor_id, parameter_id, value):
+async def SetParameterValueInDomain(context, processor_id, parameter_id, value):
     try:
         context.stub.SetParameterValue(sushi_rpc_pb2.ParameterSetRequest( \
             parameter = sushi_rpc_pb2.ParameterIdentifier(processor_id = processor_id, \

@@ -311,7 +311,7 @@ public:
         return std::pair<ControlStatus, float>(default_control_status, default_parameter_value);
     };
 
-    virtual std::pair<ControlStatus, float> get_parameter_value_un_normalized(int /* processor_id */, int /* parameter_id */) const override
+    virtual std::pair<ControlStatus, float> get_parameter_value_in_domain(int /* processor_id */, int /* parameter_id */) const override
     {
         return std::pair<ControlStatus, float>(default_control_status, default_parameter_value);
     };

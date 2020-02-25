@@ -596,13 +596,13 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int process
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, float> Controller::get_parameter_value_un_normalized(int processor_id, int parameter_id) const
+std::pair<ext::ControlStatus, float> Controller::get_parameter_value_in_domain(int processor_id, int parameter_id) const
 {
     SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
-        auto[status, value] = processor->parameter_value_un_normalized(static_cast<ObjectId>(parameter_id));
+        auto[status, value] = processor->parameter_value_in_domain(static_cast<ObjectId>(parameter_id));
         if (status == ProcessorReturnCode::OK)
         {
             return {ext::ControlStatus::OK, value};

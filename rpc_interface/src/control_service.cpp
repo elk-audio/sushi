@@ -580,9 +580,9 @@ grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*conte
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetParameterValueUnNormalized(grpc::ServerContext* /*context*/,
-                                                                const sushi_rpc::ParameterIdentifier* request,
-                                                                sushi_rpc::GenericFloatValue* response)
+grpc::Status SushiControlService::GetParameterValueInDomain(grpc::ServerContext* /*context*/,
+                                                            const sushi_rpc::ParameterIdentifier* request,
+                                                            sushi_rpc::GenericFloatValue* response)
 {
     auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)

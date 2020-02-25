@@ -59,7 +59,7 @@ service SushiController {
     rpc GetParameterId (ParameterIdRequest) returns (ParameterIdentifier) {}
     rpc GetParameterInfo (ParameterIdentifier) returns (ParameterInfo) {}
     rpc GetParameterValue (ParameterIdentifier) returns (GenericFloatValue) {}
-    rpc GetParameterValueUnNormalized (ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetStringPropertyValue (ParameterIdentifier) returns (GenericStringValue) {}
     rpc SetParameterValue (ParameterSetRequest) returns (GenericVoidValue) {}
