@@ -368,13 +368,13 @@ public:
         INVALID_NAME = EventStatus::EVENT_SPECIFIC
     };
     AddTrackEvent(const std::string& name, int channels, Time timestamp) : EngineEvent(timestamp),
-                                                                              _name(name),
-                                                                              _channels(channels){}
+                                                                           _name(name),
+                                                                           _channels(channels){}
     int execute(engine::BaseEngine* engine) override;
 
 private:
     std::string _name;
-    int _channels;
+    int         _channels;
 };
 
 class RemoveTrackEvent : public EngineEvent
@@ -385,7 +385,7 @@ public:
         INVALID_TRACK = EventStatus::EVENT_SPECIFIC
     };
     RemoveTrackEvent(const std::string& name, Time timestamp) : EngineEvent(timestamp),
-                                                                   _name(name) {}
+                                                                _name(name) {}
     int execute(engine::BaseEngine* engine) override;
 
 private:
@@ -412,29 +412,14 @@ public:
                              const std::string& file,
                              ProcessorType processor_type,
                              ObjectId track,
-                             ObjectId before_processor,
+                             std::optional<ObjectId> before_processor,
                              Time timestamp) : EngineEvent(timestamp) ,
                                                _name(name),
                                                _uid(uid),
                                                _file(file),
                                                _processor_type(processor_type),
                                                _track(track),
-                                               _add_to_back(false),
                                                _before_processor(before_processor) {}
-
-    AddProcessorToTrackEvent(const std::string& name,
-                             const std::string& uid,
-                             const std::string& file,
-                             ProcessorType processor_type,
-                             ObjectId track,
-                             Time timestamp) : EngineEvent(timestamp) ,
-                                               _name(name),
-                                               _uid(uid),
-                                               _file(file),
-                                               _processor_type(processor_type),
-                                               _track(track),
-                                               _add_to_back(true),
-                                               _before_processor(0) {}
 
     int execute(engine::BaseEngine* engine) override;
 
@@ -444,8 +429,7 @@ private:
     std::string     _file;
     ProcessorType   _processor_type;
     ObjectId        _track;
-    bool            _add_to_back;
-    ObjectId        _before_processor;
+    std::optional<ObjectId>  _before_processor;
 };
 
 class MoveProcessorEvent : public EngineEvent
@@ -457,27 +441,15 @@ public:
         INVALID_SOURCE_TRACK,
         INVALID_DEST_TRACK
     };
-
     MoveProcessorEvent(ObjectId processor,
                        ObjectId source_track,
                        ObjectId dest_track,
+                       std::optional<ObjectId> before_processor,
                        Time timestamp) : EngineEvent(timestamp),
                                          _processor(processor),
                                          _source_track(source_track),
                                          _dest_track(dest_track),
-                                         _before_processor(0),
-                                         _add_to_back(true) {}
-
-    MoveProcessorEvent(ObjectId processor,
-                       ObjectId source_track,
-                       ObjectId dest_track,
-                       ObjectId before_processor,
-                       Time timestamp) : EngineEvent(timestamp),
-                                         _processor(processor),
-                                         _source_track(source_track),
-                                         _dest_track(dest_track),
-                                         _before_processor(before_processor),
-                                         _add_to_back(false) {}
+                                         _before_processor(before_processor) {}
 
     int execute(engine::BaseEngine* engine) override;
 
@@ -485,8 +457,7 @@ private:
     ObjectId _processor;
     ObjectId _source_track;
     ObjectId _dest_track;
-    ObjectId _before_processor;
-    bool     _add_to_back;
+    std::optional<ObjectId> _before_processor;
 };
 
 class RemoveProcessorEvent : public EngineEvent
@@ -579,10 +550,10 @@ public:
                                    ObjectId processor,
                                    EventId rt_event_id,
                                    Time timestamp) : AsynchronousWorkEvent(timestamp),
-                                                       _work_callback(callback),
-                                                       _data(data),
-                                                       _rt_processor(processor),
-                                                       _rt_event_id(rt_event_id)
+                                                     _work_callback(callback),
+                                                     _data(data),
+                                                     _rt_processor(processor),
+                                                      _rt_event_id(rt_event_id)
     {}
 
     virtual Event* execute() override;
@@ -601,9 +572,9 @@ public:
                                              ObjectId processor,
                                              EventId rt_event_id,
                                              Time timestamp) : Event(timestamp),
-                                                                  _return_value(return_value),
-                                                                  _rt_processor(processor),
-                                                                  _rt_event_id(rt_event_id) {}
+                                                               _return_value(return_value),
+                                                               _rt_processor(processor),
+                                                               _rt_event_id(rt_event_id) {}
 
     bool maps_to_rt_event() override {return true;}
     RtEvent to_rt_event(int sample_offset) override;

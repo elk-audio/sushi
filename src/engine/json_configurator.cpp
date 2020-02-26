@@ -608,7 +608,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
-        status = _engine->add_plugin_to_track_back(plugin_id, track_id);
+        status = _engine->add_plugin_to_track(plugin_id, track_id);
         if (status != EngineReturnStatus::OK)
         {
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;

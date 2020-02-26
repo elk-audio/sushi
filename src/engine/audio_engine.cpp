@@ -813,7 +813,9 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
     return {EngineReturnStatus::OK, plugin->id()};
 }
 
-EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, ObjectId track_id, ObjectId before_plugin_id)
+EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
+                                                    ObjectId track_id,
+                                                    std::optional<ObjectId> before_plugin_id)
 {
     auto track = _mutable_track(track_id);
     if (track == nullptr)
@@ -828,10 +830,11 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, O
         SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
         return EngineReturnStatus::INVALID_PLUGIN;
     }
+    bool add_to_back = before_plugin_id.has_value() == false;
 
-    if (_processor_exists(before_plugin_id) == false)
+    if (add_to_back == false && _processor_exists(before_plugin_id.value()) == false)
     {
-        SUSHI_LOG_ERROR("Plugin {} not found", before_plugin_id);
+        SUSHI_LOG_ERROR("Plugin {} not found", before_plugin_id.value());
         return EngineReturnStatus::INVALID_PLUGIN;
     }
 
@@ -844,12 +847,20 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, O
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id);
+        RtEvent add_event;
+        if (add_to_back)
+        {
+            add_event = RtEvent::make_add_processor_to_track_back_event(plugin_id, track_id);
+        }
+        else
+        {
+            add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id.value());
+        }
         send_async_event(add_event);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
         {
-            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin->name());
+            SUSHI_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -857,7 +868,16 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, O
     {
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin.get());
-        if (track->add_before(plugin.get(), before_plugin_id) == false)
+        bool added;
+        if (add_to_back)
+        {
+            added = track->add_back(plugin.get());
+        }
+        else
+        {
+            added = track->add_before(plugin.get(), before_plugin_id.value());
+        }
+        if (added == false)
         {
             return EngineReturnStatus::ERROR;
         }
@@ -865,65 +885,22 @@ EngineReturnStatus AudioEngine::add_plugin_to_track_before(ObjectId plugin_id, O
 
     // Add it to the engine's mirror of track processing chains
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    auto& plugins = _processors_by_track[track->id()];
-    for (auto i = plugins.begin(); i != plugins.end(); ++i)
+    auto& track_processors = _processors_by_track[track->id()];
+    if (add_to_back)
     {
-        if ((*i)->id() == before_plugin_id)
-        {
-            plugins.insert(i, plugin);
-            break;
-        }
-    }
-    return EngineReturnStatus::OK;
-}
-
-EngineReturnStatus AudioEngine::add_plugin_to_track_back(ObjectId plugin_id, ObjectId track_id)
-{
-    auto plugin = _mutable_processor(plugin_id);
-    auto track = _mutable_track(track_id);
-    if (plugin == nullptr)
-    {
-        SUSHI_LOG_ERROR("Plugin {} not found", track_id);
-        return EngineReturnStatus::INVALID_PLUGIN;
-    }
-    if (track == nullptr)
-    {
-        SUSHI_LOG_ERROR("Track {} not found", track_id);
-        return EngineReturnStatus::INVALID_TRACK;
-    }
-
-    if (plugin->active_rt_processing())
-    {
-        SUSHI_LOG_ERROR("Plugin {} is already active on a track");
-        return EngineReturnStatus::ERROR;
-    }
-
-    if (this->realtime())
-    {
-        // In realtime mode we need to handle this in the audio thread
-        auto add_event = RtEvent::make_add_processor_to_track_back_event(plugin_id, track_id);
-        send_async_event(add_event);
-        bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        if (added == false)
-        {
-            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_id);
-            return EngineReturnStatus::INVALID_PROCESSOR;
-        }
+        track_processors.push_back(plugin);
     }
     else
     {
-        // If the engine is not running in realtime mode we can add the processor directly
-        _insert_processor_in_realtime_part(plugin.get());
-        if (track->add_back(plugin.get()) == false)
+        for (auto i = track_processors.begin(); i != track_processors.end(); ++i)
         {
-            return EngineReturnStatus::ERROR;
+            if ((*i)->id() == before_plugin_id.value())
+            {
+                track_processors.insert(i, plugin);
+                break;
+            }
         }
     }
-    SUSHI_LOG_INFO("Adding proc {} to track {}", plugin->name(), track->name());
-
-    // Add it to the engine's mirror of track processing chains
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    _processors_by_track[track_id].push_back(plugin);
     return EngineReturnStatus::OK;
 }
 
@@ -1395,11 +1372,10 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
          << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average(%)" << std::setw(16) << "minimum(%)"
          << std::setw(16) << "maximum(%)" << std::endl;
 
-    for (const auto& track : _audio_graph)
+    for (const auto& track : this->all_tracks())
     {
         file << std::setw(0) << "Track: " << track->name() << "\n";
-        auto processors = track->process_chain();
-        for (auto& p : processors)
+        for (auto& p : this->processors_on_track(track->id()))
         {
             file << std::setw(8) << "" << std::setw(16) << p->name();
             print_single_timings_for_node(file, _process_timer, p->id());

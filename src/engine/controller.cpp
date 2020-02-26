@@ -685,34 +685,28 @@ ext::ControlStatus Controller::create_processor_on_track(const std::string& name
                                                          ext::PluginType type, int track_id, std::optional<int> before_processor_id)
 {
 
-    if (before_processor_id.has_value())
-    {
-        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id),
-                                                  ObjectId(before_processor_id.value()), IMMEDIATE_PROCESS);
-        event->set_completion_cb(Controller::completion_callback, this);
-        _event_dispatcher->post_event(event);
-    }
-    else
-    {
-        auto event = new AddProcessorToTrackEvent(name, uid, file, to_event_type(type), ObjectId(track_id), IMMEDIATE_PROCESS);
-        event->set_completion_cb(Controller::completion_callback, this);
-        _event_dispatcher->post_event(event);
-    }
+    auto event = new AddProcessorToTrackEvent(name,
+                                              uid,
+                                              file,
+                                              to_event_type(type),
+                                              ObjectId(track_id),
+                                              before_processor_id,
+                                              IMMEDIATE_PROCESS);
+
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
 {
     MoveProcessorEvent* event;
-    if (before_processor_id.has_value())
-    {
-        event = new MoveProcessorEvent(ObjectId(processor_id), ObjectId(source_track_id), ObjectId(dest_track_id),
-                         ObjectId(before_processor_id.value()),IMMEDIATE_PROCESS);
-    }
-    else
-    {
-        event = new MoveProcessorEvent(ObjectId(processor_id), ObjectId(source_track_id), ObjectId(dest_track_id), IMMEDIATE_PROCESS);
-    }
+    event = new MoveProcessorEvent(ObjectId(processor_id),
+                                   ObjectId(source_track_id),
+                                   ObjectId(dest_track_id),
+                                   before_processor_id,
+                                   IMMEDIATE_PROCESS);
     event->set_completion_cb(Controller::completion_callback, this);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;

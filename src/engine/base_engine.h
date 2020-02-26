@@ -274,15 +274,9 @@ public:
         return {EngineReturnStatus::OK, ObjectId(0)};
     }
 
-    virtual EngineReturnStatus add_plugin_to_track_before(ObjectId /*plugin_id*/,
-                                                          ObjectId /*track_id*/,
-                                                          ObjectId /*before_plugin_id*/)
-    {
-        return EngineReturnStatus::OK;
-    }
-
-    virtual EngineReturnStatus add_plugin_to_track_back(ObjectId /*plugin_id*/,
-                                                        ObjectId /*track_id*/)
+    virtual EngineReturnStatus add_plugin_to_track(ObjectId /*plugin_id*/,
+                                                   ObjectId /*track_id*/,
+                                                   std::optional<ObjectId> /*before_plugin_id*/ = std::nullopt)
     {
         return EngineReturnStatus::OK;
     }

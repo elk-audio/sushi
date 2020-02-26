@@ -212,12 +212,6 @@ public:
         _update_channel_config();
     }
 
-    // TODO - remove direct access to this
-    const std::vector<Processor*> process_chain() const
-    {
-        return _processors;
-    }
-
     /* Inherited from RtEventPipe */
     void send_event(const RtEvent& event) override;
 

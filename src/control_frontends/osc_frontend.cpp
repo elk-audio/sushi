@@ -365,6 +365,7 @@ static int osc_add_processor_to_track(const char* /*path*/,
         SUSHI_LOG_INFO("Unrecognised Plugin type \"{}\" received", type_str);
         return 0;
     }
+
     SUSHI_LOG_DEBUG("Got a create processor on track request");
     auto [status, track_id] = instance->get_processor_id(track);
     if (status != ext::ControlStatus::OK)
@@ -431,7 +432,6 @@ static int osc_move_processor(const char* /*path*/,
         SUSHI_LOG_WARNING("Error looking up destination track {}", source_track);
         return 0;
     }
-
 
     if (add_to_back)
     {

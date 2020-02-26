@@ -61,7 +61,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(1, tracks[0].input_busses);
     EXPECT_EQ(2, tracks[0].output_channels);
     EXPECT_EQ(1, tracks[0].output_busses);
-    EXPECT_EQ(3, tracks[0].processors.size());
+    EXPECT_EQ(3u, tracks[0].processors.size());
 
     EXPECT_EQ("monotrack", tracks[1].name);
     EXPECT_EQ("", tracks[1].label);
@@ -69,7 +69,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(1, tracks[1].input_busses);
     EXPECT_EQ(1, tracks[1].output_channels);
     EXPECT_EQ(1, tracks[1].output_busses);
-    EXPECT_EQ(3, tracks[1].processors.size());
+    EXPECT_EQ(3u, tracks[1].processors.size());
 
     EXPECT_EQ("multi", tracks[2].name);
     EXPECT_EQ("", tracks[2].label);
@@ -77,7 +77,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(2, tracks[2].input_busses);
     EXPECT_EQ(4, tracks[2].output_channels);
     EXPECT_EQ(2, tracks[2].output_busses);
-    EXPECT_EQ(0, tracks[2].processors.size());
+    EXPECT_EQ(0u, tracks[2].processors.size());
 }
 
 TEST_F(ControllerTest, TestKeyboardControls)
@@ -107,7 +107,7 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ(1, info.input_busses);
     EXPECT_EQ(2, info.output_channels);
     EXPECT_EQ(1, info.output_busses);
-    EXPECT_EQ(3, info.processors.size());
+    EXPECT_EQ(3u, info.processors.size());
 
     auto [proc_status, processors] = _module_under_test->get_track_processors(id);
     ASSERT_EQ(ext::ControlStatus::OK, proc_status);

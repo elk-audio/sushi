@@ -100,7 +100,7 @@ void BaseControlFrontend::send_add_processor_event(const std::string &/*track*/,
 {
     Time timestamp = IMMEDIATE_PROCESS;
     // TODO - deprecate This entire class
-    auto e = new AddProcessorToTrackEvent(uid, name, file, type, 0, timestamp);
+    auto e = new AddProcessorToTrackEvent(name, uid, file, type, 0, 0, timestamp);
     send_with_callback(e);
 }
 

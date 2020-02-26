@@ -290,16 +290,9 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
             return EventStatus::ERROR;
     }
 
-    if (_add_to_back)
-    {
-        SUSHI_LOG_DEBUG("Adding plugin {} to back of track {}", _name, _track);
-        status = engine->add_plugin_to_track_back(plugin_id, _track);
-    }
-    else
-    {
-        SUSHI_LOG_DEBUG("Adding plugin {} to track {}, before processor {}", _name, _track, _before_processor);
-        status = engine->add_plugin_to_track_before(plugin_id, _track, _before_processor);
-    }
+    SUSHI_LOG_DEBUG("Adding plugin {} to track {}", _name, _track);
+    status = engine->add_plugin_to_track(plugin_id, _track, _before_processor);
+
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -333,14 +326,8 @@ int MoveProcessorEvent::execute(engine::BaseEngine* engine)
             return EventStatus::ERROR;
     }
 
-    if (_add_to_back)
-    {
-        status = engine->add_plugin_to_track_back(_processor, _dest_track);
-    }
-    else
-    {
-        status = engine->add_plugin_to_track_before(_processor, _dest_track, _before_processor);
-    }
+    status = engine->add_plugin_to_track(_processor, _dest_track, _before_processor);
+
     if (status == engine::EngineReturnStatus::OK)
     {
         return EventStatus::HANDLED_OK;
@@ -349,7 +336,7 @@ int MoveProcessorEvent::execute(engine::BaseEngine* engine)
     /* If the insertion operation failed, we must put the processor back in the source track */
     if (old_plugin_order.back()->id() == _processor)
     {
-        [[maybe_unused]] auto replace_status = engine->add_plugin_to_track_back(_processor, _source_track);
+        [[maybe_unused]] auto replace_status = engine->add_plugin_to_track(_processor, _source_track);
         SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
                 "Failed to replace processor {} on track {}", _processor, _source_track);
     }
@@ -361,7 +348,7 @@ int MoveProcessorEvent::execute(engine::BaseEngine* engine)
             {
                 i++;
                 ObjectId before = (*i)->id();
-                [[maybe_unused]] auto replace_status = engine->add_plugin_to_track_before(_processor, _source_track, before);
+                [[maybe_unused]] auto replace_status = engine->add_plugin_to_track(_processor, _source_track, before);
                 SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
                            "Failed to replace processor {} on track {} before pos {}", _processor, _source_track, before);
                 break;

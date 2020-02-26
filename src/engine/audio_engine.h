@@ -411,23 +411,17 @@ public:
                                                          PluginType plugin_type) override;
 
     /**
-     * @brief Add a plugin to a track at the position before plugin with the name given in
-     *        before_plugin. The plugin must not currently be active on any track.
+     * @brief Add a plugin to a track. The plugin must not currently be active on any track.
      * @param track_id The id of the track to add the plugin to.
      * @param plugin_id The id of the plugin to add.
-     * @param before_plugin_id The plugin will be inserted after this plugin
+     * @param before_plugin_id If this parameter is passed with a value, the plugin will be
+     *        inserted after this plugin. If this parameter is empty, the plugin will be
+     *        placed at the back of the track's processing chain.
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_track_before(ObjectId plugin_id, ObjectId track_id, ObjectId before_plugin_id) override;
-
-    /**
-     * @brief Add a plugin to the end of a Track's processing chain. The plugin must
-     *        not currently be active on any track.
-     * @param track_id The id of the track to add the plugin to.
-     * @param plugin_id The id of the plugin.
-     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
-     */
-    EngineReturnStatus add_plugin_to_track_back(ObjectId plugin_id, ObjectId track_id) override;
+    EngineReturnStatus add_plugin_to_track(ObjectId plugin_id,
+                                           ObjectId track_id,
+                                           std::optional<ObjectId> before_plugin_id = std::nullopt) override;
 
     /**
      * @brief Remove a given plugin from a track and delete it
