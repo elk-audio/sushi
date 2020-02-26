@@ -257,6 +257,9 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Add synth before gain */
     status = _module_under_test->add_plugin_to_track(synth_id, left_track_id, gain_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
+    auto processors = _module_under_test->processors_on_track(left_track_id);
+    ASSERT_EQ(2u, processors.size());
+    ASSERT_EQ("synth", processors.front()->name());
 
     /* Check that processors exists and in the right order on track "main" */
     ASSERT_TRUE(_module_under_test->_processor_exists("gain"));
@@ -285,7 +288,7 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Test removing plugin */
     status = _module_under_test->remove_plugin_from_track(gain_id, left_track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    auto processors = _module_under_test->processors_on_track(left_track_id);
+    processors = _module_under_test->processors_on_track(left_track_id);
     ASSERT_EQ(0u, processors.size());
 
     status = _module_under_test->delete_plugin(gain_id);
