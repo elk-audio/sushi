@@ -207,7 +207,6 @@ TEST_F(ControllerTest, TestProcessorControls)
     DECLARE_UNUSED(prog_unused);
 }
 
-// TODO: When this is run with the CLion debugger individually, test_utils get_data_dir_path fails.
 TEST_F(ControllerTest, TestParameterControls)
 {
     auto [status, proc_id] = _module_under_test->get_processor_id("equalizer_0_l");

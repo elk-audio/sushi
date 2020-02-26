@@ -49,7 +49,7 @@ void GainPlugin::set_input_channels(int channels)
 
 void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    float gain = _gain_parameter->value();
+    float gain = _gain_parameter->domain_value();
     if (!_bypassed)
     {
         out_buffer.clear();

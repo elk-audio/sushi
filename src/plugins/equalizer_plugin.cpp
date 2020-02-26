@@ -81,9 +81,9 @@ void EqualizerPlugin::set_input_channels(int channels)
 void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
-    float frequency = _frequency->value();
-    float gain = _gain->value();
-    float q = _q->value();
+    float frequency = _frequency->domain_value();
+    float gain = _gain->domain_value();
+    float q = _q->domain_value();
 
     if (!_bypassed)
     {

@@ -101,7 +101,7 @@ void TransposerPlugin::process_event(const RtEvent& event)
 
 int TransposerPlugin::_transpose_note(int note)
 {
-    int steps = _transpose_parameter->value();
+    int steps = _transpose_parameter->domain_value();
     return std::clamp(note + steps, MIN_NOTE, MAX_NOTE);
 }
 

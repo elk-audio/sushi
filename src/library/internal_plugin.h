@@ -56,7 +56,7 @@ public:
      * @param name The unique name of the parameter
      * @param label The display name of the parameter
      * @param unit The unit of the parameters display value
-     * @param default_value The default value the parameter should have.
+     * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
      * @param pre_proc An optional preprocessor object used to clip/scale the set value

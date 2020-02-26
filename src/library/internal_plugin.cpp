@@ -197,7 +197,8 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
 
     if (maybe_output_cv_value(storage->descriptor()->id(), new_value) == false)
     {
-        auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+        auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(),
+                                                      storage->domain_value());
         output_event(e);
     }
 }
@@ -205,14 +206,14 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
 void InternalPlugin::set_parameter_and_notify(IntParameterValue* storage, int new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->domain_value());
     output_event(e);
 }
 
 void InternalPlugin::set_parameter_and_notify(BoolParameterValue* storage, bool new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->domain_value());
     output_event(e);
 }
 
@@ -237,7 +238,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
-        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_value()? 1.0f : 0.0f};
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_domain_value() ? 1.0f : 0.0f};
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, 0};
@@ -254,15 +255,15 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_in_domain(
 
     if (value_storage.type() == ParameterType::FLOAT)
     {
-        return {ProcessorReturnCode::OK, value_storage.float_parameter_value()->raw_value()};
+        return {ProcessorReturnCode::OK, value_storage.float_parameter_value()->raw_domain_value()};
     }
     else if (value_storage.type() == ParameterType::INT)
     {
-        return {ProcessorReturnCode::OK, value_storage.int_parameter_value()->raw_value()};
+        return {ProcessorReturnCode::OK, value_storage.int_parameter_value()->raw_domain_value()};
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
-        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_value()? 1.0f : 0.0f};
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->raw_domain_value() ? 1.0f : 0.0f};
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, 0};
@@ -279,15 +280,15 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
 
     if (value_storage.type() == ParameterType::FLOAT)
     {
-        return {ProcessorReturnCode::OK, std::to_string(value_storage.float_parameter_value()->raw_value())};
+        return {ProcessorReturnCode::OK, std::to_string(value_storage.float_parameter_value()->raw_domain_value())};
     }
     else if (value_storage.type() == ParameterType::INT)
     {
-        return {ProcessorReturnCode::OK, std::to_string(value_storage.int_parameter_value()->raw_value())};
+        return {ProcessorReturnCode::OK, std::to_string(value_storage.int_parameter_value()->raw_domain_value())};
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
-        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->value()? "True" : "False"};
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->domain_value() ? "True" : "False"};
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, ""};

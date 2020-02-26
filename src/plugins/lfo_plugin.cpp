@@ -59,7 +59,7 @@ void LfoPlugin::configure(float sample_rate)
 void LfoPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
-    _phase += _freq_parameter->value() * M_PI / _buffers_per_second;
+    _phase += _freq_parameter->domain_value() * M_PI / _buffers_per_second;
     this->set_parameter_and_notify(_out_parameter, (std::sin(_phase) + 1) * 0.5f);
 }
 
