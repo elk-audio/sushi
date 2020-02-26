@@ -294,7 +294,7 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_FALSE(_module_under_test->_processor_exists("gain"));
     ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_processors.size());
     ASSERT_EQ("synth", _module_under_test->_audio_graph[1]->_processors[0]->name());
-    
+
     /* Negative tests */
     ObjectId id;
     std::tie(status, id) = _module_under_test->load_plugin("sushi.testing.passthrough",

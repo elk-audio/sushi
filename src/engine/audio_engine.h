@@ -644,6 +644,10 @@ private:
 
     void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
 
+    void _add_to_processors_by_track(std::shared_ptr<Processor> processor,
+                                     ObjectId track_id,
+                                     std::optional<ObjectId> before_id);
+
     const bool _multicore_processing;
     const int  _rt_cores;
 

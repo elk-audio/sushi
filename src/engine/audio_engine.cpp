@@ -882,25 +882,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
             return EngineReturnStatus::ERROR;
         }
     }
-
     // Add it to the engine's mirror of track processing chains
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    auto& track_processors = _processors_by_track[track->id()];
-    if (add_to_back)
-    {
-        track_processors.push_back(plugin);
-    }
-    else
-    {
-        for (auto i = track_processors.begin(); i != track_processors.end(); ++i)
-        {
-            if ((*i)->id() == before_plugin_id.value())
-            {
-                track_processors.insert(i, plugin);
-                break;
-            }
-        }
-    }
+    _add_to_processors_by_track(plugin, track->id(), before_plugin_id);
     return EngineReturnStatus::OK;
 }
 
@@ -1010,7 +993,7 @@ std::shared_ptr<const Track> AudioEngine::track(ObjectId track_id) const
     std::unique_lock<std::mutex> lock(_processors_by_track_lock);
     if (_processors_by_track.count(track_id) > 0)
     {
-        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
         auto track_node = _processors_by_id.find(track_id);
         if (track_node != _processors_by_id.end())
         {
@@ -1449,6 +1432,32 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
         }
     }
     buffer.gate_values = _outgoing_gate_values;
+}
+
+void AudioEngine::_add_to_processors_by_track(std::shared_ptr<Processor> processor,
+                                              ObjectId track_id,
+                                              std::optional<ObjectId> before_id)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    auto& track_processors = _processors_by_track[track_id];
+
+    if (before_id.has_value())
+    {
+        for (auto i = track_processors.begin(); i != track_processors.end(); ++i)
+        {
+            if ((*i)->id() == before_id.value())
+            {
+                track_processors.insert(i, processor);
+                return;
+            }
+        }
+        // If we end up here, the track's processing chain and _processors_by_track has diverged.
+        assert(false);
+    }
+    else
+    {
+        track_processors.push_back(processor);
+    }
 }
 
 RealtimeState update_state(RealtimeState current_state)
