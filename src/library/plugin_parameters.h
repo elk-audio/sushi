@@ -295,25 +295,24 @@ public:
                    T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
                                                                _pre_processor(pre_processor),
                                                                _raw_domain_value(value),
-                                                               _domain_value(pre_processor->process(value)),
-                                                               _value_normalized(
-                                                                       pre_processor->to_normalized(_domain_value)) {}
+                                                               _domain_value(pre_processor->process(value)) {}
 
     ParameterType type() const {return _type;}
 
     T domain_value() const {return _domain_value;}
     T raw_domain_value() const {return _raw_domain_value;}
-    float value_normalized() const { return _value_normalized; }
+
+    float value_normalized() const
+    {
+        return _pre_processor->to_normalized(_domain_value);
+    }
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set(float value_normalized)
     {
         _raw_domain_value = _pre_processor->to_domain(value_normalized);
-        _domain_value = _pre_processor->process(_pre_processor->to_domain(value_normalized));
-
-        // 'process' has to always execute on the domain value, hence the additional conversion.
-        _value_normalized = _pre_processor->to_normalized(_domain_value);
+        _domain_value = _pre_processor->process(_raw_domain_value);
     }
 
 private:
@@ -322,7 +321,6 @@ private:
     ParameterPreProcessor<T>* _pre_processor{nullptr};
     T _raw_domain_value;
     T _domain_value;
-    float _value_normalized;
 };
 
 /* Specialization for bool values, lack a pre_processor */
