@@ -98,7 +98,10 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/tra
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
-target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING -D__cdecl= )
+target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
+                                              -D__cdecl=
+                                              -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
