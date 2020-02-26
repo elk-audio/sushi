@@ -46,7 +46,8 @@ void GrpcServer::HandleRpcs()
     {
         // GPR_ASSERT(cq->Next(&tag, &ok));
         // GPR_ASSERT(ok);
-        assert(_cq->Next(&tag, &ok));
+        // assert(_cq->Next(&tag, &ok));
+        _cq->Next(&tag, &ok);
         // assert(ok);
         if (ok != true)
         {

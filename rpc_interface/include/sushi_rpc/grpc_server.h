@@ -36,7 +36,6 @@ namespace grpc {
 }
 
 namespace sushi_rpc {
-
 class SushiControlService;
 
 class GrpcServer

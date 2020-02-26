@@ -676,31 +676,37 @@ void SubscribeToParameterUpdatesCallData::Proceed()
     {
         if (_times == 0)
         {
-            _last_notification_id = _notifications->counter();
             new SubscribeToParameterUpdatesCallData(_service, _cq, _notifications);
+            _last_notification_id = _notifications->counter();
+            for (auto& parameter_identifier : _request.parameters())
+            {
+                _notification_filter[_create_map_key(parameter_identifier.parameter_id(), 
+                                                     parameter_identifier.processor_id())] = false;
+            }
             _times++;
         }
-
+               
         if (_last_notification_id <= _notifications->counter())
         {
             _reply = (*_notifications)[_last_notification_id];
-            _responder.Write(_reply, this);
             _last_notification_id++;
-            _status = PUSH_TO_BACK;
+            if (_notification_filter.find(_create_map_key(_reply.parameter().parameter_id(), 
+                                                          _reply.parameter().processor_id())) == _notification_filter.end())
+            {
+                _responder.Write(_reply, this);
+                _status = PUSH_TO_BACK;
+                return;
+            }
         }
-        else
-        {
-            _alarm.Set(_cq, std::chrono::system_clock::now(), this); // Might be slow to use system_clock?
-        }
+        _alarm.Set(_cq, std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), this);
     }
     else if (_status == PUSH_TO_BACK)
     {
         _status = PROCESS;
-        _alarm.Set(_cq, std::chrono::system_clock::now(), this); // Might be slow to use system_clock?
+        _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
     }
     else
     {
-        // GPR_ASSERT(_status == FINISH);
         assert(_status == FINISH);
         delete this;
     }

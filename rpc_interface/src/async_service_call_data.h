@@ -42,7 +42,9 @@ protected:
 class SubscribeToParameterUpdatesCallData : public CallDataBase
 {
 public:
-    SubscribeToParameterUpdatesCallData(SushiControlService* service, grpc::ServerCompletionQueue* cq, const NotificationContainer<ParameterSetRequest>* notifications)
+    SubscribeToParameterUpdatesCallData(SushiControlService* service, 
+                                        grpc::ServerCompletionQueue* cq, 
+                                        const NotificationContainer<ParameterSetRequest>* notifications)
         : CallDataBase(service, cq),
             _responder(&_ctx),
             _times(0),
@@ -55,7 +57,12 @@ public:
     virtual void Proceed() override;
 
 private:
-    GenericVoidValue _request;
+    std::string _create_map_key(int parameter_id, int processor_id) 
+    { 
+        return std::to_string(parameter_id) + "_" + std::to_string(processor_id);
+    }
+
+    ParameterNotificationRequest _request;
     ParameterSetRequest _reply;
     grpc::ServerAsyncWriter<ParameterSetRequest> _responder;
 
@@ -64,6 +71,7 @@ private:
     int _times;
     unsigned int _last_notification_id;
 
+    std::unordered_map<std::string, bool> _notification_filter;
     const NotificationContainer<ParameterSetRequest>* _notifications;
 };
 
