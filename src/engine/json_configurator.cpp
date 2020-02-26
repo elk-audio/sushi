@@ -113,7 +113,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
     if (host_config.HasMember("tempo_sync"))
     {
         SyncMode mode;
-        if (host_config["tempo_sync"] == "ableton link")
+        if (host_config["tempo_sync"] == "ableton_link")
         {
             mode = SyncMode::ABLETON_LINK;
         }
