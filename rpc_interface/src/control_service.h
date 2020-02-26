@@ -35,6 +35,13 @@ namespace sushi_rpc {
 
 constexpr int NOTIFICATION_BUFFER_SIZE = 16;
 
+/**
+ * @brief A ring buffer to hold the notifications received from
+ * the sushi controller.
+ * 
+ * @tparam T type of notification.
+ */
+
 template<typename T>
 class NotificationContainer
 {

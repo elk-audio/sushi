@@ -674,36 +674,45 @@ void SubscribeToParameterUpdatesCallData::Proceed()
     }
     else if (_status == PROCESS)
     {
-        if (_times == 0)
+        if (_first_iteration)
         {
+            // Spawn a new CallData instance to serve new clients while we process
+            // the one for this CallData. The instance will deallocate itself as
+            // part of its FINISH state.
             new SubscribeToParameterUpdatesCallData(_service, _cq, _notifications);
+
             _last_notification_id = _notifications->counter();
             for (auto& parameter_identifier : _request.parameters())
             {
-                _notification_filter[_create_map_key(parameter_identifier.parameter_id(), 
+                _parameter_blacklist[_create_map_key(parameter_identifier.parameter_id(), 
                                                      parameter_identifier.processor_id())] = false;
             }
-            _times++;
+            _first_iteration = false;
         }
                
         if (_last_notification_id <= _notifications->counter())
         {
             _reply = (*_notifications)[_last_notification_id];
             _last_notification_id++;
-            if (_notification_filter.find(_create_map_key(_reply.parameter().parameter_id(), 
-                                                          _reply.parameter().processor_id())) == _notification_filter.end())
+            if (_parameter_blacklist.find(_create_map_key(_reply.parameter().parameter_id(), 
+                                                          _reply.parameter().processor_id())) == _parameter_blacklist.end())
             {
                 _responder.Write(_reply, this);
                 _status = PUSH_TO_BACK;
                 return;
             }
         }
+        // If no call to write was made this will add this object back into the
+        // completion queue after the alarm expires.
         _alarm.Set(_cq, std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), this);
     }
     else if (_status == PUSH_TO_BACK)
     {
-        _status = PROCESS;
+        // Since a call to write adds the object at the front of the completion
+        // queue. We then place it at the back with an alarm to serve the clients
+        // in a round robin fashion.
         _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
+        _status = PROCESS;
     }
     else
     {
