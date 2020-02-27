@@ -383,8 +383,6 @@ std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value(ObjectId par
 
 std::pair<ProcessorReturnCode, float> Vst3xWrapper::parameter_value_in_domain(ObjectId parameter_id) const
 {
-    // TODO: Ilias populate
-
     /* Always returns OK as the default vst3 implementation just returns 0 for invalid parameter ids */
     auto controller = const_cast<PluginInstance*>(&_instance)->controller();
     auto value = controller->normalizedParamToPlain(parameter_id, controller->getParamNormalized(parameter_id));

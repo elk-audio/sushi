@@ -195,11 +195,11 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
 
 void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer &out_buffer)
 {
-    float gain = _volume_parameter->domain_value();
-    float attack = _attack_parameter->domain_value();
-    float decay = _decay_parameter->domain_value();
-    float sustain = _sustain_parameter->domain_value();
-    float release = _release_parameter->domain_value();
+    float gain = _volume_parameter->processed_value();
+    float attack = _attack_parameter->processed_value();
+    float decay = _decay_parameter->processed_value();
+    float sustain = _sustain_parameter->processed_value();
+    float release = _release_parameter->processed_value();
 
     _buffer.clear();
     out_buffer.clear();

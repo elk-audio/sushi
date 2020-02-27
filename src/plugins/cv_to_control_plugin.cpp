@@ -103,11 +103,11 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
         return;
     }
 
-    bool send_pitch_bend = _pitch_bend_mode_parameter->domain_value();
-    bool send_velocity = _velocity_mode_parameter->domain_value();
-    int  channel = _channel_parameter->domain_value();
-    int  tune = _coarse_tune_parameter->domain_value();
-    int  polyphony = _polyphony_parameter->domain_value();
+    bool send_pitch_bend = _pitch_bend_mode_parameter->processed_value();
+    bool send_velocity = _velocity_mode_parameter->processed_value();
+    int  channel = _channel_parameter->processed_value();
+    int  tune = _coarse_tune_parameter->processed_value();
+    int  polyphony = _polyphony_parameter->processed_value();
 
     _send_deferred_events(channel);
     _process_cv_signals(polyphony, channel, tune, send_velocity, send_pitch_bend);
@@ -132,7 +132,7 @@ void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune
         {
             /* For now, sending pitch bend only makes sense for monophonic control
                Eventually add a mode that sends every voice on a separate channel */
-            auto[note, fraction] = cv_to_pitch(_pitch_parameters[0]->domain_value());
+            auto[note, fraction] = cv_to_pitch(_pitch_parameters[0]->processed_value());
             note += tune;
             float note_diff = std::clamp((note - _voices[0].note + fraction) / PITCH_BEND_RANGE, -1.0f, 1.0f);
             output_event(RtEvent::make_pitch_bend_event(0, 0, channel, note_diff));
@@ -146,12 +146,12 @@ void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune
             if (voice.active)
             {
                 int new_note;
-                std::tie(new_note, std::ignore) = cv_to_pitch(_pitch_parameters[i]->domain_value());
+                std::tie(new_note, std::ignore) = cv_to_pitch(_pitch_parameters[i]->processed_value());
                 if (voice.note != new_note)
                 {
                     _deferred_note_offs.push_back(voice.note);
                     voice.note = new_note;
-                    float velocity = send_velocity ? _velocity_parameters[i]->domain_value() : 1.0f;
+                    float velocity = send_velocity ? _velocity_parameters[i]->processed_value() : 1.0f;
                     output_event(RtEvent::make_note_on_event(0, 0, channel, new_note, velocity));
                 }
             }
@@ -171,9 +171,9 @@ void CvToControlPlugin::_process_gate_changes(int polyphony, int channel, int tu
         {
             if (gate_state) // Gate high
             {
-                float velocity = send_velocity ? _velocity_parameters[gate]->domain_value() : 1.0f;
+                float velocity = send_velocity ? _velocity_parameters[gate]->processed_value() : 1.0f;
                 _voices[gate].active = true;
-                auto [note, fraction] = cv_to_pitch(_pitch_parameters[gate]->domain_value());
+                auto [note, fraction] = cv_to_pitch(_pitch_parameters[gate]->processed_value());
                 note += tune;
                 _voices[gate].note = note;
                 output_event(RtEvent::make_note_on_event(0, 0, channel, note, velocity));

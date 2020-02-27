@@ -198,7 +198,7 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
     if (maybe_output_cv_value(storage->descriptor()->id(), new_value) == false)
     {
         auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(),
-                                                      storage->domain_value());
+                                                      storage->processed_value());
         output_event(e);
     }
 }
@@ -206,14 +206,14 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
 void InternalPlugin::set_parameter_and_notify(IntParameterValue* storage, int new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->domain_value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->processed_value());
     output_event(e);
 }
 
 void InternalPlugin::set_parameter_and_notify(BoolParameterValue* storage, bool new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->domain_value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->processed_value());
     output_event(e);
 }
 
@@ -288,7 +288,7 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
-        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->domain_value() ? "True" : "False"};
+        return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->processed_value() ? "True" : "False"};
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, ""};

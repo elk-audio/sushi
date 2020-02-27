@@ -294,33 +294,34 @@ public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
                    T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
                                                                _pre_processor(pre_processor),
-                                                               _raw_domain_value(value),
-                                                               _domain_value(pre_processor->process(value)) {}
+                                                               _processed_value(pre_processor->process(value)),
+                                                               _normalized_value(pre_processor->to_normalized(value)) {}
 
     ParameterType type() const {return _type;}
 
-    T domain_value() const {return _domain_value;}
-    T raw_domain_value() const {return _raw_domain_value;}
+    T processed_value() const {return _processed_value;}
+
+    T raw_domain_value() const {return _pre_processor->to_domain(_normalized_value);}
 
     float value_normalized() const
     {
-        return _pre_processor->to_normalized(_domain_value);
+        return _pre_processor->to_normalized(_processed_value);
     }
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set(float value_normalized)
     {
-        _raw_domain_value = _pre_processor->to_domain(value_normalized);
-        _domain_value = _pre_processor->process(_raw_domain_value);
+        _normalized_value = value_normalized;
+        _processed_value = _pre_processor->process(_pre_processor->to_domain(value_normalized));
     }
 
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
-    T _raw_domain_value;
-    T _domain_value;
+    T _processed_value;
+    float _normalized_value;
 };
 
 /* Specialization for bool values, lack a pre_processor */
@@ -329,20 +330,20 @@ class ParameterValue<bool, ParameterType::BOOL>
 {
 public:
     ParameterValue(bool value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
-                                                                  _domain_value(value) {}
+                                                                  _processed_value(value) {}
 
     ParameterType type() const {return _type;}
-    bool domain_value() const {return _domain_value;}
-    bool raw_domain_value() const {return _domain_value;}
+    bool processed_value() const {return _processed_value;}
+    bool raw_domain_value() const {return _processed_value;}
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(bool value, bool raw_value) { _domain_value = value; _domain_value = raw_value;}
-    void set(bool value) { _domain_value = value;}
+    void set_values(bool value, bool raw_value) { _processed_value = value; _processed_value = raw_value;}
+    void set(bool value) { _processed_value = value;}
 
 private:
     ParameterType _type{ParameterType::BOOL};
     ParameterDescriptor* _descriptor{nullptr};
-    bool _domain_value;
+    bool _processed_value;
 };
 
 typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;

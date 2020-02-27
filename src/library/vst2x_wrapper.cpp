@@ -174,7 +174,6 @@ std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId par
 
 std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value_in_domain(ObjectId parameter_id) const
 {
-    // Ilias TODO: populate
     return this->parameter_value(parameter_id);
 }
 

@@ -149,12 +149,12 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
          * vice versa in order to provide visual feedback when the sequencer is running */
         set_parameter_and_notify(_step_indicator_parameters[_current_step], _current_step_active);
         _current_step = step;
-        _current_step_active = _step_parameters[step]->domain_value();
+        _current_step_active = _step_parameters[step]->processed_value();
         set_parameter_and_notify(_step_indicator_parameters[step], !_current_step_active);
 
         if (_current_step_active)
         {
-            _current_note = snap_to_scale(_pitch_parameters[step]->domain_value() + START_NOTE, MINOR_SCALE) + _transpose;
+            _current_note = snap_to_scale(_pitch_parameters[step]->processed_value() + START_NOTE, MINOR_SCALE) + _transpose;
             RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, 0, _current_note, 1.0f);
             output_event(note_on);
         }

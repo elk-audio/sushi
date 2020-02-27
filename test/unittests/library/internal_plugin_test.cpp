@@ -72,7 +72,7 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
     EXPECT_EQ(5u, _module_under_test->_parameter_values.size());
     IntParameterValue* value = nullptr;
     ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[3].int_parameter_value());
-    EXPECT_EQ(3, value->domain_value());
+    EXPECT_EQ(3, value->processed_value());
 }
 
 TEST_F(InternalPluginTest, TestDuplicateParameterNames)
@@ -94,7 +94,7 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     EXPECT_EQ(ParameterType::BOOL, _module_under_test->parameter_from_name("param_1")->type());
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 6.0f);
     _module_under_test->process_event(event);
-    EXPECT_TRUE(value->domain_value());
+    EXPECT_TRUE(value->processed_value());
     // Access the parameter from the external interface
     auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
@@ -118,7 +118,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 0.6f);
 
     _module_under_test->process_event(event);
-    EXPECT_FLOAT_EQ(6.0f, value->domain_value());
+    EXPECT_FLOAT_EQ(6.0f, value->processed_value());
 
     // Access the parameter from the external interface
     auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());
@@ -147,7 +147,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
 
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 0.5f);
     _module_under_test->process_event(event);
-    EXPECT_EQ(5, value->domain_value());
+    EXPECT_EQ(5, value->processed_value());
 
     // Access the parameter from the external interface
     auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());

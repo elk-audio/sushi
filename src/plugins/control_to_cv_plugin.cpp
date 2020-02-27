@@ -106,12 +106,12 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
         return;
     }
 
-    bool send_velocity = _send_velocity_parameter->domain_value();
-    bool send_modulation = _send_modulation_parameter->domain_value();
-    bool retrigger_mode = _retrigger_mode_parameter->domain_value();
-    int  coarse_tune = _coarse_tune_parameter->domain_value();
-    float fine_tune = _fine_tune_parameter->domain_value();
-    int  polyphony = _polyphony_parameter->domain_value();
+    bool send_velocity = _send_velocity_parameter->processed_value();
+    bool send_modulation = _send_modulation_parameter->processed_value();
+    bool retrigger_mode = _retrigger_mode_parameter->processed_value();
+    int coarse_tune = _coarse_tune_parameter->processed_value();
+    float fine_tune = _fine_tune_parameter->processed_value();
+    int polyphony = _polyphony_parameter->processed_value();
 
     _send_deferred_events();
     _parse_events(retrigger_mode, polyphony);
