@@ -5,25 +5,6 @@
 
 using namespace sushi;
 
-class TestParameterPreProcessor : public ::testing::Test
-{
-protected:
-    TestParameterPreProcessor() {}
-
-    ParameterPreProcessor<float> _module_under_test{-10, 10};
-};
-
-TEST_F(TestParameterPreProcessor, TestClipping)
-{
-    EXPECT_FLOAT_EQ(1.0f, _module_under_test.process(_module_under_test.to_domain(0.55f)));
-    EXPECT_FLOAT_EQ(10.0f, _module_under_test.process(_module_under_test.to_domain(1.0f)));
-    EXPECT_FLOAT_EQ(-4.0, _module_under_test.process(_module_under_test.to_domain(0.3f)));
-
-    EXPECT_FLOAT_EQ(-10.0, _module_under_test.process(_module_under_test.to_domain(-1.0f)));
-    EXPECT_FLOAT_EQ(10.0, _module_under_test.process(_module_under_test.to_domain(267890.5f)));
-}
-
-
 class TestdBToLinPreProcessor : public ::testing::Test
 {
 protected:

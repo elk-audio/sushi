@@ -113,7 +113,7 @@ protected:
 
 /**
  * @brief Parameter preprocessor for scaling or non-linear mapping. This basic,
- * templated base class only supports clipping to a pre-defined range.
+ * templated base class with no processing implemented.
  */
 template<typename T>
 class ParameterPreProcessor
@@ -123,7 +123,7 @@ public:
 
     virtual T process(T value)
     {
-        return clip(value);
+        return value;
     }
 
     T to_domain(float value_normalized)
@@ -137,11 +137,6 @@ public:
     }
 
 protected:
-    T clip(T raw_value)
-    {
-        return (raw_value > _max_domain_value ? _max_domain_value : (raw_value < _min_domain_value ? _min_domain_value : raw_value));
-    }
-
     T _min_domain_value;
     T _max_domain_value;
 
@@ -269,7 +264,7 @@ public:
 
     float process(float value) override
     {
-        return powf(10.0f, clip(value) / 20.0f);
+        return powf(10.0f, value / 20.0f);
     }
 };
 
@@ -283,7 +278,7 @@ public:
 
     float process(float value) override
     {
-        return 20.0f * log10(clip(value));
+        return 20.0f * log10(value);
     }
 };
 

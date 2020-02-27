@@ -634,11 +634,13 @@ std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
+    float clamped_value = std::clamp<float>(value, 0.0f, 1.0f);
+    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, clamped_value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
-                                          value, IMMEDIATE_PROCESS);
+                                          clamped_value,
+                                          IMMEDIATE_PROCESS);
 
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;

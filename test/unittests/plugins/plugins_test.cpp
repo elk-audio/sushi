@@ -177,9 +177,9 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     ASSERT_TRUE(q_param);
 
     _module_under_test->set_input_channels(2);
-    _module_under_test->_frequency->set(4000.0f);
-    _module_under_test->_gain->set(6.0f);
-    _module_under_test->_q->set(1.0f);
+    _module_under_test->_frequency->set(0.1991991991991992f);
+    _module_under_test->_gain->set(0.625f);
+    _module_under_test->_q->set(0.1f);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
