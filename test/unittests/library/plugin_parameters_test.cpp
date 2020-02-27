@@ -89,10 +89,10 @@ TEST(TestParameterValue, TestSet)
     /* Check correct defaults */
     EXPECT_EQ(ParameterType::FLOAT, value.float_parameter_value()->type());
     EXPECT_FLOAT_EQ(1.0f, value.float_parameter_value()->processed_value());
-    EXPECT_FLOAT_EQ(0.0f, value.float_parameter_value()->raw_domain_value());
+    EXPECT_FLOAT_EQ(0.0f, value.float_parameter_value()->domain_value());
 
     /* Test set */
     value.float_parameter_value()->set(pre_processor.to_normalized(6.0f));
     EXPECT_NEAR(2.0f, value.float_parameter_value()->processed_value(), 0.01f);
-    EXPECT_FLOAT_EQ(6.0f, value.float_parameter_value()->raw_domain_value());
+    EXPECT_FLOAT_EQ(6.0f, value.float_parameter_value()->domain_value());
 }

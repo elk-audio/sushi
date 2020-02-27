@@ -84,7 +84,7 @@ public:
      grpc::Status GetParameterId(grpc::ServerContext* context, const sushi_rpc::ParameterIdRequest* request, sushi_rpc::ParameterIdentifier* response) override;
      grpc::Status GetParameterInfo(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::ParameterInfo* response) override;
      grpc::Status GetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
-     grpc::Status GetParameterValueInDomain(grpc::ServerContext*, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
+     grpc::Status GetParameterValueInDomain(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
      grpc::Status GetParameterValueAsString(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;

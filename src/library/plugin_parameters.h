@@ -311,9 +311,9 @@ public:
 
     T processed_value() const {return _processed_value;}
 
-    T raw_domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
+    T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
 
-    float value_normalized() const { return _normalized_value; }
+    float normalized_value() const { return _normalized_value; }
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
@@ -347,7 +347,7 @@ public:
 
     ParameterType type() const {return _type;}
     bool processed_value() const {return _processed_value;}
-    bool raw_domain_value() const {return _processed_value;}
+    bool domain_value() const {return _processed_value;}
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set_values(bool value, bool raw_value) { _processed_value = value; _processed_value = raw_value;}
