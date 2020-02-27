@@ -15,9 +15,9 @@ protected:
 
 TEST_F(TestdBToLinPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(1.0, _module_under_test.process(_module_under_test.to_domain(0.5f)), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(2.0, _module_under_test.process(_module_under_test.to_domain(0.625f)), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(0.25, _module_under_test.process(_module_under_test.to_domain(0.25f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(1.0, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.5f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(2.0, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.625f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.25, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.25f)), test_utils::DECIBEL_ERROR);
 }
 
 class TestLinTodBPreProcessor : public ::testing::Test
@@ -30,9 +30,9 @@ protected:
 
 TEST_F(TestLinTodBPreProcessor, TestProcessing)
 {
-    EXPECT_NEAR(0.0f, _module_under_test.process(_module_under_test.to_domain(0.1f)), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(6.02f, _module_under_test.process(_module_under_test.to_domain(0.2f)), test_utils::DECIBEL_ERROR);
-    EXPECT_NEAR(-12.04f, _module_under_test.process(_module_under_test.to_domain(0.025f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(0.0f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.1f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(6.02f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.2f)), test_utils::DECIBEL_ERROR);
+    EXPECT_NEAR(-12.04f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.025f)), test_utils::DECIBEL_ERROR);
 }
 
 /*

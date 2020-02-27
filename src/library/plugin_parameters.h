@@ -121,7 +121,12 @@ class ParameterPreProcessor
 public:
     ParameterPreProcessor(T min, T max): _min_domain_value(min), _max_domain_value(max) {}
 
-    virtual T process(T value)
+    virtual T process_to_plugin(T value)
+    {
+        return value;
+    }
+
+    virtual T process_from_plugin(T value)
     {
         return value;
     }
@@ -262,9 +267,14 @@ class dBToLinPreProcessor : public FloatParameterPreProcessor
 public:
     dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
 
-    float process(float value) override
+    float process_to_plugin(float value) override
     {
         return powf(10.0f, value / 20.0f);
+    }
+
+    float process_from_plugin(float value) override
+    {
+        return value;
     }
 };
 
@@ -276,9 +286,14 @@ class LinTodBPreProcessor : public FloatParameterPreProcessor
 public:
     LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
 
-    float process(float value) override
+    float process_to_plugin(float value) override
     {
         return 20.0f * log10(value);
+    }
+
+    float process_from_plugin(float value) override
+    {
+        return value;
     }
 };
 
@@ -289,26 +304,29 @@ public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
                    T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
                                                                _pre_processor(pre_processor),
-                                                               _processed_value(pre_processor->process(value)),
+                                                               _processed_value(pre_processor->process_to_plugin(value)),
                                                                _normalized_value(pre_processor->to_normalized(value)) {}
 
     ParameterType type() const {return _type;}
 
     T processed_value() const {return _processed_value;}
 
-    T raw_domain_value() const {return _pre_processor->to_domain(_normalized_value);}
+    T raw_domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
 
-    float value_normalized() const
-    {
-        return _pre_processor->to_normalized(_processed_value);
-    }
+    float value_normalized() const { return _normalized_value; }
 
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set(float value_normalized)
     {
         _normalized_value = value_normalized;
-        _processed_value = _pre_processor->process(_pre_processor->to_domain(value_normalized));
+        _processed_value = _pre_processor->process_to_plugin(_pre_processor->to_domain(value_normalized));
+    }
+
+    void set_processed(float value_processed)
+    {
+        _processed_value = value_processed;
+        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(value_processed));
     }
 
 private:
@@ -316,7 +334,7 @@ private:
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
     T _processed_value;
-    float _normalized_value;
+    float _normalized_value; // Always not processed, but raw as set from the outside.
 };
 
 /* Specialization for bool values, lack a pre_processor */
