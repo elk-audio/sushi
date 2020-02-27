@@ -115,7 +115,7 @@ TEST_F(TestGainPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     _module_under_test->set_input_channels(2);
     _module_under_test->set_output_channels(2);
-    _module_under_test->_gain_parameter->set(0.525f);
+    _module_under_test->_gain_parameter->set(0.875f);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }

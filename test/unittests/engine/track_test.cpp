@@ -161,7 +161,7 @@ TEST_F(TrackTest, TestPanAndGain)
     ASSERT_FALSE(pan_param == nullptr);
 
     /* Pan hard right and volume up 6 dB */
-    auto gain_ev = RtEvent::make_parameter_change_event(0, 0, gain_param->id(), 6.0f);
+    auto gain_ev = RtEvent::make_parameter_change_event(0, 0, gain_param->id(), 0.875);
     auto pan_ev = RtEvent::make_parameter_change_event(0, 0, pan_param->id(), 1.0f);
 
     auto in_bus = _module_under_test.input_bus(0);
