@@ -97,15 +97,14 @@ void PluginLoader::close_plugin_instance()
 
         for (unsigned i = 0; i < _model->controls().size(); ++i)
         {
-            auto control = _model->controls()[i].get();
-            lilv_node_free(control->node);
-            lilv_node_free(control->symbol);
-            lilv_node_free(control->label);
-            lilv_node_free(control->group);
-            lilv_node_free(control->min);
-            lilv_node_free(control->max);
-            lilv_node_free(control->def);
-            free(control);
+            auto control = _model->controls()[i];
+            lilv_node_free(control.node);
+            lilv_node_free(control.symbol);
+            lilv_node_free(control.label);
+            lilv_node_free(control.group);
+            lilv_node_free(control.min);
+            lilv_node_free(control.max);
+            lilv_node_free(control.def);
         }
 
         _model->set_plugin_instance(nullptr);

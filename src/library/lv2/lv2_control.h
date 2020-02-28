@@ -48,7 +48,7 @@ struct ControlID
     int index; // Iff type == PORT
     LilvNode* group; // Port/control group, or NULL
 
-    std::vector<std::unique_ptr<ScalePoint>> scale_points;
+    std::vector<ScalePoint> scale_points;
     LV2_URID value_type; // Type of control value
     LilvNode* min;
     LilvNode* max;
@@ -62,11 +62,11 @@ struct ControlID
     bool is_readable; // Readable (output)
 };
 
-std::unique_ptr<ControlID> new_port_control(Port* port, Model *model, uint32_t index);
+ControlID new_port_control(Port* port, Model *model, uint32_t index);
 
 bool has_range(Model* model, const LilvNode* subject, const char* range_uri);
 
-std::unique_ptr<ControlID> new_property_control(Model *model, const LilvNode *property);
+ControlID new_property_control(Model *model, const LilvNode *property);
 
 } // end namespace lv2
 } // end namespace sushi

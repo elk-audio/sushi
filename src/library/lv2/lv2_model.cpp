@@ -324,7 +324,7 @@ bool Model::buf_size_set()
     return _buf_size_set;
 }
 
-std::vector<std::unique_ptr<ControlID>>& Model::controls()
+std::vector<ControlID>& Model::controls()
 {
     return _controls;
 }

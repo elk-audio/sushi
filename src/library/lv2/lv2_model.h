@@ -184,7 +184,7 @@ public:
 
     bool buf_size_set();
 
-    std::vector<std::unique_ptr<ControlID>>& controls();
+    std::vector<ControlID>& controls();
 
     uint32_t position();
     void set_position(uint32_t position);
@@ -206,7 +206,7 @@ private:
 
     void _initialize_make_path_feature();
 
-    std::vector<std::unique_ptr<ControlID>> _controls;
+    std::vector<ControlID> _controls;
 
     bool _buf_size_set{false};
 

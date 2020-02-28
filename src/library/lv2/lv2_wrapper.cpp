@@ -172,10 +172,10 @@ void LV2_Wrapper::_create_controls(bool writable)
             // Find existing writable control
             for (size_t i = 0; i < _model->controls().size(); ++i)
             {
-                if (lilv_node_equals(_model->controls()[i]->node, property))
+                if (lilv_node_equals(_model->controls()[i].node, property))
                 {
                     found = true;
-                    _model->controls()[i]->is_readable = true;
+                    _model->controls()[i].is_readable = true;
                     break;
                 }
             }
@@ -190,20 +190,20 @@ void LV2_Wrapper::_create_controls(bool writable)
 
         if (writable)
         {
-            record->is_writable = true;
+            record.is_writable = true;
         }
         else
         {
-            record->is_readable = true;
+            record.is_readable = true;
         }
 
-        if (record->value_type)
+        if (record.value_type)
         {
             _model->controls().emplace_back(std::move(record));
         }
         else
         {
-            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record->node));
+            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record.node));
         }
     }
 
