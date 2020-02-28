@@ -25,13 +25,13 @@
 namespace sushi {
 namespace lv2 {
 
-class LV2_State
+class State
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(LV2_State);
+    SUSHI_DECLARE_NON_COPYABLE(State);
 
-    LV2_State(LV2Model* model);
-    ~LV2_State() = default;
+    State(Model* model);
+    ~State() = default;
 
     void save(const char *dir);
 
@@ -69,7 +69,7 @@ private:
 
     LilvState* _preset {nullptr}; // Naked pointer because Lilv manages lifetime.
 
-    LV2Model* _model;
+    Model* _model;
 };
 
 // LV2 callbacks:

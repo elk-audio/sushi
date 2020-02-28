@@ -47,10 +47,10 @@ public:
 
     void close_plugin_instance();
 
-    LV2Model* model();
+    Model* model();
 
 private:
-    LV2Model* _model;
+    Model* _model;
 };
 
 } // namespace lv2

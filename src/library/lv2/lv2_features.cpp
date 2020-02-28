@@ -29,7 +29,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Port* port_by_symbol(LV2Model* model, const char* sym)
+Port* port_by_symbol(Model* model, const char* sym)
 {
     for (int i = 0; i < model->port_count(); ++i)
     {
@@ -50,7 +50,7 @@ int lv2_vprintf(LV2_Log_Handle handle,
                 [[maybe_unused]] const char* fmt,
                 va_list /*ap*/)
 {
-    auto model = static_cast<LV2Model*>(handle);
+    auto model = static_cast<Model*>(handle);
     auto urids = model->urids();
 
     if (type == urids.log_Trace && TRACE_OPTION)
@@ -98,7 +98,7 @@ int lv2_printf(LV2_Log_Handle handle,
 
 char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 {
-    auto model = static_cast<LV2Model*>(handle);
+    auto model = static_cast<Model*>(handle);
 
     // Create in save directory if saving, otherwise use temp directory
 
@@ -121,13 +121,13 @@ char* make_path(LV2_State_Make_Path_Handle handle, const char* path)
 
 LV2_URID map_uri(LV2_URID_Map_Handle handle, const char* uri)
 {
-    auto model = static_cast<LV2Model*>(handle);
+    auto model = static_cast<Model*>(handle);
     return model->map(uri);
 }
 
 const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid)
 {
-    auto model = static_cast<LV2Model*>(handle);
+    auto model = static_cast<Model*>(handle);
     return model->unmap(urid);
 }
 

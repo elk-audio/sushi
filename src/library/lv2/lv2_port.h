@@ -37,7 +37,7 @@
 namespace sushi {
 namespace lv2 {
 
-class LV2Model;
+class Model;
 
 enum class PortFlow
 {
@@ -58,7 +58,7 @@ enum class PortType
 class Port
 {
 public:
-    Port(const LilvPlugin* plugin, int port_index, float default_value, LV2Model* model);
+    Port(const LilvPlugin* plugin, int port_index, float default_value, Model* model);
 
     ~Port() = default;
 
@@ -94,7 +94,7 @@ private:
     /**
     * @brief Allocates LV2 port buffers (only necessary for MIDI)
     */
-    void _allocate_port_buffers(LV2Model *model);
+    void _allocate_port_buffers(Model *model);
 
     float _control; ///< For control ports, otherwise 0.0f
 

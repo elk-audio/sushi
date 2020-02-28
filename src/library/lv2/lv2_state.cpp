@@ -29,7 +29,7 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // Callback method - signature as required by Lilv
-static int populate_preset_list(LV2Model* model, const LilvNode *node, const LilvNode* title, void* /*data*/)
+static int populate_preset_list(Model* model, const LilvNode *node, const LilvNode* title, void* /*data*/)
 {
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
@@ -39,30 +39,30 @@ static int populate_preset_list(LV2Model* model, const LilvNode *node, const Lil
     return 0;
 }
 
-LV2_State::LV2_State(LV2Model* model):
+State::State(Model* model):
     _model(model) {}
 
-std::vector<std::string>& LV2_State::program_names()
+std::vector<std::string>& State::program_names()
 {
     return _program_names;
 }
 
-int LV2_State::number_of_programs()
+int State::number_of_programs()
 {
     return _program_names.size();
 }
 
-int LV2_State::current_program_index()
+int State::current_program_index()
 {
     return _current_program_index;
 }
 
-std::string LV2_State::current_program_name()
+std::string State::current_program_name()
 {
     return program_name(_current_program_index);
 }
 
-std::string LV2_State::program_name(int program_index)
+std::string State::program_name(int program_index)
 {
     if (program_index >= 0 && program_index < number_of_programs())
     {
@@ -72,12 +72,12 @@ std::string LV2_State::program_name(int program_index)
     return "";
 }
 
-void LV2_State::populate_program_list()
+void State::populate_program_list()
 {
     _load_programs(populate_preset_list, nullptr);
 }
 
-void LV2_State::save(const char* dir)
+void State::save(const char* dir)
 {
     _model->set_save_dir(std::string(dir) + "/");
 
@@ -94,7 +94,7 @@ void LV2_State::save(const char* dir)
     _model->set_save_dir(std::string(""));
 }
 
-void LV2_State::_load_programs(PresetSink sink, void* data)
+void State::_load_programs(PresetSink sink, void* data)
 {
    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
@@ -126,7 +126,7 @@ void LV2_State::_load_programs(PresetSink sink, void* data)
    lilv_nodes_free(presets);
 }
 
-void LV2_State::unload_programs()
+void State::unload_programs()
 {
     auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
 
@@ -139,7 +139,7 @@ void LV2_State::unload_programs()
     lilv_nodes_free(presets);
 }
 
-void LV2_State::apply_state(LilvState* state)
+void State::apply_state(LilvState* state)
 {
     bool must_pause = _model->play_state() == PlayState::RUNNING;
 
@@ -159,7 +159,7 @@ void LV2_State::apply_state(LilvState* state)
     }
 }
 
-bool LV2_State::apply_program(const int program_index)
+bool State::apply_program(const int program_index)
 {
     if (program_index < number_of_programs())
     {
@@ -175,13 +175,13 @@ bool LV2_State::apply_program(const int program_index)
     return false;
 }
 
-void LV2_State::apply_program(const LilvNode* preset)
+void State::apply_program(const LilvNode* preset)
 {
     _set_preset(lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), preset));
     apply_state(_preset);
 }
 
-void LV2_State::_set_preset(LilvState* new_preset)
+void State::_set_preset(LilvState* new_preset)
 {
     if (_preset != nullptr)
     {
@@ -191,7 +191,7 @@ void LV2_State::_set_preset(LilvState* new_preset)
     _preset = new_preset;
 }
 
-int LV2_State::save_program(const char* dir, const char* uri, const char* label, const char* filename)
+int State::save_program(const char* dir, const char* uri, const char* label, const char* filename)
 {
    auto state = lilv_state_new_from_instance(
             _model->plugin_class(), _model->plugin_instance(), &_model->get_map(),
@@ -211,7 +211,7 @@ int LV2_State::save_program(const char* dir, const char* uri, const char* label,
    return ret;
 }
 
-bool LV2_State::delete_current_program()
+bool State::delete_current_program()
 {
    if (_preset == nullptr)
    {
@@ -228,7 +228,7 @@ bool LV2_State::delete_current_program()
 // This one has a signature as required by Lilv.
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t* size, uint32_t* type)
 {
-    auto model = static_cast<LV2Model*>(user_data);
+    auto model = static_cast<Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
     if (port && port->flow() == PortFlow::FLOW_INPUT && port->type() == PortType::TYPE_CONTROL)
@@ -252,7 +252,7 @@ void set_port_value(const char* port_symbol,
                     uint32_t /*size*/,
                     uint32_t type)
 {
-    auto model = static_cast<LV2Model*>(user_data);
+    auto model = static_cast<Model*>(user_data);
     auto port = port_by_symbol(model, port_symbol);
 
     if (port == nullptr)

@@ -61,14 +61,14 @@ constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
 
-class Lv2Wrapper : public Processor
+class LV2_Wrapper : public Processor
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(Lv2Wrapper);
+    SUSHI_DECLARE_NON_COPYABLE(LV2_Wrapper);
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Lv2Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
             Processor(host_control),
             _sample_rate {0},
             _process_inputs {},
@@ -80,7 +80,7 @@ public:
         _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
     }
 
-    virtual ~Lv2Wrapper()
+    virtual ~LV2_Wrapper()
     {
         _cleanup();
     }
@@ -122,7 +122,7 @@ public:
 
     static int non_rt_callback(void* data, EventId id)
     {
-        reinterpret_cast<Lv2Wrapper*>(data)->_non_rt_callback(id);
+        reinterpret_cast<LV2_Wrapper*>(data)->_non_rt_callback(id);
         return 1;
     }
 
@@ -196,7 +196,7 @@ private:
     RtSafeRtEventFifo _incoming_event_queue;
 
     PluginLoader _loader;
-    LV2Model* _model{nullptr};
+    Model* _model{nullptr};
 
     // These are not used for other than the Unit tests,
     // to simulate how the wrapper behaves if multi-threaded.
@@ -219,10 +219,10 @@ namespace lv2 {
 /* If LV2 support is disabled in the build, the wrapper is replaced with this
    minimal dummy processor whose purpose is to log an error message if a user
    tries to load an LV2 plugin */
-class Lv2Wrapper : public Processor
+class LV2_Wrapper : public Processor
 {
 public:
-    Lv2Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
+    LV2_Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
             Processor(host_control) {}
 
     ProcessorReturnCode init(float sample_rate) override;

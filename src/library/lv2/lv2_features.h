@@ -60,7 +60,7 @@ static const bool TRACE_OPTION = true;
 /**
    Get a port structure by symbol.
 */
-Port* port_by_symbol(LV2Model* model, const char* sym);
+Port* port_by_symbol(Model* model, const char* sym);
 
 // These two are callbacks for the LV2 logging macro.
 int lv2_vprintf(LV2_Log_Handle handle,
@@ -72,7 +72,7 @@ int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,
            const char *fmt, ...);
 
-typedef int (*PresetSink)(LV2Model* model,
+typedef int (*PresetSink)(Model* model,
                           const LilvNode* node,
                           const LilvNode* title,
                           void* data);

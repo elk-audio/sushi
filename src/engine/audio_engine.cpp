@@ -774,7 +774,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_nam
             plugin = new vst3::Vst3xWrapper(_host_control, plugin_path, plugin_uid);
             break;
         case PluginType::LV2:
-            plugin = new lv2::Lv2Wrapper(_host_control, plugin_path);
+            plugin = new lv2::LV2_Wrapper(_host_control, plugin_path);
             break;
     }
 

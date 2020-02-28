@@ -32,7 +32,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Port::Port(const LilvPlugin *plugin, int port_index, float default_value, LV2Model* model):
+Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model* model):
     _control(0.0f),
     _flow(PortFlow::FLOW_UNKNOWN),
     _evbuf(nullptr), // For MIDI ports, otherwise NULL
@@ -129,7 +129,7 @@ void Port::reset_output_buffer()
     lv2_evbuf_reset(_evbuf, false);
 }
 
-void Port::_allocate_port_buffers(LV2Model* model)
+void Port::_allocate_port_buffers(Model* model)
 {
     switch (_type)
     {

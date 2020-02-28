@@ -39,7 +39,7 @@ enum class ControlType
 /** Plugin control. */
 struct ControlID
 {
-    LV2Model* model;
+    Model* model;
     ControlType type;
     LilvNode* node;
     LilvNode* symbol;
@@ -62,11 +62,11 @@ struct ControlID
     bool is_readable; // Readable (output)
 };
 
-std::unique_ptr<ControlID> new_port_control(Port* port, LV2Model *model, uint32_t index);
+std::unique_ptr<ControlID> new_port_control(Port* port, Model *model, uint32_t index);
 
-bool has_range(LV2Model* model, const LilvNode* subject, const char* range_uri);
+bool has_range(Model* model, const LilvNode* subject, const char* range_uri);
 
-std::unique_ptr<ControlID> new_property_control(LV2Model *model, const LilvNode *property);
+std::unique_ptr<ControlID> new_property_control(Model *model, const LilvNode *property);
 
 } // end namespace lv2
 } // end namespace sushi

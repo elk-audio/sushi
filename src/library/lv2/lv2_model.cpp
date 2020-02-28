@@ -42,9 +42,9 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-LV2Model::LV2Model(LilvWorld* worldIn):
-    _nodes(worldIn),
-    _world(worldIn)
+Model::Model(LilvWorld* world_in):
+    _nodes(world_in),
+    _world(world_in)
 {
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
@@ -58,15 +58,15 @@ LV2Model::LV2Model(LilvWorld* worldIn):
     _initialize_log_feature();
     _initialize_make_path_feature();
 
-    _lv2_state = std::make_unique<LV2_State>(this);
+    _lv2_state = std::make_unique<State>(this);
 }
 
-LV2Model::~LV2Model()
+Model::~Model()
 {
     symap_free(_symap);
 }
 
-void LV2Model::initialize_host_feature_list()
+void Model::initialize_host_feature_list()
 {
     // Build feature list for passing to plugins.
     std::vector<const LV2_Feature*> features({
@@ -86,7 +86,7 @@ void LV2Model::initialize_host_feature_list()
     _feature_list = std::move(features);
 }
 
-void LV2Model::_initialize_urid_symap()
+void Model::_initialize_urid_symap()
 {
     lv2_atom_forge_init(&this->_forge, &_map);
 
@@ -124,7 +124,7 @@ void LV2Model::_initialize_urid_symap()
     this->_urids.ui_updateRate = symap_map(this->_symap, LV2_UI__updateRate);
 }
 
-void LV2Model::_initialize_log_feature()
+void Model::_initialize_log_feature()
 {
     this->_features.llog.handle = this;
     this->_features.llog.printf = lv2_printf;
@@ -132,7 +132,7 @@ void LV2Model::_initialize_log_feature()
     init_feature(&this->_features.log_feature, LV2_LOG__log, &this->_features.llog);
 }
 
-void LV2Model::_initialize_map_feature()
+void Model::_initialize_map_feature()
 {
     this->_symap = lv2_host::symap_new();
     this->_map.handle = this;
@@ -140,19 +140,19 @@ void LV2Model::_initialize_map_feature()
     init_feature(&this->_features.map_feature, LV2_URID__map, &this->_map);
 }
 
-void LV2Model::_initialize_unmap_feature()
+void Model::_initialize_unmap_feature()
 {
     this->_unmap.handle = this;
     this->_unmap.unmap = unmap_uri;
     init_feature(&this->_features.unmap_feature, LV2_URID__unmap, &this->_unmap);
 }
 
-LV2_State* LV2Model::state()
+State* Model::state()
 {
     return _lv2_state.get();
 }
 
-void LV2Model::_initialize_make_path_feature()
+void Model::_initialize_make_path_feature()
 {
     this->_features.make_path.handle = this;
     this->_features.make_path.path = make_path;
@@ -160,93 +160,93 @@ void LV2Model::_initialize_make_path_feature()
                  LV2_STATE__makePath, &this->_features.make_path);
 }
 
-HostFeatures& LV2Model::host_features()
+HostFeatures& Model::host_features()
 {
     return _features;
 }
 
-std::vector<const LV2_Feature*>* LV2Model::host_feature_list()
+std::vector<const LV2_Feature*>* Model::host_feature_list()
 {
     return &_feature_list;
 }
 
-LilvWorld* LV2Model::lilv_world()
+LilvWorld* Model::lilv_world()
 {
     return _world;
 }
 
-LilvInstance* LV2Model::plugin_instance()
+LilvInstance* Model::plugin_instance()
 {
     return _plugin_instance;
 }
 
-void LV2Model::set_plugin_instance(LilvInstance* new_instance)
+void Model::set_plugin_instance(LilvInstance* new_instance)
 {
     _plugin_instance = new_instance;
 }
 
-const LilvPlugin* LV2Model::plugin_class()
+const LilvPlugin* Model::plugin_class()
 {
     return _plugin_class;
 }
 
-void LV2Model::set_plugin_class(const LilvPlugin* new_plugin)
+void Model::set_plugin_class(const LilvPlugin* new_plugin)
 {
     _plugin_class = new_plugin;
 }
 
-int LV2Model::midi_buffer_size()
+int Model::midi_buffer_size()
 {
     return _midi_buffer_size;
 }
 
-float LV2Model::sample_rate()
+float Model::sample_rate()
 {
     return _sample_rate;
 }
 
-Port* LV2Model::get_port(int index)
+Port* Model::get_port(int index)
 {
     return &_ports[index];
 }
 
-void LV2Model::add_port(Port port)
+void Model::add_port(Port port)
 {
     _ports.push_back(port);
 }
 
-int LV2Model::port_count()
+int Model::port_count()
 {
     return _ports.size();
 }
 
-const Lv2_Host_Nodes& LV2Model::nodes()
+const HostNodes& Model::nodes()
 {
     return _nodes;
 }
 
-const LV2_URIDs& LV2Model::urids()
+const LV2_URIDs& Model::urids()
 {
     return _urids;
 }
 
-LV2_URID_Map& LV2Model::get_map()
+LV2_URID_Map& Model::get_map()
 {
     return _map;
 }
 
-LV2_URID_Unmap& LV2Model::get_unmap()
+LV2_URID_Unmap& Model::get_unmap()
 {
     return _unmap;
 }
 
-LV2_URID LV2Model::map(const char* uri)
+LV2_URID Model::map(const char* uri)
 {
     std::unique_lock<std::mutex> lock(_symap_lock);
     return symap_map(_symap, uri);
 }
 
-const char* LV2Model::unmap(LV2_URID urid)
+const char* Model::unmap(LV2_URID urid)
 {
     std::unique_lock<std::mutex> lock(_symap_lock);
     const char* uri = symap_unmap(_symap, urid);
@@ -254,117 +254,117 @@ const char* LV2Model::unmap(LV2_URID urid)
     return uri;
 }
 
-LV2_Atom_Forge& LV2Model::forge()
+LV2_Atom_Forge& Model::forge()
 {
     return _forge;
 }
 
-int LV2Model::plugin_latency()
+int Model::plugin_latency()
 {
     return _plugin_latency;
 }
 
-void LV2Model::set_plugin_latency(int latency)
+void Model::set_plugin_latency(int latency)
 {
     _plugin_latency = latency;
 }
 
-void LV2Model::trigger_exit()
+void Model::trigger_exit()
 {
     _exit = true;
 }
 
-void LV2Model::set_control_input_index(int index)
+void Model::set_control_input_index(int index)
 {
     _control_input_index = index;
 }
 
-bool LV2Model::update_requested()
+bool Model::update_requested()
 {
     return _request_update;
 }
 
-void LV2Model::request_update()
+void Model::request_update()
 {
     _request_update = true;
 }
 
-void LV2Model::clear_update_request()
+void Model::clear_update_request()
 {
     _request_update = false;
 }
 
-void LV2Model::set_play_state(PlayState play_state)
+void Model::set_play_state(PlayState play_state)
 {
     _play_state = play_state;
 }
 
-PlayState LV2Model::play_state()
+PlayState Model::play_state()
 {
     return _play_state;
 }
 
-std::string LV2Model::temp_dir()
+std::string Model::temp_dir()
 {
     return _temp_dir;
 }
 
-std::string LV2Model::save_dir()
+std::string Model::save_dir()
 {
     return _save_dir;
 }
 
-void LV2Model::set_save_dir(const std::string& save_dir)
+void Model::set_save_dir(const std::string& save_dir)
 {
     _save_dir = save_dir;
 }
 
-bool LV2Model::buf_size_set()
+bool Model::buf_size_set()
 {
     return _buf_size_set;
 }
 
-std::vector<std::unique_ptr<ControlID>>& LV2Model::controls()
+std::vector<std::unique_ptr<ControlID>>& Model::controls()
 {
     return _controls;
 }
 
-uint32_t LV2Model::position()
+uint32_t Model::position()
 {
     return _position;
 }
 
-void LV2Model::set_position(uint32_t position)
+void Model::set_position(uint32_t position)
 {
     _position = position;
 }
 
-float LV2Model::bpm()
+float Model::bpm()
 {
     return _bpm;
 }
 
-void LV2Model::set_bpm(float bpm)
+void Model::set_bpm(float bpm)
 {
     _bpm = bpm;
 }
 
-bool LV2Model::rolling()
+bool Model::rolling()
 {
     return _rolling;
 }
 
-void LV2Model::set_rolling(bool rolling)
+void Model::set_rolling(bool rolling)
 {
     _rolling = rolling;
 }
 
-LilvState* LV2Model::state_to_set()
+LilvState* Model::state_to_set()
 {
     return _state_to_set;
 }
 
-void LV2Model::set_state_to_set(LilvState* state_to_set)
+void Model::set_state_to_set(LilvState* state_to_set)
 {
     _state_to_set = state_to_set;
 }

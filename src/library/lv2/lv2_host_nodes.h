@@ -33,12 +33,12 @@
 namespace sushi {
 namespace lv2 {
 
-class Lv2_Host_Nodes
+class HostNodes
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(Lv2_Host_Nodes);
+    SUSHI_DECLARE_NON_COPYABLE(HostNodes);
 
-    Lv2_Host_Nodes(LilvWorld* world)
+    HostNodes(LilvWorld* world)
     {
         /* Cache URIs for concepts we'll use */
         this->atom_AtomPort = lilv_new_uri(world, LV2_ATOM__AtomPort);
@@ -76,7 +76,7 @@ public:
         this->rsz_minimumSize = lilv_new_uri(world, LV2_RESIZE_PORT__minimumSize);
     }
 
-    ~Lv2_Host_Nodes()
+    ~HostNodes()
     {
         lilv_node_free(atom_AtomPort);
         lilv_node_free(atom_Chunk);

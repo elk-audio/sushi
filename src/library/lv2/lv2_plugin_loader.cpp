@@ -33,7 +33,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 PluginLoader::PluginLoader()
 {
     auto world = lilv_world_new();
-    _model = new LV2Model(world);
+    _model = new Model(world);
 }
 
 PluginLoader::~PluginLoader()
@@ -112,7 +112,7 @@ void PluginLoader::close_plugin_instance()
     }
 }
 
-LV2Model* PluginLoader::model()
+Model* PluginLoader::model()
 {
     return _model;
 }

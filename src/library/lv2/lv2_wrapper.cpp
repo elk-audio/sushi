@@ -46,7 +46,7 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 /** Return true iff Sushi supports the given feature. */
-bool feature_is_supported(LV2Model* model, const std::string& uri)
+bool feature_is_supported(Model* model, const std::string& uri)
 {
     if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
     {
@@ -66,7 +66,7 @@ bool feature_is_supported(LV2Model* model, const std::string& uri)
     return false;
 }
 
-ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
+ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
 
@@ -144,7 +144,7 @@ ProcessorReturnCode Lv2Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
-void Lv2Wrapper::_create_controls(bool writable)
+void LV2_Wrapper::_create_controls(bool writable)
 {
     const auto plugin = _model->plugin_class();
     const auto uri_node = lilv_plugin_get_uri(plugin);
@@ -213,7 +213,7 @@ void Lv2Wrapper::_create_controls(bool writable)
     lilv_node_free(patch_writable);
 }
 
-void Lv2Wrapper::_fetch_plugin_name_and_label()
+void LV2_Wrapper::_fetch_plugin_name_and_label()
 {
     const auto uri_node = lilv_plugin_get_uri(_model->plugin_class());
     const std::string uri_as_string = lilv_node_as_string(uri_node);
@@ -225,7 +225,7 @@ void Lv2Wrapper::_fetch_plugin_name_and_label()
     lilv_free(label_node);
 }
 
-bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
+bool LV2_Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 {
     // Check that any required features are supported
     auto required_features = lilv_plugin_get_required_features(plugin);
@@ -247,7 +247,7 @@ bool Lv2Wrapper::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
+bool LV2_Wrapper::_create_ports(const LilvPlugin* plugin)
 {
     _max_input_channels = 0;
     _max_output_channels = 0;
@@ -303,7 +303,7 @@ bool Lv2Wrapper::_create_ports(const LilvPlugin* plugin)
 
    Exception Port::FailedCreation can be thrown in the port constructor!
 */
-Port Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
+Port LV2_Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
     Port port(plugin, port_index, default_value, _model);
 
@@ -322,12 +322,12 @@ Port Lv2Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float de
     return port;
 }
 
-void Lv2Wrapper::configure(float /*sample_rate*/)
+void LV2_Wrapper::configure(float /*sample_rate*/)
 {
     SUSHI_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
 }
 
-std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value(ObjectId parameter_id) const
 {
     float value = 0.0;
     const int index = static_cast<int>(parameter_id);
@@ -346,34 +346,34 @@ std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value(ObjectId param
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
 }
 
-std::pair<ProcessorReturnCode, float> Lv2Wrapper::parameter_value_normalised(ObjectId parameter_id) const
+std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_normalised(ObjectId parameter_id) const
 {
 // TODO: Implement parameter normalization
     return this->parameter_value(parameter_id);
 }
 
-std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
+std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
 {
 // TODO: Populate parameter_value_formatted
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
 }
 
-void Lv2Wrapper::_populate_program_list()
+void LV2_Wrapper::_populate_program_list()
 {
     _model->state()->populate_program_list();
 }
 
-bool Lv2Wrapper::supports_programs() const
+bool LV2_Wrapper::supports_programs() const
 {
     return _model->state()->number_of_programs() > 0;
 }
 
-int Lv2Wrapper::program_count() const
+int LV2_Wrapper::program_count() const
 {
     return _model->state()->number_of_programs();
 }
 
-int Lv2Wrapper::current_program() const
+int LV2_Wrapper::current_program() const
 {
     if (this->supports_programs())
     {
@@ -383,12 +383,12 @@ int Lv2Wrapper::current_program() const
     return 0;
 }
 
-std::string Lv2Wrapper::current_program_name() const
+std::string LV2_Wrapper::current_program_name() const
 {
    return _model->state()->current_program_name();
 }
 
-std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program) const
+std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::program_name(int program) const
 {
     if (this->supports_programs())
     {
@@ -402,7 +402,7 @@ std::pair<ProcessorReturnCode, std::string> Lv2Wrapper::program_name(int program
     return {ProcessorReturnCode::ERROR, ""};
 }
 
-std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program_names() const
+std::pair<ProcessorReturnCode, std::vector<std::string>> LV2_Wrapper::all_program_names() const
 {
     if (this->supports_programs() == false)
     {
@@ -415,7 +415,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Lv2Wrapper::all_program
     return {ProcessorReturnCode::OK, programs};
 }
 
-ProcessorReturnCode Lv2Wrapper::set_program(int program)
+ProcessorReturnCode LV2_Wrapper::set_program(int program)
 {
     if (this->supports_programs() && program < _model->state()->number_of_programs())
     {
@@ -430,7 +430,7 @@ ProcessorReturnCode Lv2Wrapper::set_program(int program)
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
-void Lv2Wrapper::_cleanup()
+void LV2_Wrapper::_cleanup()
 {
     if (_model != nullptr)
     {
@@ -443,7 +443,7 @@ void Lv2Wrapper::_cleanup()
     _loader.close_plugin_instance();
 }
 
-bool Lv2Wrapper::_register_parameters()
+bool LV2_Wrapper::_register_parameters()
 {
     bool param_inserted_ok = true;
 
@@ -483,7 +483,7 @@ bool Lv2Wrapper::_register_parameters()
     return param_inserted_ok;
 }
 
-void Lv2Wrapper::process_event(const RtEvent& event)
+void LV2_Wrapper::process_event(const RtEvent& event)
 {
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
@@ -514,7 +514,7 @@ void Lv2Wrapper::process_event(const RtEvent& event)
     }
 }
 
-void Lv2Wrapper::_update_transport()
+void LV2_Wrapper::_update_transport()
 {
     auto transport = _host_control.transport();
 
@@ -567,7 +567,7 @@ void Lv2Wrapper::_update_transport()
     _model->set_rolling(rolling);
 }
 
-void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     if (_bypass_manager.should_process() == false)
     {
@@ -582,7 +582,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
             {
                 _model->set_play_state(PlayState::PAUSED);
 
-                auto e = RtEvent::make_async_work_event(&Lv2Wrapper::non_rt_callback, this->id(), this);
+                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::non_rt_callback, this->id(), this);
                 _pending_event_id = e.async_work_event()->event_id();
                 output_event(e);
                 break;
@@ -614,7 +614,7 @@ void Lv2Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     }
 }
 
-void Lv2Wrapper::_non_rt_callback(EventId id)
+void LV2_Wrapper::_non_rt_callback(EventId id)
 {
     if (id == _pending_event_id)
     {
@@ -640,7 +640,7 @@ void Lv2Wrapper::_non_rt_callback(EventId id)
     }
 }
 
-void Lv2Wrapper::set_enabled(bool enabled)
+void LV2_Wrapper::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     if (enabled)
@@ -653,18 +653,18 @@ void Lv2Wrapper::set_enabled(bool enabled)
     }
 }
 
-void Lv2Wrapper::set_bypassed(bool bypassed)
+void LV2_Wrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
-bool Lv2Wrapper::bypassed() const
+bool LV2_Wrapper::bypassed() const
 {
     return _bypass_manager.bypassed();
 }
 
-void Lv2Wrapper::_deliver_inputs_to_plugin()
+void LV2_Wrapper::_deliver_inputs_to_plugin()
 {
     auto instance = _model->plugin_instance();
 
@@ -707,7 +707,7 @@ void Lv2Wrapper::_deliver_inputs_to_plugin()
     _model->clear_update_request();
 }
 
-void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
+void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
 {
     for (int p = 0; p < _model->port_count(); ++p)
     {
@@ -741,7 +741,7 @@ void Lv2Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
     }
 }
 
-void Lv2Wrapper::_process_midi_output(Port* port)
+void LV2_Wrapper::_process_midi_output(Port* port)
 {
     for (auto buf_i = lv2_evbuf_begin(port->evbuf()); lv2_evbuf_is_valid(buf_i); buf_i = lv2_evbuf_next(buf_i))
     {
@@ -827,7 +827,7 @@ void Lv2Wrapper::_process_midi_output(Port* port)
     }
 }
 
-void Lv2Wrapper::_process_midi_input(Port* port)
+void LV2_Wrapper::_process_midi_input(Port* port)
 {
     auto lv2_evbuf_iterator = lv2_evbuf_begin(port->evbuf());
 
@@ -872,7 +872,7 @@ void Lv2Wrapper::_process_midi_input(Port* port)
     }
 }
 
-void Lv2Wrapper::_flush_event_queue()
+void LV2_Wrapper::_flush_event_queue()
 {
     RtEvent rt_event;
     while (_incoming_event_queue.empty() == false)
@@ -881,7 +881,7 @@ void Lv2Wrapper::_flush_event_queue()
     }
 }
 
-MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
+MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
 {
     if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::NOTE_AFTERTOUCH)
     {
@@ -947,7 +947,7 @@ MidiDataByte Lv2Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
     return MidiDataByte();
 }
 
-void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
 
@@ -980,7 +980,7 @@ void Lv2Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSam
     }
 }
 
-void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
+void LV2_Wrapper::_update_mono_mode(bool speaker_arr_status)
 {
     _double_mono_input = false;
 
@@ -995,7 +995,7 @@ void Lv2Wrapper::_update_mono_mode(bool speaker_arr_status)
     }
 }
 
-void Lv2Wrapper::_pause_audio_processing()
+void LV2_Wrapper::_pause_audio_processing()
 {
     _previous_play_state = _model->play_state();
 
@@ -1005,7 +1005,7 @@ void Lv2Wrapper::_pause_audio_processing()
     }
 }
 
-void Lv2Wrapper::_resume_audio_processing()
+void LV2_Wrapper::_resume_audio_processing()
 {
     _model->set_play_state(_previous_play_state);
 }

@@ -45,8 +45,8 @@
 namespace sushi {
 namespace lv2 {
 
-class LV2Model;
-class LV2_State;
+class Model;
+class State;
 struct ControlID;
 
 /**
@@ -121,13 +121,13 @@ struct HostFeatures
  * @brief LV2 depends on a "GOD" struct/class per plugin instance, which it passes around with pointers in the various
  * callbacks. LV2Model is this GOD class.
  */
-class LV2Model
+class Model
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(LV2Model);
+    SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    LV2Model(LilvWorld* worldIn);
-    ~LV2Model();
+    Model(LilvWorld* world_in);
+    ~Model();
 
     void initialize_host_feature_list();
 
@@ -149,7 +149,7 @@ public:
     void add_port(Port port);
     int port_count();
 
-    const Lv2_Host_Nodes& nodes();
+    const HostNodes& nodes();
 
     const LV2_URIDs& urids();
 
@@ -172,7 +172,7 @@ public:
     void request_update();
     void clear_update_request();
 
-    LV2_State* state();
+    State* state();
 
     void set_play_state(PlayState play_state);
     PlayState play_state();
@@ -215,7 +215,7 @@ private:
 
     PlayState _play_state;
 
-    std::unique_ptr<LV2_State> _lv2_state;
+    std::unique_ptr<State> _lv2_state;
 
     bool _request_update{false};
 
@@ -235,7 +235,7 @@ private:
 
     LV2_URIDs _urids;
 
-    Lv2_Host_Nodes _nodes;
+    HostNodes _nodes;
 
     std::vector<Port> _ports;
 
