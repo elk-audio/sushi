@@ -362,12 +362,12 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_ON, out_buffer, 2);
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_ON, out_buffer, 2, 0.0001f);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2);
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
 
     // A compromise, for the unit tests to be able to run.
     // It simulates the series of events in the live multithreaded program.
@@ -382,7 +382,7 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2);
+    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2, 0.0001f);
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);

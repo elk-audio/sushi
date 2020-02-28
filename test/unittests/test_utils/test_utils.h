@@ -62,13 +62,13 @@ inline std::string get_data_dir_path()
     return test_config_file;
 };
 
-inline void compare_buffers(const float static_array[][64], ChunkSampleBuffer& buffer, int channels)
+inline void compare_buffers(const float static_array[][64], ChunkSampleBuffer& buffer, int channels, float error_margin = 0.0001f)
 {
     for (int i = 0; i < channels; i++)
     {
         for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
         {
-            ASSERT_FLOAT_EQ(static_array[i][j], buffer.channel(i)[j]);
+            ASSERT_NEAR(static_array[i][j], buffer.channel(i)[j], error_margin);
         }
     }
 }
