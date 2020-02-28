@@ -584,7 +584,7 @@ grpc::Status SushiControlService::GetParameterValueInDomain(grpc::ServerContext*
                                                             const sushi_rpc::ParameterIdentifier* request,
                                                             sushi_rpc::GenericFloatValue* response)
 {
-    auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
+    auto [status, value] = _controller->get_parameter_value_in_domain(request->processor_id(), request->parameter_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
