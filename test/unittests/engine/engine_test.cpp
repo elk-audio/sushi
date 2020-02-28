@@ -344,11 +344,12 @@ TEST_F(TestEngine, TestSetSamplerate)
     _module_under_test->set_sample_rate(48000.0f);
     ASSERT_FLOAT_EQ(48000.0f, _module_under_test->sample_rate());
     /* Pretty ugly way of checking that it was actually set, but wth */
-    auto eq_plugin = static_cast<equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors_by_name["eq"].get());
+    auto eq_plugin = static_cast<const equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors.processor("eq").get());
     ASSERT_FLOAT_EQ(48000.0f, eq_plugin->_sample_rate);
 }
 
 TEST_F(TestEngine, TestRealtimeConfiguration)
+
 {
     auto faux_rt_thread = [](AudioEngine* e)
     {

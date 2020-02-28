@@ -78,6 +78,60 @@ private:
 };
 
 
+class ProcessorContainer
+{
+public:
+    ProcessorContainer() = default;
+    SUSHI_DECLARE_NON_COPYABLE(ProcessorContainer);
+
+    bool add_processor(std::shared_ptr<Processor>);
+
+    bool add_track(std::shared_ptr<Track>);
+
+    bool remove_processor(ObjectId id);
+
+    bool remove_track(ObjectId track_id);
+
+    bool processor_exists(ObjectId id);
+
+    bool processor_exists(const std::string& name);
+
+    bool add_to_track(std::shared_ptr<Processor> processor, ObjectId track_id, std::optional<ObjectId> before_id);
+
+    bool remove_from_track(ObjectId processor_id, ObjectId track_id);
+
+    std::vector<std::shared_ptr<const Processor>> all_processors() const;
+
+    std::shared_ptr<Processor> mutable_processor(ObjectId id);
+
+    std::shared_ptr<Processor> mutable_processor(const std::string& name);
+
+    std::shared_ptr<const Processor> processor(ObjectId) const;
+
+    std::shared_ptr<const Processor> processor(const std::string& name) const;
+
+    std::shared_ptr<Track> mutable_track(ObjectId track_id);
+
+    std::shared_ptr<Track> mutable_track(const std::string& track_name);
+
+    std::shared_ptr<const Track> track(ObjectId track_id) const;
+
+    std::shared_ptr<const Track> track(const std::string& name) const;
+
+    std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId /*track_id*/) const;
+
+    std::vector<std::shared_ptr<const Track>> all_tracks() const;
+
+private:
+    std::unordered_map<std::string, std::shared_ptr<Processor>>           _processors_by_name;
+    std::unordered_map<ObjectId, std::shared_ptr<Processor>>              _processors_by_id;
+    std::unordered_map<ObjectId, std::vector<std::shared_ptr<Processor>>> _processors_by_track;
+
+    mutable std::mutex _processors_by_name_lock;
+    mutable std::mutex _processors_by_id_lock;
+    mutable std::mutex _processors_by_track_lock;
+};
+
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
 
 class AudioEngine : public BaseEngine
@@ -544,13 +598,6 @@ public:
 
 private:
     /**
-     * @brief Instantiate a plugin instance of a given type
-     * @param uid String unique id
-     * @return Pointer to plugin instance if uid is valid, nullptr otherwise
-     */
-    std::shared_ptr<Processor> _make_internal_plugin(const std::string& uid);
-
-    /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
@@ -653,15 +700,7 @@ private:
 
     std::unique_ptr<twine::WorkerPool> _worker_pool;
 
-    // Containers for processors, should only be accessed from a non-rt thread and using
-    // their respective mutex
-    std::unordered_map<std::string, std::shared_ptr<Processor>>           _processors_by_name;
-    std::unordered_map<ObjectId, std::shared_ptr<Processor>>              _processors_by_id;
-    std::unordered_map<ObjectId, std::vector<std::shared_ptr<Processor>>> _processors_by_track;
-
-    mutable std::mutex _processors_by_name_lock;
-    mutable std::mutex _processors_by_id_lock;
-    mutable std::mutex _processors_by_track_lock;
+    ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
@@ -727,6 +766,13 @@ private:
  * @return A new, non-transient state
  */
 RealtimeState update_state(RealtimeState current_state);
+
+/**
+ * @brief Instantiate a plugin instance of a given type
+ * @param uid String unique id
+ * @return Pointer to plugin instance if uid is valid, nullptr otherwise
+ */
+std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control);
 
 } // namespace engine
 } // namespace sushi
