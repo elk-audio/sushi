@@ -415,7 +415,7 @@ public:
     }
 
     static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
-                                                       float default_value,
+                                                       int default_value,
                                                        IntParameterPreProcessor* pre_processor)
     {
         IntParameterValue value(pre_processor, default_value, descriptor);
