@@ -665,14 +665,14 @@ void SushiControlService::notification(const sushi::ext::ControlNotification* no
     }
 }
 
-void SubscribeToParameterUpdatesCallData::Proceed()
+void SubscribeToParameterUpdatesCallData::proceed()
 {
-    if (_status == CREATE)
+    if (_status == CallStatus::CREATE)
     {
-        _status = PROCESS;
+        _status = CallStatus::PROCESS;
         _service->RequestSubscribeToParameterUpdates(&_ctx, &_request, &_responder, _cq, _cq, this);
     }
-    else if (_status == PROCESS)
+    else if (_status == CallStatus::PROCESS)
     {
         if (_first_iteration)
         {
@@ -698,7 +698,7 @@ void SubscribeToParameterUpdatesCallData::Proceed()
                                                           _reply.parameter().processor_id())) == _parameter_blacklist.end())
             {
                 _responder.Write(_reply, this);
-                _status = PUSH_TO_BACK;
+                _status = CallStatus::PUSH_TO_BACK;
                 return;
             }
         }
@@ -706,17 +706,17 @@ void SubscribeToParameterUpdatesCallData::Proceed()
         // completion queue after the alarm expires.
         _alarm.Set(_cq, std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), this);
     }
-    else if (_status == PUSH_TO_BACK)
+    else if (_status == CallStatus::PUSH_TO_BACK)
     {
         // Since a call to write adds the object at the front of the completion
         // queue. We then place it at the back with an alarm to serve the clients
         // in a round robin fashion.
         _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
-        _status = PROCESS;
+        _status = CallStatus::PROCESS;
     }
     else
     {
-        assert(_status == FINISH);
+        assert(_status == CallStatus::FINISH);
         delete this;
     }
 }

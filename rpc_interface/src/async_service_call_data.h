@@ -27,21 +27,21 @@
 
 namespace sushi_rpc {
 
-class CallDataBase
+class CallData
 {
 public:
-    CallDataBase(SushiControlService* service, grpc::ServerCompletionQueue* cq)
+    CallData(SushiControlService* service, grpc::ServerCompletionQueue* cq)
         : _service(service),
           _cq(cq),
-          _status(CREATE) {}
+          _status(CallStatus::CREATE) {}
 
-    virtual ~CallDataBase() = default;
+    virtual ~CallData() = default;
 
-    virtual void Proceed() = 0;
+    virtual void proceed() = 0;
 
     void Stop()
     {
-        _status = FINISH;
+        _status = CallStatus::FINISH;
     }
 
 protected:
@@ -49,37 +49,38 @@ protected:
     grpc::ServerCompletionQueue* _cq;
     grpc::ServerContext _ctx;
 
-    enum CallStatus
+    enum class CallStatus
     {
         CREATE,
         PROCESS,
-        FINISH,
-        PUSH_TO_BACK
+        PUSH_TO_BACK,
+        FINISH
     };
+
     CallStatus _status;
 };
 
-class SubscribeToParameterUpdatesCallData : public CallDataBase
+class SubscribeToParameterUpdatesCallData : public CallData
 {
 public:
     SubscribeToParameterUpdatesCallData(SushiControlService* service, 
                                         grpc::ServerCompletionQueue* cq, 
                                         const NotificationContainer<ParameterSetRequest>* notifications)
-        : CallDataBase(service, cq),
+        : CallData(service, cq),
             _responder(&_ctx),
             _first_iteration(true),
             _last_notification_id(0),
             _notifications(notifications) 
     {
-        Proceed();
+        proceed();
     }
 
-    virtual void Proceed() override;
+    virtual void proceed() override;
 
 private:
-    std::string _create_map_key(int parameter_id, int processor_id) 
+    int64_t _create_map_key(int parameter_id, int processor_id) 
     { 
-        return std::to_string(parameter_id) + "_" + std::to_string(processor_id);
+        return ((int64_t)parameter_id << 32) | processor_id;
     }
 
     ParameterNotificationRequest _request;
@@ -91,7 +92,7 @@ private:
     bool _first_iteration;
     unsigned int _last_notification_id;
 
-    std::unordered_map<std::string, bool> _parameter_blacklist;
+    std::unordered_map<int64_t, bool> _parameter_blacklist;
     const NotificationContainer<ParameterSetRequest>* _notifications;
 };
 

@@ -663,11 +663,16 @@ ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, i
     return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener)
+ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type, 
+                                                          ext::ControlListener* listener)
 {
     switch (type)
     {
-        case ext::NotificationType::PARAMETER_CHANGE: _parameter_change_listeners.push_back(listener);
+        case ext::NotificationType::PARAMETER_CHANGE: 
+            _parameter_change_listeners.push_back(listener); 
+            break;
+        default: 
+            break;
     }
 
     return ext::ControlStatus::OK;
@@ -695,7 +700,7 @@ int Controller::process(Event* event)
         ext::ParameterChangeNotification notification((int)typed_event->processor_id(), 
                                                       (int)typed_event->parameter_id(), 
                                                       typed_event->float_value(), 
-                                                      std::chrono::milliseconds());
+                                                      typed_event->time());
         for (auto& listener : _parameter_change_listeners)
         {
             listener->notification(&notification);

@@ -51,10 +51,10 @@ void GrpcServer::HandleRpcs()
         // assert(ok);
         if (ok != true)
         {
-            static_cast<CallDataBase*>(tag)->Stop();
+            static_cast<CallData*>(tag)->Stop();
             continue;
         }
-        static_cast<CallDataBase*>(tag)->Proceed();
+        static_cast<CallData*>(tag)->proceed();
     }
 }
 
