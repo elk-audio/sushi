@@ -18,6 +18,188 @@
 using namespace sushi;
 using namespace sushi::lv2;
 
+constexpr float TEST_SAMPLE_RATE = 48000;
+
+class TestLv2Wrapper : public ::testing::Test
+{
+protected:
+    TestLv2Wrapper()
+    {
+    }
+
+    void SetUp(const std::string& plugin_URI)
+    {
+        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
+
+        auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
+
+        if (ret == ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR)
+        {
+            _module_under_test = nullptr;
+            return;
+        }
+
+        ASSERT_EQ(ProcessorReturnCode::OK, ret);
+        _module_under_test->set_event_output(&_fifo);
+        _module_under_test->set_enabled(true);
+    }
+
+    void TearDown()
+    {
+
+    }
+
+    RtSafeRtEventFifo _fifo;
+
+    HostControlMockup _host_control;
+    std::unique_ptr<LV2_Wrapper> _module_under_test {nullptr};
+};
+
+TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
+{
+    SetUp("http://lv2plug.in/plugins/eg-amp");
+
+    // TestSetName
+    EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
+    EXPECT_EQ("Simple Amplifier", _module_under_test->label());
+
+    // TestParameterInitialization
+    auto gain_param = _module_under_test->parameter_from_name("Gain");
+    EXPECT_TRUE(gain_param);
+    EXPECT_EQ(0u, gain_param->id());
+
+    // TestParameterSetViaEvent
+    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
+    _module_under_test->process_event(parameter_change_event);
+    auto value = _module_under_test->parameter_value(0);
+    EXPECT_EQ(0.123f, value.second);
+}
+
+TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
+{
+    SetUp("http://lv2plug.in/plugins/eg-amp");
+
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
+
+    // TestProcessingWithParameterChanges
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Verify that a parameter change affects the sound.
+    // eg-amp plugins Gain parameter range is from -90 to 24
+    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
+    _module_under_test->process_event(lower_gain_Event);
+
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    test_utils::assert_buffer_value(0.0f, out_buffer);
+
+    auto [status, parameter_value] = _module_under_test->parameter_value(0);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ(-90.0f, parameter_value);
+}
+
+TEST_F(TestLv2Wrapper, TestBypassProcessing)
+{
+    SetUp("http://lv2plug.in/plugins/eg-amp");
+
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -45.0f);
+    _module_under_test->process_event(event);
+
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    // Set bypass and manually feed the generated RtEvent back to the
+    // wrapper processor as event dispatcher is not running
+    _module_under_test->set_bypassed(true);
+    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
+    EXPECT_TRUE(bypass_event.get());
+
+    _module_under_test->process_event(bypass_event->to_rt_event(0));
+    EXPECT_TRUE(_module_under_test->bypassed());
+
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    // Test that we are ramping up the audio to the bypass value
+    float prev_value = 0;
+    for (int i = 1; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        EXPECT_GT(out_buffer.channel(0)[i], prev_value);
+        prev_value = out_buffer.channel(0)[i];
+    }
+}
+
+TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
+{
+    SetUp("http://lv2plug.in/plugins/eg-fifths");
+
+    ASSERT_TRUE(_fifo.empty());
+
+    ChunkSampleBuffer in_buffer(2);
+    ChunkSampleBuffer out_buffer(2);
+
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    RtEvent e;
+    bool got_event = _fifo.pop(e);
+    ASSERT_TRUE(got_event);
+
+    ASSERT_EQ(_module_under_test->id(), e.processor_id());
+
+    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
+    ASSERT_EQ(60, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
+    ASSERT_EQ(67, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
+    ASSERT_EQ(60, e.keyboard_event()->note());
+
+    _fifo.pop(e);
+
+    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
+    ASSERT_EQ(67, e.keyboard_event()->note());
+
+    ASSERT_TRUE(_fifo.empty());
+}
+
+/* TODO: Currently incomplete.
+ * Complete this with fetching of transport info from LV2 plugin, to compare states.
+ * As it is now, it demonstrates that an LV2 plugin that reguires the time extension,
+ * successfully loads.
+*/
+TEST_F(TestLv2Wrapper, TestTimeInfo)
+{
+    SetUp("http://lv2plug.in/plugins/eg-metro");
+
+    _host_control._transport.set_tempo(60);
+    _host_control._transport.set_time_signature({4, 4});
+    _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
+
+    // Currently My LV2 host does not get time info from plugin - it only sets.
+    // So I cannot directly replicate the below.
+    /*
+    auto time_info = _module_under_test->time_info();
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);
+    EXPECT_EQ(1'000'000'000, time_info->nanoSeconds);
+    EXPECT_FLOAT_EQ(1.0f, time_info->ppqPos);
+    EXPECT_FLOAT_EQ(60.0f, time_info->tempo);
+    EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
+    EXPECT_EQ(4, time_info->timeSigNumerator);
+    EXPECT_EQ(4, time_info->timeSigDenominator);
+     */
+}
+
+#ifdef SUSHI_BUILD_WITH_LV2_MDA_TESTS
+
 static const float LV2_JX10_EXPECTED_OUT_NOTE_ON[2][64] = {
     {
         0.0000000000e+00f, -1.3231920004e-09f, -5.8071242259e-11f, 7.4176806919e-09f,
@@ -135,119 +317,6 @@ static const float LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE[2][64] = {
     }
 };
 
-constexpr float TEST_SAMPLE_RATE = 48000;
-
-class TestLv2Wrapper : public ::testing::Test
-{
-protected:
-    TestLv2Wrapper()
-    {
-    }
-
-    void SetUp(const std::string& plugin_URI)
-    {
-        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
-
-        auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
-
-        if (ret == ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR)
-        {
-            _module_under_test = nullptr;
-            return;
-        }
-
-        ASSERT_EQ(ProcessorReturnCode::OK, ret);
-        _module_under_test->set_event_output(&_fifo);
-        _module_under_test->set_enabled(true);
-    }
-
-    void TearDown()
-    {
-
-    }
-
-    RtSafeRtEventFifo _fifo;
-
-    HostControlMockup _host_control;
-    std::unique_ptr<LV2_Wrapper> _module_under_test {nullptr};
-};
-
-TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    // TestSetName
-    EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
-    EXPECT_EQ("Simple Amplifier", _module_under_test->label());
-
-    // TestParameterInitialization
-    auto gain_param = _module_under_test->parameter_from_name("Gain");
-    EXPECT_TRUE(gain_param);
-    EXPECT_EQ(0u, gain_param->id());
-
-    // TestParameterSetViaEvent
-    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
-    _module_under_test->process_event(parameter_change_event);
-    auto value = _module_under_test->parameter_value(0);
-    EXPECT_EQ(0.123f, value.second);
-}
-
-TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    ChunkSampleBuffer in_buffer(1);
-    ChunkSampleBuffer out_buffer(1);
-
-    // TestProcessingWithParameterChanges
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    _module_under_test->process_audio(in_buffer, out_buffer);
-    test_utils::assert_buffer_value(1.0f, out_buffer);
-
-    // Verify that a parameter change affects the sound.
-    // eg-amp plugins Gain parameter range is from -90 to 24
-    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
-    _module_under_test->process_event(lower_gain_Event);
-
-    _module_under_test->process_audio(in_buffer, out_buffer);
-
-    test_utils::assert_buffer_value(0.0f, out_buffer);
-
-    auto [status, parameter_value] = _module_under_test->parameter_value(0);
-    ASSERT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(-90.0f, parameter_value);
-}
-
-TEST_F(TestLv2Wrapper, TestBypassProcessing)
-{
-    SetUp("http://lv2plug.in/plugins/eg-amp");
-
-    ChunkSampleBuffer in_buffer(1);
-    ChunkSampleBuffer out_buffer(1);
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -45.0f);
-    _module_under_test->process_event(event);
-
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-
-    // Set bypass and manually feed the generated RtEvent back to the
-    // wrapper processor as event dispatcher is not running
-    _module_under_test->set_bypassed(true);
-    auto bypass_event = _host_control._dummy_dispatcher.retrieve_event();
-    EXPECT_TRUE(bypass_event.get());
-
-    _module_under_test->process_event(bypass_event->to_rt_event(0));
-    EXPECT_TRUE(_module_under_test->bypassed());
-
-    _module_under_test->process_audio(in_buffer, out_buffer);
-    // Test that we are ramping up the audio to the bypass value
-    float prev_value = 0;
-    for (int i = 1; i < AUDIO_CHUNK_SIZE; ++i)
-    {
-        EXPECT_GT(out_buffer.channel(0)[i], prev_value);
-        prev_value = out_buffer.channel(0)[i];
-    }
-}
-
 /*
  * Depends on the MDA JX10 Synth plugin, as ported by drobilla (there are more ports).
  * Since this is relatively heavy to load, several tests are done in one method.
@@ -256,7 +325,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
  * 3. Audio check after note off
  * 4. Different audio after program change message.
  *
- * If the Calf plugin is not found, the test just returns after printing a message to the console.
+ * If the plugin is not found, the test just returns after printing a message to the console.
  */
 TEST_F(TestLv2Wrapper, TestSynth)
 {
@@ -319,69 +388,4 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_audio(in_buffer, out_buffer);
 }
 
-TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
-{
-    SetUp("http://lv2plug.in/plugins/eg-fifths");
-
-    ASSERT_TRUE(_fifo.empty());
-
-    ChunkSampleBuffer in_buffer(2);
-    ChunkSampleBuffer out_buffer(2);
-
-    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
-    _module_under_test->process_audio(in_buffer, out_buffer);
-
-    RtEvent e;
-    bool got_event = _fifo.pop(e);
-    ASSERT_TRUE(got_event);
-
-    ASSERT_EQ(_module_under_test->id(), e.processor_id());
-
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
-
-    ASSERT_TRUE(_fifo.empty());
-}
-
-/* TODO: Currently incomplete.
- * Complete this with fetching of transport info from LV2 plugin, to compare states.
- * As it is now, it demonstrates that an LV2 plugin that reguires the time extension,
- * successfully loads.
-*/
-TEST_F(TestLv2Wrapper, TestTimeInfo)
-{
-    SetUp("http://lv2plug.in/plugins/eg-metro");
-
-    _host_control._transport.set_tempo(60);
-    _host_control._transport.set_time_signature({4, 4});
-    _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
-
-    // Currently My LV2 host does not get time info from plugin - it only sets.
-    // So I cannot directly replicate the below.
-    /*
-    auto time_info = _module_under_test->time_info();
-    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);
-    EXPECT_EQ(1'000'000'000, time_info->nanoSeconds);
-    EXPECT_FLOAT_EQ(1.0f, time_info->ppqPos);
-    EXPECT_FLOAT_EQ(60.0f, time_info->tempo);
-    EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
-    EXPECT_EQ(4, time_info->timeSigNumerator);
-    EXPECT_EQ(4, time_info->timeSigDenominator);
-     */
-}
+#endif //SUSHI_BUILD_WITH_LV2_MDA_TESTS

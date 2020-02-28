@@ -44,6 +44,7 @@ option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
+option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
@@ -398,6 +399,10 @@ endif()
 
 if (${WITH_LV2})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
+endif()
+
+if (${WITH_LV2_MDA_TESTS})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2_MDA_TESTS)
 endif()
 
 if (${WITH_VST2})

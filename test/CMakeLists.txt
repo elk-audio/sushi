@@ -130,6 +130,10 @@ if (${WITH_LV2})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2)
 endif()
 
+if (${WITH_LV2_MDA_TESTS})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2_MDA_TESTS)
+endif()
+
 ##########################################
 #  Include directories relative to test  #
 ##########################################
