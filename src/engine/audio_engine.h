@@ -583,7 +583,7 @@ private:
     /**
      * @brief Register a newly created track
      * @param track Pointer to the track
-     * @return OK if succesfull, error code otherwise
+     * @return OK if succesful, error code otherwise
      */
     EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
 

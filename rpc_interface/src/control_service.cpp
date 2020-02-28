@@ -682,9 +682,8 @@ grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*
     return to_grpc_status(status);
 }
 
-grpc::Status
-SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
-                                          sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
     std::optional<int> before_processor = std::nullopt;
     if (request->position().add_to_back() == false)
