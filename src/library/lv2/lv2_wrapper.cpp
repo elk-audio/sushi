@@ -45,27 +45,6 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-/** Return true iff Sushi supports the given feature. */
-bool feature_is_supported(Model* model, const std::string& uri)
-{
-    if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
-    {
-        return true;
-    }
-
-    auto feature_list = *model->host_feature_list();
-
-    for (const auto f : feature_list)
-    {
-        if (uri.compare(f->URI) == 0)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
@@ -235,7 +214,7 @@ bool LV2_Wrapper::_check_for_required_features(const LilvPlugin* plugin)
         auto node = lilv_nodes_get(required_features, f);
         auto uri = lilv_node_as_uri(node);
 
-        if (feature_is_supported(_model, uri) == false)
+        if (_model->feature_is_supported(uri) == false)
         {
             SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
 

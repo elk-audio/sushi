@@ -198,6 +198,9 @@ public:
     LilvState* state_to_set();
     void set_state_to_set(LilvState* state_to_set);
 
+    /** Return true iff Sushi supports the given feature. */
+    bool feature_is_supported(const std::string& uri);
+
 private:
     void _initialize_map_feature();
     void _initialize_unmap_feature();

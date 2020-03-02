@@ -369,6 +369,24 @@ void Model::set_state_to_set(LilvState* state_to_set)
     _state_to_set = state_to_set;
 }
 
+bool Model::feature_is_supported(const std::string& uri)
+{
+    if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
+    {
+        return true;
+    }
+
+    for (const auto f : _feature_list)
+    {
+        if (uri.compare(f->URI) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 }
 }
 
