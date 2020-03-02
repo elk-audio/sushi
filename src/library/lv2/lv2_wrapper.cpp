@@ -155,7 +155,7 @@ void LV2_Wrapper::_create_controls(bool writable)
             }
         }
 
-        auto record = new_property_control(_model.get(), property);
+        auto record = ControlID::new_property_control(_model.get(), property);
 
         if (writable)
         {

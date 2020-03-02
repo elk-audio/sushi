@@ -22,7 +22,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-ControlID new_port_control(Port* port, Model *model, uint32_t index)
+ControlID ControlID::new_port_control(Port* port, Model* model, uint32_t index)
 {
     const auto lilvPort = port->lilv_port();
     const auto plugin = model->plugin_class();
@@ -94,7 +94,7 @@ ControlID new_port_control(Port* port, Model *model, uint32_t index)
     return id;
 }
 
-bool has_range(Model* model, const LilvNode* subject, const char* range_uri)
+bool ControlID::has_range(Model* model, const LilvNode* subject, const char* range_uri)
 {
     auto world = model->lilv_world();
     auto range = lilv_new_uri(world, range_uri);
@@ -103,7 +103,7 @@ bool has_range(Model* model, const LilvNode* subject, const char* range_uri)
     return result;
 }
 
-ControlID new_property_control(Model *model, const LilvNode *property)
+ControlID ControlID::new_property_control(Model* model, const LilvNode* property)
 {
     auto world = model->lilv_world();
 
@@ -126,7 +126,7 @@ ControlID new_property_control(Model *model, const LilvNode *property)
 
     for (const char *const *t = types; *t; ++t)
     {
-        if (has_range(model, property, *t))
+        if (ControlID::has_range(model, property, *t))
         {
             id.value_type = model->get_map().map(model, *t);
             break;

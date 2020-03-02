@@ -95,7 +95,7 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
 
         if (hidden == false)
         {
-            model->controls().emplace_back(new_port_control(this, model, _index));
+            model->controls().emplace_back(ControlID::new_port_control(this, model, _index));
         }
     }
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_AudioPort))

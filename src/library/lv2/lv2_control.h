@@ -37,8 +37,16 @@ enum class ControlType
 };
 
 /** Plugin control. */
-struct ControlID
+class ControlID
 {
+public:
+    ~ControlID() = default;
+
+    static ControlID new_port_control(Port* port, Model* model, uint32_t index);
+    static ControlID new_property_control(Model* model, const LilvNode* property);
+
+    static bool has_range(Model* model, const LilvNode* subject, const char* range_uri);
+
     Model* model;
     ControlType type;
     LilvNode* node;
@@ -60,13 +68,10 @@ struct ControlID
     bool is_logarithmic;
     bool is_writable; // Writable (input)
     bool is_readable; // Readable (output)
+
+private:
+    ControlID() {}
 };
-
-ControlID new_port_control(Port* port, Model *model, uint32_t index);
-
-bool has_range(Model* model, const LilvNode* subject, const char* range_uri);
-
-ControlID new_property_control(Model *model, const LilvNode *property);
 
 } // end namespace lv2
 } // end namespace sushi
