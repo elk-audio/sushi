@@ -51,17 +51,14 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
-    auto library_handle = _loader.plugin_handle_from_URI(_plugin_path.c_str());
+    auto library_handle = _plugin_handle_from_URI(_plugin_path.c_str());
 
     if (library_handle == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
-
-        _cleanup();
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    _model = _loader.model();
     _model->set_plugin_class(library_handle);
 
     _model->set_play_state(PlayState::PAUSED);
@@ -70,17 +67,14 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     if (_check_for_required_features(_model->plugin_class()) == false)
     {
-        _cleanup();
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
-    _loader.load_plugin(library_handle, _sample_rate, _model->host_feature_list()->data());
+    _model->load_plugin(library_handle, _sample_rate, _model->host_feature_list()->data());
 
     if (_model->plugin_instance() == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
-
-        _cleanup();
         return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
     }
 
@@ -91,8 +85,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     if (_create_ports(library_handle) == false)
     {
         SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
-
-        _cleanup();
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
@@ -102,8 +94,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     if (_register_parameters() == false) // Register internal parameters
     {
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
-
-        _cleanup();
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
@@ -165,7 +155,7 @@ void LV2_Wrapper::_create_controls(bool writable)
             }
         }
 
-        auto record = new_property_control(_model, property);
+        auto record = new_property_control(_model.get(), property);
 
         if (writable)
         {
@@ -252,11 +242,9 @@ bool LV2_Wrapper::_create_ports(const LilvPlugin* plugin)
         return false;
     }
 
-    const auto control_input = lilv_plugin_get_port_by_designation(
-            plugin,
-            _model->nodes().
-            lv2_InputPort,
-            _model->nodes().lv2_control);
+    const auto control_input = lilv_plugin_get_port_by_designation(plugin,
+                                                                   _model->nodes()->lv2_InputPort,
+                                                                   _model->nodes()->lv2_control);
 
     // The (optional) lv2:designation of this port is lv2:control,
     // which indicates that this is the "main" control port where the host should send events
@@ -284,7 +272,7 @@ bool LV2_Wrapper::_create_ports(const LilvPlugin* plugin)
 */
 Port LV2_Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
 {
-    Port port(plugin, port_index, default_value, _model);
+    Port port(plugin, port_index, default_value, _model.get());
 
     if (port.type() == PortType::TYPE_AUDIO)
     {
@@ -407,19 +395,6 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
     }
 
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
-}
-
-void LV2_Wrapper::_cleanup()
-{
-    if (_model != nullptr)
-    {
-        _model->state()->unload_programs();
-
-        // Tell plugin to stop and shutdown
-        set_enabled(false);
-    }
-
-    _loader.close_plugin_instance();
 }
 
 bool LV2_Wrapper::_register_parameters()
@@ -603,7 +578,11 @@ void LV2_Wrapper::_non_rt_callback(EventId id)
         {
             auto feature_list = _model->host_feature_list();
 
-            lilv_state_restore(_model->state_to_set(), _model->plugin_instance(), set_port_value, _model, 0,
+            lilv_state_restore(_model->state_to_set(),
+                               _model->plugin_instance(),
+                               set_port_value,
+                               _model.get(),
+                               0,
                                feature_list->data());
 
             lilv_state_free(_model->state_to_set());
@@ -699,7 +678,7 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                 case PortType::TYPE_CONTROL:
                     if (lilv_port_has_property(_model->plugin_class(),
                                                current_port->lilv_port(),
-                                               _model->nodes().lv2_reportsLatency))
+                                               _model->nodes()->lv2_reportsLatency))
                     {
                         if (_model->plugin_latency() != current_port->control_value())
                         {
@@ -987,6 +966,38 @@ void LV2_Wrapper::_pause_audio_processing()
 void LV2_Wrapper::_resume_audio_processing()
 {
     _model->set_play_state(_previous_play_state);
+}
+
+const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin_URI_string)
+{
+    if (plugin_URI_string.empty())
+    {
+        SUSHI_LOG_ERROR("Empty library path");
+        return nullptr; // Calling dlopen with an empty string returns a handle to the calling
+        // program, which can cause an infinite loop.
+    }
+
+    auto plugins = lilv_world_get_all_plugins(_model->lilv_world());
+    auto plugin_uri = lilv_new_uri(_model->lilv_world(), plugin_URI_string.c_str());
+
+    if (plugin_uri == nullptr)
+    {
+        SUSHI_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
+        return nullptr;
+    }
+
+    /* Find plugin */
+    SUSHI_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
+    const auto plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
+    lilv_node_free(plugin_uri);
+
+    if (plugin == nullptr)
+    {
+        SUSHI_LOG_ERROR("Failed to find LV2 plugin.");
+        return nullptr;
+    }
+
+    return plugin;
 }
 
 } // namespace lv2

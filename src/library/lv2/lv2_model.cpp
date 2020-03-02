@@ -42,10 +42,11 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model(LilvWorld* world_in):
-    _nodes(world_in),
-    _world(world_in)
+Model::Model()
 {
+    _world = lilv_world_new();
+    _nodes = std::make_unique<HostNodes>(_world);
+
     // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
 
@@ -63,6 +64,31 @@ Model::Model(LilvWorld* world_in):
 
 Model::~Model()
 {
+    if (_plugin_instance)
+    {
+        lilv_instance_deactivate(_plugin_instance);
+        lilv_instance_free(_plugin_instance);
+
+        for (unsigned i = 0; i < _controls.size(); ++i)
+        {
+            auto control = _controls[i];
+            lilv_node_free(control.node);
+            lilv_node_free(control.symbol);
+            lilv_node_free(control.label);
+            lilv_node_free(control.group);
+            lilv_node_free(control.min);
+            lilv_node_free(control.max);
+            lilv_node_free(control.def);
+        }
+
+        _plugin_instance = nullptr;
+    }
+
+    _lv2_state->unload_programs();
+
+    _nodes = nullptr;
+
+    lilv_world_free(_world);
     symap_free(_symap);
 }
 
@@ -160,11 +186,6 @@ void Model::_initialize_make_path_feature()
                  LV2_STATE__makePath, &this->_features.make_path);
 }
 
-HostFeatures& Model::host_features()
-{
-    return _features;
-}
-
 std::vector<const LV2_Feature*>* Model::host_feature_list()
 {
     return &_feature_list;
@@ -178,11 +199,6 @@ LilvWorld* Model::lilv_world()
 LilvInstance* Model::plugin_instance()
 {
     return _plugin_instance;
-}
-
-void Model::set_plugin_instance(LilvInstance* new_instance)
-{
-    _plugin_instance = new_instance;
 }
 
 const LilvPlugin* Model::plugin_class()
@@ -220,9 +236,9 @@ int Model::port_count()
     return _ports.size();
 }
 
-const HostNodes& Model::nodes()
+const HostNodes* Model::nodes()
 {
-    return _nodes;
+    return _nodes.get();
 }
 
 const LV2_URIDs& Model::urids()
@@ -267,11 +283,6 @@ int Model::plugin_latency()
 void Model::set_plugin_latency(int latency)
 {
     _plugin_latency = latency;
-}
-
-void Model::trigger_exit()
-{
-    _exit = true;
 }
 
 void Model::set_control_input_index(int index)
@@ -385,6 +396,19 @@ bool Model::feature_is_supported(const std::string& uri)
     }
 
     return false;
+}
+
+void Model::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
+{
+    _plugin_instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
+
+    if (_plugin_instance == nullptr)
+    {
+        SUSHI_LOG_ERROR("Failed instantiating LV2 plugin.");
+        return;
+    }
+
+    _features.ext_data.data_access = lilv_instance_get_descriptor(_plugin_instance)->extension_data;
 }
 
 }

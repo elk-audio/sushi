@@ -41,14 +41,14 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
 {
     _lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
-    const bool optional = lilv_port_has_property(plugin, _lilv_port, model->nodes().lv2_connectionOptional);
+    const bool optional = lilv_port_has_property(plugin, _lilv_port, model->nodes()->lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
-    if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_InputPort))
+    if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_InputPort))
     {
         _flow = PortFlow::FLOW_INPUT;
     }
-    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_OutputPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_OutputPort))
     {
         _flow = PortFlow::FLOW_OUTPUT;
     }
@@ -59,10 +59,10 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
     }
 
     const bool hidden = (_show_hidden == false) &&
-                        lilv_port_has_property(plugin, _lilv_port, model->nodes().pprops_notOnGUI);
+                        lilv_port_has_property(plugin, _lilv_port, model->nodes()->pprops_notOnGUI);
 
     /* Set control values */
-    if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_ControlPort))
+    if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_ControlPort))
     {
         _type = PortType::TYPE_CONTROL;
 
@@ -98,11 +98,11 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
             model->controls().emplace_back(new_port_control(this, model, _index));
         }
     }
-    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().lv2_AudioPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_AudioPort))
     {
         _type = PortType::TYPE_AUDIO;
     }
-    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes().atom_AtomPort))
+    else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->atom_AtomPort))
     {
         _type = PortType::TYPE_EVENT;
     }
@@ -141,8 +141,8 @@ void Port::_allocate_port_buffers(Model* model)
 
             _evbuf = lv2_host::lv2_evbuf_new(
                     model->midi_buffer_size(),
-                    model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Chunk)),
-                    model->get_map().map(handle, lilv_node_as_string(model->nodes().atom_Sequence)));
+                    model->get_map().map(handle, lilv_node_as_string(model->nodes()->atom_Chunk)),
+                    model->get_map().map(handle, lilv_node_as_string(model->nodes()->atom_Sequence)));
 
             lilv_instance_connect_port(
                     model->plugin_instance(), _index, lv2_evbuf_get_buffer(_evbuf));

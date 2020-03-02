@@ -97,7 +97,6 @@ endif()
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
 
 if (${WITH_LV2})
-    set(TEST_FILES ${TEST_FILES} unittests/library/lv2_plugin_loader_test.cpp)
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
 else()
     set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_wrapper.cpp)

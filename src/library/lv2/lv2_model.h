@@ -126,18 +126,18 @@ class Model
 public:
     SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    Model(LilvWorld* world_in);
+    Model();
     ~Model();
 
     void initialize_host_feature_list();
 
-    HostFeatures& host_features();
+    void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
+
     std::vector<const LV2_Feature*>* host_feature_list();
 
     LilvWorld* lilv_world();
 
     LilvInstance* plugin_instance();
-    void set_plugin_instance(LilvInstance* new_instance);
 
     const LilvPlugin* plugin_class();
     void set_plugin_class(const LilvPlugin* new_plugin);
@@ -149,7 +149,7 @@ public:
     void add_port(Port port);
     int port_count();
 
-    const HostNodes& nodes();
+    const HostNodes* nodes();
 
     const LV2_URIDs& urids();
 
@@ -163,8 +163,6 @@ public:
 
     int plugin_latency();
     void set_plugin_latency(int latency);
-
-    void trigger_exit();
 
     void set_control_input_index(int index);
 
@@ -224,8 +222,6 @@ private:
 
     int _control_input_index;
 
-    bool _exit;
-
     int _plugin_latency{0};
 
     LV2_Atom_Forge _forge;
@@ -238,7 +234,8 @@ private:
 
     LV2_URIDs _urids;
 
-    HostNodes _nodes;
+    LilvWorld* _world{nullptr};
+    std::unique_ptr<HostNodes> _nodes{nullptr};
 
     std::vector<Port> _ports;
 
@@ -248,8 +245,6 @@ private:
     const LilvPlugin* _plugin_class{nullptr};
 
     LilvInstance* _plugin_instance{nullptr};
-
-    LilvWorld* _world{nullptr};
 
     HostFeatures _features;
     std::vector<const LV2_Feature*> _feature_list;

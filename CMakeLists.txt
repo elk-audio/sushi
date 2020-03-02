@@ -236,15 +236,13 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_features.h
                                src/library/lv2/lv2_host_nodes.h
                                src/library/lv2/lv2_model.h
-                               src/library/lv2/lv2_plugin_loader.h
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp
-                               src/library/lv2/lv2_control.cpp
-                               src/library/lv2/lv2_plugin_loader.cpp)
+                               src/library/lv2/lv2_control.cpp)
 endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"

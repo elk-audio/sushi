@@ -49,7 +49,7 @@
 #include "library/midi_encoder.h"
 #include "library/midi_decoder.h"
 
-#include "lv2_plugin_loader.h"
+#include "lv2_model.h"
 
 namespace sushi {
 namespace lv2 {
@@ -76,13 +76,15 @@ public:
             _double_mono_input {false},
             _plugin_path {lv2_plugin_uri}
     {
+        _model = std::make_unique<Model>();
+
         _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
     }
 
     virtual ~LV2_Wrapper()
     {
-        _cleanup();
+        set_enabled(false);
     }
 
     ProcessorReturnCode init(float sample_rate) override;
@@ -127,6 +129,8 @@ public:
     }
 
 private:
+    const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);
+
     void _non_rt_callback(EventId id);
     EventId _pending_event_id{0};
 
@@ -137,12 +141,6 @@ private:
 
     bool _create_ports(const LilvPlugin* plugin);
     Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
-
-    /**
-     * @brief Tell the plugin that we're done with it and release all resources
-     * we allocated during initialization.
-     */
-    void _cleanup();
 
     /**
      * @brief Iterate over LV2 parameters and register internal FloatParameterDescriptor
@@ -195,8 +193,7 @@ private:
     // process_audio(...).
     RtSafeRtEventFifo _incoming_event_queue;
 
-    PluginLoader _loader;
-    Model* _model{nullptr};
+    std::unique_ptr<Model> _model{nullptr};
 
     // These are not used for other than the Unit tests,
     // to simulate how the wrapper behaves if multi-threaded.

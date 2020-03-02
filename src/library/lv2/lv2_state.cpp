@@ -96,7 +96,7 @@ void State::save(const char* dir)
 
 void State::_load_programs(PresetSink sink, void* data)
 {
-   auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
+   auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes()->pset_Preset);
 
    LILV_FOREACH(nodes, i, presets)
    {
@@ -108,7 +108,7 @@ void State::_load_programs(PresetSink sink, void* data)
            continue;
        }
 
-       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes().rdfs_label, NULL);
+       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, NULL);
 
 
        if (labels)
@@ -128,7 +128,7 @@ void State::_load_programs(PresetSink sink, void* data)
 
 void State::unload_programs()
 {
-    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes().pset_Preset);
+    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes()->pset_Preset);
 
     LILV_FOREACH(nodes, i, presets)
     {

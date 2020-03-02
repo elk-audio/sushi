@@ -26,7 +26,7 @@ ControlID new_port_control(Port* port, Model *model, uint32_t index)
 {
     const auto lilvPort = port->lilv_port();
     const auto plugin = model->plugin_class();
-    const auto nodes = &model->nodes();
+    const auto nodes = model->nodes();
 
     ControlID id;
     id.model = model;
@@ -98,7 +98,7 @@ bool has_range(Model* model, const LilvNode* subject, const char* range_uri)
 {
     auto world = model->lilv_world();
     auto range = lilv_new_uri(world, range_uri);
-    const bool result = lilv_world_ask(world, subject, model->nodes().rdfs_range, range);
+    const bool result = lilv_world_ask(world, subject, model->nodes()->rdfs_range, range);
     lilv_node_free(range);
     return result;
 }
@@ -112,12 +112,12 @@ ControlID new_property_control(Model *model, const LilvNode *property)
     id.type = ControlType::PROPERTY;
     id.node = lilv_node_duplicate(property);
     id.symbol = lilv_world_get_symbol(world, property);
-    id.label = lilv_world_get(world, property, model->nodes().rdfs_label, nullptr);
+    id.label = lilv_world_get(world, property, model->nodes()->rdfs_label, nullptr);
     id.property = model->get_map().map(model, lilv_node_as_uri(property));
 
-    id.min = lilv_world_get(world, property, model->nodes().lv2_minimum, nullptr);
-    id.max = lilv_world_get(world, property, model->nodes().lv2_maximum, nullptr);
-    id.def = lilv_world_get(world, property, model->nodes().lv2_default, nullptr);
+    id.min = lilv_world_get(world, property, model->nodes()->lv2_minimum, nullptr);
+    id.max = lilv_world_get(world, property, model->nodes()->lv2_maximum, nullptr);
+    id.def = lilv_world_get(world, property, model->nodes()->lv2_default, nullptr);
 
     const char *const types[] = {
             LV2_ATOM__Int, LV2_ATOM__Long, LV2_ATOM__Float, LV2_ATOM__Double,

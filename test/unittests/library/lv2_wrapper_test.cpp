@@ -10,6 +10,8 @@
 #include "library/lv2/lv2_port.cpp"
 #include "library/lv2/lv2_model.cpp"
 
+#include "library/lv2/lv2_control.cpp"
+
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
 
