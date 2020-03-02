@@ -13,6 +13,11 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
+/**
+ * @Brief State - internally used class for the storage and manipulation of LV2 presets/states.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifndef SUSHI_LV2_STATE_H
 #define SUSHI_LV2_STATE_H
 

@@ -14,7 +14,7 @@
  */
 
 /**
- * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - extra features.
+ * @Brief Callbacks for LV2 extension features.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 

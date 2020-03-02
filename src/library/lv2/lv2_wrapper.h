@@ -32,7 +32,7 @@
 */
 
 /**
- * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - port.
+ * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 

@@ -13,6 +13,11 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
+/**
+ * @Brief LV2 plugin control class - internally used, for holding the data of LV2 plugin controls.
+ * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #ifndef SUSHI_LV2_CONTROL_H
 #define SUSHI_LV2_CONTROL_H
 

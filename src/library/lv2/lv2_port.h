@@ -14,7 +14,7 @@
  */
 
 /**
- * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - port.
+ * @Brief Port - internally used class for holding and interacting with a plugin port.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 

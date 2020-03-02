@@ -14,7 +14,7 @@
  */
 
 /**
- * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - model.
+ * @Brief LV2 plugin host Model - initializes and holds the LV2 model for each plugin instance.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
