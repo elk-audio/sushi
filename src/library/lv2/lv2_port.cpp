@@ -33,15 +33,11 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model* model):
-    _control(0.0f),
-    _flow(PortFlow::FLOW_UNKNOWN),
-    _evbuf(nullptr), // For MIDI ports, otherwise NULL
-    _buf_size(0), // Custom buffer size, or 0
     _index(port_index)
 {
     _lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);
 
-    const bool optional = lilv_port_has_property(plugin, _lilv_port, model->nodes()->lv2_connectionOptional);
+    _optional = lilv_port_has_property(plugin, _lilv_port, model->nodes()->lv2_connectionOptional);
 
     /* Set the port flow (input or output) */
     if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_InputPort))
@@ -51,11 +47,6 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->lv2_OutputPort))
     {
         _flow = PortFlow::FLOW_OUTPUT;
-    }
-    else if (optional == false)
-    {
-        SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
-        throw Port::FailedCreation();
     }
 
     const bool hidden = (_show_hidden == false) &&
@@ -105,12 +96,6 @@ Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model*
     else if (lilv_port_is_a(plugin, _lilv_port, model->nodes()->atom_AtomPort))
     {
         _type = PortType::TYPE_EVENT;
-    }
-    else if (optional == false)
-    {
-        assert(false);
-        SUSHI_LOG_ERROR("Mandatory LV2 port has unknown data type");
-        throw Port::FailedCreation();
     }
 
     if (model->buf_size_set() == false)
@@ -195,6 +180,11 @@ float Port::control_value()
 float* Port::control_pointer()
 {
     return &_control;
+}
+
+bool Port::optional()
+{
+    return _optional;
 }
 
 }

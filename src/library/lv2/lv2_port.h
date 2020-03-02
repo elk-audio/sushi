@@ -23,10 +23,7 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
-#include <exception>
-#include <condition_variable>
 #include <map>
-#include <mutex>
 
 #include <lilv-0/lilv/lilv.h>
 
@@ -82,13 +79,7 @@ public:
 
     float* control_pointer();
 
-    struct FailedCreation : public std::exception
-    {
-        const char* what () const throw ()
-        {
-            return "Failed to Create LV2 Port";
-        }
-    };
+    bool optional();
 
 private:
     /**
@@ -96,16 +87,16 @@ private:
     */
     void _allocate_port_buffers(Model *model);
 
-    float _control; ///< For control ports, otherwise 0.0f
+    float _control{0.0f}; ///< For control ports, otherwise 0.0f
 
     const LilvPort* _lilv_port;
-    PortType _type;
-    PortFlow _flow;
+    PortType _type{PortType::TYPE_UNKNOWN};
+    PortFlow _flow{PortFlow::FLOW_UNKNOWN};
 
-    lv2_host::LV2_Evbuf* _evbuf; // For MIDI ports, otherwise NULL
+    lv2_host::LV2_Evbuf* _evbuf{nullptr}; // For MIDI ports, otherwise NULL
 
     void* _widget; // Control widget, if applicable
-    int _buf_size; // Custom buffer size, or 0
+    int _buf_size{0}; // Custom buffer size, or 0
     int _index;
 
     // For ranges. Only used in control ports.
@@ -114,6 +105,8 @@ private:
     float _min{0.0f};
 
     bool _show_hidden{true};
+
+    bool _optional{true};
 };
 
 } // end namespace lv2

@@ -319,9 +319,13 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
         bool succeeded = _model->state()->apply_program(program);
 
         if (succeeded)
+        {
             return ProcessorReturnCode::OK;
+        }
         else
+        {
             return ProcessorReturnCode::ERROR;
+        }
     }
 
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;

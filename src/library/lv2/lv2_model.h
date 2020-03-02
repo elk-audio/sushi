@@ -23,10 +23,8 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
-#include <exception>
 #include <map>
 #include <mutex>
-#include <condition_variable>
 
 #include <lv2/log/log.h>
 #include <lv2/options/options.h>

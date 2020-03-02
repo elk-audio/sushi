@@ -164,19 +164,30 @@ bool Model::_create_ports(const LilvPlugin* plugin)
 
     lilv_plugin_get_port_ranges_float(plugin, nullptr, nullptr, default_values.data());
 
-    try
+    for (int i = 0; i < port_count; ++i)
     {
-        for (int i = 0; i < port_count; ++i)
-        {
-            auto new_port = _create_port(plugin, i, default_values[i]);
+        auto new_port = _create_port(plugin, i, default_values[i]);
 
-            add_port(new_port);
-        }
-    }
-    catch (Port::FailedCreation& e)
-    {
         // If it fails to create a new port, loading has failed, and the host shuts down.
-        return false;
+        if(new_port.flow() != PortFlow::FLOW_INPUT &&
+           new_port.flow() != PortFlow::FLOW_OUTPUT &&
+           new_port.optional() == false)
+        {
+            SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
+            return false;
+        }
+
+        // If the port has an unknown data type, loading has failed, and the host shuts down.
+        if( new_port.type() != PortType::TYPE_CONTROL &&
+            new_port.type() != PortType::TYPE_AUDIO &&
+            new_port.type() != PortType::TYPE_EVENT &&
+            new_port.optional() == false)
+        {
+            SUSHI_LOG_ERROR("Mandatory LV2 port has unknown data type.");
+            return false;
+        }
+
+        add_port(new_port);
     }
 
     const auto control_input = lilv_plugin_get_port_by_designation(plugin,
