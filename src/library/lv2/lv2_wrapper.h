@@ -139,9 +139,6 @@ private:
     LV2_Atom* _lv2_pos{nullptr};
     bool _xport_changed{false};
 
-    bool _create_ports(const LilvPlugin* plugin);
-    Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
-
     /**
      * @brief Iterate over LV2 parameters and register internal FloatParameterDescriptor
      *        for each one of them.

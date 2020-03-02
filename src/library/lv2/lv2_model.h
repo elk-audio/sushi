@@ -131,7 +131,12 @@ public:
 
     void initialize_host_feature_list();
 
-    void load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list);
+    ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
+                                    double sample_rate,
+                                    const LV2_Feature** feature_list);
+
+    /** Return true iff Sushi supports the given feature. */
+    bool feature_is_supported(const std::string& uri);
 
     std::vector<const LV2_Feature*>* host_feature_list();
 
@@ -196,10 +201,13 @@ public:
     LilvState* state_to_set();
     void set_state_to_set(LilvState* state_to_set);
 
-    /** Return true iff Sushi supports the given feature. */
-    bool feature_is_supported(const std::string& uri);
+    int input_audio_channel_count();
+    int output_audio_channel_count();
 
 private:
+    bool _create_ports(const LilvPlugin* plugin);
+    Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
+
     void _initialize_map_feature();
     void _initialize_unmap_feature();
     void _initialize_log_feature();
@@ -254,6 +262,9 @@ private:
     bool _rolling;
 
     LilvState* _state_to_set{nullptr};
+
+    int _input_audio_channel_count{0};
+    int _output_audio_channel_count{0};
 };
 
 } // end namespace lv2

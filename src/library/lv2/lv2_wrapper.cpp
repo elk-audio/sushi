@@ -70,23 +70,24 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
-    _model->load_plugin(library_handle, _sample_rate, _model->host_feature_list()->data());
+    auto loading_return_code = _model->load_plugin(library_handle,
+                                                   _sample_rate,
+                                                   _model->host_feature_list()->data());
 
-    if (_model->plugin_instance() == nullptr)
+    if (loading_return_code != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
-        return ProcessorReturnCode::PLUGIN_ENTRY_POINT_NOT_FOUND;
+        return loading_return_code;
     }
+
+    // Channel setup derived from ports:
+    _max_input_channels = _model->input_audio_channel_count();
+    _max_output_channels = _model->output_audio_channel_count();
+    _current_input_channels = _max_input_channels;
+    _current_output_channels = _max_output_channels;
 
     _fetch_plugin_name_and_label();
 
     _populate_program_list();
-
-    if (_create_ports(library_handle) == false)
-    {
-        SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
 
     _create_controls(true);
     _create_controls(false);
@@ -97,7 +98,9 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
-    auto state = lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), lilv_plugin_get_uri(library_handle));
+    auto state = lilv_state_new_from_world(_model->lilv_world(),
+                                           &_model->get_map(),
+                                           lilv_plugin_get_uri(library_handle));
 
     if (state != nullptr) // Apply loaded state to plugin instance if necessary
     {
@@ -214,79 +217,6 @@ bool LV2_Wrapper::_check_for_required_features(const LilvPlugin* plugin)
 
     lilv_nodes_free(required_features);
     return true;
-}
-
-bool LV2_Wrapper::_create_ports(const LilvPlugin* plugin)
-{
-    _max_input_channels = 0;
-    _max_output_channels = 0;
-
-    const int port_count = lilv_plugin_get_num_ports(plugin);
-
-    std::vector<float> default_values(port_count);
-
-    lilv_plugin_get_port_ranges_float(plugin, nullptr, nullptr, default_values.data());
-
-    try
-    {
-        for (int i = 0; i < port_count; ++i)
-        {
-            auto new_port = _create_port(plugin, i, default_values[i]);
-
-            _model->add_port(new_port);
-        }
-    }
-    catch (Port::FailedCreation& e)
-    {
-        // If it fails to create a new port, loading has failed, and the host shuts down.
-        return false;
-    }
-
-    const auto control_input = lilv_plugin_get_port_by_designation(plugin,
-                                                                   _model->nodes()->lv2_InputPort,
-                                                                   _model->nodes()->lv2_control);
-
-    // The (optional) lv2:designation of this port is lv2:control,
-    // which indicates that this is the "main" control port where the host should send events
-    // it expects to configure the plugin, for example changing the MIDI program.
-    // This is necessary since it is possible to have several MIDI input ports,
-    // though typically it is best to have one.
-    if (control_input != nullptr)
-    {
-        _model->set_control_input_index(lilv_port_get_index(plugin, control_input));
-    }
-
-    // Channel setup derived from ports:
-    _current_input_channels = _max_input_channels;
-    _current_output_channels = _max_output_channels;
-
-    return true;
-}
-
-/**
-   Create a port from data description. This is called before plugin
-   and Jack instantiation. The remaining instance-specific setup
-   (e.g. buffers) is done later in activate_port().
-
-   Exception Port::FailedCreation can be thrown in the port constructor!
-*/
-Port LV2_Wrapper::_create_port(const LilvPlugin *plugin, int port_index, float default_value)
-{
-    Port port(plugin, port_index, default_value, _model.get());
-
-    if (port.type() == PortType::TYPE_AUDIO)
-    {
-        if (port.flow() == PortFlow::FLOW_INPUT)
-        {
-            _max_input_channels++;
-        }
-        else if (port.flow() == PortFlow::FLOW_OUTPUT)
-        {
-            _max_output_channels++;
-        }
-    }
-
-    return port;
 }
 
 void LV2_Wrapper::configure(float /*sample_rate*/)
@@ -572,7 +502,8 @@ void LV2_Wrapper::_non_rt_callback(EventId id)
 {
     if (id == _pending_event_id)
     {
-        /* Note that this doesn't handle multiple requests at once. Currently for the Pause functionality it is fine,
+        /* Note that this doesn't handle multiple requests at once.
+         * Currently for the Pause functionality it is fine,
          * but if extended to support other use it may note be. */
         if(_model->state_to_set() != nullptr)
         {
@@ -614,7 +545,9 @@ void LV2_Wrapper::set_enabled(bool enabled)
 void LV2_Wrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(),
+                                                                bypassed,
+                                                                IMMEDIATE_PROCESS));
 }
 
 bool LV2_Wrapper::bypassed() const

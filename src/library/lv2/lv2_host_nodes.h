@@ -150,9 +150,9 @@ public:
     LilvNode* rsz_minimumSize;
 };
 
-#endif //SUSHI_LV2_HOST_NODES_H
+#endif //SUSHI_BUILD_WITH_LV2
 
 } // end namespace lv2
 } // end namespace sushi
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif //SUSHI_LV2_HOST_NODES_H

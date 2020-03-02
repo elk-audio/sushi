@@ -112,6 +112,116 @@ void Model::initialize_host_feature_list()
     _feature_list = std::move(features);
 }
 
+bool Model::feature_is_supported(const std::string& uri)
+{
+    if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
+    {
+        return true;
+    }
+
+    for (const auto f : _feature_list)
+    {
+        if (uri.compare(f->URI) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle,
+                                       double sample_rate,
+                                       const LV2_Feature** feature_list)
+{
+    _plugin_instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
+
+    if (_plugin_instance == nullptr)
+    {
+        SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+
+    _features.ext_data.data_access = lilv_instance_get_descriptor(_plugin_instance)->extension_data;
+
+    if (_create_ports(plugin_handle) == false)
+    {
+        SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+
+    return ProcessorReturnCode::OK;
+}
+
+bool Model::_create_ports(const LilvPlugin* plugin)
+{
+    _input_audio_channel_count = 0;
+    _output_audio_channel_count = 0;
+
+    const int port_count = lilv_plugin_get_num_ports(plugin);
+
+    std::vector<float> default_values(port_count);
+
+    lilv_plugin_get_port_ranges_float(plugin, nullptr, nullptr, default_values.data());
+
+    try
+    {
+        for (int i = 0; i < port_count; ++i)
+        {
+            auto new_port = _create_port(plugin, i, default_values[i]);
+
+            add_port(new_port);
+        }
+    }
+    catch (Port::FailedCreation& e)
+    {
+        // If it fails to create a new port, loading has failed, and the host shuts down.
+        return false;
+    }
+
+    const auto control_input = lilv_plugin_get_port_by_designation(plugin,
+                                                                   nodes()->lv2_InputPort,
+                                                                   nodes()->lv2_control);
+
+    // The (optional) lv2:designation of this port is lv2:control,
+    // which indicates that this is the "main" control port where the host should send events
+    // it expects to configure the plugin, for example changing the MIDI program.
+    // This is necessary since it is possible to have several MIDI input ports,
+    // though typically it is best to have one.
+    if (control_input != nullptr)
+    {
+        set_control_input_index(lilv_port_get_index(plugin, control_input));
+    }
+
+    return true;
+}
+
+/**
+Create a port from data description. This is called before plugin
+and Jack instantiation. The remaining instance-specific setup
+(e.g. buffers) is done later in activate_port().
+
+Exception Port::FailedCreation can be thrown in the port constructor!
+*/
+Port Model::_create_port(const LilvPlugin* plugin, int port_index, float default_value)
+{
+    Port port(plugin, port_index, default_value, this);
+
+    if (port.type() == PortType::TYPE_AUDIO)
+    {
+        if (port.flow() == PortFlow::FLOW_INPUT)
+        {
+            _input_audio_channel_count++;
+        }
+        else if (port.flow() == PortFlow::FLOW_OUTPUT)
+        {
+            _output_audio_channel_count++;
+        }
+    }
+
+    return port;
+}
+
 void Model::_initialize_urid_symap()
 {
     lv2_atom_forge_init(&this->_forge, &_map);
@@ -380,35 +490,14 @@ void Model::set_state_to_set(LilvState* state_to_set)
     _state_to_set = state_to_set;
 }
 
-bool Model::feature_is_supported(const std::string& uri)
+int Model::input_audio_channel_count()
 {
-    if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
-    {
-        return true;
-    }
-
-    for (const auto f : _feature_list)
-    {
-        if (uri.compare(f->URI) == 0)
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return _input_audio_channel_count;
 }
 
-void Model::load_plugin(const LilvPlugin* plugin_handle, double sample_rate, const LV2_Feature** feature_list)
+int Model::output_audio_channel_count()
 {
-    _plugin_instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
-
-    if (_plugin_instance == nullptr)
-    {
-        SUSHI_LOG_ERROR("Failed instantiating LV2 plugin.");
-        return;
-    }
-
-    _features.ext_data.data_access = lilv_instance_get_descriptor(_plugin_instance)->extension_data;
+    return _output_audio_channel_count;
 }
 
 }
