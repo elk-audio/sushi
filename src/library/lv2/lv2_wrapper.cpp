@@ -262,9 +262,9 @@ bool LV2_Wrapper::_create_ports(const LilvPlugin* plugin)
     {
         for (int i = 0; i < port_count; ++i)
         {
-            auto newPort = _create_port(plugin, i, default_values[i]);
+            auto new_port = _create_port(plugin, i, default_values[i]);
 
-            _model->add_port(newPort);
+            _model->add_port(new_port);
         }
     }
     catch (Port::FailedCreation& e)

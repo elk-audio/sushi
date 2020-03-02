@@ -41,7 +41,7 @@ PluginLoader::~PluginLoader()
     lilv_world_free(_model->lilv_world());
 }
 
-const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string &plugin_URI_string)
+const LilvPlugin* PluginLoader::plugin_handle_from_URI(const std::string& plugin_URI_string)
 {
     if (plugin_URI_string.empty())
     {
