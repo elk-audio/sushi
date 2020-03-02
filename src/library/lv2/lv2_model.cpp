@@ -92,7 +92,7 @@ Model::~Model()
     symap_free(_symap);
 }
 
-void Model::initialize_host_feature_list()
+void Model::_initialize_host_feature_list()
 {
     // Build feature list for passing to plugins.
     std::vector<const LV2_Feature*> features({
@@ -112,7 +112,7 @@ void Model::initialize_host_feature_list()
     _feature_list = std::move(features);
 }
 
-bool Model::feature_is_supported(const std::string& uri)
+bool Model::_feature_is_supported(const std::string& uri)
 {
     if (uri.compare("http://lv2plug.in/ns/lv2core#isLive") == 0)
     {
@@ -130,11 +130,19 @@ bool Model::feature_is_supported(const std::string& uri)
     return false;
 }
 
-ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle,
-                                       double sample_rate,
-                                       const LV2_Feature** feature_list)
+ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double sample_rate)
 {
-    _plugin_instance = lilv_plugin_instantiate(plugin_handle, sample_rate, feature_list);
+    _plugin_class = plugin_handle;
+    _play_state = PlayState::PAUSED;
+
+    _initialize_host_feature_list();
+
+    if (_check_for_required_features(plugin_handle) == false)
+    {
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+
+    _plugin_instance = lilv_plugin_instantiate(plugin_handle, sample_rate, _feature_list.data());
 
     if (_plugin_instance == nullptr)
     {
@@ -161,6 +169,9 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle,
         _lv2_state->apply_state(state);
         lilv_state_free(state);
     }
+
+    _create_controls(true);
+    _create_controls(false);
 
     return ProcessorReturnCode::OK;
 }
@@ -245,6 +256,73 @@ Port Model::_create_port(const LilvPlugin* plugin, int port_index, float default
     return port;
 }
 
+void Model::_create_controls(bool writable)
+{
+    const auto uri_node = lilv_plugin_get_uri(_plugin_class);
+    auto patch_writable = lilv_new_uri(_world, LV2_PATCH__writable);
+    auto patch_readable = lilv_new_uri(_world, LV2_PATCH__readable);
+    const std::string uri_as_string = lilv_node_as_string(uri_node);
+
+    auto properties = lilv_world_find_nodes(
+            _world,
+            uri_node,
+            writable ? patch_writable : patch_readable,
+            nullptr);
+
+    LILV_FOREACH(nodes, p, properties)
+    {
+        const auto property = lilv_nodes_get(properties, p);
+
+        bool found = false;
+        if ((writable == false) && lilv_world_ask(_world,
+                                                  uri_node,
+                                                  patch_writable,
+                                                  property))
+        {
+            // Find existing writable control
+            for (size_t i = 0; i < _controls.size(); ++i)
+            {
+                if (lilv_node_equals(_controls[i].node, property))
+                {
+                    found = true;
+                    _controls[i].is_readable = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                continue; // This skips subsequent.
+            }
+        }
+
+        auto record = ControlID::new_property_control(this, property);
+
+        if (writable)
+        {
+            record.is_writable = true;
+        }
+        else
+        {
+            record.is_readable = true;
+        }
+
+        if (record.value_type)
+        {
+            _controls.emplace_back(std::move(record));
+        }
+        else
+        {
+            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record.node));
+        }
+    }
+
+    lilv_nodes_free(properties);
+
+    lilv_node_free(patch_readable);
+    lilv_node_free(patch_writable);
+}
+
 void Model::_initialize_urid_symap()
 {
     lv2_atom_forge_init(&this->_forge, &_map);
@@ -319,6 +397,28 @@ void Model::_initialize_make_path_feature()
                  LV2_STATE__makePath, &this->_features.make_path);
 }
 
+bool Model::_check_for_required_features(const LilvPlugin* plugin)
+{
+    // Check that any required features are supported
+    auto required_features = lilv_plugin_get_required_features(plugin);
+
+    LILV_FOREACH(nodes, f, required_features)
+    {
+        auto node = lilv_nodes_get(required_features, f);
+        auto uri = lilv_node_as_uri(node);
+
+        if (_feature_is_supported(uri) == false)
+        {
+            SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
+
+            return false;
+        }
+    }
+
+    lilv_nodes_free(required_features);
+    return true;
+}
+
 std::vector<const LV2_Feature*>* Model::host_feature_list()
 {
     return &_feature_list;
@@ -337,11 +437,6 @@ LilvInstance* Model::plugin_instance()
 const LilvPlugin* Model::plugin_class()
 {
     return _plugin_class;
-}
-
-void Model::set_plugin_class(const LilvPlugin* new_plugin)
-{
-    _plugin_class = new_plugin;
 }
 
 int Model::midi_buffer_size()

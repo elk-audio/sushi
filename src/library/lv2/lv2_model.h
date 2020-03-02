@@ -127,14 +127,8 @@ public:
     Model();
     ~Model();
 
-    void initialize_host_feature_list();
-
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
-                                    double sample_rate,
-                                    const LV2_Feature** feature_list);
-
-    /** Return true iff Sushi supports the given feature. */
-    bool feature_is_supported(const std::string& uri);
+                                    double sample_rate);
 
     std::vector<const LV2_Feature*>* host_feature_list();
 
@@ -143,7 +137,6 @@ public:
     LilvInstance* plugin_instance();
 
     const LilvPlugin* plugin_class();
-    void set_plugin_class(const LilvPlugin* new_plugin);
 
     int midi_buffer_size();
     float sample_rate();
@@ -212,6 +205,15 @@ private:
     void _initialize_urid_symap();
 
     void _initialize_make_path_feature();
+
+    void _create_controls(bool writable);
+
+    void _initialize_host_feature_list();
+
+    bool _check_for_required_features(const LilvPlugin* plugin);
+
+    /** Return true iff Sushi supports the given feature. */
+    bool _feature_is_supported(const std::string& uri);
 
     std::vector<ControlID> _controls;
 

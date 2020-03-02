@@ -59,20 +59,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    _model->set_plugin_class(library_handle);
-
-    _model->set_play_state(PlayState::PAUSED);
-
-    _model->initialize_host_feature_list();
-
-    if (_check_for_required_features(_model->plugin_class()) == false)
-    {
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
-
-    auto loading_return_code = _model->load_plugin(library_handle,
-                                                   _sample_rate,
-                                                   _model->host_feature_list()->data());
+    auto loading_return_code = _model->load_plugin(library_handle, _sample_rate);
 
     if (loading_return_code != ProcessorReturnCode::OK)
     {
@@ -86,9 +73,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     _current_output_channels = _max_output_channels;
 
     _fetch_plugin_name_and_label();
-
-    _create_controls(true);
-    _create_controls(false);
 
     if (_register_parameters() == false) // Register internal parameters
     {
@@ -104,75 +88,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     return ProcessorReturnCode::OK;
 }
 
-void LV2_Wrapper::_create_controls(bool writable)
-{
-    const auto plugin = _model->plugin_class();
-    const auto uri_node = lilv_plugin_get_uri(plugin);
-    auto world = _model->lilv_world();
-    auto patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
-    auto patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
-    const std::string uri_as_string = lilv_node_as_string(uri_node);
-
-    auto properties = lilv_world_find_nodes(
-            world,
-            uri_node,
-            writable ? patch_writable : patch_readable,
-            nullptr);
-
-    LILV_FOREACH(nodes, p, properties)
-    {
-        const auto property = lilv_nodes_get(properties, p);
-
-        bool found = false;
-        if ((writable == false) && lilv_world_ask(world,
-                                        uri_node,
-                                        patch_writable,
-                                        property))
-        {
-            // Find existing writable control
-            for (size_t i = 0; i < _model->controls().size(); ++i)
-            {
-                if (lilv_node_equals(_model->controls()[i].node, property))
-                {
-                    found = true;
-                    _model->controls()[i].is_readable = true;
-                    break;
-                }
-            }
-
-            if (found)
-            {
-                continue; // This skips subsequent.
-            }
-        }
-
-        auto record = ControlID::new_property_control(_model.get(), property);
-
-        if (writable)
-        {
-            record.is_writable = true;
-        }
-        else
-        {
-            record.is_readable = true;
-        }
-
-        if (record.value_type)
-        {
-            _model->controls().emplace_back(std::move(record));
-        }
-        else
-        {
-            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record.node));
-        }
-    }
-
-    lilv_nodes_free(properties);
-
-    lilv_node_free(patch_readable);
-    lilv_node_free(patch_writable);
-}
-
 void LV2_Wrapper::_fetch_plugin_name_and_label()
 {
     const auto uri_node = lilv_plugin_get_uri(_model->plugin_class());
@@ -183,28 +98,6 @@ void LV2_Wrapper::_fetch_plugin_name_and_label()
     const std::string label_as_string = lilv_node_as_string(label_node);
     set_label(label_as_string);
     lilv_free(label_node);
-}
-
-bool LV2_Wrapper::_check_for_required_features(const LilvPlugin* plugin)
-{
-    // Check that any required features are supported
-    auto required_features = lilv_plugin_get_required_features(plugin);
-
-    LILV_FOREACH(nodes, f, required_features)
-    {
-        auto node = lilv_nodes_get(required_features, f);
-        auto uri = lilv_node_as_uri(node);
-
-        if (_model->feature_is_supported(uri) == false)
-        {
-            SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
-
-            return false;
-        }
-    }
-
-    lilv_nodes_free(required_features);
-    return true;
 }
 
 void LV2_Wrapper::configure(float /*sample_rate*/)

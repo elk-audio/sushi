@@ -150,7 +150,6 @@ private:
      */
     void _update_mono_mode(bool speaker_arr_status);
 
-    bool _check_for_required_features(const LilvPlugin* plugin);
     void _fetch_plugin_name_and_label();
 
     void _map_audio_buffers(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer);
@@ -162,8 +161,6 @@ private:
     void _flush_event_queue();
     void _process_midi_input(Port* port);
     void _process_midi_output(Port* port);
-
-    void _create_controls(bool writable);
 
     float _sample_rate{0};
 
