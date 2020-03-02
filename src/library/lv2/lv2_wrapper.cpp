@@ -87,8 +87,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     _fetch_plugin_name_and_label();
 
-    _populate_program_list();
-
     _create_controls(true);
     _create_controls(false);
 
@@ -96,16 +94,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     {
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
         return ProcessorReturnCode::PARAMETER_ERROR;
-    }
-
-    auto state = lilv_state_new_from_world(_model->lilv_world(),
-                                           &_model->get_map(),
-                                           lilv_plugin_get_uri(library_handle));
-
-    if (state != nullptr) // Apply loaded state to plugin instance if necessary
-    {
-        _model->state()->apply_state(state);
-        lilv_state_free(state);
     }
 
     // Activate plugin
@@ -253,11 +241,6 @@ std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatt
 {
 // TODO: Populate parameter_value_formatted
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
-}
-
-void LV2_Wrapper::_populate_program_list()
-{
-    _model->state()->populate_program_list();
 }
 
 bool LV2_Wrapper::supports_programs() const

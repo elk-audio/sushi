@@ -150,6 +150,18 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle,
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
+    _lv2_state->populate_program_list();
+
+    auto state = lilv_state_new_from_world(_world,
+                                           &get_map(),
+                                           lilv_plugin_get_uri(plugin_handle));
+
+    if (state != nullptr) // Apply loaded state to plugin instance if necessary
+    {
+        _lv2_state->apply_state(state);
+        lilv_state_free(state);
+    }
+
     return ProcessorReturnCode::OK;
 }
 

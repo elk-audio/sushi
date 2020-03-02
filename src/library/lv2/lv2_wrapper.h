@@ -165,8 +165,6 @@ private:
 
     void _create_controls(bool writable);
 
-    void _populate_program_list();
-
     float _sample_rate{0};
 
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
