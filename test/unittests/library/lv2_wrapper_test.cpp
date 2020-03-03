@@ -29,21 +29,23 @@ protected:
     {
     }
 
-    void SetUp(const std::string& plugin_URI)
+    ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         _module_under_test = std::make_unique<lv2::LV2_Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
 
-        if (ret == ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR)
+        if (ret != ProcessorReturnCode::OK)
         {
             _module_under_test = nullptr;
-            return;
+        }
+        else
+        {
+            _module_under_test->set_event_output(&_fifo);
+            _module_under_test->set_enabled(true);
         }
 
-        ASSERT_EQ(ProcessorReturnCode::OK, ret);
-        _module_under_test->set_event_output(&_fifo);
-        _module_under_test->set_enabled(true);
+        return ret;
     }
 
     void TearDown()
@@ -57,9 +59,17 @@ protected:
     std::unique_ptr<LV2_Wrapper> _module_under_test {nullptr};
 };
 
+TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
+{
+    auto ret = SetUp("This URI surely does not exist.");
+    ASSERT_EQ(ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, ret);
+    ASSERT_EQ(_module_under_test, nullptr);
+}
+
 TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
 {
-    SetUp("http://lv2plug.in/plugins/eg-amp");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     // TestSetName
     EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
@@ -79,7 +89,8 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
 
 TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 {
-    SetUp("http://lv2plug.in/plugins/eg-amp");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
@@ -105,7 +116,8 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
 TEST_F(TestLv2Wrapper, TestBypassProcessing)
 {
-    SetUp("http://lv2plug.in/plugins/eg-amp");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
@@ -135,7 +147,8 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
 TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
 {
-    SetUp("http://lv2plug.in/plugins/eg-fifths");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-fifths");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     ASSERT_TRUE(_fifo.empty());
 
@@ -180,7 +193,8 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
 */
 TEST_F(TestLv2Wrapper, TestTimeInfo)
 {
-    SetUp("http://lv2plug.in/plugins/eg-metro");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-metro");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     _host_control._transport.set_tempo(60);
     _host_control._transport.set_time_signature({4, 4});

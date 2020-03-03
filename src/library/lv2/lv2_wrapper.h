@@ -80,7 +80,8 @@ public:
 
     virtual ~LV2_Wrapper()
     {
-        set_enabled(false);
+        if(_model->plugin_instance() != nullptr)
+            set_enabled(false);
     }
 
     ProcessorReturnCode init(float sample_rate) override;

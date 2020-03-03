@@ -58,8 +58,6 @@ Model::Model()
     _initialize_urid_symap();
     _initialize_log_feature();
     _initialize_make_path_feature();
-
-    _lv2_state = std::make_unique<State>(this);
 }
 
 Model::~Model()
@@ -82,10 +80,11 @@ Model::~Model()
         }
 
         _plugin_instance = nullptr;
+
+        _lv2_state->unload_programs();
     }
 
-    _lv2_state->unload_programs();
-
+    // Explicitly setting to nullptr, so that destructor is invoked before world is freed.
     _nodes = nullptr;
 
     lilv_world_free(_world);
@@ -157,6 +156,8 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
         SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
+
+    _lv2_state = std::make_unique<State>(this);
 
     _lv2_state->populate_program_list();
 
