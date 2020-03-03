@@ -385,6 +385,12 @@ TEST_F(TestLv2Wrapper, TestSynth)
 
     test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
 
+    // Setting program once first without checking audio output,
+    // to ensure a sequence of changes goes through, not just the first one.
+    _module_under_test->_pause_audio_processing();
+    _module_under_test->set_program(5);
+    _module_under_test->_resume_audio_processing();
+
     // A compromise, for the unit tests to be able to run.
     // It simulates the series of events in the live multithreaded program.
     _module_under_test->_pause_audio_processing();

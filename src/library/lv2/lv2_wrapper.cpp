@@ -396,7 +396,6 @@ void LV2_Wrapper::_non_rt_callback(EventId id)
                                0,
                                feature_list->data());
 
-            lilv_state_free(_model->state_to_set());
             _model->set_state_to_set(nullptr);
 
             _model->request_update();
