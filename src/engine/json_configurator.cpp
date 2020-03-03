@@ -113,13 +113,13 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
     if (host_config.HasMember("tempo_sync"))
     {
         SyncMode mode;
-        if (host_config["tempo_sync"] == "ableton link")
+        if (host_config["tempo_sync"] == "ableton_link")
         {
             mode = SyncMode::ABLETON_LINK;
         }
         else if (host_config["tempo_sync"] == "midi")
         {
-            mode = SyncMode::MIDI_SLAVE;
+            mode = SyncMode::MIDI;
         }
         else if (host_config["tempo_sync"] == "gate")
         {
@@ -130,7 +130,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
             mode = SyncMode::INTERNAL;
         }
         SUSHI_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
-                                                               mode == SyncMode::MIDI_SLAVE? "external Midi" : (
+                                                               mode == SyncMode::MIDI ? "external Midi" : (
                                                                mode == SyncMode::GATE_INPUT? "Gate input" : "internal")));
         _engine->set_tempo_sync_mode(mode);
     }

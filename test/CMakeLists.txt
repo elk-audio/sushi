@@ -154,6 +154,9 @@ if (${WITH_JACK})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
 endif()
 
+# Disable Link in tests as this slows down the testing a lot due to network activity etc
+remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
 

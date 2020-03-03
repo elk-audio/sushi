@@ -44,6 +44,7 @@ option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
+option(WITH_LINK "Enable Ableton Link support" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
@@ -64,7 +65,12 @@ endif()
 if (${WITH_RPC_INTERFACE})
     message("Building with RPC support.")
 endif()
+if (${WITH_LINK})
+    message("Building with Ableton Link support.")
+endif()
+
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
+
 
 #############
 # Vst3 Host #
@@ -257,7 +263,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
+                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -307,6 +314,10 @@ else()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 
+if (${WITH_LINK})
+    include(third-party/link/AbletonLinkConfig.cmake)
+endif()
+
 if (${WITH_RPC_INTERFACE})
     add_subdirectory(rpc_interface)
 endif()
@@ -337,6 +348,10 @@ endif()
 
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+endif()
+
+if (${WITH_LINK})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} Ableton::Link)
 endif()
 
 if (${WITH_RPC_INTERFACE})
@@ -370,6 +385,10 @@ endif()
 
 if (${WITH_VST3})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
+if (${WITH_LINK})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ABLETON_LINK)
 endif()
 
 if (${WITH_VST2})

@@ -8,6 +8,9 @@
 [submodule "twine"]
 	path = twine
 	url = git://github.com/elk-audio/twine.git
+[submodule "Ableton Link"]
+	path = third-party/link
+	url = git://github.com/Ableton/link.git
 [submodule "test/gtest"]
 	path = test/gtest
 	url = https://github.com/google/googletest.git
