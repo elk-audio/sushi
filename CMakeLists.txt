@@ -399,10 +399,6 @@ if (${WITH_LV2})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
 endif()
 
-if (${WITH_LV2_MDA_TESTS})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2_MDA_TESTS)
-endif()
-
 if (${WITH_VST2})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
 endif()
