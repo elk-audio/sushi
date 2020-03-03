@@ -339,7 +339,7 @@ void AudioEngine::enable_realtime(bool enabled)
             _state.store(RealtimeState::STOPPED);
         }
     }
-};
+}
 
 int AudioEngine::n_channels_in_track(int track)
 {
@@ -951,11 +951,12 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     {
         _worker_pool->add_worker(Track::ext_render_function, track.get());
     }
-    if (_processors.add_track(track));
+    if (_processors.add_track(track))
     {
         SUSHI_LOG_INFO("Track {} successfully added to engine", name);
         return EngineReturnStatus::OK;
     }
+    return EngineReturnStatus::ERROR;
 }
 
 std::shared_ptr<Processor> AudioEngine::_mutable_processor(const std::string& name)
@@ -1496,7 +1497,7 @@ std::shared_ptr<const Track> ProcessorContainer::track(ObjectId track_id) const
         auto track_node = _processors_by_id.find(track_id);
         if (track_node != _processors_by_id.end())
         {
-            return std::static_pointer_cast<const Track, Processor>(track_node->second);
+            return std::static_pointer_cast<const Track>(track_node->second);
         }
     }
     return nullptr;
@@ -1504,7 +1505,7 @@ std::shared_ptr<const Track> ProcessorContainer::track(ObjectId track_id) const
 
 std::shared_ptr<const Track> ProcessorContainer::track(const std::string& track_name) const
 {
-    std::unique_lock<std::mutex> _lock(_processors_by_id_lock);
+    std::unique_lock<std::mutex> _lock(_processors_by_name_lock);
     auto track_node = _processors_by_name.find(track_name);
     if (track_node != _processors_by_name.end())
     {
@@ -1513,7 +1514,7 @@ std::shared_ptr<const Track> ProcessorContainer::track(const std::string& track_
         std::unique_lock<std::mutex> lock(_processors_by_track_lock);
         if (_processors_by_track.count(track_node->second->id()) > 0)
         {
-            return std::static_pointer_cast<const Track, Processor>(track_node->second);
+            return std::static_pointer_cast<const Track>(track_node->second);
         }
     }
     return nullptr;

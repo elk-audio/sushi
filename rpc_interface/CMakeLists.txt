@@ -43,6 +43,3 @@ target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
 
 target_include_directories(sushi_rpc PRIVATE ${PROTO_SRC_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(sushi_rpc PUBLIC include)
-
-
-
