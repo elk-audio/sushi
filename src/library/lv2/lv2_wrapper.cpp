@@ -284,7 +284,7 @@ void LV2_Wrapper::_update_transport()
 
     const bool rolling = transport->playing();
     const float beats_per_minute = transport->current_tempo();
-    const auto ts = transport->current_time_signature();
+    const auto ts = transport->time_signature();
     const int beats_per_bar = ts.numerator;
     const int beat_type = ts.denominator;
     const double current_bar_beats = transport->current_bar_beats();

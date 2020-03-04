@@ -61,7 +61,16 @@ protected:
 
 TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
 {
+    // Closing console error output temporarily.
+    // Lilv complains the URI is invalid, as it should.
+    // We don't need that to pollute our unit test output.
+    fclose(stderr);
+
     auto ret = SetUp("This URI surely does not exist.");
+
+    // And re-opening the output:
+    [[maybe_unused]] auto unused = freopen("/dev/tty","w",stderr);
+
     ASSERT_EQ(ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, ret);
     ASSERT_EQ(_module_under_test, nullptr);
 }
@@ -188,7 +197,7 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
 
 /* TODO: Currently incomplete.
  * Complete this with fetching of transport info from LV2 plugin, to compare states.
- * As it is now, it demonstrates that an LV2 plugin that reguires the time extension,
+ * As it is now, at least it demonstrates that an LV2 plugin that requires the 'time' extension,
  * successfully loads.
 */
 TEST_F(TestLv2Wrapper, TestTimeInfo)
@@ -196,12 +205,12 @@ TEST_F(TestLv2Wrapper, TestTimeInfo)
     auto ret = SetUp("http://lv2plug.in/plugins/eg-metro");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
-    _host_control._transport.set_tempo(60);
-    _host_control._transport.set_time_signature({4, 4});
+    _host_control._transport.set_tempo(60, false);
+    _host_control._transport.set_time_signature({4, 4}, false);
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
 
-    // Currently My LV2 host does not get time info from plugin - it only sets.
-    // So I cannot directly replicate the below.
+    // Currently The Sushi LV2 hosting does not get time info from plugin - it only sets.
+    // So we cannot directly replicate the below.
     /*
     auto time_info = _module_under_test->time_info();
     EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);
