@@ -78,51 +78,161 @@ private:
 };
 
 
-class ProcessorContainer
+class ProcessorContainer : public BaseProcessorContainer
 {
 public:
     ProcessorContainer() = default;
     SUSHI_DECLARE_NON_COPYABLE(ProcessorContainer);
 
-    bool add_processor(std::shared_ptr<Processor>);
+    /**
+     * @brief Add a processor to the container
+     * @param processor The Processor instance to add
+     * @return true if the track was successfully added, false otherwise.
+     */
+    bool add_processor(std::shared_ptr<Processor> processor) override;
 
-    bool add_track(std::shared_ptr<Track>);
+    /**
+     * @brief Add a track to the container
+     * @param track The Track instance to add
+     * @return true if the track was successfully added, false otherwise.
+     */
+    bool add_track(std::shared_ptr<Track> track) override;
 
-    bool remove_processor(ObjectId id);
+    /**
+     * @brief Remove a processor from the container
+     * @param id The id of the processor
+     * @return true if the processor was found and successfully removed,
+     *         false otherwise
+     */
+    bool remove_processor(ObjectId id) override;
 
-    bool remove_track(ObjectId track_id);
+    /**
+     * @brief Remove a track
+     * @param track_id The id of the track
+     * @return true of the track was found and successfully removed,
+     *         false otherwise
+     */
+    bool remove_track(ObjectId track_id) override;
 
-    bool processor_exists(ObjectId id);
+    /**
+     * @brief Add a processor from a track entry
+     * @param processor The processor instance to add.
+     * @param track_id The id of the track to add to
+     * @param before_id If populated, the processor will be added before the
+     *        processor with the give id, otherwise the processor will be
+     *        added to the back of the list of processors
+     * @return
+     */
+    bool add_to_track(std::shared_ptr<Processor> processor, ObjectId track_id, std::optional<ObjectId> before_id) override;
 
-    bool processor_exists(const std::string& name);
+    /**
+     * @brief Remove a processor from a track entry
+     * @param processor_id The id of the processor to remove.
+     * @param track_id  The id of the track to remove from
+     * @return true if the processor was successfullt removed from the track,
+     *         false otherwise
+     */
+    bool remove_from_track(ObjectId processor_id, ObjectId track_id) override;
 
-    bool add_to_track(std::shared_ptr<Processor> processor, ObjectId track_id, std::optional<ObjectId> before_id);
+    /**
+    * @brief Query whether a particular processor exists in the container
+    * @param name The unique id of the processor
+    * @return true if the processor exists, false otherwise
+    */
+    bool processor_exists(ObjectId id) const override;
 
-    bool remove_from_track(ObjectId processor_id, ObjectId track_id);
+    /**
+     * @brief Query whether a particular processor exists in the container
+     * @param name The unique name of the processor
+     * @return true if the processor exists, false otherwise
+     */
+    bool processor_exists(const std::string& name) const override;
 
-    std::vector<std::shared_ptr<const Processor>> all_processors() const;
+    /**
+     * @brief Return all processors.
+     * @return An std::vector containing all registered processors.
+     */
+    std::vector<std::shared_ptr<const Processor>> all_processors() const override;
 
-    std::shared_ptr<Processor> mutable_processor(ObjectId id);
+    /**
+     * @brief Access a particular processor by its unique id for editing,
+     *        use with care and not from several threads at once
+     * @param processor_id The id of the processor
+     * @return A mutable pointer to the processor instance if found, nullptr otherwise
+     */
+    std::shared_ptr<Processor> mutable_processor(ObjectId id) const override;
 
-    std::shared_ptr<Processor> mutable_processor(const std::string& name);
+    /**
+     * @brief Access a particular processor by its unique name for editing
+     * @param processor_name The name of the processor
+     * @return A std::shared_ptr<Processor> to the processor instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<Processor> mutable_processor(const std::string& name) const override;
 
-    std::shared_ptr<const Processor> processor(ObjectId) const;
+    /**
+     * @brief Access a particular processor by its unique id for querying
+     * @param processor_id The id of the processor
+     * @return A std::shared_ptr<const Processor> to the processor instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Processor> processor(ObjectId) const override;
 
-    std::shared_ptr<const Processor> processor(const std::string& name) const;
+    /**
+     * @brief Access a particular processor by its unique name for querying
+     * @param processor_name The name of the processor
+     * @return A std::shared_ptr<const Processor> to the processor instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Processor> processor(const std::string& name) const override;
 
-    std::shared_ptr<Track> mutable_track(ObjectId track_id);
+    /**
+     * @brief Access a particular track by its unique id for editing
+     * @param track_id The id of the track
+     * @return A std::shared_ptr<Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<Track> mutable_track(ObjectId track_id) const override;
 
-    std::shared_ptr<Track> mutable_track(const std::string& track_name);
+    /**
+     * @brief Access a particular track by its unique name for editing
+     * @param track_name The name of the track
+     * @return A std::shared_ptr<Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<Track> mutable_track(const std::string& track_name) const override;
 
-    std::shared_ptr<const Track> track(ObjectId track_id) const;
+    /**
+     * @brief Access a particular track by its unique id for querying
+     * @param track_id The id of the track
+     * @return A std::shared_ptr<const Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Track> track(ObjectId track_id) const override;
 
-    std::shared_ptr<const Track> track(const std::string& name) const;
+    /**
+     * @brief Access a particular track by its unique name for querying
+     * @param track_name The name of the track
+     * @return A std::shared_ptr<const Track> to the track instance if found,
+     *         nullptr otherwise
+     */
+    std::shared_ptr<const Track> track(const std::string& name) const override;
 
-    std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId /*track_id*/) const;
+    /**
+     * @brief Return all processors on a given Track.
+     * @param track_id The id of the track
+     * @return An std::vector containing all processors on a track in order of processing.
+     */
+    std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId track_id) const override;
 
-    std::vector<std::shared_ptr<const Track>> all_tracks() const;
+    /**
+     * @brief Return all tracks.
+     * @return An std::vector of containing all Tracks
+     */
+    std::vector<std::shared_ptr<const Track>> all_tracks() const override;
 
 private:
+
     std::unordered_map<std::string, std::shared_ptr<Processor>>           _processors_by_name;
     std::unordered_map<ObjectId, std::shared_ptr<Processor>>              _processors_by_id;
     std::unordered_map<ObjectId, std::vector<std::shared_ptr<Processor>>> _processors_by_track;
@@ -396,37 +506,7 @@ public:
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
     EngineReturnStatus send_async_event(RtEvent& event) override;
-    /**
-     * @brief Get the unique id of a processor given its name
-     * @param unique_name The unique name of a processor
-     * @return the unique id of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& name) override;
 
-    /**
-     * @brief Get the unique (per processor) id of a parameter.
-     * @param processor_name The unique name of a processor
-     * @param The unique name of a parameter of the above processor
-     * @return the unique id of the parameter, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
-                                                                   const std::string& /*parameter_name*/);
-
-    /**
-     * @brief Get the unique name of a processor of a known unique id
-     * @param uid The unique id of the processor
-     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId uid) override;
-
-    /**
-     * @brief Get the unique name of a parameter with a known unique id
-     * @param processor_name The unique name of the processor
-     * @param id The unique id of the parameter to lookup.
-     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
-                                                                            ObjectId id) override;
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
@@ -494,66 +574,6 @@ public:
     EngineReturnStatus delete_plugin(ObjectId plugin_id) override;
 
     /**
-     * @brief Access a particular processor by its unique id for querying
-     * @param processor_id The id of the processor
-     * @return A std::shared_ptr<const Processor> to the processor instance if found,
-     *         nullptr otherwise
-     */
-    std::shared_ptr<const Processor> processor(ObjectId id) const override;
-
-    /**
-     * @brief Access a particular processor by its unique name for querying
-     * @param processor_name The name of the processor
-     * @return A std::shared_ptr<const Processor> to the processor instance if found,
-     *         nullptr otherwise
-     */
-    std::shared_ptr<const Processor> processor(const std::string& name) const override;
-
-    /**
-     * @brief Access a particular processor by its unique id for editing,
-     *        use with care and not from several threads at once
-     * @param processor_id The id of the processor
-     * @return A mutable pointer to the processor instance if found, nullptr otherwise
-     */
-    std::shared_ptr<Processor> mutable_processor(ObjectId processor_id) override;
-
-    /**
-     * @brief Access a particular track by its unique id for querying
-     * @param track_id The id of the track
-     * @return A std::shared_ptr<const Track> to the track instance if found,
-     *         nullptr otherwise
-     */
-    std::shared_ptr<const Track> track(ObjectId track_id) const override;
-
-    /**
-     * @brief Access a particular track by its unique name for querying
-     * @param track_name The name of the track
-     * @return A std::shared_ptr<const Track> to the track instance if found,
-     *         nullptr otherwise
-     */
-    std::shared_ptr<const Track> track(const std::string& track_name) const override;
-
-    /**
-     * @brief Return all processors.
-     * @return An std::vector containing all registered processors.
-     */
-    std::vector<std::shared_ptr<const Processor>> all_processors() const override;
-
-    /**
-     * @brief Return all processors on a Track.
-     * @return An std::vector containing all processors on a track in order of processing.
-     */
-    std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId track_id) const override;
-
-    /**
-     * @brief Return all tracks. Potentially unsafe so use with care. Should
-     *        eventually be replaced with a better way of accessing tracks/processors
-     *        from outside the engine.
-     * @return An std::vector of containing all Tracks
-     */
-    std::vector<std::shared_ptr<const Track>> all_tracks() const override;
-
-    /**
      * @brief Enable audio clip detection on engine inputs
      * @param enabled Enable if true, disable if false
      */
@@ -589,6 +609,11 @@ public:
     performance::BasePerformanceTimer* performance_timer() override
     {
         return &_process_timer;
+    }
+
+    const BaseProcessorContainer* processor_container() override
+    {
+        return &_processors;
     }
 
     /**
@@ -633,43 +658,6 @@ private:
      * @return OK if succesful, error code otherwise
      */
     EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
-
-    /**
-     * @brief Checks whether a processor exists in the engine.
-     * @param processor_name The unique name of the processor.
-     * @return Returns true if exists, false if it does not.
-     */
-    bool _processor_exists(const std::string& processor_name);
-
-    /**
-     * @brief Checks whether a processor exists in the engine.
-     * @param uid The unique id of the processor.
-     * @return Returns true if exists, false if it does not.
-     */
-    bool _processor_exists(ObjectId id);
-
-    /**
-     * @brief Get the instance of a processor by its unique name
-     * @param name The unique name of the processor
-     * @return A std::shared_ptr with a pointer to the processor if found
-     *         or a nullptr if the processor is not found
-     */
-    std::shared_ptr<Processor> _mutable_processor(const std::string& name);
-
-    /**
-     * @brief Get the instance of a processor by its unique id
-     * @param id The id of the processor
-     * @return A std::shared_ptr with a pointer to the processor if found
-     *         or a nullptr if the processor is not found
-     */
-    std::shared_ptr<Processor> _mutable_processor(ObjectId id);
-
-    /**
-     * @brief Get the instance of a Track by its unique id
-     * @return A std::shared_ptr with a pointer to the track if found
-     *         or a nullptr if the track is not found
-     */
-    std::shared_ptr<Track> _mutable_track(ObjectId);
 
     /**
      * @brief Process events that are to be handled by the engine directly and

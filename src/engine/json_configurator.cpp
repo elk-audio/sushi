@@ -567,8 +567,8 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
     }
 
-    auto [id_status, track_id] = _engine->processor_id_from_name(name);
-    if (id_status != EngineReturnStatus::OK)
+    auto track = _engine->processor_container()->track(name);
+    if (track == nullptr)
     {
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
@@ -608,7 +608,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
-        status = _engine->add_plugin_to_track(plugin_id, track_id);
+        status = _engine->add_plugin_to_track(plugin_id, track->id());
         if (status != EngineReturnStatus::OK)
         {
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
@@ -636,45 +636,42 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))): IMMEDIATE_PROCESS;
 
     const rapidjson::Value& data = json_event["data"];
-    auto [status, processor_id] = _engine->processor_id_from_name(data["plugin_name"].GetString());
-    if (status != sushi::engine::EngineReturnStatus::OK)
+    auto processor = _engine->processor_container()->processor(data["plugin_name"].GetString());
+    if (processor == nullptr)
     {
         SUSHI_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
         return nullptr;
     }
     if (json_event["type"] == "parameter_change")
     {
-        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                      data["parameter_name"].GetString());
-        if (status != sushi::engine::EngineReturnStatus::OK)
+        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        if (parameter == nullptr)
         {
             SUSHI_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
         return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                        processor_id,
-                                        parameter_id,
+                                        processor->id(),
+                                        parameter->id(),
                                         data["value"].GetFloat(),
                                         timestamp);
     }
     if (json_event["type"] == "property_change")
     {
-        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                      data["property_name"].GetString());
-        if (status != sushi::engine::EngineReturnStatus::OK)
-        {
+        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        if (parameter == nullptr)        {
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new StringPropertyChangeEvent(processor_id,
-                                             parameter_id,
+        return new StringPropertyChangeEvent(processor->id(),
+                                             parameter->id(),
                                              data["value"].GetString(),
                                              timestamp);
     }
     if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
-                                 processor_id,
+                                 processor->id(),
                                  0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
@@ -683,7 +680,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
-                                 processor_id,
+                                 processor->id(),
                                  0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),

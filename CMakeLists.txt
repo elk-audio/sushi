@@ -177,6 +177,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/vst2x_wrapper.h
                         src/library/vst3x_wrapper.h
                         src/engine/base_engine.h
+                        src/engine/base_processor_container.h
                         src/engine/audio_engine.h
                         src/engine/controller.h
                         src/engine/track.h

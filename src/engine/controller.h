@@ -22,6 +22,7 @@
 #include "base_event_dispatcher.h"
 #include "transport.h"
 #include "library/base_performance_timer.h"
+#include "base_processor_container.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -104,10 +105,11 @@ private:
 
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
-    engine::BaseEngine*                 _engine;
-    dispatcher::BaseEventDispatcher*    _event_dispatcher;
-    engine::Transport*                  _transport;
-    performance::BasePerformanceTimer*  _performance_timer;
+    engine::BaseEngine*                     _engine;
+    dispatcher::BaseEventDispatcher*        _event_dispatcher;
+    engine::Transport*                      _transport;
+    performance::BasePerformanceTimer*      _performance_timer;
+    const engine::BaseProcessorContainer*   _processors;
 };
 
 } //namespace sushi

@@ -30,7 +30,8 @@
 
 #include "library/constants.h"
 #include "base_event_dispatcher.h"
-#include "engine/track.h"
+#include "base_processor_container.h"
+#include "track.h"
 #include "library/base_performance_timer.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
@@ -229,28 +230,6 @@ public:
 
     virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
 
-    virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, 0);
-    };
-
-    virtual std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
-                                                                           const std::string& /*parameter_name*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, 0);
-    };
-
-    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(ObjectId /*id*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, "");
-    };
-
-    virtual std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& /*processor_name*/,
-                                                                                    ObjectId /*id*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, "");
-    };
-
     virtual EngineReturnStatus create_track(const std::string & /*track_id*/, int /*channel_count*/)
     {
         return EngineReturnStatus::OK;
@@ -292,31 +271,6 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual std::shared_ptr<const Processor> processor(ObjectId /*processor_id*/) const {return nullptr;}
-
-    virtual std::shared_ptr<const Processor> processor(const std::string& /*processor_name*/) const {return nullptr;}
-
-    virtual std::shared_ptr<Processor> mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
-
-    virtual std::shared_ptr<const Track> track(ObjectId /*track_id*/) const {return nullptr;}
-
-    virtual std::shared_ptr<const Track> track(const std::string& /*track_name*/) const {return nullptr;}
-
-    virtual std::vector<std::shared_ptr<const Processor>> all_processors() const
-    {
-        return std::vector<std::shared_ptr<const Processor>>();
-    }
-
-    virtual std::vector<std::shared_ptr<const Processor>> processors_on_track(ObjectId /*track_id*/) const
-    {
-        return std::vector<std::shared_ptr<const Processor>>();
-    }
-
-    virtual std::vector<std::shared_ptr<const Track>> all_tracks() const
-    {
-        return std::vector<std::shared_ptr<const Track>>();
-    }
-
     virtual dispatcher::BaseEventDispatcher* event_dispatcher()
     {
         return nullptr;
@@ -333,6 +287,11 @@ public:
     }
 
     virtual performance::BasePerformanceTimer* performance_timer()
+    {
+        return nullptr;
+    }
+
+    virtual const BaseProcessorContainer* processor_container()
     {
         return nullptr;
     }

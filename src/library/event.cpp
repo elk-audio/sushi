@@ -308,7 +308,7 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
 
 int MoveProcessorEvent::execute(engine::BaseEngine* engine)
 {
-    auto old_plugin_order = engine->processors_on_track(_source_track);
+    auto old_plugin_order = engine->processor_container()->processors_on_track(_source_track);
 
     auto status = engine->remove_plugin_from_track(_processor, _source_track);
     switch (status)
@@ -401,7 +401,7 @@ Event* AsynchronousBlobDeleteEvent::execute()
 
 int ProgramChangeEvent::execute(engine::BaseEngine* engine)
 {
-    auto processor = engine->mutable_processor(_processor_id);
+    auto processor = engine->processor_container()->mutable_processor(_processor_id);
     if (processor != nullptr)
     {
         auto status = processor->set_program(_program_no);
