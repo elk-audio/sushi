@@ -241,7 +241,6 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
 }
 
-
 class TestLfoPlugin : public ::testing::Test
 {
 protected:

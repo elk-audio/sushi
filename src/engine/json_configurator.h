@@ -63,6 +63,8 @@ struct AudioConfig
 {
     std::optional<int> cv_inputs;
     std::optional<int> cv_outputs;
+    std::optional<int> midi_inputs;
+    std::optional<int> midi_outputs;
 };
 
 class JsonConfigurator

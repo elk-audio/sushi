@@ -40,7 +40,7 @@ R"(
         },
         "tempo_sync":
         {
-          "enum": ["internal", "midi", "ableton link"]
+          "enum": ["internal", "midi", "ableton_link"]
         },
         "audio_clip_detection" :
         {
@@ -56,6 +56,28 @@ R"(
               "type": "boolean"
             }
           }
+        },
+        "cv_inputs":
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "cv_outputs":
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "midi_inputs":
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        "midi_outputs":
+        {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": ["samplerate"]

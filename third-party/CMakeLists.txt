@@ -7,7 +7,7 @@ add_subdirectory(lv2_host)
 ##########################
 #  VST3SDK and examples  #
 ##########################
-
+if (${WITH_VST3})
 # Exclude VstGui, hosting samples and skip validation
 set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
 set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
@@ -22,7 +22,7 @@ add_subdirectory(vst3sdk)
 
 # Supress warnings to keep our build output clean
 set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
-
+endif()
 
 #####################################################
 #  External Projects definitions (non-Cmake based)  #

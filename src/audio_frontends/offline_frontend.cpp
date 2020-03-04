@@ -196,8 +196,7 @@ void OfflineFrontend::_process_dummy()
 
     while (_running)
     {
-        // Update time and sample counter
-        _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
+        auto process_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
 
         samplecount += AUDIO_CHUNK_SIZE;
         usec_time += AUDIO_CHUNK_SIZE * 1'000'000.f / _engine->sample_rate();
@@ -207,7 +206,7 @@ void OfflineFrontend::_process_dummy()
 
         fill_buffer_with_noise(_buffer, rand_gen, normal_dist);
         fill_cv_buffer_with_noise(_control_buffer, rand_gen, normal_dist);
-        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer);
+        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer, process_time, samplecount);
     }
 }
 
@@ -224,8 +223,7 @@ void OfflineFrontend::_run_blocking()
                                                          file_buffer,
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        // Update time and sample counter
-        _engine->update_time(start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time)), samplecount);
+        auto process_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
 
         samplecount += readcount;
         usec_time += readcount * 1'000'000.f / _engine->sample_rate();
@@ -245,7 +243,7 @@ void OfflineFrontend::_run_blocking()
             buffer.from_interleaved(file_buffer);
         }
         /* Gate and CV are ignored when using file frontend */
-        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer);
+        _engine->process_chunk(&_buffer, &_buffer, &_control_buffer, &_control_buffer, process_time, samplecount);
 
         if (_mono)
         {

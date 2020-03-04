@@ -121,7 +121,7 @@ private:
     int internal_samplerate_callback(jack_nframes_t sample_rate);
     void internal_latency_callback(jack_latency_callback_mode_t mode);
 
-    void process_audio(jack_nframes_t start_frame, jack_nframes_t frame_count);
+    void process_audio(jack_nframes_t start_frame, jack_nframes_t framecount, Time timestamp, int64_t samplecount);
 
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _input_ports;
     std::array<jack_port_t*, MAX_FRONTEND_CHANNELS> _output_ports;
@@ -133,6 +133,7 @@ private:
 
     jack_client_t* _client{nullptr};
     jack_nframes_t _sample_rate;
+    jack_nframes_t _start_frame{0};
     bool _autoconnect_ports{false};
 
     SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};

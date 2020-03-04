@@ -18,6 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <chrono>
 #include <cstdlib>
 
 #include <alsa/seq_event.h>
@@ -31,10 +32,51 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 namespace sushi {
 namespace midi_frontend {
 
-constexpr int ALSA_POLL_TIMEOUT_MS = 200;
+constexpr auto ALSA_POLL_TIMEOUT = std::chrono::milliseconds(200);
+constexpr auto CLIENT_NAME = "Sushi";
 
-AlsaMidiFrontend::AlsaMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
-        : BaseMidiFrontend(dispatcher)
+int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_input)
+{
+    unsigned int capabilities;
+    if (is_input)
+    {
+        capabilities = SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE;
+    }
+    else
+    {
+        capabilities = SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ;
+    }
+
+    int port = snd_seq_create_simple_port(seq, name.c_str(), capabilities, SND_SEQ_PORT_TYPE_APPLICATION);
+
+    if (port < 0)
+    {
+        SUSHI_LOG_ERROR("Error opening ALSA MIDI port {}: {}", name, strerror(-port));
+        return port;
+    }
+
+    /* For some weird reason directly creating the port with the specific timestamping
+     * doesn't work, but we can set them once the port has been created */
+    snd_seq_port_info_t* port_info;
+    snd_seq_port_info_alloca(&port_info);
+    snd_seq_get_port_info(seq, port, port_info);
+    snd_seq_port_info_set_timestamp_queue(port_info, queue);
+    snd_seq_port_info_set_timestamping(port_info, 1);
+    snd_seq_port_info_set_timestamp_real(port_info, 1);
+    int alsamidi_ret = snd_seq_set_port_info(seq, port, port_info);
+    if (alsamidi_ret < 0)
+    {
+        SUSHI_LOG_ERROR("Couldn't set output port time configuration on port {}: {}", name, strerror(-alsamidi_ret));
+        return alsamidi_ret;
+    }
+    SUSHI_LOG_INFO("Created Alsa Midi port {}", name);
+    return port;
+}
+
+AlsaMidiFrontend::AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
+        : BaseMidiFrontend(dispatcher),
+          _inputs(inputs),
+          _outputs(outputs)
 {}
 
 AlsaMidiFrontend::~AlsaMidiFrontend()
@@ -55,7 +97,7 @@ bool AlsaMidiFrontend::init()
         return false;
     }
 
-    alsamidi_ret = snd_seq_set_client_name(_seq_handle, "Sushi");
+    alsamidi_ret = snd_seq_set_client_name(_seq_handle, CLIENT_NAME);
     if (alsamidi_ret < 0)
     {
         SUSHI_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
@@ -64,7 +106,7 @@ bool AlsaMidiFrontend::init()
 
     _queue = snd_seq_alloc_queue(_seq_handle);
 
-    alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, NULL);
+    alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, nullptr);
     if (alsamidi_ret < 0)
     {
         SUSHI_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
@@ -112,8 +154,12 @@ bool AlsaMidiFrontend::init()
 void AlsaMidiFrontend::run()
 {
     assert(_seq_handle);
-    _running = true;
-    _worker = std::thread(&AlsaMidiFrontend::_poll_function, this);
+    if (_inputs > 0)
+    {
+        _running = true;
+        _worker = std::thread(&AlsaMidiFrontend::_poll_function, this);
+    }
+    SUSHI_LOG_INFO_IF(_inputs == 0, "No of midi inputs is 0, not starting read thread");
 }
 
 void AlsaMidiFrontend::stop()
@@ -132,7 +178,7 @@ void AlsaMidiFrontend::_poll_function()
     snd_seq_poll_descriptors(_seq_handle, descriptors.get(), static_cast<unsigned int>(descr_count), POLLIN);
     while (_running)
     {
-        if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT_MS) > 0)
+        if (poll(descriptors.get(), descr_count, ALSA_POLL_TIMEOUT.count()) > 0)
         {
             snd_seq_event_t* ev{nullptr};
             uint8_t data_buffer[ALSA_EVENT_MAX_SIZE]{0};
@@ -148,13 +194,17 @@ void AlsaMidiFrontend::_poll_function()
                     auto byte_count = snd_midi_event_decode(_input_parser, data_buffer, sizeof(data_buffer), ev);
                     if (byte_count > 0)
                     {
-                        bool timestamped = (ev->flags | (SND_SEQ_TIME_STAMP_REAL & SND_SEQ_TIME_MODE_ABS)) == 1;
-                        Time timestamp = timestamped? _to_sushi_time(&ev->time.time) : IMMEDIATE_PROCESS;
-                        _receiver->send_midi(0, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
+                        auto input = _port_to_input_map.find(ev->dest.port);
+                        if (input != _port_to_input_map.end())
+                        {
+                            bool timestamped = (ev->flags | (SND_SEQ_TIME_STAMP_REAL & SND_SEQ_TIME_MODE_ABS)) == 1;
+                            Time timestamp = timestamped ? _to_sushi_time(&ev->time.time) : IMMEDIATE_PROCESS;
+                            _receiver->send_midi(input->second, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
 
-                        SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}] timestamp: {}",
-                                        data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], timestamp.count());
+                            SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
+                                            data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], input->second, timestamp.count());
 
+                        }
                     }
                     SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", byte_count);
                 }
@@ -164,7 +214,7 @@ void AlsaMidiFrontend::_poll_function()
     }
 }
 
-void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timestamp)
+void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);
@@ -173,7 +223,7 @@ void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timesta
     {
         SUSHI_LOG_INFO("Failed to encode event: {} {}", strerror(-bytes), ev.type);
     }
-    snd_seq_ev_set_source(&ev, _output_midi_port);
+    snd_seq_ev_set_source(&ev, _output_midi_ports[output]);
     snd_seq_ev_set_subs(&ev);
     snd_seq_real_time_t ev_time = _to_alsa_time(timestamp);
     snd_seq_ev_schedule_real(&ev, _queue, false, &ev_time);
@@ -184,7 +234,6 @@ void AlsaMidiFrontend::send_midi(int /*output*/, MidiDataByte data, Time timesta
         SUSHI_LOG_WARNING("Event output returned: {}, type {}", strerror(-bytes), ev.type);
     }
 }
-
 
 bool AlsaMidiFrontend::_init_time()
 {
@@ -206,50 +255,29 @@ bool AlsaMidiFrontend::_init_time()
 
 bool AlsaMidiFrontend::_init_ports()
 {
-    _input_midi_port = snd_seq_create_simple_port(_seq_handle, "listen:in",
-                                                  SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-                                                  SND_SEQ_PORT_TYPE_APPLICATION);
-
-    if (_input_midi_port < 0)
+    bool add_index = _inputs > 1;
+    for (int i = 0; i < _inputs; ++i)
     {
-        SUSHI_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_input_midi_port));
-        return false;
+        int port = create_port(_seq_handle, _queue, "listen:in" + (add_index? "_" + std::to_string(i + 1) : ""), true);
+        if (port < 0)
+        {
+            return false;
+        }
+        _input_midi_ports.push_back(port);
+        _port_to_input_map[port] = i;
     }
 
-    _output_midi_port = snd_seq_create_simple_port(_seq_handle, "write:out",
-                                                   SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
-                                                   SND_SEQ_PORT_TYPE_APPLICATION);
-
-    if (_output_midi_port < 0)
+    add_index = _outputs > 1;
+    for (int i = 0; i < _outputs; ++i)
     {
-        SUSHI_LOG_ERROR("Error opening ALSA MIDI port: {}", strerror(-_output_midi_port));
-        return false;
-    }
-    /* For some weird reason directly creating the port with the specific timestamping
-     * doesn't work, but we can set them once the port has been created */
-    snd_seq_port_info_t* port_info;
-    snd_seq_port_info_alloca(&port_info);
-    snd_seq_get_port_info(_seq_handle, _output_midi_port, port_info);
-    snd_seq_port_info_set_timestamp_queue(port_info, _queue);
-    snd_seq_port_info_set_timestamping(port_info, 1);
-    snd_seq_port_info_set_timestamp_real(port_info, 1);
-    int alsamidi_ret = snd_seq_set_port_info(_seq_handle, _output_midi_port, port_info);
-    if (alsamidi_ret < 0)
-    {
-        SUSHI_LOG_ERROR("Couldn't set output port time configuration{}", strerror(-alsamidi_ret));
-        return false;
+        int port = create_port(_seq_handle, _queue, "read:out" + (add_index? "_" + std::to_string(i + 1) : ""), false);
+        if (port < 0)
+        {
+            return false;
+        }
+        _output_midi_ports.push_back(port);
     }
 
-    snd_seq_get_port_info(_seq_handle, _input_midi_port, port_info);
-    snd_seq_port_info_set_timestamp_queue(port_info, _queue);
-    snd_seq_port_info_set_timestamping(port_info, 1);
-    snd_seq_port_info_set_timestamp_real(port_info, 1);
-    alsamidi_ret = snd_seq_set_port_info(_seq_handle, _input_midi_port, port_info);
-    if (alsamidi_ret < 0)
-    {
-        SUSHI_LOG_ERROR("Couldn't set inpput port time configuration {}", strerror(-alsamidi_ret));
-        return false;
-    }
     return true;
 }
 
@@ -268,7 +296,6 @@ snd_seq_real_time_t AlsaMidiFrontend::_to_alsa_time(Time timestamp)
     alsa_time.tv_nsec = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::nanoseconds>(offset_time - seconds).count());
     return alsa_time;
 }
-
 
 } // end namespace midi_frontend
 } // end namespace sushi

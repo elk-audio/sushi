@@ -30,6 +30,7 @@
 
 #include "lo/lo.h"
 
+#include "control_interface.h"
 #include "base_control_frontend.h"
 
 namespace sushi {
@@ -41,12 +42,13 @@ struct OscConnection
     ObjectId processor;
     ObjectId parameter;
     OSCFrontend* instance;
+    ext::SushiControl* controller;
 };
 
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, int server_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int server_port, int send_port);
 
     ~OSCFrontend();
 
@@ -63,6 +65,16 @@ public:
 
     bool connect_to_string_parameter(const std::string &processor_name,
                                      const std::string &parameter_name);
+
+    /**
+     * @brief Connect osc to the bypass state of a given processor.
+     *        The resulting osc path will be:
+     *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
+     * 
+     * @param processor_name 
+     * @return
+     */
+    bool connect_to_bypass_state(const std::string &processor_name);
 
     /**
      * @brief Connect program change messages to a specific processor.
@@ -118,7 +130,13 @@ private:
 
     void _stop_server();
 
-    void setup_engine_control();
+    void _setup_engine_control();
+
+    std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
+                                                                       const std::string& parameter_name);
+
+    std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
+                                                                       const std::string& osc_path_prefix);
 
     lo_server_thread _osc_server;
     int _server_port;
@@ -126,6 +144,8 @@ private:
     lo_address _osc_out_address;
 
     std::atomic_bool _running;
+
+    sushi::ext::SushiControl* _controller;
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;

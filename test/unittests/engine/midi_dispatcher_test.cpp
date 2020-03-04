@@ -20,13 +20,14 @@ public:
     bool init() override {return true;}
     void run()  override {}
     void stop() override {}
-    void send_midi(int /*input*/, MidiDataByte /*data*/, Time /*timestamp*/) override
+    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
     {
         _sent = true;
+        _input = input;
     }
-    bool midi_sent()
+    bool midi_sent_on_input(int input)
     {
-        if (_sent)
+        if (_sent && input == _input)
         {
             _sent = false;
             return true;
@@ -35,6 +36,7 @@ public:
     }
     private:
     bool _sent{false};
+    int  _input;
 };
 
 const MidiDataByte TEST_NOTE_ON_MSG   = {0x92, 62, 55, 0}; /* Channel 2 */
@@ -186,17 +188,21 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 {
-    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 0, 12, 48, 0.5f, IMMEDIATE_PROCESS);
+    KeyboardEvent event(KeyboardEvent::Subtype::NOTE_ON, 5, 12, 48, 0.5f, IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
-    EXPECT_FALSE(_test_frontend.midi_sent());
+    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
 
     /* Connect track to output 1, channel 5 */
     _module_under_test.set_midi_outputs(3);
     auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
+    status = _module_under_test.process(&event);
+    EXPECT_EQ(EventStatus::HANDLED_OK, status);
+    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
+    EXPECT_FALSE(_test_frontend.midi_sent_on_input(1));
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)

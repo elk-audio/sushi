@@ -211,10 +211,10 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                                SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
-                               ControlBuffer* in_controls,
-                               ControlBuffer* out_controls) = 0;
-
-    virtual void update_time(Time /*timestamp*/, int64_t /*samples*/) = 0;
+                               ControlBuffer *in_controls,
+                               ControlBuffer *out_controls,
+                               Time timestamp,
+                               int64_t samplecount) = 0;
 
     virtual void set_output_latency(Time /*latency*/) = 0;
 

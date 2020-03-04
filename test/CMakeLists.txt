@@ -105,7 +105,10 @@ endif()
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
-target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING -D__cdecl= )
+target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
+                                              -D__cdecl=
+                                              -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
@@ -170,6 +173,9 @@ if (${WITH_LV2})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0 lv2_host)
     add_dependencies(unit_tests lv2_host)
 endif()
+
+# Disable Link in tests as this slows down the testing a lot due to network activity etc
+remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)

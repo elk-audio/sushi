@@ -46,6 +46,7 @@ option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
 option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
+option(WITH_LINK "Enable Ableton Link support" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
@@ -69,14 +70,21 @@ endif()
 if (${WITH_RPC_INTERFACE})
     message("Building with RPC support.")
 endif()
+if (${WITH_LINK})
+    message("Building with Ableton Link support.")
+endif()
+
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
+
 
 #############
 # Vst3 Host #
 #############
 
-# Build the given Vst3 host implementation into a separate library to
-# Avoid littering our own code with ugly defines
+if (${WITH_VST3})
+
+# Build the given Vst3 host implementation into a separate library to avoid
+# Vst specific defines leaking into our code.
 
 set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 set(VST3_HOST_SOURCES
@@ -98,6 +106,7 @@ else()
 endif()
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
+endif()
 
 ####################
 #  Main Target     #
@@ -276,7 +285,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
+                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -326,6 +336,10 @@ else()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 
+if (${WITH_LINK})
+    include(third-party/link/AbletonLinkConfig.cmake)
+endif()
+
 if (${WITH_RPC_INTERFACE})
     add_subdirectory(rpc_interface)
 endif()
@@ -360,6 +374,10 @@ endif()
 
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+endif()
+
+if (${WITH_LINK})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} Ableton::Link)
 endif()
 
 if (${WITH_RPC_INTERFACE})
@@ -397,6 +415,10 @@ endif()
 
 if (${WITH_LV2})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
+endif()
+
+if (${WITH_LINK})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ABLETON_LINK)
 endif()
 
 if (${WITH_VST2})

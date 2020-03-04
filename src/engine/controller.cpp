@@ -28,7 +28,6 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
 
 namespace sushi {
 
-
 /* Convenience conversion functions between external and internal
  * enums and data structs */
 inline ext::ParameterType to_external(const sushi::ParameterType type)
@@ -71,7 +70,7 @@ inline ext::SyncMode to_external(const sushi::SyncMode mode)
     switch (mode)
     {
         case SyncMode::INTERNAL:     return ext::SyncMode::INTERNAL;
-        case SyncMode::MIDI_SLAVE:   return ext::SyncMode::MIDI;
+        case SyncMode::MIDI:         return ext::SyncMode::MIDI;
         case SyncMode::GATE_INPUT:   return ext::SyncMode::GATE;
         case SyncMode::ABLETON_LINK: return ext::SyncMode::LINK;
         default:                     return ext::SyncMode::INTERNAL;
@@ -83,7 +82,7 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
     switch (mode)
     {
         case ext::SyncMode::INTERNAL: return sushi::SyncMode::INTERNAL;
-        case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI_SLAVE;
+        case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI;
         case ext::SyncMode::GATE:     return sushi::SyncMode::GATE_INPUT;
         case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
         default:                      return sushi::SyncMode::INTERNAL;
@@ -163,7 +162,7 @@ ext::ControlStatus Controller::set_tempo(float tempo)
 ext::TimeSignature Controller::get_time_signature() const
 {
     SUSHI_LOG_DEBUG("get_time_signature called");
-    return to_external(_transport->current_time_signature());
+    return to_external(_transport->time_signature());
 }
 
 ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
@@ -174,13 +173,13 @@ ext::ControlStatus Controller::set_time_signature(ext::TimeSignature signature)
     return ext::ControlStatus::OK;
 }
 
-bool Controller::get_timing_statistics_enabled()
+bool Controller::get_timing_statistics_enabled() const
 {
     SUSHI_LOG_DEBUG("get_timing_statistics_enabled called");
     return _performance_timer->enabled();
 }
 
-void Controller::set_timing_statistics_enabled(bool enabled) const
+void Controller::set_timing_statistics_enabled(bool enabled)
 {
     SUSHI_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
     // TODO - do this by events instead.

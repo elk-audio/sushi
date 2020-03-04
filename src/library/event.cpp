@@ -315,7 +315,7 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
     return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
 
-Event*AsynchronousBlobDeleteEvent::execute()
+Event* AsynchronousBlobDeleteEvent::execute()
 {
     delete(_data.data);
     return nullptr;
@@ -335,5 +335,31 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
     return EventStatus::NOT_HANDLED;
 }
 
+int SetEngineTempoEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo(_tempo);
+    return 0;
+}
+
+int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_time_signature(_signature);
+    return 0;
+}
+
+int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_transport_mode(_mode);
+    return 0;
+}
+
+int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo_sync_mode(_mode);
+    return 0;
+}
+
 #pragma GCC diagnostic pop
+
+
 } // end namespace sushi

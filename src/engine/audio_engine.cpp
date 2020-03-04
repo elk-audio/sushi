@@ -482,12 +482,16 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                                 SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                                 ControlBuffer* in_controls,
-                                ControlBuffer* out_controls)
+                                ControlBuffer* out_controls,
+                                Time timestamp,
+                                int64_t samplecount)
 {
     /* Signal that this is a realtime audio processing thread */
     twine::ThreadRtFlag rt_flag;
 
     auto engine_timestamp = _process_timer.start_timer();
+
+    _transport.set_time(timestamp, samplecount);
 
     RtEvent in_event;
     while (_internal_control_queue.pop(in_event))
@@ -545,11 +549,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
 
 void AudioEngine::set_tempo(float tempo)
 {
-    if (_state.load() == RealtimeState::STOPPED)
-    {
-        _transport.set_tempo(tempo);
-    }
-    else
+    bool realtime_running = _state != RealtimeState::STOPPED;
+    _transport.set_tempo(tempo, realtime_running);
+    if (realtime_running)
     {
         auto e = RtEvent::make_tempo_event(0, tempo);
         send_async_event(e);
@@ -558,11 +560,9 @@ void AudioEngine::set_tempo(float tempo)
 
 void AudioEngine::set_time_signature(TimeSignature signature)
 {
-    if (_state.load() == RealtimeState::STOPPED)
-    {
-        _transport.set_time_signature(signature);
-    }
-    else
+    bool realtime_running = _state != RealtimeState::STOPPED;
+    _transport.set_time_signature(signature, realtime_running);
+    if (realtime_running)
     {
         auto e = RtEvent::make_time_signature_event(0, signature);
         send_async_event(e);
@@ -571,11 +571,9 @@ void AudioEngine::set_time_signature(TimeSignature signature)
 
 void AudioEngine::set_transport_mode(PlayingMode mode)
 {
-    if (_state.load() == RealtimeState::STOPPED)
-    {
-        _transport.set_playing_mode(mode);
-    }
-    else
+    bool realtime_running = _state != RealtimeState::STOPPED;
+    _transport.set_playing_mode(mode, realtime_running);
+    if (realtime_running)
     {
         auto e = RtEvent::make_playing_mode_event(0, mode);
         send_async_event(e);
@@ -584,11 +582,9 @@ void AudioEngine::set_transport_mode(PlayingMode mode)
 
 void AudioEngine::set_tempo_sync_mode(SyncMode mode)
 {
-    if (_state.load() == RealtimeState::STOPPED)
-    {
-        _transport.set_sync_mode(mode);
-    }
-    else
+    bool realtime_running = _state != RealtimeState::STOPPED;
+    _transport.set_sync_mode(mode, realtime_running);
+    if (realtime_running)
     {
         auto e = RtEvent::make_sync_mode_event(0, mode);
         send_async_event(e);
@@ -1008,28 +1004,11 @@ bool AudioEngine::_handle_internal_events(RtEvent& event)
             break;
         }
         case RtEventType::TEMPO:
-        {
-            /* Eventually we might want to do sample accurate tempo changes */
-            _transport.set_tempo(event.tempo_event()->tempo());
-            break;
-        }
-
         case RtEventType::TIME_SIGNATURE:
-        {
-            /* Eventually we might want to do sample accurate time signature changes */
-            _transport.set_time_signature(event.time_signature_event()->time_signature());
-            break;
-        }
-
         case RtEventType::PLAYING_MODE:
-        {
-            _transport.set_playing_mode(event.playing_mode_event()->mode());
-            break;
-        }
-
         case RtEventType::SYNC_MODE:
         {
-            _transport.set_sync_mode(event.sync_mode_event()->mode());
+            _transport.process_event(event);
             break;
         }
 
