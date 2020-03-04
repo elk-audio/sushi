@@ -104,8 +104,7 @@ void Model::_initialize_host_feature_list()
             &static_features[0],
             &static_features[1],
             &static_features[2],
-            &static_features[3],
-            nullptr
+            &static_features[3]
     });
 
     _feature_list = std::move(features);
