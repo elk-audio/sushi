@@ -418,5 +418,5 @@ set(DOC_FILES_INSTALL
 
 install(TARGETS sushi DESTINATION bin)
 foreach(ITEM ${DOC_FILES_INSTALL})
-    install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
