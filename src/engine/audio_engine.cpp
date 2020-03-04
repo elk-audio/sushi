@@ -341,15 +341,6 @@ void AudioEngine::enable_realtime(bool enabled)
     }
 }
 
-int AudioEngine::n_channels_in_track(int track)
-{
-    if (track <= static_cast<int>(_audio_graph.size()))
-    {
-        return _audio_graph[track]->input_channels();
-    }
-    return 0;
-}
-
 EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> processor, const std::string& name)
 {
     if(name.empty())
@@ -742,7 +733,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         }
     }
     // Add it to the engine's mirror of track processing chains
-    _add_to_processors_by_track(plugin, track->id(), before_plugin_id);
+    _processors.add_to_track(plugin, track->id(), before_plugin_id);
     return EngineReturnStatus::OK;
 }
 
@@ -1139,13 +1130,6 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
         }
     }
     buffer.gate_values = _outgoing_gate_values;
-}
-
-void AudioEngine::_add_to_processors_by_track(std::shared_ptr<Processor> processor,
-                                              ObjectId track_id,
-                                              std::optional<ObjectId> before_id)
-{
-    _processors.add_to_track(processor, track_id, before_id);
 }
 
 RealtimeState update_state(RealtimeState current_state)

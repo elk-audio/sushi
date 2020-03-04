@@ -418,14 +418,6 @@ public:
                                             int ppq_ticks) override;
 
     /**
-     * @brief Return the number of configured channels for a specific track
-     *
-     * @param track The index to the track
-     * @return Number of channels the track is configured to use.
-     */
-    int n_channels_in_track(int track) override;
-
-    /**
      * @brief Returns whether the engine is running in a realtime mode or not
      * @return true if the engine is currently processing in realtime mode, false otherwise
      */
@@ -678,10 +670,6 @@ private:
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
     void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
-
-    void _add_to_processors_by_track(std::shared_ptr<Processor> processor,
-                                     ObjectId track_id,
-                                     std::optional<ObjectId> before_id);
 
     const bool _multicore_processing;
     const int  _rt_cores;

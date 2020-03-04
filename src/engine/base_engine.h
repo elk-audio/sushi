@@ -195,13 +195,7 @@ public:
     {
         return EngineReturnStatus::OK;
     }
-
-
-    virtual int n_channels_in_track(int /*track_no*/)
-    {
-        return 2;
-    }
-
+    
     virtual bool realtime()
     {
         return true;
