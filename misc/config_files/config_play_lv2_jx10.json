@@ -6,12 +6,7 @@
         {
             "name" : "main",
             "mode" : "stereo",
-            "inputs" : [
-                {
-                    "engine_bus" : 0,
-                    "track_bus" : 0
-                }
-            ],
+            "inputs" : [],
             "outputs" : [
                 {
                     "engine_bus" : 0,
@@ -20,8 +15,8 @@
             ],
             "plugins" : [
                 {
-                    "uri" : "http://lv2plug.in/plugins/eg-midigate",
-                    "name" : "midigate",
+                    "uri" : "http://drobilla.net/plugins/mda/JX10",
+                    "name" : "Synth",
                     "type"   : "lv2"
                 }
             ]

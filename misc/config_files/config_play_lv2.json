@@ -1,6 +1,8 @@
 {
     "host_config" : {
-        "samplerate" : 48000
+        "samplerate" : 48000,
+        "tempo_sync" : "internal",
+        "playing_mode" : "playing"
     },
     "tracks" : [
         {
@@ -20,8 +22,8 @@
             ],
             "plugins" : [
                 {
-                    "uri" : "http://drobilla.net/plugins/mda/JX10",
-                    "name" : "Synth",
+                    "uri" : "http://lv2plug.in/plugins/eg-metro",
+                    "name" : "metro",
                     "type"   : "lv2"
                 }
             ]

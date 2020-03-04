@@ -136,6 +136,13 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     _initialize_host_feature_list();
 
+    if (std::getenv("LV2_PATH") == nullptr)
+    {
+        SUSHI_LOG_ERROR("The LV2_PATH environment variable is not set on your system "
+                        "- this is required for loading LV2 plugins.");
+        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
+    }
+
     if (_check_for_required_features(plugin_handle) == false)
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
