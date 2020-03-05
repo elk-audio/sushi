@@ -94,7 +94,9 @@ Model::~Model()
 void Model::_initialize_host_feature_list()
 {
     // Build feature list for passing to plugins.
-    std::array<const LV2_Feature*, 8> features({
+    // Warning: LV2 / Lilv require this list to be null-terminated.
+    // So remember to check for null when iterating over it!
+    std::array<const LV2_Feature*, 9> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
@@ -104,7 +106,8 @@ void Model::_initialize_host_feature_list()
             &static_features[0],
             &static_features[1],
             &static_features[2],
-            &static_features[3]
+            &static_features[3],
+            nullptr
     });
 
     _feature_list = std::move(features);
@@ -119,6 +122,9 @@ bool Model::_feature_is_supported(const std::string& uri)
 
     for (const auto f : _feature_list)
     {
+        if (f == nullptr) // The last element is by LV2 required to be null.
+            break;
+
         if (uri.compare(f->URI) == 0)
         {
             return true;
@@ -426,7 +432,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-std::array<const LV2_Feature*, 8>* Model::host_feature_list()
+std::array<const LV2_Feature*, 9>* Model::host_feature_list()
 {
     return &_feature_list;
 }

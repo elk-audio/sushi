@@ -131,7 +131,7 @@ public:
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
-    std::array<const LV2_Feature*, 8>* host_feature_list();
+    std::array<const LV2_Feature*, 9>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -256,7 +256,7 @@ private:
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::array<const LV2_Feature*, 8> _feature_list;
+    std::array<const LV2_Feature*, 9> _feature_list;
 
     uint32_t _position;
     float _bpm;

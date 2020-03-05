@@ -110,7 +110,6 @@ void State::_load_programs(PresetSink sink, void* data)
 
        auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, NULL);
 
-
        if (labels)
        {
            auto label = lilv_nodes_get_first(labels);
