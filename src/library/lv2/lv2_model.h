@@ -116,8 +116,9 @@ struct HostFeatures
 };
 
 /**
- * @brief LV2 depends on a "GOD" struct/class per plugin instance, which it passes around with pointers in the various
- * callbacks. LV2Model is this GOD class.
+ * @brief LV2 depends on a "GOD" struct/class per plugin instance,
+ * which it passes around with pointers in the various callbacks.
+ * LV2Model is this class - to the extent needed for Lilv.
  */
 class Model
 {
@@ -130,7 +131,7 @@ public:
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
-    std::vector<const LV2_Feature*>* host_feature_list();
+    std::array<const LV2_Feature*, 8>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -255,7 +256,7 @@ private:
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::vector<const LV2_Feature*> _feature_list;
+    std::array<const LV2_Feature*, 8> _feature_list;
 
     uint32_t _position;
     float _bpm;

@@ -94,7 +94,7 @@ Model::~Model()
 void Model::_initialize_host_feature_list()
 {
     // Build feature list for passing to plugins.
-    std::vector<const LV2_Feature*> features({
+    std::array<const LV2_Feature*, 8> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
@@ -426,7 +426,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-std::vector<const LV2_Feature*>* Model::host_feature_list()
+std::array<const LV2_Feature*, 8>* Model::host_feature_list()
 {
     return &_feature_list;
 }
