@@ -1,7 +1,7 @@
 {
     "host_config" : {
         "samplerate" : 48000,
-        "tempo_sync" : "internal",
+        "tempo_sync" : "ableton_link",
         "playing_mode" : "playing"
     },
     "tracks" : [
