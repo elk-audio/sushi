@@ -39,13 +39,6 @@
                 "raw_midi": false
             }
         ],
-        "track_out_connections": [
-            {
-                "port": 0,
-                "channel": 0,
-                "track": "main"
-            }
-        ],
         "program_change_connections": [
             {
                 "port": 0,
