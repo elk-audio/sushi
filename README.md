@@ -112,4 +112,4 @@ Path                                   | Typespec | Arguments
 /engine/set_timing_statistics_enabled  |  i       | 1 = enabled, 0 = disabled
 /engine/reset_timing_statstics         |  s(s)    | reset target ("all", "track", "processor"), track name/processor name
 
-Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm, Sweden.
+Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm, Sweden.

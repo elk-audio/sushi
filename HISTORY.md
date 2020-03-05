@@ -1,3 +1,13 @@
+## 0.10.0
+
+New Features:
+  * LV2 plugin support
+  * Ableton Link support
+  * Multiple midi input and output ports
+
+Fixes:
+  * Updated example configuration files
+
 ## 0.9.1
 
 New Features:
