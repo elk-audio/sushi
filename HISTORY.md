@@ -4,6 +4,7 @@ New Features:
   * LV2 plugin support
   * Ableton Link support
   * Multiple midi input and output ports
+  * Extended OSC control API making it more similar to gRPC
 
 Fixes:
   * Updated example configuration files
