@@ -20,22 +20,22 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/home/minddev/plugins/mdaOverdrive.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaOverdrive.so",
                     "name" : "overdrive",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaDubDelay.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDubDelay.so",
                     "name" : "dubdelay",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaDelay.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
                     "name" : "delay",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaAmbience.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaAmbience.so",
                     "name" : "ambience",
                     "type"   : "vst2x"
                 }
