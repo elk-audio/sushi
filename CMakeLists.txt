@@ -445,19 +445,8 @@ set(DOC_FILES_INSTALL
     "${PROJECT_SOURCE_DIR}/README.md"
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )
-set(EXAMPLE_CONFIGS_INSTALL
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_empty.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_fx.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_synth.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multi_track.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multichannel_plugin.json"
-    "${PROJECT_SOURCE_DIR}/test/data/config.json"
-)
 
 install(TARGETS sushi DESTINATION bin)
 foreach(ITEM ${DOC_FILES_INSTALL})
-    install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_PREFIX})
-endforeach()
-foreach(ITEM ${EXAMPLE_CONFIGS_INSTALL})
-    install(FILES ${ITEM} DESTINATION example_configs)
+    install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
