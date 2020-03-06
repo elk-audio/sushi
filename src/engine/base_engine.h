@@ -70,7 +70,8 @@ enum class PluginType
 {
     INTERNAL,
     VST2X,
-    VST3X
+    VST3X,
+    LV2
 };
 
 enum class RealtimeState
@@ -208,10 +209,10 @@ public:
 
     virtual void enable_realtime(bool /*enabled*/) {}
 
-    virtual void process_chunk(SampleBuffer <AUDIO_CHUNK_SIZE>* in_buffer,
-                               SampleBuffer <AUDIO_CHUNK_SIZE>* out_buffer,
-                               ControlBuffer* in_controls,
-                               ControlBuffer* out_controls,
+    virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                               SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                               ControlBuffer *in_controls,
+                               ControlBuffer *out_controls,
                                Time timestamp,
                                int64_t samplecount) = 0;
 

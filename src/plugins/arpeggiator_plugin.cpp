@@ -94,30 +94,44 @@ void ArpeggiatorPlugin::process_event(const RtEvent& event)
 
 void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/)
 {
-    double beat = _host_control.transport()->current_beats();
-    double last_beat_this_chunk = _host_control.transport()->current_beats(AUDIO_CHUNK_SIZE);
-    double beat_period = last_beat_this_chunk - beat;
-    auto notes_this_chunk = std::min(MULTIPLIER_8TH_NOTE * (last_beat_this_chunk -_last_note_beat), 2.0);
-
-    while (notes_this_chunk > 1.0)
+    if (_host_control.transport()->playing())
     {
-        double next_note_beat = _last_note_beat + 1 / MULTIPLIER_8TH_NOTE;
-        auto fraction = next_note_beat - beat - std::floor(next_note_beat - beat);
-        _last_note_beat = next_note_beat;
-        int offset = 0;
-        if (fraction > 0)
+        if (_host_control.transport()->current_state_change() == PlayStateChange::STARTING)
         {
-            /* If fraction is not positive, then there was a missed beat in an underrun */
-            offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)), AUDIO_CHUNK_SIZE -1);
+            _last_note_beat = _host_control.transport()->current_beats();
         }
+        double beat = _host_control.transport()->current_beats();
+        double last_beat_this_chunk = _host_control.transport()->current_beats(AUDIO_CHUNK_SIZE);
+        double beat_period = last_beat_this_chunk - beat;
+        auto notes_this_chunk = std::min(MULTIPLIER_8TH_NOTE * (last_beat_this_chunk - _last_note_beat), 2.0);
 
-        RtEvent note_off = RtEvent::make_note_off_event(this->id(), offset, 0, _current_note, 1.0f);
-        _current_note = _arp.next_note();
-        RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, 0, _current_note, 1.0f);
-        output_event(note_off);
-        output_event(note_on);
+        while (notes_this_chunk > 1.0)
+        {
+            double next_note_beat = _last_note_beat + 1 / MULTIPLIER_8TH_NOTE;
+            auto fraction = next_note_beat - beat - std::floor(next_note_beat - beat);
+            _last_note_beat = next_note_beat;
+            int offset = 0;
+            if (fraction > 0)
+            {
+                /* If fraction is not positive, then there was a missed beat in an underrun */
+                offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)),
+                                  AUDIO_CHUNK_SIZE - 1);
+            }
 
-        notes_this_chunk = MULTIPLIER_8TH_NOTE * (last_beat_this_chunk -_last_note_beat);
+            RtEvent note_off = RtEvent::make_note_off_event(this->id(), offset, 0, _current_note, 1.0f);
+            _current_note = _arp.next_note();
+            RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, 0, _current_note, 1.0f);
+            output_event(note_off);
+            output_event(note_on);
+
+            notes_this_chunk = MULTIPLIER_8TH_NOTE * (last_beat_this_chunk - _last_note_beat);
+        }
+    }
+
+    if (_host_control.transport()->current_state_change() == PlayStateChange::STOPPING)
+    {
+        /* Don't leave notes hanging if transport is stopped */
+        output_event(RtEvent::make_note_off_event(this->id(), 0, 0, _current_note, 1.0f));
     }
 }
 

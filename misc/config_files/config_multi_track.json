@@ -20,12 +20,12 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/home/minddev/plugins/mdaCombo.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaCombo.so",
                     "name" : "g1_combo",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaBandisto.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaBandisto.so",
                     "name" : "g1_band_distortion",
                     "type"   : "vst2x"
                 }
@@ -44,22 +44,22 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/home/minddev/plugins/mdaEPiano.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaEPiano.so",
                     "name" : "epiano",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaRezFilter.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaRezFilter.so",
                     "name" : "g2_compressor",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaAmbience.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaAmbience.so",
                     "name" : "g2_band_distortion",
                     "type"   : "vst2x"
                 },
                 {
-                    "path" : "/home/minddev/plugins/mdaDelay.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
                     "name" : "g2_leslie",
                     "type"   : "vst2x"
                 }

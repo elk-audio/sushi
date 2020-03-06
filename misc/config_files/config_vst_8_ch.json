@@ -96,14 +96,14 @@
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "main(Piano)",
-                "raw_midi": false
+                "track": "main(Piano)",
+                "raw_midi": true
             },
             {
                 "port": 0,
                 "channel": "all",
-                "chain": "second(Synth)",
-                "raw_midi": false
+                "track": "second(Synth)",
+                "raw_midi": true
             }
         ],
         "cc_mappings": [

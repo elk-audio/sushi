@@ -8,6 +8,7 @@
 #define protected public
 
 #include "library/processor.cpp"
+#undef private
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;

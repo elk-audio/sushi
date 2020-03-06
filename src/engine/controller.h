@@ -48,7 +48,7 @@ public:
     ext::TimeSignature                                  get_time_signature() const override;
     ext::ControlStatus                                  set_time_signature(ext::TimeSignature signature) override;
     bool                                                get_timing_statistics_enabled() const override;
-    void                                                set_timing_statistics_enabled(bool enabled)override;
+    void                                                set_timing_statistics_enabled(bool enabled) override;
     std::vector<ext::TrackInfo>                         get_tracks() const override;
 
     ext::ControlStatus                                  send_note_on(int track_id, int channel, int note, float velocity) override;

@@ -284,10 +284,10 @@ public:
      * @param timestamp Current time in microseconds
      * @param samplecount Current number of samples processed
      */
-    void process_chunk(SampleBuffer <AUDIO_CHUNK_SIZE>*in_buffer,
-                       SampleBuffer <AUDIO_CHUNK_SIZE>*out_buffer,
-                       ControlBuffer*in_controls,
-                       ControlBuffer*out_controls,
+    void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
+                       SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
+                       ControlBuffer* in_controls,
+                       ControlBuffer* out_controls,
                        Time timestamp,
                        int64_t samplecount) override;
 
