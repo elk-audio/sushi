@@ -245,33 +245,21 @@ int RemoveTrackEvent::execute(engine::BaseEngine*engine)
     }
 }
 
+engine::PluginType to_engine(AddProcessorToTrackEvent::ProcessorType type)
+{
+    switch (type)
+    {
+        case AddProcessorToTrackEvent::ProcessorType::INTERNAL:   return engine::PluginType::INTERNAL;
+        case AddProcessorToTrackEvent::ProcessorType::VST2X:      return engine::PluginType::VST2X;
+        case AddProcessorToTrackEvent::ProcessorType::VST3X:      return engine::PluginType::VST3X;
+        case AddProcessorToTrackEvent::ProcessorType::LV2:        return engine::PluginType::LV2;
+        default:                                                  return engine::PluginType::INTERNAL;
+    }
+}
+
 int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
 {
-    engine::PluginType plugin_type;
-    switch (_processor_type)
-    {
-        case AddProcessorToTrackEvent::ProcessorType::INTERNAL:
-            plugin_type = engine::PluginType::INTERNAL;
-            break;
-
-        case AddProcessorToTrackEvent::ProcessorType::VST2X:
-            plugin_type = engine::PluginType::VST2X;
-            break;
-
-        case AddProcessorToTrackEvent::ProcessorType::VST3X:
-            plugin_type = engine::PluginType::VST3X;
-            break;
-
-            // TODO - add LV2 once it has been merged
-
-        default:
-            /* GCC is overzealous and warns even with a class enum that plugin_type
-             * may be unitialised. This is apparently a by design and not a bug, see:
-             * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53479*/
-            __builtin_unreachable();
-    }
-
-    auto [status, plugin_id] = engine->load_plugin(_uid, _name, _file, plugin_type);
+    auto [status, plugin_id] = engine->load_plugin(_uid, _name, _file, to_engine(_processor_type));
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
@@ -411,6 +399,30 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
         }
     }
     return EventStatus::NOT_HANDLED;
+}
+
+int SetEngineTempoEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo(_tempo);
+    return 0;
+}
+
+int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_time_signature(_signature);
+    return 0;
+}
+
+int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_transport_mode(_mode);
+    return 0;
+}
+
+int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine)
+{
+    engine->set_tempo_sync_mode(_mode);
+    return 0;
 }
 
 #pragma GCC diagnostic pop

@@ -96,9 +96,19 @@ endif()
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
 
+if (${WITH_LV2})
+    set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
+else()
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_wrapper.cpp)
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_wrapper.h)
+endif()
+
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
-target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING -D__cdecl= )
+target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
+                                              -D__cdecl=
+                                              -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
@@ -116,6 +126,14 @@ endif()
 
 if (${WITH_VST3})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST3)
+endif()
+
+if (${WITH_LV2})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2)
+endif()
+
+if (${WITH_LV2_MDA_TESTS})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2_MDA_TESTS)
 endif()
 
 ##########################################
@@ -151,6 +169,14 @@ if (${WITH_JACK})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
 endif()
 
+if (${WITH_LV2})
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0 lv2_host)
+    add_dependencies(unit_tests lv2_host)
+endif()
+
+# Disable Link in tests as this slows down the testing a lot due to network activity etc
+remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_test(unit_tests unit_tests)
 
@@ -163,4 +189,3 @@ add_custom_target(run_tests ALL
                   -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
                   "./unit_tests")
 add_dependencies(run_tests unit_tests)
-

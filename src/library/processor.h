@@ -218,7 +218,7 @@ public:
     virtual void set_bypassed(bool bypassed) {_bypassed = bypassed;}
 
     /**
-     * @brief Get the value of the  parameter with parameter_id, safe to call from
+     * @brief Get the value of the parameter with parameter_id, safe to call from
      *        a non rt-thread
      * @param parameter_id The Id of the requested parameter
      * @return The current value of the parameter if the return code is OK

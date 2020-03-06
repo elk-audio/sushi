@@ -22,9 +22,9 @@
                     "type" : "internal"
                 },
                 {
-                    "path" : "/home/mind/plugins/mda-vst2/mdaJX10.so",
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
                     "name" : "synth",
-                    "type"   : "vst2x"
+                    "type" : "vst2x"
                 }
             ]
         }
@@ -47,12 +47,8 @@
                 "parameter" : "VCF Freq"
             }
         ],
-        "cv_outputs" : [
-
-        ],
-        "gate_inputs" : [  ],
-        "gate_outputs" : [
-
-        ]
+        "cv_outputs" : [],
+        "gate_inputs" : [],
+        "gate_outputs" : []
     }
 }

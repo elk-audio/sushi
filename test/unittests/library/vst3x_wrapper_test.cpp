@@ -3,10 +3,9 @@
 #include "test_utils/test_utils.h"
 #include "library/rt_event_fifo.h"
 #include "library/vst3x_utils.cpp"
+#include "test_utils/host_control_mockup.h"
 
 #define private public
-
-#include "test_utils/host_control_mockup.h"
 #include "library/vst3x_wrapper.cpp"
 #include "library/vst3x_host_app.cpp"
 
@@ -208,8 +207,9 @@ TEST_F(TestVst3xWrapper, TestConfigurationChange)
 TEST_F(TestVst3xWrapper, TestTimeInfo)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    _host_control._transport.set_tempo(120);
-    _host_control._transport.set_time_signature({3, 4});
+    _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
+    _host_control._transport.set_tempo(120, false);
+    _host_control._transport.set_time_signature({3, 4}, false);
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
 
     _module_under_test->_fill_processing_context();

@@ -281,12 +281,16 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     {
         SUSHI_LOG_ERROR("Error getting time from jack frontend");
     }
+    if (_start_frame == 0 && current_frames > 0)
+    {
+        _start_frame = current_frames;
+    }
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
-        process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame);
+        process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame - _start_frame);
     }
     return 0;
 }

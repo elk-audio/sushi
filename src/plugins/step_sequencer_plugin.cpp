@@ -120,6 +120,11 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
         {
             output_event(_event_queue.pop());
         }
+        // If stopping, we kill the current note playing.
+        if (_host_control.transport()->current_state_change() == PlayStateChange::STOPPING)
+        {
+            output_event(RtEvent::make_note_off_event(this->id(), 0, 0, _current_note, 1.0f));
+        }
         return;
     }
 

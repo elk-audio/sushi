@@ -43,7 +43,10 @@ option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
+option(WITH_LV2 "Enable LV 2 support" ON)
+option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
+option(WITH_LINK "Enable Ableton Link support" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 
@@ -61,10 +64,18 @@ endif()
 if (${WITH_VST3})
     message("Building with Vst3 support.")
 endif()
+if (${WITH_LV2})
+    message("Building with LV2 support.")
+endif()
 if (${WITH_RPC_INTERFACE})
     message("Building with RPC support.")
 endif()
+if (${WITH_LINK})
+    message("Building with Ableton Link support.")
+endif()
+
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
+
 
 #############
 # Vst3 Host #
@@ -127,6 +138,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/vst2x_wrapper.cpp
                       src/library/vst3x_wrapper.cpp
+                      src/library/lv2/lv2_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -176,6 +188,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/time.h
                         src/library/vst2x_wrapper.h
                         src/library/vst3x_wrapper.h
+                        src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
@@ -228,10 +241,25 @@ if (${WITH_VST3})
                                 src/library/vst3x_utils.h)
 endif()
 
+if (${WITH_LV2})
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_control.h
+                               src/library/lv2/lv2_features.h
+                               src/library/lv2/lv2_host_nodes.h
+                               src/library/lv2/lv2_model.h
+                               src/library/lv2/lv2_port.h
+                               src/library/lv2/lv2_state.h
+                               src/library/lv2/lv2_state.cpp
+                               src/library/lv2/lv2_features.cpp
+                               src/library/lv2/lv2_model.cpp
+                               src/library/lv2/lv2_port.cpp
+                               src/library/lv2/lv2_control.cpp)
+endif()
+
 add_executable(sushi "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
                      "${ADDITIONAL_VST2_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
+                     "${ADDITIONAL_LV2_SOURCES}"
                      "${ADDITIONAL_ALSA_SOURCES}")
 
 #########################
@@ -258,7 +286,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
+                 "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
 # /usr/local doesn't get added by default in Mac OS X
 if (APPLE)
@@ -308,6 +337,10 @@ else()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 
+if (${WITH_LINK})
+    include(third-party/link/AbletonLinkConfig.cmake)
+endif()
+
 if (${WITH_RPC_INTERFACE})
     add_subdirectory(rpc_interface)
 endif()
@@ -336,8 +369,16 @@ if (WITH_VST2)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
 endif()
 
+if (${WITH_LV2})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} lilv-0 lv2_host)
+endif()
+
 if (${WITH_JACK})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+endif()
+
+if (${WITH_LINK})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} Ableton::Link)
 endif()
 
 if (${WITH_RPC_INTERFACE})
@@ -373,6 +414,14 @@ if (${WITH_VST3})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
 endif()
 
+if (${WITH_LV2})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
+endif()
+
+if (${WITH_LINK})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ABLETON_LINK)
+endif()
+
 if (${WITH_VST2})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
 endif()
@@ -397,20 +446,8 @@ set(DOC_FILES_INSTALL
     "${PROJECT_SOURCE_DIR}/README.md"
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )
-set(EXAMPLE_CONFIGS_INSTALL
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_empty.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_fx.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_synth.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multi_track.json"
-    "${PROJECT_SOURCE_DIR}/misc/config_files/config_multichannel_plugin.json"
-    "${PROJECT_SOURCE_DIR}/test/data/config.json"
-)
 
 install(TARGETS sushi DESTINATION bin)
 foreach(ITEM ${DOC_FILES_INSTALL})
-    install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
-foreach(ITEM ${EXAMPLE_CONFIGS_INSTALL})
-    install(FILES ${ITEM} DESTINATION example_configs)
-endforeach()
-

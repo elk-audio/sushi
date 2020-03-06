@@ -858,7 +858,7 @@ void Vst3xWrapper::_fill_processing_context()
     auto transport = _host_control.transport();
     auto context = _process_data.processContext;
     *context = {};
-    auto ts = transport->current_time_signature();
+    auto ts = transport->time_signature();
 
     context->state = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0;
     context->sampleRate             = _sample_rate;

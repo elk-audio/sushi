@@ -155,10 +155,10 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(27, event.playing_mode_event()->sample_offset());
     EXPECT_EQ(PlayingMode::PLAYING, event.playing_mode_event()->mode());
 
-    event = RtEvent::make_sync_mode_event(28, SyncMode::MIDI_SLAVE);
+    event = RtEvent::make_sync_mode_event(28, SyncMode::MIDI);
     EXPECT_EQ(RtEventType::SYNC_MODE, event.type());
     EXPECT_EQ(28, event.sync_mode_event()->sample_offset());
-    EXPECT_EQ(SyncMode::MIDI_SLAVE, event.sync_mode_event()->mode());
+    EXPECT_EQ(SyncMode::MIDI, event.sync_mode_event()->mode());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)

@@ -1,22 +1,21 @@
 #include "gtest/gtest.h"
 
-#include "engine/transport.h"
-
 #define private public
+#include "engine/track.cpp"
+#undef private
+
+#include "engine/transport.h"
+#include "plugins/passthrough_plugin.h"
+#include "plugins/gain_plugin.h"
 
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/dummy_processor.h"
-#include "engine/track.cpp"
-#include "plugins/passthrough_plugin.h"
-#include "plugins/gain_plugin.h"
 
 using namespace sushi;
 using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
-
-
 
 class TrackTest : public ::testing::Test
 {
