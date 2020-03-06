@@ -13,11 +13,6 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
-/**
- * @brief Main entry point to Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
- */
-
  /**
  * @Brief Handles time, tempo and start/stop inside the engine
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
@@ -26,23 +21,39 @@
 #ifndef SUSHI_TRANSPORT_H
 #define SUSHI_TRANSPORT_H
 
-#include <library/constants.h>
+#include <memory>
+#include <atomic>
+#include <cassert>
+
+#include "library/constants.h"
+#include "library/event_interface.h"
 #include "library/time.h"
 #include "library/types.h"
 #include "library/rt_event.h"
 
+/* Forward declare Link, then we can include link.hpp from transport.cpp and
+ * nowhere else, it pulls in a lot of dependencies that slow down compilation
+ * significantly otherwise. */
+namespace ableton {class Link;}
+
 namespace sushi {
+
+enum class PlayStateChange
+{
+    UNCHANGED,
+    STARTING,
+    STOPPING,
+};
+
 namespace engine {
 
 constexpr float DEFAULT_TEMPO = 120;
-/* Ableton recomends this to be around 10 Hz */
-constexpr int LINK_UPDATE_RATE = 48000 / (10 * AUDIO_CHUNK_SIZE);
 
 class Transport
 {
 public:
-    explicit Transport(float sample_rate) : _samplerate(sample_rate) {}
-    ~Transport() {}
+    explicit Transport(float sample_rate);
+    ~Transport();
 
     /**
      * @brief Set the current time. Called from the audio thread
@@ -63,40 +74,54 @@ public:
     }
 
     /**
-     * @brief Set the time signature used in the engine
-     * @param signature The new time signature to use
+     * @brief Process a single realtime event that is to take place during the current audio
+     * interrupt
+     * @param event Event to process.
      */
-    void set_time_signature(TimeSignature signature);
+    void process_event(const RtEvent& event);
 
     /**
-     * @brief Set the tempo of the engine in beats (quarter notes) per minute
-     * @param tempo The new tempo in beats per minute
+     * @brief Set the time signature used in the engine. Called from a non-realtime thread.
+     * @param signature The new time signature to use
+     * @param update_via_event true true if the engine passes the update as an RtEvent
      */
-    void set_tempo(float tempo) {_tempo = tempo;}
+    void set_time_signature(TimeSignature signature, bool update_via_event);
+
+    /**
+     * @brief Set the tempo of the engine in beats (quarter notes) per minute. Called from
+     *        a non-realtime thread.
+     * @param tempo The new tempo in beats per minute
+     * @param update_via_event true if the engine passes the update as an RtEvent
+     */
+    void set_tempo(float tempo, bool update_via_event);
 
     /**
      * @brief Return the current set playing mode
      * @return the current set playing mode
      */
-    PlayingMode playing_mode() const {return _mode;}
+    PlayingMode playing_mode() const {return _playmode;}
 
     /**
-     * @brief Set the playing mode, i.e. playing, stopped, recording etc..
+     * @brief Set the playing mode, i.e. playing, stopped, recording etc.. Called from
+     *        a non-realtime thread.
      * @param mode The new playing mode.
+     * @param update_via_event true if the engine passes the update as an RtEvent
      */
-    void set_playing_mode(PlayingMode mode) {_mode = mode;}
+    void set_playing_mode(PlayingMode mode, bool update_via_event);
 
     /**
      * @brief Return the current current mode of synchronising tempo and beats
      * @return the current set mode of synchronisation
      */
-    SyncMode sync_mode() const {return _sync_mode;}
+    SyncMode sync_mode() const {return _syncmode;}
 
     /**
-     * @brief Set the current mode of synchronising tempo and beats
+     * @brief Set the current mode of synchronising tempo and beats. Called from
+     *        a non-realtime thread.
      * @param mode The mode of synchronisation to use
+     * @param update_via_event true if the engine passes the update as an RtEvent
      */
-    void set_sync_mode(SyncMode mode) {_sync_mode = mode;}
+    void set_sync_mode(SyncMode mode, bool update_via_event);
 
     /**
      * @return Set the sample rate.
@@ -121,22 +146,22 @@ public:
     int64_t current_samples() const {return _sample_count;}
 
     /**
-     * @brief If the transport is currently playing or not. If in master mode, this always
-     *        returns true as we don't really have a concept of stop and start yet and
-     *        as sushi as of now is mostly intended for live use.
+     * @brief If the transport is currently playing or not.
      * @return true if the transport is currently playing, false if stopped
      */
-    bool playing() const {return _mode != PlayingMode::STOPPED;}
+    bool playing() const {return _playmode != PlayingMode::STOPPED;}
 
     /**
      * @brief Query the current time signature being used
      * @return A TimeSignature struct describing the current time signature
      */
-    TimeSignature current_time_signature() const {return _time_signature;}
+    TimeSignature time_signature() const {return _time_signature;}
 
     /**
      * @brief Query the current tempo. Safe to call from rt and non-rt context but will
-     *        only return approximate value if called from a non-rt context
+     *        only return approximate value if called from a non-rt context. If sync is
+     *        not set to INTERNAL, this might be different than what was previously used
+     *        as an argument to set_tempo()
      * @return A float representing the tempo in beats per minute
      */
     float current_tempo() const {return _tempo;}
@@ -173,22 +198,42 @@ public:
      */
     double current_bar_start_beats() const {return _bar_start_beat_count;}
 
+    /**
+     * @brief Query any playing state changes occuring during the current processing chunk.
+     *        For instance, if Transport is starting, during the first chunk, Transport
+     *        will report playing() as true and current_state_change() as STARTING.
+     *        Subsequent chunks Transport will report playing() as true and
+     *        current_state_change() as UNCHANGED.
+     * @return A PlayStateChange enum with the current state change, if any.
+     */
+    PlayStateChange current_state_change() const {return _state_change;}
+
 private:
     void _update_internals();
+    void _update_internal_sync(int64_t samples);
+    void _update_link_sync(Time timestamp);
+    void _set_link_playing(bool playing);
+    void _set_link_tempo(float tempo);
 
     int64_t         _sample_count{0};
     Time            _time{0};
     Time            _latency{0};
-    float           _tempo{DEFAULT_TEMPO};
     double          _current_bar_beat_count{0.0};
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
-    float           _beats_per_bar;
-    float           _samplerate{};
-    SyncMode        _sync_mode{SyncMode::INTERNAL};
+    double          _beats_per_bar;
+    float           _samplerate;
+
+    float           _tempo{DEFAULT_TEMPO};
+    float           _set_tempo{_tempo};
+    PlayingMode     _playmode{PlayingMode::STOPPED};
+    PlayingMode     _set_playmode{_playmode};
+    SyncMode        _syncmode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
-    PlayingMode     _mode{PlayingMode::PLAYING};
+    PlayStateChange _state_change{PlayStateChange::STARTING};
+
+    std::unique_ptr<ableton::Link>  _link_controller;
 };
 
 } // namespace engine

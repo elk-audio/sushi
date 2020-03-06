@@ -284,6 +284,15 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
     rapidjson::Value vst3_uid("vst3_uid");
     plugin.AddMember("uid", vst3_uid, test_cfg.GetAllocator());
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+
+    /* type = LV2; requires name & uri */
+    plugin["type"] = "lv2";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    plugin.AddMember("uri", path, test_cfg.GetAllocator());
+    plugin.RemoveMember("uid");
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    plugin["type"] = "vst3x";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
 }
 
 TEST_F(TestJsonConfigurator, TestMidiSchema)

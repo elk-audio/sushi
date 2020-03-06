@@ -34,9 +34,9 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/home/minddev/plugins/multichannel.so",
-                    "name" : "multichannel",
-                    "type" : "vst2x"
+                    "uid" : "sushi.testing.gain",
+                    "name" : "gain",
+                    "type"   : "internal"
                 }
             ]
         }

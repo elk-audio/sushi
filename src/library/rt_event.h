@@ -504,7 +504,7 @@ protected:
 enum class SyncMode
 {
     INTERNAL,
-    MIDI_SLAVE,
+    MIDI,
     GATE_INPUT,
     ABLETON_LINK
 };

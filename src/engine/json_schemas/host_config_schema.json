@@ -40,7 +40,7 @@ R"(
         },
         "tempo_sync":
         {
-          "enum": ["internal", "midi", "ableton link"]
+          "enum": ["internal", "midi", "ableton_link"]
         },
         "audio_clip_detection" :
         {
