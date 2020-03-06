@@ -88,7 +88,7 @@ public:
     /**
      * @brief Remove a plugin from the track.
      * @param processor The ObjectId of the processor to remove
-     * @return true if the processor was found and succesfully removed, false otherwise
+     * @return true if the processor was found and successfully removed, false otherwise
      */
     bool remove(ObjectId processor);
 
