@@ -771,7 +771,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
             break;
 
         case PluginType::LV2:
-            plugin = new lv2::LV2_Wrapper(_host_control, plugin_path);
+            plugin = std::make_shared<lv2::LV2_Wrapper>(_host_control, plugin_path);
             break;
     }
 

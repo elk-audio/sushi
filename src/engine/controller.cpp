@@ -96,7 +96,7 @@ inline sushi::AddProcessorToTrackEvent::ProcessorType to_event_type(ext::PluginT
         case ext::PluginType::INTERNAL: return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
         case ext::PluginType::VST2X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST2X;
         case ext::PluginType::VST3X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST3X;
-        case ext::PluginType::LV2:      return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL; //TODO - Fix when LV2 is merged
+        case ext::PluginType::LV2:      return sushi::AddProcessorToTrackEvent::ProcessorType::LV2;
         default:                        return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
     }
 }

@@ -405,8 +405,10 @@ public:
     {
         INTERNAL,
         VST2X,
-        VST3X
+        VST3X,
+        LV2,
     };
+
     AddProcessorToTrackEvent(const std::string& name,
                              const std::string& uid,
                              const std::string& file,

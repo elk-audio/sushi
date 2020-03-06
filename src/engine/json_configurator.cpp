@@ -590,16 +590,16 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_type = PluginType::VST2X;
             plugin_path = def["path"].GetString();
         }
-        else if(type == "lv2")
-        {
-            plugin_type = PluginType::LV2;
-            plugin_path = def["uri"].GetString();
-        }
-        else
+        else if(type == "vst3x")
         {
             plugin_uid = def["uid"].GetString();
             plugin_path = def["path"].GetString();
             plugin_type = PluginType::VST3X;
+        }
+        else // Anything else should have been caught by the validation step before this
+        {
+            plugin_type = PluginType::LV2;
+            plugin_path = def["uri"].GetString();
         }
 
         auto [status, plugin_id] = _engine->load_plugin(plugin_uid, plugin_name, plugin_path, plugin_type);
