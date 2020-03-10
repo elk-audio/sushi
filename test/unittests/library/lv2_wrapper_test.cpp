@@ -31,7 +31,8 @@ protected:
 
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
-        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
+        auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
+        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
 
@@ -90,10 +91,10 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
     EXPECT_EQ(0u, gain_param->id());
 
     // TestParameterSetViaEvent
-    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
+    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.5f);
     _module_under_test->process_event(parameter_change_event);
     auto value = _module_under_test->parameter_value(0);
-    EXPECT_EQ(0.123f, value.second);
+    EXPECT_EQ(0.5f, value.second);
 }
 
 TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
@@ -111,7 +112,7 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
     // Verify that a parameter change affects the sound.
     // eg-amp plugins Gain parameter range is from -90 to 24
-    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
+    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
     _module_under_test->process_event(lower_gain_Event);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -120,7 +121,7 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
     auto [status, parameter_value] = _module_under_test->parameter_value(0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(-90.0f, parameter_value);
+    EXPECT_EQ(0.0f, parameter_value);
 }
 
 TEST_F(TestLv2Wrapper, TestBypassProcessing)
@@ -130,7 +131,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -45.0f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.3f);
     _module_under_test->process_event(event);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);

@@ -221,7 +221,7 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
 {
     if (parameter_id >= _parameter_values.size())
     {
-        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
     }
 
     const auto& value_storage = _parameter_values[parameter_id];
@@ -241,14 +241,14 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value(ObjectId p
         return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->domain_value() ? 1.0f : 0.0f};
     }
 
-    return {ProcessorReturnCode::PARAMETER_ERROR, 0};
+    return {ProcessorReturnCode::PARAMETER_ERROR, 0.0f};
 }
 
 std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_in_domain(ObjectId parameter_id) const
 {
     if (parameter_id >= _parameter_values.size())
     {
-        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
     }
 
     const auto& value_storage = _parameter_values[parameter_id];
@@ -273,7 +273,7 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
 {
     if (parameter_id >= _parameter_values.size())
     {
-        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0};
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
     }
 
     const auto& value_storage = _parameter_values[parameter_id];
