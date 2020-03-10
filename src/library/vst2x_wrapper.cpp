@@ -389,7 +389,7 @@ bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
 VstTimeInfo* Vst2xWrapper::time_info()
 {
     auto transport = _host_control.transport();
-    auto ts = transport->current_time_signature();
+    auto ts = transport->time_signature();
 
     _time_info.samplePos          = transport->current_samples();
     _time_info.sampleRate         = _sample_rate;
@@ -400,6 +400,10 @@ VstTimeInfo* Vst2xWrapper::time_info()
     _time_info.timeSigNumerator   = ts.numerator;
     _time_info.timeSigDenominator = ts.denominator;
     _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
+    if (transport->current_state_change() != PlayStateChange::UNCHANGED)
+    {
+        _time_info.flags |= kVstTransportChanged;
+    }
     return &_time_info;
 }
 

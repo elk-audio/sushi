@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Singleton wrapper around spdlog and custom logging macros
+ * @brief Wrapper around spdlog and custom logging macros
  * *
  * If -DSUSHI_DISABLE_LOGGING is passed as a compiler argument, all logging code
  * disappears without a trace. Useful for testing and outside releases.
@@ -24,7 +24,7 @@
  * SUSHI_GET_LOGGER_WITH_MODULE_NAME() to set a module name that will be
  * used by all log entries from that file.
  *
- * Write to the logger using the ELK_LOG_XXX macros with cppformat style
+ * Write to the logger using the SUSHI_LOG_XXX macros with cppformat style
  * ie: SUSHI_LOG_INFO("Setting x to {} and y to {}", x, y);
  *
  * spdlog supports ostream style too, but that doesn't work with

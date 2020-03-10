@@ -8,6 +8,8 @@
 
 #include "library/sample_buffer.h"
 
+#include <iomanip>
+
 using ::testing::internal::posix::GetEnv;
 using namespace sushi;
 namespace test_utils {
@@ -59,6 +61,41 @@ inline std::string get_data_dir_path()
     test_config_file.append("/");
     return test_config_file;
 };
+
+inline void compare_buffers(const float static_array[][64], ChunkSampleBuffer& buffer, int channels, float error_margin = 0.0001f)
+{
+    for (int i = 0; i < channels; i++)
+    {
+        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        {
+            ASSERT_NEAR(static_array[i][j], buffer.channel(i)[j], error_margin);
+        }
+    }
+}
+
+// Utility for creating static buffers such as those used in vst2/lv2_wrapper_test, by copying values from console.
+inline void print_buffer(ChunkSampleBuffer& buffer, int channels)
+{
+    std::cout << std::scientific << std::setprecision(10);
+    int print_i = 0;
+    for (int i = 0; i < channels; i++)
+    {
+        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        {
+            std::cout << buffer.channel(i)[j] << "f, ";
+            print_i++;
+
+            if(print_i == 4)
+            {
+                std::cout << std::endl;
+                print_i = 0;
+            }
+        }
+
+        std::cout << std::endl;
+    }
+}
+
 
 // Macro to hide unused variable warnings when using structured bindings
 #define DECLARE_UNUSED(var) [[maybe_unused]] auto unused_##var = var

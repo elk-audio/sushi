@@ -566,65 +566,49 @@ private:
     BlobData _data;
 };
 
-class SetEngineTempoEvent : public Event
+class SetEngineTempoEvent : public EngineEvent
 {
 public:
-    SetEngineTempoEvent(float tempo, Time timestamp) : Event(timestamp),
+    SetEngineTempoEvent(float tempo, Time timestamp) : EngineEvent(timestamp),
                                                        _tempo(tempo) {}
 
-    bool maps_to_rt_event() override {return true;}
-    RtEvent to_rt_event(int sample_offset) override
-    {
-        return RtEvent::make_tempo_event(sample_offset, _tempo);
-    }
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     float _tempo;
 };
 
-class SetEngineTimeSignatureEvent : public Event
+class SetEngineTimeSignatureEvent : public EngineEvent
 {
 public:
-    SetEngineTimeSignatureEvent(TimeSignature signature, Time timestamp) : Event(timestamp),
+    SetEngineTimeSignatureEvent(TimeSignature signature, Time timestamp) : EngineEvent(timestamp),
                                                                            _signature(signature) {}
 
-    bool maps_to_rt_event() override {return true;}
-    RtEvent to_rt_event(int sample_offset) override
-    {
-        return RtEvent::make_time_signature_event(sample_offset, _signature);
-    }
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     TimeSignature _signature;
 };
 
-class SetEnginePlayingModeStateEvent : public Event
+class SetEnginePlayingModeStateEvent : public EngineEvent
 {
 public:
-    SetEnginePlayingModeStateEvent(PlayingMode mode, Time timestamp) : Event(timestamp),
+    SetEnginePlayingModeStateEvent(PlayingMode mode, Time timestamp) : EngineEvent(timestamp),
                                                                        _mode(mode) {}
 
-    bool maps_to_rt_event() override {return true;}
-    RtEvent to_rt_event(int sample_offset) override
-    {
-        return RtEvent::make_playing_mode_event(sample_offset, _mode);
-    }
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     PlayingMode _mode;
 };
 
-class SetEngineSyncModeEvent : public Event
+class SetEngineSyncModeEvent : public EngineEvent
 {
 public:
-    SetEngineSyncModeEvent(SyncMode mode, Time timestamp) : Event(timestamp),
+    SetEngineSyncModeEvent(SyncMode mode, Time timestamp) : EngineEvent(timestamp),
                                                             _mode(mode) {}
 
-    bool maps_to_rt_event() override {return true;}
-    RtEvent to_rt_event(int sample_offset) override
-    {
-        return RtEvent::make_sync_mode_event(sample_offset, _mode);
-    }
+    int execute(engine::BaseEngine* engine) override;
 
 private:
     SyncMode _mode;

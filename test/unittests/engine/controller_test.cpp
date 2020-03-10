@@ -31,6 +31,10 @@ protected:
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
         _dispatcher = _engine.event_dispatcher();
         _module_under_test = _engine.controller();
+        ChunkSampleBuffer buffer(8);
+        ControlBuffer ctrl_buffer;
+        // Run once so that pending changes are executed
+        _engine.process_chunk(&buffer, &buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
         ASSERT_TRUE(_module_under_test != nullptr);
     }
 

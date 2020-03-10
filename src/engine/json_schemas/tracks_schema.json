@@ -196,6 +196,26 @@ R"(
                     }
                   },
                   "required": ["uid","path", "name", "type"]
+                },
+                {
+                  "properties":
+                  {
+                    "uri":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name":
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type":
+                    {
+                      "enum": ["lv2"]
+                    }
+                  },
+                  "required": ["uri", "name", "type"]
                 }
               ]
             }

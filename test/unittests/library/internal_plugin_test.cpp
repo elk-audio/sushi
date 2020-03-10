@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+#include "engine/transport.h"
+
 #define private public
 #include "library/internal_plugin.cpp"
 #undef private
