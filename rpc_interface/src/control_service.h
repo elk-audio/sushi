@@ -22,13 +22,14 @@
 #define SUSHI_SUSHICONTROLSERVICE_H
 
 #include <atomic>
-#include <grpc++/grpc++.h>
+#include <grpcpp/grpcpp.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "sushi_rpc.grpc.pb.h"
 #pragma GCC diagnostic pop
 
+#include "library/synchronised_fifo.h"
 #include "../../include/control_interface.h"
 
 namespace sushi_rpc {
@@ -38,7 +39,7 @@ constexpr int NOTIFICATION_BUFFER_SIZE = 16;
 /**
  * @brief A ring buffer to hold the notifications received from
  * the sushi controller.
- * 
+ *
  * @tparam T type of notification.
  */
 
@@ -142,13 +143,13 @@ public:
 
      void notification(const sushi::ext::ControlNotification* notification) override;
 
-     const NotificationContainer<ParameterSetRequest>* parameter_notifications() const
+     SynchronizedQueue<std::shared_ptr<google::protobuf::Message>>* notifications()
      {
-         return &_parameter_notifications;
+         return &_notifications;
      }
 
 private:
-    NotificationContainer<ParameterSetRequest> _parameter_notifications;
+    SynchronizedQueue<std::shared_ptr<google::protobuf::Message>> _notifications;
     sushi::ext::SushiControl* _controller;
 };
 

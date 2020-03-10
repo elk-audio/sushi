@@ -26,6 +26,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <unordered_map>
 
 #include "../../include/control_interface.h"
 
@@ -55,14 +56,15 @@ public:
 
 private:
 
-    std::string                                  _listenAddress;
-    std::unique_ptr<SushiControlService>         _service;
-    std::unique_ptr<grpc::ServerBuilder>         _server_builder;
-    std::unique_ptr<grpc::Server>                _server;
-    std::unique_ptr<grpc::ServerCompletionQueue> _cq;
-    sushi::ext::SushiControl*                    _controller;
-    std::thread                                  _worker;
-    std::atomic<bool>                            _running;
+    std::string                                     _listenAddress;
+    std::unique_ptr<SushiControlService>            _service;
+    std::unique_ptr<grpc::ServerBuilder>            _server_builder;
+    std::unique_ptr<grpc::Server>                   _server;
+    // std::unique_ptr<grpc::ServerCompletionQueue>    _cq;
+    sushi::ext::SushiControl*                       _controller;
+    std::thread                                     _worker;
+    std::atomic<bool>                               _running;
+    std::unique_ptr<std::unordered_map<void*,bool>> _event_handled_by_call_data;
 };
 
 
