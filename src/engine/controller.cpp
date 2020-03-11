@@ -379,8 +379,8 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
                 info.unit = param->unit();
                 info.id = param->id();
                 info.type = ext::ParameterType::FLOAT;
-                info.min_range = param->min_range();
-                info.max_range = param->max_range();
+                info.min_domain_value = param->min_domain_value();
+                info.max_domain_value = param->max_domain_value();
                 infos.push_back(info);
             }
             return {ext::ControlStatus::OK, infos};
@@ -535,8 +535,8 @@ Controller::get_processor_parameters(int processor_id) const
             info.unit = param->unit();
             info.id = param->id();
             info.type = ext::ParameterType::FLOAT;
-            info.min_range = param->min_range();
-            info.max_range = param->max_range();
+            info.min_domain_value = param->min_domain_value();
+            info.max_domain_value = param->max_domain_value();
             infos.push_back(info);
         }
         return {ext::ControlStatus::OK, infos};
@@ -575,8 +575,8 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
             info.name = descr->name();
             info.unit = descr->unit();
             info.type = to_external(descr->type());
-            info.min_range = descr->min_range();
-            info.max_range = descr->max_range();
+            info.min_domain_value = descr->min_domain_value();
+            info.max_domain_value = descr->max_domain_value();
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
                                 descr->type() == ParameterType::INT   ||
                                 descr->type() == ParameterType::BOOL;
@@ -601,13 +601,13 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int process
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, float> Controller::get_parameter_value_normalised(int processor_id, int parameter_id) const
+std::pair<ext::ControlStatus, float> Controller::get_parameter_value_in_domain(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
+    SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
-        auto[status, value] = processor->parameter_value_normalised(static_cast<ObjectId>(parameter_id));
+        auto[status, value] = processor->parameter_value_in_domain(static_cast<ObjectId>(parameter_id));
         if (status == ProcessorReturnCode::OK)
         {
             return {ext::ControlStatus::OK, value};
@@ -639,23 +639,14 @@ std::pair<ext::ControlStatus, std::string> Controller::get_string_property_value
 
 ext::ControlStatus Controller::set_parameter_value(int processor_id, int parameter_id, float value)
 {
-    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
+    float clamped_value = std::clamp<float>(value, 0.0f, 1.0f);
+    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, clamped_value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
-                                          value, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
-}
+                                          clamped_value,
+                                          IMMEDIATE_PROCESS);
 
-ext::ControlStatus Controller::set_parameter_value_normalised(int processor_id, int parameter_id, float value)
-{
-    // TODO - this is exactly the same as set_parameter_value_now
-    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, value);
-    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                          static_cast<ObjectId>(processor_id),
-                                          static_cast<ObjectId>(parameter_id),
-                                          value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }

@@ -93,7 +93,7 @@ public:
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
-    std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
+    std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
 
