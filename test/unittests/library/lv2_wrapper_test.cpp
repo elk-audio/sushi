@@ -12,6 +12,9 @@
 
 #include "library/lv2/lv2_control.cpp"
 
+#include "library/lv2/lv2_worker.cpp"
+#include "library/lv2/zix/ring.cpp"
+
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
 

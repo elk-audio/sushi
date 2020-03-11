@@ -40,12 +40,32 @@
 #include "lv2_host_nodes.h"
 #include "lv2_control.h"
 
+#include "zix/ring.h"
+#include "zix/sem.h"
+#include "zix/thread.h"
+
 namespace sushi {
 namespace lv2 {
 
 class Model;
 class State;
 struct ControlID;
+
+typedef struct {
+    Model* model; // TODO: Is this needed?
+
+    ZixRing* requests = nullptr; ///< Requests to the worker
+    ZixRing* responses = nullptr; ///< Responses from the worker
+
+// TODO: Introduce proper thread. std::thread
+    ZixThread thread; ///< Worker thread
+
+    void* response = nullptr; ///< Worker response buffer
+    ZixSem sem;
+
+    const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
+    bool threaded = false; ///< Run work in another thread
+} Lv2_Worker;
 
 /**
 Control change event, sent through ring buffers for UI updates.
@@ -107,6 +127,13 @@ struct HostFeatures
     LV2_Feature unmap_feature;
     LV2_State_Make_Path make_path;
     LV2_Feature make_path_feature;
+
+    LV2_Worker_Schedule sched;
+    LV2_Feature sched_feature;
+    LV2_Worker_Schedule ssched;
+    LV2_Feature state_sched_feature;
+    LV2_Feature safe_restore_feature;
+
     LV2_Log_Log llog;
     LV2_Feature log_feature;
     LV2_Options_Option options[6];
@@ -131,7 +158,7 @@ public:
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
-    std::array<const LV2_Feature*, 9>* host_feature_list();
+    std::array<const LV2_Feature*, 10>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -196,6 +223,16 @@ public:
     int input_audio_channel_count();
     int output_audio_channel_count();
 
+
+    bool exit; ///< True iff execution is finished
+    Lv2_Worker worker; ///< Worker thread implementation
+    Lv2_Worker state_worker; ///< Synchronous worker for state restore
+    ZixSem work_lock; ///< Lock for plugin work() method
+    ZixSem done; ///< Exit semaphore
+    ZixSem paused; ///< Paused signal from process thread
+
+    bool safe_restore; ///< Plugin restore() is thread-safe
+
 private:
     bool _create_ports(const LilvPlugin* plugin);
     Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
@@ -206,6 +243,9 @@ private:
     void _initialize_urid_symap();
 
     void _initialize_make_path_feature();
+
+    void _initialize_worker_feature();
+    void _initialize_safe_restore_feature();
 
     void _create_controls(bool writable);
 
@@ -256,7 +296,7 @@ private:
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::array<const LV2_Feature*, 9> _feature_list;
+    std::array<const LV2_Feature*, 10> _feature_list;
 
     uint32_t _position;
     float _bpm;

@@ -26,6 +26,8 @@
 #include "lv2_state.h"
 #include "logging.h"
 
+#include "lv2_worker.h"
+
 namespace {
 /** These features have no data */
 static const LV2_Feature static_features[] = {
@@ -53,19 +55,32 @@ Model::Model()
     // Find all installed plugins.
     lilv_world_load_all(_world);
 
+    zix_sem_init(&this->done, 0);
+    zix_sem_init(&this->paused, 0);
+    zix_sem_init(&this->worker.sem, 0);
+
+
     _initialize_map_feature();
     _initialize_unmap_feature();
     _initialize_urid_symap();
     _initialize_log_feature();
     _initialize_make_path_feature();
+
+    _initialize_worker_feature();
+    _initialize_safe_restore_feature();
 }
 
 Model::~Model()
 {
     if (_plugin_instance)
     {
+        /* Terminate the worker */
+        lv2_worker_finish(&worker);
+
         lilv_instance_deactivate(_plugin_instance);
         lilv_instance_free(_plugin_instance);
+
+        lv2_worker_destroy(&worker);
 
         for (unsigned i = 0; i < _controls.size(); ++i)
         {
@@ -96,10 +111,11 @@ void Model::_initialize_host_feature_list()
     // Build feature list for passing to plugins.
     // Warning: LV2 / Lilv require this list to be null-terminated.
     // So remember to check for null when iterating over it!
-    std::array<const LV2_Feature*, 9> features({
+    std::array<const LV2_Feature*, 10> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
+            &_features.sched_feature,
             &_features.make_path_feature,
 // TODO: Re-introduce options extension.
             //&_features.options_feature,
@@ -162,6 +178,28 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
     }
 
     _features.ext_data.data_access = lilv_instance_get_descriptor(_plugin_instance)->extension_data;
+
+    /* Create workers if necessary */
+    if (lilv_plugin_has_extension_data(plugin_handle, _nodes->work_interface))
+    {
+        const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
+                lilv_instance_get_extension_data(_plugin_instance, LV2_WORKER__interface);
+
+        lv2_worker_init(this, &worker, iface, true);
+        if (safe_restore)
+        {
+            lv2_worker_init(this, &state_worker, iface, false);
+        }
+    }
+
+    LilvNode* state_threadSafeRestore = lilv_new_uri(_world, LV2_STATE__threadSafeRestore);
+    if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
+    {
+        safe_restore = true;
+    }
+    lilv_node_free(state_threadSafeRestore);
+
+
 
     if (_create_ports(plugin_handle) == false)
     {
@@ -410,6 +448,29 @@ void Model::_initialize_make_path_feature()
                  LV2_STATE__makePath, &this->_features.make_path);
 }
 
+void Model::_initialize_worker_feature()
+{
+    this->worker.model = this;
+    this->state_worker.model = this;
+
+    this->_features.sched.handle = &this->worker;
+    this->_features.sched.schedule_work = lv2_worker_schedule;
+    init_feature(&this->_features.sched_feature,
+                 LV2_WORKER__schedule, &this->_features.sched);
+
+    this->_features.ssched.handle = &this->state_worker;
+    this->_features.ssched.schedule_work = lv2_worker_schedule;
+    init_feature(&this->_features.state_sched_feature,
+                 LV2_WORKER__schedule, &this->_features.ssched);
+}
+
+void Model::_initialize_safe_restore_feature()
+{
+    init_feature(&this->_features.safe_restore_feature,
+                 LV2_STATE__threadSafeRestore,
+                 NULL);
+}
+
 bool Model::_check_for_required_features(const LilvPlugin* plugin)
 {
     // Check that any required features are supported
@@ -432,7 +493,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-std::array<const LV2_Feature*, 9>* Model::host_feature_list()
+std::array<const LV2_Feature*, 10>* Model::host_feature_list()
 {
     return &_feature_list;
 }

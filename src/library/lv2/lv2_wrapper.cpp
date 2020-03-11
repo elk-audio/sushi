@@ -33,6 +33,8 @@
 #include "lv2_state.h"
 #include "lv2_control.h"
 
+#include "lv2_worker.h"
+
 namespace
 {
 
@@ -407,6 +409,10 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         _deliver_inputs_to_plugin();
 
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
+
+        /* Process any worker replies. */
+        lv2_worker_emit_responses(&_model->state_worker, _model->plugin_instance());
+        lv2_worker_emit_responses(&_model->worker, _model->plugin_instance());
 
         _deliver_outputs_from_plugin(false);
 

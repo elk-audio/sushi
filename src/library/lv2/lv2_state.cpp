@@ -140,7 +140,7 @@ void State::unload_programs()
 
 void State::apply_state(LilvState* state)
 {
-    bool must_pause = _model->play_state() == PlayState::RUNNING;
+    bool must_pause = !_model->safe_restore && _model->play_state() == PlayState::RUNNING;
 
     if (state)
     {
