@@ -91,8 +91,8 @@ struct ParameterInfo
     std::string     name;
     std::string     unit;
     bool            automatable;
-    float           min_range;
-    float           max_range;
+    float           min_domain_value;
+    float           max_domain_value;
 };
 
 struct ProcessorInfo
@@ -179,11 +179,10 @@ public:
     virtual std::pair<ControlStatus, int>              get_parameter_id(int processor_id, const std::string& parameter) const = 0;
     virtual std::pair<ControlStatus, ParameterInfo>    get_parameter_info(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, float>            get_parameter_value(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, float>            get_parameter_value_normalised(int processor_id, int parameter_id) const = 0;
+    virtual std::pair<ControlStatus, float>            get_parameter_value_in_domain(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_parameter_value_as_string(int processor_id, int parameter_id) const = 0;
     virtual std::pair<ControlStatus, std::string>      get_string_property_value(int processor_id, int parameter_id) const = 0;
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) = 0;
-    virtual ControlStatus                              set_parameter_value_normalised(int processor_id, int parameter_id, float value) = 0;
     virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
     // Audio graph control

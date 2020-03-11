@@ -20,26 +20,26 @@ service SushiController {
     rpc GetTracks(GenericVoidValue) returns (TrackInfoList) {}
 
     // Keyboard control
-    rpc SendNoteOn(NoteOnRequest) returns (GenericVoidValue) {}
-    rpc SendNoteOff(NoteOffRequest) returns (GenericVoidValue) {}
-    rpc SendNoteAftertouch(NoteAftertouchRequest) returns (GenericVoidValue) {}
-    rpc SendAftertouch(NoteModulationRequest) returns (GenericVoidValue) {}
-    rpc SendPitchBend(NoteModulationRequest) returns (GenericVoidValue) {}
-    rpc SendModulation(NoteModulationRequest) returns (GenericVoidValue) {}
+    rpc SendNoteOn (NoteOnRequest) returns (GenericVoidValue) {}
+    rpc SendNoteOff (NoteOffRequest) returns (GenericVoidValue) {}
+    rpc SendNoteAftertouch (NoteAftertouchRequest) returns (GenericVoidValue) {}
+    rpc SendAftertouch (NoteModulationRequest) returns (GenericVoidValue) {}
+    rpc SendPitchBend (NoteModulationRequest) returns (GenericVoidValue) {}
+    rpc SendModulation (NoteModulationRequest) returns (GenericVoidValue) {}
 
     // Cpu timings
-    rpc GetEngineTimings(GenericVoidValue) returns (CpuTimings) {}
-    rpc GetTrackTimings(TrackIdentifier) returns (CpuTimings) {}
-    rpc GetProcessorTimings(ProcessorIdentifier) returns (CpuTimings) {}
-    rpc ResetAllTimings(GenericVoidValue) returns (GenericVoidValue) {}
-    rpc ResetTrackTimings(TrackIdentifier) returns (GenericVoidValue) {}
-    rpc ResetProcessorTimings(ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc GetEngineTimings (GenericVoidValue) returns (CpuTimings) {}
+    rpc GetTrackTimings (TrackIdentifier) returns (CpuTimings) {}
+    rpc GetProcessorTimings (ProcessorIdentifier) returns (CpuTimings) {}
+    rpc ResetAllTimings (GenericVoidValue) returns (GenericVoidValue) {}
+    rpc ResetTrackTimings (TrackIdentifier) returns (GenericVoidValue) {}
+    rpc ResetProcessorTimings (ProcessorIdentifier) returns (GenericVoidValue) {}
 
     // Track control
-    rpc GetTrackId(GenericStringValue) returns (TrackIdentifier) {}
-    rpc GetTrackInfo(TrackIdentifier) returns (TrackInfo) {}
-    rpc GetTrackProcessors(TrackIdentifier) returns (ProcessorInfoList) {}
-    rpc GetTrackParameters(TrackIdentifier) returns (ParameterInfoList) {}
+    rpc GetTrackId (GenericStringValue) returns (TrackIdentifier) {}
+    rpc GetTrackInfo (TrackIdentifier) returns (TrackInfo) {}
+    rpc GetTrackProcessors (TrackIdentifier) returns (ProcessorInfoList) {}
+    rpc GetTrackParameters (TrackIdentifier) returns (ParameterInfoList) {}
     // list requests left out for now
 
     // Processor control
@@ -58,13 +58,12 @@ service SushiController {
     // Parameter control
     rpc GetParameterId (ParameterIdRequest) returns (ParameterIdentifier) {}
     rpc GetParameterInfo (ParameterIdentifier) returns (ParameterInfo) {}
-    rpc GetParameterValue(ParameterIdentifier) returns (GenericFloatValue) {}
-    rpc GetParameterValueNormalised(ParameterIdentifier) returns (GenericFloatValue) {}
-    rpc GetParameterValueAsString(ParameterIdentifier) returns (GenericStringValue) {}
-    rpc GetStringPropertyValue(ParameterIdentifier) returns (GenericStringValue) {}
-    rpc SetParameterValue(ParameterSetRequest) returns (GenericVoidValue) {}
-    rpc SetParameterValueNormalised(ParameterSetRequest) returns (GenericVoidValue) {}
-    rpc SetStringPropertyValue(StringPropertySetRequest) returns (GenericVoidValue) {}
+    rpc GetParameterValue (ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
+    rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
+    rpc GetStringPropertyValue (ParameterIdentifier) returns (GenericStringValue) {}
+    rpc SetParameterValue (ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetStringPropertyValue (StringPropertySetRequest) returns (GenericVoidValue) {}
 
     // Audio Graph Control
     rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
@@ -254,8 +253,8 @@ message ParameterInfo {
     string name = 4;
     string unit = 5;
     bool   automatable = 6;
-    float  min_range = 7;
-    float  max_range = 8;
+    float  min_domain_value = 7;
+    float  max_domain_value = 8;
 }
 
 message ParameterInfoList {

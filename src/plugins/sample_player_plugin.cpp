@@ -33,11 +33,26 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _volume_parameter  = register_float_parameter("volume", "Volume", "dB", 0.0f, -120.0f, 36.0f, new dBToLinPreProcessor(-120.0f, 36.0f));
-    _attack_parameter  = register_float_parameter("attack", "Attack", "s", 0.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
-    _decay_parameter   = register_float_parameter("decay", "Decay", "s",0.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
-    _sustain_parameter = register_float_parameter("sustain", "Sustain", "", 1.0f, 0.0f, 1.0f, new FloatParameterPreProcessor(0.0f, 1.0f));
-    _release_parameter = register_float_parameter("release", "Release", "s", 0.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0f, 10.0f));
+    _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
+                                                  0.0f, -120.0f, 36.0f,
+                                                  new dBToLinPreProcessor(-120.0f, 36.0f));
+
+    _attack_parameter  = register_float_parameter("attack", "Attack", "s",
+                                                  0.0f, 0.0f, 10.0f,
+                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+
+    _decay_parameter   = register_float_parameter("decay", "Decay", "s",
+                                                  0.0f, 0.0f, 10.0f,
+                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+
+    _sustain_parameter = register_float_parameter("sustain", "Sustain", "",
+                                                  1.0f, 0.0f, 1.0f,
+                                                  new FloatParameterPreProcessor(0.0f, 1.0f));
+
+    _release_parameter = register_float_parameter("release", "Release", "s",
+                                                  0.0f, 0.0f, 10.0f,
+                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+
     [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File", "");
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
 }
@@ -180,11 +195,11 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
 
 void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer &out_buffer)
 {
-    float gain = _volume_parameter->value();
-    float attack = _attack_parameter->value();
-    float decay = _decay_parameter->value();
-    float sustain = _sustain_parameter->value();
-    float release = _release_parameter->value();
+    float gain = _volume_parameter->processed_value();
+    float attack = _attack_parameter->processed_value();
+    float decay = _decay_parameter->processed_value();
+    float sustain = _sustain_parameter->processed_value();
+    float release = _release_parameter->processed_value();
 
     _buffer.clear();
     out_buffer.clear();

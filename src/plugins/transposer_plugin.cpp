@@ -43,10 +43,10 @@ TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(ho
     _transpose_parameter = register_float_parameter("transpose",
                                                     "Transpose",
                                                     "semitones",
-                                                    0,
-                                                    -24,
-                                                    24,
-                                                    new FloatParameterPreProcessor(-24, 24) );
+                                                    0.0f,
+                                                    -24.0f,
+                                                    24.0f,
+                                                    new FloatParameterPreProcessor(-24.0f, 24.0f) );
     assert(_transpose_parameter);
     _max_input_channels = 0;
     _max_output_channels = 0;
@@ -101,7 +101,7 @@ void TransposerPlugin::process_event(const RtEvent& event)
 
 int TransposerPlugin::_transpose_note(int note)
 {
-    int steps = _transpose_parameter->value();
+    int steps = _transpose_parameter->processed_value();
     return std::clamp(note + steps, MIN_NOTE, MAX_NOTE);
 }
 

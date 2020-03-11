@@ -234,7 +234,7 @@ public:
      * @param parameter_id The Id of the requested parameter
      * @return The current value normalised to a 0 to 1 range, if the return code is OK
      */
-    virtual std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId /*parameter_id*/) const
+    virtual std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId /*parameter_id*/) const
     {
         return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
     };

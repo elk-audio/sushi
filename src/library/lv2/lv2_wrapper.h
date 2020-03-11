@@ -101,7 +101,7 @@ public:
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
-    std::pair<ProcessorReturnCode, float> parameter_value_normalised(ObjectId parameter_id) const override;
+    std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
 
@@ -189,6 +189,22 @@ private:
     PlayState _previous_play_state {PlayState::PAUSED};
     void _pause_audio_processing();
     void _resume_audio_processing();
+
+    // TODO: These are duplicated in ParameterPreProcessor, used for internal plugins.
+    // Eventually LV2 can instead use the same parameter processing subsystem:
+    // It has a field units:unit for instantiating an appropriate PreProcessor.
+    float _to_domain(float value_normalized, float min_domain, float max_domain) const
+    {
+        return max_domain + (min_domain - max_domain) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+    }
+
+    float _to_normalized(float value, float min_domain, float max_domain) const
+    {
+        return _max_normalized + (_min_normalized - _max_normalized) / (min_domain - max_domain) * (value - max_domain);
+    }
+
+    static constexpr float _min_normalized{0.0f};
+    static constexpr float _max_normalized{1.0f};
 };
 
 } // end namespace lv2

@@ -128,8 +128,9 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
     status = _module_under_test.connect_gate_from_processor(1, 0, 1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    auto event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("polyphony")->id(), 2.0f);
+    auto event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("polyphony")->id(), 0.5f);
     _module_under_test.process_event(event);
+
     event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("send_velocity")->id(), 1.0f);
     _module_under_test.process_event(event);
 
@@ -248,7 +249,7 @@ TEST_F(ControlToCvPluginTest, TestPitchBend)
     _event_output.clear();
 
     // Set the tune parameters up 1 octave
-    event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("tune")->id(), 12.0f);
+    event = RtEvent::make_parameter_change_event(_module_under_test.id(), 0, _module_under_test.parameter_from_name("tune")->id(), 0.75f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);
 

@@ -36,7 +36,10 @@ ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _range_parameter  = register_int_parameter("range", "Range", "octaves", 2, 1, 5, new IntParameterPreProcessor(1, 5));
+    _range_parameter  = register_int_parameter("range", "Range", "octaves",
+                                               2, 1, 5,
+                                               new IntParameterPreProcessor(1, 5));
+
     assert(_range_parameter);
     _max_input_channels = 0;
     _max_output_channels = 0;
@@ -80,12 +83,13 @@ void ArpeggiatorPlugin::process_event(const RtEvent& event)
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
+            InternalPlugin::process_event(event);
             auto typed_event = event.parameter_change_event();
             if (typed_event->param_id() == _range_parameter->descriptor()->id())
             {
-                _arp.set_range(static_cast<int>(typed_event->value()));
+                _arp.set_range(_range_parameter->processed_value());
             }
-            [[fallthrough]];
+            break;
         }
         default:
             InternalPlugin::process_event(event);
