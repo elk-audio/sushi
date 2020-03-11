@@ -83,12 +83,13 @@ void ArpeggiatorPlugin::process_event(const RtEvent& event)
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
+            InternalPlugin::process_event(event);
             auto typed_event = event.parameter_change_event();
             if (typed_event->param_id() == _range_parameter->descriptor()->id())
             {
-                _arp.set_range(static_cast<int>(typed_event->value()));
+                _arp.set_range(_range_parameter->processed_value());
             }
-            [[fallthrough]];
+            break;
         }
         default:
             InternalPlugin::process_event(event);
