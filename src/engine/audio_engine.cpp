@@ -41,12 +41,14 @@
 #include "library/vst3x_wrapper.h"
 #include "library/lv2/lv2_wrapper.h"
 
+
 namespace sushi {
 namespace engine {
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
+constexpr int  MAX_TRACKS = 32;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -84,18 +86,107 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     }
 }
 
+void external_render_callback(void* data)
+{
+    auto tracks = reinterpret_cast<std::vector<Track*>*>(data);
+    for (auto i : *tracks)
+    {
+        i->render();
+    }
+}
+
+AudioGraph::AudioGraph(int cpu_cores) : _audio_graph(cpu_cores),
+                                        _event_outputs(cpu_cores),
+                                        _cores(cpu_cores),
+                                        _current_core(0)
+{
+    assert(cpu_cores > 0);
+    if (_cores > 1)
+    {
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores);
+        for (auto& i : _audio_graph)
+        {
+            _worker_pool->add_worker(external_render_callback, &i);
+            i.reserve(MAX_TRACKS);
+        }
+    }
+    else
+    {
+        _audio_graph[0].reserve(MAX_TRACKS);
+    }
+}
+
+bool AudioGraph::add(Track* track)
+{
+    auto& slot = _audio_graph[_current_core];
+    if (slot.size() < MAX_TRACKS)
+    {
+        track->set_event_output(&_event_outputs[_current_core]);
+        slot.push_back(track);
+        _current_core = (_current_core + 1) % _cores;
+        return true;
+    }
+    return false;
+}
+
+bool AudioGraph::add_to_core(Track* track, int core)
+{
+    assert(core < _cores);
+    auto& slot = _audio_graph[core];
+    if (slot.size() < MAX_TRACKS)
+    {
+        track->set_event_output(&_event_outputs[core]);
+        slot.push_back(track);
+        return true;
+    }
+    return false;
+}
+
+bool AudioGraph::remove(Track* track)
+{
+    for (auto& slot : _audio_graph)
+    {
+        for (auto i = slot.begin(); i != slot.end(); ++i)
+        {
+            if (*i == track)
+            {
+                slot.erase(i);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void AudioGraph::render()
+{
+    for (auto& i : _event_outputs)
+    {
+        i.clear();
+    }
+
+    if (_cores == 1)
+    {
+        for (auto& track : _audio_graph[0])
+        {
+            track->render();
+        }
+    }
+    else
+    {
+        _worker_pool->wakeup_workers();
+        _worker_pool->wait_for_workers_idle();
+    }
+}
+
+
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
-                                                                _multicore_processing(rt_cpu_cores > 1),
-                                                                _rt_cores(rt_cpu_cores),
+                                                                _audio_graph(rt_cpu_cores),
                                                                 _transport(sample_rate),
                                                                 _clip_detector(sample_rate)
 {
     this->set_sample_rate(sample_rate);
     _event_dispatcher.run();
-    if (_multicore_processing)
-    {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_rt_cores);
-    }
 }
 
 AudioEngine::~AudioEngine()
@@ -426,23 +517,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     }
     _copy_audio_to_tracks(in_buffer);
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wakeup_workers();
-    }
-    else
-    {
-        for (auto& track : _audio_graph)
-        {
-            track->render();
-        }
-    }
-    _retrieve_events_from_tracks(*out_controls);
+    // Render all tracks
+    _audio_graph.render();
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wait_for_workers_idle();
-    }
+    _retrieve_events_from_tracks(*out_controls);
 
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _copy_audio_from_tracks(out_buffer);
@@ -541,7 +619,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
 {
     // TODO - Until it's decided how tracks report what processors they have,
     // we assume that the track has no processors before deleting
-    auto track = _processors.mutable_processor(track_name);
+    auto track = _processors.mutable_track(track_name);
     if (track == nullptr)
     {
         SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_name);
@@ -563,7 +641,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
     }
     else
     {
-        _audio_graph.erase(std::remove(_audio_graph.begin(), _audio_graph.end(), track.get()), _audio_graph.end());
+        _audio_graph.remove(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false,"Plugin track {} was not in the audio graph", track_name);
     }
@@ -783,8 +861,6 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
         track.reset();
         return status;
     }
-    // Have tracks buffer their events internally as outputting directly might not be thread safe
-    track->set_event_output_internal();
 
     if (realtime())
     {
@@ -799,14 +875,19 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
             SUSHI_LOG_ERROR("Failed to insert/add track {} to processing part", name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
-    } else
-    {
-        _insert_processor_in_realtime_part(track.get());
-        _audio_graph.push_back(track.get());
     }
-    if (_multicore_processing)
+    else
     {
-        _worker_pool->add_worker(Track::ext_render_function, track.get());
+        if (_audio_graph.add(track.get()) == false)
+        {
+            SUSHI_LOG_ERROR("Error adding track {}, max number of tracks reached", track->name());
+            return EngineReturnStatus::ERROR;
+        }
+        if (_insert_processor_in_realtime_part(track.get()) == false)
+        {
+            SUSHI_LOG_ERROR("Error adding track {}", track->name());
+            return EngineReturnStatus::ERROR;
+        }
     }
     if (_processors.add_track(track))
     {
@@ -879,13 +960,15 @@ void AudioEngine::_process_internal_rt_events()
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 if (track)
                 {
-                    _audio_graph.push_back(track);
-                    track->set_active_rt_processing(true);
-                    typed_event->set_handled(true);
-                } else
-                {
-                    typed_event->set_handled(false);
+                    bool ok = _audio_graph.add(track);
+                    if (ok)
+                    {
+                        track->set_active_rt_processing(true);
+                        typed_event->set_handled(true);
+                        break;
+                    }
                 }
+                typed_event->set_handled(false);
                 break;
             }
             case RtEventType::REMOVE_TRACK:
@@ -894,18 +977,15 @@ void AudioEngine::_process_internal_rt_events()
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 if (track)
                 {
-                    for (auto i = _audio_graph.begin(); i != _audio_graph.end(); ++i)
+                    bool removed = _audio_graph.remove(track);
+                    if (removed)
                     {
-                        if ((*i)->id() == typed_event->track())
-                        {
-                            _audio_graph.erase(i);
-                            track->set_active_rt_processing(false);
-                            typed_event->set_handled(true);
-                            break;
-                        }
+                        track->set_active_rt_processing(false);
+                        typed_event->set_handled(true);
+                        break;
                     }
-                } else
-                    typed_event->set_handled(false);
+                }
+                typed_event->set_handled(false);
                 break;
             }
             case RtEventType::TEMPO:
@@ -945,10 +1025,32 @@ void AudioEngine::_send_rt_event(const RtEvent& event)
 
 void AudioEngine::_retrieve_events_from_tracks(ControlBuffer& buffer)
 {
-    for (auto& track : _audio_graph)
+    for (auto& output : _audio_graph.event_outputs())
     {
-        auto& event_buffer = track->output_event_buffer();
-        _process_outgoing_events(buffer, event_buffer);
+        while (output.empty() == false)
+        {
+            const RtEvent& event = output.pop();
+            switch (event.type())
+            {
+                case RtEventType::CV_EVENT:
+                {
+                    auto typed_event = event.cv_event();
+                    buffer.cv_values[typed_event->cv_id()] = typed_event->value();
+                    break;
+                }
+
+                case RtEventType::GATE_EVENT:
+                {
+                    auto typed_event = event.gate_event();
+                    _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
+                    break;
+                }
+
+                default:
+                    _main_out_queue.push(event);
+            }
+        }
+        buffer.gate_values = _outgoing_gate_values;
     }
 }
 

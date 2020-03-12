@@ -176,7 +176,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test = std::make_unique<AudioEngine>(SAMPLE_RATE);
+        _module_under_test = std::make_unique<AudioEngine>(SAMPLE_RATE, 1);
         _module_under_test->set_audio_input_channels(TEST_CHANNEL_COUNT);
         _module_under_test->set_audio_output_channels(TEST_CHANNEL_COUNT);
         _processors = _module_under_test->processor_container();
@@ -192,7 +192,9 @@ protected:
 TEST_F(TestEngine, TestProcess)
 {
     /* Add a plugin track and connect it to inputs and outputs */
-    _module_under_test->create_track("test_track", 2);
+    auto status = _module_under_test->create_track("test_track", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
     auto track = _module_under_test->processor_container()->track("test_track");
     ASSERT_NE(nullptr, track);
 
@@ -258,8 +260,8 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     auto status = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_TRUE(_processors->processor_exists("left"));
-    ASSERT_EQ(_module_under_test->_audio_graph.size(),1u);
-    ASSERT_EQ(_module_under_test->_audio_graph[0]->name(),"left");
+    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),1u);
+    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0][0]->name(),"left");
 
     /* Test invalid name */
     status = _module_under_test->create_track("left", 1);
@@ -271,7 +273,7 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     status = _module_under_test->delete_track("left");
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_FALSE(_processors->processor_exists("left"));
-    ASSERT_EQ(_module_under_test->_audio_graph.size(),0u);
+    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
 
     /* Test invalid number of channels */
     status = _module_under_test->create_track("left", 3);
@@ -308,9 +310,9 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Check that processors exists and in the right order on track "main" */
     ASSERT_TRUE(_processors->processor_exists("gain"));
     ASSERT_TRUE(_processors->processor_exists("synth"));
-    ASSERT_EQ(2u, _module_under_test->_audio_graph[0]->_processors.size());
-    ASSERT_EQ("synth", _module_under_test->_audio_graph[0]->_processors[0]->name());
-    ASSERT_EQ("gain", _module_under_test->_audio_graph[0]->_processors[1]->name());
+    ASSERT_EQ(2u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
+    ASSERT_EQ("synth", _module_under_test->_audio_graph._audio_graph[0][0]->_processors[0]->name());
+    ASSERT_EQ("gain", _module_under_test->_audio_graph._audio_graph[0][0]->_processors[1]->name());
 
     /* Move a processor from 1 track to another */
     status = _module_under_test->create_track("right", 2);
@@ -339,8 +341,8 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     ASSERT_FALSE(_processors->processor_exists("gain"));
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_processors.size());
-    ASSERT_EQ("synth", _module_under_test->_audio_graph[1]->_processors[0]->name());
+    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
+    ASSERT_EQ("synth", _module_under_test->_audio_graph._audio_graph[0][1]->_processors[0]->name());
 
     /* Negative tests */
     ObjectId id;
@@ -424,7 +426,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[0]->_processors.size());
+    ASSERT_EQ(1u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
 
     // Remove the plugin and track.
 
@@ -436,7 +438,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     status = _module_under_test->remove_plugin_from_track(plugin_id, track_id);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[0]->_processors.size());
+    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
     status = _module_under_test->delete_plugin(plugin_id);
@@ -447,7 +449,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     status = _module_under_test->delete_track("main");
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(0u, _module_under_test->_audio_graph.size());
+    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0].size());
 
     // Assert that they were also deleted from the map of processors
     ASSERT_FALSE(_processors->processor_exists("main"));

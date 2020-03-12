@@ -77,6 +77,34 @@ private:
     std::vector<unsigned int> _output_clip_count;
 };
 
+/**
+ * @brief Wrapper around the list of tracks used for rt processing and its associated
+ *        multicore management
+ */
+class AudioGraph
+{
+public:
+    AudioGraph(int cpu_cores);
+
+    bool add(Track* track);
+
+    bool add_to_core(Track* track, int core);
+
+    bool remove(Track* track);
+
+    std::vector<RtEventFifo<100>>& event_outputs()
+    {
+        return _event_outputs;
+    }
+
+    void render();
+private:
+    std::vector<std::vector<Track*>>   _audio_graph;
+    std::unique_ptr<twine::WorkerPool> _worker_pool;
+    std::vector<RtEventFifo<100>>      _event_outputs;
+    int _cores;
+    int _current_core;
+};
 
 class ProcessorContainer : public BaseProcessorContainer
 {
@@ -676,17 +704,12 @@ private:
 
     void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
 
-    const bool _multicore_processing;
-    const int  _rt_cores;
-
-    std::unique_ptr<twine::WorkerPool> _worker_pool;
-
     ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
-    std::vector<Track*>     _audio_graph;
+    std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    AudioGraph                 _audio_graph;
 
     struct AudioConnection
     {

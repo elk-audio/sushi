@@ -17,7 +17,7 @@
  * @brief Simple, non-thread safe fifo queue for use internally in the engine when
  *        concurrent access is not neccesary.
  *        Support for popping elements by value or reference, though in most cases
- *        the most efficient should be to interate over the elements in place and
+ *        the most efficient should be to iterate over the elements in place and
  *        the call clear()
  *        Capacity should ideally be a power of 2.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
