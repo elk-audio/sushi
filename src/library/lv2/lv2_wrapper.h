@@ -68,21 +68,9 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
-            Processor(host_control),
-            _plugin_path {lv2_plugin_uri}
-    {
-        _model = std::make_unique<Model>();
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri);
 
-        _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
-        _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
-    }
-
-    virtual ~LV2_Wrapper()
-    {
-        if(_model->plugin_instance() != nullptr)
-            set_enabled(false);
-    }
+    virtual ~LV2_Wrapper();
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -162,8 +150,6 @@ private:
     void _flush_event_queue();
     void _process_midi_input(Port* port);
     void _process_midi_output(Port* port);
-
-    float _sample_rate{0};
 
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS]{};

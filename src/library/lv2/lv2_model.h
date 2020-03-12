@@ -152,13 +152,13 @@ class Model
 public:
     SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    Model();
+    Model(float sample_rate);
     ~Model();
 
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
-    std::array<const LV2_Feature*, 10>* host_feature_list();
+    std::array<const LV2_Feature*, 11>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -224,7 +224,7 @@ public:
     int output_audio_channel_count();
 
 
-    bool exit; ///< True iff execution is finished
+    bool lv2_exit {false}; ///< True iff execution is finished
     Lv2_Worker worker; ///< Worker thread implementation
     Lv2_Worker state_worker; ///< Synchronous worker for state restore
     ZixSem work_lock; ///< Lock for plugin work() method
@@ -246,6 +246,7 @@ private:
 
     void _initialize_worker_feature();
     void _initialize_safe_restore_feature();
+    void _initialize_options_feature();
 
     void _create_controls(bool writable);
 
@@ -289,14 +290,17 @@ private:
     std::vector<Port> _ports;
 
     float _sample_rate;
+    const int _buffer_size{AUDIO_CHUNK_SIZE};
     int _midi_buffer_size{4096};
+
+    int _ui_update_hz{30};
 
     const LilvPlugin* _plugin_class{nullptr};
 
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::array<const LV2_Feature*, 10> _feature_list;
+    std::array<const LV2_Feature*, 11> _feature_list;
 
     uint32_t _position;
     float _bpm;

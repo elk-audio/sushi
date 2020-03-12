@@ -42,9 +42,21 @@ static const LV2_Feature static_features[] = {
 namespace sushi {
 namespace lv2 {
 
+/* Size factor for UI ring buffers.  The ring size is a few times the size of
+an event output to give the UI a chance to keep up.  Experiments with Ingen,
+which can highly saturate its event output, led me to this value.  It
+really ought to be enough for anybody(TM).
+*/
+#define N_BUFFER_CYCLES 16
+
+#ifndef ARRAY_SIZE
+#    define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#endif
+
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model()
+Model::Model(float sample_rate):
+_sample_rate(sample_rate)
 {
     _world = lilv_world_new();
     _nodes = std::make_unique<HostNodes>(_world);
@@ -68,6 +80,7 @@ Model::Model()
 
     _initialize_worker_feature();
     _initialize_safe_restore_feature();
+    _initialize_options_feature();
 }
 
 Model::~Model()
@@ -111,14 +124,13 @@ void Model::_initialize_host_feature_list()
     // Build feature list for passing to plugins.
     // Warning: LV2 / Lilv require this list to be null-terminated.
     // So remember to check for null when iterating over it!
-    std::array<const LV2_Feature*, 10> features({
+    std::array<const LV2_Feature*, 11> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
             &_features.sched_feature,
             &_features.make_path_feature,
-// TODO: Re-introduce options extension.
-            //&_features.options_feature,
+            &_features.options_feature,
             &static_features[0],
             &static_features[1],
             &static_features[2],
@@ -154,6 +166,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 {
     _plugin_class = plugin_handle;
     _play_state = PlayState::PAUSED;
+    _sample_rate = sample_rate;
 
     _initialize_host_feature_list();
 
@@ -417,7 +430,7 @@ void Model::_initialize_log_feature()
     this->_features.llog.handle = this;
     this->_features.llog.printf = lv2_printf;
     this->_features.llog.vprintf = lv2_vprintf;
-    init_feature(&this->_features.log_feature, LV2_LOG__log, &this->_features.llog);
+    init_feature(&_features.log_feature, LV2_LOG__log, &_features.llog);
 }
 
 void Model::_initialize_map_feature()
@@ -471,6 +484,25 @@ void Model::_initialize_safe_restore_feature()
                  NULL);
 }
 
+void Model::_initialize_options_feature()
+{
+    /* Build options array to pass to plugin */
+    const LV2_Options_Option options[ARRAY_SIZE(_features.options)] = {
+            { LV2_OPTIONS_INSTANCE, 0, _urids.param_sampleRate, sizeof(float), _urids.atom_Float, &_sample_rate },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_minBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_maxBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_sequenceSize, sizeof(int32_t), _urids.atom_Int, &_midi_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.ui_updateRate, sizeof(float), _urids.atom_Float, &_ui_update_hz },
+            { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, NULL }
+    };
+
+    memcpy(_features.options, options, sizeof(_features.options));
+
+    init_feature(&_features.options_feature,
+                 LV2_OPTIONS__options,
+                 (void*)_features.options);
+}
+
 bool Model::_check_for_required_features(const LilvPlugin* plugin)
 {
     // Check that any required features are supported
@@ -493,7 +525,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-std::array<const LV2_Feature*, 10>* Model::host_feature_list()
+std::array<const LV2_Feature*, 11>* Model::host_feature_list()
 {
     return &_feature_list;
 }

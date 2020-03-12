@@ -47,9 +47,23 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
+LV2_Wrapper::LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
+Processor(host_control),
+_plugin_path {lv2_plugin_uri}
+{
+    _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
+    _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
+}
+
+LV2_Wrapper::~LV2_Wrapper()
+{
+    if(_model->plugin_instance() != nullptr)
+        set_enabled(false);
+}
+
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _sample_rate = sample_rate;
+    _model = std::make_unique<Model>(sample_rate);
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
@@ -61,7 +75,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    auto loading_return_code = _model->load_plugin(library_handle, _sample_rate);
+    auto loading_return_code = _model->load_plugin(library_handle, sample_rate);
 
     if (loading_return_code != ProcessorReturnCode::OK)
     {
@@ -81,9 +95,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
-
-    // Activate plugin
-    lilv_instance_activate(_model->plugin_instance());
 
     _model->set_play_state(PlayState::RUNNING);
 
@@ -311,7 +322,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     else if(event.type() == RtEventType::SET_BYPASS)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        _bypass_manager.set_bypass(bypassed, _model->sample_rate());
     }
     else
     {
