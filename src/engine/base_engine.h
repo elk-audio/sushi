@@ -221,9 +221,7 @@ public:
 
     virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
 
-    virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
-
-    virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
+    virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
 
     virtual EngineReturnStatus create_track(const std::string & /*track_id*/, int /*channel_count*/)
     {

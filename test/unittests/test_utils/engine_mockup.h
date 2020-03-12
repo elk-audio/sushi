@@ -145,15 +145,9 @@ public:
 
     void set_tempo_sync_mode(SyncMode /*mode*/) override {}
 
-    EngineReturnStatus send_rt_event(RtEvent& /*event*/) override
+    EngineReturnStatus send_rt_event(const RtEvent& /*event*/) override
     {
         got_rt_event = true;
-        return EngineReturnStatus::OK;
-    }
-
-    EngineReturnStatus send_async_event(RtEvent& /*event*/) override
-    {
-        got_event = true;
         return EngineReturnStatus::OK;
     }
 

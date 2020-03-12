@@ -425,7 +425,7 @@ public:
 
     /**
      * @brief Set the engine to operate in realtime mode. In this mode process_chunk and
-     *        send_rt_event is assumed to be called from a realtime thread.
+     *        _send_rt_event is assumed to be called from a realtime thread.
      *        All other function calls are assumed to be made from non-realtime threads
      *
      * @param enabled true to enable realtime mode, false to disable
@@ -484,20 +484,14 @@ public:
      * @param mode A SyncMode with the current mode of syncronisation
      */
     void set_tempo_sync_mode(SyncMode mode) override;
-    /**
-     * @brief Process an event directly. In a realtime processing setup this must be
-     *        called from the realtime thread before calling process_chunk()
-     * @param event The event to process
-     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
-     */
-    EngineReturnStatus send_rt_event(RtEvent& event) override;
 
     /**
-     * @brief Called from a non-realtime thread to process an event in the realtime
+     * @brief Send an RtEvent directly to the realtime thread, should normally only be used
+     *        from an rt thread or in a context where the engine is not running in realtime mode
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_async_event(RtEvent& event) override;
+    EngineReturnStatus send_rt_event(const RtEvent& event) override;
 
     /**
      * @brief Create an empty track
@@ -652,12 +646,23 @@ private:
     EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
 
     /**
+    * @brief Called from a non-realtime thread to process an event in the realtime
+    * @param event The event to process
+    * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+    */
+    EngineReturnStatus _send_async_event(RtEvent& event);
+
+    /**
      * @brief Process events that are to be handled by the engine directly and
      *        not by a particular processor.
      * @param event The event to handle
      * @return true if handled, false if not an engine event
      */
-    bool _handle_internal_events(RtEvent &event);
+    void _process_internal_rt_events();
+
+    void _send_rt_events_to_processors();
+
+    void _send_rt_event(const RtEvent& event);
 
     inline void _retrieve_events_from_tracks(ControlBuffer& buffer);
 
@@ -715,9 +720,8 @@ private:
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    RtSafeRtEventFifo _internal_control_queue;
+    RtSafeRtEventFifo _control_queue_in;
     RtSafeRtEventFifo _main_in_queue;
-    RtSafeRtEventFifo _processor_out_queue;
     RtSafeRtEventFifo _main_out_queue;
     RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
