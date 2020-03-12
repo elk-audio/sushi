@@ -71,6 +71,7 @@ _sample_rate(sample_rate)
     zix_sem_init(&this->paused, 0);
     zix_sem_init(&this->worker.sem, 0);
 
+    zix_sem_init(&this->work_lock, 1);
 
     _initialize_map_feature();
     _initialize_unmap_feature();
