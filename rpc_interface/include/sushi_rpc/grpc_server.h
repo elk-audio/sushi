@@ -60,7 +60,7 @@ private:
     std::unique_ptr<SushiControlService>            _service;
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;
     std::unique_ptr<grpc::Server>                   _server;
-    // std::unique_ptr<grpc::ServerCompletionQueue>    _cq;
+    std::unique_ptr<grpc::ServerCompletionQueue>    _cq;
     sushi::ext::SushiControl*                       _controller;
     std::thread                                     _worker;
     std::atomic<bool>                               _running;

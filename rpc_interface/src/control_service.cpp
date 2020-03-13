@@ -666,65 +666,64 @@ void SushiControlService::notification(const sushi::ext::ControlNotification* no
     }
 }
 
-// void SubscribeToParameterUpdatesCallData::proceed(google::protobuf::Message* notification_message)
-// {
-//     if (_status == CallStatus::CREATE)
-//     {
-//         _status = CallStatus::PROCESS;
-//         _service->RequestSubscribeToParameterUpdates(&_ctx, &_request, &_responder, _cq, _cq, this);
-//         _event_handled_by_call_data->insert({this, false});
-//     }
-//     else if (_status == CallStatus::PROCESS)
-//     {
-//         if (_first_iteration)
-//         {
-//             // Spawn a new CallData instance to serve new clients while we process
-//             // the one for this CallData. The instance will deallocate itself as
-//             // part of its FINISH state.
-//             new SubscribeToParameterUpdatesCallData(_service, _cq, _event_handled_by_call_data);
+void SubscribeToParameterUpdatesCallData::proceed(google::protobuf::Message* notification_message)
+{
+    if (_status == CallStatus::CREATE)
+    {
+        _status = CallStatus::PROCESS;
+        _service->RequestSubscribeToParameterUpdates(&_ctx, &_request, &_responder, _cq, _cq, this);
+        _event_handled_by_call_data->insert({this, false});
+    }
+    else if (_status == CallStatus::PROCESS)
+    {
+        if (_first_iteration)
+        {
+            // Spawn a new CallData instance to serve new clients while we process
+            // the one for this CallData. The instance will deallocate itself as
+            // part of its FINISH state.
+            new SubscribeToParameterUpdatesCallData(_service, _cq, _event_handled_by_call_data);
 
-//             for (auto& parameter_identifier : _request.parameters())
-//             {
-//                 _parameter_blacklist[_create_map_key(parameter_identifier.parameter_id(),
-//                                                      parameter_identifier.processor_id())] = false;
-//             }
-//             _first_iteration = false;
-//         }
+            for (auto& parameter_identifier : _request.parameters())
+            {
+                _parameter_blacklist[_create_map_key(parameter_identifier.parameter_id(),
+                                                     parameter_identifier.processor_id())] = false;
+            }
+            _first_iteration = false;
+        }
 
-//         if (notification_message != nullptr)
-//         {
-//             _event_handled_by_call_data->at(this) = true;
-//             std::cout << "Event handled by " << this << std::endl;
-//             if (notification_message->GetDescriptor()->name() == "ParameterSetRequest")
-//             {
-//                 _reply = *(static_cast<ParameterSetRequest*>(notification_message));
-//                 _last_notification_id++;
-//                 if (_parameter_blacklist.find(_create_map_key(_reply.parameter().parameter_id(),
-//                                                             _reply.parameter().processor_id())) == _parameter_blacklist.end())
-//                 {
-//                     _responder.Write(_reply, this);
-//                     _status = CallStatus::PUSH_TO_BACK;
-//                     return;
-//                 }
-//             }
-//         }
-//         // If no call to write was made this will add this object back into the
-//         // completion queue after the alarm expires.
-//         // _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
-//     }
-//     else if (_status == CallStatus::PUSH_TO_BACK)
-//     {
-//         // Since a call to write adds the object at the front of the completion
-//         // queue. We then place it at the back with an alarm to serve the clients
-//         // in a round robin fashion.
-//         // _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
-//         _status = CallStatus::PROCESS;
-//     }
-//     else
-//     {
-//         assert(_status == CallStatus::FINISH);
-//         delete this;
-//     }
-// }
+        if (notification_message != nullptr)
+        {
+            _event_handled_by_call_data->at(this) = true;
+            if (notification_message->GetDescriptor()->name() == "ParameterSetRequest")
+            {
+                _reply = *(static_cast<ParameterSetRequest*>(notification_message));
+                _last_notification_id++;
+                if (_parameter_blacklist.find(_create_map_key(_reply.parameter().parameter_id(),
+                                                            _reply.parameter().processor_id())) == _parameter_blacklist.end())
+                {
+                    _responder.Write(_reply, this);
+                    _status = CallStatus::PUSH_TO_BACK;
+                    return;
+                }
+            }
+        }
+        // If no call to write was made this will add this object back into the
+        // completion queue after the alarm expires.
+        _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
+    }
+    else if (_status == CallStatus::PUSH_TO_BACK)
+    {
+        // Since a call to write adds the object at the front of the completion
+        // queue. We then place it at the back with an alarm to serve the clients
+        // in a round robin fashion.
+        _alarm.Set(_cq, std::chrono::high_resolution_clock::now(), this);
+        _status = CallStatus::PROCESS;
+    }
+    else
+    {
+        assert(_status == CallStatus::FINISH);
+        delete this;
+    }
+}
 
 } // sushi_rpc
