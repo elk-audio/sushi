@@ -23,16 +23,14 @@ namespace lv2 {
 class Worker
 {
 public:
-    Worker(Model* model, bool threaded);
+    Worker(Model* model);
     ~Worker();
 
-    void init(const LV2_Worker_Interface *iface, bool threaded);
+    void init(const LV2_Worker_Interface* iface, bool threaded);
 
-    void emit_responses(LilvInstance *instance);
+    void emit_responses(LilvInstance* instance);
 
     ZixSem sem;
-
-    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
 
     Model* model();
 
@@ -41,7 +39,11 @@ public:
     ZixRing* requests();
     ZixRing* responses();
 
+    const LV2_Worker_Interface* iface();
+
 private:
+    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
+
     // TODO: Introduce proper thread. std::thread
     ZixThread thread; ///< Worker thread
 

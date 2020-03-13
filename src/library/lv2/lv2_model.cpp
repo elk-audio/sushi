@@ -77,37 +77,19 @@ _sample_rate(sample_rate)
     _initialize_safe_restore_feature();
     _initialize_options_feature();
 
-    zix_sem_init(&this->done, 0);
-    zix_sem_init(&this->paused, 0);
-    zix_sem_init(&this->_worker->sem, 0);
+    zix_sem_init(&done, 0);
+    zix_sem_init(&paused, 0);
+    zix_sem_init(&_worker->sem, 0);
 
-    zix_sem_init(&this->work_lock, 1);
+    zix_sem_init(&work_lock, 1);
 }
 
 Model::~Model()
 {
     if (_plugin_instance)
     {
-        /* Terminate the worker */
-        //finish(&worker);
-        //_worker->finish();
-
-        // Why did I not do this before?
-        /*if(_state_worker.get() != nullptr)
-        {
-            _state_worker->finish();
-        }*/
-
         lilv_instance_deactivate(_plugin_instance);
         lilv_instance_free(_plugin_instance);
-
-        // Why did I not do this before?
-        //_worker->destroy();
-
-        /*if(_state_worker.get() != nullptr)
-        {
-            _state_worker->destroy();
-        }*/
 
         for (unsigned i = 0; i < _controls.size(); ++i)
         {
@@ -209,8 +191,8 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
     /* Create workers if necessary */
     if (lilv_plugin_has_extension_data(plugin_handle, _nodes->work_interface))
     {
-        const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
-                lilv_instance_get_extension_data(_plugin_instance, LV2_WORKER__interface);
+        const void* iface_raw = lilv_instance_get_extension_data(_plugin_instance, LV2_WORKER__interface);
+        auto iface = static_cast<const LV2_Worker_Interface*>(iface_raw);
 
         _worker->init(iface, true);
         if (_safe_restore)
@@ -219,7 +201,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
         }
     }
 
-    LilvNode* state_threadSafeRestore = lilv_new_uri(_world, LV2_STATE__threadSafeRestore);
+    auto state_threadSafeRestore = lilv_new_uri(_world, LV2_STATE__threadSafeRestore);
     if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
     {
         _safe_restore = true;
@@ -475,12 +457,12 @@ void Model::_initialize_make_path_feature()
 
 void Model::_initialize_worker_feature()
 {
-    _worker = std::make_unique<Worker>(this, true);
+    _worker = std::make_unique<Worker>(this);
 
     // TODO: Should I really inherit this check? Why not just always create it?
     if (_safe_restore)
     {
-        _state_worker = std::make_unique<Worker>(this, true);
+        _state_worker = std::make_unique<Worker>(this);
     }
 
     _features.sched.handle = _worker.get();
