@@ -425,8 +425,12 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
-        lv2_worker_emit_responses(&_model->state_worker, _model->plugin_instance());
-        lv2_worker_emit_responses(&_model->worker, _model->plugin_instance());
+        if(_model->state_worker() != nullptr)
+        {
+            _model->state_worker()->emit_responses(_model->plugin_instance());
+        }
+
+        _model->worker()->emit_responses(_model->plugin_instance());
 
         _deliver_outputs_from_plugin(false);
 

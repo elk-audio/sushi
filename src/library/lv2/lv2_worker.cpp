@@ -23,19 +23,31 @@
 namespace sushi {
 namespace lv2 {
 
+Worker::Worker(Model* model, bool threaded)
+{
+    _model = model;
+    _threaded = threaded;
+}
+
+Worker::~Worker()
+{
+    _finish();
+    _destroy();
+}
+
 static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)handle;
-	zix_ring_write(worker->responses, (const char*)&size, sizeof(size));
-	zix_ring_write(worker->responses, (const char*)data, size);
+    Worker* worker = (Worker*)handle;
+	zix_ring_write(worker->responses(), (const char*)&size, sizeof(size));
+	zix_ring_write(worker->responses(), (const char*)data, size);
     fprintf(stdout, "In lv2_worker_respond\n");
 	return LV2_WORKER_SUCCESS;
 }
 
 static void* worker_func(void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)data;
-    Model* model = worker->model;
+    Worker* worker = (Worker*)data;
+    Model* model = worker->model();
 
     fprintf(stdout, "In worker_func\n");
 
@@ -46,7 +58,7 @@ static void* worker_func(void* data)
 		zix_sem_wait(&worker->sem);
 
         fprintf(stdout, "In worker_func - after wait\n");
-		if (model->lv2_exit == true)
+		if (model->exit == true)
 		{
             fprintf(stdout, "In worker_func - breaking for exit\n");
 			break;
@@ -55,7 +67,7 @@ static void* worker_func(void* data)
         fprintf(stdout, "In worker_func - after exit block\n");
 
 		uint32_t size = 0;
-		zix_ring_read(worker->requests, (char*)&size, sizeof(size));
+		zix_ring_read(worker->requests(), (char*)&size, sizeof(size));
 
         fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
 
@@ -66,14 +78,14 @@ static void* worker_func(void* data)
 			return NULL;
 		}
 
-		zix_ring_read(worker->requests, (char*)buf, size);
+		zix_ring_read(worker->requests(), (char*)buf, size);
 
         fprintf(stdout, "In worker_func - after reading request.\n");
 
         // It seems to wait here forever!
 		zix_sem_wait(&model->work_lock);
 
-		worker->iface->work(
+		worker->_iface->work(
 			model->plugin_instance()->lv2_handle,
 			lv2_worker_respond,
 			worker,
@@ -91,97 +103,116 @@ static void* worker_func(void* data)
 }
 
 // TODO: what is ZIX_UNUSED?
-void lv2_worker_init(ZIX_UNUSED Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded)
+void Worker::init(const LV2_Worker_Interface *iface, bool threaded)
 {
-	worker->iface = iface;
-	worker->threaded = threaded;
+	_iface = iface;
+	_threaded = threaded;
 
-    fprintf(stdout, "In lv2_worker_init\n");
+    fprintf(stdout, "In init\n");
 
-	if (threaded)
+	if (_threaded)
 	{
-		zix_thread_create(&worker->thread, 4096, worker_func, worker);
-		worker->requests = zix_ring_new(4096);
-		zix_ring_mlock(worker->requests);
+		zix_thread_create(&thread, 4096, worker_func, this);
+		_requests = zix_ring_new(4096);
+		zix_ring_mlock(_requests);
 	}
 
-
-	worker->responses = zix_ring_new(4096);
-	worker->response  = malloc(4096);
-	zix_ring_mlock(worker->responses);
+	_responses = zix_ring_new(4096);
+	_response  = malloc(4096);
+	zix_ring_mlock(_responses);
 }
 
-void lv2_worker_finish(Lv2_Worker* worker)
+void Worker::_finish()
 {
-    fprintf(stdout, "In lv2_worker_finish\n");
-	if (worker->threaded)
+    fprintf(stdout, "In finish\n");
+	if (_threaded)
 	{
-		zix_sem_post(&worker->sem);
-		zix_thread_join(worker->thread, NULL);
+		zix_sem_post(&sem);
+		zix_thread_join(thread, NULL);
 	}
 }
 
-void lv2_worker_destroy(Lv2_Worker* worker)
+void Worker::_destroy()
 {
-	if (worker->requests)
+	if (_requests)
 	{
-		if (worker->threaded)
+		if (_threaded)
 		{
-			zix_ring_free(worker->requests);
+			zix_ring_free(_requests);
 		}
 
-		if(worker->responses)
+		if(_responses)
 		{
-            zix_ring_free(worker->responses);
-            free(worker->response);
+            zix_ring_free(_responses);
+            free(_response);
         }
 	}
 }
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
-    Lv2_Worker* worker = (Lv2_Worker*)handle;
-    Model* model = worker->model;
+    Worker* worker = (Worker*)handle;
+    Model* model = worker->model();
 
-	if (worker->threaded)
-	{
+    if (worker->threaded())
+    {
         fprintf(stdout, "In lv2_worker_schedule threaded\n");
-		// Schedule a request to be executed by the worker thread
-		zix_ring_write(worker->requests, (const char*)&size, sizeof(size));
-		zix_ring_write(worker->requests, (const char*)data, size);
-		zix_sem_post(&worker->sem);
-	}
-	else
-	{
+        // Schedule a request to be executed by the worker thread
+        zix_ring_write(worker->requests(), (const char*)&size, sizeof(size));
+        zix_ring_write(worker->requests(), (const char*)data, size);
+        zix_sem_post(&worker->sem);
+    }
+    else
+    {
         fprintf(stdout, "In lv2_worker_schedule immediately\n");
-		// Execute work immediately in this thread
-		zix_sem_wait(&model->work_lock);
-		worker->iface->work(
+        // Execute work immediately in this thread
+        zix_sem_wait(&model->work_lock);
+        worker->_iface->work(
                 model->plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
-		zix_sem_post(&model->work_lock);
-	}
-	return LV2_WORKER_SUCCESS;
+        zix_sem_post(&model->work_lock);
+    }
+    return LV2_WORKER_SUCCESS;
 }
 
-void lv2_worker_emit_responses(Lv2_Worker* worker, LilvInstance* instance)
+void Worker::emit_responses(LilvInstance* instance)
 {
-	if (worker->responses)
+	if (_responses)
 	{
-		uint32_t read_space = zix_ring_read_space(worker->responses);
+		uint32_t read_space = zix_ring_read_space(_responses);
 		while (read_space)
 		{
-            fprintf(stdout, "In lv2_worker_emit_responses\n");
+            fprintf(stdout, "In emit_responses\n");
 			uint32_t size = 0;
-			zix_ring_read(worker->responses, (char*)&size, sizeof(size));
+			zix_ring_read(_responses, (char*)&size, sizeof(size));
 
-			zix_ring_read(worker->responses, (char*)worker->response, size);
+			zix_ring_read(_responses, (char*)_response, size);
 
-			worker->iface->work_response(
-				instance->lv2_handle, size, worker->response);
+			_iface->work_response(
+				instance->lv2_handle, size, _response);
 
 			read_space -= sizeof(size) + size;
 		}
 	}
+}
+
+Model* Worker::model()
+{
+    return _model;
+}
+
+bool Worker::threaded()
+{
+    return _threaded;
+}
+
+ZixRing* Worker::requests()
+{
+    return _requests;
+}
+
+ZixRing* Worker::responses()
+{
+    return _responses;
 }
 
 }

@@ -49,23 +49,8 @@ namespace lv2 {
 
 class Model;
 class State;
+class Worker;
 struct ControlID;
-
-typedef struct {
-    Model* model; // TODO: Is this needed?
-
-    ZixRing* requests = nullptr; ///< Requests to the worker
-    ZixRing* responses = nullptr; ///< Responses from the worker
-
-// TODO: Introduce proper thread. std::thread
-    ZixThread thread; ///< Worker thread
-
-    void* response = nullptr; ///< Worker response buffer
-    ZixSem sem;
-
-    const LV2_Worker_Interface* iface = nullptr; ///< Plugin worker interface
-    bool threaded = false; ///< Run work in another thread
-} Lv2_Worker;
 
 /**
 Control change event, sent through ring buffers for UI updates.
@@ -225,15 +210,15 @@ public:
     int input_audio_channel_count();
     int output_audio_channel_count();
 
-
-    bool lv2_exit {false}; ///< True iff execution is finished
-    Lv2_Worker worker; ///< Worker thread implementation
-    Lv2_Worker state_worker; ///< Synchronous worker for state restore
+    bool exit {false}; ///< True iff execution is finished
     ZixSem work_lock; ///< Lock for plugin work() method
     ZixSem done; ///< Exit semaphore
     ZixSem paused; ///< Paused signal from process thread
 
-    bool safe_restore; ///< Plugin restore() is thread-safe
+    Worker* worker();
+    Worker* state_worker();
+
+    bool safe_restore();
 
 private:
     bool _create_ports(const LilvPlugin* plugin);
@@ -312,6 +297,11 @@ private:
 
     int _input_audio_channel_count{0};
     int _output_audio_channel_count{0};
+
+    bool _safe_restore; ///< Plugin restore() is thread-safe
+
+    std::unique_ptr<Worker> _state_worker; ///< Synchronous worker for state restore
+    std::unique_ptr<Worker> _worker; ///< Worker thread implementation
 };
 
 } // end namespace lv2

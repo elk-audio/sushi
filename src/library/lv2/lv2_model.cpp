@@ -67,12 +67,6 @@ _sample_rate(sample_rate)
     // Find all installed plugins.
     lilv_world_load_all(_world);
 
-    zix_sem_init(&this->done, 0);
-    zix_sem_init(&this->paused, 0);
-    zix_sem_init(&this->worker.sem, 0);
-
-    zix_sem_init(&this->work_lock, 1);
-
     _initialize_map_feature();
     _initialize_unmap_feature();
     _initialize_urid_symap();
@@ -82,6 +76,12 @@ _sample_rate(sample_rate)
     _initialize_worker_feature();
     _initialize_safe_restore_feature();
     _initialize_options_feature();
+
+    zix_sem_init(&this->done, 0);
+    zix_sem_init(&this->paused, 0);
+    zix_sem_init(&this->_worker->sem, 0);
+
+    zix_sem_init(&this->work_lock, 1);
 }
 
 Model::~Model()
@@ -89,12 +89,25 @@ Model::~Model()
     if (_plugin_instance)
     {
         /* Terminate the worker */
-        lv2_worker_finish(&worker);
+        //finish(&worker);
+        //_worker->finish();
+
+        // Why did I not do this before?
+        /*if(_state_worker.get() != nullptr)
+        {
+            _state_worker->finish();
+        }*/
 
         lilv_instance_deactivate(_plugin_instance);
         lilv_instance_free(_plugin_instance);
 
-        lv2_worker_destroy(&worker);
+        // Why did I not do this before?
+        //_worker->destroy();
+
+        /*if(_state_worker.get() != nullptr)
+        {
+            _state_worker->destroy();
+        }*/
 
         for (unsigned i = 0; i < _controls.size(); ++i)
         {
@@ -199,21 +212,19 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
         const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
                 lilv_instance_get_extension_data(_plugin_instance, LV2_WORKER__interface);
 
-        lv2_worker_init(this, &worker, iface, true);
-        if (safe_restore)
+        _worker->init(iface, true);
+        if (_safe_restore)
         {
-            lv2_worker_init(this, &state_worker, iface, false);
+            _state_worker->init(iface, false);
         }
     }
 
     LilvNode* state_threadSafeRestore = lilv_new_uri(_world, LV2_STATE__threadSafeRestore);
     if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
     {
-        safe_restore = true;
+        _safe_restore = true;
     }
     lilv_node_free(state_threadSafeRestore);
-
-
 
     if (_create_ports(plugin_handle) == false)
     {
@@ -464,18 +475,23 @@ void Model::_initialize_make_path_feature()
 
 void Model::_initialize_worker_feature()
 {
-    this->worker.model = this;
-    this->state_worker.model = this;
+    _worker = std::make_unique<Worker>(this, true);
 
-    this->_features.sched.handle = &this->worker;
-    this->_features.sched.schedule_work = lv2_worker_schedule;
-    init_feature(&this->_features.sched_feature,
-                 LV2_WORKER__schedule, &this->_features.sched);
+    // TODO: Should I really inherit this check? Why not just always create it?
+    if (_safe_restore)
+    {
+        _state_worker = std::make_unique<Worker>(this, true);
+    }
 
-    this->_features.ssched.handle = &this->state_worker;
-    this->_features.ssched.schedule_work = lv2_worker_schedule;
-    init_feature(&this->_features.state_sched_feature,
-                 LV2_WORKER__schedule, &this->_features.ssched);
+    _features.sched.handle = _worker.get();
+    _features.sched.schedule_work = lv2_worker_schedule;
+    init_feature(&_features.sched_feature,
+                 LV2_WORKER__schedule, &_features.sched);
+
+    _features.ssched.handle = _state_worker.get();
+    _features.ssched.schedule_work = lv2_worker_schedule;
+    init_feature(&_features.state_sched_feature,
+                 LV2_WORKER__schedule, &_features.ssched);
 }
 
 void Model::_initialize_safe_restore_feature()
@@ -723,6 +739,21 @@ int Model::input_audio_channel_count()
 int Model::output_audio_channel_count()
 {
     return _output_audio_channel_count;
+}
+
+Worker* Model::worker()
+{
+    return _worker.get();
+}
+
+Worker* Model::state_worker()
+{
+    return _state_worker.get();
+}
+
+bool Model::safe_restore()
+{
+    return _safe_restore;
 }
 
 }

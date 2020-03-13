@@ -20,15 +20,46 @@
 namespace sushi {
 namespace lv2 {
 
-void lv2_worker_init(Model* model, Lv2_Worker* worker, const LV2_Worker_Interface* iface, bool threaded);
+class Worker
+{
+public:
+    Worker(Model* model, bool threaded);
+    ~Worker();
 
-void lv2_worker_finish(Lv2_Worker* worker);
+    void init(const LV2_Worker_Interface *iface, bool threaded);
 
-void lv2_worker_destroy(Lv2_Worker* worker);
+    void emit_responses(LilvInstance *instance);
+
+    ZixSem sem;
+
+    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
+
+    Model* model();
+
+    bool threaded();
+
+    ZixRing* requests();
+    ZixRing* responses();
+
+private:
+    // TODO: Introduce proper thread. std::thread
+    ZixThread thread; ///< Worker thread
+
+    ZixRing* _requests = nullptr; ///< Requests to the worker
+    ZixRing* _responses = nullptr; ///< Responses from the worker
+
+    void* _response = nullptr; ///< Worker response buffer
+
+    void _finish();
+    void _destroy();
+
+    Model* _model{nullptr};
+    bool _threaded{false};
+};
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
-void lv2_worker_emit_responses(Lv2_Worker* worker, LilvInstance *instance);
+
 
 }
 }
