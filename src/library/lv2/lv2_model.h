@@ -158,6 +158,8 @@ public:
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
+    // Warning: LV2 / Lilv require this list to be null-terminated.
+    // So remember to check for null when iterating over it!
     std::array<const LV2_Feature*, 11>* host_feature_list();
 
     LilvWorld* lilv_world();

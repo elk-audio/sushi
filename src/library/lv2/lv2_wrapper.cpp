@@ -387,6 +387,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
 {
     if (_bypass_manager.should_process() == false)
     {
+        fprintf(stdout, "BYPASSED\n");
          bypass_process(in_buffer, out_buffer);
         _flush_event_queue();
     }
@@ -396,6 +397,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         {
             case PlayState::PAUSE_REQUESTED:
             {
+                fprintf(stdout, "PAUSE_REQUESTED\n");
                 _model->set_play_state(PlayState::PAUSED);
 
                 auto e = RtEvent::make_async_work_event(&LV2_Wrapper::non_rt_callback, this->id(), this);
@@ -405,6 +407,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
             }
             case PlayState::PAUSED:
             {
+                fprintf(stdout, "PAUSED\n");
                 // JALV cleared MIDI buffer here.
                 _flush_event_queue();
                 return;
