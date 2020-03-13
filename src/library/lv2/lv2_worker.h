@@ -14,8 +14,16 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#ifndef SUSHI_LV2_WORKER_H
+#define SUSHI_LV2_WORKER_H
+
+#ifdef SUSHI_BUILD_WITH_LV2
+
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
+#include <thread>
+#include "zix/ring.h"
+#include "zix/sem.h"
 
 namespace sushi {
 namespace lv2 {
@@ -42,10 +50,9 @@ public:
     const LV2_Worker_Interface* iface();
 
 private:
-    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
+    void worker_func();
 
-    // TODO: Introduce proper thread. std::thread
-    ZixThread thread; ///< Worker thread
+    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
 
     ZixRing* _requests = nullptr; ///< Requests to the worker
     ZixRing* _responses = nullptr; ///< Responses from the worker
@@ -57,11 +64,15 @@ private:
 
     Model* _model{nullptr};
     bool _threaded{false};
+
+    std::thread _thread;
 };
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
-
-
 }
 }
+
+#endif //SUSHI_BUILD_WITH_LV2
+
+#endif //SUSHI_LV2_WORKER_H

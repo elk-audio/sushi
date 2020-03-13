@@ -16,10 +16,6 @@
 
 #include "lv2_worker.h"
 
-#include "zix/ring.h"
-#include "zix/sem.h"
-#include "zix/thread.h"
-
 namespace sushi {
 namespace lv2 {
 
@@ -32,21 +28,18 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
     return LV2_WORKER_SUCCESS;
 }
 
-static void* worker_func(void* data)
+void Worker::worker_func()
 {
-    auto worker = static_cast<Worker*>(data);
-    auto model = worker->model();
-
     fprintf(stdout, "In worker_func\n");
 
-    void* buf = NULL;
+    void* buf = nullptr;
     while (true)
     {
         fprintf(stdout, "In worker_func - before wait\n");
-        zix_sem_wait(&worker->sem);
+        zix_sem_wait(&sem);
 
         fprintf(stdout, "In worker_func - after wait\n");
-        if (model->exit == true)
+        if (_model->exit == true)
         {
             fprintf(stdout, "In worker_func - breaking for exit\n");
             break;
@@ -55,7 +48,7 @@ static void* worker_func(void* data)
         fprintf(stdout, "In worker_func - after exit block\n");
 
         uint32_t size = 0;
-        zix_ring_read(worker->requests(), (char*)&size, sizeof(size));
+        zix_ring_read(_requests, (char*)&size, sizeof(size));
 
         fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
 
@@ -63,31 +56,28 @@ static void* worker_func(void* data)
         {
             fprintf(stderr, "error: realloc() failed\n");
             free(buf);
-            return NULL;
         }
 
-        zix_ring_read(worker->requests(), (char*)buf, size);
+        zix_ring_read(_requests, (char*)buf, size);
 
         fprintf(stdout, "In worker_func - after reading request.\n");
 
         // It seems to wait here forever!
-        zix_sem_wait(&model->work_lock);
+        zix_sem_wait(&_model->work_lock);
 
-        worker->iface()->work(
-                model->plugin_instance()->lv2_handle,
+        _iface->work(
+                _model->plugin_instance()->lv2_handle,
                 lv2_worker_respond,
-                worker,
+                this,
                 size,
                 buf);
 
         fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
 
-        zix_sem_post(&model->work_lock);
+        zix_sem_post(&_model->work_lock);
     }
 
     free(buf);
-
-    return NULL;
 }
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
@@ -138,7 +128,8 @@ void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 
 	if (_threaded)
 	{
-		zix_thread_create(&thread, 4096, worker_func, this);
+        _thread = std::thread(&Worker::worker_func, this);
+
 		_requests = zix_ring_new(4096);
 		zix_ring_mlock(_requests);
 	}
@@ -154,7 +145,7 @@ void Worker::_finish()
 	if (_threaded)
 	{
 		zix_sem_post(&sem);
-		zix_thread_join(thread, NULL);
+        _thread.join();
 	}
 }
 

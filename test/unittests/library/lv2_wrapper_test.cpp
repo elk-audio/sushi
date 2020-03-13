@@ -7,18 +7,16 @@
 #include "library/lv2/lv2_state.cpp"
 #include "library/lv2/lv2_features.cpp"
 
-#include "library/lv2/lv2_port.cpp"
-#include "library/lv2/lv2_model.cpp"
-
-#include "library/lv2/lv2_control.cpp"
-
-#include "library/lv2/lv2_worker.cpp"
-#include "library/lv2/zix/ring.cpp"
-
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
 
 #include "library/lv2/lv2_wrapper.cpp"
+
+#include "library/lv2/lv2_port.cpp"
+#include "library/lv2/lv2_model.cpp"
+#include "library/lv2/lv2_worker.cpp"
+#include "library/lv2/lv2_control.cpp"
+#include "library/lv2/zix/ring.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
