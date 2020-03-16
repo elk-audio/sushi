@@ -211,10 +211,9 @@ public:
 
     bool exit {false}; ///< True iff execution is finished
 
-    ZixSem work_lock; ///< Lock for plugin work() method
-
     Worker* worker();
     Worker* state_worker();
+    std::mutex& work_lock();
 
     bool safe_restore();
 
@@ -298,6 +297,7 @@ private:
 
     bool _safe_restore; ///< Plugin restore() is thread-safe
 
+    std::mutex _work_lock;
     std::unique_ptr<Worker> _state_worker; ///< Synchronous worker for state restore
     std::unique_ptr<Worker> _worker; ///< Worker thread implementation
 };

@@ -62,7 +62,7 @@ void Worker::worker_func()
 
         fprintf(stdout, "In worker_func - after reading request.\n");
 
-        zix_sem_wait(&_model->work_lock);
+        std::unique_lock<std::mutex> lock(_model->work_lock());
 
         _iface->work(
                 _model->plugin_instance()->lv2_handle,
@@ -72,8 +72,6 @@ void Worker::worker_func()
                 buf);
 
         fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
-
-        zix_sem_post(&_model->work_lock);
     }
 
     free(buf);
@@ -96,10 +94,9 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
     {
         fprintf(stdout, "In lv2_worker_schedule immediately\n");
         // Execute work immediately in this thread
-        zix_sem_wait(&model->work_lock);
+        std::unique_lock<std::mutex> lock(model->work_lock());
         worker->iface()->work(
                 model->plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
-        zix_sem_post(&model->work_lock);
     }
     return LV2_WORKER_SUCCESS;
 }

@@ -76,8 +76,6 @@ _sample_rate(sample_rate)
     _initialize_options_feature();
 
     zix_sem_init(&_worker->sem, 0);
-
-    zix_sem_init(&work_lock, 1);
 }
 
 Model::~Model()
@@ -732,6 +730,11 @@ Worker* Model::state_worker()
 bool Model::safe_restore()
 {
     return _safe_restore;
+}
+
+std::mutex& Model::work_lock()
+{
+    return _work_lock;
 }
 
 }
