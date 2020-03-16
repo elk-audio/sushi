@@ -88,7 +88,7 @@ public:
         return storage_capacity - _head + _tail;
     }
 
-    // Actual capacity is 1 less than reserved storage, otherwis head == tail would indicate both full and empty
+    // Actual capacity is 1 less than reserved storage, otherwise head == tail would indicate both full and empty
     int capacity() const {return storage_capacity - 1;}
 
     bool empty() const {return _head == _tail;}

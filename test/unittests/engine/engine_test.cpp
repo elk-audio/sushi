@@ -173,6 +173,7 @@ TEST_F(TestAudioGraph, TestMultiCoreOperation)
     _track_2.process_event(event);
     _module_under_test->render();
 
+    // Test that events were properly passed through
     auto queues = _module_under_test->event_outputs();
     EXPECT_EQ(1, queues[0].size());
     EXPECT_EQ(1, queues[1].size());

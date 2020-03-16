@@ -674,11 +674,11 @@ private:
     EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
 
     /**
-    * @brief Called from a non-realtime thread to process an event in the realtime
+    * @brief Called from a non-realtime thread to process a control event in the realtime thread
     * @param event The event to process
     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
     */
-    EngineReturnStatus _send_async_event(RtEvent& event);
+    EngineReturnStatus _send_control_event(RtEvent& event);
 
     /**
      * @brief Process events that are to be handled by the engine directly and
@@ -701,8 +701,6 @@ private:
     void print_timings_to_file(const std::string& filename);
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
-
-    void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
 
     ProcessorContainer _processors;
 

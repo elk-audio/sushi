@@ -425,7 +425,7 @@ void AudioEngine::enable_realtime(bool enabled)
         if (realtime())
         {
             auto event = RtEvent::make_stop_engine_event();
-            _send_async_event(event);
+            _send_control_event(event);
         } else
         {
             _state.store(RealtimeState::STOPPED);
@@ -540,7 +540,7 @@ void AudioEngine::set_tempo(float tempo)
     if (realtime_running)
     {
         auto e = RtEvent::make_tempo_event(0, tempo);
-        _send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -551,7 +551,7 @@ void AudioEngine::set_time_signature(TimeSignature signature)
     if (realtime_running)
     {
         auto e = RtEvent::make_time_signature_event(0, signature);
-        _send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -562,7 +562,7 @@ void AudioEngine::set_transport_mode(PlayingMode mode)
     if (realtime_running)
     {
         auto e = RtEvent::make_playing_mode_event(0, mode);
-        _send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -573,7 +573,7 @@ void AudioEngine::set_tempo_sync_mode(SyncMode mode)
     if (realtime_running)
     {
         auto e = RtEvent::make_sync_mode_event(0, mode);
-        _send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -583,8 +583,10 @@ EngineReturnStatus AudioEngine::send_rt_event(const RtEvent& event)
     return status? EngineReturnStatus::OK : EngineReturnStatus::QUEUE_FULL;
 }
 
-EngineReturnStatus AudioEngine::_send_async_event(RtEvent& event)
+EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
 {
+    // This queue will only handle engine control events, not processor events
+    assert(event.type() >= RtEventType::STOP_ENGINE);
     std::lock_guard<std::mutex> lock(_in_queue_lock);
     if (_control_queue_in.push(event))
     {
@@ -630,8 +632,8 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
     {
         auto remove_track_event = RtEvent::make_remove_track_event(track->id());
         auto delete_event = RtEvent::make_remove_processor_event(track->id());
-        _send_async_event(remove_track_event);
-        _send_async_event(delete_event);
+        _send_control_event(remove_track_event);
+        _send_control_event(delete_event);
         bool removed = _event_receiver.wait_for_response(remove_track_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
@@ -698,7 +700,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
     {
         // In realtime mode we need to handle this in the audio thread
         auto insert_event = RtEvent::make_insert_processor_event(plugin.get());
-        _send_async_event(insert_event);
+        _send_control_event(insert_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted)
         {
@@ -758,7 +760,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         {
             add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id.value());
         }
-        _send_async_event(add_event);
+        _send_control_event(add_event);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
         {
@@ -806,7 +808,7 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
     {
         // Send events to handle this in the rt domain
         auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
-        _send_async_event(remove_event);
+        _send_control_event(remove_event);
         [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         SUSHI_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
     }
@@ -839,7 +841,7 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
     {
         // Send events to handle this in the rt domain
         auto delete_event = RtEvent::make_remove_processor_event(processor->id());
-        _send_async_event(delete_event);
+        _send_control_event(delete_event);
         [[maybe_unused]] bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         SUSHI_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
     }
@@ -866,8 +868,8 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     {
         auto insert_event = RtEvent::make_insert_processor_event(track.get());
         auto add_event = RtEvent::make_add_track_event(track->id());
-        _send_async_event(insert_event);
-        _send_async_event(add_event);
+        _send_control_event(insert_event);
+        _send_control_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
@@ -1173,34 +1175,6 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
         }
     }
     _prev_gate_values = buffer.gate_values;
-}
-
-void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue)
-{
-    RtEvent event;
-    while (source_queue.pop(event))
-    {
-        switch (event.type())
-        {
-            case RtEventType::CV_EVENT:
-            {
-                auto typed_event = event.cv_event();
-                buffer.cv_values[typed_event->cv_id()] = typed_event->value();
-                break;
-            }
-
-            case RtEventType::GATE_EVENT:
-            {
-                auto typed_event = event.gate_event();
-                _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
-                break;
-            }
-
-            default:
-                _main_out_queue.push(event);
-        }
-    }
-    buffer.gate_values = _outgoing_gate_values;
 }
 
 RealtimeState update_state(RealtimeState current_state)
