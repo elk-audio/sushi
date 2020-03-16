@@ -62,7 +62,6 @@ void Worker::worker_func()
 
         fprintf(stdout, "In worker_func - after reading request.\n");
 
-        // It seems to wait here forever!
         zix_sem_wait(&_model->work_lock);
 
         _iface->work(

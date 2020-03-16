@@ -75,8 +75,6 @@ _sample_rate(sample_rate)
     _initialize_safe_restore_feature();
     _initialize_options_feature();
 
-    zix_sem_init(&done, 0);
-    zix_sem_init(&paused, 0);
     zix_sem_init(&_worker->sem, 0);
 
     zix_sem_init(&work_lock, 1);

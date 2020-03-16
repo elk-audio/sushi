@@ -210,9 +210,8 @@ public:
     int output_audio_channel_count();
 
     bool exit {false}; ///< True iff execution is finished
+
     ZixSem work_lock; ///< Lock for plugin work() method
-    ZixSem done; ///< Exit semaphore
-    ZixSem paused; ///< Paused signal from process thread
 
     Worker* worker();
     Worker* state_worker();
