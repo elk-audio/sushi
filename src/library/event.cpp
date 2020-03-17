@@ -219,7 +219,7 @@ RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset)
 
 int AddTrackEvent::execute(engine::BaseEngine*engine)
 {
-    auto status = engine->create_track(_name, _channels);
+    auto [status, track_id] = engine->create_track(_name, _channels);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:

@@ -330,24 +330,24 @@ public:
      *        Not safe to call while the engine is running.
      * @param input_channel Index of the engine input channel to connect.
      * @param track_channel Index of the input channel of the track to connect to.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect to.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_input_channel(int input_channel,
                                                    int track_channel,
-                                                   const std::string& track_name) override;
+                                                   ObjectId track_id) override;
 
     /**
      * @brief Connect an output channel of a track to an engine output channel.
      *        Not safe to call while the engine is running.
      * @param output_channel Index of the engine output channel to connect to.
      * @param track_channel Index of the output channel of the track to connect from.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect from.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_output_channel(int output_channel,
                                                     int track_channel,
-                                                    const std::string& track_name) override;
+                                                    ObjectId track_id) override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -355,12 +355,12 @@ public:
      * @param input_bus The engine input bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The input bus of the track to connect to.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect to.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_input_bus(int input_bus,
                                                int track_bus,
-                                               const std::string& track_name) override;
+                                               ObjectId track_id) override;
 
     /**
      * @brief Connect an output bus of a track to an output bus (stereo pair)
@@ -368,12 +368,12 @@ public:
      * @param output_bus The engine outpus bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The output bus of the track to connect from.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect from.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_output_bus(int output_bus,
                                                 int track_bus,
-                                                const std::string& track_name) override;
+                                                ObjectId track_id) override;
 
     /**
      * @brief Connect a control voltage input to control a parameter on a processor
@@ -525,9 +525,9 @@ public:
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
      * @param channel_count The number of channels in the track.
-     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     * @return the unique id of the track created, only valid if status is EngineReturnStatus::OK
      */
-    EngineReturnStatus create_track(const std::string& name, int channel_count) override;
+    std::pair<EngineReturnStatus, ObjectId> create_track(const std::string& name, int channel_count) override;
 
     /**
      * @brief Create an empty track
@@ -536,7 +536,7 @@ public:
      * @param output_busses The number of output stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_name The unique name of the track to delete

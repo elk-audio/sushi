@@ -129,28 +129,28 @@ public:
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
                                                            int /*track_channel*/,
-                                                           const std::string& /*track_name*/)
+                                                           ObjectId /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_channel(int /*engine_channel*/,
                                                             int /*track_channel*/,
-                                                            const std::string& /*track_name*/)
+                                                            ObjectId /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
                                                        int /*track_bus*/,
-                                                       const std::string & /*track_name*/)
+                                                       ObjectId  /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_bus(int /*output_bus*/,
                                                         int /*track_bus*/,
-                                                        const std::string & /*track_name*/)
+                                                        ObjectId  /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -223,14 +223,15 @@ public:
 
     virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
 
-    virtual EngineReturnStatus create_track(const std::string & /*track_id*/, int /*channel_count*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_track(const std::string & /*track_id*/, int /*channel_count*/)
     {
-        return EngineReturnStatus::OK;
+        return {EngineReturnStatus::OK, 0};
     }
 
-    virtual EngineReturnStatus create_multibus_track(const std::string & /*track_id*/, int /*input_busses*/, int /*output_busses*/)
+    virtual std::pair<EngineReturnStatus, ObjectId>
+    create_multibus_track(const std::string & /*track_id*/, int /*input_busses*/, int /*output_busses*/)
     {
-        return EngineReturnStatus::OK;
+        return {EngineReturnStatus::OK, 0};
     }
 
     virtual EngineReturnStatus delete_track(const std::string & /*track_id*/)

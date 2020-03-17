@@ -252,15 +252,15 @@ protected:
 TEST_F(TestEngine, TestProcess)
 {
     /* Add a plugin track and connect it to inputs and outputs */
-    auto status = _module_under_test->create_track("test_track", 2);
+    auto [status, track_id] = _module_under_test->create_track("test_track", 2);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     auto track = _module_under_test->processor_container()->track("test_track");
     ASSERT_NE(nullptr, track);
 
-    auto res = _module_under_test->connect_audio_input_bus(0, 0, "test_track");
+    auto res = _module_under_test->connect_audio_input_bus(0, 0, track_id);
     ASSERT_EQ(EngineReturnStatus::OK, res);
-    res = _module_under_test->connect_audio_output_bus(0, 0, "test_track");
+    res = _module_under_test->connect_audio_output_bus(0, 0, track_id);
     ASSERT_EQ(EngineReturnStatus::OK, res);
 
     /* Run tests */
@@ -294,12 +294,14 @@ TEST_F(TestEngine, TestProcess)
 
 TEST_F(TestEngine, TestOutputMixing)
 {
-    _module_under_test->create_track("1", 2);
-    _module_under_test->create_track("2", 2);
-    _module_under_test->connect_audio_input_bus(0, 0, "1");
-    _module_under_test->connect_audio_input_bus(1, 0, "2");
-    _module_under_test->connect_audio_output_bus(0, 0, "1");
-    _module_under_test->connect_audio_output_bus(0, 0, "2");
+    auto [status_1, track_1_id] = _module_under_test->create_track("1", 2);
+    auto [status_2, track_2_id] = _module_under_test->create_track("2", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, status_1);
+    ASSERT_EQ(EngineReturnStatus::OK, status_2);
+    _module_under_test->connect_audio_input_bus(0, 0, track_1_id);
+    _module_under_test->connect_audio_input_bus(1, 0, track_2_id);
+    _module_under_test->connect_audio_output_bus(0, 0, track_1_id);
+    _module_under_test->connect_audio_output_bus(0, 0, track_2_id);
 
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
@@ -317,16 +319,16 @@ TEST_F(TestEngine, TestOutputMixing)
 
 TEST_F(TestEngine, TestCreateEmptyTrack)
 {
-    auto status = _module_under_test->create_track("left", 2);
+    auto [status, track_id] = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_TRUE(_processors->processor_exists("left"));
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),1u);
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0][0]->name(),"left");
 
     /* Test invalid name */
-    status = _module_under_test->create_track("left", 1);
+    std::tie(status, track_id) = _module_under_test->create_track("left", 1);
     ASSERT_EQ(EngineReturnStatus::INVALID_PROCESSOR, status);
-    status = _module_under_test->create_track("", 1);
+    std::tie(status, track_id) = _module_under_test->create_track("", 1);
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN, status);
 
     /* Test removal */
@@ -336,15 +338,15 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
 
     /* Test invalid number of channels */
-    status = _module_under_test->create_track("left", 3);
+    std::tie(status, track_id) = _module_under_test->create_track("left", 3);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 
 TEST_F(TestEngine, TestAddAndRemovePlugin)
 {
     /* Test adding Internal plugins */
-    auto status = _module_under_test->create_track("left", 2);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
+    auto [left_track_status, left_track_id] = _module_under_test->create_track("left", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, left_track_status);
     auto [gain_status, gain_id] = _module_under_test->load_plugin("sushi.testing.gain",
                                                                   "gain",
                                                                   "   ",
@@ -356,8 +358,7 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
                                                                     PluginType::INTERNAL);
     ASSERT_EQ(synth_status, EngineReturnStatus::OK);
 
-    auto left_track_id = _module_under_test->processor_container()->track("left")->id();
-    status = _module_under_test->add_plugin_to_track(gain_id, left_track_id);
+    auto status = _module_under_test->add_plugin_to_track(gain_id, left_track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     /* Add synth before gain */
@@ -375,9 +376,8 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     ASSERT_EQ("gain", _module_under_test->_audio_graph._audio_graph[0][0]->_processors[1]->name());
 
     /* Move a processor from 1 track to another */
-    status = _module_under_test->create_track("right", 2);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
-    auto right_track_id = _module_under_test->processor_container()->track("right")->id();
+    auto [right_track_status, right_track_id] = _module_under_test->create_track("right", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, right_track_status);
     status = _module_under_test->remove_plugin_from_track(synth_id, left_track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
@@ -437,14 +437,14 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
 
 TEST_F(TestEngine, TestSetSamplerate)
 {
-    auto status = _module_under_test->create_track("left", 2);
-    ASSERT_EQ(EngineReturnStatus::OK, status);
+    auto [track_status, track_id] = _module_under_test->create_track("left", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, track_status);
     auto [load_status, id] = _module_under_test->load_plugin("sushi.testing.equalizer",
                                                              "eq",
                                                              "",
                                                              PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, load_status);
-    status = _module_under_test->add_plugin_to_track(id, _processors->track("left")->id());
+    auto status = _module_under_test->add_plugin_to_track(id, _processors->track("left")->id());
     ASSERT_GE(EngineReturnStatus::OK, status);
 
     _module_under_test->set_sample_rate(48000.0f);
@@ -468,9 +468,9 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     // Add a track, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
     _module_under_test->enable_realtime(true);
     auto rt = std::thread(faux_rt_thread, _module_under_test.get());
-    auto status = _module_under_test->create_track("main", 2);
+    auto [track_status, track_id] = _module_under_test->create_track("main", 2);
     rt.join();
-    ASSERT_EQ(EngineReturnStatus::OK, status);
+    ASSERT_EQ(EngineReturnStatus::OK, track_status);
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
     auto [load_status, plugin_id] = _module_under_test->load_plugin("sushi.testing.gain",
@@ -479,10 +479,9 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
                                                                     PluginType::INTERNAL);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, load_status);
-    auto track_id = _processors->track("main")->id();
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
-    status = _module_under_test->add_plugin_to_track(plugin_id, track_id);
+    auto status = _module_under_test->add_plugin_to_track(plugin_id, track_id);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
@@ -535,14 +534,14 @@ TEST_F(TestEngine, TestSetCvChannels)
 TEST_F(TestEngine, TestCvRouting)
 {
     /* Add a control plugin track and connect cv to its parameters */
-    _module_under_test->create_track("lfo_track", 0);
+    auto [track_status, track_id] = _module_under_test->create_track("lfo_track", 0);
     auto [status, id] = _module_under_test->load_plugin("sushi.testing.lfo",
                                                         "lfo",
                                                         "   ",
                                                         PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    status = _module_under_test->add_plugin_to_track(id, _processors->track("lfo_track")->id());
+    status = _module_under_test->add_plugin_to_track(id, track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     status = _module_under_test->set_cv_input_channels(2);

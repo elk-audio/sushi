@@ -237,7 +237,7 @@ TEST(EventTest, TestAddProcessorToTrackEventExecution)
     // Prepare an engine instance with 1 track
     auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
     auto processor_container = engine.processor_container();
-    auto status = engine.create_track("main", 2);
+    auto [status, track_id] = engine.create_track("main", 2);
     ASSERT_EQ(engine::EngineReturnStatus::OK, status);
     auto main_track_id = engine.processor_container()->processor("main")->id();
 

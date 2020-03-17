@@ -241,9 +241,9 @@ EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
     return BaseEngine::set_cv_output_channels(channels);
 }
 
-EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, ObjectId track_id)
 {
-    auto track = _processors.track(track_name);
+    auto track = _processors.track(track_id);
     if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
@@ -254,14 +254,14 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
     }
     AudioConnection con = {input_channel, track_channel, track->id()};
     _audio_in_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
+    SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_id);
     return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel, int track_channel,
-                                                             const std::string& track_name)
+                                                             ObjectId track_id)
 {
-    auto track = _processors.track(track_name);
+    auto track = _processors.track(track_id);
     if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
@@ -272,28 +272,28 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     }
     AudioConnection con = {output_channel, track_channel, track->id()};
     _audio_out_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
+    SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_id, output_channel);
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::connect_audio_input_bus(int input_bus, int track_bus, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_input_bus(int input_bus, int track_bus, ObjectId track_id)
 {
-    auto status = connect_audio_input_channel(input_bus * 2, track_bus * 2, track_name);
+    auto status = connect_audio_input_channel(input_bus * 2, track_bus * 2, track_id);
     if (status != EngineReturnStatus::OK)
     {
         return status;
     }
-    return connect_audio_input_channel(input_bus * 2 + 1, track_bus * 2 + 1, track_name);
+    return connect_audio_input_channel(input_bus * 2 + 1, track_bus * 2 + 1, track_id);
 }
 
-EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int track_bus, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int track_bus, ObjectId track_id)
 {
-    auto status = connect_audio_output_channel(output_bus * 2, track_bus * 2, track_name);
+    auto status = connect_audio_output_channel(output_bus * 2, track_bus * 2, track_id);
     if (status != EngineReturnStatus::OK)
     {
         return status;
     }
-    return connect_audio_output_channel(output_bus * 2 + 1, track_bus * 2 + 1, track_name);
+    return connect_audio_output_channel(output_bus * 2 + 1, track_bus * 2 + 1, track_id);
 }
 
 EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& processor_name,
@@ -595,26 +595,38 @@ EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
     return EngineReturnStatus::QUEUE_FULL;
 }
 
-EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, int input_busses, int output_busses)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name,
+                                                                           int input_busses,
+                                                                           int output_busses)
 {
-    if((input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES))
+    if(input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES)
     {
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
-        return EngineReturnStatus::INVALID_N_CHANNELS;
+        return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
     auto track = std::make_shared<Track>(_host_control, input_busses, output_busses, &_process_timer);
-    return _register_new_track(name, track);
+    auto status = _register_new_track(name, track);
+    if (status != EngineReturnStatus::OK)
+    {
+        return {status, ObjectId(0)};
+    }
+    return {EngineReturnStatus::OK, track->id()};
 }
 
-EngineReturnStatus AudioEngine::create_track(const std::string &name, int channel_count)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::string &name, int channel_count)
 {
     if((channel_count < 0 || channel_count > 2))
     {
         SUSHI_LOG_ERROR("Invalid number of channels for new track");
-        return EngineReturnStatus::INVALID_N_CHANNELS;
+        return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
     auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer);
-    return _register_new_track(name, track);
+    auto status = _register_new_track(name, track);
+    if (status != EngineReturnStatus::OK)
+    {
+        return {status, ObjectId(0)};
+    }
+    return {EngineReturnStatus::OK, track->id()};
 }
 
 EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
