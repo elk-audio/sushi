@@ -253,7 +253,7 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
         return EngineReturnStatus::INVALID_CHANNEL;
     }
     AudioConnection con = {input_channel, track_channel, track->id()};
-    _in_audio_connections.push_back(con);
+    _audio_in_connections.push_back(con);
     SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
     return EngineReturnStatus::OK;
 }
@@ -271,7 +271,7 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
         return EngineReturnStatus::INVALID_CHANNEL;
     }
     AudioConnection con = {output_channel, track_channel, track->id()};
-    _out_audio_connections.push_back(con);
+    _audio_out_connections.push_back(con);
     SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
     return EngineReturnStatus::OK;
 }
@@ -318,7 +318,7 @@ EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& proce
     con.processor_id = processor->id();
     con.parameter_id = param->id();
     con.cv_id = cv_input_id;
-    _cv_in_routes.push_back(con);
+    _cv_in_connections.push_back(con);
     SUSHI_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
     return EngineReturnStatus::OK;
 }
@@ -369,7 +369,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     con.note_no = note_no;
     con.channel = channel;
     con.gate_id = gate_input_id;
-    _gate_in_routes.push_back(con);
+    _gate_in_connections.push_back(con);
     SUSHI_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
@@ -1058,7 +1058,7 @@ void AudioEngine::_retrieve_events_from_tracks(ControlBuffer& buffer)
 
 void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
 {
-    for (const auto& c : _in_audio_connections)
+    for (const auto& c : _audio_in_connections)
     {
         auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*input, c.engine_channel, 1);
         auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
@@ -1069,7 +1069,7 @@ void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
 void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
 {
     output->clear();
-    for (const auto& c : _out_audio_connections)
+    for (const auto& c : _audio_out_connections)
     {
         auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
         auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*output, c.engine_channel, 1);
@@ -1146,7 +1146,7 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
 
 void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
 {
-    for (const auto& r : _cv_in_routes)
+    for (const auto& r : _cv_in_connections)
     {
         float value = buffer.cv_values[r.cv_id];
         auto ev = RtEvent::make_parameter_change_event(r.processor_id, 0, r.parameter_id, value);
@@ -1156,7 +1156,7 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
     auto gate_diffs = _prev_gate_values ^ buffer.gate_values;
     if (gate_diffs.any())
     {
-        for (const auto& r : _gate_in_routes)
+        for (const auto& r : _gate_in_connections)
         {
             if (gate_diffs[r.gate_id])
             {

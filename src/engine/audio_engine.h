@@ -709,33 +709,11 @@ private:
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
 
-    struct AudioConnection
-    {
-        int engine_channel;
-        int track_channel;
-        ObjectId track;
-    };
+    std::vector<AudioConnection> _audio_in_connections;
+    std::vector<AudioConnection> _audio_out_connections;
+    std::vector<CvConnection>    _cv_in_connections;
+    std::vector<GateConnection>  _gate_in_connections;
 
-    std::vector<AudioConnection> _in_audio_connections;
-    std::vector<AudioConnection> _out_audio_connections;
-
-    struct CvConnection
-    {
-        ObjectId processor_id;
-        ObjectId parameter_id;
-        int cv_id;
-    };
-
-    struct GateConnection
-    {
-        ObjectId processor_id;
-        int gate_id;
-        int note_no;
-        int channel;
-    };
-
-    std::vector<CvConnection> _cv_in_routes;
-    std::vector<GateConnection> _gate_in_routes;
     BitSet32 _prev_gate_values{0};
     BitSet32 _outgoing_gate_values{0};
 

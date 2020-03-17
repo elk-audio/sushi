@@ -75,6 +75,13 @@ enum class RtEventType
     REMOVE_TRACK,
     ASYNC_WORK,
     ASYNC_WORK_NOTIFICATION,
+    /* Routing events */
+    ADD_AUDIO_CONNECTION,
+    REMOVE_AUDIO_CONNECTION,
+    ADD_CV_CONNECTION,
+    REMOVE_CV_CONNECTION,
+    ADD_GATE_CONNECTION,
+    REMOVE_GATE_CONNECTION,
     /* Delete object event */
     STRING_DELETE,
     BLOB_DELETE,
@@ -438,11 +445,93 @@ public:
 
     uint16_t    sending_event_id() const {return _event_id;}
     int         return_status() const {return value();}
+
 private:
     uint16_t  _event_id;
 };
 
-/* RtEvent for passing timestaps synced to sample offsets */
+struct AudioConnection
+{
+    int engine_channel;
+    int track_channel;
+    ObjectId track;
+};
+
+struct CvConnection
+{
+    ObjectId processor_id;
+    ObjectId parameter_id;
+    int cv_id;
+};
+
+struct GateConnection
+{
+    ObjectId processor_id;
+    int gate_id;
+    int note_no;
+    int channel;
+};
+
+/* Base class for passing audio, cv and gate connections */
+/* slightly hackish to repurpose the processor_id field for storing a
+ * bool, but it allows us to keep the size down to 32 bytes.
+ * Otherwise GateConnection wouldn't fit in the event */
+class ConnectionRtEvent : public ReturnableRtEvent
+{
+public:
+    bool input_connection() const {return _processor_id == 1;}
+    bool output_connection() const {return _processor_id == 0;}
+
+protected:
+    ConnectionRtEvent(RtEventType type,
+                      bool is_input_connection) : ReturnableRtEvent(type,
+                                                                    is_input_connection ? 1 : 0) {}
+};
+
+/* RtEvents for passing and deleting audio, cv and gate mappings */
+class AudioConnectionRtEvent : public ConnectionRtEvent
+{
+public:
+    AudioConnectionRtEvent(AudioConnection connection,
+                           RtEventType type,
+                           bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
+                                                       _connection(connection) {}
+
+    const AudioConnection& connection() const {return _connection;}
+
+private:
+    AudioConnection _connection;
+};
+
+class CvConnectionRtEvent : public ConnectionRtEvent
+{
+public:
+    CvConnectionRtEvent(CvConnection connection,
+                        RtEventType type,
+                        bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
+                                                    _connection(connection) {}
+
+    const CvConnection& connection() const {return _connection;}
+
+private:
+    CvConnection _connection;
+};
+
+class GateConnectionRtEvent : public ConnectionRtEvent
+{
+public:
+    GateConnectionRtEvent(GateConnection connection,
+                          RtEventType type,
+                          bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
+                                                      _connection(connection) {}
+
+    const GateConnection& connection() const {return _connection;}
+
+private:
+    GateConnection _connection;
+};
+
+/* RtEvent for passing timestamps synced to sample offsets */
 class SynchronisationRtEvent : public BaseRtEvent
 {
 public:
@@ -686,6 +775,27 @@ public:
         return &_async_work_completion_event;
     }
 
+    const AudioConnectionRtEvent* audio_connection_event() const
+    {
+        assert(_audio_connection_event.type() == RtEventType::ADD_AUDIO_CONNECTION ||
+               _audio_connection_event.type() == RtEventType::REMOVE_AUDIO_CONNECTION);
+        return &_audio_connection_event;
+    }
+
+    const CvConnectionRtEvent* cv_connection_event() const
+    {
+        assert(_cv_connection_event.type() == RtEventType::ADD_CV_CONNECTION ||
+               _cv_connection_event.type() == RtEventType::REMOVE_CV_CONNECTION);
+        return &_cv_connection_event;
+    }
+
+    const GateConnectionRtEvent* gate_connection_event() const
+    {
+        assert(_gate_connection_event.type() == RtEventType::ADD_GATE_CONNECTION ||
+               _gate_connection_event.type() == RtEventType::REMOVE_GATE_CONNECTION);
+        return &_gate_connection_event;
+    }
+
     const DataPayloadRtEvent* data_payload_event() const
     {
         assert(_data_payload_event.type() == RtEventType::STRING_DELETE ||
@@ -877,6 +987,78 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_add_audio_input_connection_event(const AudioConnection& connection)
+    {
+        AudioConnectionRtEvent typed_event(connection, RtEventType::ADD_AUDIO_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_add_audio_output_connection_event(const AudioConnection& connection)
+    {
+        AudioConnectionRtEvent typed_event(connection, RtEventType::ADD_AUDIO_CONNECTION, false);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_audio_input_connection_event(const AudioConnection& connection)
+    {
+        AudioConnectionRtEvent typed_event(connection, RtEventType::REMOVE_AUDIO_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_audio_output_connection_event(const AudioConnection& connection)
+    {
+        AudioConnectionRtEvent typed_event(connection, RtEventType::REMOVE_AUDIO_CONNECTION, false);
+        return typed_event;
+    }
+
+    static RtEvent make_add_cv_input_connection_event(const CvConnection& connection)
+    {
+        CvConnectionRtEvent typed_event(connection, RtEventType::ADD_CV_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_add_cv_output_connection_event(const CvConnection& connection)
+    {
+        CvConnectionRtEvent typed_event(connection, RtEventType::ADD_CV_CONNECTION, false);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_cv_input_connection_event(const CvConnection& connection)
+    {
+        CvConnectionRtEvent typed_event(connection, RtEventType::REMOVE_CV_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_cv_output_connection_event(const CvConnection& connection)
+    {
+        CvConnectionRtEvent typed_event(connection, RtEventType::REMOVE_CV_CONNECTION, false);
+        return typed_event;
+    }
+
+    static RtEvent make_add_gate_input_connection_event(const GateConnection& connection)
+    {
+        GateConnectionRtEvent typed_event(connection, RtEventType::ADD_GATE_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_add_gate_output_connection_event(const GateConnection& connection)
+    {
+        GateConnectionRtEvent typed_event(connection, RtEventType::ADD_GATE_CONNECTION, false);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_gate_input_connection_event(const GateConnection& connection)
+    {
+        GateConnectionRtEvent typed_event(connection, RtEventType::REMOVE_GATE_CONNECTION, true);
+        return typed_event;
+    }
+
+    static RtEvent make_remove_gate_output_connection_event(const GateConnection& connection)
+    {
+        GateConnectionRtEvent typed_event(connection, RtEventType::REMOVE_GATE_CONNECTION, false);
+        return typed_event;
+    }
+
     static RtEvent make_delete_string_event(std::string* string)
     {
         DataPayloadRtEvent typed_event(RtEventType::STRING_DELETE, 0, 0, {0, reinterpret_cast<uint8_t*>(string)});
@@ -934,27 +1116,30 @@ public:
 
 private:
     /* Private constructors that are invoked automatically when using the make_xxx_event functions */
-    RtEvent(const KeyboardRtEvent& e) : _keyboard_event(e) {}
-    RtEvent(const KeyboardCommonRtEvent& e) : _keyboard_common_event(e) {}
-    RtEvent(const WrappedMidiRtEvent& e) : _wrapped_midi_event(e) {}
-    RtEvent(const GateRtEvent& e) : _gate_event(e) {}
-    RtEvent(const CvRtEvent& e) : _cv_event(e) {}
-    RtEvent(const ParameterChangeRtEvent& e) : _parameter_change_event(e) {}
-    RtEvent(const StringParameterChangeRtEvent& e) : _string_parameter_change_event(e) {}
-    RtEvent(const DataParameterChangeRtEvent& e) : _data_parameter_change_event(e) {}
-    RtEvent(const ProcessorCommandRtEvent& e) : _processor_command_event(e) {}
-    RtEvent(const ReturnableRtEvent& e) : _returnable_event(e) {}
-    RtEvent(const ProcessorOperationRtEvent& e) : _processor_operation_event(e) {}
-    RtEvent(const ProcessorReorderRtEvent& e) : _processor_reorder_event(e) {}
-    RtEvent(const AsyncWorkRtEvent& e) : _async_work_event(e) {}
-    RtEvent(const AsyncWorkRtCompletionEvent& e) : _async_work_completion_event(e) {}
-    RtEvent(const DataPayloadRtEvent& e) : _data_payload_event(e) {}
-    RtEvent(const SynchronisationRtEvent& e) : _synchronisation_event(e) {}
-    RtEvent(const TempoRtEvent& e) : _tempo_event(e) {}
-    RtEvent(const TimeSignatureRtEvent& e) : _time_signature_event(e) {}
-    RtEvent(const PlayingModeRtEvent& e) : _playing_mode_event(e) {}
-    RtEvent(const SyncModeRtEvent& e) : _sync_mode_event(e) {}
-    RtEvent(const ClipNotificationRtEvent& e) : _clip_notification_event(e) {}
+    RtEvent(const KeyboardRtEvent& e)                   : _keyboard_event(e) {}
+    RtEvent(const KeyboardCommonRtEvent& e)             : _keyboard_common_event(e) {}
+    RtEvent(const WrappedMidiRtEvent& e)                : _wrapped_midi_event(e) {}
+    RtEvent(const GateRtEvent& e)                       : _gate_event(e) {}
+    RtEvent(const CvRtEvent& e)                         : _cv_event(e) {}
+    RtEvent(const ParameterChangeRtEvent& e)            : _parameter_change_event(e) {}
+    RtEvent(const StringParameterChangeRtEvent& e)      : _string_parameter_change_event(e) {}
+    RtEvent(const DataParameterChangeRtEvent& e)        : _data_parameter_change_event(e) {}
+    RtEvent(const ProcessorCommandRtEvent& e)           : _processor_command_event(e) {}
+    RtEvent(const ReturnableRtEvent& e)                 : _returnable_event(e) {}
+    RtEvent(const ProcessorOperationRtEvent& e)         : _processor_operation_event(e) {}
+    RtEvent(const ProcessorReorderRtEvent& e)           : _processor_reorder_event(e) {}
+    RtEvent(const AsyncWorkRtEvent& e)                  : _async_work_event(e) {}
+    RtEvent(const AsyncWorkRtCompletionEvent& e)        : _async_work_completion_event(e) {}
+    RtEvent(const AudioConnectionRtEvent& e)            : _audio_connection_event(e) {}
+    RtEvent(const CvConnectionRtEvent& e)               : _cv_connection_event(e) {}
+    RtEvent(const GateConnectionRtEvent& e)             : _gate_connection_event(e) {}
+    RtEvent(const DataPayloadRtEvent& e)                : _data_payload_event(e) {}
+    RtEvent(const SynchronisationRtEvent& e)            : _synchronisation_event(e) {}
+    RtEvent(const TempoRtEvent& e)                      : _tempo_event(e) {}
+    RtEvent(const TimeSignatureRtEvent& e)              : _time_signature_event(e) {}
+    RtEvent(const PlayingModeRtEvent& e)                : _playing_mode_event(e) {}
+    RtEvent(const SyncModeRtEvent& e)                   : _sync_mode_event(e) {}
+    RtEvent(const ClipNotificationRtEvent& e)           : _clip_notification_event(e) {}
     /* Data storage */
     union
     {
@@ -973,6 +1158,9 @@ private:
         ProcessorReorderRtEvent       _processor_reorder_event;
         AsyncWorkRtEvent              _async_work_event;
         AsyncWorkRtCompletionEvent    _async_work_completion_event;
+        AudioConnectionRtEvent        _audio_connection_event;
+        CvConnectionRtEvent           _cv_connection_event;
+        GateConnectionRtEvent         _gate_connection_event;
         DataPayloadRtEvent            _data_payload_event;
         SynchronisationRtEvent        _synchronisation_event;
         TempoRtEvent                  _tempo_event;
