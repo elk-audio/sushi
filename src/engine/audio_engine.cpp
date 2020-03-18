@@ -45,10 +45,15 @@
 namespace sushi {
 namespace engine {
 
+constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
+
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
-constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
+
 constexpr int  MAX_TRACKS = 32;
+constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
+constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
+constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -186,6 +191,10 @@ AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::Base
                                                                 _clip_detector(sample_rate)
 {
     this->set_sample_rate(sample_rate);
+    _audio_in_connections.reserve(MAX_AUDIO_CONNECTIONS);
+    _audio_out_connections.reserve(MAX_AUDIO_CONNECTIONS);
+    _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
+    _gate_in_connections.reserve(MAX_GATE_CONNECTIONS);
     _event_dispatcher.run();
 }
 
@@ -252,8 +261,31 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
+
+    bool added = false;
     AudioConnection con = {input_channel, track_channel, track->id()};
-    _audio_in_connections.push_back(con);
+
+    if (realtime())
+    {
+        auto event = RtEvent::make_add_audio_input_connection_event(con);
+        _send_control_event(event);
+        added = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        if (_audio_in_connections.size() < MAX_AUDIO_CONNECTIONS)
+        {
+            _audio_in_connections.push_back(con);
+            added = true;
+        }
+    }
+
+    if (added == false)
+    {
+        SUSHI_LOG_ERROR("Max number of output audio connections reached");
+        return EngineReturnStatus::ERROR;
+    }
+
     SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_id);
     return EngineReturnStatus::OK;
 }
@@ -270,8 +302,31 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
+
+    bool added = false;
     AudioConnection con = {output_channel, track_channel, track->id()};
-    _audio_out_connections.push_back(con);
+
+    if (this->realtime())
+    {
+        auto event = RtEvent::make_add_audio_output_connection_event(con);
+        _send_control_event(event);
+        added = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        if (_audio_out_connections.size() < MAX_AUDIO_CONNECTIONS)
+        {
+            _audio_out_connections.push_back(con);
+            added = true;
+        }
+    }
+
+    if (added == false)
+    {
+        SUSHI_LOG_ERROR("Max number of output audio connections reached");
+        return EngineReturnStatus::ERROR;
+    }
+
     SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_id, output_channel);
     return EngineReturnStatus::OK;
 }
@@ -925,6 +980,14 @@ void AudioEngine::_process_internal_rt_events()
                 typed_event->set_handled(true);
                 break;
             }
+            case RtEventType::TEMPO:
+            case RtEventType::TIME_SIGNATURE:
+            case RtEventType::PLAYING_MODE:
+            case RtEventType::SYNC_MODE:
+            {
+                _transport.process_event(event);
+                break;
+            }
             case RtEventType::INSERT_PROCESSOR:
             {
                 auto typed_event = event.processor_operation_event();
@@ -1002,12 +1065,34 @@ void AudioEngine::_process_internal_rt_events()
                 typed_event->set_handled(false);
                 break;
             }
-            case RtEventType::TEMPO:
-            case RtEventType::TIME_SIGNATURE:
-            case RtEventType::PLAYING_MODE:
-            case RtEventType::SYNC_MODE:
+            case RtEventType::ADD_AUDIO_CONNECTION:
             {
-                _transport.process_event(event);
+                auto typed_event = event.audio_connection_event();
+                auto& list = typed_event->input_connection()? _audio_in_connections : _audio_out_connections;
+                if (list.size() < MAX_AUDIO_CONNECTIONS)
+                {
+                    list.push_back(typed_event->connection());
+                    typed_event->set_handled(true);
+                    break;
+                }
+                typed_event->set_handled(false);
+                break;
+            }
+            case RtEventType::REMOVE_AUDIO_CONNECTION:
+            {
+                auto typed_event = event.audio_connection_event();
+                auto& list = typed_event->input_connection()? _audio_in_connections : _audio_out_connections;
+                // Note, currently this removes all connections related to a specific track
+                // If/when we allow access to the list of connection we might want to remove
+                // only the specific connection matching
+                for (auto i = list.begin(); i != list.end(); ++i)
+                {
+                    if (i->track == typed_event->connection().track)
+                    {
+                        list.erase(i);
+                    }
+                }
+                typed_event->set_handled(true);
                 break;
             }
 

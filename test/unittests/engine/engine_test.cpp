@@ -465,6 +465,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         e->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
     };
+
     // Add a track, then a plugin to it while the engine is running, i.e. do it by asynchronous events instead
     _module_under_test->enable_realtime(true);
     auto rt = std::thread(faux_rt_thread, _module_under_test.get());
@@ -517,6 +518,58 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     ASSERT_FALSE(_processors->processor_exists(track_id));
     ASSERT_FALSE(_module_under_test->_realtime_processors[track_id]);
     ASSERT_FALSE(_module_under_test->_realtime_processors[plugin_id]);
+}
+
+TEST_F(TestEngine, TestAudioConnections)
+{
+    auto faux_rt_thread = [](AudioEngine* e, ChunkSampleBuffer* in, ChunkSampleBuffer* out, ControlBuffer* ctrl)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        e->process_chunk(in, out, ctrl, ctrl, Time(0), 0);
+    };
+
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(4);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(4);
+    ControlBuffer control_buffer;
+
+    // Fill the channels with different values so we can differentiate channels
+    for (int i = 0; i < in_buffer.channel_count(); ++i)
+    {
+        auto channel_buffer = ChunkSampleBuffer::create_non_owning_buffer(in_buffer, i, 1);
+        test_utils::fill_sample_buffer(channel_buffer, static_cast<float>(i + 1));
+    }
+
+    // Create a track and connect audio channels
+    auto [track_status, track_id] = _module_under_test->create_track("main", 2);
+    ASSERT_EQ(EngineReturnStatus::OK, track_status);
+    auto status = _module_under_test->connect_audio_input_channel(0, 0, track_id);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    status = _module_under_test->connect_audio_output_channel(1, 0, track_id);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
+    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
+    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(2)[0]);
+    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
+
+    // Connect some while the engine is running
+    _module_under_test->enable_realtime(true);
+    auto rt = std::thread(faux_rt_thread, _module_under_test.get(), &in_buffer, &out_buffer, &control_buffer);
+    status = _module_under_test->connect_audio_input_channel(3, 1, track_id);
+    rt.join();
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    rt = std::thread(faux_rt_thread, _module_under_test.get(), &in_buffer, &out_buffer, &control_buffer);
+    status = _module_under_test->connect_audio_output_channel(2, 1, track_id);
+    rt.join();
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
+    ASSERT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
+    ASSERT_FLOAT_EQ(4.0, out_buffer.channel(2)[0]);
+    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
+
 }
 
 TEST_F(TestEngine, TestSetCvChannels)

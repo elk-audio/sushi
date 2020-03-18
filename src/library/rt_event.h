@@ -782,6 +782,13 @@ public:
         return &_audio_connection_event;
     }
 
+    AudioConnectionRtEvent* audio_connection_event()
+    {
+        assert(_audio_connection_event.type() == RtEventType::ADD_AUDIO_CONNECTION ||
+               _audio_connection_event.type() == RtEventType::REMOVE_AUDIO_CONNECTION);
+        return &_audio_connection_event;
+    }
+
     const CvConnectionRtEvent* cv_connection_event() const
     {
         assert(_cv_connection_event.type() == RtEventType::ADD_CV_CONNECTION ||
