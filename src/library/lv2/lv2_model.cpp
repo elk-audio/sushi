@@ -23,6 +23,7 @@
 #include "lv2_model.h"
 #include "lv2_features.h"
 #include "lv2_worker.h"
+#include "lv2_wrapper.h"
 #include "lv2_state.h"
 #include "logging.h"
 
@@ -53,8 +54,9 @@ really ought to be enough for anybody(TM).
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model(float sample_rate):
-_sample_rate(sample_rate)
+Model::Model(float sample_rate, LV2_Wrapper* wrapper):
+_sample_rate(sample_rate),
+_wrapper(wrapper)
 {
     _world = lilv_world_new();
     _nodes = std::make_unique<HostNodes>(_world);
@@ -74,8 +76,6 @@ _sample_rate(sample_rate)
     _initialize_worker_feature();
     _initialize_safe_restore_feature();
     _initialize_options_feature();
-
-    zix_sem_init(&_worker->sem, 0);
 }
 
 Model::~Model()
@@ -735,6 +735,11 @@ bool Model::safe_restore()
 std::mutex& Model::work_lock()
 {
     return _work_lock;
+}
+
+LV2_Wrapper* Model::wrapper()
+{
+    return _wrapper;
 }
 
 }

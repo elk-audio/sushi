@@ -63,7 +63,7 @@ LV2_Wrapper::~LV2_Wrapper()
 
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _model = std::make_unique<Model>(sample_rate);
+    _model = std::make_unique<Model>(sample_rate, this);
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
@@ -400,8 +400,8 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
                 fprintf(stdout, "PAUSE_REQUESTED\n");
                 _model->set_play_state(PlayState::PAUSED);
 
-                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::non_rt_callback, this->id(), this);
-                _pending_event_id = e.async_work_event()->event_id();
+                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
+                _pending_state_restore_event_id = e.async_work_event()->event_id();
                 output_event(e);
                 break;
             }
@@ -441,9 +441,9 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
     }
 }
 
-void LV2_Wrapper::_non_rt_callback(EventId id)
+void LV2_Wrapper::_restore_state_callback(EventId id)
 {
-    if (id == _pending_event_id)
+    if (id == _pending_state_restore_event_id)
     {
         /* Note that this doesn't handle multiple requests at once.
          * Currently for the Pause functionality it is fine,
@@ -467,7 +467,19 @@ void LV2_Wrapper::_non_rt_callback(EventId id)
     }
     else
     {
-        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
+        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of non-rt callback didn't match, {} vs {}", id, _pending_state_restore_event_id);
+    }
+}
+
+void LV2_Wrapper::_worker_callback(EventId id)
+{
+    if(id == _pending_worker_event_id)
+    {
+        _model->worker()->worker_func();
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of worker callback didn't match, {} vs {}", id, _pending_worker_event_id);
     }
 }
 
@@ -495,6 +507,16 @@ void LV2_Wrapper::set_bypassed(bool bypassed)
 bool LV2_Wrapper::bypassed() const
 {
     return _bypass_manager.bypassed();
+}
+
+void LV2_Wrapper::set_pending_worker_event_id(EventId id)
+{
+    _pending_worker_event_id = id;
+}
+
+void LV2_Wrapper::output_worker_event(const RtEvent& event)
+{
+    output_event(event);
 }
 
 void LV2_Wrapper::_deliver_inputs_to_plugin()

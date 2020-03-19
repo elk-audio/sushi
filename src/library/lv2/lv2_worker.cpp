@@ -15,6 +15,7 @@
 */
 
 #include "lv2_worker.h"
+#include "lv2_wrapper.h"
 
 namespace sushi {
 namespace lv2 {
@@ -33,46 +34,40 @@ void Worker::worker_func()
     fprintf(stdout, "In worker_func\n");
 
     void* buf = nullptr;
-    while (true)
+
+    if (_model->exit == true)
     {
-        fprintf(stdout, "In worker_func - before wait\n");
-        zix_sem_wait(&sem);
-
-        fprintf(stdout, "In worker_func - after wait\n");
-        if (_model->exit == true)
-        {
-            fprintf(stdout, "In worker_func - breaking for exit\n");
-            break;
-        }
-
-        fprintf(stdout, "In worker_func - after exit block\n");
-
-        uint32_t size = 0;
-        zix_ring_read(_requests, (char*)&size, sizeof(size));
-
-        fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
-
-        if (!(buf = realloc(buf, size)))
-        {
-            fprintf(stderr, "error: realloc() failed\n");
-            free(buf);
-        }
-
-        zix_ring_read(_requests, (char*)buf, size);
-
-        fprintf(stdout, "In worker_func - after reading request.\n");
-
-        std::unique_lock<std::mutex> lock(_model->work_lock());
-
-        _iface->work(
-                _model->plugin_instance()->lv2_handle,
-                lv2_worker_respond,
-                this,
-                size,
-                buf);
-
-        fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
+        fprintf(stdout, "In worker_func - breaking for exit\n");
+        return;
     }
+
+    fprintf(stdout, "In worker_func - after exit block\n");
+
+    uint32_t size = 0;
+    zix_ring_read(_requests, (char*)&size, sizeof(size));
+
+    fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
+
+    if (!(buf = realloc(buf, size)))
+    {
+        fprintf(stderr, "error: realloc() failed\n");
+        free(buf);
+    }
+
+    zix_ring_read(_requests, (char*)buf, size);
+
+    fprintf(stdout, "In worker_func - after reading request.\n");
+
+    std::unique_lock<std::mutex> lock(_model->work_lock());
+
+    _iface->work(
+            _model->plugin_instance()->lv2_handle,
+            lv2_worker_respond,
+            this,
+            size,
+            buf);
+
+    fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
 
     free(buf);
 }
@@ -81,6 +76,7 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
 {
     auto worker = static_cast<Worker*>(handle);
     auto model = worker->model();
+    auto wrapper = model->wrapper();
 
     if (worker->threaded())
     {
@@ -88,15 +84,30 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
         // Schedule a request to be executed by the worker thread
         zix_ring_write(worker->requests(), (const char*)&size, sizeof(size));
         zix_ring_write(worker->requests(), (const char*)data, size);
-        zix_sem_post(&worker->sem);
+
+        auto e = RtEvent::make_async_work_event(&LV2_Wrapper::worker_callback,
+                                                wrapper->id(),
+                                                wrapper);
+
+        auto id = e.async_work_event()->event_id();
+        fprintf(stdout, "event ID: %d\n", id);
+        wrapper->set_pending_worker_event_id(id);
+
+        wrapper->output_worker_event(e);
     }
     else
     {
         fprintf(stdout, "In lv2_worker_schedule immediately\n");
+
         // Execute work immediately in this thread
         std::unique_lock<std::mutex> lock(model->work_lock());
+
         worker->iface()->work(
-                model->plugin_instance()->lv2_handle, lv2_worker_respond, worker, size, data);
+                model->plugin_instance()->lv2_handle,
+                lv2_worker_respond,
+                worker,
+                size,
+                data);
     }
     return LV2_WORKER_SUCCESS;
 }
@@ -124,7 +135,7 @@ void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 
 	if (_threaded)
 	{
-        _thread = std::thread(&Worker::worker_func, this);
+        //_thread = std::thread(&Worker::worker_func, this);
 
 		_requests = zix_ring_new(4096);
 		zix_ring_mlock(_requests);
@@ -140,8 +151,10 @@ void Worker::_finish()
     fprintf(stdout, "In finish\n");
 	if (_threaded)
 	{
-		zix_sem_post(&sem);
-        _thread.join();
+	    // Currently no thread is started, instead the processing is done
+	    // in the existing non-realtime thread that the callback
+	    // invokes.
+	    // _thread.join();
 	}
 }
 

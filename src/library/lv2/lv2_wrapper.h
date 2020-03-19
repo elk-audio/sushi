@@ -107,17 +107,30 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
-    static int non_rt_callback(void* data, EventId id)
+    static int worker_callback(void* data, EventId id)
     {
-        reinterpret_cast<LV2_Wrapper*>(data)->_non_rt_callback(id);
+        reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);
         return 1;
     }
+
+    static int restore_state_callback(void* data, EventId id)
+    {
+        reinterpret_cast<LV2_Wrapper *>(data)->_restore_state_callback(id);
+        return 1;
+    }
+
+    void set_pending_worker_event_id(EventId id);
+
+    void output_worker_event(const RtEvent& event);
 
 private:
     const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);
 
-    void _non_rt_callback(EventId id);
-    EventId _pending_event_id{0};
+    void _worker_callback(EventId id);
+
+    void _restore_state_callback(EventId id);
+    EventId _pending_state_restore_event_id{0};
+    EventId _pending_worker_event_id{0};
 
     void _update_transport();
     uint8_t pos_buf[256];

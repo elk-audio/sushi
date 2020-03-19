@@ -37,7 +37,6 @@
 #include "engine/base_event_dispatcher.h"
 
 #include "zix/ring.h"
-#include "zix/sem.h"
 
 #include "lv2_port.h"
 #include "lv2_host_nodes.h"
@@ -50,6 +49,7 @@ class Model;
 class State;
 class Worker;
 struct ControlID;
+class LV2_Wrapper;
 
 /**
 Control change event, sent through ring buffers for UI updates.
@@ -136,7 +136,7 @@ class Model
 public:
     SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    Model(float sample_rate);
+    Model(float sample_rate, LV2_Wrapper* wrapper);
     ~Model();
 
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
@@ -216,6 +216,8 @@ public:
     std::mutex& work_lock();
 
     bool safe_restore();
+
+    LV2_Wrapper* wrapper();
 
 private:
     bool _create_ports(const LilvPlugin* plugin);
@@ -300,6 +302,8 @@ private:
     std::mutex _work_lock;
     std::unique_ptr<Worker> _state_worker; ///< Synchronous worker for state restore
     std::unique_ptr<Worker> _worker; ///< Worker thread implementation
+
+    LV2_Wrapper* _wrapper{nullptr};
 };
 
 } // end namespace lv2

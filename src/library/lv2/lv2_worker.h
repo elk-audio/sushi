@@ -23,7 +23,6 @@
 #include "lv2_model.h"
 #include <thread>
 #include "zix/ring.h"
-#include "zix/sem.h"
 
 namespace sushi {
 namespace lv2 {
@@ -38,8 +37,6 @@ public:
 
     void emit_responses(LilvInstance* instance);
 
-    ZixSem sem;
-
     Model* model();
 
     bool threaded();
@@ -49,8 +46,9 @@ public:
 
     const LV2_Worker_Interface* iface();
 
-private:
     void worker_func();
+
+private:
 
     const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
 
@@ -65,7 +63,7 @@ private:
     Model* _model{nullptr};
     bool _threaded{false};
 
-    std::thread _thread;
+    //std::thread _thread;
 };
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
