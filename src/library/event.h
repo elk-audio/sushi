@@ -369,14 +369,24 @@ public:
     {
         INVALID_NAME = EventStatus::EVENT_SPECIFIC
     };
-    AddTrackEvent(const std::string& name, int channels, Time timestamp) : EngineEvent(timestamp),
-                                                                           _name(name),
-                                                                           _channels(channels){}
+
+    AddTrackEvent(const std::string& name,
+                  int channels,
+                  std::optional<int> input,
+                  int output,
+                  Time timestamp) : EngineEvent(timestamp),
+                                    _name(name),
+                                    _channels(channels),
+                                    _input_bus_channel(input),
+                                    _output_bus_channel(output) {}
+
     int execute(engine::BaseEngine* engine) override;
 
 private:
-    std::string _name;
-    int         _channels;
+    std::string          _name;
+    int                  _channels;
+    std::optional<int>   _input_bus_channel;
+    int                  _output_bus_channel;
 };
 
 class RemoveTrackEvent : public EngineEvent
@@ -386,12 +396,13 @@ public:
     {
         INVALID_TRACK = EventStatus::EVENT_SPECIFIC
     };
-    RemoveTrackEvent(const std::string& name, Time timestamp) : EngineEvent(timestamp),
-                                                                _name(name) {}
+    RemoveTrackEvent(ObjectId track_id, Time timestamp) : EngineEvent(timestamp),
+                                                          _track_id(track_id) {}
+
     int execute(engine::BaseEngine* engine) override;
 
 private:
-    std::string _name;
+    ObjectId _track_id;
 };
 
 class AddProcessorToTrackEvent : public EngineEvent

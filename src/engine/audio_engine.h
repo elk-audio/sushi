@@ -509,7 +509,7 @@ public:
     /**
      * @brief Set the current mode of synchronising the engine tempo and beats. Default is
      *        INTERNAL.
-     * @param mode A SyncMode with the current mode of syncronisation
+     * @param mode A SyncMode with the current mode of synchronisation
      */
     void set_tempo_sync_mode(SyncMode mode) override;
 
@@ -539,10 +539,10 @@ public:
     std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
-     * @param track_name The unique name of the track to delete
+     * @param track_id The unique name of the track to delete
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus delete_track(const std::string &track_name) override;
+    EngineReturnStatus delete_track(ObjectId track_id) override;
 
     /**
      * @brief Create a plugin instance, either from internal plugins or loaded from file.
@@ -666,6 +666,11 @@ private:
      */
     bool _remove_processor_from_realtime_part(ObjectId processor);
 
+    /**
+     * @brief Remove all audio connections from track
+     * @param track_id The id of the track to remove from
+     */
+    void _remove_connections_from_track(ObjectId track_id);
     /**
      * @brief Register a newly created track
      * @param track Pointer to the track

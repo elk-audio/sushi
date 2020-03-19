@@ -217,23 +217,74 @@ RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset)
     return RtEvent::make_data_parameter_change_event(_processor_id, sample_offset, _parameter_id, _blob_value);
 }
 
-int AddTrackEvent::execute(engine::BaseEngine*engine)
+int AddTrackEvent::execute(engine::BaseEngine* engine)
 {
     auto [status, track_id] = engine->create_track(_name, _channels);
-    switch (status)
+    if (status != engine::EngineReturnStatus::OK)
     {
-        case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
-
-        case engine::EngineReturnStatus::INVALID_PLUGIN:
-        default:
-            return AddTrackEvent::Status::INVALID_NAME;
+        return EventStatus::ERROR;
     }
+    if (_channels == 1)
+    {
+        status = engine->connect_audio_output_channel(_output_bus_channel, 0, track_id);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            engine->delete_track(track_id);
+            return EventStatus::ERROR;
+        }
+        if (_input_bus_channel.has_value())
+        {
+            status = engine->connect_audio_input_channel(_input_bus_channel.value(), 0, track_id);
+            if (status != engine::EngineReturnStatus::OK)
+            {
+                engine->delete_track(track_id);
+                return EventStatus::ERROR;
+            }
+        }
+    }
+    else if (_channels == 2)
+    {
+        status = engine->connect_audio_output_bus(_output_bus_channel, 0, track_id);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            engine->delete_track(track_id);
+            return EventStatus::ERROR;
+        }
+        if (_input_bus_channel.has_value())
+        {
+            status = engine->connect_audio_input_bus(_input_bus_channel.value(), 0, track_id);
+            if (status != engine::EngineReturnStatus::OK)
+            {
+                engine->delete_track(track_id);
+                return EventStatus::ERROR;
+            }
+        }
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+
+    return EventStatus::HANDLED_OK;
 }
 
-int RemoveTrackEvent::execute(engine::BaseEngine*engine)
+int RemoveTrackEvent::execute(engine::BaseEngine* engine)
 {
-    auto status = engine->delete_track(_name);
+    // First remove any
+    auto track = engine->processor_container()->track(_track_id);
+    if (track == nullptr)
+    {
+        return EventStatus::ERROR;
+    }
+    auto processors = engine->processor_container()->processors_on_track(_track_id);
+
+    // Remove processors starting with the last, more efficient
+    for (auto i = processors.rbegin(); i != processors.rend(); ++i)
+    {
+        engine->remove_plugin_from_track(_track_id, (*i)->id());
+    }
+
+    auto status = engine->delete_track(_track_id);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:

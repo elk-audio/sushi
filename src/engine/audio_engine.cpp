@@ -541,6 +541,37 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
     return true;
 }
 
+void AudioEngine::_remove_connections_from_track(ObjectId track_id)
+{
+    if (this->realtime())
+    {
+        AudioConnection con = {0, 0, track_id};
+        auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
+        auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
+        _send_control_event(input_event);
+        _send_control_event(output_event);
+        _event_receiver.wait_for_response(input_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        _event_receiver.wait_for_response(output_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        for (auto i = _audio_in_connections.begin(); i != _audio_in_connections.end(); ++i)
+        {
+            if (i->track == track_id)
+            {
+                _audio_in_connections.erase(i);
+            }
+        }
+        for (auto i = _audio_out_connections.begin(); i != _audio_out_connections.end(); ++i)
+        {
+            if (i->track == track_id)
+            {
+                _audio_out_connections.erase(i);
+            }
+        }
+    }
+}
+
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                                 SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                                 ControlBuffer* in_controls,
@@ -684,35 +715,48 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::str
     return {EngineReturnStatus::OK, track->id()};
 }
 
-EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
+EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
 {
-    // TODO - Until it's decided how tracks report what processors they have,
-    // we assume that the track has no processors before deleting
-    auto track = _processors.mutable_track(track_name);
+    auto track = _processors.mutable_track(track_id);
     if (track == nullptr)
     {
-        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_name);
+        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
+    }
+    if (_processors.processors_on_track(track->id()).size() > 0)
+    {
+        SUSHI_LOG_ERROR("Couldn't delete track {}, track not empty", track_id);
+        return EngineReturnStatus::ERROR;
     }
 
     if (realtime())
     {
+        AudioConnection con;
+        con.track = track->id();
+        auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
+        auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
         auto remove_track_event = RtEvent::make_remove_track_event(track->id());
         auto delete_event = RtEvent::make_remove_processor_event(track->id());
+        _send_control_event(input_event);
+        _send_control_event(output_event);
         _send_control_event(remove_track_event);
         _send_control_event(delete_event);
+        // The audio connection events are assumed to go through
         bool removed = _event_receiver.wait_for_response(remove_track_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track->name());
         }
     }
     else
     {
+        // First remove the track from any audio connections, if realtime, this is done with RtEvents
+        _remove_connections_from_track(track->id());
+
         _audio_graph.remove(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
-        SUSHI_LOG_WARNING_IF(removed == false,"Plugin track {} was not in the audio graph", track_name);
+        SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id);
     }
     _processors.remove_track(track->id());
     _deregister_processor(track.get());
@@ -1040,7 +1084,6 @@ void AudioEngine::_process_internal_rt_events()
                     bool ok = _audio_graph.add(track);
                     if (ok)
                     {
-                        track->set_active_rt_processing(true);
                         typed_event->set_handled(true);
                         break;
                     }
@@ -1057,7 +1100,6 @@ void AudioEngine::_process_internal_rt_events()
                     bool removed = _audio_graph.remove(track);
                     if (removed)
                     {
-                        track->set_active_rt_processing(false);
                         typed_event->set_handled(true);
                         break;
                     }

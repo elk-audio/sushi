@@ -234,7 +234,7 @@ public:
         return {EngineReturnStatus::OK, 0};
     }
 
-    virtual EngineReturnStatus delete_track(const std::string & /*track_id*/)
+    virtual EngineReturnStatus delete_track(ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }

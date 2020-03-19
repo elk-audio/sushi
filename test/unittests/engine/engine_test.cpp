@@ -322,6 +322,7 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     auto [status, track_id] = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_TRUE(_processors->processor_exists("left"));
+    auto left_track_id = track_id;
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),1u);
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0][0]->name(),"left");
 
@@ -332,7 +333,7 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN, status);
 
     /* Test removal */
-    status = _module_under_test->delete_track("left");
+    status = _module_under_test->delete_track(left_track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_FALSE(_processors->processor_exists("left"));
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
@@ -455,7 +456,6 @@ TEST_F(TestEngine, TestSetSamplerate)
 }
 
 TEST_F(TestEngine, TestRealtimeConfiguration)
-
 {
     auto faux_rt_thread = [](AudioEngine* e)
     {
@@ -506,7 +506,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
-    status = _module_under_test->delete_track("main");
+    status = _module_under_test->delete_track(track_id);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0].size());

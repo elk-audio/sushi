@@ -83,14 +83,14 @@ void BaseControlFrontend::send_program_change_event(ObjectId processor, int prog
 void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new AddTrackEvent(name, channels, timestamp);
+    auto e = new AddTrackEvent(name, channels, 0, 0, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_track_event(const std::string &name)
+void BaseControlFrontend::send_remove_track_event(const std::string& /*name*/)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveTrackEvent(name, timestamp);
+    auto e = new RemoveTrackEvent(0, timestamp);
     send_with_callback(e);
 }
 
