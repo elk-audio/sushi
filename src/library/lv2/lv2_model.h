@@ -36,8 +36,6 @@
 #include "library/processor.h"
 #include "engine/base_event_dispatcher.h"
 
-#include "zix/ring.h"
-
 #include "lv2_port.h"
 #include "lv2_host_nodes.h"
 #include "lv2_control.h"

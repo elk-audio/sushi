@@ -25,8 +25,15 @@ namespace lv2 {
 static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
     auto worker = static_cast<Worker*>(handle);
-    zix_ring_write(worker->responses(), (const char*)&size, sizeof(size));
-    zix_ring_write(worker->responses(), (const char*)data, size);
+
+    Lv2FifoItem response;
+    response.size = size;
+
+    // TODO: std::copy.
+    memcpy(response.block.data(), data, size);
+
+    worker->responses().push(response);
+
     fprintf(stdout, "In lv2_worker_respond\n");
     return LV2_WORKER_SUCCESS;
 }
@@ -45,30 +52,24 @@ void Worker::worker_func()
 
     fprintf(stdout, "In worker_func - after exit block\n");
 
-    uint32_t size = 0;
-//    zix_ring_read(_requests, (char*)&size, sizeof(size));
+    Lv2FifoItem request;
+    fprintf(stdout, "SIZE OF THING: %d\n", sizeof(request));
 
-    fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
+    _requests.pop(request);
 
-    if (!(buf = realloc(buf, size)))
+    fprintf(stdout, "In worker_func - after reading request.\n");
+
+
+    if (!(buf = realloc(buf, request.size)))
     {
         fprintf(stderr, "error: realloc() failed\n");
         free(buf);
     }
 
-//    zix_ring_read(_requests, (char*)buf, size);
-
-    fprintf(stdout, "In worker_func - after reading request.\n");
-
-    Lv2FifoItem request;
-    fprintf(stdout, "SIZE OF THING: %d\n", sizeof(request));
-
-    _requestsFIFO.pop(request);
-
     // TODO: std::copy.
-    memcpy(buf, request.block.data(), size);
+    memcpy(buf, request.block.data(), request.size);
 
-//    assert(request.size == size);
+    fprintf(stdout, "In worker_func - after reading request size: %d\n", request.size);
 
     std::unique_lock<std::mutex> lock(_model->work_lock());
 
@@ -76,7 +77,7 @@ void Worker::worker_func()
             _model->plugin_instance()->lv2_handle,
             lv2_worker_respond,
             this,
-            size,
+            request.size,
             buf);
 
     fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
@@ -94,8 +95,6 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
     {
         fprintf(stdout, "In lv2_worker_schedule threaded\n");
         // Schedule a request to be executed by the worker thread
-        //zix_ring_write(worker->requests(), (const char*)&size, sizeof(size));
-        //zix_ring_write(worker->requests(), (const char*)data, size);
 
         Lv2FifoItem request;
         request.size = size;
@@ -103,7 +102,7 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
         // TODO: std::copy.
         memcpy(request.block.data(), data, size);
 
-        worker->requestsFIFO().push(request);
+        worker->requests().push(request);
 
         auto e = RtEvent::make_async_work_event(&LV2_Wrapper::worker_callback,
                                                 wrapper->id(),
@@ -155,14 +154,9 @@ void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 	if (_threaded)
 	{
         //_thread = std::thread(&Worker::worker_func, this);
-
-//		_requests = zix_ring_new(4096);
-//		zix_ring_mlock(_requests);
 	}
 
-	_responses = zix_ring_new(4096);
-	_response  = malloc(4096);
-	zix_ring_mlock(_responses);
+    _response  = malloc(4096);
 }
 
 void Worker::_finish()
@@ -179,40 +173,25 @@ void Worker::_finish()
 
 void Worker::_destroy()
 {
-//	if (_requests)
-	{
-		if (_threaded)
-		{
-//			zix_ring_free(_requests);
-		}
-
-		if(_responses)
-		{
-            zix_ring_free(_responses);
-            free(_response);
-        }
-	}
+    free(_response);
 }
 
 void Worker::emit_responses(LilvInstance* instance)
 {
-	if (_responses)
-	{
-		uint32_t read_space = zix_ring_read_space(_responses);
-		while (read_space)
-		{
-            fprintf(stdout, "In emit_responses\n");
-			uint32_t size = 0;
-			zix_ring_read(_responses, (char*)&size, sizeof(size));
+    while (_responses.empty() == false)
+    {
+        fprintf(stdout, "In emit_responses\n");
 
-			zix_ring_read(_responses, (char*)_response, size);
+        Lv2FifoItem response;
 
-			_iface->work_response(
-				instance->lv2_handle, size, _response);
+        _responses.pop(response);
 
-			read_space -= sizeof(size) + size;
-		}
-	}
+        // TODO: std::copy.
+        memcpy(_response, response.block.data(), response.size);
+
+        _iface->work_response(
+            instance->lv2_handle, response.size, _response);
+    }
 }
 
 Model* Worker::model()
@@ -225,17 +204,12 @@ bool Worker::threaded()
     return _threaded;
 }
 
-Lv2WorkerFifo& Worker::requestsFIFO()
+Lv2WorkerFifo& Worker::requests()
 {
-    return _requestsFIFO;
+    return _requests;
 }
 
-//ZixRing* Worker::requests()
-//{
-//    return _requests;
-//}
-
-ZixRing* Worker::responses()
+Lv2WorkerFifo& Worker::responses()
 {
     return _responses;
 }

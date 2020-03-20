@@ -16,7 +16,6 @@
 #include "library/lv2/lv2_model.cpp"
 #include "library/lv2/lv2_worker.cpp"
 #include "library/lv2/lv2_control.cpp"
-#include "library/lv2/zix/ring.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;

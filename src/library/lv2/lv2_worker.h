@@ -23,7 +23,6 @@
 #include "lv2_model.h"
 #include "lv2_worker_fifo.h"
 #include <thread>
-#include "zix/ring.h"
 
 namespace sushi {
 namespace lv2 {
@@ -42,9 +41,9 @@ public:
 
     bool threaded();
 
-    Lv2WorkerFifo& requestsFIFO();
-    //ZixRing* requests();
-    ZixRing* responses();
+    Lv2WorkerFifo& requests();
+
+    Lv2WorkerFifo& responses();
 
     const LV2_Worker_Interface* iface();
 
@@ -54,10 +53,8 @@ private:
 
     const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
 
-    Lv2WorkerFifo _requestsFIFO; ///< Requests to the worker
-
-    //ZixRing* _requests = nullptr; ///< Requests to the worker
-    ZixRing* _responses = nullptr; ///< Responses from the worker
+    Lv2WorkerFifo _requests; ///< Requests to the worker
+    Lv2WorkerFifo _responses; ///< Responses from the worker
 
     void* _response = nullptr; ///< Worker response buffer
 
