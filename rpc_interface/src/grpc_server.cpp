@@ -22,6 +22,7 @@
 #include "control_service.h"
 #include "async_service_call_data.h"
 
+
 namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listenAddress,
@@ -30,8 +31,7 @@ GrpcServer::GrpcServer(const std::string& listenAddress,
                          _service{new SushiControlService(controller)},
                          _server_builder{new grpc::ServerBuilder()},
                          _controller{controller},
-                         _running{false},
-                         _event_handled_by_call_data(new std::unordered_map<void *, bool>)
+                         _running{false}
 {
 
 }
@@ -40,36 +40,19 @@ GrpcServer::~GrpcServer() = default;
 
 void GrpcServer::HandleRpcs()
 {
-    new SubscribeToParameterUpdatesCallData(_service.get(),
-                                            _cq.get(),
-                                            _event_handled_by_call_data.get());
+    new SubscribeToParameterUpdatesCallData(_service.get(), _cq.get());
 
-    void* tag;
-    bool ok;
-    _cq->Next(&tag, &ok);
     while (_running.load())
     {
-        _service->notifications()->wait_for_data(std::chrono::milliseconds(500));
-        while (_service->notifications()->empty() == false)
+        void* tag;
+        bool ok;
+
+        _cq->Next(&tag, &ok);
+        if (ok != true)
         {
-            auto notification = std::shared_ptr(_service->notifications()->pop());
-            while(std::find(_event_handled_by_call_data->begin(),
-                            _event_handled_by_call_data->end(),
-                            std::pair<void* const,bool>(tag,false))
-                            != _event_handled_by_call_data->end())
-            {
-                if (ok != true)
-                {
-                    static_cast<CallData*>(tag)->stop();
-                }
-                static_cast<CallData*>(tag)->proceed(notification.get());
-                _cq->Next(&tag, &ok);
-            }
-            for(auto& call_data : *(_event_handled_by_call_data.get()))
-            {
-                _event_handled_by_call_data->at(call_data.first) = false;
-            }
+            static_cast<CallData*>(tag)->stop();
         }
+        static_cast<CallData*>(tag)->proceed();
     }
 }
 
@@ -85,13 +68,18 @@ void GrpcServer::start()
 
 void GrpcServer::stop()
 {
+    _service->stop_all_call_data();
     _running.store(false);
     std::chrono::system_clock::time_point shutdown_deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(50);
     _server->Shutdown(shutdown_deadline);
     _cq->Shutdown();
     void* tag;
     bool ok;
-    while(_cq->Next(&tag, &ok));
+    while(_cq->Next(&tag, &ok))
+    {
+        static_cast<CallData*>(tag)->stop();
+        static_cast<CallData*>(tag)->proceed();
+    };
 
     if (_worker.joinable())
     {

@@ -64,7 +64,6 @@ private:
     sushi::ext::SushiControl*                       _controller;
     std::thread                                     _worker;
     std::atomic<bool>                               _running;
-    std::unique_ptr<std::unordered_map<void*,bool>> _event_handled_by_call_data;
 };
 
 

@@ -22,25 +22,31 @@
 #define SUSHI_ASYNCSERVICECALLDATA_H
 
 #include <grpc++/alarm.h>
+#include <grpcpp/grpcpp.h>
 
-#include "control_service.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "sushi_rpc.grpc.pb.h"
+#pragma GCC diagnostic pop
+
+#include "library/synchronised_fifo.h"
 
 namespace sushi_rpc {
+
+class SushiControlService;
 
 class CallData
 {
 public:
     CallData(SushiControlService* service,
-             grpc::ServerCompletionQueue* cq,
-             std::unordered_map<void*, bool>* event_handled_by_call_data)
+             grpc::ServerCompletionQueue* cq)
         : _service(service),
           _cq(cq),
-          _status(CallStatus::CREATE),
-          _event_handled_by_call_data(event_handled_by_call_data) {}
+          _status(CallStatus::CREATE) {}
 
     virtual ~CallData() = default;
 
-    virtual void proceed(google::protobuf::Message* notification_message) = 0;
+    virtual void proceed() = 0;
 
     void stop()
     {
@@ -66,29 +72,41 @@ protected:
     };
 
     CallStatus _status;
-    std::unordered_map<void*, bool>* _event_handled_by_call_data;
 };
 
 class SubscribeToParameterUpdatesCallData : public CallData
 {
 public:
     SubscribeToParameterUpdatesCallData(SushiControlService* service,
-                                        grpc::ServerCompletionQueue* cq,
-                                        std::unordered_map<void*, bool>* event_handled_by_call_data)
-        : CallData(service, cq, event_handled_by_call_data),
+                                        grpc::ServerCompletionQueue* cq)
+        : CallData(service, cq),
             _responder(&_ctx),
             _first_iteration(true),
-            _last_notification_id(0)
+            _in_completion_queue(false),
+            _subscribed(false)
     {
-        proceed(nullptr);
+        std::cout << this << " created" << std::endl;
+        proceed();
     }
 
-    ~SubscribeToParameterUpdatesCallData()
+    virtual void proceed() override;
+
+    void push(std::shared_ptr<ParameterSetRequest> notification)
     {
-        _event_handled_by_call_data->erase(this);
+        _notifications.push(notification);
+        alert();
     }
 
-    virtual void proceed(google::protobuf::Message* notification_message) override;
+    void alert()
+    {
+        std::scoped_lock lock(_alert_lock);
+        if (_in_completion_queue == false)
+        {
+            _alarm.Set(_cq, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+            _in_completion_queue = true;
+        }
+    }
+
 
 private:
     int64_t _create_map_key(int parameter_id, int processor_id)
@@ -103,10 +121,13 @@ private:
     grpc::Alarm _alarm;
 
     bool _first_iteration;
-    unsigned int _last_notification_id;
+    bool _in_completion_queue;
+    bool _subscribed;
 
     std::unordered_map<int64_t, bool> _parameter_blacklist;
-    const NotificationContainer<ParameterSetRequest>* _notifications;
+    SynchronizedQueue<std::shared_ptr<ParameterSetRequest>> _notifications;
+
+    std::mutex _alert_lock;
 };
 
 }

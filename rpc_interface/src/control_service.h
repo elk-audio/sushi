@@ -29,7 +29,7 @@
 #include "sushi_rpc.grpc.pb.h"
 #pragma GCC diagnostic pop
 
-#include "library/synchronised_fifo.h"
+#include "async_service_call_data.h"
 #include "../../include/control_interface.h"
 
 namespace sushi_rpc {
@@ -139,17 +139,19 @@ public:
      grpc::Status SetParameterValueNormalised(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
-     /* Inherited from ControlListener */
-
+     // Inherited from ControlListener
      void notification(const sushi::ext::ControlNotification* notification) override;
 
-     SynchronizedQueue<std::shared_ptr<google::protobuf::Message>>* notifications()
-     {
-         return &_notifications;
-     }
+     // Subscribtion methods
+     void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+     void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+
+      // Shutdown method
+      void stop_all_call_data();
 
 private:
-    SynchronizedQueue<std::shared_ptr<google::protobuf::Message>> _notifications;
+    std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
+    std::mutex _subscriber_lock;
     sushi::ext::SushiControl* _controller;
 };
 

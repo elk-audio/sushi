@@ -29,7 +29,8 @@ endforeach()
 ######################
 
 set(SUSHI_GRPC_SOURCES src/grpc_server.cpp
-                       src/control_service.cpp )
+                       src/control_service.cpp
+                       src/async_service_call_data.cpp )
 
 add_library(sushi_rpc STATIC
                       ${SUSHI_GRPC_SOURCES}
