@@ -31,7 +31,7 @@ class Worker
 {
 public:
     Worker(Model* model);
-    ~Worker();
+    ~Worker() = default;
 
     void init(const LV2_Worker_Interface* iface, bool threaded);
 
@@ -50,21 +50,15 @@ public:
     void worker_func();
 
 private:
-
     const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
 
     Lv2WorkerFifo _requests; ///< Requests to the worker
     Lv2WorkerFifo _responses; ///< Responses from the worker
 
-    void* _response = nullptr; ///< Worker response buffer
-
-    void _finish();
-    void _destroy();
+    std::vector<std::byte> _response; ///< Worker response buffer
 
     Model* _model{nullptr};
     bool _threaded{false};
-
-    //std::thread _thread;
 };
 
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);

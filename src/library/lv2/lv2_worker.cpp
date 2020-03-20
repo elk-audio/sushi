@@ -38,53 +38,6 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
     return LV2_WORKER_SUCCESS;
 }
 
-void Worker::worker_func()
-{
-    fprintf(stdout, "In worker_func\n");
-
-    void* buf = nullptr;
-
-    if (_model->exit == true)
-    {
-        fprintf(stdout, "In worker_func - breaking for exit\n");
-        return;
-    }
-
-    fprintf(stdout, "In worker_func - after exit block\n");
-
-    Lv2FifoItem request;
-    fprintf(stdout, "SIZE OF THING: %d\n", sizeof(request));
-
-    _requests.pop(request);
-
-    fprintf(stdout, "In worker_func - after reading request.\n");
-
-
-    if (!(buf = realloc(buf, request.size)))
-    {
-        fprintf(stderr, "error: realloc() failed\n");
-        free(buf);
-    }
-
-    // TODO: std::copy.
-    memcpy(buf, request.block.data(), request.size);
-
-    fprintf(stdout, "In worker_func - after reading request size: %d\n", request.size);
-
-    std::unique_lock<std::mutex> lock(_model->work_lock());
-
-    _iface->work(
-            _model->plugin_instance()->lv2_handle,
-            lv2_worker_respond,
-            this,
-            request.size,
-            buf);
-
-    fprintf(stdout, "In worker_func - after waiting on work lock!!!\n");
-
-    free(buf);
-}
-
 LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
     auto worker = static_cast<Worker*>(handle);
@@ -138,12 +91,6 @@ Worker::Worker(Model* model)
     _model = model;
 }
 
-Worker::~Worker()
-{
-    _finish();
-    _destroy();
-}
-
 void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 {
 	_iface = iface;
@@ -151,30 +98,47 @@ void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 
     fprintf(stdout, "In init\n");
 
-	if (_threaded)
-	{
-        //_thread = std::thread(&Worker::worker_func, this);
-	}
-
-    _response  = malloc(4096);
+    _response.resize(4096);
 }
 
-void Worker::_finish()
+void Worker::worker_func()
 {
-    fprintf(stdout, "In finish\n");
-	if (_threaded)
-	{
-	    // Currently no thread is started, instead the processing is done
-	    // in the existing non-realtime thread that the callback
-	    // invokes.
-	    // _thread.join();
-	}
+    fprintf(stdout, "In worker_func\n");
+
+    if (_model->exit == true)
+    {
+        fprintf(stdout, "In worker_func - breaking for exit\n");
+        return;
+    }
+
+    fprintf(stdout, "In worker_func - after exit block\n");
+
+    Lv2FifoItem request;
+    fprintf(stdout, "SIZE OF THING: %d\n", sizeof(request));
+
+    _requests.pop(request);
+
+    fprintf(stdout, "In worker_func - after reading request.\n");
+
+    std::vector<std::byte> buf(request.size);
+
+    // TODO: std::copy.
+    memcpy(buf.data(), request.block.data(), request.size);
+
+    fprintf(stdout, "In worker_func - after reading request size: %d\n", request.size);
+
+    std::unique_lock<std::mutex> lock(_model->work_lock());
+
+    _iface->work(
+            _model->plugin_instance()->lv2_handle,
+            lv2_worker_respond,
+            this,
+            request.size,
+            buf.data());
+
+    fprintf(stdout, "In worker_func - after waiting on work lock!\n");
 }
 
-void Worker::_destroy()
-{
-    free(_response);
-}
 
 void Worker::emit_responses(LilvInstance* instance)
 {
@@ -187,10 +151,9 @@ void Worker::emit_responses(LilvInstance* instance)
         _responses.pop(response);
 
         // TODO: std::copy.
-        memcpy(_response, response.block.data(), response.size);
+        memcpy(_response.data(), response.block.data(), response.size);
 
-        _iface->work_response(
-            instance->lv2_handle, response.size, _response);
+        _iface->work_response(instance->lv2_handle, response.size, _response.data());
     }
 }
 
