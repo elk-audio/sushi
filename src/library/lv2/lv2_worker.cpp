@@ -20,6 +20,8 @@
 namespace sushi {
 namespace lv2 {
 
+// With the Guitarix plugins, which are the only worker-thread plugins tested,
+// This does not seem to be used - it never gets invoked, neither in Sushi nor in Jalv.
 static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
     auto worker = static_cast<Worker*>(handle);
@@ -44,7 +46,7 @@ void Worker::worker_func()
     fprintf(stdout, "In worker_func - after exit block\n");
 
     uint32_t size = 0;
-    zix_ring_read(_requests, (char*)&size, sizeof(size));
+//    zix_ring_read(_requests, (char*)&size, sizeof(size));
 
     fprintf(stdout, "In worker_func - after reading request size: %d\n", size);
 
@@ -54,9 +56,19 @@ void Worker::worker_func()
         free(buf);
     }
 
-    zix_ring_read(_requests, (char*)buf, size);
+//    zix_ring_read(_requests, (char*)buf, size);
 
     fprintf(stdout, "In worker_func - after reading request.\n");
+
+    Lv2FifoItem request;
+    fprintf(stdout, "SIZE OF THING: %d\n", sizeof(request));
+
+    _requestsFIFO.pop(request);
+
+    // TODO: std::copy.
+    memcpy(buf, request.block.data(), size);
+
+//    assert(request.size == size);
 
     std::unique_lock<std::mutex> lock(_model->work_lock());
 
@@ -82,8 +94,16 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
     {
         fprintf(stdout, "In lv2_worker_schedule threaded\n");
         // Schedule a request to be executed by the worker thread
-        zix_ring_write(worker->requests(), (const char*)&size, sizeof(size));
-        zix_ring_write(worker->requests(), (const char*)data, size);
+        //zix_ring_write(worker->requests(), (const char*)&size, sizeof(size));
+        //zix_ring_write(worker->requests(), (const char*)data, size);
+
+        Lv2FifoItem request;
+        request.size = size;
+
+        // TODO: std::copy.
+        memcpy(request.block.data(), data, size);
+
+        worker->requestsFIFO().push(request);
 
         auto e = RtEvent::make_async_work_event(&LV2_Wrapper::worker_callback,
                                                 wrapper->id(),
@@ -125,7 +145,6 @@ Worker::~Worker()
     _destroy();
 }
 
-// TODO: what is ZIX_UNUSED?
 void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 {
 	_iface = iface;
@@ -137,8 +156,8 @@ void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 	{
         //_thread = std::thread(&Worker::worker_func, this);
 
-		_requests = zix_ring_new(4096);
-		zix_ring_mlock(_requests);
+//		_requests = zix_ring_new(4096);
+//		zix_ring_mlock(_requests);
 	}
 
 	_responses = zix_ring_new(4096);
@@ -160,11 +179,11 @@ void Worker::_finish()
 
 void Worker::_destroy()
 {
-	if (_requests)
+//	if (_requests)
 	{
 		if (_threaded)
 		{
-			zix_ring_free(_requests);
+//			zix_ring_free(_requests);
 		}
 
 		if(_responses)
@@ -206,10 +225,15 @@ bool Worker::threaded()
     return _threaded;
 }
 
-ZixRing* Worker::requests()
+Lv2WorkerFifo& Worker::requestsFIFO()
 {
-    return _requests;
+    return _requestsFIFO;
 }
+
+//ZixRing* Worker::requests()
+//{
+//    return _requests;
+//}
 
 ZixRing* Worker::responses()
 {
