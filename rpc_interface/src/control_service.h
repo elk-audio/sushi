@@ -34,47 +34,6 @@
 
 namespace sushi_rpc {
 
-constexpr int NOTIFICATION_BUFFER_SIZE = 16;
-
-/**
- * @brief A ring buffer to hold the notifications received from
- * the sushi controller.
- *
- * @tparam T type of notification.
- */
-
-template<typename T>
-class NotificationContainer
-{
-public:
-    void set_content(T content)
-    {
-        _latest_index = (_latest_index + 1) % NOTIFICATION_BUFFER_SIZE;
-        _content[_latest_index] = content;
-        _counter++;
-    }
-
-    const T &latest_content() const
-    {
-        return this[_latest_index];
-    }
-
-    const T &operator[] (std::size_t idx) const
-    {
-        return _content[idx % NOTIFICATION_BUFFER_SIZE];
-    }
-
-    unsigned int counter() const
-    {
-        return _counter;
-    }
-
-private:
-    T _content[NOTIFICATION_BUFFER_SIZE];
-    unsigned int _counter;
-    unsigned int _latest_index;
-};
-
 typedef sushi_rpc::SushiController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::SushiController::Service> AsyncService;
 
 class SushiControlService : public AsyncService, sushi::ext::ControlListener
