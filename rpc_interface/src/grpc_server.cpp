@@ -68,23 +68,24 @@ void GrpcServer::start()
 
 void GrpcServer::stop()
 {
-    _service->stop_all_call_data();
+    auto shutdown_deadline = std::chrono::high_resolution_clock::now()
+                             + std::chrono::milliseconds(50);
     _running.store(false);
-    std::chrono::system_clock::time_point shutdown_deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(50);
     _server->Shutdown(shutdown_deadline);
     _cq->Shutdown();
-    void* tag;
-    bool ok;
-    while(_cq->Next(&tag, &ok))
-    {
-        static_cast<CallData*>(tag)->stop();
-        static_cast<CallData*>(tag)->proceed();
-    };
 
     if (_worker.joinable())
     {
         _worker.join();
     }
+
+    _service->stop_all_call_data();
+
+    void* tag;
+    bool ok;
+
+    //empty completion queue
+    while(_cq->Next(&tag, &ok));
 }
 
 void GrpcServer::waitForCompletion()

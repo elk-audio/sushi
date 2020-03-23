@@ -42,6 +42,7 @@ public:
              grpc::ServerCompletionQueue* cq)
         : _service(service),
           _cq(cq),
+          _in_completion_queue(false),
           _status(CallStatus::CREATE) {}
 
     virtual ~CallData() = default;
@@ -53,15 +54,25 @@ public:
         _status = CallStatus::FINISH;
     }
 
-    void push_to_back()
+    void alert()
     {
-        _status = CallStatus::PUSH_TO_BACK;
+        std::scoped_lock lock(_alert_lock);
+        if (_in_completion_queue == false)
+        {
+            _alarm.Set(_cq, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+            _in_completion_queue = true;
+        }
     }
 
 protected:
     SushiControlService* _service;
     grpc::ServerCompletionQueue* _cq;
     grpc::ServerContext _ctx;
+
+    grpc::Alarm _alarm;
+
+    bool _in_completion_queue;
+    std::mutex _alert_lock;
 
     enum class CallStatus
     {
@@ -80,12 +91,10 @@ public:
     SubscribeToParameterUpdatesCallData(SushiControlService* service,
                                         grpc::ServerCompletionQueue* cq)
         : CallData(service, cq),
-            _responder(&_ctx),
-            _first_iteration(true),
-            _in_completion_queue(false),
-            _subscribed(false)
+          _responder(&_ctx),
+          _first_iteration(true),
+          _subscribed(false)
     {
-        std::cout << this << " created" << std::endl;
         proceed();
     }
 
@@ -97,17 +106,6 @@ public:
         alert();
     }
 
-    void alert()
-    {
-        std::scoped_lock lock(_alert_lock);
-        if (_in_completion_queue == false)
-        {
-            _alarm.Set(_cq, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
-            _in_completion_queue = true;
-        }
-    }
-
-
 private:
     int64_t _create_map_key(int parameter_id, int processor_id)
     {
@@ -118,16 +116,11 @@ private:
     ParameterSetRequest _reply;
     grpc::ServerAsyncWriter<ParameterSetRequest> _responder;
 
-    grpc::Alarm _alarm;
-
     bool _first_iteration;
-    bool _in_completion_queue;
     bool _subscribed;
 
     std::unordered_map<int64_t, bool> _parameter_blacklist;
     SynchronizedQueue<std::shared_ptr<ParameterSetRequest>> _notifications;
-
-    std::mutex _alert_lock;
 };
 
 }

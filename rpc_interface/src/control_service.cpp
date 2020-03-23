@@ -689,7 +689,7 @@ void SushiControlService::stop_all_call_data()
     for (auto& subscriber : _parameter_subscribers)
     {
         subscriber->stop();
-        subscriber->alert();
+        subscriber->proceed();
     }
 }
 
