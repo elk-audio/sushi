@@ -90,6 +90,10 @@ public:
     ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
+    ext::ControlStatus                                  create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override;
+    ext::ControlStatus                                  create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override;
+    ext::ControlStatus                                  delete_track(int track_id) override;
+
     ext::ControlStatus                                  create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                                                   ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
     ext::ControlStatus                                  move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) override;

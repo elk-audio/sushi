@@ -91,6 +91,9 @@ public:
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
     // Audio Graph Control
+     grpc::Status CreateStereoTrack(grpc::ServerContext* context, const sushi_rpc::CreateStereoTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status CreateMonoTrack(grpc::ServerContext* context, const sushi_rpc::CreateMonoTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status DeleteTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status CreateProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::CreateProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status MoveProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::MoveProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status DeleteProcessorFromTrack(grpc::ServerContext* context, const sushi_rpc::DeleteProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;

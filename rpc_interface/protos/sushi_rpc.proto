@@ -66,6 +66,9 @@ service SushiController {
     rpc SetStringPropertyValue (StringPropertySetRequest) returns (GenericVoidValue) {}
 
     // Audio Graph Control
+    rpc CreateStereoTrack(CreateStereoTrackRequest) returns (GenericVoidValue) {}
+    rpc CreateMonoTrack(CreateMonoTrackRequest) returns (GenericVoidValue) {}
+    rpc DeleteTrack(TrackIdentifier) returns (GenericVoidValue) {}
     rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
     rpc MoveProcessorOnTrack(MoveProcessorRequest) returns (GenericVoidValue) {}
     rpc DeleteProcessorFromTrack(DeleteProcessorRequest) returns (GenericVoidValue) {}
@@ -290,6 +293,20 @@ message PluginType {
 message ProcessorPosition {
     bool add_to_back = 1;
     ProcessorIdentifier before_processor = 2;
+}
+
+message CreateStereoTrackRequest {
+    string name = 1;
+    int32  output_bus = 2;
+    bool   has_input = 3;
+    int32  input_bus  = 4;
+}
+
+message CreateMonoTrackRequest {
+    string name = 1;
+    int32  output_channel = 2;
+    bool   has_input = 3;
+    int32  input_channel = 4;
 }
 
 message CreateProcessorRequest {

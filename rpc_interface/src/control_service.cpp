@@ -654,6 +654,40 @@ grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*
     return to_grpc_status(status);
 }
 
+grpc::Status SushiControlService::CreateStereoTrack(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::CreateStereoTrackRequest* request,
+                                                    sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> input_bus;
+    if (request->has_input())
+    {
+        input_bus = request->input_bus();
+    }
+    auto status = _controller->create_stereo_track(request->name(), request->output_bus(), input_bus);
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::CreateMonoTrack(grpc::ServerContext* /*context*/,
+                                                  const sushi_rpc::CreateMonoTrackRequest* request,
+                                                  sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> input_channel;
+    if (request->has_input())
+    {
+        input_channel = request->input_channel();
+    }
+    auto status = _controller->create_mono_track(request->name(), request->output_channel(), input_channel);
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::DeleteTrack(grpc::ServerContext* /*context*/,
+                                              const sushi_rpc::TrackIdentifier* request,
+                                              sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->delete_track(request->id());
+    return to_grpc_status(status);
+}
+
 grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*context*/,
                                                          const sushi_rpc::CreateProcessorRequest* request,
                                                          sushi_rpc::GenericVoidValue* /*response*/)

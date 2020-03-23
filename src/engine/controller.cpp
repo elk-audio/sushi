@@ -672,10 +672,30 @@ std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node
     return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
 }
 
+ext::ControlStatus Controller::create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus)
+{
+    auto event = new AddTrackEvent(name, 2, input_bus, output_bus, IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+}
+
+ext::ControlStatus Controller::create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel)
+{
+    auto event = new AddTrackEvent(name, 1, input_channel, output_channel, IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+}
+
+ext::ControlStatus Controller::delete_track(int track_id)
+{
+    auto event = new RemoveTrackEvent(ObjectId(track_id), IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+}
+
 ext::ControlStatus Controller::create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                          ext::PluginType type, int track_id, std::optional<int> before_processor_id)
 {
-
     auto event = new AddProcessorToTrackEvent(name,
                                               uid,
                                               file,

@@ -186,6 +186,9 @@ public:
     virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
     // Audio graph control
+    virtual ControlStatus               create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) = 0;
+    virtual ControlStatus               create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) = 0;
+    virtual ControlStatus               delete_track(int track_id) = 0;
     virtual ControlStatus               create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                                   PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
     virtual ControlStatus               move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) = 0;
