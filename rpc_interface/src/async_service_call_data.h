@@ -93,7 +93,7 @@ public:
         : CallData(service, cq),
           _responder(&_ctx),
           _first_iteration(true),
-          _subscribed(false)
+          _active(false)
     {
         proceed();
     }
@@ -102,7 +102,10 @@ public:
 
     void push(std::shared_ptr<ParameterSetRequest> notification)
     {
-        _notifications.push(notification);
+        if (_active)
+        {
+            _notifications.push(notification);
+        }
         alert();
     }
 
@@ -117,7 +120,7 @@ private:
     grpc::ServerAsyncWriter<ParameterSetRequest> _responder;
 
     bool _first_iteration;
-    bool _subscribed;
+    bool _active;
 
     std::unordered_map<int64_t, bool> _parameter_blacklist;
     SynchronizedQueue<std::shared_ptr<ParameterSetRequest>> _notifications;

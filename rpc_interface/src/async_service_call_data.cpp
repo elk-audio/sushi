@@ -22,6 +22,7 @@ void SubscribeToParameterUpdatesCallData::proceed()
             // the one for this CallData. The instance will deallocate itself as
             // part of its FINISH state.
             new SubscribeToParameterUpdatesCallData(_service, _cq);
+            _active = true;
 
             for (auto& parameter_identifier : _request.parameters())
             {
