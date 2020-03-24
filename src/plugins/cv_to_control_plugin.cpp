@@ -38,20 +38,36 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
     Processor::set_label(DEFAULT_LABEL);
     _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", "", false);
     _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false);
-    _channel_parameter  = register_int_parameter("channel", "Channel", "", 0, 0, 16, new IntParameterPreProcessor(0, 16));
-    _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones", 0, -TUNE_RANGE, TUNE_RANGE, new IntParameterPreProcessor(-24, 24));
-    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "", 1, 1, MAX_CV_VOICES,
-                                                 new IntParameterPreProcessor(1, MAX_CV_VOICES));
+
+    _channel_parameter  = register_int_parameter("channel", "Channel", "",
+                                                 0, 0, 16,
+                                                 new IntParameterPreProcessor(0, 16));
+
+    _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones",
+                                                     0, -TUNE_RANGE, TUNE_RANGE,
+                                                     new IntParameterPreProcessor(-TUNE_RANGE, TUNE_RANGE));
+
+    _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "",
+                                                   1, 1, MAX_CV_VOICES,
+                                                   new IntParameterPreProcessor(1, MAX_CV_VOICES));
+
     assert(_pitch_bend_mode_parameter && _velocity_mode_parameter && _channel_parameter &&
                                            _coarse_tune_parameter && _polyphony_parameter);
 
     for (int i = 0; i < MAX_CV_VOICES; ++i)
     {
         auto i_str = std::to_string(i);
-        _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones", 0, 0, 1, new FloatParameterPreProcessor(0, 1));
-        _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "", 0.5, 0, 1, new FloatParameterPreProcessor(0, 1));
+        _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones",
+                                                        0.0f, 0.0f, 1.0f,
+                                                        new FloatParameterPreProcessor(0.0f, 1.0f));
+
+        _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "",
+                                                           0.5f, 0.0f, 1.0f,
+                                                           new FloatParameterPreProcessor(0.0f, 1.0f));
+
         assert(_pitch_parameters[i] && _velocity_parameters[i]);
     }
+
     _max_input_channels = 0;
     _max_output_channels = 0;
     _deferred_note_offs.reserve(MAX_ENGINE_CV_IO_PORTS);
@@ -75,6 +91,7 @@ void CvToControlPlugin::process_event(const RtEvent& event)
         _gate_events.push(event);
         return;
     }
+
     InternalPlugin::process_event(event);
 }
 
@@ -86,11 +103,11 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
         return;
     }
 
-    bool send_pitch_bend = _pitch_bend_mode_parameter->value();
-    bool send_velocity = _velocity_mode_parameter->value();
-    int  channel = _channel_parameter->value();
-    int  tune = _coarse_tune_parameter->value();
-    int  polyphony = _polyphony_parameter->value();
+    bool send_pitch_bend = _pitch_bend_mode_parameter->processed_value();
+    bool send_velocity = _velocity_mode_parameter->processed_value();
+    int  channel = _channel_parameter->processed_value();
+    int  tune = _coarse_tune_parameter->processed_value();
+    int  polyphony = _polyphony_parameter->processed_value();
 
     _send_deferred_events(channel);
     _process_cv_signals(polyphony, channel, tune, send_velocity, send_pitch_bend);
@@ -115,7 +132,7 @@ void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune
         {
             /* For now, sending pitch bend only makes sense for monophonic control
                Eventually add a mode that sends every voice on a separate channel */
-            auto[note, fraction] = cv_to_pitch(_pitch_parameters[0]->value());
+            auto[note, fraction] = cv_to_pitch(_pitch_parameters[0]->processed_value());
             note += tune;
             float note_diff = std::clamp((note - _voices[0].note + fraction) / PITCH_BEND_RANGE, -1.0f, 1.0f);
             output_event(RtEvent::make_pitch_bend_event(0, 0, channel, note_diff));
@@ -129,12 +146,12 @@ void CvToControlPlugin::_process_cv_signals(int polyphony, int channel, int tune
             if (voice.active)
             {
                 int new_note;
-                std::tie(new_note, std::ignore) = cv_to_pitch(_pitch_parameters[i]->value());
+                std::tie(new_note, std::ignore) = cv_to_pitch(_pitch_parameters[i]->processed_value());
                 if (voice.note != new_note)
                 {
                     _deferred_note_offs.push_back(voice.note);
                     voice.note = new_note;
-                    float velocity = send_velocity ? _velocity_parameters[i]->value() : 1.0f;
+                    float velocity = send_velocity ? _velocity_parameters[i]->processed_value() : 1.0f;
                     output_event(RtEvent::make_note_on_event(0, 0, channel, new_note, velocity));
                 }
             }
@@ -154,9 +171,9 @@ void CvToControlPlugin::_process_gate_changes(int polyphony, int channel, int tu
         {
             if (gate_state) // Gate high
             {
-                float velocity = send_velocity? _velocity_parameters[gate]->value() : 1.0f;
+                float velocity = send_velocity ? _velocity_parameters[gate]->processed_value() : 1.0f;
                 _voices[gate].active = true;
-                auto [note, fraction] = cv_to_pitch(_pitch_parameters[gate]->value());
+                auto [note, fraction] = cv_to_pitch(_pitch_parameters[gate]->processed_value());
                 note += tune;
                 _voices[gate].note = note;
                 output_event(RtEvent::make_note_on_event(0, 0, channel, note, velocity));

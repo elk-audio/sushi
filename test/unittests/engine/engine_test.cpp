@@ -125,16 +125,18 @@ TEST_F(TestEngine, TestProcess)
     auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
     auto second_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 2, 2);
 
-    test_utils::assert_buffer_value(1.0f, main_bus);
-    test_utils::assert_buffer_value(0.0f, second_bus);
+    test_utils::assert_buffer_value(1.0f, main_bus, test_utils::DECIBEL_ERROR);
+    test_utils::assert_buffer_value(0.0f, second_bus, test_utils::DECIBEL_ERROR);
 
     /* Add plugin to the track and do the same thing */
     res = _module_under_test->add_plugin_to_track("test_track", "sushi.testing.gain",
                                                   "gain", "", PluginType::INTERNAL);
     ASSERT_EQ(EngineReturnStatus::OK, res);
+
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
     main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
-    test_utils::assert_buffer_value(1.0f, main_bus);
+
+    test_utils::assert_buffer_value(1.0f, main_bus, test_utils::DECIBEL_ERROR);
 }
 
 TEST_F(TestEngine, TestOutputMixing)
@@ -149,6 +151,7 @@ TEST_F(TestEngine, TestOutputMixing)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
     ControlBuffer control_buffer;
+
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
@@ -156,7 +159,7 @@ TEST_F(TestEngine, TestOutputMixing)
     /* Both track's outputs are routed to bus 0, so they should sum to 2 */
     auto main_bus = SampleBuffer<AUDIO_CHUNK_SIZE>::create_non_owning_buffer(out_buffer, 0, 2);
 
-    test_utils::assert_buffer_value(2.0f, main_bus);
+    test_utils::assert_buffer_value(2.0f, main_bus, test_utils::DECIBEL_ERROR);
 }
 
 

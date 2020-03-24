@@ -21,6 +21,7 @@ protected:
     ControllerTest()
     {
     }
+
     void SetUp()
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
@@ -40,6 +41,7 @@ protected:
     void TearDown()
     {
     }
+
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
@@ -141,20 +143,19 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ("dB", parameters[0].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[0].type);
     EXPECT_TRUE(parameters[0].automatable);
-    EXPECT_FLOAT_EQ(-120.0f, parameters[0].min_range);
-    EXPECT_FLOAT_EQ(24.0f, parameters[0].max_range);
+    EXPECT_FLOAT_EQ(-120.0f, parameters[0].min_domain_value);
+    EXPECT_FLOAT_EQ(24.0f, parameters[0].max_domain_value);
 
     EXPECT_EQ("pan", parameters[1].name);
     EXPECT_EQ("Pan", parameters[1].label);
     EXPECT_EQ("", parameters[1].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[1].type);
     EXPECT_TRUE(parameters[1].automatable);
-    EXPECT_FLOAT_EQ(-1.0f, parameters[1].min_range);
-    EXPECT_FLOAT_EQ(1.0f, parameters[1].max_range);
+    EXPECT_FLOAT_EQ(-1.0f, parameters[1].min_domain_value);
+    EXPECT_FLOAT_EQ(1.0f, parameters[1].max_domain_value);
 
     DECLARE_UNUSED(id_unused);
 }
-
 
 TEST_F(ControllerTest, TestProcessorControls)
 {
@@ -187,29 +188,28 @@ TEST_F(ControllerTest, TestProcessorControls)
     EXPECT_EQ("Hz", parameters[0].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[0].type);
     EXPECT_TRUE(parameters[0].automatable);
-    EXPECT_FLOAT_EQ(20.0f, parameters[0].min_range);
-    EXPECT_FLOAT_EQ(20000.0f, parameters[0].max_range);
+    EXPECT_FLOAT_EQ(20.0f, parameters[0].min_domain_value);
+    EXPECT_FLOAT_EQ(20000.0f, parameters[0].max_domain_value);
 
     EXPECT_EQ("gain", parameters[1].name);
     EXPECT_EQ("Gain", parameters[1].label);
     EXPECT_EQ("dB", parameters[1].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[1].type);
     EXPECT_TRUE(parameters[1].automatable);
-    EXPECT_FLOAT_EQ(-24.0f, parameters[1].min_range);
-    EXPECT_FLOAT_EQ(24.0f, parameters[1].max_range);
+    EXPECT_FLOAT_EQ(-24.0f, parameters[1].min_domain_value);
+    EXPECT_FLOAT_EQ(24.0f, parameters[1].max_domain_value);
 
     EXPECT_EQ("q", parameters[2].name);
     EXPECT_EQ("Q", parameters[2].label);
     EXPECT_EQ("", parameters[2].unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, parameters[2].type);
     EXPECT_TRUE(parameters[2].automatable);
-    EXPECT_FLOAT_EQ(0.0f, parameters[2].min_range);
-    EXPECT_FLOAT_EQ(10.0f, parameters[2].max_range);
+    EXPECT_FLOAT_EQ(0.0f, parameters[2].min_domain_value);
+    EXPECT_FLOAT_EQ(10.0f, parameters[2].max_domain_value);
 
     DECLARE_UNUSED(id_unused);
     DECLARE_UNUSED(prog_unused);
 }
-
 
 TEST_F(ControllerTest, TestParameterControls)
 {
@@ -226,15 +226,14 @@ TEST_F(ControllerTest, TestParameterControls)
     EXPECT_EQ("Hz", info.unit);
     EXPECT_EQ(ext::ParameterType::FLOAT, info.type);
     EXPECT_EQ(true, info.automatable);
-    EXPECT_FLOAT_EQ(20.0f, info.min_range);
-    EXPECT_FLOAT_EQ(20000.0f, info.max_range);
+    EXPECT_FLOAT_EQ(20.0f, info.min_domain_value);
+    EXPECT_FLOAT_EQ(20000.0f, info.max_domain_value);
 
-
-    auto [value_status, value] = _module_under_test->get_parameter_value(proc_id, id);
+    auto [value_status, value] = _module_under_test->get_parameter_value_in_domain(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, value_status);
     EXPECT_FLOAT_EQ(1000.0f, value);
 
-    auto [norm_value_status,norm_value] = _module_under_test->get_parameter_value_normalised(proc_id, id);
+    auto [norm_value_status,norm_value] = _module_under_test->get_parameter_value(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, norm_value_status);
     EXPECT_GE(norm_value, 0.0f);
     EXPECT_LE(norm_value, 1.0f);

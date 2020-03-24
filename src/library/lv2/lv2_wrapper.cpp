@@ -107,6 +107,42 @@ void LV2_Wrapper::configure(float /*sample_rate*/)
 
 std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value(ObjectId parameter_id) const
 {
+    auto parameter = parameter_from_id(parameter_id);
+
+    if (parameter == nullptr)
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+    }
+
+    // All parameters registered in the wrapper were of type FloatParameterDescriptor
+    if (parameter->type() != ParameterType::FLOAT)
+    {
+        return {ProcessorReturnCode::PARAMETER_ERROR, 0.0f};
+    }
+
+    const int index = static_cast<int>(parameter_id);
+
+    if (index < _model->port_count())
+    {
+        auto port = _model->get_port(index);
+
+        if (port != nullptr)
+        {
+            float value = port->control_value();
+            float min = parameter->min_domain_value();
+            float max = parameter->max_domain_value();
+
+            float value_normalized = _to_normalized(value, min, max);
+
+            return {ProcessorReturnCode::OK, value_normalized};
+        }
+    }
+
+    return {ProcessorReturnCode::PARAMETER_NOT_FOUND, 0.0f};
+}
+
+std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_in_domain(ObjectId parameter_id) const
+{
     float value = 0.0;
     const int index = static_cast<int>(parameter_id);
 
@@ -122,12 +158,6 @@ std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value(ObjectId para
     }
 
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
-}
-
-std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_normalised(ObjectId parameter_id) const
-{
-// TODO: Implement parameter normalization
-    return this->parameter_value(parameter_id);
 }
 
 std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
@@ -252,13 +282,22 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
         auto typed_event = event.parameter_change_event();
-        auto id = typed_event->param_id();
+        auto parameter_id = typed_event->param_id();
 
-        const int portIndex = static_cast<int>(id);
+        auto parameter = parameter_from_id(parameter_id);
+
+        const int portIndex = static_cast<int>(parameter_id);
         assert(portIndex < _model->port_count());
 
         auto port = _model->get_port(portIndex);
-        port->set_control_value(typed_event->value());
+
+        auto value = typed_event->value();
+
+        float min = parameter->min_domain_value();
+        float max = parameter->max_domain_value();
+
+        auto value_in_domain = _to_domain(value, min, max);
+        port->set_control_value(value_in_domain);
     }
     else if (is_keyboard_event(event))
     {
