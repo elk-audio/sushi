@@ -65,16 +65,12 @@ LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_
 
         auto id = e.async_work_event()->event_id();
 
-        fprintf(stdout, "Worker event ID: %d\n", id);
-
         wrapper->set_pending_worker_event_id(id);
 
         wrapper->output_worker_event(e);
     }
     else
     {
-        fprintf(stdout, "In lv2_worker_schedule immediately\n");
-
         // Execute work immediately in this thread
         std::unique_lock<std::mutex> lock(model->work_lock());
 

@@ -22,7 +22,6 @@
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
 #include "lv2_worker_fifo.h"
-#include <thread>
 
 namespace sushi {
 namespace lv2 {
