@@ -1012,15 +1012,15 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::INSERT_PROCESSOR:
             {
                 auto typed_event = event.processor_operation_event();
-                bool ok = _insert_processor_in_realtime_part(typed_event->instance());
-                typed_event->set_handled(ok);
+                bool inserted = _insert_processor_in_realtime_part(typed_event->instance());
+                typed_event->set_handled(inserted);
                 break;
             }
             case RtEventType::REMOVE_PROCESSOR:
             {
                 auto typed_event = event.processor_reorder_event();
-                bool ok = _remove_processor_from_realtime_part(typed_event->processor());
-                typed_event->set_handled(ok);
+                bool removed = _remove_processor_from_realtime_part(typed_event->processor());
+                typed_event->set_handled(removed);
                 break;
             }
             case RtEventType::ADD_PROCESSOR_TO_TRACK:
@@ -1028,61 +1028,48 @@ void AudioEngine::_process_internal_rt_events()
                 auto typed_event = event.processor_reorder_event();
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 Processor*processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
+                bool added = false;
                 if (track && processor)
                 {
-                    auto ok = track->add(processor, typed_event->before_processor());
-                    typed_event->set_handled(ok);
+                    added = track->add(processor, typed_event->before_processor());
                 }
-                else
-                {
-                    typed_event->set_handled(false);
-                }
+                typed_event->set_handled(added);
                 break;
             }
             case RtEventType::REMOVE_PROCESSOR_FROM_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool removed = false;
                 if (track)
                 {
-                    bool ok = track->remove(typed_event->processor());
-                    typed_event->set_handled(ok);
-                } else
-                {
-                    typed_event->set_handled(true);
+                    removed = track->remove(typed_event->processor());
                 }
+                typed_event->set_handled(removed);
                 break;
             }
             case RtEventType::ADD_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool added = false;
                 if (track)
                 {
-                    bool ok = _audio_graph.add(track);
-                    if (ok)
-                    {
-                        typed_event->set_handled(true);
-                        break;
-                    }
+                    added = _audio_graph.add(track);
                 }
-                typed_event->set_handled(false);
+                typed_event->set_handled(added);
                 break;
             }
             case RtEventType::REMOVE_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
                 Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool removed = false;
                 if (track)
                 {
-                    bool removed = _audio_graph.remove(track);
-                    if (removed)
-                    {
-                        typed_event->set_handled(true);
-                        break;
-                    }
+                    removed = _audio_graph.remove(track);
                 }
-                typed_event->set_handled(false);
+                typed_event->set_handled(removed);
                 break;
             }
             case RtEventType::ADD_AUDIO_CONNECTION:

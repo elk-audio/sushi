@@ -84,20 +84,56 @@ private:
 class AudioGraph
 {
 public:
+    /**
+     * @brief create an AudioGraph instance
+     * @param cpu_cores The number of cores to use for audio processing. Must not
+     *                  exceed the number of cores on the architecture
+     */
     AudioGraph(int cpu_cores);
 
+    /**
+     * @brief Add a track to the graph. The track will be assigned to a cpu
+     *        core on a round robin basis. Must not be called concurrently
+     *        with render()
+     * @param track the track instance to add
+     * @return true if the track was successfully added, false otherwise
+     */
     bool add(Track* track);
 
+    /**
+     * @brief Add a track to the graph and assign it to a particular cpu core.
+     *        Must not be called concurrently with render()
+     * @param track the track instance to add
+     * @param core The cpu that should be used to process the track.
+     * @return true if the track was successfully added, false otherwise
+     */
     bool add_to_core(Track* track, int core);
 
+    /**
+     * @brief Remove a track from the audio graph. Must not be called concurrently
+     *        with render()
+     * @param track The instance to remove.
+     * @return true if the track was successfully removed, false otherwise.
+     */
     bool remove(Track* track);
 
+    /**
+     * @brief Return the event output buffers for all tracks. Called after render()
+     *        to retrieve events passed from tracks.
+     * @return A std::vector of event buffers.
+     */
     std::vector<RtEventFifo<100>>& event_outputs()
     {
         return _event_outputs;
     }
 
+    /**
+     * @brief Render all tracks. If cpu_cores = 1 all processing is done in the
+     *        calling thread. With higher number of cores, the calling thread
+     *        sleeps while processing is running.
+     */
     void render();
+
 private:
     std::vector<std::vector<Track*>>   _audio_graph;
     std::unique_ptr<twine::WorkerPool> _worker_pool;
