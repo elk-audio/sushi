@@ -263,7 +263,7 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
     }
 
     bool added = false;
-    AudioConnection con = {input_channel, track_channel, track->id()};
+    AudioConnection con = {.engine_channel = input_channel, .track_channel = track_channel, .track = track->id()};
 
     if (realtime())
     {
@@ -304,7 +304,7 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     }
 
     bool added = false;
-    AudioConnection con = {output_channel, track_channel, track->id()};
+    AudioConnection con = {.engine_channel = output_channel, .track_channel = track_channel, .track = track->id()};
 
     if (this->realtime())
     {
@@ -545,7 +545,7 @@ void AudioEngine::_remove_connections_from_track(ObjectId track_id)
 {
     if (this->realtime())
     {
-        AudioConnection con = {0, 0, track_id};
+        AudioConnection con = {.engine_channel = 0, .track_channel = 0, .track = track_id};
         auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
         auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
         _send_control_event(input_event);
@@ -731,7 +731,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
 
     if (realtime())
     {
-        AudioConnection con;
+        AudioConnection con = {.engine_channel = 0, .track_channel = 0, .track = track_id};
         con.track = track->id();
         auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
         auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
