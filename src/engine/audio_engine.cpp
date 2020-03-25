@@ -845,13 +845,6 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
         return EngineReturnStatus::INVALID_PLUGIN;
     }
-    bool add_to_back = before_plugin_id.has_value() == false;
-
-    if (add_to_back == false && _processors.processor_exists(before_plugin_id.value()) == false)
-    {
-        SUSHI_LOG_ERROR("Plugin {} not found", before_plugin_id.value());
-        return EngineReturnStatus::INVALID_PLUGIN;
-    }
 
     if (plugin->active_rt_processing())
     {
@@ -862,15 +855,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        RtEvent add_event;
-        if (add_to_back)
-        {
-            add_event = RtEvent::make_add_processor_to_track_back_event(plugin_id, track_id);
-        }
-        else
-        {
-            add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id.value());
-        }
+        RtEvent add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id);
         _send_control_event(add_event);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
@@ -883,15 +868,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     {
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin.get());
-        bool added;
-        if (add_to_back)
-        {
-            added = track->add_back(plugin.get());
-        }
-        else
-        {
-            added = track->add_before(plugin.get(), before_plugin_id.value());
-        }
+        bool added = track->add(plugin.get(), before_plugin_id);
         if (added == false)
         {
             return EngineReturnStatus::ERROR;
@@ -1053,9 +1030,10 @@ void AudioEngine::_process_internal_rt_events()
                 Processor*processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
                 if (track && processor)
                 {
-                    auto ok = track->add_back(processor);
+                    auto ok = track->add(processor, typed_event->before_processor());
                     typed_event->set_handled(ok);
-                } else
+                }
+                else
                 {
                     typed_event->set_handled(false);
                 }

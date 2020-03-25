@@ -392,29 +392,22 @@ private:
 class ProcessorReorderRtEvent : public ReturnableRtEvent
 {
 public:
-    ProcessorReorderRtEvent(RtEventType type, ObjectId processor, ObjectId track) : ReturnableRtEvent(type, 0),
-                                                                                    _processor{processor},
-                                                                                    _track{track},
-                                                                                    _before_processor{0},
-                                                                                    _add_to_back{true} {}
-
     ProcessorReorderRtEvent(RtEventType type,
                             ObjectId processor,
                             ObjectId track,
-                            ObjectId before_processor) : ReturnableRtEvent(type, 0),
-                                                        _processor{processor},
-                                                        _track{track},
-                                                        _before_processor{before_processor},
-                                                        _add_to_back{false} {}
+                            std::optional<ObjectId> before_processor) : ReturnableRtEvent(type, 0),
+                                                                        _processor{processor},
+                                                                        _track{track},
+                                                                        _before_processor{before_processor} {}
+
     ObjectId processor() const {return _processor;}
     ObjectId track() const {return _track;}
-    ObjectId before_processor() const {return _before_processor;}
-    bool     add_to_back() const {return _add_to_back;}
+    const std::optional<ObjectId>& before_processor() const {return _before_processor;}
+
 private:
     ObjectId _processor;
     ObjectId _track;
-    ObjectId _before_processor;
-    bool     _add_to_back;
+    std::optional<ObjectId> _before_processor;
 };
 
 typedef int (*AsyncWorkCallback)(void* data, EventId id);
@@ -948,37 +941,33 @@ public:
 
     static RtEvent make_remove_processor_event(ObjectId processor)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR, processor, 0);
+        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR, processor, 0, std::nullopt);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_add_processor_to_track_event(ObjectId processor, ObjectId track, ObjectId before_processor)
+    static RtEvent make_add_processor_to_track_event(ObjectId processor,
+                                                     ObjectId track,
+                                                     std::optional<ObjectId> before_processor = std::nullopt)
     {
         ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_TRACK, processor, track, before_processor);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_add_processor_to_track_back_event(ObjectId processor, ObjectId track)
-    {
-        ProcessorReorderRtEvent typed_event(RtEventType::ADD_PROCESSOR_TO_TRACK, processor, track);
-        return RtEvent(typed_event);
-    }
-
     static RtEvent make_remove_processor_from_track_event(ObjectId processor, ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, processor, track);
+        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, processor, track, std::nullopt);
         return RtEvent(typed_event);
     }
 
     static RtEvent make_add_track_event(ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::ADD_TRACK, 0, track);
+        ProcessorReorderRtEvent typed_event(RtEventType::ADD_TRACK, 0, track, std::nullopt);
         return RtEvent(typed_event);
     }
 
     static RtEvent make_remove_track_event(ObjectId track)
     {
-        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_TRACK, 0, track);
+        ProcessorReorderRtEvent typed_event(RtEventType::REMOVE_TRACK, 0, track, std::nullopt);
         return RtEvent(typed_event);
     }
 

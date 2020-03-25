@@ -42,7 +42,7 @@ TEST_F(TestAsyncReceiver, TestMultipleEvents)
 {
     ASSERT_FALSE(_module_under_test.wait_for_response(123u, ZERO_TIMEOUT));
     auto event1 = RtEvent::make_insert_processor_event(nullptr);
-    auto event2 = RtEvent::make_add_processor_to_track_back_event(123, 234);
+    auto event2 = RtEvent::make_add_processor_to_track_event(123, 234);
     event1.returnable_event()->set_handled(true);
     event2.returnable_event()->set_handled(true);
     EventId id1 = event1.returnable_event()->event_id();

@@ -102,41 +102,42 @@ void Track::configure(float sample_rate)
     }
 }
 
-bool Track::add_before(Processor* processor, ObjectId before_position)
+bool Track::add(Processor* processor, std::optional<ObjectId> before_position)
 {
     if (_processors.size() >= TRACK_MAX_PROCESSORS || processor == this)
     {
         // If a track adds itself to its process chain, endless loops can arise
+        // In addition, _processors must not allocate if running in the rt-thread
         return false;
     }
     assert(processor->active_rt_processing() == false);
-    for (auto i = _processors.cbegin(); i != _processors.cend(); ++i)
+
+    bool added = false;
+    if (before_position.has_value())
     {
-        if ((*i)->id() == before_position)
+        for (auto i = _processors.cbegin(); i != _processors.cend(); ++i)
         {
-            _processors.insert(i, processor);
-            processor->set_event_output(this);
-            processor->set_active_rt_processing(true);
-            _update_channel_config();
-            return true;
+            if ((*i)->id() == *before_position) // * accesses value without throwing
+            {
+                _processors.insert(i, processor);
+                added = true;
+                break;
+            }
         }
     }
-    return false;
-}
-
-bool Track::add_back(Processor* processor)
-{
-    if (_processors.size() >= TRACK_MAX_PROCESSORS || processor == this)
+    else
     {
-        // If a track adds itself to its process chain, endless loops can arrise
-        return false;
+        _processors.push_back(processor);
+        added = true;
     }
-    assert(processor->active_rt_processing() == false);
-    _processors.push_back(processor);
-    processor->set_event_output(this);
-    processor->set_active_rt_processing(true);
-    _update_channel_config();
-    return true;
+
+    if (added)
+    {
+        processor->set_event_output(this);
+        processor->set_active_rt_processing(true);
+        _update_channel_config();
+    }
+    return added;
 }
 
 bool Track::remove(ObjectId processor)

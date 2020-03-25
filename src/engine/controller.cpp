@@ -345,7 +345,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_t
     SUSHI_LOG_DEBUG("get_track_processors called for track: {}", track_id);
     const auto& tracks = _processors->processors_on_track(track_id);
     std::vector<ext::ProcessorInfo> infos;
-    if (tracks.empty())
+    if (tracks.empty()) // TODO - this should be ok for an empty track
     {
         return {ext::ControlStatus::NOT_FOUND, infos};
     }
@@ -677,6 +677,7 @@ ext::ControlStatus Controller::create_stereo_track(const std::string& name, int 
     auto event = new AddTrackEvent(name, 2, input_bus, output_bus, IMMEDIATE_PROCESS);
     event->set_completion_cb(Controller::completion_callback, this);
     _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel)
@@ -684,6 +685,7 @@ ext::ControlStatus Controller::create_mono_track(const std::string& name, int ou
     auto event = new AddTrackEvent(name, 1, input_channel, output_channel, IMMEDIATE_PROCESS);
     event->set_completion_cb(Controller::completion_callback, this);
     _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::delete_track(int track_id)
@@ -691,6 +693,7 @@ ext::ControlStatus Controller::delete_track(int track_id)
     auto event = new RemoveTrackEvent(ObjectId(track_id), IMMEDIATE_PROCESS);
     event->set_completion_cb(Controller::completion_callback, this);
     _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus Controller::create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,

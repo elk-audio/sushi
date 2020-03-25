@@ -371,7 +371,8 @@ int MoveProcessorEvent::execute(engine::BaseEngine* engine)
     {
         return EventStatus::HANDLED_OK;
     }
-
+    SUSHI_LOG_ERROR("Failed to move processor {} from track {} to track {} with error {}, reverting",
+            _processor, _source_track, _dest_track, static_cast<int>(status));
     /* If the insertion operation failed, we must put the processor back in the source track */
     if (old_plugin_order.back()->id() == _processor)
     {

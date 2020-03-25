@@ -40,7 +40,7 @@ TEST_F(TrackTest, TestChannelManagement)
      * it is configured in mono config */
     Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1, &_timer);
     _module_under_test_mono.set_input_channels(1);
-    _module_under_test_mono.add_back(&test_processor);
+    _module_under_test_mono.add(&test_processor);
     EXPECT_EQ(1, test_processor.input_channels());
     EXPECT_EQ(1, test_processor.output_channels());
 
@@ -49,8 +49,8 @@ TEST_F(TrackTest, TestChannelManagement)
     gain_plugin::GainPlugin gain_plugin(_host_control.make_host_control_mockup());
     DummyMonoProcessor mono_processor(_host_control.make_host_control_mockup());
     _module_under_test.set_output_channels(1);
-    _module_under_test.add_back(&gain_plugin);
-    _module_under_test.add_back(&mono_processor);
+    _module_under_test.add(&gain_plugin);
+    _module_under_test.add(&mono_processor);
 
     EXPECT_EQ(2, _module_under_test.input_channels());
     EXPECT_EQ(1, _module_under_test.output_channels());
@@ -79,18 +79,30 @@ TEST_F(TrackTest, TestMultibusSetup)
 TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor(_host_control.make_host_control_mockup());
-    _module_under_test.add_back(&test_processor);
+    DummyProcessor test_processor_2(_host_control.make_host_control_mockup());
+    // Add to back
+    auto ok = _module_under_test.add(&test_processor);
+    EXPECT_TRUE(ok);
     EXPECT_EQ(1u, _module_under_test._processors.size());
     EXPECT_FALSE(_module_under_test.remove(1234567u));
     EXPECT_EQ(1u, _module_under_test._processors.size());
+
+    // Add test_processor_2 to the front
+    ok = _module_under_test.add(&test_processor_2, test_processor.id());
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(2u, _module_under_test._processors.size());
+    EXPECT_EQ(&test_processor_2, _module_under_test._processors[0]);
+    EXPECT_EQ(&test_processor, _module_under_test._processors[1]);
+
     EXPECT_TRUE(_module_under_test.remove(test_processor.id()));
+    EXPECT_TRUE(_module_under_test.remove(test_processor_2.id()));
     EXPECT_TRUE(_module_under_test._processors.empty());
 }
 
 TEST_F(TrackTest, TestNestedBypass)
 {
     DummyProcessor test_processor(_host_control.make_host_control_mockup());
-    _module_under_test.add_back(&test_processor);
+    _module_under_test.add(&test_processor);
     _module_under_test.set_bypassed(true);
     EXPECT_TRUE(test_processor.bypassed());
 }
@@ -108,7 +120,7 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
-    _module_under_test.add_back(&plugin);
+    _module_under_test.add(&plugin);
 
     auto in_bus = _module_under_test.input_bus(0);
     test_utils::fill_sample_buffer(in_bus, 1.0f);
@@ -121,7 +133,7 @@ TEST_F(TrackTest, TestPanAndGain)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
-    _module_under_test.add_back(&plugin);
+    _module_under_test.add(&plugin);
     auto gain_param = _module_under_test.parameter_from_name("gain");
     auto pan_param = _module_under_test.parameter_from_name("pan");
     ASSERT_FALSE(gain_param == nullptr);
@@ -156,7 +168,7 @@ TEST_F(TrackTest, TestEventProcessing)
     _module_under_test.set_input_channels(2);
     _module_under_test.set_output_channels(2);
     _module_under_test.set_event_output(&event_queue);
-    _module_under_test.add_back(&plugin);
+    _module_under_test.add(&plugin);
 
     RtEvent event = RtEvent::make_note_on_event(0, 0, 0, 0, 0);
 
@@ -188,7 +200,7 @@ TEST_F(TrackTest, TestEventForwarding)
     plugin.set_event_output(&event_queue);
 
     _module_under_test.set_event_output(&event_queue);
-    _module_under_test.add_back(&plugin);
+    _module_under_test.add(&plugin);
 
     RtEvent event = RtEvent::make_note_on_event(125, 13, 0, 48, 0.0f);
 

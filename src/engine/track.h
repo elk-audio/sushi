@@ -75,15 +75,7 @@ public:
      * @param before_position The ObjectId of the succeeding plugin
      * @return true if the insertion was successful, false otherwise
      */
-    bool add_before(Processor* processor, ObjectId before_position);
-
-    /**
-     * @brief Add a processor to the end of the track's processing chain.
-     *        Should be called from the audio thread or when the track is not processing.
-     * @param A pointer to the plugin instance to add.
-     * @return true if the insertion was successful, false otherwise
-     */
-    bool add_back(Processor* processor);
+    bool add(Processor* processor, std::optional<ObjectId> before_position = std::nullopt);
 
     /**
      * @brief Remove a plugin from the track.
