@@ -899,7 +899,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER;
 
-ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
+ProcessorReturnCode LV2_Wrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");
