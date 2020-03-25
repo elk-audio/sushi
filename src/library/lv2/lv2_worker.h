@@ -50,12 +50,12 @@ public:
     void worker_func();
 
 private:
-    const LV2_Worker_Interface* _iface = nullptr; ///< Plugin worker interface
+    const LV2_Worker_Interface* _iface = nullptr;
 
-    Lv2WorkerFifo _requests; ///< Requests to the worker
-    Lv2WorkerFifo _responses; ///< Responses from the worker
+    Lv2WorkerFifo _requests;
+    Lv2WorkerFifo _responses;
 
-    std::vector<std::byte> _response; ///< Worker response buffer
+    std::vector<std::byte> _response;
 
     Model* _model{nullptr};
     bool _threaded{false};

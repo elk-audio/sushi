@@ -70,7 +70,7 @@ public:
      */
     LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri);
 
-    virtual ~LV2_Wrapper();
+    virtual ~LV2_Wrapper() = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 

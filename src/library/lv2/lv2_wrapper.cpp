@@ -55,12 +55,6 @@ _plugin_path {lv2_plugin_uri}
     _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
 }
 
-LV2_Wrapper::~LV2_Wrapper()
-{
-    if(_model->plugin_instance() != nullptr)
-        set_enabled(false);
-}
-
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
     _model = std::make_unique<Model>(sample_rate, this);
@@ -387,7 +381,6 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
 {
     if (_bypass_manager.should_process() == false)
     {
-        fprintf(stdout, "BYPASSED\n");
          bypass_process(in_buffer, out_buffer);
         _flush_event_queue();
     }
@@ -397,7 +390,6 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         {
             case PlayState::PAUSE_REQUESTED:
             {
-                fprintf(stdout, "PAUSE_REQUESTED\n");
                 _model->set_play_state(PlayState::PAUSED);
 
                 auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
@@ -407,8 +399,6 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
             }
             case PlayState::PAUSED:
             {
-                fprintf(stdout, "PAUSED\n");
-                // JALV cleared MIDI buffer here.
                 _flush_event_queue();
                 return;
             }

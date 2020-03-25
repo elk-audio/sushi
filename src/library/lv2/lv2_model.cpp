@@ -91,7 +91,11 @@ Model::~Model()
             lilv_node_free(control.node);
             lilv_node_free(control.symbol);
             lilv_node_free(control.label);
-            lilv_node_free(control.group);
+
+            // This can optionally be null for some plugins.
+            if(control.group != nullptr)
+                lilv_node_free(control.group);
+
             lilv_node_free(control.min);
             lilv_node_free(control.max);
             lilv_node_free(control.def);
