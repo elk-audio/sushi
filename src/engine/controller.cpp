@@ -345,7 +345,7 @@ std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_t
     SUSHI_LOG_DEBUG("get_track_processors called for track: {}", track_id);
     const auto& tracks = _processors->processors_on_track(track_id);
     std::vector<ext::ProcessorInfo> infos;
-    if (tracks.empty()) // TODO - this should be ok for an empty track
+    if (tracks.empty() && _processors->processor_exists(track_id) == false)
     {
         return {ext::ControlStatus::NOT_FOUND, infos};
     }

@@ -102,6 +102,9 @@ TEST_F(ControllerTest, TestTrackControls)
     auto [status, id] = _module_under_test->get_track_id("main");
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
+    auto [track_not_found_status, processor_list] = _module_under_test->get_track_processors(ObjectId(1234));
+    ASSERT_EQ(ext::ControlStatus::NOT_FOUND, track_not_found_status);
+
     auto [info_status, info] = _module_under_test->get_track_info(id);
     ASSERT_EQ(ext::ControlStatus::OK, info_status);
 
