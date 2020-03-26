@@ -180,6 +180,19 @@ TEST_F(TestAudioGraph, TestMultiCoreOperation)
     EXPECT_EQ(0, queues[2].size());
 }
 
+TEST(TestUtilityFunctions, TestRemoveConnectionsMatchingTrack)
+{
+    std::vector<AudioConnection> test_vector = {{1,2,4}, {1,2,4}, {1,2,9}, {1,2,3}, {1,2,4}};
+
+    remove_connections_matching_track(test_vector, ObjectId(4));
+    EXPECT_EQ(2u, test_vector.size());
+    EXPECT_EQ(9u, test_vector[0].track);
+
+    remove_connections_matching_track(test_vector, 9);
+    EXPECT_EQ(1u, test_vector.size());
+    EXPECT_EQ(3u, test_vector[0].track);
+}
+
 TEST_F(TestProcessorContainer, TestTrackManagement)
 {
     auto proc_1 = std::make_shared<DummyProcessor>(_hc.make_host_control_mockup(SAMPLE_RATE));
@@ -548,10 +561,10 @@ TEST_F(TestEngine, TestAudioConnections)
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
-    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
-    ASSERT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
-    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(2)[0]);
-    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
+    EXPECT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
+    EXPECT_FLOAT_EQ(0.0, out_buffer.channel(2)[0]);
+    EXPECT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
 
     // Connect some while the engine is running
     _module_under_test->enable_realtime(true);
@@ -565,11 +578,17 @@ TEST_F(TestEngine, TestAudioConnections)
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
-    ASSERT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
-    ASSERT_FLOAT_EQ(4.0, out_buffer.channel(2)[0]);
-    ASSERT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
+    EXPECT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
+    EXPECT_FLOAT_EQ(4.0, out_buffer.channel(2)[0]);
+    EXPECT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
 
+    // Remove the connections
+    rt = std::thread(faux_rt_thread, _module_under_test.get(), &in_buffer, &out_buffer, &control_buffer);
+    _module_under_test->_remove_connections_from_track(track_id);
+    rt.join();
+    EXPECT_EQ(0u, _module_under_test->_audio_in_connections.size());
+    EXPECT_EQ(0u, _module_under_test->_audio_out_connections.size());
 }
 
 TEST_F(TestEngine, TestSetCvChannels)

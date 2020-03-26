@@ -122,7 +122,7 @@ public:
      *        to retrieve events passed from tracks.
      * @return A std::vector of event buffers.
      */
-    std::vector<RtEventFifo<100>>& event_outputs()
+    std::vector<RtEventFifo<>>& event_outputs()
     {
         return _event_outputs;
     }
@@ -137,7 +137,7 @@ public:
 private:
     std::vector<std::vector<Track*>>   _audio_graph;
     std::unique_ptr<twine::WorkerPool> _worker_pool;
-    std::vector<RtEventFifo<100>>      _event_outputs;
+    std::vector<RtEventFifo<>>         _event_outputs;
     int _cores;
     int _current_core;
 };

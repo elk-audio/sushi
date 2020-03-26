@@ -281,7 +281,10 @@ int RemoveTrackEvent::execute(engine::BaseEngine* engine)
     // Remove processors starting with the last, more efficient
     for (auto i = processors.rbegin(); i != processors.rend(); ++i)
     {
-        engine->remove_plugin_from_track(_track_id, (*i)->id());
+        SUSHI_LOG_DEBUG("Removing plugin {} from track: {}", (*i)->name(), track->name());
+        [[maybe_unused]] auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
+        SUSHI_LOG_ERROR_IF(status != engine::EngineReturnStatus::OK, "Failed to remove plugin {} from track {}",
+                           (*i)->name(), track->name());
     }
 
     auto status = engine->delete_track(_track_id);

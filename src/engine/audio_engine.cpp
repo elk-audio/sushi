@@ -184,6 +184,11 @@ void AudioGraph::render()
     }
 }
 
+void remove_connections_matching_track(std::vector<AudioConnection>& list, ObjectId track_id)
+{
+    list.erase(std::remove_if(list.begin(), list.end(), [&](const auto& c) {
+        return c.track == track_id; }), list.end());
+}
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
                                                                 _audio_graph(rt_cpu_cores),
@@ -555,20 +560,8 @@ void AudioEngine::_remove_connections_from_track(ObjectId track_id)
     }
     else
     {
-        for (auto i = _audio_in_connections.begin(); i != _audio_in_connections.end(); ++i)
-        {
-            if (i->track == track_id)
-            {
-                _audio_in_connections.erase(i);
-            }
-        }
-        for (auto i = _audio_out_connections.begin(); i != _audio_out_connections.end(); ++i)
-        {
-            if (i->track == track_id)
-            {
-                _audio_out_connections.erase(i);
-            }
-        }
+        remove_connections_matching_track(_audio_in_connections, track_id);
+        remove_connections_matching_track(_audio_out_connections, track_id);
     }
 }
 
@@ -1026,7 +1019,7 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::ADD_PROCESSOR_TO_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
-                Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 Processor*processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
                 bool added = false;
                 if (track && processor)
@@ -1039,7 +1032,7 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::REMOVE_PROCESSOR_FROM_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
-                Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 bool removed = false;
                 if (track)
                 {
@@ -1051,7 +1044,7 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::ADD_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
-                Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 bool added = false;
                 if (track)
                 {
@@ -1063,7 +1056,7 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::REMOVE_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
-                Track*track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
                 bool removed = false;
                 if (track)
                 {
@@ -1092,13 +1085,7 @@ void AudioEngine::_process_internal_rt_events()
                 // Note, currently this removes all connections related to a specific track
                 // If/when we allow access to the list of connection we might want to remove
                 // only the specific connection matching
-                for (auto i = list.begin(); i != list.end(); ++i)
-                {
-                    if (i->track == typed_event->connection().track)
-                    {
-                        list.erase(i);
-                    }
-                }
+                remove_connections_matching_track(list, typed_event->connection().track);
                 typed_event->set_handled(true);
                 break;
             }

@@ -57,7 +57,7 @@ private:
  *        internally when concurrent access from multiple threads is not neccesary
  * @tparam size Number of events to store in the queue
  */
-template <size_t size>
+template <size_t size = MAX_EVENTS_IN_QUEUE>
 class RtEventFifo : public SimpleFifo<RtEvent, size>, public RtEventPipe
 {
 public:
