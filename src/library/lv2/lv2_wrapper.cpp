@@ -310,17 +310,13 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         if (_incoming_event_queue.push(event) == false)
         {
-            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            // Logging this as a warning causes mode switches! Do we want to log it anyway?
         }
     }
     else if(event.type() == RtEventType::SET_BYPASS)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
         _bypass_manager.set_bypass(bypassed, _model->sample_rate());
-    }
-    else
-    {
-        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
 }
 
