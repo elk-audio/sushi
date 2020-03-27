@@ -310,7 +310,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         if (_incoming_event_queue.push(event) == false)
         {
-            // Logging this as a warning causes mode switches! Do we want to log it anyway?
+            SUSHI_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else if(event.type() == RtEventType::SET_BYPASS)
