@@ -270,7 +270,6 @@ int AddTrackEvent::execute(engine::BaseEngine* engine)
 
 int RemoveTrackEvent::execute(engine::BaseEngine* engine)
 {
-    // First remove any
     auto track = engine->processor_container()->track(_track_id);
     if (track == nullptr)
     {

@@ -336,12 +336,12 @@ public:
         return default_control_status; 
     };
 
-    virtual ControlStatus set_string_property_value(int /* processor_id  */, int /* parameter_id */, const std::string& /* value */) override
+    virtual ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override
     {
         return default_control_status;
     };
 
-    ControlStatus               create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override
+    ControlStatus create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
@@ -351,7 +351,7 @@ public:
         return default_control_status;
     }
 
-    ControlStatus               create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override
+    ControlStatus create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
@@ -361,7 +361,7 @@ public:
         return default_control_status;
     }
 
-    ControlStatus               delete_track(int track_id) override
+    ControlStatus delete_track(int track_id) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["track_id"] = std::to_string(track_id);
