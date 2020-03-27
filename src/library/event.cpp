@@ -335,11 +335,14 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
     SUSHI_LOG_DEBUG("Adding plugin {} to track {}", _name, _track);
     status = engine->add_plugin_to_track(plugin_id, _track, _before_processor);
 
+    if (status == engine::EngineReturnStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    SUSHI_LOG_ERROR("Failed to load plugin {} to track {}", plugin_id, _track);
+    engine->delete_plugin(plugin_id);
     switch (status)
     {
-        case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
-
         case engine::EngineReturnStatus::INVALID_TRACK:
             return AddProcessorToTrackEvent::Status::INVALID_TRACK;
 
