@@ -469,60 +469,29 @@ struct GateConnection
 /* slightly hackish to repurpose the processor_id field for storing a
  * bool, but it allows us to keep the size down to 32 bytes.
  * Otherwise GateConnection wouldn't fit in the event */
+template <typename ConnectionType>
 class ConnectionRtEvent : public ReturnableRtEvent
 {
 public:
-    bool input_connection() const {return _processor_id == 1;}
-    bool output_connection() const {return _processor_id == 0;}
-
-protected:
-    ConnectionRtEvent(RtEventType type,
+    ConnectionRtEvent(ConnectionType connection,
+                      RtEventType type,
                       bool is_input_connection) : ReturnableRtEvent(type,
-                                                                    is_input_connection ? 1 : 0) {}
+                                                                    is_input_connection ? 1 : 0),
+                                                  _connection(connection) {}
+
+    const ConnectionType& connection() const {return _connection;}
+    bool  input_connection() const {return _processor_id == 1;}
+    bool  output_connection() const {return _processor_id == 0;}
+
+private:
+    ConnectionType _connection;
 };
 
 /* RtEvents for passing and deleting audio, cv and gate mappings */
-class AudioConnectionRtEvent : public ConnectionRtEvent
-{
-public:
-    AudioConnectionRtEvent(AudioConnection connection,
-                           RtEventType type,
-                           bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
-                                                       _connection(connection) {}
+using AudioConnectionRtEvent = ConnectionRtEvent<AudioConnection>;
+using CvConnectionRtEvent = ConnectionRtEvent<CvConnection>;
+using GateConnectionRtEvent = ConnectionRtEvent<GateConnection>;
 
-    const AudioConnection& connection() const {return _connection;}
-
-private:
-    AudioConnection _connection;
-};
-
-class CvConnectionRtEvent : public ConnectionRtEvent
-{
-public:
-    CvConnectionRtEvent(CvConnection connection,
-                        RtEventType type,
-                        bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
-                                                    _connection(connection) {}
-
-    const CvConnection& connection() const {return _connection;}
-
-private:
-    CvConnection _connection;
-};
-
-class GateConnectionRtEvent : public ConnectionRtEvent
-{
-public:
-    GateConnectionRtEvent(GateConnection connection,
-                          RtEventType type,
-                          bool is_input_connection) : ConnectionRtEvent(type, is_input_connection),
-                                                      _connection(connection) {}
-
-    const GateConnection& connection() const {return _connection;}
-
-private:
-    GateConnection _connection;
-};
 
 /* RtEvent for passing timestamps synced to sample offsets */
 class SynchronisationRtEvent : public BaseRtEvent
