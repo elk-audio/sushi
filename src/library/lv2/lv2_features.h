@@ -57,7 +57,7 @@ namespace lv2 {
 
 // writing also LV2 Trace Log messages to file.
 // This is set to false by default as it will cause thousands of mode switches.
-static const bool TRACE_OPTION = false;
+static constexpr bool TRACE_OPTION = false;
 
 /**
    Get a port structure by symbol.

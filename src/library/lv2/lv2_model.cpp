@@ -41,22 +41,9 @@ static const LV2_Feature static_features[] = {
 namespace sushi {
 namespace lv2 {
 
-/* Size factor for UI ring buffers.  The ring size is a few times the size of
-an event output to give the UI a chance to keep up.  Experiments with Ingen,
-which can highly saturate its event output, led me to this value.  It
-really ought to be enough for anybody(TM).
-*/
-#define N_BUFFER_CYCLES 16
-
-#ifndef ARRAY_SIZE
-#    define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
-#endif
-
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model(float sample_rate, LV2_Wrapper* wrapper):
-_sample_rate(sample_rate),
-_wrapper(wrapper)
+Model::Model(float sample_rate, LV2_Wrapper* wrapper): _sample_rate(sample_rate), _wrapper(wrapper)
 {
     _world = lilv_world_new();
     _nodes = std::make_unique<HostNodes>(_world);
@@ -94,7 +81,9 @@ Model::~Model()
 
             // This can optionally be null for some plugins.
             if(control.group != nullptr)
+            {
                 lilv_node_free(control.group);
+            }
 
             lilv_node_free(control.min);
             lilv_node_free(control.max);
@@ -457,25 +446,21 @@ void Model::_initialize_worker_feature()
 {
     _worker = std::make_unique<Worker>(this);
 
-    // TODO: Should I really inherit this check? Why not just always create it?
-    if (_safe_restore)
-    {
-        _state_worker = std::make_unique<Worker>(this);
-    }
-
     _features.sched.handle = _worker.get();
-    _features.sched.schedule_work = lv2_worker_schedule;
+    _features.sched.schedule_work = Worker::schedule;
     init_feature(&_features.sched_feature,
                  LV2_WORKER__schedule, &_features.sched);
-
-    _features.ssched.handle = _state_worker.get();
-    _features.ssched.schedule_work = lv2_worker_schedule;
-    init_feature(&_features.state_sched_feature,
-                 LV2_WORKER__schedule, &_features.ssched);
 }
 
 void Model::_initialize_safe_restore_feature()
 {
+    _state_worker = std::make_unique<Worker>(this);
+
+    _features.ssched.handle = _state_worker.get();
+    _features.ssched.schedule_work = Worker::schedule;
+    init_feature(&_features.state_sched_feature,
+                 LV2_WORKER__schedule, &_features.ssched);
+
     init_feature(&this->_features.safe_restore_feature,
                  LV2_STATE__threadSafeRestore,
                  NULL);
@@ -484,7 +469,7 @@ void Model::_initialize_safe_restore_feature()
 void Model::_initialize_options_feature()
 {
     /* Build options array to pass to plugin */
-    const LV2_Options_Option options[ARRAY_SIZE(_features.options)] = {
+    const LV2_Options_Option options[6] = {
             { LV2_OPTIONS_INSTANCE, 0, _urids.param_sampleRate, sizeof(float), _urids.atom_Float, &_sample_rate },
             { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_minBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
             { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_maxBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
@@ -493,11 +478,11 @@ void Model::_initialize_options_feature()
             { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, NULL }
     };
 
-    memcpy(_features.options, options, sizeof(_features.options));
+    std::copy(std::begin(options), std::end(options), std::begin(_features.options));
 
     init_feature(&_features.options_feature,
                  LV2_OPTIONS__options,
-                 (void*)_features.options);
+                 (void*)_features.options.data());
 }
 
 bool Model::_check_for_required_features(const LilvPlugin* plugin)

@@ -35,10 +35,6 @@ public:
 
     void emit_responses(LilvInstance* instance);
 
-    Model* model();
-
-    bool threaded();
-
     Lv2WorkerFifo& requests();
 
     Lv2WorkerFifo& responses();
@@ -46,6 +42,8 @@ public:
     const LV2_Worker_Interface* iface();
 
     void worker_func();
+
+    static LV2_Worker_Status schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
 private:
     const LV2_Worker_Interface* _iface = nullptr;
@@ -58,8 +56,6 @@ private:
     Model* _model{nullptr};
     bool _threaded{false};
 };
-
-LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
 }
 }

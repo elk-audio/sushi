@@ -118,7 +118,7 @@ struct HostFeatures
 
     LV2_Log_Log llog;
     LV2_Feature log_feature;
-    LV2_Options_Option options[6];
+    std::array<LV2_Options_Option, 6> options;
     LV2_Feature options_feature;
 
     LV2_Extension_Data_Feature ext_data;
@@ -295,11 +295,11 @@ private:
     int _input_audio_channel_count{0};
     int _output_audio_channel_count{0};
 
-    bool _safe_restore; ///< Plugin restore() is thread-safe
+    bool _safe_restore;
 
     std::mutex _work_lock;
-    std::unique_ptr<Worker> _state_worker; ///< Synchronous worker for state restore
-    std::unique_ptr<Worker> _worker; ///< Worker thread implementation
+    std::unique_ptr<Worker> _state_worker;
+    std::unique_ptr<Worker> _worker;
 
     LV2_Wrapper* _wrapper{nullptr};
 };

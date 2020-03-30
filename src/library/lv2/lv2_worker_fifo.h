@@ -45,31 +45,7 @@ struct Lv2FifoItem
     std::array<std::byte, 64> block;
 };
 
-/**
- * @brief Wait free fifo queue for communication between rt and non-rt code.
- * For use in the LV2 Worker thread implementation.
- */
-class Lv2WorkerFifo
-{
-public:
-    inline bool push(const Lv2FifoItem& item)
-    {
-        return _fifo.push(item);
-    }
-
-    inline bool pop(Lv2FifoItem& item)
-    {
-        return _fifo.pop(item);
-    }
-
-    inline bool empty()
-    {
-        return _fifo.wasEmpty();
-    }
-
-private:
-    memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, MAX_ITEMS_IN_QUEUE> _fifo;
-};
+using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, MAX_ITEMS_IN_QUEUE>;
 
 } // end namespace lv2
 } // end namespace sushi

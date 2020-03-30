@@ -32,7 +32,6 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
     Lv2FifoItem response;
     response.size = size;
 
-    // TODO: Is there a modern alternative to memcpy in this case?
     memcpy(response.block.data(), data, size);
 
     worker->responses().push(response);
@@ -40,20 +39,19 @@ static LV2_Worker_Status lv2_worker_respond(LV2_Worker_Respond_Handle handle, ui
     return LV2_WORKER_SUCCESS;
 }
 
-LV2_Worker_Status lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
+LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
 {
     auto worker = static_cast<Worker*>(handle);
-    auto model = worker->model();
+    auto model = worker->_model;
     auto wrapper = model->wrapper();
 
-    if (worker->threaded())
+    if (worker->_threaded)
     {
         // Schedule a request to be executed by the worker thread
 
         Lv2FifoItem request;
         request.size = size;
 
-        // TODO: Is there a modern alternative to memcpy in this case?
         memcpy(request.block.data(), data, size);
 
         worker->requests().push(request);
@@ -112,7 +110,6 @@ void Worker::worker_func()
 
     std::vector<std::byte> buf(request.size);
 
-    // TODO: Is there a modern alternative to memcpy in this case?
     memcpy(buf.data(), request.block.data(), request.size);
 
     _iface->work(
@@ -123,30 +120,18 @@ void Worker::worker_func()
             buf.data());
 }
 
-
 void Worker::emit_responses(LilvInstance* instance)
 {
-    while (_responses.empty() == false)
+    while (_responses.wasEmpty() == false)
     {
         Lv2FifoItem response;
 
         _responses.pop(response);
 
-        // TODO: Is there a modern alternative to memcpy in this case?
         memcpy(_response.data(), response.block.data(), response.size);
 
         _iface->work_response(instance->lv2_handle, response.size, _response.data());
     }
-}
-
-Model* Worker::model()
-{
-    return _model;
-}
-
-bool Worker::threaded()
-{
-    return _threaded;
 }
 
 Lv2WorkerFifo& Worker::requests()
