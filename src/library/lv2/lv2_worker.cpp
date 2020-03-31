@@ -70,7 +70,7 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
     else
     {
         // Execute work immediately in this thread
-        std::unique_lock<std::mutex> lock(model->work_lock());
+        std::unique_lock<std::mutex> lock(worker->_work_lock);
 
         worker->iface()->work(
                 model->plugin_instance()->lv2_handle,
@@ -103,7 +103,7 @@ void Worker::worker_func()
         return;
     }
 
-    std::unique_lock<std::mutex> lock(_model->work_lock());
+    std::unique_lock<std::mutex> lock(_work_lock);
 
     Lv2FifoItem request;
 

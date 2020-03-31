@@ -60,6 +60,8 @@ public:
     static LV2_Worker_Status schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
 private:
+    std::mutex _work_lock;
+
     const LV2_Worker_Interface* _iface = nullptr;
 
     Lv2WorkerFifo _requests;

@@ -721,11 +721,6 @@ bool Model::safe_restore()
     return _safe_restore;
 }
 
-std::mutex& Model::work_lock()
-{
-    return _work_lock;
-}
-
 LV2_Wrapper* Model::wrapper()
 {
     return _wrapper;

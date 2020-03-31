@@ -211,7 +211,6 @@ public:
 
     Worker* worker();
     Worker* state_worker();
-    std::mutex& work_lock();
 
     bool safe_restore();
 
@@ -297,7 +296,6 @@ private:
 
     bool _safe_restore;
 
-    std::mutex _work_lock;
     std::unique_ptr<Worker> _state_worker;
     std::unique_ptr<Worker> _worker;
 
