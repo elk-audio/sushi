@@ -18,12 +18,26 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
-#include "lv2_worker_fifo.h"
 
 namespace sushi {
 namespace lv2 {
+
+struct Lv2FifoItem
+{
+    uint32_t size{0}; // Change to int later
+
+    // The zix ring buffer does not enforce a fixed block size.
+    // Instead it is 4096 bytes in total for the buffer.
+    // Each entry is a size uint, followed by as many bytes as defined in that.
+    // So the safest thing would be 4096-4 really.
+    //std::byte block[64]; // Old style.
+    std::array<std::byte, 64> block;
+};
+
+using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, 128>;
 
 class Worker
 {
