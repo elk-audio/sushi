@@ -285,8 +285,16 @@ TEST_F(TestLv2Wrapper, TestSynchronousStateAndWorkerThreads)
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    // Increment channels to 2 when supporting stereo loading of mono plugins.
-    test_utils::compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF, out_buffer, 1, 0.0001f);
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        // Increment channels to 2 when supporting stereo loading of mono plugins.
+        test_utils::compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF, out_buffer, 1, 0.0001f);
+    }
+    else
+    {
+        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
+                  << std::endl;
+    }
 }
 
 #ifdef SUSHI_BUILD_WITH_LV2_MDA_TESTS
@@ -458,7 +466,15 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
+    }
+    else
+    {
+        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
+                  << std::endl;
+    }
 
     // Setting program once first without checking audio output,
     // to ensure a sequence of changes goes through, not just the first one.
@@ -479,7 +495,10 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2, 0.0001f);
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2,0.0001f);
+    }
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);

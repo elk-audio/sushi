@@ -62,11 +62,12 @@ inline std::string get_data_dir_path()
     return test_config_file;
 };
 
-inline void compare_buffers(const float static_array[][64], ChunkSampleBuffer& buffer, int channels, float error_margin = 0.0001f)
+template <int size>
+inline void compare_buffers(const float static_array[][size], ChunkSampleBuffer& buffer, int channels, float error_margin = 0.0001f)
 {
     for (int i = 0; i < channels; i++)
     {
-        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, size); j++)
         {
             ASSERT_NEAR(static_array[i][j], buffer.channel(i)[j], error_margin);
         }
@@ -74,16 +75,18 @@ inline void compare_buffers(const float static_array[][64], ChunkSampleBuffer& b
 }
 
 // Utility for creating static buffers such as those used in vst2/lv2_wrapper_test, by copying values from console.
+template <int size>
 inline void print_buffer(ChunkSampleBuffer& buffer, int channels)
 {
     std::cout << std::scientific << std::setprecision(10);
     int print_i = 0;
     for (int i = 0; i < channels; i++)
     {
-        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, 64); j++)
+        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, size); j++)
         {
             std::cout << buffer.channel(i)[j] << "f, ";
             print_i++;
+
 
             if(print_i == 4)
             {
