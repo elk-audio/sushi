@@ -65,10 +65,6 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
                                                 wrapper->id(),
                                                 wrapper);
 
-        auto id = e.async_work_event()->event_id();
-
-        wrapper->set_pending_worker_event_id(id);
-
         wrapper->output_worker_event(e);
     }
     else

@@ -119,18 +119,14 @@ public:
         return 1;
     }
 
-    void set_pending_worker_event_id(EventId id);
-
     void output_worker_event(const RtEvent& event);
 
 private:
     const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);
 
-    void _worker_callback(EventId id);
+    void _worker_callback(EventId);
 
-    void _restore_state_callback(EventId id);
-    EventId _pending_state_restore_event_id{0};
-    EventId _pending_worker_event_id{0};
+    void _restore_state_callback(EventId);
 
     void _update_transport();
     uint8_t pos_buf[256];

@@ -389,7 +389,6 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
                 _model->set_play_state(PlayState::PAUSED);
 
                 auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
-                _pending_state_restore_event_id = e.async_work_event()->event_id();
                 output_event(e);
                 break;
             }
@@ -427,46 +426,32 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
     }
 }
 
-void LV2_Wrapper::_restore_state_callback(EventId id)
+void LV2_Wrapper::_restore_state_callback(EventId)
 {
-    if (id == _pending_state_restore_event_id)
+    /* Note that this doesn't handle multiple requests at once.
+     * Currently for the Pause functionality it is fine,
+     * but if extended to support other use it may note be. */
+    if(_model->state_to_set() != nullptr)
     {
-        /* Note that this doesn't handle multiple requests at once.
-         * Currently for the Pause functionality it is fine,
-         * but if extended to support other use it may note be. */
-        if(_model->state_to_set() != nullptr)
-        {
-            auto feature_list = _model->host_feature_list();
+        auto feature_list = _model->host_feature_list();
 
-            lilv_state_restore(_model->state_to_set(),
-                               _model->plugin_instance(),
-                               set_port_value,
-                               _model.get(),
-                               0,
-                               feature_list->data());
+        lilv_state_restore(_model->state_to_set(),
+                           _model->plugin_instance(),
+                           set_port_value,
+                           _model.get(),
+                           0,
+                           feature_list->data());
 
-            _model->set_state_to_set(nullptr);
+        _model->set_state_to_set(nullptr);
 
-            _model->request_update();
-            _model->set_play_state(PlayState::RUNNING);
-        }
-    }
-    else
-    {
-        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of non-rt callback didn't match, {} vs {}", id, _pending_state_restore_event_id);
+        _model->request_update();
+        _model->set_play_state(PlayState::RUNNING);
     }
 }
 
-void LV2_Wrapper::_worker_callback(EventId id)
+void LV2_Wrapper::_worker_callback(EventId)
 {
-    if(id == _pending_worker_event_id)
-    {
-        _model->worker()->worker_func();
-    }
-    else
-    {
-        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of worker callback didn't match, {} vs {}", id, _pending_worker_event_id);
-    }
+    _model->worker()->worker_func();
 }
 
 void LV2_Wrapper::set_enabled(bool enabled)
@@ -493,11 +478,6 @@ void LV2_Wrapper::set_bypassed(bool bypassed)
 bool LV2_Wrapper::bypassed() const
 {
     return _bypass_manager.bypassed();
-}
-
-void LV2_Wrapper::set_pending_worker_event_id(EventId id)
-{
-    _pending_worker_event_id = id;
 }
 
 void LV2_Wrapper::output_worker_event(const RtEvent& event)
