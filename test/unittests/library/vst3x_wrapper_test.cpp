@@ -210,17 +210,19 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(120, false);
     _host_control._transport.set_time_signature({3, 4}, false);
-    _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
+    _host_control._transport.set_time(std::chrono::seconds(2), static_cast<int64_t>(TEST_SAMPLE_RATE) * 2);
 
     _module_under_test->_fill_processing_context();
     auto context = _module_under_test->_process_data.processContext;
-
+    /* For these numbers to match exactly, we need to choose a time interval which
+     * is an integer multiple of AUDIO_CHUNK_SIZE, hence 2 seconds at 48000, which
+     * is good up to AUDIO_CHUNK_SIZE = 256 */
     EXPECT_FLOAT_EQ(TEST_SAMPLE_RATE, context->sampleRate);
-    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), context->projectTimeSamples);
-    EXPECT_EQ(1'000'000'000, context->systemTime);
-    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), context->continousTimeSamples);
-    EXPECT_FLOAT_EQ(2.0f, context->projectTimeMusic);
-    EXPECT_FLOAT_EQ(0.0f, context->barPositionMusic);
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE) * 2, context->projectTimeSamples);
+    EXPECT_EQ(2'000'000'000, context->systemTime);
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE) * 2, context->continousTimeSamples);
+    EXPECT_FLOAT_EQ(4.0f, context->projectTimeMusic);
+    EXPECT_FLOAT_EQ(3.0f, context->barPositionMusic);
     EXPECT_FLOAT_EQ(120.0f, context->tempo);
     EXPECT_EQ(3, context->timeSigNumerator);
     EXPECT_EQ(4, context->timeSigDenominator);

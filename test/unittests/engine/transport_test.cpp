@@ -84,7 +84,7 @@ TEST_F(TestTransport, TestTimeline68Time)
     _module_under_test.set_sample_rate(TEST_SAMPLERATE);
     _module_under_test.set_tempo(180, false);
     _module_under_test.set_time_signature({6, 8}, false);
-    constexpr float precision = 3.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLERATE;
+    constexpr float precision = 4.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLERATE;
 
     /* Check that the starting point is 0 */
     _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
