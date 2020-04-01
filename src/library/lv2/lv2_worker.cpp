@@ -52,7 +52,7 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
         Lv2FifoItem request;
         request.size = size;
 
-        if(size > 64)
+        if(size > WORKER_REQUEST_SIZE)
         {
             return LV2_WORKER_ERR_NO_SPACE;
         }
@@ -91,8 +91,9 @@ Worker::Worker(Model* model)
 
 void Worker::init(const LV2_Worker_Interface* iface, bool threaded)
 {
-	_iface = iface;
-	_threaded = threaded;
+    _iface = iface;
+    _threaded = threaded;
+    _request.resize(4096);
     _response.resize(4096);
 }
 
@@ -109,16 +110,14 @@ void Worker::worker_func()
 
     _requests.pop(request);
 
-    std::vector<std::byte> buf(request.size);
-
-    memcpy(buf.data(), request.block.data(), request.size);
+    memcpy(_request.data(), request.block.data(), request.size);
 
     _iface->work(
             _model->plugin_instance()->lv2_handle,
             lv2_worker_respond,
             this,
             request.size,
-            buf.data());
+            _request.data());
 }
 
 void Worker::emit_responses(LilvInstance* instance)

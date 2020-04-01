@@ -124,6 +124,8 @@ struct HostFeatures
     LV2_Extension_Data_Feature ext_data;
 };
 
+constexpr int FEATURE_LIST_SIZE = 11;
+
 /**
  * @brief LV2 depends on a "GOD" struct/class per plugin instance,
  * which it passes around with pointers in the various callbacks.
@@ -142,7 +144,7 @@ public:
 
     // Warning: LV2 / Lilv require this list to be null-terminated.
     // So remember to check for null when iterating over it!
-    std::array<const LV2_Feature*, 11>* host_feature_list();
+    std::array<const LV2_Feature*, FEATURE_LIST_SIZE>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -283,7 +285,7 @@ private:
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::array<const LV2_Feature*, 11> _feature_list;
+    std::array<const LV2_Feature*, FEATURE_LIST_SIZE> _feature_list;
 
     uint32_t _position;
     float _bpm;

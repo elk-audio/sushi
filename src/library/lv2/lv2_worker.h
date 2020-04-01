@@ -25,19 +25,21 @@
 namespace sushi {
 namespace lv2 {
 
+constexpr int WORKER_FIFO_SIZE = 128;
+constexpr int WORKER_REQUEST_SIZE = 64;
+
 struct Lv2FifoItem
 {
-    uint32_t size{0}; // Change to int later
+    int size{0};
 
     // The zix ring buffer does not enforce a fixed block size.
     // Instead it is 4096 bytes in total for the buffer.
     // Each entry is a size uint, followed by as many bytes as defined in that.
     // So the safest thing would be 4096-4 really.
-    //std::byte block[64]; // Old style.
-    std::array<std::byte, 64> block;
+    std::array<std::byte, WORKER_REQUEST_SIZE> block;
 };
 
-using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, 128>;
+using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, WORKER_FIFO_SIZE>;
 
 class Worker
 {
@@ -57,6 +59,7 @@ public:
 
     void worker_func();
 
+    // Signature is as required by LV2 api.
     static LV2_Worker_Status schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void *data);
 
 private:
@@ -67,6 +70,7 @@ private:
     Lv2WorkerFifo _requests;
     Lv2WorkerFifo _responses;
 
+    std::vector<std::byte> _request;
     std::vector<std::byte> _response;
 
     Model* _model{nullptr};
