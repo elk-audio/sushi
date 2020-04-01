@@ -1,3 +1,12 @@
+## 0.10.1
+
+New Features:
+  * LV2 worker thread extension support
+  * Parameter values are now always normalised
+
+Fixes:
+  * Lv2 string parameter value fix
+
 ## 0.10.0
 
 New Features:
