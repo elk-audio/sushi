@@ -7,20 +7,62 @@
 #include "library/lv2/lv2_state.cpp"
 #include "library/lv2/lv2_features.cpp"
 
-#include "library/lv2/lv2_port.cpp"
-#include "library/lv2/lv2_model.cpp"
-
-#include "library/lv2/lv2_control.cpp"
-
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
 
 #include "library/lv2/lv2_wrapper.cpp"
 
+#include "library/lv2/lv2_port.cpp"
+#include "library/lv2/lv2_model.cpp"
+#include "library/lv2/lv2_worker.cpp"
+#include "library/lv2/lv2_control.cpp"
+
 using namespace sushi;
 using namespace sushi::lv2;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
+
+static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_ON[1][64] = {
+    {
+        8.593750e-02f, 1.562500e-01f, 2.109375e-01f, 2.812500e-01f,
+        3.359375e-01f, 3.906250e-01f, 4.531250e-01f, 5.078125e-01f,
+        5.546875e-01f, 6.093750e-01f, 6.562500e-01f, 7.031250e-01f,
+        7.421875e-01f, 7.890625e-01f, 8.203125e-01f, 8.593750e-01f,
+        8.828125e-01f, 9.140625e-01f, 9.375000e-01f, 9.531250e-01f,
+        9.765625e-01f, 9.765625e-01f, 9.921875e-01f, 9.921875e-01f,
+        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.687500e-01f,
+        9.453125e-01f, 9.375000e-01f, 9.062500e-01f, 8.828125e-01f,
+        8.515625e-01f, 8.203125e-01f, 7.890625e-01f, 7.343750e-01f,
+        7.031250e-01f, 6.484375e-01f, 6.093750e-01f, 5.546875e-01f,
+        5.000000e-01f, 4.531250e-01f, 3.828125e-01f, 3.359375e-01f,
+        2.734375e-01f, 2.187500e-01f, 1.562500e-01f, 9.375000e-02f,
+        3.125000e-02f, -3.906250e-02f, -9.375000e-02f, -1.640625e-01f,
+        -2.187500e-01f, -2.890625e-01f, -3.437500e-01f, -4.062500e-01f,
+        -4.531250e-01f, -5.078125e-01f, -5.625000e-01f, -6.171875e-01f,
+        -6.640625e-01f, -7.187500e-01f, -7.500000e-01f, -7.890625e-01f
+    }
+};
+
+static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[1][64] = {
+    {
+        -8.281250e-01f, -8.671875e-01f, -8.906250e-01f, -9.296875e-01f,
+        -9.531250e-01f, -9.609375e-01f, -9.843750e-01f, -9.921875e-01f,
+        -1.000000e+00f, -1.000000e+00f, -1.000000e+00f, -1.000000e+00f,
+        -1.000000e+00f, -9.843750e-01f, -9.687500e-01f, -9.531250e-01f,
+        -9.218750e-01f, -9.062500e-01f, -8.671875e-01f, -8.437500e-01f,
+        -7.968750e-01f, -7.578125e-01f, -7.265625e-01f, -6.718750e-01f,
+        -6.328125e-01f, -5.703125e-01f, -5.234375e-01f, -4.609375e-01f,
+        -4.062500e-01f, -3.515625e-01f, -2.890625e-01f, -2.343750e-01f,
+        -1.718750e-01f, -1.171875e-01f, -4.687500e-02f, 1.562500e-02f,
+        7.031250e-02f, 1.406250e-01f, 1.953125e-01f, 2.656250e-01f,
+        3.203125e-01f, 3.828125e-01f, 4.375000e-01f, 5.000000e-01f,
+        5.390625e-01f, 6.015625e-01f, 6.406250e-01f, 6.953125e-01f,
+        7.343750e-01f, 7.812500e-01f, 8.125000e-01f, 8.515625e-01f,
+        8.750000e-01f, 9.062500e-01f, 9.218750e-01f, 9.531250e-01f,
+        9.609375e-01f, 9.843750e-01f, 9.921875e-01f, 9.921875e-01f,
+        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.765625e-01f
+    }
+};
 
 class TestLv2Wrapper : public ::testing::Test
 {
@@ -31,7 +73,8 @@ protected:
 
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
-        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), plugin_URI);
+        auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
+        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
 
@@ -90,10 +133,15 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
     EXPECT_EQ(0u, gain_param->id());
 
     // TestParameterSetViaEvent
-    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
+    auto parameter_change_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.5f);
     _module_under_test->process_event(parameter_change_event);
     auto value = _module_under_test->parameter_value(0);
-    EXPECT_EQ(0.123f, value.second);
+    EXPECT_EQ(0.5f, value.second);
+
+    // TestFetchingFormattedParameterValue
+    auto [status, formattedValue] = _module_under_test->parameter_value_formatted(0);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ("-33.000000", formattedValue);
 }
 
 TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
@@ -111,7 +159,7 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
     // Verify that a parameter change affects the sound.
     // eg-amp plugins Gain parameter range is from -90 to 24
-    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, -90.0f);
+    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
     _module_under_test->process_event(lower_gain_Event);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
@@ -120,7 +168,7 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
     auto [status, parameter_value] = _module_under_test->parameter_value(0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(-90.0f, parameter_value);
+    EXPECT_EQ(0.0f, parameter_value);
 }
 
 TEST_F(TestLv2Wrapper, TestBypassProcessing)
@@ -130,7 +178,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
-    auto event = RtEvent::make_parameter_change_event(0, 0, 0, -45.0f);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.3f);
     _module_under_test->process_event(event);
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
@@ -221,6 +269,37 @@ TEST_F(TestLv2Wrapper, TestTimeInfo)
     EXPECT_EQ(4, time_info->timeSigNumerator);
     EXPECT_EQ(4, time_info->timeSigDenominator);
      */
+}
+
+// TODO: This tests synchronous worker invocation.
+// Asynchronous invocation requires an additional LV2 extension to be implemented first,
+// optional for eg-sampler, but required for its sample-loading feature.
+TEST_F(TestLv2Wrapper, TestSynchronousStateAndWorkerThreads)
+{
+    SetUp("http://lv2plug.in/plugins/eg-sampler");
+
+    ChunkSampleBuffer in_buffer(1);
+    ChunkSampleBuffer out_buffer(1);
+
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    // Increment channels to 2 when supporting stereo loading of mono plugins.
+    test_utils::compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_ON, out_buffer, 1, 0.0001f);
+
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
+    _module_under_test->process_audio(in_buffer, out_buffer);
+
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        // Increment channels to 2 when supporting stereo loading of mono plugins.
+        test_utils::compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF, out_buffer, 1, 0.0001f);
+    }
+    else
+    {
+        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
+                  << std::endl;
+    }
 }
 
 #ifdef SUSHI_BUILD_WITH_LV2_MDA_TESTS
@@ -392,7 +471,15 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
+    }
+    else
+    {
+        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
+                  << std::endl;
+    }
 
     // Setting program once first without checking audio output,
     // to ensure a sequence of changes goes through, not just the first one.
@@ -413,7 +500,10 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2, 0.0001f);
+    if(AUDIO_CHUNK_SIZE == 64)
+    {
+        test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_AFTER_PROGRAM_CHANGE, out_buffer, 2,0.0001f);
+    }
 
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);

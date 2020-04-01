@@ -54,8 +54,10 @@
 
 namespace sushi {
 namespace lv2 {
+
 // writing also LV2 Trace Log messages to file.
-static const bool TRACE_OPTION = true;
+// This is set to false by default as it will cause thousands of mode switches.
+static constexpr bool TRACE_OPTION = false;
 
 /**
    Get a port structure by symbol.

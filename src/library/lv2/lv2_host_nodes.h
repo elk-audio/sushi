@@ -79,6 +79,9 @@ public:
         this->rdfs_label = lilv_new_uri(world, LILV_NS_RDFS "label");
         this->rdfs_range = lilv_new_uri(world, LILV_NS_RDFS "range");
         this->rsz_minimumSize = lilv_new_uri(world, LV2_RESIZE_PORT__minimumSize);
+
+        this->work_interface = lilv_new_uri(world, LV2_WORKER__interface);
+        this->work_schedule = lilv_new_uri(world, LV2_WORKER__schedule);
     }
 
     ~HostNodes()
@@ -117,6 +120,9 @@ public:
         lilv_node_free(rdfs_label);
         lilv_node_free(rdfs_range);
         lilv_node_free(rsz_minimumSize);
+
+        lilv_node_free(work_interface);
+        lilv_node_free(work_schedule);
     }
 
     LilvNode* atom_AtomPort;
@@ -153,6 +159,9 @@ public:
     LilvNode* rdfs_label;
     LilvNode* rdfs_range;
     LilvNode* rsz_minimumSize;
+
+    LilvNode* work_interface;
+    LilvNode* work_schedule;
 };
 
 #endif //SUSHI_BUILD_WITH_LV2

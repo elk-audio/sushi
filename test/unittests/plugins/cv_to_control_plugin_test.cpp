@@ -39,7 +39,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     EXPECT_TRUE(_event_output.empty());
 
     // Set pitch parameter and send a gate high event, we should receive a note on event
-    auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 1);
+    auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 0);
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_0")->id(), 0.5);
     _module_under_test.process_event(event);
@@ -86,7 +86,7 @@ TEST_F(CvToControlPluginTest, TestPitchBendMode)
     EXPECT_TRUE(_event_output.empty());
 
     // Set pitch parameter and send a gate high event, we should receive a note on event and a pitch bend
-    auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 1);
+    auto event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("polyphony")->id(), 0);
     _module_under_test.process_event(event);
     event = RtEvent::make_parameter_change_event(0, 0, _module_under_test.parameter_from_name("pitch_bend_enabled")->id(), 1);
     _module_under_test.process_event(event);

@@ -43,7 +43,10 @@ StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlu
     for (int i = 0; i < SEQUENCER_STEPS; ++i)
     {
         std::string str_nr = std::to_string(i);
-        _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, "semitone", 0, -24, 24, new IntParameterPreProcessor(-24, 24));
+        _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, "semitone",
+                                                      0, -24, 24,
+                                                      new IntParameterPreProcessor(-24, 24));
+
         _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, "", true);
         _step_indicator_parameters[i] = register_bool_parameter("step_ind_" + str_nr, "Step Indication " + str_nr, "", true);
         assert(_pitch_parameters[i] && _step_indicator_parameters[i] && _step_indicator_parameters[i]);
@@ -128,8 +131,8 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
         return;
     }
 
-    double start_beat = _host_control.transport()->current_bar_beats() * MULTIPLIER_8TH_NOTE;
-    double end_beat = _host_control.transport()->current_bar_beats(AUDIO_CHUNK_SIZE) * MULTIPLIER_8TH_NOTE;
+    float start_beat = _host_control.transport()->current_bar_beats() * MULTIPLIER_8TH_NOTE;
+    float end_beat = _host_control.transport()->current_bar_beats(AUDIO_CHUNK_SIZE) * MULTIPLIER_8TH_NOTE;
 
     /* New 8th note during this chunk */
     if (static_cast<int>(end_beat) - static_cast<int>(start_beat) != 0)
@@ -151,12 +154,12 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
          * vice versa in order to provide visual feedback when the sequencer is running */
         set_parameter_and_notify(_step_indicator_parameters[_current_step], _current_step_active);
         _current_step = step;
-        _current_step_active = _step_parameters[step]->value();
+        _current_step_active = _step_parameters[step]->processed_value();
         set_parameter_and_notify(_step_indicator_parameters[step], !_current_step_active);
 
         if (_current_step_active)
         {
-            _current_note = snap_to_scale(_pitch_parameters[step]->value() + START_NOTE, MINOR_SCALE) + _transpose;
+            _current_note = snap_to_scale(_pitch_parameters[step]->processed_value() + START_NOTE, MINOR_SCALE) + _transpose;
             RtEvent note_on = RtEvent::make_note_on_event(this->id(), offset, 0, _current_note, 1.0f);
             output_event(note_on);
         }

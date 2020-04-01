@@ -21,8 +21,9 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include "lv2_model.h"
-
 #include "lv2_features.h"
+#include "lv2_worker.h"
+#include "lv2_wrapper.h"
 #include "lv2_state.h"
 #include "logging.h"
 
@@ -42,7 +43,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model()
+Model::Model(float sample_rate, LV2_Wrapper* wrapper): _sample_rate(sample_rate), _wrapper(wrapper)
 {
     _world = lilv_world_new();
     _nodes = std::make_unique<HostNodes>(_world);
@@ -58,6 +59,10 @@ Model::Model()
     _initialize_urid_symap();
     _initialize_log_feature();
     _initialize_make_path_feature();
+
+    _initialize_worker_feature();
+    _initialize_safe_restore_feature();
+    _initialize_options_feature();
 }
 
 Model::~Model()
@@ -73,7 +78,13 @@ Model::~Model()
             lilv_node_free(control.node);
             lilv_node_free(control.symbol);
             lilv_node_free(control.label);
-            lilv_node_free(control.group);
+
+            // This can optionally be null for some plugins.
+            if(control.group != nullptr)
+            {
+                lilv_node_free(control.group);
+            }
+
             lilv_node_free(control.min);
             lilv_node_free(control.max);
             lilv_node_free(control.def);
@@ -96,13 +107,13 @@ void Model::_initialize_host_feature_list()
     // Build feature list for passing to plugins.
     // Warning: LV2 / Lilv require this list to be null-terminated.
     // So remember to check for null when iterating over it!
-    std::array<const LV2_Feature*, 9> features({
+    std::array<const LV2_Feature*, FEATURE_LIST_SIZE> features({
             &_features.map_feature,
             &_features.unmap_feature,
             &_features.log_feature,
+            &_features.sched_feature,
             &_features.make_path_feature,
-// TODO: Re-introduce options extension.
-            //&_features.options_feature,
+            &_features.options_feature,
             &static_features[0],
             &static_features[1],
             &static_features[2],
@@ -138,6 +149,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 {
     _plugin_class = plugin_handle;
     _play_state = PlayState::PAUSED;
+    _sample_rate = sample_rate;
 
     _initialize_host_feature_list();
 
@@ -162,6 +174,26 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
     }
 
     _features.ext_data.data_access = lilv_instance_get_descriptor(_plugin_instance)->extension_data;
+
+    /* Create workers if necessary */
+    if (lilv_plugin_has_extension_data(plugin_handle, _nodes->work_interface))
+    {
+        const void* iface_raw = lilv_instance_get_extension_data(_plugin_instance, LV2_WORKER__interface);
+        auto iface = static_cast<const LV2_Worker_Interface*>(iface_raw);
+
+        _worker->init(iface, true);
+        if (_safe_restore)
+        {
+            _state_worker->init(iface, false);
+        }
+    }
+
+    auto state_threadSafeRestore = lilv_new_uri(_world, LV2_STATE__threadSafeRestore);
+    if (lilv_plugin_has_feature(plugin_handle, state_threadSafeRestore))
+    {
+        _safe_restore = true;
+    }
+    lilv_node_free(state_threadSafeRestore);
 
     if (_create_ports(plugin_handle) == false)
     {
@@ -379,7 +411,7 @@ void Model::_initialize_log_feature()
     this->_features.llog.handle = this;
     this->_features.llog.printf = lv2_printf;
     this->_features.llog.vprintf = lv2_vprintf;
-    init_feature(&this->_features.log_feature, LV2_LOG__log, &this->_features.llog);
+    init_feature(&_features.log_feature, LV2_LOG__log, &_features.llog);
 }
 
 void Model::_initialize_map_feature()
@@ -410,6 +442,49 @@ void Model::_initialize_make_path_feature()
                  LV2_STATE__makePath, &this->_features.make_path);
 }
 
+void Model::_initialize_worker_feature()
+{
+    _worker = std::make_unique<Worker>(this);
+
+    _features.sched.handle = _worker.get();
+    _features.sched.schedule_work = Worker::schedule;
+    init_feature(&_features.sched_feature,
+                 LV2_WORKER__schedule, &_features.sched);
+}
+
+void Model::_initialize_safe_restore_feature()
+{
+    _state_worker = std::make_unique<Worker>(this);
+
+    _features.ssched.handle = _state_worker.get();
+    _features.ssched.schedule_work = Worker::schedule;
+    init_feature(&_features.state_sched_feature,
+                 LV2_WORKER__schedule, &_features.ssched);
+
+    init_feature(&this->_features.safe_restore_feature,
+                 LV2_STATE__threadSafeRestore,
+                 NULL);
+}
+
+void Model::_initialize_options_feature()
+{
+    /* Build options array to pass to plugin */
+    const LV2_Options_Option options[6] = {
+            { LV2_OPTIONS_INSTANCE, 0, _urids.param_sampleRate, sizeof(float), _urids.atom_Float, &_sample_rate },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_minBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_maxBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_sequenceSize, sizeof(int32_t), _urids.atom_Int, &_midi_buffer_size },
+            { LV2_OPTIONS_INSTANCE, 0, _urids.ui_updateRate, sizeof(float), _urids.atom_Float, &_ui_update_hz },
+            { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, NULL }
+    };
+
+    std::copy(std::begin(options), std::end(options), std::begin(_features.options));
+
+    init_feature(&_features.options_feature,
+                 LV2_OPTIONS__options,
+                 (void*)_features.options.data());
+}
+
 bool Model::_check_for_required_features(const LilvPlugin* plugin)
 {
     // Check that any required features are supported
@@ -432,7 +507,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
     return true;
 }
 
-std::array<const LV2_Feature*, 9>* Model::host_feature_list()
+std::array<const LV2_Feature*, FEATURE_LIST_SIZE>* Model::host_feature_list()
 {
     return &_feature_list;
 }
@@ -629,6 +704,26 @@ int Model::input_audio_channel_count()
 int Model::output_audio_channel_count()
 {
     return _output_audio_channel_count;
+}
+
+Worker* Model::worker()
+{
+    return _worker.get();
+}
+
+Worker* Model::state_worker()
+{
+    return _state_worker.get();
+}
+
+bool Model::safe_restore()
+{
+    return _safe_restore;
+}
+
+LV2_Wrapper* Model::wrapper()
+{
+    return _wrapper;
 }
 
 }

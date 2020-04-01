@@ -55,31 +55,31 @@ int lv2_vprintf(LV2_Log_Handle handle,
 
     if (type == urids.log_Trace && TRACE_OPTION)
     {
-        SUSHI_LOG_WARNING("LV2 Trace: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Trace: {}", fmt);
     }
     else if (type == urids.log_Error)
     {
-        SUSHI_LOG_ERROR("LV2 Error: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Error: {}", fmt);
     }
     else if (type == urids.log_Warning)
     {
-        SUSHI_LOG_WARNING("LV2 Warning: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Warning: {}", fmt);
     }
     else if (type == urids.log_Entry)
     {
-        SUSHI_LOG_WARNING("LV2 Entry: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Entry: {}", fmt);
     }
     else if (type == urids.log_Note)
     {
-        SUSHI_LOG_WARNING("LV2 Note: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Note: {}", fmt);
     }
     else if (type == urids.log_log)
     {
-        SUSHI_LOG_WARNING("LV2 Log: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 Log: {}", fmt);
     }
     else
     {
-        SUSHI_LOG_WARNING("LV2 unknown error: {}", fmt);
+        SUSHI_LOG_DEBUG("LV2 unknown error: {}", fmt);
     }
 
     return 0;

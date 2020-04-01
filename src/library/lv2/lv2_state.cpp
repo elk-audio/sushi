@@ -140,7 +140,7 @@ void State::unload_programs()
 
 void State::apply_state(LilvState* state)
 {
-    bool must_pause = _model->play_state() == PlayState::RUNNING;
+    bool must_pause = !_model->safe_restore() && _model->play_state() == PlayState::RUNNING;
 
     if (state)
     {
@@ -256,7 +256,7 @@ void set_port_value(const char* port_symbol,
 
     if (port == nullptr)
     {
-        SUSHI_LOG_ERROR("error: Preset port `{}' is missing", port_symbol);
+        SUSHI_LOG_DEBUG("error: Preset port `{}' is missing", port_symbol);
         return;
     }
 
@@ -282,7 +282,7 @@ void set_port_value(const char* port_symbol,
     }
     else
     {
-        SUSHI_LOG_ERROR("error: Preset {} value has bad type {}",
+        SUSHI_LOG_DEBUG("error: Preset {} value has bad type {}",
                 port_symbol,
                 model->get_unmap().unmap(model->get_unmap().handle, type));
 

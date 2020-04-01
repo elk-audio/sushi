@@ -248,6 +248,7 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_state.cpp
+                               src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp

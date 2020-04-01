@@ -36,7 +36,7 @@ class EqualizerPlugin : public InternalPlugin
 public:
     EqualizerPlugin(HostControl hostControl);
 
-    ~EqualizerPlugin();
+    ~EqualizerPlugin() = default;
 
     virtual ProcessorReturnCode init(float sample_rate) override;
 

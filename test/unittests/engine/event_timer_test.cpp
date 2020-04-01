@@ -46,12 +46,15 @@ TEST_F(TestEventTimer, TestToOffsetConversion)
     ASSERT_EQ(0, offset);
 
     /* Create a timestamp in the middle of the chunk, note we must add
-     * chunk time here because the EventTimer is 1 chunk ahead internally */
+     * chunk time here because the EventTimer is 1 chunk ahead internally,
+     * Because of rounding errors, the resulting sample offset could be
+     * both AUDIO_CHUNK_SIZE / 2 and AUDIO_CHUNK_SIZE / 2 -1 */
     auto chunk_time = calc_chunk_time(TEST_SAMPLE_RATE);
     Time timestamp = 1s + chunk_time + chunk_time / 2;
     std::tie(send_now, offset) = _module_under_test.sample_offset_from_realtime(timestamp);
     ASSERT_TRUE(send_now);
-    ASSERT_EQ(AUDIO_CHUNK_SIZE / 2 - 1, offset);
+    ASSERT_GE(offset, AUDIO_CHUNK_SIZE / 2 - 1);
+    ASSERT_LE(offset, AUDIO_CHUNK_SIZE / 2);
 }
 
 TEST_F(TestEventTimer, TestToRealTimesConversion)

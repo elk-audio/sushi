@@ -250,8 +250,8 @@ TEST_F(TestBypassManager, TestCrossfade)
 
     _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2);
 
-    EXPECT_LT(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 2.0f);
-    EXPECT_GT(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 1.0f);
+    EXPECT_LE(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 2.0f);
+    EXPECT_GE(buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 1.0f);
 
     for (int i = 0; i < chunks_in_ramp - 1; ++i)
     {

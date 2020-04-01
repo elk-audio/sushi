@@ -85,7 +85,7 @@ public:
     void set_id(ObjectId id) {_id = id;}
 
     /**
-     * @brief Whether or not the parameter is automatable or not.
+     * @brief Whether the parameter is automatable or not.
      * @return true if the parameter can be automated, false otherwise
      */
     virtual bool automatable() const {return true;}
@@ -94,13 +94,13 @@ public:
      * @brief Returns the maximum value of the parameter
      * @return A float with the maximum representation of the parameter
      */
-    virtual float min_range() const {return 0;};
+    virtual float min_domain_value() const {return 0;};
 
     /**
      * @brief Returns the minimum value of the parameter
      * @return A float with the minimum representation of the parameter
      */
-    virtual float max_range() const {return 1;};
+    virtual float max_domain_value() const {return 1;};
 
 protected:
     std::string _label;
@@ -113,23 +113,40 @@ protected:
 
 /**
  * @brief Parameter preprocessor for scaling or non-linear mapping. This basic,
- * templated base class only supports clipping to a pre-defined range.
+ * templated base class with no processing implemented.
  */
 template<typename T>
 class ParameterPreProcessor
 {
 public:
-    ParameterPreProcessor(T min, T max): _min_range(min), _max_range(max) {}
-    virtual T process(T raw_value) {return clip(raw_value);}
+    ParameterPreProcessor(T min, T max): _min_domain_value(min), _max_domain_value(max) {}
 
-protected:
-    T clip(T raw_value)
+    virtual T process_to_plugin(T value)
     {
-        return (raw_value > _max_range? _max_range : (raw_value < _min_range? _min_range : raw_value));
+        return value;
     }
 
-    T _min_range;
-    T _max_range;
+    virtual T process_from_plugin(T value)
+    {
+        return value;
+    }
+
+    T to_domain(float value_normalized)
+    {
+        return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+    }
+
+    float to_normalized(T value)
+    {
+        return _max_normalized + (_min_normalized - _max_normalized) / (_min_domain_value - _max_domain_value) * (value - _max_domain_value);
+    }
+
+protected:
+    T _min_domain_value;
+    T _max_domain_value;
+
+    static constexpr float _min_normalized{0.0f};
+    static constexpr float _max_normalized{1.0f};
 };
 
 /**
@@ -149,10 +166,12 @@ template <> inline std::string ParameterFormatPolicy<bool>::format(bool value) c
 {
     return value? "True": "False";
 }
+
 template <> inline std::string ParameterFormatPolicy<std::string*>::format(std::string* value) const
 {
     return *value;
 }
+
 template <> inline std::string ParameterFormatPolicy<BlobData>::format(BlobData /*value*/) const
 {
     /* This parameter type is intended to transfer opaque binary data, and
@@ -175,26 +194,23 @@ public:
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
                              const std::string& unit,
-                             T range_min,
-                             T range_max,
+                             T min_domain_value,
+                             T max_domain_Value,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
-                                        _min(range_min),
-                                        _max(range_max) {}
+                                        _min_domain_value(min_domain_value),
+                                        _max_domain_value(max_domain_Value) {}
 
     ~TypedParameterDescriptor() = default;
 
-    float min_range() const override {return static_cast<float>(_min);}
-    float max_range() const override {return static_cast<float>(_max);}
-
-    T min_value() const {return _min;}
-    T max_value() const {return _max;}
+    float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
+    float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
-    T _min;
-    T _max;
+    T _min_domain_value;
+    T _max_domain_value;
 };
 
 /* Partial specialization for pointer type parameters */
@@ -250,9 +266,15 @@ class dBToLinPreProcessor : public FloatParameterPreProcessor
 {
 public:
     dBToLinPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
-    float process(float raw_value) override
+
+    float process_to_plugin(float value) override
     {
-        return powf(10.0f, this->clip(raw_value) / 20.0f);
+        return powf(10.0f, value / 20.0f);
+    }
+
+    float process_from_plugin(float value) override
+    {
+        return value;
     }
 };
 
@@ -263,9 +285,15 @@ class LinTodBPreProcessor : public FloatParameterPreProcessor
 {
 public:
     LinTodBPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
-    float process(float raw_value) override
+
+    float process_to_plugin(float value) override
     {
-        return 20.0f * log10(this->clip(raw_value));
+        return 20.0f * log10(value);
+    }
+
+    float process_from_plugin(float value) override
+    {
+        return value;
     }
 };
 
@@ -276,26 +304,37 @@ public:
     ParameterValue(ParameterPreProcessor<T>* pre_processor,
                    T value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
                                                                _pre_processor(pre_processor),
-                                                               _raw_value(value),
-                                                               _value(pre_processor->process(value)){}
+                                                               _processed_value(pre_processor->process_to_plugin(value)),
+                                                               _normalized_value(pre_processor->to_normalized(value)) {}
 
     ParameterType type() const {return _type;}
-    T value() const {return _value;}
-    T raw_value() const {return _raw_value;}
+
+    T processed_value() const {return _processed_value;}
+
+    T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
+
+    float normalized_value() const { return _normalized_value; }
+
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(T value, T raw_value) {_value = value; _raw_value = raw_value;}
-    void set(T value)
+    void set(float value_normalized)
     {
-        _raw_value = value;
-        _value = _pre_processor->process(value);
+        _normalized_value = value_normalized;
+        _processed_value = _pre_processor->process_to_plugin(_pre_processor->to_domain(value_normalized));
     }
+
+    void set_processed(float value_processed)
+    {
+        _processed_value = value_processed;
+        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(value_processed));
+    }
+
 private:
     ParameterType _type{enumerated_type};
     ParameterDescriptor* _descriptor{nullptr};
     ParameterPreProcessor<T>* _pre_processor{nullptr};
-    T _raw_value;
-    T _value;
+    T _processed_value;
+    float _normalized_value; // Always not processed, but raw as set from the outside.
 };
 
 /* Specialization for bool values, lack a pre_processor */
@@ -304,25 +343,25 @@ class ParameterValue<bool, ParameterType::BOOL>
 {
 public:
     ParameterValue(bool value, ParameterDescriptor* descriptor) : _descriptor(descriptor),
-                                                                  _value(value) {}
+                                                                  _processed_value(value) {}
 
     ParameterType type() const {return _type;}
-    bool value() const {return _value;}
-    bool raw_value() const {return _value;}
+    bool processed_value() const {return _processed_value;}
+    bool domain_value() const {return _processed_value;}
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
-    void set_values(bool value, bool raw_value) {_value = value; _value = raw_value;}
-    void set(bool value) {_value = value;}
+    void set_values(bool value, bool raw_value) { _processed_value = value; _processed_value = raw_value;}
+    void set(bool value) { _processed_value = value;}
+
 private:
     ParameterType _type{ParameterType::BOOL};
     ParameterDescriptor* _descriptor{nullptr};
-    bool _value;
+    bool _processed_value;
 };
 
 typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
 typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
-typedef ParameterValue<float,ParameterType::FLOAT> FloatParameterValue;
-
+typedef ParameterValue<float, ParameterType::FLOAT> FloatParameterValue;
 
 class ParameterStorage
 {
@@ -374,6 +413,7 @@ public:
         BoolParameterValue value(default_value, descriptor);
         return ParameterStorage(value);
     }
+
     static ParameterStorage make_int_parameter_storage(ParameterDescriptor* descriptor,
                                                        int default_value,
                                                        IntParameterPreProcessor* pre_processor)
@@ -381,6 +421,7 @@ public:
         IntParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
+
     static ParameterStorage make_float_parameter_storage(ParameterDescriptor* descriptor,
                                                          float default_value,
                                                          FloatParameterPreProcessor* pre_processor)
@@ -388,6 +429,7 @@ public:
         FloatParameterValue value(pre_processor, default_value, descriptor);
         return ParameterStorage(value);
     }
+
 private:
     ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
     ParameterStorage(IntParameterValue value) : _int_value(value) {}
@@ -400,6 +442,7 @@ private:
         FloatParameterValue _float_value;
     };
 };
+
 /* We need this to be able to copy the ParameterValues by value into a container */
 static_assert(std::is_trivially_copyable<ParameterStorage>::value, "");
 
