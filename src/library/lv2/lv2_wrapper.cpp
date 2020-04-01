@@ -167,9 +167,16 @@ std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_in_domain(Obj
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
 }
 
-std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
+std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-// TODO: Populate parameter_value_formatted
+    auto valueTuple = parameter_value_in_domain(parameter_id);
+
+    if(valueTuple.first == ProcessorReturnCode::OK)
+    {
+        std::string parsedValue = std::to_string(valueTuple.second);
+        return {ProcessorReturnCode::OK, parsedValue};
+    }
+
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
 }
 

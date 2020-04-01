@@ -137,6 +137,11 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
     _module_under_test->process_event(parameter_change_event);
     auto value = _module_under_test->parameter_value(0);
     EXPECT_EQ(0.5f, value.second);
+
+    // TestFetchingFormattedParameterValue
+    auto [status, formattedValue] = _module_under_test->parameter_value_formatted(0);
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ("-33.000000", formattedValue);
 }
 
 TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
