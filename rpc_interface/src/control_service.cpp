@@ -623,7 +623,7 @@ grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*
 }
 
 grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterSetRequest* request,
+                                                    const sushi_rpc::ParameterValue* request,
                                                     sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_parameter_value(request->parameter().processor_id(),
@@ -647,7 +647,7 @@ void SushiControlService::notification(const sushi::ext::ControlNotification* no
     if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
     {
         auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-        auto notification_content = std::make_shared<ParameterSetRequest>();
+        auto notification_content = std::make_shared<ParameterValue>();
         notification_content->set_value(typed_notification->value());
         notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
         notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());

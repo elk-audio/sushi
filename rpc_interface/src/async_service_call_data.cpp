@@ -8,20 +8,19 @@ void SubscribeToParameterUpdatesCallData::proceed()
     if (_status == CallStatus::CREATE)
     {
         _status = CallStatus::PROCESS;
-        _service->RequestSubscribeToParameterUpdates(&_ctx, &_request, &_responder, _cq, _cq, this);
+        _service->RequestSubscribeToParameterUpdates(&_ctx, &_request, &_responder,
+                                                     _async_rpc_queue, _async_rpc_queue, this);
         _in_completion_queue = true;
         _service->subscribe_to_parameter_updates(this);
     }
     else if (_status == CallStatus::PROCESS)
     {
-        std::scoped_lock lock(_alert_lock);
-        _in_completion_queue = false;
         if (_first_iteration)
         {
             // Spawn a new CallData instance to serve new clients while we process
             // the one for this CallData. The instance will deallocate itself as
             // part of its FINISH state.
-            new SubscribeToParameterUpdatesCallData(_service, _cq);
+            new SubscribeToParameterUpdatesCallData(_service, _async_rpc_queue);
             _active = true;
 
             for (auto& parameter_identifier : _request.parameters())
@@ -34,42 +33,34 @@ void SubscribeToParameterUpdatesCallData::proceed()
 
         if (_notifications.empty() == false)
         {
-            _reply = *_notifications.pop();
-            auto key =  _create_map_key(_reply.parameter().parameter_id(),
-                                        _reply.parameter().processor_id());
+            auto _reply = _notifications.pop();
+            auto key =  _create_map_key(_reply->parameter().parameter_id(),
+                                        _reply->parameter().processor_id());
             if (_parameter_blacklist.find(key) == _parameter_blacklist.end())
             {
-                _responder.Write(_reply, this);
+                _responder.Write(*_reply.get(), this);
                 _status = CallStatus::PUSH_TO_BACK;
                 _in_completion_queue = true;
             }
         }
+        else
+        {
+            _in_completion_queue = false;
+        }
     }
     else if (_status == CallStatus::PUSH_TO_BACK)
     {
-        {
-            std::scoped_lock lock(_alert_lock);
-            _in_completion_queue = false;
-            _status = CallStatus::PROCESS;
-        }
         // Since a call to write adds the object at the front of the completion
         // queue. We then place it at the back with an alarm to serve the clients
         // in a round robin fashion.
+        _in_completion_queue = false;
+        _status = CallStatus::PROCESS;
         alert();
     }
     else
     {
-        {
-            std::scoped_lock lock(_alert_lock);
-            assert(_status == CallStatus::FINISH);
-            _service->unsubscribe_from_parameter_updates(this);
-
-            // empty notification queue
-            while(_notifications.empty() == false)
-            {
-                _notifications.pop();
-            }
-        }
+        assert(_status == CallStatus::FINISH);
+        _service->unsubscribe_from_parameter_updates(this);
         delete this;
     }
 }

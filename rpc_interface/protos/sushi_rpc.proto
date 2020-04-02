@@ -62,11 +62,11 @@ service SushiController {
     rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetStringPropertyValue (ParameterIdentifier) returns (GenericStringValue) {}
-    rpc SetParameterValue (ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetParameterValue (ParameterValue) returns (GenericVoidValue) {}
     rpc SetStringPropertyValue (StringPropertySetRequest) returns (GenericVoidValue) {}
 
     // Notification RPCs
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterSetRequest) {}
+    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
 }
 
 
@@ -264,7 +264,7 @@ message ParameterIdRequest {
     string ParameterName = 2;
 }
 
-message ParameterSetRequest {
+message ParameterValue {
     ParameterIdentifier parameter = 1;
     float value = 2;
 }

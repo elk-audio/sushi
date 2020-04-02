@@ -338,7 +338,7 @@ public:
 
     virtual ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override { return default_control_status; };
 
-    virtual ControlStatus                              subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
+    virtual ControlStatus subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
     {
         return default_control_status;
     };

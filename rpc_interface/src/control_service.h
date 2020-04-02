@@ -34,7 +34,7 @@
 
 namespace sushi_rpc {
 
-typedef sushi_rpc::SushiController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::SushiController::Service> AsyncService;
+using AsyncService = sushi_rpc::SushiController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::SushiController::Service>;
 
 class SushiControlService : public AsyncService, sushi::ext::ControlListener
 {
@@ -94,7 +94,7 @@ public:
      grpc::Status GetParameterValueInDomain(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
      grpc::Status GetParameterValueAsString(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
-     grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterValue* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
      // Inherited from ControlListener

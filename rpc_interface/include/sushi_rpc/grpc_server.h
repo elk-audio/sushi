@@ -39,6 +39,8 @@ namespace grpc {
 namespace sushi_rpc {
 class SushiControlService;
 
+constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::milliseconds(50);
+
 class GrpcServer
 {
 public:
@@ -52,15 +54,15 @@ public:
 
     void waitForCompletion();
 
-    void HandleRpcs();
+    void AsyncRpcLoop();
 
 private:
 
-    std::string                                     _listenAddress;
+    std::string                                     _listen_address;
     std::unique_ptr<SushiControlService>            _service;
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;
     std::unique_ptr<grpc::Server>                   _server;
-    std::unique_ptr<grpc::ServerCompletionQueue>    _cq;
+    std::unique_ptr<grpc::ServerCompletionQueue>    _async_rpc_queue;
     sushi::ext::SushiControl*                       _controller;
     std::thread                                     _worker;
     std::atomic<bool>                               _running;

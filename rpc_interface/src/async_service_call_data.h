@@ -39,11 +39,10 @@ class CallData
 {
 public:
     CallData(SushiControlService* service,
-             grpc::ServerCompletionQueue* cq)
-        : _service(service),
-          _cq(cq),
-          _in_completion_queue(false),
-          _status(CallStatus::CREATE) {}
+             grpc::ServerCompletionQueue* async_rpc_queue) : _service(service),
+                                                             _async_rpc_queue(async_rpc_queue),
+                                                             _in_completion_queue(false),
+                                                             _status(CallStatus::CREATE) {}
 
     virtual ~CallData() = default;
 
@@ -56,23 +55,21 @@ public:
 
     void alert()
     {
-        std::scoped_lock lock(_alert_lock);
         if (_in_completion_queue == false)
         {
-            _alarm.Set(_cq, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+            _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
             _in_completion_queue = true;
         }
     }
 
 protected:
     SushiControlService* _service;
-    grpc::ServerCompletionQueue* _cq;
+    grpc::ServerCompletionQueue* _async_rpc_queue;
     grpc::ServerContext _ctx;
 
     grpc::Alarm _alarm;
 
     bool _in_completion_queue;
-    std::mutex _alert_lock;
 
     enum class CallStatus
     {
@@ -89,8 +86,8 @@ class SubscribeToParameterUpdatesCallData : public CallData
 {
 public:
     SubscribeToParameterUpdatesCallData(SushiControlService* service,
-                                        grpc::ServerCompletionQueue* cq)
-        : CallData(service, cq),
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+        : CallData(service, async_rpc_queue),
           _responder(&_ctx),
           _first_iteration(true),
           _active(false)
@@ -100,7 +97,7 @@ public:
 
     virtual void proceed() override;
 
-    void push(std::shared_ptr<ParameterSetRequest> notification)
+    void push(std::shared_ptr<ParameterValue> notification)
     {
         if (_active)
         {
@@ -116,14 +113,13 @@ private:
     }
 
     ParameterNotificationRequest _request;
-    ParameterSetRequest _reply;
-    grpc::ServerAsyncWriter<ParameterSetRequest> _responder;
+    grpc::ServerAsyncWriter<ParameterValue> _responder;
 
     bool _first_iteration;
     bool _active;
 
     std::unordered_map<int64_t, bool> _parameter_blacklist;
-    SynchronizedQueue<std::shared_ptr<ParameterSetRequest>> _notifications;
+    SynchronizedQueue<std::shared_ptr<ParameterValue>> _notifications;
 };
 
 }
