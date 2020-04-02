@@ -55,11 +55,8 @@ public:
 
     void alert()
     {
-        if (_in_completion_queue == false)
-        {
-            _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
-            _in_completion_queue = true;
-        }
+        _in_completion_queue = true;
+        _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
     }
 
 protected:
@@ -103,7 +100,10 @@ public:
         {
             _notifications.push(notification);
         }
-        alert();
+        if (_in_completion_queue == false)
+        {
+            alert();
+        }
     }
 
 private:

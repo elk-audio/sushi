@@ -38,22 +38,19 @@ void SubscribeToParameterUpdatesCallData::proceed()
                                         _reply->parameter().processor_id());
             if (_parameter_blacklist.find(key) == _parameter_blacklist.end())
             {
+                _in_completion_queue = true;
                 _responder.Write(*_reply.get(), this);
                 _status = CallStatus::PUSH_TO_BACK;
-                _in_completion_queue = true;
+                return;
             }
         }
-        else
-        {
-            _in_completion_queue = false;
-        }
+        _in_completion_queue = false;
     }
     else if (_status == CallStatus::PUSH_TO_BACK)
     {
         // Since a call to write adds the object at the front of the completion
         // queue. We then place it at the back with an alarm to serve the clients
         // in a round robin fashion.
-        _in_completion_queue = false;
         _status = CallStatus::PROCESS;
         alert();
     }
