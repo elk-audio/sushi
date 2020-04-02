@@ -123,6 +123,15 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
     auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
+    int pCount = _module_under_test->parameter_count();
+    EXPECT_EQ(1, pCount);
+    auto param0 = _module_under_test->parameter_from_id(0);
+    EXPECT_TRUE(param0);
+    EXPECT_EQ(0u, param0->id());
+
+    auto paramNull = _module_under_test->parameter_from_id(1);
+    EXPECT_EQ(paramNull, nullptr);
+
     // TestSetName
     EXPECT_EQ("http://lv2plug.in/plugins/eg-amp", _module_under_test->name());
     EXPECT_EQ("Simple Amplifier", _module_under_test->label());
