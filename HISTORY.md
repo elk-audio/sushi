@@ -1,3 +1,8 @@
+## 0.10.2
+
+Fixes:
+  * LV2 parameter handling fix for non-sequential parameter ids
+
 ## 0.10.1
 
 New Features:
@@ -5,7 +10,7 @@ New Features:
   * Parameter values are now always normalised
 
 Fixes:
-  * Lv2 string parameter value fix
+  * LV2 string parameter value fix
 
 ## 0.10.0
 

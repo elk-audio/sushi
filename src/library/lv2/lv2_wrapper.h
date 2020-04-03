@@ -87,6 +87,8 @@ public:
 
     bool bypassed() const override;
 
+    const ParameterDescriptor* parameter_from_id(ObjectId id) const override;
+
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId parameter_id) const override;
@@ -200,6 +202,8 @@ private:
 
     static constexpr float _min_normalized{0.0f};
     static constexpr float _max_normalized{1.0f};
+
+    std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
 };
 
 } // end namespace lv2

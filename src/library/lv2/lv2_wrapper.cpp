@@ -112,6 +112,16 @@ void LV2_Wrapper::configure(float /*sample_rate*/)
     SUSHI_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
 }
 
+const ParameterDescriptor* LV2_Wrapper::parameter_from_id(ObjectId id) const
+{
+    auto descriptor = _parameters_by_lv2_id.find(id);
+    if (descriptor !=  _parameters_by_lv2_id.end())
+    {
+        return descriptor->second;
+    }
+    return nullptr;
+}
+
 std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value(ObjectId parameter_id) const
 {
     auto parameter = parameter_from_id(parameter_id);
@@ -263,6 +273,9 @@ bool LV2_Wrapper::_register_parameters()
         {
             // Here I need to get the name of the port.
             auto nameNode = lilv_port_get_name(_model->plugin_class(), currentPort->lilv_port());
+            int portIndex = lilv_port_get_index(_model->plugin_class(), currentPort->lilv_port());
+
+            assert(portIndex == _pi); // This should only fail is the plugin's .ttl file is incorrect.
 
             const std::string name_as_string = lilv_node_as_string(nameNode);
             const std::string param_unit = "";
@@ -273,7 +286,7 @@ bool LV2_Wrapper::_register_parameters()
                     currentPort->min(), // range min
                     currentPort->max(), // range max
                     nullptr), // ParameterPreProcessor
-                    static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
+                    static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
 
             if (param_inserted_ok)
             {
@@ -286,6 +299,17 @@ bool LV2_Wrapper::_register_parameters()
 
             lilv_node_free(nameNode);
         }
+    }
+
+    /* Create a "backwards map" from LV2 parameter ids to parameter indices.
+     * LV2 parameter ports have an integer ID, assigned in the ttl file.
+     * While often it starts from 0 and goes up to n-1 parameters, there is no
+     * guarantee. Very often this is not true, when in the ttl, the parameter ports,
+     * are preceded by other types of ports in the list (i.e. audio/midi i/o).
+     */
+    for (auto param : this->all_parameters())
+    {
+        _parameters_by_lv2_id[param->id()] = param;
     }
 
     return param_inserted_ok;
