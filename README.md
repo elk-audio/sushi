@@ -90,26 +90,6 @@ Sushi carries most dependencies as submodules and will build and link with them 
 
 Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Run-time OSC control
 
-Sushi listens on port 24024 by default for the following OSC commands:
-
-Path                                   | Typespec | Arguments
----------------------------------------|----------|--------------------------------------
-/parameter/plugin_name/parameter_name  |  f       | parameter value
-/bypass/plugin_name/                   |  i       | bypass state (1 = bypassed, 0 = enabled)
-/keyboard_event/track_name             |  siif    | event type ("note_on", "note_off", "aftertouch"), channel, note index, norm. value
-/keyboard_event/track_name             |  sif     | event type ("modulation", "pitch_bend", "aftertouch"), channel, norm. value
-/program/plugin_name                   |  i       | program id
-/engine/add_track                      |  si      | name, n. of channels
-/engine/delete_track                   |  s       | name
-/engine/add_processor                  |  sssss   | track, id, name, file path, type
-/engine/delete_processor               |  ss      | track name, plugin id
-/engine/set_tempo                      |  f       | tempo in beats per minute
-/engine/set_time_signature             |  ii      | time signature numerator, time signature denominator
-/engine/set_playing_mode               |  s       | "playing" or "stopped"
-/engine/set_sync_mode                  |  s       | "internal", "ableton_link" or "midi"
-/engine/set_timing_statistics_enabled  |  i       | 1 = enabled, 0 = disabled
-/engine/reset_timing_statstics         |  s(s)    | reset target ("all", "track", "processor"), track name/processor name
 
 Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm, Sweden.
