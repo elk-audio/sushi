@@ -99,7 +99,7 @@ void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
     {
         out_buffer.clear();
     }
-    else if (_current_input_channels == _current_output_channels || _current_input_channels == 1)
+    else if (_current_input_channels == _current_output_channels)
     {
         out_buffer = in_buffer;
     }

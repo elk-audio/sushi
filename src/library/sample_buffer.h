@@ -413,7 +413,7 @@ public:
     */
     void add_with_gain(const SampleBuffer &source, float gain)
     {
-        assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
+         assert(source.channel_count() == 1 || source.channel_count() == this->channel_count());
 
         if (source.channel_count() == 1)
         {
