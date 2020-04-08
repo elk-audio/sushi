@@ -198,8 +198,7 @@ service NotificationController
  * However, this leads to unnecessary bloat especially for cases where it's clear
  * that a primitive type is the best choice (e.g. GetNumSomething), so we define here
  * some common cases to all services.
- (
- rpc ConnectAudio*/
+ */
 
 message GenericVoidValue {
 }
