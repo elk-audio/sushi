@@ -281,9 +281,16 @@ int RemoveTrackEvent::execute(engine::BaseEngine* engine)
     for (auto i = processors.rbegin(); i != processors.rend(); ++i)
     {
         SUSHI_LOG_DEBUG("Removing plugin {} from track: {}", (*i)->name(), track->name());
-        [[maybe_unused]] auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
-        SUSHI_LOG_ERROR_IF(status != engine::EngineReturnStatus::OK, "Failed to remove plugin {} from track {}",
-                           (*i)->name(), track->name());
+        auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
+        if (status == engine::EngineReturnStatus::OK)
+        {
+            status = engine->delete_plugin((*i)->id());
+        }
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to remove plugin {} from track {}", (*i)->name(), track->name());
+            return EventStatus::ERROR;
+        }
     }
 
     auto status = engine->delete_track(_track_id);

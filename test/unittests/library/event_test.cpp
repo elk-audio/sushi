@@ -312,3 +312,27 @@ TEST(EventTest, TestRemoveProcessorEventExecution)
     ASSERT_FALSE(processor_container->processor("gain"));
     ASSERT_FALSE(processor_container->processor(proc_id));
 }
+
+TEST(EventTest, TestRemoveTrackEventExecution)
+{
+    // Prepare an engine instance with 1 track and 1 processor
+    auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
+    auto processor_container = engine.processor_container();
+    engine.create_track("main", 2);
+    auto main_track_id = engine.processor_container()->processor("main")->id();
+    auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
+    ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
+    auto status = engine.add_plugin_to_track(proc_id, main_track_id);
+    ASSERT_EQ(engine::EngineReturnStatus::OK, status);
+
+    auto event = RemoveTrackEvent(main_track_id, IMMEDIATE_PROCESS);
+    auto event_status = event.execute(&engine);
+    ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
+
+    // Verify that the track was deleted together with the processor on it
+    ASSERT_EQ(0u, processor_container->all_tracks().size());
+    ASSERT_FALSE(processor_container->track("main"));
+    ASSERT_FALSE(processor_container->track(main_track_id));
+    ASSERT_FALSE(processor_container->processor("gain"));
+    ASSERT_FALSE(processor_container->processor(proc_id));
+}
