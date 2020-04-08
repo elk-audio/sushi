@@ -56,9 +56,9 @@ service AudioGraphController
     rpc GetTrackProcessors (TrackIdentifier) returns (ProcessorInfoList) {}
     rpc GetProcessorId (GenericStringValue) returns (ProcessorIdentifier) {}
     rpc GetProcessorInfo (ProcessorIdentifier) returns (ProcessorInfo) {}
-    rpc GetProcessorMuteState (ProcessorIdentifier) returns (GenericBoolValue) {}
+    rpc GetProcessorBypassState (ProcessorIdentifier) returns (GenericBoolValue) {}
 
-    rpc SetProcessorMuteState (ProcessorMuteStateSetRequest) returns (GenericVoidValue) {}
+    rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
 
     rpc GetAvailablePlugins (GenericVoidValue) returns () {}
 
@@ -182,8 +182,9 @@ service OscController
 service NotificationController
 {
     rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
-    rpc SubscribeToTrackUpdates() returns (stream TrackUpdate) {}
-    rpc SubscribeToProcessorUpdates() returns (stream ProcessorUpdate) {}
+    rpc SubscribeToTimingUpdates() returns (stream CpuTimings) {}
+    rpc SubscribeToTrackChanges() returns (stream TrackUpdate) {}
+    rpc SubscribeToProcessorChanges() returns (stream ProcessorUpdate) {}
     rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
     rpc SubscribeToParameterStringUpdates(ParameterNotificationRequest) returns (stream ParameterStringValue) {}
 }
@@ -355,7 +356,7 @@ message ProcessorProgramSetRequest {
     ProgramIdentifier program = 2;
 }
 
-message ProcessorMuteStateSetRequest {
+message ProcessorBypassStateSetRequest {
     ProcessorIdentifier processor = 1;
     bool value = 2;
 }
@@ -436,7 +437,7 @@ message MoveProcessorRequest {
     ProcessorPosition   position = 4;
 }
 
-message DeleteProcessorRequest {
+message DeleteProcessorRequest{
     ProcessorIdentifier processor = 1;
     TrackIdentifier     track = 2;
 }
