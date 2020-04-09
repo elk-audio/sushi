@@ -85,8 +85,10 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
     ASSERT_EQ(2, _engine->_audio_graph[0]->output_channels());
     ASSERT_EQ(1, _engine->_audio_graph[1]->input_channels());
     ASSERT_EQ(1, _engine->_audio_graph[1]->output_channels());
-    ASSERT_EQ(4, _engine->_audio_graph[2]->input_channels());
-    ASSERT_EQ(4, _engine->_audio_graph[2]->output_channels());
+    ASSERT_EQ(1, _engine->_audio_graph[2]->input_channels());
+    ASSERT_EQ(2, _engine->_audio_graph[2]->output_channels());
+    ASSERT_EQ(4, _engine->_audio_graph[3]->input_channels());
+    ASSERT_EQ(4, _engine->_audio_graph[3]->output_channels());
     auto track_l = &_engine->_audio_graph[0]->_processors;
     auto track_r = &_engine->_audio_graph[1]->_processors;
     ASSERT_EQ(3u, track_l->size());

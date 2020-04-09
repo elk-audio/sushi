@@ -179,7 +179,11 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
     auto track = static_cast<Track*>(processor_node->second.get());
     if (output_channel >= _audio_outputs || track_channel >= track->output_channels())
     {
-        return EngineReturnStatus::INVALID_CHANNEL;
+        if (track_channel > track->max_output_channels())
+        {
+            return EngineReturnStatus::INVALID_CHANNEL;
+        }
+        track->set_output_channels(track_channel + 1);
     }
     AudioConnection con = {output_channel, track_channel, track->id()};
     _out_audio_connections.push_back(con);
