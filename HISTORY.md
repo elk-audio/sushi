@@ -1,3 +1,9 @@
+## 0.10.3
+
+Fixes:
+  * Mono tracks can now be connected to stereo output busses
+  * OSC paths for gain and pan controls on tracks work again
+
 ## 0.10.2
 
 Fixes:
