@@ -70,6 +70,20 @@ protected:
     OSCFrontend _module_under_test{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
 };
 
+TEST_F(TestOSCFrontend, TestConnectAll)
+{
+    _module_under_test.connect_all();
+    lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/proc_2/param_2", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/non/existing", "f", 0.5f);
+    ASSERT_FALSE(wait_for_event());
+}
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)
 {
@@ -92,7 +106,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOn)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_on", 0, 46, 0.8f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -110,7 +124,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOff)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_off", 1, 52, 0.7f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -128,7 +142,7 @@ TEST_F(TestOSCFrontend, TestSendNoteAftertouch)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_aftertouch", 10, 36, 0.1f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -146,7 +160,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardModulation)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "modulation", 9, 0.5f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -163,7 +177,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardPitchBend)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "pitch_bend", 3, 0.3f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -180,7 +194,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardAftertouch)
 {
     ASSERT_TRUE(_module_under_test.connect_kb_to_track("sampler"));
     lo_send(_address, "/keyboard_event/sampler", "sif", "aftertouch", 11, 0.11f);
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
@@ -245,7 +259,7 @@ TEST_F(TestOSCFrontend, TestSetTimeSignature)
 TEST_F(TestOSCFrontend, TestSetPlayingMode)
 {
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ("PLAYING", args["playing mode"]);
@@ -254,7 +268,7 @@ TEST_F(TestOSCFrontend, TestSetPlayingMode)
 TEST_F(TestOSCFrontend, TestSetSyncMode)
 {
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
-    
+
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ("MIDI", args["sync mode"]);

@@ -82,7 +82,7 @@ static int osc_send_bypass_state_event(const char* /*path*/,
     connection->controller->set_processor_bypass_state(connection->processor, isBypassed);
     SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
     return 0;
-}                            
+}
 
 static int osc_send_keyboard_note_event(const char* /*path*/,
                                    const char* /*types*/,
@@ -234,7 +234,7 @@ static int osc_reset_timing_statistics(const char* /*path*/,
     }
     SUSHI_LOG_DEBUG("Resetting {} timing statistics", output_text);
     return 0;
-}                                            
+}
 
 static int osc_set_tempo(const char* /*path*/,
                                 const char* /*types*/,
@@ -391,7 +391,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
     connection->instance = this;
     connection->controller = _controller;
     return {connection, osc_path};
-} 
+}
 
 bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
@@ -497,11 +497,34 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     return true;
 }
 
+bool OSCFrontend::connect_processor_parameters(const std::string& processor_name, int processor_id)
+{
+    auto [parameters_status, parameters] = _controller->get_processor_parameters(processor_id);
+    if (parameters_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    for (auto& param : parameters)
+    {
+        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+        {
+            connect_to_parameter(processor_name, param.name);
+            connect_from_parameter(processor_name, param.name);
+        }
+        if (param.type == ext::ParameterType::STRING_PROPERTY)
+        {
+            connect_to_string_parameter(processor_name, param.name);
+        }
+    }
+    return true;
+}
+
 void OSCFrontend::connect_all()
 {
     auto tracks = _controller->get_tracks();
     for (auto& track : tracks)
     {
+        connect_processor_parameters(track.name, track.id);
         auto [processors_status, processors] = _controller->get_track_processors(track.id);
         if (processors_status != ext::ControlStatus::OK)
         {
@@ -509,23 +532,7 @@ void OSCFrontend::connect_all()
         }
         for (auto& processor : processors)
         {
-            auto [parameters_status, parameters] = _controller->get_processor_parameters(processor.id);
-            if (parameters_status != ext::ControlStatus::OK)
-            {
-                return;
-            }
-            for (auto& param : parameters)
-            {
-                if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
-                {
-                    connect_to_parameter(processor.name, param.name);
-                    connect_from_parameter(processor.name, param.name);
-                }
-                if (param.type == ext::ParameterType::STRING_PROPERTY)
-                {
-                    connect_to_string_parameter(processor.name, param.name);
-                }
-            }
+            connect_processor_parameters(processor.name, processor.id);
             if (processor.program_count > 0)
             {
                 connect_to_program_change(processor.name);

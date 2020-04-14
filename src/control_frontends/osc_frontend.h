@@ -70,8 +70,8 @@ public:
      * @brief Connect osc to the bypass state of a given processor.
      *        The resulting osc path will be:
      *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
-     * 
-     * @param processor_name 
+     *
+     * @param processor_name
      * @return
      */
     bool connect_to_bypass_state(const std::string &processor_name);
@@ -103,6 +103,15 @@ public:
      * @return true
      */
     bool connect_kb_to_track(const std::string &track_name);
+
+    /**
+     * @brief Connect all parameters from a given processor.
+     *
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
+     */
+    bool connect_processor_parameters(const std::string& processor_name, int procesor_id);
 
     /**
      * @brief Register OSC callbacks far all parameters of all plugins and
