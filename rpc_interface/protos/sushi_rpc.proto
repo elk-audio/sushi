@@ -10,6 +10,11 @@ package sushi_rpc;
 service SystemController
 {
     rpc GetInterfaceVersion (GenericVoidValue) returns (GenericStringValue) {}
+    rpc GetSushiVersion (GenericVoidValue) returns (GenericStringValue) {}
+    rpc GetBuildInfo (GenericVoidValue) returns (SushiBuildInfo) {}
+
+    rpc GetInputAudioChannelCount (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetOutputAudioChannelCount (GenericVoidValue) returns (GenericIntValue) {}
 }
 
 service TransportController
@@ -60,8 +65,6 @@ service AudioGraphController
 
     rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
 
-    rpc GetAvailablePlugins (GenericVoidValue) returns () {}
-
     rpc CreateStereoTrack(CreateStereoTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMonoTrack(CreateMonoTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMultibusTrack(CreateMultibusTrackRequest) returns (GenericVoidValue) {}
@@ -97,48 +100,43 @@ service ParameterController
 
 service MidiController
 {
-    rpc GetMidiInputPorts (GenericVoidValue) returns (GenericIntValue) {}
-    rpc GetMidiOutputPorts (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetInputPorts (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetOutputPorts (GenericVoidValue) returns (GenericIntValue) {}
 
-    rpc GetAllMidiKeyboardInputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
-    rpc GetAllMidiKeyboardOutputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
-    rpc GetAllMidiControlChangeInputConnections (GenericVoidValue) returns (MidiControlChangeConnectionList) {}
-    rpc GetAllMidiProgramChangeInputConnections (GenericVoidValue) returns (MidiProgramChangeConnectionList) {}
-    rpc GetMidiControlChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiControlChangeConnectionList) {}
-    rpc GetMidiProgramChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiProgramChangeConnectionList) {}
+    rpc GetAllKeyboardInputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
+    rpc GetAllKeyboardOutputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
+    rpc GetAllControlChangeInputConnections (GenericVoidValue) returns (MidiControlChangeConnectionList) {}
+    rpc GetAllProgramChangeInputConnections (GenericVoidValue) returns (MidiProgramChangeConnectionList) {}
+    rpc GetControlChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiControlChangeConnectionList) {}
+    rpc GetProgramChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiProgramChangeConnectionList) {}
 
-    rpc ConnectMidiKeyboardInputToTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc ConnectMidiKeyboardOutputFromTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc ConnectMidiControlChangeToProcessorParameter (MidiControlChangeConnection) returns (GenericVoidValue) {}
-    rpc ConnectMidiProgramChangeToProcessor (MidiProgramChangeConnection) returns (GenericVoidValue) {}
+    rpc ConnectKeyboardInputToTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
+    rpc ConnectKeyboardOutputFromTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
+    rpc ConnectControlChangeToProcessorParameter (MidiControlChangeConnection) returns (GenericVoidValue) {}
+    rpc ConnectProgramChangeToProcessor (MidiProgramChangeConnection) returns (GenericVoidValue) {}
 
-    rpc DisconnectMidiKeyboardInput (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc DisconnectMidiKeyboardOutput (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc DisconnectMidiControlChange (MidiControlChangeConnection) returns (GenericVoidValue) {}
-    rpc DisconnectMidiProgramChange (MidiProgramChangeConnection) returns (GenericVoidValue) {}
-    rpc DisconnectAllMidiControlChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllMidiProgramChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectKeyboardInput (MidiKeyboardConnection) returns (GenericVoidValue) {}
+    rpc DisconnectKeyboardOutput (MidiKeyboardConnection) returns (GenericVoidValue) {}
+    rpc DisconnectControlChange (MidiControlChangeConnection) returns (GenericVoidValue) {}
+    rpc DisconnectProgramChange (MidiProgramChangeConnection) returns (GenericVoidValue) {}
+    rpc DisconnectAllControlChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllProgramChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
 }
 
 service AudioRoutingController
 {
-    rpc GetAudioInputChannelCount (GenericVoidValue) returns (GenericIntValue) {}
-    rpc GetAudioOutputChannelCount (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetAllInputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
+    rpc GetAllOutputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
+    rpc GetInputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
+    rpc GetOutputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
 
-    rpc GetAllAudioInputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetAllAudioOutputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetAudioInputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetAudioOutputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
+    rpc ConnectInputChannelToTrack (AudioTrackConnection) returns (GenericVoidValue) {}
+    rpc ConnectOutputChannelFromTrack (AudioTrackConnection) returns (GenericVoidValue) {}
 
-    rpc ConnectAudioInputChannelToTrack (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc ConnectAudioOutputChannelFromTrack (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc ConnectAudioInputBusToTrack (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc ConnectAudioOutputBusFromTrack (AudioTrackConnection) returns (GenericVoidValue) {}
-
-    rpc DisconnectAudioInput (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc DisconnectAudioOutput (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc DisconnectAllAudioInputsFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllAudioOutputFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectInput (AudioTrackConnection) returns (GenericVoidValue) {}
+    rpc DisconnectOutput (AudioTrackConnection) returns (GenericVoidValue) {}
+    rpc DisconnectAllInputsFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllOutputFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
 }
 
 service CvGateRoutingController
@@ -152,7 +150,7 @@ service CvGateRoutingController
     rpc GetAllGateOutputConnections (GenericVoidValue) returns (GateProcessorConnectionList) {}
     rpc GetCvInputConnectionsForProcessor (ProcessorIdentifier) returns (CvParameterConnectionList) {}
     rpc GetCvOutputConnectionsForProcessor (ProcessorIdentifier) returns (CvParameterConnectionList) {}
-    rpc GetGateOutputConnectionsForProcessor (ProcessorIdentifier) returns (GateProcessorConnectionList) {}
+    rpc GetGateInputConnectionsForProcessor (ProcessorIdentifier) returns (GateProcessorConnectionList) {}
     rpc GetGateOutputConnectionsForProcessor (ProcessorIdentifier) returns (GateProcessorConnectionList) {}
 
     rpc ConnectCvInputToParameter (CvParameterConnection) returns (GenericVoidValue) {}
@@ -172,11 +170,11 @@ service CvGateRoutingController
 
 service OscController
 {
-    rpc GetOscSendPort (GenericVoidValue) returns (GenericIntValue) {}
-    rpc GetOscReceivePort (GenericVoidValue) returns (GenericIntValue) {}
-    rpc GetEnabledOscParameterOutputs (GenericVoidValue) returns (OscParameterOutputList) {}
-    rpc EnableOscOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
-    rpc DisableOscOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
+    rpc GetSendPort (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetReceivePort (GenericVoidValue) returns (GenericIntValue) {}
+    rpc GetEnabledParameterOutputs (GenericVoidValue) returns (OscParameterOutputList) {}
+    rpc EnableOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
+    rpc DisableOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
 }
 
 service NotificationController
@@ -221,6 +219,15 @@ message GenericStringValue {
 }
 
 /* Common types */
+
+message SushiBuildInfo
+{
+    string          version = 1;
+    repeated string build_options = 2;
+    int32           audio_buffer_size = 3;
+    string          commit_hash = 4;
+    string          build_date = 5;
+}
 
 message TrackIdentifier {
     int32 id = 1;
