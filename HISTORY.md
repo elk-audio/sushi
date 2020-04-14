@@ -1,9 +1,24 @@
+## 0.10.2
+
+Fixes:
+  * LV2 parameter handling fix for non-sequential parameter ids
+
+## 0.10.1
+
+New Features:
+  * LV2 worker thread extension support
+  * Parameter values are now always normalised
+
+Fixes:
+  * LV2 string parameter value fix
+
 ## 0.10.0
 
 New Features:
   * LV2 plugin support
   * Ableton Link support
   * Multiple midi input and output ports
+  * Extended OSC control API making it more similar to gRPC
 
 Fixes:
   * Updated example configuration files

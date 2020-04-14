@@ -68,21 +68,9 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
-            Processor(host_control),
-            _plugin_path {lv2_plugin_uri}
-    {
-        _model = std::make_unique<Model>();
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri);
 
-        _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
-        _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
-    }
-
-    virtual ~LV2_Wrapper()
-    {
-        if(_model->plugin_instance() != nullptr)
-            set_enabled(false);
-    }
+    virtual ~LV2_Wrapper() = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -98,6 +86,8 @@ public:
     void set_bypassed(bool bypassed) override;
 
     bool bypassed() const override;
+
+    const ParameterDescriptor* parameter_from_id(ObjectId id) const override;
 
     std::pair<ProcessorReturnCode, float> parameter_value(ObjectId parameter_id) const override;
 
@@ -119,17 +109,26 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
-    static int non_rt_callback(void* data, EventId id)
+    static int worker_callback(void* data, EventId id)
     {
-        reinterpret_cast<LV2_Wrapper*>(data)->_non_rt_callback(id);
+        reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);
         return 1;
     }
+
+    static int restore_state_callback(void* data, EventId id)
+    {
+        reinterpret_cast<LV2_Wrapper *>(data)->_restore_state_callback(id);
+        return 1;
+    }
+
+    void output_worker_event(const RtEvent& event);
 
 private:
     const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);
 
-    void _non_rt_callback(EventId id);
-    EventId _pending_event_id{0};
+    void _worker_callback(EventId);
+
+    void _restore_state_callback(EventId);
 
     void _update_transport();
     uint8_t pos_buf[256];
@@ -162,8 +161,6 @@ private:
     void _flush_event_queue();
     void _process_midi_input(Port* port);
     void _process_midi_output(Port* port);
-
-    float _sample_rate{0};
 
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
@@ -205,6 +202,8 @@ private:
 
     static constexpr float _min_normalized{0.0f};
     static constexpr float _max_normalized{1.0f};
+
+    std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
 };
 
 } // end namespace lv2

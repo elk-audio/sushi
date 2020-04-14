@@ -45,7 +45,9 @@ namespace lv2 {
 
 class Model;
 class State;
+class Worker;
 struct ControlID;
+class LV2_Wrapper;
 
 /**
 Control change event, sent through ring buffers for UI updates.
@@ -107,13 +109,22 @@ struct HostFeatures
     LV2_Feature unmap_feature;
     LV2_State_Make_Path make_path;
     LV2_Feature make_path_feature;
+
+    LV2_Worker_Schedule sched;
+    LV2_Feature sched_feature;
+    LV2_Worker_Schedule ssched;
+    LV2_Feature state_sched_feature;
+    LV2_Feature safe_restore_feature;
+
     LV2_Log_Log llog;
     LV2_Feature log_feature;
-    LV2_Options_Option options[6];
+    std::array<LV2_Options_Option, 6> options;
     LV2_Feature options_feature;
 
     LV2_Extension_Data_Feature ext_data;
 };
+
+constexpr int FEATURE_LIST_SIZE = 11;
 
 /**
  * @brief LV2 depends on a "GOD" struct/class per plugin instance,
@@ -125,13 +136,15 @@ class Model
 public:
     SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    Model();
+    Model(float sample_rate, LV2_Wrapper* wrapper);
     ~Model();
 
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
                                     double sample_rate);
 
-    std::array<const LV2_Feature*, 9>* host_feature_list();
+    // Warning: LV2 / Lilv require this list to be null-terminated.
+    // So remember to check for null when iterating over it!
+    std::array<const LV2_Feature*, FEATURE_LIST_SIZE>* host_feature_list();
 
     LilvWorld* lilv_world();
 
@@ -196,6 +209,15 @@ public:
     int input_audio_channel_count();
     int output_audio_channel_count();
 
+    bool exit {false}; ///< True iff execution is finished
+
+    Worker* worker();
+    Worker* state_worker();
+
+    bool safe_restore();
+
+    LV2_Wrapper* wrapper();
+
 private:
     bool _create_ports(const LilvPlugin* plugin);
     Port _create_port(const LilvPlugin* plugin, int port_index, float default_value);
@@ -206,6 +228,10 @@ private:
     void _initialize_urid_symap();
 
     void _initialize_make_path_feature();
+
+    void _initialize_worker_feature();
+    void _initialize_safe_restore_feature();
+    void _initialize_options_feature();
 
     void _create_controls(bool writable);
 
@@ -249,14 +275,17 @@ private:
     std::vector<Port> _ports;
 
     float _sample_rate;
+    const int _buffer_size{AUDIO_CHUNK_SIZE};
     int _midi_buffer_size{4096};
+
+    int _ui_update_hz{30};
 
     const LilvPlugin* _plugin_class{nullptr};
 
     LilvInstance* _plugin_instance{nullptr};
 
     HostFeatures _features;
-    std::array<const LV2_Feature*, 9> _feature_list;
+    std::array<const LV2_Feature*, FEATURE_LIST_SIZE> _feature_list;
 
     uint32_t _position;
     float _bpm;
@@ -266,6 +295,13 @@ private:
 
     int _input_audio_channel_count{0};
     int _output_audio_channel_count{0};
+
+    bool _safe_restore;
+
+    std::unique_ptr<Worker> _state_worker;
+    std::unique_ptr<Worker> _worker;
+
+    LV2_Wrapper* _wrapper{nullptr};
 };
 
 } // end namespace lv2
