@@ -82,7 +82,7 @@ static int osc_send_bypass_state_event(const char* /*path*/,
     connection->controller->set_processor_bypass_state(connection->processor, isBypassed);
     SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
     return 0;
-}                            
+}
 
 static int osc_send_keyboard_note_event(const char* /*path*/,
                                    const char* /*types*/,
@@ -234,7 +234,7 @@ static int osc_reset_timing_statistics(const char* /*path*/,
     }
     SUSHI_LOG_DEBUG("Resetting {} timing statistics", output_text);
     return 0;
-}                                            
+}
 
 static int osc_set_tempo(const char* /*path*/,
                                 const char* /*types*/,
@@ -391,7 +391,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
     connection->instance = this;
     connection->controller = _controller;
     return {connection, osc_path};
-} 
+}
 
 bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)

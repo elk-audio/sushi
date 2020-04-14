@@ -70,8 +70,8 @@ public:
      * @brief Connect osc to the bypass state of a given processor.
      *        The resulting osc path will be:
      *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
-     * 
-     * @param processor_name 
+     *
+     * @param processor_name
      * @return
      */
     bool connect_to_bypass_state(const std::string &processor_name);
