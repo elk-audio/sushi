@@ -61,7 +61,7 @@ Track::Track(HostControl host_control, int channels,
                                                      _timer{timer}
     {
     _max_input_channels = channels;
-    _max_output_channels = channels;
+    _max_output_channels = std::max(channels, 2);
     _current_input_channels = channels;
     _current_output_channels = channels;
     _common_init();
@@ -285,6 +285,12 @@ void Track::_update_channel_config()
 {
     int input_channels = _current_input_channels;
     int output_channels;
+    int max_processed_output_channels = _max_output_channels;
+
+    if (_max_input_channels == 1)
+    {
+        max_processed_output_channels = 1;
+    }
 
     for (unsigned int i = 0; i < _processors.size(); ++i)
     {
@@ -297,12 +303,12 @@ void Track::_update_channel_config()
 
         if (i < _processors.size() - 1)
         {
-            output_channels = std::min(_max_output_channels, std::min(_processors[i]->max_output_channels(),
+            output_channels = std::min(max_processed_output_channels, std::min(_processors[i]->max_output_channels(),
                                                                       _processors[i+1]->max_input_channels()));
         }
         else
         {
-            output_channels = std::min(_max_output_channels, std::min(_processors[i]->max_output_channels(),
+            output_channels = std::min(max_processed_output_channels, std::min(_processors[i]->max_output_channels(),
                                                                       _current_output_channels));
         }
 
@@ -390,6 +396,11 @@ void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus)
 
     ChunkSampleBuffer left = ChunkSampleBuffer::create_non_owning_buffer(buffer, LEFT_CHANNEL_INDEX, 1);
     ChunkSampleBuffer right = ChunkSampleBuffer::create_non_owning_buffer(buffer, RIGHT_CHANNEL_INDEX, 1);
+
+    if (_current_input_channels == 1)
+    {
+        right.replace(left);
+    }
 
     if (_pan_gain_smoothers_left[bus].stationary() && _pan_gain_smoothers_right[bus].stationary())
     {

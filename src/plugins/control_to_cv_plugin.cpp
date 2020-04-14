@@ -14,8 +14,8 @@
  */
 
 /**
- * @brief Adapter plugin to convert cv/gate information to note on and note
- *        off messages to enable cv/gate control of synthesizer plugins.
+ * @brief Adapter plugin to convert from note on and note
+ *        off messages, to cv/gate information, to enable cv/gate control from MIDI plugins.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 

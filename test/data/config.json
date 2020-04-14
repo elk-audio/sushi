@@ -85,6 +85,24 @@
             ]
         },
         {
+            "name" : "monobustrack",
+            "mode" : "mono",
+            "inputs" : [
+                {
+                    "engine_channel" : 2,
+                    "track_channel" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 3,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+            ]
+        },
+        {
             "name" : "multi",
             "mode" : "multibus",
             "input_busses" : 2,
