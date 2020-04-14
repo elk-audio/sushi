@@ -70,6 +70,20 @@ protected:
     OSCFrontend _module_under_test{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
 };
 
+TEST_F(TestOSCFrontend, TestConnectAll)
+{
+    _module_under_test.connect_all();
+    lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/proc_2/param_2", "f", 0.5f);
+    ASSERT_TRUE(wait_for_event());
+    lo_send(_address, "/parameter/non/existing", "f", 0.5f);
+    ASSERT_FALSE(wait_for_event());
+}
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)
 {
