@@ -151,6 +151,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
                       src/plugins/step_sequencer_plugin.cpp
+                      src/plugins/wav_writer_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
         )
 
@@ -214,6 +215,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
                         src/plugins/step_sequencer_plugin.h
+                        src/plugins/wav_writer_plugin.cpp
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/offline_frontend.h
         )
