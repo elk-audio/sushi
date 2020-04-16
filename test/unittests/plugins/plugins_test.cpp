@@ -12,6 +12,7 @@
 #include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
+#include "plugins/wav_writer_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
