@@ -35,9 +35,11 @@ protected:
         _module_under_test.run();
     }
 
-    bool wait_for_event()
+    // If the test expects the events NOT to be received, set the number of
+    // retries to something low (1-2) to keep test execution times down
+    bool wait_for_event(int retries = EVENT_WAIT_RETRIES)
     {
-        for (int i = 0; i < EVENT_WAIT_RETRIES; ++i)
+        for (int i = 0; i < retries; ++i)
         {
             auto event = _controller.was_recently_called();
             if (event)
@@ -56,7 +58,6 @@ protected:
         lo_address_free(_address);
     }
 
-
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
@@ -68,15 +69,33 @@ TEST_F(TestOSCFrontend, TestConnectAll)
 {
     _module_under_test.connect_all();
     lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/proc_2/param_2", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/non/existing", "f", 0.5f);
-    ASSERT_FALSE(wait_for_event());
+    ASSERT_FALSE(wait_for_event(2));
+}
+
+TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
+{
+    // As this in only done in response to events, test the event handling at the same time
+    ObjectId processor_id = 0;
+    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_ADDED,
+                                             processor_id, 0, IMMEDIATE_PROCESS);
+    _module_under_test.process(&event);
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    EXPECT_TRUE(wait_for_event());
+
+    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_REMOVED,
+                                        processor_id, 0, IMMEDIATE_PROCESS);
+
+    _module_under_test.process(&event);
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    EXPECT_FALSE(wait_for_event(2));
 }
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)

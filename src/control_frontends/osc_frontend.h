@@ -37,12 +37,14 @@ namespace sushi {
 namespace control_frontend {
 
 class OSCFrontend;
+
 struct OscConnection
 {
-    ObjectId processor;
-    ObjectId parameter;
-    OSCFrontend* instance;
+    ObjectId           processor;
+    ObjectId           parameter;
+    OSCFrontend*       instance;
     ext::SushiControl* controller;
+    void*              liblo_cb;
 };
 
 class OSCFrontend : public BaseControlFrontend
@@ -111,7 +113,7 @@ public:
      * @param processor_id The id of the processor to connect.
      * @return
      */
-    bool connect_processor_parameters(const std::string& processor_name, int procesor_id);
+    bool connect_processor_parameters(const std::string& processor_name, int processor_id);
 
     /**
      * @brief Register OSC callbacks far all parameters of all plugins and
@@ -141,11 +143,19 @@ private:
 
     void _setup_engine_control();
 
+    bool _remove_processor_connections(ObjectId processor_id);
+
     std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
-                                                                       const std::string& parameter_name);
+                                                                        const std::string& parameter_name);
 
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
-                                                                       const std::string& osc_path_prefix);
+                                                                        const std::string& osc_path_prefix);
+
+    bool _handle_param_change_notification(ParameterChangeNotificationEvent* event);
+
+    bool _handle_clipping_notification(ClippingNotificationEvent* event);
+
+    bool _handle_audio_graph_notification(AudioGraphNotificationEvent* event);
 
     lo_server_thread _osc_server;
     int _server_port;

@@ -524,7 +524,7 @@ OSCFrontend::~OSCFrontend()
 }
 
 std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection(const std::string& processor_name,
-                                                                      const std::string& parameter_name)
+                                                                                 const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
     auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
@@ -554,7 +554,9 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     {
         return false;
     }
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
+    connection->liblo_cb = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
@@ -567,7 +569,9 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
     {
         return false;
     }
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
+    connection->liblo_cb = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
@@ -592,7 +596,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
 }
 
 std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
-                                                                                const std::string& osc_path_prefix)
+                                                                                 const std::string& osc_path_prefix)
 {
     std::string osc_path = osc_path_prefix;
     auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
@@ -616,12 +620,12 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
     {
         return false;
     }
+    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_bypass_state_event, connection);
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_bypass_state_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
-
 
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
@@ -630,9 +634,14 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
     {
         return false;
     }
+    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "siif", osc_send_keyboard_note_event, connection);
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "siif", osc_send_keyboard_note_event, connection);
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_modulation_event, connection);
+
+    auto dupl_conn = new OscConnection(*connection);
+    cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_modulation_event, connection);
+    dupl_conn->liblo_cb = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
@@ -644,8 +653,9 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     {
         return false;
     }
+    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
 }
@@ -696,6 +706,30 @@ void OSCFrontend::connect_all()
     }
 }
 
+int OSCFrontend::process(Event* event)
+{
+    if (event->is_parameter_change_notification())
+    {
+        _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
+    }
+    else if (event->is_clipping_notification())
+    {
+        _handle_clipping_notification(static_cast<ClippingNotificationEvent*>(event));
+    }
+    else if (event->is_audio_graph_notification())
+    {
+        _handle_audio_graph_notification(static_cast<AudioGraphNotificationEvent*>(event));
+    }
+
+    // Return statuses for notifications are not handled, so just return ok.
+    return EventStatus::HANDLED_OK;
+}
+
+void OSCFrontend::_completion_callback(Event* event, int return_status)
+{
+    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+}
+
 void OSCFrontend::_start_server()
 {
     _running.store(true);
@@ -733,42 +767,98 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/delete_processor_from_track", "ss", osc_delete_processor, this->_controller);
 }
 
-int OSCFrontend::process(Event* event)
+bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
 {
-    if (event->is_parameter_change_notification())
+    int count = 0;
+    for (const auto& c : _connections)
     {
-        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
-        const auto& node = _outgoing_connections.find(typed_event->processor_id());
-        if (node != _outgoing_connections.end())
+        if (c->processor == processor_id)
         {
-            const auto& param_node = node->second.find(typed_event->parameter_id());
-            if (param_node != node->second.end())
-            {
-                lo_send(_osc_out_address, param_node->second.c_str(), "f", typed_event->float_value());
-                SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", typed_event->processor_id(), typed_event->parameter_id(), typed_event->float_value());
-            }
-        }
-        return EventStatus::HANDLED_OK;
-    }
-    if (event->is_engine_notification())
-    {
-        // TODO - Currently the only engine notification event so direct casting works
-        auto typed_event = static_cast<ClippingNotificationEvent*>(event);
-        if (typed_event->channel_type() == ClippingNotificationEvent::ClipChannelType::INPUT)
-        {
-            lo_send(_osc_out_address, "/engine/input_clip_notification", "i", typed_event->channel());
-        }
-        else if (typed_event->channel_type() == ClippingNotificationEvent::ClipChannelType::OUTPUT)
-        {
-            lo_send(_osc_out_address, "/engine/output_clip_notification", "i", typed_event->channel());
+            lo_server_thread_del_lo_method(_osc_server, c->liblo_cb);
+            count++;
         }
     }
-    return EventStatus::NOT_HANDLED;
+    _connections.erase(std::remove_if(_connections.begin(),
+                                      _connections.end(),
+                                      [&](const auto& c) { return c->processor == processor_id; }),
+                       _connections.end());
+
+    count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
+
+    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id);
+    return count > 0;
 }
 
-void OSCFrontend::_completion_callback(Event* event, int return_status)
+bool OSCFrontend::_handle_param_change_notification(ParameterChangeNotificationEvent* event)
 {
-    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+    const auto& node = _outgoing_connections.find(event->processor_id());
+    if (node != _outgoing_connections.end())
+    {
+        const auto& param_node = node->second.find(event->parameter_id());
+        if (param_node != node->second.end())
+        {
+            lo_send(_osc_out_address, param_node->second.c_str(), "f", event->float_value());
+            SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", event->processor_id(), event->parameter_id(), event->float_value());
+        }
+    };
+    return EventStatus::HANDLED_OK;
+}
+
+bool OSCFrontend::_handle_clipping_notification(ClippingNotificationEvent* event)
+{
+    if (event->channel_type() == ClippingNotificationEvent::ClipChannelType::INPUT)
+    {
+        lo_send(_osc_out_address, "/engine/input_clip_notification", "i", event->channel());
+    }
+    else if (event->channel_type() == ClippingNotificationEvent::ClipChannelType::OUTPUT)
+    {
+        lo_send(_osc_out_address, "/engine/output_clip_notification", "i", event->channel());
+    }
+    return EventStatus::HANDLED_OK;
+}
+
+bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* event)
+{
+    switch(event->subtype())
+    {
+        case AudioGraphNotificationEvent::Subtype::PROCESSOR_ADDED:
+        {
+            auto [status, info] = _controller->get_processor_info(event->processor());
+            if (status == ext::ControlStatus::OK)
+            {
+                connect_to_bypass_state(info.name);
+                connect_to_program_change(info.name);
+                connect_processor_parameters(info.name, event->processor());
+            }
+            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
+            break;
+        }
+
+        case AudioGraphNotificationEvent::Subtype::TRACK_ADDED:
+        {
+            auto [status, info] = _controller->get_track_info(event->processor());
+            if (status == ext::ControlStatus::OK)
+            {
+                connect_kb_to_track(info.name);
+                connect_to_bypass_state(info.name);
+                connect_processor_parameters(info.name, event->track());
+            }
+            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
+            break;
+        }
+
+        case AudioGraphNotificationEvent::Subtype::PROCESSOR_REMOVED:
+            _remove_processor_connections(event->processor());
+            break;
+
+        case AudioGraphNotificationEvent::Subtype::TRACK_REMOVED:
+            _remove_processor_connections(event->track());
+            break;
+
+        default:
+            break;
+    }
+    return EventStatus::HANDLED_OK;
 }
 
 } // namespace control_frontend

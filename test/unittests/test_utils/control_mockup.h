@@ -17,8 +17,8 @@ const ProcessorInfo processor1{0, "proc 1", "proc 1", 0 ,0};
 const ProcessorInfo processor2{1, "proc 2", "proc 2", 1 ,1};
 const std::vector<ProcessorInfo> processors{processor1, processor2};
 
-const TrackInfo track1{0,"track1","track1",0,0,0,0,{}};
-const TrackInfo track2{1,"track2","track2",1,1,1,1,{}};
+const TrackInfo track1{0,"track 1","track 1",0,0,0,0,{}};
+const TrackInfo track2{1,"track 2","track 2",1,1,1,1,{}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float default_samplerate = 48000.0f;

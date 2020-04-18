@@ -242,7 +242,7 @@ void EventDispatcher::_publish_parameter_events(Event* event)
     }
 }
 
-void EventDispatcher::_publish_engine_notification_events(sushi::Event*event)
+void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
 {
     for (auto& listener : _engine_notification_listeners)
     {

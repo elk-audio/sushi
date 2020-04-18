@@ -91,8 +91,14 @@ public:
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() {return false;}
 
-    /* Convertible to EngineNotification */
+    /* Is either ClippingNotification or AudioGraphNotification */
     virtual bool is_engine_notification() {return false;}
+
+    /* Convertible to ClippingNotification */
+    virtual bool is_clipping_notification() {return false;}
+
+    /* Convertible to AudioGraphNotification */
+    virtual bool is_audio_graph_notification() {return false;}
 
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() {return false;}
@@ -515,17 +521,7 @@ protected:
     int                 _program_no;
 };
 
-/* Dont instantiate this event directly */
-class EngineNotificationEvent : public Event
-{
-public:
-     bool is_engine_notification() override {return true;}
-
-protected:
-    explicit EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
-};
-
-class ClippingNotificationEvent : public EngineNotificationEvent
+class ClippingNotificationEvent : public Event
 {
 public:
     enum class ClipChannelType
@@ -533,15 +529,49 @@ public:
         INPUT,
         OUTPUT,
     };
-    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : EngineNotificationEvent(timestamp),
+    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : Event(timestamp),
                                                                                            _channel(channel),
                                                                                            _channel_type(channel_type) {}
-    int channel() {return _channel;}
+    bool            is_clipping_notification() override {return true;}
+    bool            is_engine_notification() override {return true;}
+    int             channel() {return _channel;}
     ClipChannelType channel_type() {return _channel_type;}
 
 private:
     int _channel;
     ClipChannelType _channel_type;
+};
+
+class AudioGraphNotificationEvent : public Event
+{
+public:
+    enum class Subtype
+    {
+        PROCESSOR_ADDED,
+        PROCESSOR_REMOVED,
+        PROCESSOR_MOVED,
+        TRACK_ADDED,
+        TRACK_REMOVED,
+    };
+
+    AudioGraphNotificationEvent(Subtype subtype,
+                                ObjectId processor_id,
+                                ObjectId track_id,
+                                Time timestamp) : Event(timestamp),
+                                                  _subtype(subtype),
+                                                  _processor(processor_id),
+                                                  _track(track_id) {}
+
+    bool     is_audio_graph_notification() override {return true;}
+    bool     is_engine_notification() override {return true;}
+    Subtype  subtype() const {return _subtype;}
+    ObjectId processor() const {return _processor;}
+    ObjectId track() const {return _track;}
+
+private:
+    Subtype  _subtype;
+    ObjectId _processor;
+    ObjectId _track;
 };
 
 class AsynchronousWorkEvent : public Event
