@@ -31,7 +31,6 @@ ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
     _soundfile_info.samplerate = sample_rate;
     _soundfile_info.channels = N_AUDIO_CHANNELS;
     _soundfile_info.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_24);
-    _start_recording();
 
     return ProcessorReturnCode::OK;
 }
@@ -46,15 +45,47 @@ void WavWriterPlugin::set_bypassed(bool bypassed)
     Processor::set_bypassed(bypassed);
 }
 
+void WavWriterPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::BOOL_PARAMETER_CHANGE:
+    case RtEventType::FLOAT_PARAMETER_CHANGE:
+    case RtEventType::INT_PARAMETER_CHANGE:
+    {
+        auto typed_event = event.parameter_change_event();
+        if (typed_event->param_id() == 0)
+        {
+            set_parameter_and_notify(_recording, typed_event->value());
+            if (typed_event->value())
+            {
+                _start_recording();
+            }
+            else
+            {
+                _stop_recording();
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+
 void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
     // Put samples in the ringbuffer already in interleaved format
-    for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
+    if (_recording->domain_value())
     {
-        for (int k = 0; k < N_AUDIO_CHANNELS; k++)
+        for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
         {
-            _ring_buffer.push(in_buffer.channel(k)[n]);
+            for (int k = 0; k < N_AUDIO_CHANNELS; k++)
+            {
+                _ring_buffer.push(in_buffer.channel(k)[n]);
+            }
         }
     }
 }
