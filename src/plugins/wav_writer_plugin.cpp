@@ -15,16 +15,12 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
+    _recording = register_bool_parameter("recording", "Recording", "bool", false);
 }
 
 WavWriterPlugin::~WavWriterPlugin()
 {
-    _worker_running.store(false);
-    if (_worker.joinable())
-    {
-        _worker.join();
-    }
-    sf_close(_output_file);
+    _stop_recording();
 }
 
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
@@ -35,11 +31,7 @@ ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
     _soundfile_info.samplerate = sample_rate;
     _soundfile_info.channels = N_AUDIO_CHANNELS;
     _soundfile_info.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_24);
-
-    _output_file = sf_open("./wav_writer_plug_out.wav", SFM_WRITE, &_soundfile_info);
-
-    _worker = std::thread(&WavWriterPlugin::_file_writer_task, this);
-    _worker_running.store(true);
+    _start_recording();
 
     return ProcessorReturnCode::OK;
 }
@@ -67,23 +59,23 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
     }
 }
 
-// void WavWriterPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames)
-// {
-//     // Bypass processing
-//     for (int k = 0; k < N_AUDIO_CHANNELS; k++)
-//     {
-//         std::copy(inputs[k], inputs[k] + sampleFrames, outputs[k]);
-//     }
+void WavWriterPlugin::_start_recording()
+{
+    _output_file = sf_open("./wav_writer_plug_out.wav", SFM_WRITE, &_soundfile_info);
 
-//     // Put samples in the ringbuffer already in interleaved format
-//     for (int n = 0; n < sampleFrames; n++)
-//     {
-//         for (int k = 0; k < N_AUDIO_CHANNELS; k++)
-//         {
-//             _ring_buffer.push(inputs[k][n]);
-//         }
-//     }
-// }
+    _worker = std::thread(&WavWriterPlugin::_file_writer_task, this);
+    _worker_running.store(true);
+}
+
+void WavWriterPlugin::_stop_recording()
+{
+    _worker_running.store(false);
+    if (_worker.joinable())
+    {
+        _worker.join();
+    }
+    sf_close(_output_file);
+}
 
 void WavWriterPlugin::_file_writer_task()
 {

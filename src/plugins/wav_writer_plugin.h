@@ -54,6 +54,8 @@ public:
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
 private:
+    void _start_recording();
+    void _stop_recording();
     void _file_writer_task();
 
     char _program_name[32];
@@ -65,6 +67,8 @@ private:
     std::array<float, RINGBUFFER_SIZE> _file_buffer;
     SNDFILE* _output_file;
     SF_INFO _soundfile_info;
+
+    BoolParameterValue* _recording;
 };
 
 } // namespace wav_writer_plugin
