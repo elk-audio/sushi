@@ -1,10 +1,11 @@
 #include <thread>
 #include "gtest/gtest.h"
 
+#include "control_frontends/base_control_frontend.cpp"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define private public
-#include "control_frontends/base_control_frontend.cpp"
 #include "control_frontends/osc_frontend.cpp"
+#undef private
 #pragma GCC diagnostic pop
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
@@ -35,17 +36,16 @@ protected:
         _module_under_test.run();
     }
 
-    // If the test expects the events NOT to be received, set the number of
+    // If the test expects events NOT to be received, set the number of
     // retries to something low (1-2) to keep test execution times down
     bool wait_for_event(int retries = EVENT_WAIT_RETRIES)
     {
         for (int i = 0; i < retries; ++i)
         {
-            auto event = _controller.was_recently_called();
-            if (event)
+            if (_controller.was_recently_called())
             {
                 _controller.clear_recent_call();
-                return event;
+                return true;
             }
             std::this_thread::sleep_for(EVENT_WAIT_TIME);
         }
