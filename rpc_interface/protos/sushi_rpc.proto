@@ -65,8 +65,7 @@ service AudioGraphController
 
     rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
 
-    rpc CreateStereoTrack(CreateStereoTrackRequest) returns (GenericVoidValue) {}
-    rpc CreateMonoTrack(CreateMonoTrackRequest) returns (GenericVoidValue) {}
+    rpc CreateTrack(CreateTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMultibusTrack(CreateMultibusTrackRequest) returns (GenericVoidValue) {}
     rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
     rpc MoveProcessorOnTrack(MoveProcessorRequest) returns (GenericVoidValue) {}
@@ -414,18 +413,15 @@ message ProcessorPosition {
     ProcessorIdentifier before_processor = 2;
 }
 
-message CreateStereoTrackRequest {
+message CreateTrackRequest {
     string name = 1;
-    int32  output_bus = 2;
-    bool   has_input = 3;
-    int32  input_bus  = 4;
+    int32  channels = 2;
 }
 
-message CreateMonoTrackRequest {
+message CreateMultibusTrackRequest {
     string name = 1;
-    int32  output_channel = 2;
-    bool   has_input = 3;
-    int32  input_channel = 4;
+    int32  output_busses = 2;
+    int32  input_busses  = 3;
 }
 
 message CreateProcessorRequest {
@@ -573,7 +569,7 @@ message TrackUpdate
 enum Action {
         TRACK_ADDED = 1;
         TRACK_DELETED = 2;
-        PROCESSORS_CHANGED = 3
+        PROCESSORS_CHANGED = 3;
     }
     Action      action = 1;
     TrackInfo   track = 2;
@@ -584,7 +580,7 @@ message ProcessorUpdate
 enum Action {
         PROCESSOR_ADDED = 1;
         PROCESSOR_DELETED = 2;
-        PROCESSOR_MOVED = 3
+        PROCESSOR_MOVED = 3;
     }
     Action         action = 1;
     ProcessorInfo  track = 2;
