@@ -545,7 +545,7 @@ private:
 class AudioGraphNotificationEvent : public Event
 {
 public:
-    enum class Subtype
+    enum class Action
     {
         PROCESSOR_ADDED,
         PROCESSOR_DELETED,
@@ -554,22 +554,22 @@ public:
         TRACK_DELETED,
     };
 
-    AudioGraphNotificationEvent(Subtype subtype,
+    AudioGraphNotificationEvent(Action action,
                                 ObjectId processor_id,
                                 ObjectId track_id,
                                 Time timestamp) : Event(timestamp),
-                                                  _subtype(subtype),
+                                                  _action(action),
                                                   _processor(processor_id),
                                                   _track(track_id) {}
 
     bool     is_audio_graph_notification() override {return true;}
     bool     is_engine_notification() override {return true;}
-    Subtype  subtype() const {return _subtype;}
+    Action   action() const {return _action;}
     ObjectId processor() const {return _processor;}
     ObjectId track() const {return _track;}
 
 private:
-    Subtype  _subtype;
+    Action   _action;
     ObjectId _processor;
     ObjectId _track;
 };

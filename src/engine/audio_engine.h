@@ -743,17 +743,6 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
-    void _notify_processor_added(ObjectId processor_id);
-
-    void _notify_processor_deleted(ObjectId processor_id);
-
-    void _notify_processor_moved(ObjectId processor_id, ObjectId track_id);
-
-    void _notify_track_added(ObjectId track_id);
-
-    void _notify_track_deleted(ObjectId track_id);
-
-
     ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id

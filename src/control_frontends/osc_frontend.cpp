@@ -819,10 +819,11 @@ bool OSCFrontend::_handle_clipping_notification(ClippingNotificationEvent* event
 
 bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* event)
 {
-    switch(event->subtype())
+    switch(event->action())
     {
-        case AudioGraphNotificationEvent::Subtype::PROCESSOR_ADDED:
+        case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
         {
+            SUSHI_LOG_DEBUG("Received a PROCESSOR_ADDED notification for processor {}", event->processor());
             auto [status, info] = _controller->get_processor_info(event->processor());
             if (status == ext::ControlStatus::OK)
             {
@@ -834,9 +835,10 @@ bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* 
             break;
         }
 
-        case AudioGraphNotificationEvent::Subtype::TRACK_ADDED:
+        case AudioGraphNotificationEvent::Action::TRACK_ADDED:
         {
-            auto [status, info] = _controller->get_track_info(event->processor());
+            SUSHI_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
+            auto [status, info] = _controller->get_track_info(event->track());
             if (status == ext::ControlStatus::OK)
             {
                 connect_kb_to_track(info.name);
@@ -847,11 +849,13 @@ bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* 
             break;
         }
 
-        case AudioGraphNotificationEvent::Subtype::PROCESSOR_DELETED:
+        case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+            SUSHI_LOG_DEBUG("Received a PROCESSOR_DELETED notification for processor {}", event->processor());
             _remove_processor_connections(event->processor());
             break;
 
-        case AudioGraphNotificationEvent::Subtype::TRACK_DELETED:
+        case AudioGraphNotificationEvent::Action::TRACK_DELETED:
+            SUSHI_LOG_DEBUG("Received a TRACK_DELETED notification for processor {}", event->track());
             _remove_processor_connections(event->track());
             break;
 

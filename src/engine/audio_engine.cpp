@@ -757,7 +757,8 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     }
     _processors.remove_track(track->id());
     _deregister_processor(track.get());
-    _notify_track_deleted(track->id());
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED,
+                                                                 0, track->id(), IMMEDIATE_PROCESS));
     return EngineReturnStatus::OK;
 }
 
@@ -823,7 +824,8 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
         // If the engine is not running in realtime mode we can add the processor directly
         _insert_processor_in_realtime_part(plugin.get());
     }
-    _notify_processor_added(plugin->id());
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED,
+                                                                 plugin->id(), 0, IMMEDIATE_PROCESS));
     return {EngineReturnStatus::OK, plugin->id()};
 }
 
@@ -875,7 +877,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     }
     // Add it to the engine's mirror of track processing chains
     _processors.add_to_track(plugin, track->id(), before_plugin_id);
-    _notify_processor_moved(plugin_id, track_id);
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
+                                                                 plugin_id, track_id, IMMEDIATE_PROCESS));
     return EngineReturnStatus::OK;
 }
 
@@ -939,7 +942,8 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
     }
 
     _deregister_processor(processor.get());
-    _notify_processor_deleted(processor->id());
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
+                                                                 processor->id(), 0, IMMEDIATE_PROCESS));
     return EngineReturnStatus::OK;
 }
 
@@ -983,7 +987,8 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     if (_processors.add_track(track))
     {
         SUSHI_LOG_INFO("Track {} successfully added to engine", name);
-        _notify_track_added(track->id());
+        _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_ADDED,
+                                                                     0, track->id(), IMMEDIATE_PROCESS));
         return EngineReturnStatus::OK;
     }
     return EngineReturnStatus::ERROR;
@@ -1275,51 +1280,6 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
         }
     }
     _prev_gate_values = buffer.gate_values;
-}
-
-void AudioEngine::_notify_processor_added(ObjectId processor_id)
-{
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_ADDED,
-                                                 processor_id,
-                                                 0,
-                                                 IMMEDIATE_PROCESS);
-    _event_dispatcher.post_event(event);
-}
-
-void AudioEngine::_notify_processor_deleted(ObjectId processor_id)
-{
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_DELETED,
-                                                 processor_id,
-                                                 0,
-                                                 IMMEDIATE_PROCESS);
-    _event_dispatcher.post_event(event);
-}
-
-void AudioEngine::_notify_processor_moved(ObjectId processor_id, ObjectId track_id)
-{
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_MOVED,
-                                                 processor_id,
-                                                 track_id,
-                                                 IMMEDIATE_PROCESS);
-    _event_dispatcher.post_event(event);
-}
-
-void AudioEngine::_notify_track_added(ObjectId track_id)
-{
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::TRACK_ADDED,
-                                                 0,
-                                                 track_id,
-                                                 IMMEDIATE_PROCESS);
-    _event_dispatcher.post_event(event);
-}
-
-void AudioEngine::_notify_track_deleted(ObjectId track_id)
-{
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::TRACK_DELETED,
-                                                 0,
-                                                 track_id,
-                                                 IMMEDIATE_PROCESS);
-    _event_dispatcher.post_event(event);
 }
 
 RealtimeState update_state(RealtimeState current_state)
