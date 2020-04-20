@@ -548,10 +548,10 @@ public:
     enum class Subtype
     {
         PROCESSOR_ADDED,
-        PROCESSOR_REMOVED,
+        PROCESSOR_DELETED,
         PROCESSOR_MOVED,
         TRACK_ADDED,
-        TRACK_REMOVED,
+        TRACK_DELETED,
     };
 
     AudioGraphNotificationEvent(Subtype subtype,

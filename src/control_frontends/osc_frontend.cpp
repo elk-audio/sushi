@@ -20,12 +20,12 @@
 
 #include <algorithm>
 #include <sstream>
+
 #include <lo/lo_types.h>
 
 #include "osc_utils.h"
 #include "osc_frontend.h"
 #include "logging.h"
-
 
 namespace sushi {
 namespace control_frontend {
@@ -847,11 +847,11 @@ bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* 
             break;
         }
 
-        case AudioGraphNotificationEvent::Subtype::PROCESSOR_REMOVED:
+        case AudioGraphNotificationEvent::Subtype::PROCESSOR_DELETED:
             _remove_processor_connections(event->processor());
             break;
 
-        case AudioGraphNotificationEvent::Subtype::TRACK_REMOVED:
+        case AudioGraphNotificationEvent::Subtype::TRACK_DELETED:
             _remove_processor_connections(event->track());
             break;
 

@@ -130,6 +130,11 @@ int EventDispatcher::process(Event* event)
         _publish_parameter_events(event);
         return EventStatus::HANDLED_OK;
     }
+    if (event->is_engine_notification())
+    {
+        _publish_engine_notification_events(event);
+        return EventStatus::HANDLED_OK;
+    }
     return EventStatus::UNRECOGNIZED_EVENT;
 }
 

@@ -90,7 +90,7 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
     lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
     EXPECT_TRUE(wait_for_event());
 
-    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_REMOVED,
+    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Subtype::PROCESSOR_DELETED,
                                         processor_id, 0, IMMEDIATE_PROCESS);
 
     _module_under_test.process(&event);
