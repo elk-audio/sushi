@@ -151,11 +151,11 @@ private:
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
                                                                         const std::string& osc_path_prefix);
 
-    bool _handle_param_change_notification(ParameterChangeNotificationEvent* event);
+    bool _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
 
-    bool _handle_clipping_notification(ClippingNotificationEvent* event);
+    bool _handle_clipping_notification(const ClippingNotificationEvent* event);
 
-    bool _handle_audio_graph_notification(AudioGraphNotificationEvent* event);
+    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
 
     lo_server_thread _osc_server;
     int _server_port;

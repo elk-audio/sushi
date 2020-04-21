@@ -789,7 +789,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
     return count > 0;
 }
 
-bool OSCFrontend::_handle_param_change_notification(ParameterChangeNotificationEvent* event)
+bool OSCFrontend::_handle_param_change_notification(const ParameterChangeNotificationEvent* event)
 {
     const auto& node = _outgoing_connections.find(event->processor_id());
     if (node != _outgoing_connections.end())
@@ -804,7 +804,7 @@ bool OSCFrontend::_handle_param_change_notification(ParameterChangeNotificationE
     return EventStatus::HANDLED_OK;
 }
 
-bool OSCFrontend::_handle_clipping_notification(ClippingNotificationEvent* event)
+bool OSCFrontend::_handle_clipping_notification(const ClippingNotificationEvent* event)
 {
     if (event->channel_type() == ClippingNotificationEvent::ClipChannelType::INPUT)
     {
@@ -817,7 +817,7 @@ bool OSCFrontend::_handle_clipping_notification(ClippingNotificationEvent* event
     return EventStatus::HANDLED_OK;
 }
 
-bool OSCFrontend::_handle_audio_graph_notification(AudioGraphNotificationEvent* event)
+bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationEvent* event)
 {
     switch(event->action())
     {
