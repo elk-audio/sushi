@@ -157,20 +157,20 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
-    auto [proc_status, processor_id] = _engine->processor_id_from_name(processor_name);
-    auto [param_status, parameter_id] = _engine->parameter_id_from_name(processor_name, parameter_name);
-    if (proc_status != engine::EngineReturnStatus::OK)
+    auto processor = _engine->processor_container()->processor(processor_name);
+    if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_PROCESSOR;
     }
-    if (param_status != engine::EngineReturnStatus::OK)
+    auto parameter = processor->parameter_from_name(parameter_name);
+    if (parameter == nullptr)
     {
         return MidiDispatcherStatus::INVALID_PARAMETER;
     }
 
     InputConnection connection;
-    connection.target = processor_id;
-    connection.parameter = parameter_id;
+    connection.target = processor->id();
+    connection.parameter = parameter->id();
     connection.min_range = min_range;
     connection.max_range = max_range;
     connection.relative = use_relative_mode;
@@ -189,13 +189,13 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto [status, id] = _engine->processor_id_from_name(processor_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto processor = _engine->processor_container()->processor(processor_name);
+    if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
     InputConnection connection;
-    connection.target = id;
+    connection.target = processor->id();
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
@@ -212,13 +212,13 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto [status, id] = _engine->processor_id_from_name(track_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto track = _engine->processor_container()->track(track_name);
+    if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
     InputConnection connection;
-    connection.target = id;
+    connection.target = track->id();
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
@@ -235,13 +235,13 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto [status, id] = _engine->processor_id_from_name(track_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto track = _engine->processor_container()->track(track_name);
+    if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
     InputConnection connection;
-    connection.target = id;
+    connection.target = track->id();
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
@@ -260,8 +260,8 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     {
         return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
     }
-    auto[status, id] = _engine->processor_id_from_name(track_name);
-    if (status != engine::EngineReturnStatus::OK)
+    auto track = _engine->processor_container()->track(track_name);
+    if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
     }
@@ -271,7 +271,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     connection.min_range = 1.234f;
     connection.max_range = 4.5678f;
     connection.cc_number = 123;
-    _kb_routes_out[id].push_back(connection);
+    _kb_routes_out[track->id()].push_back(connection);
     SUSHI_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", track_name, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }

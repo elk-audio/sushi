@@ -236,9 +236,10 @@ TEST(EventTest, TestAddProcessorToTrackEventExecution)
 {
     // Prepare an engine instance with 1 track
     auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
+    auto processor_container = engine.processor_container();
     auto status = engine.create_track("main", 2);
     ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-    auto main_track_id = engine.processor_id_from_name("main").second;
+    auto main_track_id = engine.processor_container()->processor("main")->id();
 
     auto event = AddProcessorToTrackEvent("gain",
                                           "sushi.testing.gain",
@@ -250,7 +251,7 @@ TEST(EventTest, TestAddProcessorToTrackEventExecution)
 
     auto event_status = event.execute(&engine);
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
-    auto processors = engine.processors_on_track(main_track_id);
+    auto processors = processor_container->processors_on_track(main_track_id);
     ASSERT_EQ(1u, processors.size());
     ASSERT_EQ("gain", processors.front()->name());
 }
@@ -259,41 +260,43 @@ TEST(EventTest, TestMoveProcessorEventExecution)
 {
     // Prepare an engine instance with 2 tracks and 1 processor on track_1
     auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
+    auto processor_container = engine.processor_container();
     engine.create_track("track_1", 2);
     engine.create_track("track_2", 2);
-    auto track_1_id = engine.processor_id_from_name("track_1").second;
-    auto track_2_id = engine.processor_id_from_name("track_2").second;
+    auto track_1_id = engine.processor_container()->processor("track_1")->id();
+    auto track_2_id = engine.processor_container()->processor("track_2")->id();
 
     auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
     ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
     auto status = engine.add_plugin_to_track(proc_id, track_1_id);
     ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-    ASSERT_EQ(1u, engine.processors_on_track(track_1_id).size());
-    ASSERT_EQ(0u, engine.processors_on_track(track_2_id).size());
+    ASSERT_EQ(1u, processor_container->processors_on_track(track_1_id).size());
+    ASSERT_EQ(0u, processor_container->processors_on_track(track_2_id).size());
 
     // Move it from track_1 to track_2
     auto event = MoveProcessorEvent(proc_id, track_1_id, track_2_id, std::nullopt, IMMEDIATE_PROCESS);
     auto event_status = event.execute(&engine);
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
 
-    ASSERT_EQ(0u, engine.processors_on_track(track_1_id).size());
-    ASSERT_EQ(1u, engine.processors_on_track(track_2_id).size());
+    ASSERT_EQ(0u, processor_container->processors_on_track(track_1_id).size());
+    ASSERT_EQ(1u, processor_container->processors_on_track(track_2_id).size());
 
     // Test with an erroneous target track and see that nothing changed
     auto err_event = MoveProcessorEvent(proc_id, track_2_id, ObjectId(123), std::nullopt, IMMEDIATE_PROCESS);
     event_status = err_event.execute(&engine);
     ASSERT_EQ(MoveProcessorEvent::Status::INVALID_DEST_TRACK, event_status);
 
-    ASSERT_EQ(0u, engine.processors_on_track(track_1_id).size());
-    ASSERT_EQ(1u, engine.processors_on_track(track_2_id).size());
+    ASSERT_EQ(0u, processor_container->processors_on_track(track_1_id).size());
+    ASSERT_EQ(1u, processor_container->processors_on_track(track_2_id).size());
 }
 
 TEST(EventTest, TestRemoveProcessorEventExecution)
 {
     // Prepare an engine instance with 1 track and 1 processor
     auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
+    auto processor_container = engine.processor_container();
     engine.create_track("main", 2);
-    auto main_track_id = engine.processor_id_from_name("main").second;
+    auto main_track_id = engine.processor_container()->processor("main")->id();
     auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
     ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
     auto status = engine.add_plugin_to_track(proc_id, main_track_id);
@@ -304,8 +307,8 @@ TEST(EventTest, TestRemoveProcessorEventExecution)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
 
     // Verify that it was deleted
-    auto processors = engine.processors_on_track(main_track_id);
+    auto processors = processor_container->processors_on_track(main_track_id);
     ASSERT_EQ(0u, processors.size());
-    ASSERT_FALSE(engine.processor("gain"));
-    ASSERT_FALSE(engine.processor(proc_id));
+    ASSERT_FALSE(processor_container->processor("gain"));
+    ASSERT_FALSE(processor_container->processor(proc_id));
 }

@@ -111,9 +111,9 @@ AudioEngine::~AudioEngine()
 void AudioEngine::set_sample_rate(float sample_rate)
 {
     BaseEngine::set_sample_rate(sample_rate);
-    for (auto& node : _processors_by_name)
+    for (auto& node : _processors.all_processors())
     {
-        node.second->configure(sample_rate);
+        _processors.mutable_processor(node->id())->configure(sample_rate);
     }
     _transport.set_sample_rate(sample_rate);
     _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
@@ -152,7 +152,7 @@ EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
 {
-    auto track = this->track(track_name);
+    auto track = _processors.track(track_name);
     if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
@@ -170,7 +170,7 @@ EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, i
 EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel, int track_channel,
                                                              const std::string& track_name)
 {
-    auto track = this->track(track_name);
+    auto track = _processors.track(track_name);
     if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
@@ -213,7 +213,7 @@ EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& proce
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
-    auto processor = _mutable_processor(processor_name);
+    auto processor = _processors.mutable_processor(processor_name);
     if(processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
@@ -240,7 +240,7 @@ EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor = _mutable_processor(processor_name);
+    auto processor = _processors.mutable_processor(processor_name);
     if (processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
@@ -268,7 +268,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor = _mutable_processor(processor_name);
+    auto processor = _processors.mutable_processor(processor_name);
     if (processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
@@ -292,7 +292,7 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor = _mutable_processor(processor_name);
+    auto processor = _processors.mutable_processor(processor_name);
     if(processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
@@ -340,64 +340,6 @@ void AudioEngine::enable_realtime(bool enabled)
             _state.store(RealtimeState::STOPPED);
         }
     }
-};
-
-int AudioEngine::n_channels_in_track(int track)
-{
-    if (track <= static_cast<int>(_audio_graph.size()))
-    {
-        return _audio_graph[track]->input_channels();
-    }
-    return 0;
-}
-
-std::shared_ptr<Processor> AudioEngine::_make_internal_plugin(const std::string& uid)
-{
-    if (uid == "sushi.testing.passthrough")
-    {
-        return std::make_shared<passthrough_plugin::PassthroughPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.gain")
-    {
-        return std::make_shared<gain_plugin::GainPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.lfo")
-    {
-        return std::make_shared<lfo_plugin::LfoPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.equalizer")
-    {
-        return std::make_shared<equalizer_plugin::EqualizerPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.sampleplayer")
-    {
-        return std::make_shared<sample_player_plugin::SamplePlayerPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        return std::make_shared<arpeggiator_plugin::ArpeggiatorPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.peakmeter")
-    {
-        return std::make_shared<peak_meter_plugin::PeakMeterPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.transposer")
-    {
-        return std::make_shared<transposer_plugin::TransposerPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.step_sequencer")
-    {
-        return std::make_shared<step_sequencer_plugin::StepSequencerPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.cv_to_control")
-    {
-        return std::make_shared<cv_to_control_plugin::CvToControlPlugin>(_host_control);
-    }
-    else if (uid == "sushi.testing.control_to_cv")
-    {
-        return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(_host_control);
-    }
-    return nullptr;
 }
 
 EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> processor, const std::string& name)
@@ -407,22 +349,12 @@ EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> p
         SUSHI_LOG_ERROR("Plugin name is not specified");
         return EngineReturnStatus::INVALID_PLUGIN;
     }
-    if(_processor_exists(name))
+    processor->set_name(name);
+    if (_processors.add_processor(processor) == false)
     {
         SUSHI_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    processor->set_name(name);
-
-    {
-        std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-        _processors_by_name[name] = processor;
-    }
-    {
-        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-        _processors_by_id[processor->id()] = processor;
-    }
-
     SUSHI_LOG_DEBUG("Succesfully registered processor {}.", name);
     return EngineReturnStatus::OK;
 }
@@ -431,32 +363,8 @@ void AudioEngine::_deregister_processor(Processor* processor)
 {
     assert(processor);
     assert(processor->active_rt_processing() == false);
-
-    SUSHI_LOG_DEBUG("Deregistering processor: {}", processor->name());
-    {
-        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-        [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
-    }
-    {
-        std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-        [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
-    }
-
+    _processors.remove_processor(processor->id());
     SUSHI_LOG_INFO("Successfully deregistered processor {}", processor->name());
-}
-
-bool AudioEngine::_processor_exists(const std::string& processor_name)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    return _processors_by_name.count(processor_name) > 0;
-}
-
-bool AudioEngine::_processor_exists(ObjectId id)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-    return _processors_by_id.count(id) > 0;
 }
 
 bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
@@ -630,62 +538,6 @@ EngineReturnStatus AudioEngine::send_async_event(RtEvent& event)
     return EngineReturnStatus::QUEUE_FULL;
 }
 
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(name);
-    if (processor_node == _processors_by_name.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
-    }
-    return std::make_pair(EngineReturnStatus::OK, processor_node->second->id());
-}
-
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(const std::string& processor_name,
-                                                                            const std::string& parameter_name)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(processor_name);
-    if (processor_node == _processors_by_name.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
-    }
-    auto param = processor_node->second->parameter_from_name(parameter_name);
-    if (param)
-    {
-        return std::make_pair(EngineReturnStatus::OK, param->id());
-    }
-    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, 0);
-};
-
-std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(ObjectId id)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-    auto processor_node = _processors_by_id.find(id);
-    if (processor_node == _processors_by_id.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, "");
-    }
-    return std::make_pair(EngineReturnStatus::OK, processor_node->second->name());
-}
-
-std::pair<EngineReturnStatus, const std::string> AudioEngine::parameter_name_from_id(const std::string &processor_name,
-                                                                                     ObjectId id)
-{
-    std::unique_lock<std::mutex> _lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(processor_name);
-    if (processor_node == _processors_by_name.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, "");
-    }
-    auto param = processor_node->second->parameter_from_id(id);
-    if (param)
-    {
-        return std::make_pair(EngineReturnStatus::OK, param->name());
-    }
-    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, "");
-}
-
 EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, int input_busses, int output_busses)
 {
     if((input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES))
@@ -712,7 +564,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
 {
     // TODO - Until it's decided how tracks report what processors they have,
     // we assume that the track has no processors before deleting
-    auto track = _mutable_processor(track_name);
+    auto track = _processors.mutable_processor(track_name);
     if (track == nullptr)
     {
         SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_name);
@@ -738,9 +590,7 @@ EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false,"Plugin track {} was not in the audio graph", track_name);
     }
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    _processors_by_track.erase(track->id());
-
+    _processors.remove_track(track->id());
     _deregister_processor(track.get());
     return EngineReturnStatus::OK;
 }
@@ -754,7 +604,7 @@ std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::str
     switch (plugin_type)
     {
         case PluginType::INTERNAL:
-            plugin = _make_internal_plugin(plugin_uid);
+            plugin = create_internal_plugin(plugin_uid, _host_control);
             if(plugin == nullptr)
             {
                 SUSHI_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
@@ -814,14 +664,14 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
                                                     ObjectId track_id,
                                                     std::optional<ObjectId> before_plugin_id)
 {
-    auto track = _mutable_track(track_id);
+    auto track = _processors.mutable_track(track_id);
     if (track == nullptr)
     {
         SUSHI_LOG_ERROR("Track {} not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
     }
 
-    auto plugin = _mutable_processor(plugin_id);
+    auto plugin = _processors.mutable_processor(plugin_id);
     if (plugin == nullptr)
     {
         SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
@@ -829,7 +679,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     }
     bool add_to_back = before_plugin_id.has_value() == false;
 
-    if (add_to_back == false && _processor_exists(before_plugin_id.value()) == false)
+    if (add_to_back == false && _processors.processor_exists(before_plugin_id.value()) == false)
     {
         SUSHI_LOG_ERROR("Plugin {} not found", before_plugin_id.value());
         return EngineReturnStatus::INVALID_PLUGIN;
@@ -880,14 +730,14 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         }
     }
     // Add it to the engine's mirror of track processing chains
-    _add_to_processors_by_track(plugin, track->id(), before_plugin_id);
+    _processors.add_to_track(plugin, track->id(), before_plugin_id);
     return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id)
 {
-    auto plugin = this->processor(plugin_id);
-    auto track = _mutable_track(track_id);
+    auto plugin = _processors.processor(plugin_id);
+    auto track = _processors.mutable_track(track_id);
     if (plugin == nullptr)
     {
         return EngineReturnStatus::INVALID_PLUGIN;
@@ -914,16 +764,13 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
         }
     }
 
-    // Remove it from the engine's mirror of track processing chains
-    std::unique_lock<std::mutex> track_lock(_processors_by_track_lock);
-    auto& track_processors = _processors_by_track[track_id];
-    track_processors.erase(std::remove(track_processors.begin(), track_processors.end(), plugin), track_processors.end());
+    _processors.remove_from_track(plugin_id, track_id);
     return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
 {
-    auto processor = _mutable_processor(plugin_id);
+    auto processor = _processors.mutable_processor(plugin_id);
     if (processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PLUGIN;
@@ -948,117 +795,6 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
 
     _deregister_processor(processor.get());
     return EngineReturnStatus::OK;
-}
-
-std::shared_ptr<const Processor> AudioEngine::processor(ObjectId id) const
-{
-    std::unique_lock<std::mutex> _lock(_processors_by_id_lock);
-    auto processor_node = _processors_by_id.find(id);
-    if (processor_node == _processors_by_id.end())
-    {
-        return nullptr;
-    }
-    return processor_node->second;
-}
-
-std::shared_ptr<const Processor> AudioEngine::processor(const std::string& name) const
-{
-    std::unique_lock<std::mutex> _lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(name);
-    if (processor_node == _processors_by_name.end())
-    {
-        return nullptr;
-    }
-    return processor_node->second;
-}
-
-std::shared_ptr<Processor> AudioEngine::mutable_processor(ObjectId processor_id)
-{
-    std::unique_lock<std::mutex> _lock(_processors_by_id_lock);
-    auto processor_node = _processors_by_id.find(processor_id);
-    if (processor_node == _processors_by_id.end())
-    {
-        return nullptr;
-    }
-    return processor_node->second;
-}
-
-std::shared_ptr<const Track> AudioEngine::track(ObjectId track_id) const
-{
-    /* Check if there is an entry for the ObjectId in the list of track processor
-     * In that case we can safely look up the processor by its id and cast it */
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    if (_processors_by_track.count(track_id) > 0)
-    {
-        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
-        auto track_node = _processors_by_id.find(track_id);
-        if (track_node != _processors_by_id.end())
-        {
-            return std::static_pointer_cast<const Track, Processor>(track_node->second);
-        }
-    }
-    return nullptr;
-}
-
-std::shared_ptr<const Track> AudioEngine::track(const std::string& track_name) const
-{
-    std::unique_lock<std::mutex> _lock(_processors_by_id_lock);
-    auto track_node = _processors_by_name.find(track_name);
-    if (track_node != _processors_by_name.end())
-    {
-        /* Check if there is an entry for the ObjectId in the list of track processor
-         * In that case we can safely look up the processor by its id and cast it */
-        std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-        if (_processors_by_track.count(track_node->second->id()) > 0)
-        {
-            return std::static_pointer_cast<const Track, Processor>(track_node->second);
-        }
-    }
-    return nullptr;
-}
-
-std::vector<std::shared_ptr<const Processor>> AudioEngine::all_processors() const
-{
-    std::vector<std::shared_ptr<const Processor>> processors;
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-    processors.reserve(_processors_by_id.size());
-    for (const auto& p : _processors_by_id)
-    {
-        processors.emplace_back(p.second);
-    }
-    return processors;
-}
-
-std::vector<std::shared_ptr<const Processor>> AudioEngine::processors_on_track(ObjectId track_id) const
-{
-    std::vector<std::shared_ptr<const Processor>> processors;
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    auto track_node = _processors_by_track.find(track_id);
-    if (track_node != _processors_by_track.end())
-    {
-        for (const auto& p : track_node->second)
-        {
-            processors.push_back(p);
-        }
-    }
-    return processors;
-}
-
-std::vector<std::shared_ptr<const Track>> AudioEngine::all_tracks() const
-{
-    std::vector<std::shared_ptr<const Track>> tracks;
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    for (const auto& p : _processors_by_track)
-    {
-        auto processor_node = _processors_by_id.find(p.first);
-        if (processor_node != _processors_by_id.end())
-        {
-            tracks.push_back(std::static_pointer_cast<const Track, Processor>(processor_node->second));
-        }
-    }
-    /* Sort the list so tracks are listed in the order they were created */
-    std::sort(tracks.begin(), tracks.end(), [](auto a, auto b) {return a->id() < b->id();});
-    return tracks;
 }
 
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std::shared_ptr<Track> track)
@@ -1101,50 +837,12 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     {
         _worker_pool->add_worker(Track::ext_render_function, track.get());
     }
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    _processors_by_track[track->id()].clear();
-
-    SUSHI_LOG_INFO("Track {} successfully added to engine", name);
-    return EngineReturnStatus::OK;
-}
-
-std::shared_ptr<Processor> AudioEngine::_mutable_processor(const std::string& name)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
-    auto processor_node = _processors_by_name.find(name);
-    if (processor_node == _processors_by_name.end())
+    if (_processors.add_track(track))
     {
-        return nullptr;
+        SUSHI_LOG_INFO("Track {} successfully added to engine", name);
+        return EngineReturnStatus::OK;
     }
-    return processor_node->second;
-}
-
-std::shared_ptr<Processor> AudioEngine::_mutable_processor(ObjectId id)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-    auto processor_node = _processors_by_id.find(id);
-    if (processor_node == _processors_by_id.end())
-    {
-        return nullptr;
-    }
-    return processor_node->second;
-}
-
-std::shared_ptr<Track> AudioEngine::_mutable_track(ObjectId track_id)
-{
-    /* Check if there is an entry for the ObjectId in the list of track processor
-     * In that case we can safely look up the processor by its id and cast it */
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    if (_processors_by_track.count(track_id) > 0)
-    {
-        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
-        auto track_node = _processors_by_id.find(track_id);
-        if (track_node != _processors_by_id.end())
-        {
-            return std::static_pointer_cast<Track, Processor>(track_node->second);
-        }
-    }
-    return nullptr;
+    return EngineReturnStatus::ERROR;
 }
 
 bool AudioEngine::_handle_internal_events(RtEvent& event)
@@ -1290,13 +988,13 @@ void AudioEngine::print_timings_to_log()
 {
     if (_process_timer.enabled())
     {
-        for (const auto& processor : _processors_by_name)
+        for (const auto& processor : _processors.all_processors())
         {
-            auto id = processor.second->id();
+            auto id = processor->id();
             auto timings = _process_timer.timings_for_node(id);
             if (timings.has_value())
             {
-                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
                               timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
             }
         }
@@ -1335,10 +1033,10 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
          << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average(%)" << std::setw(16) << "minimum(%)"
          << std::setw(16) << "maximum(%)" << std::endl;
 
-    for (const auto& track : this->all_tracks())
+    for (const auto& track : _processors.all_tracks())
     {
         file << std::setw(0) << "Track: " << track->name() << "\n";
-        for (auto& p : this->processors_on_track(track->id()))
+        for (auto& p : _processors.processors_on_track(track->id()))
         {
             file << std::setw(8) << "" << std::setw(16) << p->name();
             print_single_timings_for_node(file, _process_timer, p->id());
@@ -1414,32 +1112,6 @@ void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventF
     buffer.gate_values = _outgoing_gate_values;
 }
 
-void AudioEngine::_add_to_processors_by_track(std::shared_ptr<Processor> processor,
-                                              ObjectId track_id,
-                                              std::optional<ObjectId> before_id)
-{
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    auto& track_processors = _processors_by_track[track_id];
-
-    if (before_id.has_value())
-    {
-        for (auto i = track_processors.begin(); i != track_processors.end(); ++i)
-        {
-            if ((*i)->id() == before_id.value())
-            {
-                track_processors.insert(i, processor);
-                return;
-            }
-        }
-        // If we end up here, the track's processing chain and _processors_by_track has diverged.
-        assert(false);
-    }
-    else
-    {
-        track_processors.push_back(processor);
-    }
-}
-
 RealtimeState update_state(RealtimeState current_state)
 {
     if (current_state == RealtimeState::STARTING)
@@ -1451,6 +1123,283 @@ RealtimeState update_state(RealtimeState current_state)
         return RealtimeState::STOPPED;
     }
     return current_state;
+}
+
+std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control)
+{
+    if (uid == "sushi.testing.passthrough")
+    {
+        return std::make_shared<passthrough_plugin::PassthroughPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.gain")
+    {
+        return std::make_shared<gain_plugin::GainPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.lfo")
+    {
+        return std::make_shared<lfo_plugin::LfoPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.equalizer")
+    {
+        return std::make_shared<equalizer_plugin::EqualizerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.sampleplayer")
+    {
+        return std::make_shared<sample_player_plugin::SamplePlayerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.arpeggiator")
+    {
+        return std::make_shared<arpeggiator_plugin::ArpeggiatorPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.peakmeter")
+    {
+        return std::make_shared<peak_meter_plugin::PeakMeterPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.transposer")
+    {
+        return std::make_shared<transposer_plugin::TransposerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.step_sequencer")
+    {
+        return std::make_shared<step_sequencer_plugin::StepSequencerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.cv_to_control")
+    {
+        return std::make_shared<cv_to_control_plugin::CvToControlPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.control_to_cv")
+    {
+        return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(host_control);
+    }
+    return nullptr;
+}
+
+bool ProcessorContainer::add_processor(std::shared_ptr<Processor> processor)
+{
+    std::unique_lock<std::mutex> name_lock(_processors_by_name_lock);
+    std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
+    if (_processors_by_name.count(processor->name()) > 0)
+    {
+        return false;
+    }
+    _processors_by_name[processor->name()] = processor;
+    _processors_by_id[processor->id()] = processor;
+    return true;
+}
+
+bool ProcessorContainer::add_track(std::shared_ptr<Track> track)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    if (_processors_by_track.count(track->id()) > 0)
+    {
+        return false;
+    }
+    _processors_by_track[track->id()].clear();
+    return true;
+}
+
+bool ProcessorContainer::remove_processor(ObjectId id)
+{
+    auto processor = this->processor(id);
+    if (processor == nullptr)
+    {
+        return false;
+    }
+    {
+        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
+    }
+    {
+        std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+        [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
+    }
+    return true;
+}
+
+bool ProcessorContainer::remove_track(ObjectId track_id)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    assert(_processors_by_track[track_id].size() == 0);
+    _processors_by_track.erase(track_id);
+    return true;
+}
+
+bool ProcessorContainer::add_to_track(std::shared_ptr<Processor> processor, ObjectId track_id,
+                                      std::optional<ObjectId> before_id)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    auto& track_processors = _processors_by_track[track_id];
+
+    if (before_id.has_value())
+    {
+        for (auto i = track_processors.begin(); i != track_processors.end(); ++i)
+        {
+            if ((*i)->id() == before_id.value())
+            {
+                track_processors.insert(i, processor);
+                return true;
+            }
+        }
+        // If we end up here, the track's processing chain and _processors_by_track has diverged.
+        assert(false);
+    }
+    else
+    {
+        track_processors.push_back(processor);
+    }
+    return true;
+}
+
+bool ProcessorContainer::processor_exists(ObjectId id) const
+{
+    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    return _processors_by_id.count(id) > 0;
+}
+
+bool ProcessorContainer::processor_exists(const std::string& name) const
+{
+    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+    return _processors_by_name.count(name) > 0;
+}
+
+bool ProcessorContainer::remove_from_track(ObjectId processor_id, ObjectId track_id)
+{
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    auto& track_processors = _processors_by_track[track_id];
+    for (auto i = track_processors.cbegin(); i != track_processors.cend(); ++i)
+    {
+        if ((*i)->id() == processor_id)
+        {
+            track_processors.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::shared_ptr<const Processor>> ProcessorContainer::all_processors() const
+{
+    std::vector<std::shared_ptr<const Processor>> processors;
+    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    processors.reserve(_processors_by_id.size());
+    for (const auto& p : _processors_by_id)
+    {
+        processors.emplace_back(p.second);
+    }
+    return processors;
+}
+
+std::shared_ptr<Processor> ProcessorContainer::mutable_processor(ObjectId id) const
+{
+    return std::const_pointer_cast<Processor>(this->processor(id));
+}
+
+std::shared_ptr<Processor> ProcessorContainer::mutable_processor(const std::string& name) const
+{
+    return std::const_pointer_cast<Processor>(this->processor(name));
+}
+
+std::shared_ptr<const Processor> ProcessorContainer::processor(ObjectId id) const
+{
+    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    auto processor_node = _processors_by_id.find(id);
+    if (processor_node == _processors_by_id.end())
+    {
+        return nullptr;
+    }
+    return processor_node->second;
+}
+
+std::shared_ptr<const Processor> ProcessorContainer::processor(const std::string& name) const
+{
+    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+    auto processor_node = _processors_by_name.find(name);
+    if (processor_node == _processors_by_name.end())
+    {
+        return nullptr;
+    }
+    return processor_node->second;
+}
+
+std::shared_ptr<Track> ProcessorContainer::mutable_track(ObjectId track_id) const
+{
+    return std::const_pointer_cast<Track>(this->track(track_id));
+}
+
+std::shared_ptr<Track> ProcessorContainer::mutable_track(const std::string& track_name) const
+{
+    return std::const_pointer_cast<Track>(this->track(track_name));
+}
+
+std::shared_ptr<const Track> ProcessorContainer::track(ObjectId track_id) const
+{
+    /* Check if there is an entry for the ObjectId in the list of track processor
+     * In that case we can safely look up the processor by its id and cast it */
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    if (_processors_by_track.count(track_id) > 0)
+    {
+        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
+        auto track_node = _processors_by_id.find(track_id);
+        if (track_node != _processors_by_id.end())
+        {
+            return std::static_pointer_cast<const Track>(track_node->second);
+        }
+    }
+    return nullptr;
+}
+
+std::shared_ptr<const Track> ProcessorContainer::track(const std::string& track_name) const
+{
+    std::unique_lock<std::mutex> _lock(_processors_by_name_lock);
+    auto track_node = _processors_by_name.find(track_name);
+    if (track_node != _processors_by_name.end())
+    {
+        /* Check if there is an entry for the ObjectId in the list of track processor
+         * In that case we can safely look up the processor by its id and cast it */
+        std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+        if (_processors_by_track.count(track_node->second->id()) > 0)
+        {
+            return std::static_pointer_cast<const Track>(track_node->second);
+        }
+    }
+    return nullptr;
+}
+
+std::vector<std::shared_ptr<const Processor>> ProcessorContainer::processors_on_track(ObjectId track_id) const
+{
+    std::vector<std::shared_ptr<const Processor>> processors;
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    auto track_node = _processors_by_track.find(track_id);
+    if (track_node != _processors_by_track.end())
+    {
+        processors.reserve(track_node->second.size());
+        for (const auto& p : track_node->second)
+        {
+            processors.push_back(p);
+        }
+    }
+    return processors;
+}
+
+std::vector<std::shared_ptr<const Track>> ProcessorContainer::all_tracks() const
+{
+    std::vector<std::shared_ptr<const Track>> tracks;
+    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    for (const auto& p : _processors_by_track)
+    {
+        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
+        auto processor_node = _processors_by_id.find(p.first);
+        if (processor_node != _processors_by_id.end())
+        {
+            tracks.push_back(std::static_pointer_cast<const Track, Processor>(processor_node->second));
+        }
+    }
+    lock.unlock();
+    /* Sort the list so tracks are listed in the order they were created */
+    std::sort(tracks.begin(), tracks.end(), [](auto a, auto b) {return a->id() < b->id();});
+    return tracks;
 }
 
 } // namespace engine

@@ -1,58 +1,21 @@
 #include "gtest/gtest.h"
 
-#include "engine/transport.h"
-
 #define private public
-
 #include "engine/track.cpp"
 #undef private
 
-#include "test_utils/test_utils.h"
-#include "test_utils/host_control_mockup.h"
+#include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 
-
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
+#include "test_utils/dummy_processor.h"
 
 using namespace sushi;
 using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
-
-class DummyProcessor : public Processor
-{
-public:
-    DummyProcessor(HostControl host_control) : Processor(host_control)
-    {
-        _max_input_channels = 2;
-        _max_output_channels = 2;
-        _current_input_channels = _max_input_channels;
-        _current_output_channels = _max_output_channels;
-    }
-
-    ProcessorReturnCode init(float /* sample_rate */) override
-    {
-        return ProcessorReturnCode::OK;
-    }
-
-    void process_event(const RtEvent& /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
-    {
-        out_buffer = in_buffer;
-    }
-};
-
-class DummyMonoProcessor : public DummyProcessor
-{
-public:
-    DummyMonoProcessor(HostControl host_control) :DummyProcessor(host_control)
-    {
-        _max_input_channels = 1;
-        _max_output_channels = 1;
-        _current_input_channels = _max_input_channels;
-        _current_output_channels = _max_output_channels;
-    }
-};
 
 class TrackTest : public ::testing::Test
 {
