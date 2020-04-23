@@ -37,8 +37,8 @@
 #include "plugins/step_sequencer_plugin.h"
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
-#include "library/vst2x_wrapper.h"
-#include "library/vst3x_wrapper.h"
+#include "library/vst2x/vst2x_wrapper.h"
+#include "library/vst3x/vst3x_wrapper.h"
 #include "library/lv2/lv2_wrapper.h"
 
 namespace sushi {

@@ -22,7 +22,7 @@
 
 #include "twine/twine.h"
 
-#include "library/vst2x_wrapper.h"
+#include "vst2x_wrapper.h"
 #include "library/midi_decoder.h"
 #include "logging.h"
 

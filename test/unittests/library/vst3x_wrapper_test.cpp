@@ -2,12 +2,12 @@
 
 #include "test_utils/test_utils.h"
 #include "library/rt_event_fifo.h"
-#include "library/vst3x_utils.cpp"
+#include "library/vst3x/vst3x_utils.cpp"
 #include "test_utils/host_control_mockup.h"
 
 #define private public
-#include "library/vst3x_wrapper.cpp"
-#include "library/vst3x_host_app.cpp"
+#include "library/vst3x/vst3x_wrapper.cpp"
+#include "library/vst3x/vst3x_host_app.cpp"
 
 using namespace sushi;
 using namespace sushi::vst3;

@@ -26,8 +26,8 @@
 #include <map>
 
 #include "library/processor.h"
-#include "library/vst2x_plugin_loader.h"
-#include "library/vst2x_midi_event_fifo.h"
+#include "vst2x_plugin_loader.h"
+#include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"
 
 namespace sushi {

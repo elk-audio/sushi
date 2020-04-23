@@ -84,16 +84,16 @@ if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loader_test.cpp
                                  unittests/library/vst2x_midi_event_fifo_test.cpp
-                                 ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+                                 ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_host_callback.cpp)
 else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst2x_wrapper.cpp
-                                               ${PROJECT_SOURCE_DIR}/src/library/vst2x_wrapper.h)
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.cpp
+                                               ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.h)
 endif()
 
 if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_wrapper.cpp)
 endif()
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
