@@ -49,6 +49,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/step_sequencer_test.cpp
                unittests/engine/track_test.cpp
                unittests/engine/engine_test.cpp
+               unittests/engine/processor_container_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/engine/json_configurator_test.cpp
                unittests/engine/receiver_test.cpp
