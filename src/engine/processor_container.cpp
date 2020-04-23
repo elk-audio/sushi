@@ -28,8 +28,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 bool ProcessorContainer::add_processor(std::shared_ptr<Processor> processor)
 {
-    std::unique_lock<std::mutex> name_lock(_processors_by_name_lock);
-    std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
+    std::scoped_lock<std::mutex, std::mutex> lock(_processors_by_name_lock, _processors_by_id_lock);
     if (_processors_by_name.count(processor->name()) > 0)
     {
         return false;
@@ -41,7 +40,7 @@ bool ProcessorContainer::add_processor(std::shared_ptr<Processor> processor)
 
 bool ProcessorContainer::add_track(std::shared_ptr<Track> track)
 {
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     if (_processors_by_track.count(track->id()) > 0)
     {
         return false;
@@ -58,12 +57,12 @@ bool ProcessorContainer::remove_processor(ObjectId id)
         return false;
     }
     {
-        std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+        std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
         [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
         SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
     }
     {
-        std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+        std::scoped_lock<std::mutex> lock(_processors_by_name_lock);
         [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
         SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
     }
@@ -72,7 +71,7 @@ bool ProcessorContainer::remove_processor(ObjectId id)
 
 bool ProcessorContainer::remove_track(ObjectId track_id)
 {
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     assert(_processors_by_track[track_id].size() == 0);
     _processors_by_track.erase(track_id);
     return true;
@@ -81,7 +80,7 @@ bool ProcessorContainer::remove_track(ObjectId track_id)
 bool ProcessorContainer::add_to_track(std::shared_ptr<Processor> processor, ObjectId track_id,
                                       std::optional<ObjectId> before_id)
 {
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     auto& track_processors = _processors_by_track[track_id];
 
     if (before_id.has_value())
@@ -106,19 +105,19 @@ bool ProcessorContainer::add_to_track(std::shared_ptr<Processor> processor, Obje
 
 bool ProcessorContainer::processor_exists(ObjectId id) const
 {
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
     return _processors_by_id.count(id) > 0;
 }
 
 bool ProcessorContainer::processor_exists(const std::string& name) const
 {
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_name_lock);
     return _processors_by_name.count(name) > 0;
 }
 
 bool ProcessorContainer::remove_from_track(ObjectId processor_id, ObjectId track_id)
 {
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     auto& track_processors = _processors_by_track[track_id];
     for (auto i = track_processors.cbegin(); i != track_processors.cend(); ++i)
     {
@@ -134,7 +133,7 @@ bool ProcessorContainer::remove_from_track(ObjectId processor_id, ObjectId track
 std::vector<std::shared_ptr<const Processor>> ProcessorContainer::all_processors() const
 {
     std::vector<std::shared_ptr<const Processor>> processors;
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
     processors.reserve(_processors_by_id.size());
     for (const auto& p : _processors_by_id)
     {
@@ -155,7 +154,7 @@ std::shared_ptr<Processor> ProcessorContainer::mutable_processor(const std::stri
 
 std::shared_ptr<const Processor> ProcessorContainer::processor(ObjectId id) const
 {
-    std::unique_lock<std::mutex> lock(_processors_by_id_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
     auto processor_node = _processors_by_id.find(id);
     if (processor_node == _processors_by_id.end())
     {
@@ -166,7 +165,7 @@ std::shared_ptr<const Processor> ProcessorContainer::processor(ObjectId id) cons
 
 std::shared_ptr<const Processor> ProcessorContainer::processor(const std::string& name) const
 {
-    std::unique_lock<std::mutex> lock(_processors_by_name_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_name_lock);
     auto processor_node = _processors_by_name.find(name);
     if (processor_node == _processors_by_name.end())
     {
@@ -189,10 +188,10 @@ std::shared_ptr<const Track> ProcessorContainer::track(ObjectId track_id) const
 {
     /* Check if there is an entry for the ObjectId in the list of track processor
      * In that case we can safely look up the processor by its id and cast it */
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     if (_processors_by_track.count(track_id) > 0)
     {
-        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
+        std::scoped_lock<std::mutex> id_lock(_processors_by_id_lock);
         auto track_node = _processors_by_id.find(track_id);
         if (track_node != _processors_by_id.end())
         {
@@ -204,13 +203,13 @@ std::shared_ptr<const Track> ProcessorContainer::track(ObjectId track_id) const
 
 std::shared_ptr<const Track> ProcessorContainer::track(const std::string& track_name) const
 {
-    std::unique_lock<std::mutex> _lock(_processors_by_name_lock);
+    std::scoped_lock<std::mutex> _lock(_processors_by_name_lock);
     auto track_node = _processors_by_name.find(track_name);
     if (track_node != _processors_by_name.end())
     {
         /* Check if there is an entry for the ObjectId in the list of track processor
          * In that case we can safely look up the processor by its id and cast it */
-        std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+        std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
         if (_processors_by_track.count(track_node->second->id()) > 0)
         {
             return std::static_pointer_cast<const Track>(track_node->second);
@@ -222,7 +221,7 @@ std::shared_ptr<const Track> ProcessorContainer::track(const std::string& track_
 std::vector<std::shared_ptr<const Processor>> ProcessorContainer::processors_on_track(ObjectId track_id) const
 {
     std::vector<std::shared_ptr<const Processor>> processors;
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
+    std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
     auto track_node = _processors_by_track.find(track_id);
     if (track_node != _processors_by_track.end())
     {
@@ -238,17 +237,17 @@ std::vector<std::shared_ptr<const Processor>> ProcessorContainer::processors_on_
 std::vector<std::shared_ptr<const Track>> ProcessorContainer::all_tracks() const
 {
     std::vector<std::shared_ptr<const Track>> tracks;
-    std::unique_lock<std::mutex> lock(_processors_by_track_lock);
-    for (const auto& p : _processors_by_track)
     {
-        std::unique_lock<std::mutex> id_lock(_processors_by_id_lock);
-        auto processor_node = _processors_by_id.find(p.first);
-        if (processor_node != _processors_by_id.end())
+        std::scoped_lock<std::mutex, std::mutex> lock(_processors_by_track_lock, _processors_by_id_lock);
+        for (const auto& p : _processors_by_track)
         {
-            tracks.push_back(std::static_pointer_cast<const Track, Processor>(processor_node->second));
+            auto processor_node = _processors_by_id.find(p.first);
+            if (processor_node != _processors_by_id.end())
+            {
+                tracks.push_back(std::static_pointer_cast<const Track, Processor>(processor_node->second));
+            }
         }
     }
-    lock.unlock();
     /* Sort the list so tracks are listed in the order they were created */
     std::sort(tracks.begin(), tracks.end(), [](auto a, auto b) {return a->id() < b->id();});
     return tracks;

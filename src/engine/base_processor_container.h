@@ -28,7 +28,6 @@
 #include "library/processor.h"
 #include "engine/track.h"
 
-
 namespace sushi {
 namespace engine {
 

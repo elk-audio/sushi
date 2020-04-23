@@ -188,7 +188,6 @@ public:
     std::vector<std::shared_ptr<const Track>> all_tracks() const override;
 
 private:
-
     std::unordered_map<std::string, std::shared_ptr<Processor>>           _processors_by_name;
     std::unordered_map<ObjectId, std::shared_ptr<Processor>>              _processors_by_id;
     std::unordered_map<ObjectId, std::vector<std::shared_ptr<Processor>>> _processors_by_track;
