@@ -22,7 +22,6 @@
 #define SUSHI_BASE_PROCESSOR_CONTAINER_H
 
 #include <memory>
-#include <map>
 #include <vector>
 
 #include "library/constants.h"

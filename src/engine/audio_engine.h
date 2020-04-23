@@ -15,15 +15,12 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_ENGINE_H
 #define SUSHI_ENGINE_H
 
-#include <memory>
-#include <map>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <mutex>
@@ -38,6 +35,7 @@
 #include "engine/transport.h"
 #include "engine/host_control.h"
 #include "engine/controller.h"
+#include "engine/audio_graph.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/elk_allocator.h"
@@ -76,71 +74,6 @@ private:
     unsigned int _interval;
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
-};
-
-/**
- * @brief Wrapper around the list of tracks used for rt processing and its associated
- *        multicore management
- */
-class AudioGraph
-{
-public:
-    /**
-     * @brief create an AudioGraph instance
-     * @param cpu_cores The number of cores to use for audio processing. Must not
-     *                  exceed the number of cores on the architecture
-     */
-    AudioGraph(int cpu_cores);
-
-    /**
-     * @brief Add a track to the graph. The track will be assigned to a cpu
-     *        core on a round robin basis. Must not be called concurrently
-     *        with render()
-     * @param track the track instance to add
-     * @return true if the track was successfully added, false otherwise
-     */
-    bool add(Track* track);
-
-    /**
-     * @brief Add a track to the graph and assign it to a particular cpu core.
-     *        Must not be called concurrently with render()
-     * @param track the track instance to add
-     * @param core The cpu that should be used to process the track.
-     * @return true if the track was successfully added, false otherwise
-     */
-    bool add_to_core(Track* track, int core);
-
-    /**
-     * @brief Remove a track from the audio graph. Must not be called concurrently
-     *        with render()
-     * @param track The instance to remove.
-     * @return true if the track was successfully removed, false otherwise.
-     */
-    bool remove(Track* track);
-
-    /**
-     * @brief Return the event output buffers for all tracks. Called after render()
-     *        to retrieve events passed from tracks.
-     * @return A std::vector of event buffers.
-     */
-    std::vector<RtEventFifo<>>& event_outputs()
-    {
-        return _event_outputs;
-    }
-
-    /**
-     * @brief Render all tracks. If cpu_cores = 1 all processing is done in the
-     *        calling thread. With higher number of cores, the calling thread
-     *        sleeps while processing is running.
-     */
-    void render();
-
-private:
-    std::vector<std::vector<Track*>>   _audio_graph;
-    std::unique_ptr<twine::WorkerPool> _worker_pool;
-    std::vector<RtEventFifo<>>         _event_outputs;
-    int _cores;
-    int _current_core;
 };
 
 constexpr int MAX_RT_PROCESSOR_ID = 1000;

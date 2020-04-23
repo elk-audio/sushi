@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <fstream>
@@ -90,98 +90,6 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     }
 }
 
-void external_render_callback(void* data)
-{
-    auto tracks = reinterpret_cast<std::vector<Track*>*>(data);
-    for (auto i : *tracks)
-    {
-        i->render();
-    }
-}
-
-AudioGraph::AudioGraph(int cpu_cores) : _audio_graph(cpu_cores),
-                                        _event_outputs(cpu_cores),
-                                        _cores(cpu_cores),
-                                        _current_core(0)
-{
-    assert(cpu_cores > 0);
-    if (_cores > 1)
-    {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores);
-        for (auto& i : _audio_graph)
-        {
-            _worker_pool->add_worker(external_render_callback, &i);
-            i.reserve(MAX_TRACKS);
-        }
-    }
-    else
-    {
-        _audio_graph[0].reserve(MAX_TRACKS);
-    }
-}
-
-bool AudioGraph::add(Track* track)
-{
-    auto& slot = _audio_graph[_current_core];
-    if (slot.size() < MAX_TRACKS)
-    {
-        track->set_event_output(&_event_outputs[_current_core]);
-        slot.push_back(track);
-        _current_core = (_current_core + 1) % _cores;
-        return true;
-    }
-    return false;
-}
-
-bool AudioGraph::add_to_core(Track* track, int core)
-{
-    assert(core < _cores);
-    auto& slot = _audio_graph[core];
-    if (slot.size() < MAX_TRACKS)
-    {
-        track->set_event_output(&_event_outputs[core]);
-        slot.push_back(track);
-        return true;
-    }
-    return false;
-}
-
-bool AudioGraph::remove(Track* track)
-{
-    for (auto& slot : _audio_graph)
-    {
-        for (auto i = slot.begin(); i != slot.end(); ++i)
-        {
-            if (*i == track)
-            {
-                slot.erase(i);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-void AudioGraph::render()
-{
-    for (auto& i : _event_outputs)
-    {
-        i.clear();
-    }
-
-    if (_cores == 1)
-    {
-        for (auto& track : _audio_graph[0])
-        {
-            track->render();
-        }
-    }
-    else
-    {
-        _worker_pool->wakeup_workers();
-        _worker_pool->wait_for_workers_idle();
-    }
-}
 
 void remove_connections_matching_track(std::vector<AudioConnection>& list, ObjectId track_id)
 {
@@ -190,7 +98,7 @@ void remove_connections_matching_track(std::vector<AudioConnection>& list, Objec
 }
 
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
-                                                                _audio_graph(rt_cpu_cores),
+                                                                _audio_graph(rt_cpu_cores, MAX_TRACKS),
                                                                 _transport(sample_rate),
                                                                 _clip_detector(sample_rate)
 {

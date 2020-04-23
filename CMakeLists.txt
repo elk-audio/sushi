@@ -121,6 +121,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
+                      src/engine/audio_graph.cpp
                       src/engine/controller.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
@@ -193,6 +194,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
+                        src/engine/audio_graph.h
                         src/engine/controller.h
                         src/engine/track.h
                         src/engine/receiver.h
