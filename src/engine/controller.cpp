@@ -22,6 +22,7 @@
 #include "engine/base_engine.h"
 
 #include "logging.h"
+#include "control_notifications.h"
 
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
@@ -119,6 +120,7 @@ inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 Controller::Controller(engine::BaseEngine* engine) : _engine{engine}
 {
     _event_dispatcher = _engine->event_dispatcher();
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _transport = _engine->transport();
     _performance_timer = engine->performance_timer();
     _processors = engine->processor_container();
@@ -658,6 +660,21 @@ ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, i
     return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
+ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type, 
+                                                          ext::ControlListener* listener)
+{
+    switch (type)
+    {
+        case ext::NotificationType::PARAMETER_CHANGE: 
+            _parameter_change_listeners.push_back(listener); 
+            break;
+        default: 
+            break;
+    }
+
+    return ext::ControlStatus::OK;
+}
+
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const
 {
     if (_performance_timer->enabled())
@@ -749,6 +766,26 @@ std::vector<int> Controller::_get_processor_ids(int track_id) const
         ids.push_back(p->id());
     }
     return ids;
+}
+
+
+int Controller::process(Event* event)
+{
+    if (event->is_parameter_change_notification())
+    {
+        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
+        ext::ParameterChangeNotification notification((int)typed_event->processor_id(), 
+                                                      (int)typed_event->parameter_id(), 
+                                                      typed_event->float_value(), 
+                                                      typed_event->time());
+        for (auto& listener : _parameter_change_listeners)
+        {
+            listener->notification(&notification);
+        }
+        return EventStatus::HANDLED_OK;
+    }
+
+    return EventStatus::NOT_HANDLED;
 }
 
 void Controller::_completion_callback([[maybe_unused]] Event* event, int status)

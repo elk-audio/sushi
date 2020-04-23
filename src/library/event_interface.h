@@ -32,6 +32,7 @@ enum EventPosterId : int
     MIDI_DISPATCHER,
     OSC_FRONTEND,
     WORKER,
+    CONTROLLER,
     MAX_POSTERS
 };
 

@@ -62,16 +62,19 @@ service SushiController {
     rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
     rpc GetStringPropertyValue (ParameterIdentifier) returns (GenericStringValue) {}
-    rpc SetParameterValue (ParameterSetRequest) returns (GenericVoidValue) {}
+    rpc SetParameterValue (ParameterValue) returns (GenericVoidValue) {}
     rpc SetStringPropertyValue (StringPropertySetRequest) returns (GenericVoidValue) {}
 
-    // Audio Graph Control
+ // Audio Graph Control
     rpc CreateStereoTrack(CreateStereoTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMonoTrack(CreateMonoTrackRequest) returns (GenericVoidValue) {}
     rpc DeleteTrack(TrackIdentifier) returns (GenericVoidValue) {}
     rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
     rpc MoveProcessorOnTrack(MoveProcessorRequest) returns (GenericVoidValue) {}
     rpc DeleteProcessorFromTrack(DeleteProcessorRequest) returns (GenericVoidValue) {}
+
+    // Notification RPCs
+    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
 }
 
 
@@ -269,7 +272,7 @@ message ParameterIdRequest {
     string ParameterName = 2;
 }
 
-message ParameterSetRequest {
+message ParameterValue {
     ParameterIdentifier parameter = 1;
     float value = 2;
 }
@@ -328,4 +331,8 @@ message MoveProcessorRequest {
 message DeleteProcessorRequest {
     ProcessorIdentifier processor = 1;
     TrackIdentifier     track = 2;
+}
+
+message ParameterNotificationRequest {
+    repeated ParameterIdentifier parameters = 1;
 }

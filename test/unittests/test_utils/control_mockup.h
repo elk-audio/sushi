@@ -1,7 +1,7 @@
 #ifndef SUSHI_CONTROL_MOCKUP_H
 #define SUSHI_CONTROL_MOCKUP_H
 
-#include <bits/stdc++.h> 
+#include <bits/stdc++.h>
 
 #include "control_interface.h"
 
@@ -282,15 +282,15 @@ public:
     };
 
     virtual ControlStatus set_processor_program(int processor_id, int program_id) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _args_from_last_call["program id"] = std::to_string(program_id);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
-    virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_processor_parameters(int /* processor_id */) const override 
+    virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_processor_parameters(int /* processor_id */) const override
     {
         return std::pair<ControlStatus, std::vector<ParameterInfo>>(ControlStatus::OK, parameters);
     };
@@ -333,7 +333,7 @@ public:
         _args_from_last_call["parameter id"] = std::to_string(parameter_id);
         _args_from_last_call["value"] = std::to_string(value);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override
@@ -403,6 +403,11 @@ public:
         _recently_called = true;
         return default_control_status;
     }
+
+    virtual ControlStatus subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
+    {
+        return default_control_status;
+    };
 
     std::unordered_map<std::string,std::string> get_args_from_last_call()
     {
