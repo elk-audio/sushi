@@ -48,15 +48,14 @@ public:
 
     virtual void proceed() = 0;
 
+    /**
+     * @brief Set the state of the call data to FINISH to make it destroy itself
+     *        on the next call to proceed.
+     *
+     */
     void stop()
     {
         _status = CallStatus::FINISH;
-    }
-
-    void alert()
-    {
-        _in_completion_queue = true;
-        _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
     }
 
 protected:
@@ -77,6 +76,18 @@ protected:
     };
 
     CallStatus _status;
+
+    /**
+     * @brief Put the call data object at the back of the gRPC completion queue.
+     *        This will result in an error if this object is already placed in
+     *        the queue.
+     *
+     */
+    void _alert()
+    {
+        _in_completion_queue = true;
+        _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+    }
 };
 
 class SubscribeToParameterUpdatesCallData : public CallData

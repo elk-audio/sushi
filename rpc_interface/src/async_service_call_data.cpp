@@ -52,7 +52,7 @@ void SubscribeToParameterUpdatesCallData::proceed()
         // queue. We then place it at the back with an alarm to serve the clients
         // in a round robin fashion.
         _status = CallStatus::PROCESS;
-        alert();
+        _alert();
     }
     else
     {
