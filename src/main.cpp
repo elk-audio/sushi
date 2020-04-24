@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
     configurator.reset();
 
     if (enable_parameter_dump)
-    { 
+    {
         std::cout << sushi::generate_processor_parameter_document(engine->controller());
         error_exit("");
     }
@@ -493,7 +493,7 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_frontend(midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-        auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
+    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////

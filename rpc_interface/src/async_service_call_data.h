@@ -113,14 +113,14 @@ public:
         }
         if (_in_completion_queue == false)
         {
-            alert();
+            _alert();
         }
     }
 
 private:
-    int64_t _create_map_key(int parameter_id, int processor_id)
+    int64_t _map_key(int parameter_id, int processor_id)
     {
-        return ((int64_t)parameter_id << 32) | processor_id;
+        return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
 
     ParameterNotificationRequest _request;
