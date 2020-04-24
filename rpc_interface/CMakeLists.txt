@@ -29,7 +29,8 @@ endforeach()
 ######################
 
 set(SUSHI_GRPC_SOURCES src/grpc_server.cpp
-                       src/control_service.cpp )
+                       src/control_service.cpp
+                       src/async_service_call_data.cpp )
 
 add_library(sushi_rpc STATIC
                       ${SUSHI_GRPC_SOURCES}
@@ -37,11 +38,11 @@ add_library(sushi_rpc STATIC
                       ${GRPC_SRCS} )
 
 target_include_directories(sushi_rpc PUBLIC include)
-target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf)
+target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf gpr)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
 
-target_include_directories(sushi_rpc PRIVATE ${PROTO_SRC_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(sushi_rpc PRIVATE ${PROTO_SRC_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(sushi_rpc PUBLIC include)
 
 ##################

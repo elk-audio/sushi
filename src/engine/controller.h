@@ -22,6 +22,7 @@
 #include "base_event_dispatcher.h"
 #include "transport.h"
 #include "library/base_performance_timer.h"
+#include "library/event_interface.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -30,7 +31,7 @@ namespace sushi {
 
 namespace engine {class BaseEngine;}
 
-class Controller : public ext::SushiControl
+class Controller : public ext::SushiControl, EventPoster
 {
 public:
     Controller(engine::BaseEngine* engine);
@@ -89,6 +90,14 @@ public:
     ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
+    ext::ControlStatus                                  subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
+
+    /* Inherited from EventPoster */
+    int process(Event* event) override;
+
+    int poster_id() override {return EventPosterId::CONTROLLER;}
+
+
 protected:
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
@@ -96,6 +105,8 @@ protected:
     dispatcher::BaseEventDispatcher*    _event_dispatcher;
     engine::Transport*                  _transport;
     performance::BasePerformanceTimer*  _performance_timer;
+
+    std::vector<ext::ControlListener*> _parameter_change_listeners;
 };
 
 } //namespace sushi

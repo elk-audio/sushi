@@ -24,6 +24,7 @@
 #include <utility>
 #include <optional>
 #include <vector>
+#include <chrono>
 
 namespace sushi {
 namespace ext {
@@ -114,6 +115,43 @@ struct TrackInfo
     int         processor_count;
 };
 
+
+using Time = std::chrono::microseconds;
+
+enum class NotificationType
+{
+    PARAMETER_CHANGE,
+    TRACK_ADDED,
+    TRACK_REMOVED,
+    TRACK_CHANGED,
+    PROCESSOR_ADDED,
+    PROCESSOR_REMOVED
+};
+
+class ControlNotification
+{
+public:
+    virtual ~ControlNotification() = default;
+
+    NotificationType type() const {return _type;}
+    Time timestamp() const {return _timestamp;}
+
+protected:
+    ControlNotification(NotificationType type, Time timestamp) : _type(type),
+                                                                 _timestamp(timestamp) {}
+
+private:
+    NotificationType _type;
+    Time _timestamp;
+};
+
+
+class ControlListener
+{
+public:
+    virtual void notification(const ControlNotification* notification) = 0;
+}; 
+
 class SushiControl
 {
 public:
@@ -177,6 +215,7 @@ public:
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) = 0;
     virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
+    virtual ControlStatus                              subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
 protected:
     SushiControl() = default;

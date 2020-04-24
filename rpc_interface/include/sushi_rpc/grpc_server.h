@@ -24,17 +24,22 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
+#include <atomic>
+#include <unordered_map>
 
 #include "../../include/control_interface.h"
 
 namespace grpc {
     class Server;
     class ServerBuilder;
+    class ServerCompletionQueue;
 }
 
 namespace sushi_rpc {
-
 class SushiControlService;
+
+constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::milliseconds(50);
 
 class GrpcServer
 {
@@ -49,13 +54,18 @@ public:
 
     void waitForCompletion();
 
+    void AsyncRpcLoop();
+
 private:
 
-    std::string                          _listenAddress;
-    std::unique_ptr<SushiControlService> _service;
-    std::unique_ptr<grpc::ServerBuilder> _server_builder;
-    std::unique_ptr<grpc::Server>        _server;
-    sushi::ext::SushiControl*            _controller;
+    std::string                                     _listen_address;
+    std::unique_ptr<SushiControlService>            _service;
+    std::unique_ptr<grpc::ServerBuilder>            _server_builder;
+    std::unique_ptr<grpc::Server>                   _server;
+    std::unique_ptr<grpc::ServerCompletionQueue>    _async_rpc_queue;
+    sushi::ext::SushiControl*                       _controller;
+    std::thread                                     _worker;
+    std::atomic<bool>                               _running;
 };
 
 
