@@ -18,6 +18,8 @@
 using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
+static const std::string WRITE_FILE = "write_test.wav";
+constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
 {
@@ -290,4 +292,102 @@ TEST_F(TestLfoPlugin, TestProcess)
     ASSERT_TRUE(_queue.pop(event));
     EXPECT_EQ(RtEventType::CV_EVENT, event.type());
     EXPECT_EQ(2, event.cv_event()->cv_id());
+}
+
+class TestWavWriterPlugin : public ::testing::Test
+{
+protected:
+    TestWavWriterPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new wav_writer_plugin::WavWriterPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    wav_writer_plugin::WavWriterPlugin* _module_under_test;
+    RtEventFifo<10> _fifo;
+};
+
+TEST_F(TestWavWriterPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Wav writer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.wav_writer", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestWavWriterPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up buffers and events
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    std::string* path = new std::string("./");
+    path->append(WRITE_FILE);
+    RtEvent path_event = RtEvent::make_string_parameter_change_event(0, 0, 0, path);
+    RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 1.0f);
+    RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+
+    // Test setting path
+    _module_under_test->process_event(path_event);
+    ASSERT_EQ(*path, _module_under_test->_destination_file_property);
+    auto e = _fifo.pop();
+    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
+    ASSERT_FLOAT_EQ(0.0f, e.parameter_change_event()->value());
+
+    // Test start recording and open file
+    _module_under_test->process_event(start_recording_event);
+    e = _fifo.pop();
+    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
+    ASSERT_FLOAT_EQ(1.0f, e.parameter_change_event()->value());
+    e = _fifo.pop();
+    ASSERT_EQ(RtEventType::ASYNC_WORK, e.type());
+    ASSERT_NE(nullptr, _module_under_test->_output_file);
+    ASSERT_TRUE(_module_under_test->_pending_write_event);
+
+    // Test processing
+    _module_under_test->_recording->set_values(true, true);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, in_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Test Writing. Should be
+    ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
+
+    // Test notification that task was completed
+    RtEvent completion_event = AsyncWorkRtCompletionEvent(e.async_work_event()->processor_id(),
+                                                          e.async_work_event()->event_id(),
+                                                          wav_writer_plugin::WavWriterStatus::SUCCESS);
+    _module_under_test->process_event(completion_event);
+    ASSERT_FALSE(_module_under_test->_pending_write_event);
+
+    // Test end recording and close file
+    _module_under_test->process_event(stop_recording_event);
+    e = _fifo.pop();
+    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
+    ASSERT_FLOAT_EQ(0.0f, e.parameter_change_event()->value());
+    ASSERT_EQ(nullptr, _module_under_test->_output_file);
+
+    // Verify written samples
+    SF_INFO soundfile_info;
+    SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
+    int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
+    float written_data[number_of_samples];
+    ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data, AUDIO_CHUNK_SIZE));
+    for (int sample = 0; sample < number_of_samples; ++sample)
+    {
+        ASSERT_FLOAT_EQ(1.0f, written_data[sample]);
+    }
+    sf_close(file);
+    remove(path->c_str());
 }
