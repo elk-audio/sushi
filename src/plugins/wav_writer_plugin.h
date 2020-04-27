@@ -35,9 +35,16 @@
 namespace sushi {
 namespace wav_writer_plugin {
 
-    constexpr int N_AUDIO_CHANNELS = 2;
-    constexpr int RINGBUFFER_SIZE = 16384;
-    constexpr auto WORKER_SLEEP_INTERVAL = std::chrono::milliseconds(3);
+constexpr int N_AUDIO_CHANNELS = 2;
+constexpr int RINGBUFFER_SIZE = 16384;
+constexpr int WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4) / AUDIO_CHUNK_SIZE;
+
+namespace WavWriterStatus {
+enum WavWriter : int
+{
+    SUCCESS = 0,
+    FAILURE
+};}
 
 class WavWriterPlugin : public InternalPlugin
 {
@@ -55,15 +62,20 @@ public:
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
+    static int non_rt_callback(void* data, EventId id)
+    {
+        return reinterpret_cast<WavWriterPlugin*>(data)->_non_rt_callback(id);
+    }
+
 private:
     void _start_recording();
     void _stop_recording();
-    void _file_writer_task();
+    void _post_write_event();
+    int _write_to_file();
+    int _non_rt_callback(EventId id);
 
     char _program_name[32];
 
-    std::thread _worker;
-    std::atomic<bool> _worker_running {false};
     memory_relaxed_aquire_release::CircularFifo<float, RINGBUFFER_SIZE> _ring_buffer;
 
     std::array<float, RINGBUFFER_SIZE> _file_buffer;
@@ -71,6 +83,9 @@ private:
     SF_INFO _soundfile_info;
 
     BoolParameterValue* _recording;
+    EventId _pending_event_id{0};
+    bool _pending_write_event{false};
+    int _write_counter{0};
 };
 
 } // namespace wav_writer_plugin

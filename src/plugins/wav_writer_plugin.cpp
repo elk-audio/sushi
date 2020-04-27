@@ -56,7 +56,6 @@ void WavWriterPlugin::process_event(const RtEvent& event)
         auto typed_event = event.parameter_change_event();
         if (typed_event->param_id() == 0)
         {
-            set_parameter_and_notify(_recording, typed_event->value());
             if (typed_event->value())
             {
                 _start_recording();
@@ -65,6 +64,17 @@ void WavWriterPlugin::process_event(const RtEvent& event)
             {
                 _stop_recording();
             }
+        }
+        break;
+    }
+
+    case RtEventType::ASYNC_WORK_NOTIFICATION:
+    {
+        auto typed_event = event.async_work_completion_event();
+        if (typed_event->sending_event_id() == _pending_event_id &&
+            typed_event->return_status() == WavWriterStatus::SUCCESS)
+        {
+            _pending_write_event = false;
         }
         break;
     }
@@ -88,53 +98,78 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
             }
         }
     }
+
+    // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
+    if (_write_counter > WRITE_FREQUENCY)
+    {
+        _write_counter = 0;
+        _post_write_event();
+    }
+    _write_counter++;
 }
 
 void WavWriterPlugin::_start_recording()
 {
     _output_file = sf_open("./wav_writer_plug_out.wav", SFM_WRITE, &_soundfile_info);
 
-    _worker = std::thread(&WavWriterPlugin::_file_writer_task, this);
-    _worker_running.store(true);
+    set_parameter_and_notify(_recording, true);
+    _post_write_event();
 }
 
 void WavWriterPlugin::_stop_recording()
 {
-    _worker_running.store(false);
-    if (_worker.joinable())
-    {
-        _worker.join();
-    }
+    set_parameter_and_notify(_recording, false);
+    while (_pending_write_event); // busy wait
     sf_close(_output_file);
 }
 
-void WavWriterPlugin::_file_writer_task()
+void WavWriterPlugin::_post_write_event()
+{
+    if (_pending_write_event == false)
+    {
+        auto e = RtEvent::make_async_work_event(&WavWriterPlugin::non_rt_callback, this->id(), this);
+        _pending_event_id = e.async_work_event()->event_id();
+        output_event(e);
+    }
+}
+
+int WavWriterPlugin::_write_to_file()
 {
     int samples_received = 0;
 
-    while (_worker_running)
+    float cur_sample;
+    while (_ring_buffer.pop(cur_sample))
     {
-        float cur_sample;
-        while (_ring_buffer.pop(cur_sample))
-        {
-            _file_buffer[samples_received++] = cur_sample;
-        }
-        if (samples_received > (RINGBUFFER_SIZE/2))
-        {
-            sf_count_t samples_written = 0;
-            while (samples_written < samples_received)
-            {
-                samples_written += sf_write_float(_output_file, &_file_buffer[samples_written],
-                                                  static_cast<sf_count_t>(samples_received + samples_written));
-            }
-            sf_write_sync(_output_file);
-            samples_received = 0;
-        }
-        std::this_thread::sleep_for(WORKER_SLEEP_INTERVAL);
+        _file_buffer[samples_received++] = cur_sample;
     }
-
+    sf_count_t samples_written = 0;
+    while (samples_written < samples_received)
+    {
+        samples_written += sf_write_float(_output_file, &_file_buffer[samples_written],
+                                            static_cast<sf_count_t>(samples_received + samples_written));
+    }
+    sf_write_sync(_output_file);
+    return samples_written;
 }
 
+int WavWriterPlugin::_non_rt_callback(EventId id)
+{
+    if (id == _pending_event_id)
+    {
+        auto samples_written = _write_to_file();
+        if (samples_written > 0)
+        {
+            SUSHI_LOG_INFO("WavWriter: Successfully wrote {} samples", samples_written);
+            return WavWriterStatus::SUCCESS;
+        }
+        return WavWriterStatus::FAILURE;
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("WavWriter: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
+        return WavWriterStatus::FAILURE;
+    }
+}
 
 } // namespace wav_writer_plugin
 } // namespace sushis
