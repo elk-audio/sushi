@@ -86,6 +86,7 @@ private:
     EventId _pending_event_id{0};
     bool _pending_write_event{false};
     int _write_counter{0};
+    std::string _destination_file_property;
 };
 
 } // namespace wav_writer_plugin

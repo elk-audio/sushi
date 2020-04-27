@@ -8,6 +8,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
 static const std::string DEFAULT_NAME = "sushi.testing.wav_writer";
 static const std::string DEFAULT_LABEL = "Wav writer";
+static const std::string DEFAULT_PATH = "./";
 
 WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -16,6 +17,7 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
     _recording = register_bool_parameter("recording", "Recording", "bool", false);
+    register_string_property("destination_file", "Destination file", "path");
 }
 
 WavWriterPlugin::~WavWriterPlugin()
@@ -54,16 +56,23 @@ void WavWriterPlugin::process_event(const RtEvent& event)
     case RtEventType::INT_PARAMETER_CHANGE:
     {
         auto typed_event = event.parameter_change_event();
-        if (typed_event->param_id() == 0)
+        if (typed_event->value())
         {
-            if (typed_event->value())
-            {
-                _start_recording();
-            }
-            else
-            {
-                _stop_recording();
-            }
+            _start_recording();
+        }
+        else
+        {
+            _stop_recording();
+        }
+        break;
+    }
+    case RtEventType::STRING_PROPERTY_CHANGE:
+    {
+        auto typed_event = event.string_parameter_change_event();
+        if (*typed_event->value() != _destination_file_property)
+        {
+            _stop_recording();
+            _destination_file_property = *typed_event->value();
         }
         break;
     }
@@ -97,21 +106,24 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
                 _ring_buffer.push(in_buffer.channel(k)[n]);
             }
         }
-    }
 
-    // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
-    if (_write_counter > WRITE_FREQUENCY)
-    {
-        _write_counter = 0;
-        _post_write_event();
+        // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
+        if (_write_counter > WRITE_FREQUENCY)
+        {
+            _write_counter = 0;
+            _post_write_event();
+        }
+        _write_counter++;
     }
-    _write_counter++;
 }
 
 void WavWriterPlugin::_start_recording()
 {
-    _output_file = sf_open("./wav_writer_plug_out.wav", SFM_WRITE, &_soundfile_info);
-
+    if (_destination_file_property.empty())
+    {
+        _destination_file_property = DEFAULT_PATH + this->name() + "_output.wav";
+    }
+    _output_file = sf_open(_destination_file_property.c_str(), SFM_WRITE, &_soundfile_info);
     set_parameter_and_notify(_recording, true);
     _post_write_event();
 }
