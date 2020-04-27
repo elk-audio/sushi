@@ -88,7 +88,7 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
 {
     bypass_process(in_buffer, out_buffer);
     // Put samples in the ringbuffer already in interleaved format
-    if (_recording->domain_value())
+    if (_recording->processed_value())
     {
         for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
         {
@@ -121,6 +121,7 @@ void WavWriterPlugin::_stop_recording()
     set_parameter_and_notify(_recording, false);
     while (_pending_write_event); // busy wait
     sf_close(_output_file);
+    _output_file = nullptr;
 }
 
 void WavWriterPlugin::_post_write_event()
@@ -129,6 +130,7 @@ void WavWriterPlugin::_post_write_event()
     {
         auto e = RtEvent::make_async_work_event(&WavWriterPlugin::non_rt_callback, this->id(), this);
         _pending_event_id = e.async_work_event()->event_id();
+        _pending_write_event = true;
         output_event(e);
     }
 }
