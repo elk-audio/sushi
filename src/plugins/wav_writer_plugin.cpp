@@ -17,11 +17,16 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
     _recording = register_bool_parameter("recording", "Recording", "bool", false);
+    _write_speed = register_float_parameter("write_speed", "Write Speed", "writes/s",
+                                            DEFAULT_WRITE_INTERVAL,
+                                            MIN_WRITE_INTERVAL,
+                                            MAX_WRITE_INTERVAL);
     register_string_property("destination_file", "Destination file", "path");
 }
 
 WavWriterPlugin::~WavWriterPlugin()
 {
+    _pending_write_event = false;
     _stop_recording();
 }
 
@@ -56,16 +61,24 @@ void WavWriterPlugin::process_event(const RtEvent& event)
     case RtEventType::INT_PARAMETER_CHANGE:
     {
         auto typed_event = event.parameter_change_event();
-        if (typed_event->value())
+        if (typed_event->param_id() == _recording->descriptor()->id())
         {
-            _start_recording();
+            if (typed_event->value())
+            {
+                _start_recording();
+            }
+            else
+            {
+                _stop_recording();
+            }
         }
         else
         {
-            _stop_recording();
+            InternalPlugin::process_event(event);
         }
         break;
     }
+
     case RtEventType::STRING_PROPERTY_CHANGE:
     {
         auto typed_event = event.string_parameter_change_event();
@@ -80,15 +93,19 @@ void WavWriterPlugin::process_event(const RtEvent& event)
     case RtEventType::ASYNC_WORK_NOTIFICATION:
     {
         auto typed_event = event.async_work_completion_event();
-        if (typed_event->sending_event_id() == _pending_event_id &&
-            typed_event->return_status() == WavWriterStatus::SUCCESS)
+        if (typed_event->sending_event_id() == _pending_event_id)
         {
             _pending_write_event = false;
+            if (typed_event->return_status() == WavWriterStatus::FAILURE)
+            {
+                _stop_recording();
+            }
         }
         break;
     }
 
     default:
+        InternalPlugin::process_event(event);
         break;
     }
 }
@@ -108,12 +125,12 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
         }
 
         // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
-        if (_write_counter > WRITE_FREQUENCY)
+        if (_flushed_samples_counter % FLUSH_FREQUENCY == 0)
         {
-            _write_counter = 0;
             _post_write_event();
+            _flushed_samples_counter = 0;
         }
-        _write_counter++;
+        _flushed_samples_counter += AUDIO_CHUNK_SIZE;
     }
 }
 
@@ -123,6 +140,10 @@ void WavWriterPlugin::_start_recording()
     {
         _destination_file_property = DEFAULT_PATH + this->name() + "_output.wav";
     }
+    _file_buffer.resize(_soundfile_info.samplerate
+                        * _write_speed->descriptor()->max_domain_value()
+                        * _current_input_channels);
+
     _output_file = sf_open(_destination_file_property.c_str(), SFM_WRITE, &_soundfile_info);
     set_parameter_and_notify(_recording, true);
     _post_write_event();
@@ -132,6 +153,7 @@ void WavWriterPlugin::_stop_recording()
 {
     set_parameter_and_notify(_recording, false);
     while (_pending_write_event); // busy wait
+    _write_to_file(); // write any leftover samples
     sf_close(_output_file);
     _output_file = nullptr;
 }
@@ -149,20 +171,32 @@ void WavWriterPlugin::_post_write_event()
 
 int WavWriterPlugin::_write_to_file()
 {
-    int samples_received = 0;
-
     float cur_sample;
     while (_ring_buffer.pop(cur_sample))
     {
-        _file_buffer[samples_received++] = cur_sample;
+        if (_samples_received > _file_buffer.size())
+        {
+            _file_buffer.push_back(cur_sample);
+        }
+        else
+        {
+            _file_buffer[_samples_received++] = cur_sample;
+        }
     }
     sf_count_t samples_written = 0;
-    while (samples_written < samples_received)
+
+    unsigned int write_limit = static_cast<int>(_write_speed->domain_value() * _soundfile_info.samplerate);
+    if (_samples_received > write_limit || _recording->domain_value() == false)
     {
-        samples_written += sf_write_float(_output_file, &_file_buffer[samples_written],
-                                            static_cast<sf_count_t>(samples_received + samples_written));
+        while (samples_written < _samples_received)
+        {
+            samples_written += sf_write_float(_output_file, &_file_buffer[samples_written],
+                                                static_cast<sf_count_t>(_samples_received - samples_written));
+        }
+        sf_write_sync(_output_file);
+        _samples_received = 0;
     }
-    sf_write_sync(_output_file);
+
     return samples_written;
 }
 
@@ -170,17 +204,16 @@ int WavWriterPlugin::_non_rt_callback(EventId id)
 {
     if (id == _pending_event_id)
     {
-        auto samples_written = _write_to_file();
+        int samples_written = _write_to_file();
         if (samples_written > 0)
         {
-            SUSHI_LOG_INFO("WavWriter: Successfully wrote {} samples", samples_written);
-            return WavWriterStatus::SUCCESS;
+            SUSHI_LOG_DEBUG("Successfully wrote {} samples", samples_written);
         }
-        return WavWriterStatus::FAILURE;
+        return WavWriterStatus::SUCCESS;
     }
     else
     {
-        SUSHI_LOG_WARNING("WavWriter: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
+        SUSHI_LOG_WARNING("EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
         return WavWriterStatus::FAILURE;
     }
 }

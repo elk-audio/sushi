@@ -361,7 +361,8 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     test_utils::assert_buffer_value(1.0f, in_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
-    // Test Writing. Should be
+    // Test Writing.
+    _module_under_test->_recording->set_values(false, false); // set recording to false to immediately write
     ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
 
     // Test notification that task was completed

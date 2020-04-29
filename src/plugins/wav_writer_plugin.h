@@ -36,8 +36,11 @@ namespace sushi {
 namespace wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
-constexpr int RINGBUFFER_SIZE = 16384 * 8;
-constexpr int WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4) / AUDIO_CHUNK_SIZE;
+constexpr int RINGBUFFER_SIZE = 65536;
+constexpr int FLUSH_FREQUENCY = (RINGBUFFER_SIZE / 4);
+constexpr float DEFAULT_WRITE_INTERVAL = 1.0f;
+constexpr float MAX_WRITE_INTERVAL = 4.0f;
+constexpr float MIN_WRITE_INTERVAL = 0.5f;
 
 namespace WavWriterStatus {
 enum WavWriter : int
@@ -74,19 +77,21 @@ private:
     int _write_to_file();
     int _non_rt_callback(EventId id);
 
-    char _program_name[32];
-
     memory_relaxed_aquire_release::CircularFifo<float, RINGBUFFER_SIZE> _ring_buffer;
 
-    std::array<float, RINGBUFFER_SIZE> _file_buffer;
+    std::vector<float> _file_buffer;
     SNDFILE* _output_file;
     SF_INFO _soundfile_info;
 
     BoolParameterValue* _recording;
+    FloatParameterValue* _write_speed;
+    std::string _destination_file_property;
+
     EventId _pending_event_id{0};
     bool _pending_write_event{false};
-    int _write_counter{0};
-    std::string _destination_file_property;
+    int _flushed_samples_counter{0};
+    unsigned int _samples_received{0};
+
 };
 
 } // namespace wav_writer_plugin
