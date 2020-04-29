@@ -36,7 +36,7 @@ namespace sushi {
 namespace wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
-constexpr int RINGBUFFER_SIZE = 16384;
+constexpr int RINGBUFFER_SIZE = 16384 * 8;
 constexpr int WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4) / AUDIO_CHUNK_SIZE;
 
 namespace WavWriterStatus {
