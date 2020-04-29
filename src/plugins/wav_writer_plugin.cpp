@@ -26,8 +26,10 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
 
 WavWriterPlugin::~WavWriterPlugin()
 {
-    _pending_write_event = false;
-    _stop_recording();
+    if (_recording->domain_value())
+    {
+        _stop_recording();
+    }
 }
 
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
@@ -74,7 +76,11 @@ void WavWriterPlugin::process_event(const RtEvent& event)
         }
         else
         {
-            InternalPlugin::process_event(event);
+            // Write speed can't be updated while recording
+            if (_recording->domain_value() == false)
+            {
+                InternalPlugin::process_event(event);
+            }
         }
         break;
     }
@@ -86,20 +92,6 @@ void WavWriterPlugin::process_event(const RtEvent& event)
         {
             _stop_recording();
             _destination_file_property = *typed_event->value();
-        }
-        break;
-    }
-
-    case RtEventType::ASYNC_WORK_NOTIFICATION:
-    {
-        auto typed_event = event.async_work_completion_event();
-        if (typed_event->sending_event_id() == _pending_event_id)
-        {
-            _pending_write_event = false;
-            if (typed_event->return_status() == WavWriterStatus::FAILURE)
-            {
-                _stop_recording();
-            }
         }
         break;
     }
@@ -125,7 +117,7 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
         }
 
         // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
-        if (_flushed_samples_counter % FLUSH_FREQUENCY == 0)
+        if (_flushed_samples_counter > FLUSH_FREQUENCY)
         {
             _post_write_event();
             _flushed_samples_counter = 0;
@@ -152,7 +144,6 @@ void WavWriterPlugin::_start_recording()
 void WavWriterPlugin::_stop_recording()
 {
     set_parameter_and_notify(_recording, false);
-    while (_pending_write_event); // busy wait
     _write_to_file(); // write any leftover samples
     sf_close(_output_file);
     _output_file = nullptr;
@@ -160,13 +151,9 @@ void WavWriterPlugin::_stop_recording()
 
 void WavWriterPlugin::_post_write_event()
 {
-    if (_pending_write_event == false)
-    {
-        auto e = RtEvent::make_async_work_event(&WavWriterPlugin::non_rt_callback, this->id(), this);
-        _pending_event_id = e.async_work_event()->event_id();
-        _pending_write_event = true;
-        output_event(e);
-    }
+    auto e = RtEvent::make_async_work_event(&WavWriterPlugin::non_rt_callback, this->id(), this);
+    _pending_event_id = e.async_work_event()->event_id();
+    output_event(e);
 }
 
 int WavWriterPlugin::_write_to_file()
@@ -183,21 +170,21 @@ int WavWriterPlugin::_write_to_file()
             _file_buffer[_samples_received++] = cur_sample;
         }
     }
-    sf_count_t samples_written = 0;
+
+    _samples_written = 0;
 
     unsigned int write_limit = static_cast<int>(_write_speed->domain_value() * _soundfile_info.samplerate);
     if (_samples_received > write_limit || _recording->domain_value() == false)
     {
-        while (samples_written < _samples_received)
+        while (_samples_written < _samples_received)
         {
-            samples_written += sf_write_float(_output_file, &_file_buffer[samples_written],
-                                                static_cast<sf_count_t>(_samples_received - samples_written));
+            _samples_written += sf_write_float(_output_file, &_file_buffer[_samples_written],
+                                               static_cast<sf_count_t>(_samples_received - _samples_written));
         }
         sf_write_sync(_output_file);
         _samples_received = 0;
     }
-
-    return samples_written;
+    return _samples_written;
 }
 
 int WavWriterPlugin::_non_rt_callback(EventId id)

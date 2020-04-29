@@ -353,7 +353,6 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     e = _fifo.pop();
     ASSERT_EQ(RtEventType::ASYNC_WORK, e.type());
     ASSERT_NE(nullptr, _module_under_test->_output_file);
-    ASSERT_TRUE(_module_under_test->_pending_write_event);
 
     // Test processing
     _module_under_test->_recording->set_values(true, true);
@@ -364,13 +363,6 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     // Test Writing.
     _module_under_test->_recording->set_values(false, false); // set recording to false to immediately write
     ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
-
-    // Test notification that task was completed
-    RtEvent completion_event = AsyncWorkRtCompletionEvent(e.async_work_event()->processor_id(),
-                                                          e.async_work_event()->event_id(),
-                                                          wav_writer_plugin::WavWriterStatus::SUCCESS);
-    _module_under_test->process_event(completion_event);
-    ASSERT_FALSE(_module_under_test->_pending_write_event);
 
     // Test end recording and close file
     _module_under_test->process_event(stop_recording_event);

@@ -88,9 +88,9 @@ private:
     std::string _destination_file_property;
 
     EventId _pending_event_id{0};
-    bool _pending_write_event{false};
     int _flushed_samples_counter{0};
     unsigned int _samples_received{0};
+    sf_count_t _samples_written{0};
 
 };
 
