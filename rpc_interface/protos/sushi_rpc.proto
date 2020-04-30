@@ -33,6 +33,9 @@ service TransportController
 
 service TimingController
 {
+    rpc GetTimingsEnabled (GenericVoidValue) returns (GenericBoolValue) {}
+    rpc SetTimingsEnabled (GenericBoolValue) returns (GenericVoidValue) {}
+
     rpc GetEngineTimings (GenericVoidValue) returns (CpuTimings) {}
     rpc GetTrackTimings (TrackIdentifier) returns (CpuTimings) {}
     rpc GetProcessorTimings (ProcessorIdentifier) returns (CpuTimings) {}
@@ -102,69 +105,69 @@ service MidiController
     rpc GetInputPorts (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetOutputPorts (GenericVoidValue) returns (GenericIntValue) {}
 
-    rpc GetAllKeyboardInputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
-    rpc GetAllKeyboardOutputConnections (GenericVoidValue) returns (MidiKeyboardConnectionList) {}
-    rpc GetAllControlChangeInputConnections (GenericVoidValue) returns (MidiControlChangeConnectionList) {}
-    rpc GetAllProgramChangeInputConnections (GenericVoidValue) returns (MidiProgramChangeConnectionList) {}
-    rpc GetControlChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiControlChangeConnectionList) {}
-    rpc GetProgramChangeInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiProgramChangeConnectionList) {}
+    rpc GetAllKbdInputConnections (GenericVoidValue) returns (MidiKbdConnectionList) {}
+    rpc GetAllKbdOutputConnections (GenericVoidValue) returns (MidiKbdConnectionList) {}
+    rpc GetAllCCInputConnections (GenericVoidValue) returns (MidiCCConnectionList) {}
+    rpc GetAllPCInputConnections (GenericVoidValue) returns (MidiPCConnectionList) {}
+    rpc GetCCInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiCCConnectionList) {}
+    rpc GetPCInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiPCConnectionList) {}
 
-    rpc ConnectKeyboardInputToTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc ConnectKeyboardOutputFromTrack (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc ConnectControlChangeToProcessorParameter (MidiControlChangeConnection) returns (GenericVoidValue) {}
-    rpc ConnectProgramChangeToProcessor (MidiProgramChangeConnection) returns (GenericVoidValue) {}
+    rpc ConnectKbdInputToTrack (MidiKbdConnection) returns (GenericVoidValue) {}
+    rpc ConnectKbdOutputFromTrack (MidiKbdConnection) returns (GenericVoidValue) {}
+    rpc ConnectCCToParameter (MidiCCConnection) returns (GenericVoidValue) {}
+    rpc ConnectPCToProcessor (MidiPCConnection) returns (GenericVoidValue) {}
 
-    rpc DisconnectKeyboardInput (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc DisconnectKeyboardOutput (MidiKeyboardConnection) returns (GenericVoidValue) {}
-    rpc DisconnectControlChange (MidiControlChangeConnection) returns (GenericVoidValue) {}
-    rpc DisconnectProgramChange (MidiProgramChangeConnection) returns (GenericVoidValue) {}
-    rpc DisconnectAllControlChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllProgramChangeForProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectKbdInput (MidiKbdConnection) returns (GenericVoidValue) {}
+    rpc DisconnectKbdOutput (MidiKbdConnection) returns (GenericVoidValue) {}
+    rpc DisconnectCC (MidiCCConnection) returns (GenericVoidValue) {}
+    rpc DisconnectPC (MidiPCConnection) returns (GenericVoidValue) {}
+    rpc DisconnectAllCCFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllPCFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
 }
 
 service AudioRoutingController
 {
-    rpc GetAllInputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetAllOutputConnections (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetInputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
-    rpc GetOutputConnectionsForTrack (GenericVoidValue) returns (AudioTrackConnectionList) {}
+    rpc GetAllInputConnections (GenericVoidValue) returns (AudioConnectionList) {}
+    rpc GetAllOutputConnections (GenericVoidValue) returns (AudioConnectionList) {}
+    rpc GetInputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
+    rpc GetOutputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
 
-    rpc ConnectInputChannelToTrack (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc ConnectOutputChannelFromTrack (AudioTrackConnection) returns (GenericVoidValue) {}
+    rpc ConnectInputChannelToTrack (AudioConnection) returns (GenericVoidValue) {}
+    rpc ConnectOutputChannelFromTrack (AudioConnection) returns (GenericVoidValue) {}
 
-    rpc DisconnectInput (AudioTrackConnection) returns (GenericVoidValue) {}
-    rpc DisconnectOutput (AudioTrackConnection) returns (GenericVoidValue) {}
+    rpc DisconnectInput (AudioConnection) returns (GenericVoidValue) {}
+    rpc DisconnectOutput (AudioConnection) returns (GenericVoidValue) {}
     rpc DisconnectAllInputsFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
     rpc DisconnectAllOutputFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
 }
 
-service CvGateRoutingController
+service CvGateController
 {
     rpc GetCvInputChannelCount (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetCvOutputChannelCount (GenericVoidValue) returns (GenericIntValue) {}
 
-    rpc GetAllCvInputConnections (GenericVoidValue) returns (CvParameterConnectionList) {}
-    rpc GetAllCvOutputConnections (GenericVoidValue) returns (CvParameterConnectionList) {}
-    rpc GetAllGateInputConnections (GenericVoidValue) returns  (GateProcessorConnectionList) {}
-    rpc GetAllGateOutputConnections (GenericVoidValue) returns (GateProcessorConnectionList) {}
-    rpc GetCvInputConnectionsForProcessor (ProcessorIdentifier) returns (CvParameterConnectionList) {}
-    rpc GetCvOutputConnectionsForProcessor (ProcessorIdentifier) returns (CvParameterConnectionList) {}
-    rpc GetGateInputConnectionsForProcessor (ProcessorIdentifier) returns (GateProcessorConnectionList) {}
-    rpc GetGateOutputConnectionsForProcessor (ProcessorIdentifier) returns (GateProcessorConnectionList) {}
+    rpc GetAllCvInputConnections (GenericVoidValue) returns (CvConnectionList) {}
+    rpc GetAllCvOutputConnections (GenericVoidValue) returns (CvConnectionList) {}
+    rpc GetAllGateInputConnections (GenericVoidValue) returns (GateConnectionList) {}
+    rpc GetAllGateOutputConnections (GenericVoidValue) returns (GateConnectionList) {}
+    rpc GetCvInputConnectionsForProcessor (ProcessorIdentifier) returns (CvConnectionList) {}
+    rpc GetCvOutputConnectionsForProcessor (ProcessorIdentifier) returns (CvConnectionList) {}
+    rpc GetGateInputConnectionsForProcessor (ProcessorIdentifier) returns (GateConnectionList) {}
+    rpc GetGateOutputConnectionsForProcessor (ProcessorIdentifier) returns (GateConnectionList) {}
 
-    rpc ConnectCvInputToParameter (CvParameterConnection) returns (GenericVoidValue) {}
-    rpc ConnectCvOutputFromParameter (CvParameterConnection) returns (GenericVoidValue) {}
-    rpc ConnectGateInputToProcessor (GateProcessorConnection) returns (GenericVoidValue) {}
-    rpc ConnectGateOutputFromProcessor (GateProcessorConnection) returns (GenericVoidValue) {}
+    rpc ConnectCvInputToParameter (CvConnection) returns (GenericVoidValue) {}
+    rpc ConnectCvOutputFromParameter (CvConnection) returns (GenericVoidValue) {}
+    rpc ConnectGateInputToProcessor (GateConnection) returns (GenericVoidValue) {}
+    rpc ConnectGateOutputFromProcessor (GateConnection) returns (GenericVoidValue) {}
 
-    rpc DisconnectCvInput (CvParameterConnection) returns (GenericVoidValue) {}
-    rpc DisconnectCvOutput (CvParameterConnection) returns (GenericVoidValue) {}
-    rpc DisconnectGateInput (GateProcessorConnection) returns (GenericVoidValue) {}
-    rpc DisconnectGateOutput (GateProcessorConnection) returns (GenericVoidValue) {}
-    rpc DisconnectAllCvInputsOnProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllCvOutputsOnProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllGateInputsOnProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllGateOutputsOnProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectCvInput (CvConnection) returns (GenericVoidValue) {}
+    rpc DisconnectCvOutput (CvConnection) returns (GenericVoidValue) {}
+    rpc DisconnectGateInput (GateConnection) returns (GenericVoidValue) {}
+    rpc DisconnectGateOutput (GateConnection) returns (GenericVoidValue) {}
+    rpc DisconnectAllCvInputsFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllCvOutputsFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllGateInputsFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllGateOutputsFromProcessor (ProcessorIdentifier) returns (GenericVoidValue) {}
 }
 
 service OscController
@@ -179,11 +182,11 @@ service OscController
 service NotificationController
 {
     rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
-    rpc SubscribeToTimingUpdates() returns (stream CpuTimings) {}
-    rpc SubscribeToTrackChanges() returns (stream TrackUpdate) {}
-    rpc SubscribeToProcessorChanges() returns (stream ProcessorUpdate) {}
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
-    rpc SubscribeToParameterStringUpdates(ParameterNotificationRequest) returns (stream ParameterStringValue) {}
+    rpcSubscribeToTimingUpdates()returns(streamCpuTimings){}
+    rpcSubscribeToTrackChanges()returns(streamTrackUpdate){}
+    rpcSubscribeToProcessorChanges()returns(streamProcessorUpdate){}
+    rpcSubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){}
+    rpcSubscribeToParameterStringUpdates(ParameterNotificationRequest)returns(streamParameterStringValue){}
 }
 
 /**
@@ -472,43 +475,43 @@ message MidiChannel {
     Channel channel = 1;
 }
 
-message AudioTrackConnection
+message AudioConnection
 {
     TrackIdentifier    track = 1;
     int32              track_channel = 2;
     int32              engine_channel = 3;
 }
 
-message AudioTrackConnectionList
+message AudioConnectionList
 {
-    repeated AudioTrackConnection connections = 1;
+    repeated AudioConnection connections = 1;
 }
 
-message CvParameterConnection
+message CvConnection
 {
     ParameterIdentifier parameter = 1;
     int32               cv_port_id = 2;
 }
 
-message CvParameterConnectionList
+message CvConnectionList
 {
-    repeated CvParameterConnection connections = 1;
+    repeated CvConnection connections = 1;
 }
 
-message GateProcessorConnection
+message GateConnection
 {
-    ProcessorIdentifier parameter = 1;
+    ProcessorIdentifier processor = 1;
     int32               gate_port_id = 2;
     int32               channel = 3;
     int32               note_no = 4;
 }
 
-message GateProcessorConnectionList
+message GateConnectionList
 {
-    repeated GateProcessorConnection connections = 1;
+    repeated GateConnection connections = 1;
 }
 
-message MidiKeyboardConnection
+message MidiKbdConnection
 {
     TrackIdentifier     track = 1;
     MidiChannel         channel = 2;
@@ -516,12 +519,12 @@ message MidiKeyboardConnection
     bool                raw_midi = 7;
 }
 
-message MidiKeyboardConnectionList
+message MidiKbdConnectionList
 {
-    repeated MidiKeyboardConnection connections = 1;
+    repeated MidiKbdConnection connections = 1;
 }
 
-message MidiControlChangeConnection
+message MidiCCConnection
 {
     ProcessorIdentifier processor = 1;
     MidiChannel         channel = 2;
@@ -532,20 +535,21 @@ message MidiControlChangeConnection
     bool                relative_mode = 7;
 }
 
-message MidiControlChangeConnectionList
+message MidiCCConnectionList
 {
-    repeated MidiControlChangeConnection connections = 1;
+    repeated MidiCCConnection connections = 1;
 }
 
-message MidiProgramChangeConnection
+message MidiPCConnection
 {
     ProcessorIdentifier processor = 1;
     MidiChannel         channel = 2;
+    int32               port = 3;
 }
 
-message MidiProgramChangeConnectionList
+message MidiPCConnectionList
 {
-    repeated MidiProgramChangeConnection connections = 1;
+    repeated MidiPCConnection connections = 1;
 }
 
 message OscParameterOutputList
