@@ -201,22 +201,25 @@ service NotificationController
  * some common cases to all services.
  */
 
-message GenericVoidValue {
-}
+message GenericVoidValue {}
 
-message GenericFloatValue {
+message GenericFloatValue
+{
     float value = 1;
 }
 
-message GenericIntValue {
+message GenericIntValue
+{
     int32 value = 1;
 }
 
-message GenericBoolValue {
+message GenericBoolValue
+{
     bool value = 1;
 }
 
-message GenericStringValue {
+message GenericStringValue
+{
     string value = 1;
 }
 
@@ -231,22 +234,27 @@ message SushiBuildInfo
     string          build_date = 5;
 }
 
-message TrackIdentifier {
+message TrackIdentifier
+{
     int32 id = 1;
 }
 
-message ProcessorIdentifier {
+message ProcessorIdentifier
+{
     int32 id = 1;
 }
 
-message ParameterIdentifier {
+message ParameterIdentifier
+{
     int32 processor_id = 1;
     int32 parameter_id = 2;
 }
 
 /* 0 is reserved for "not set" in protobuf, so we don't use it for a valid response */
-message ParameterType {
-    enum Type {
+message ParameterType
+{
+    enum Type
+    {
         DUMMY = 0;
         BOOL = 1;
         INT = 2;
@@ -257,8 +265,10 @@ message ParameterType {
 
 /* Messages */
 
-message PlayingMode {
-    enum Mode {
+message PlayingMode
+{
+    enum Mode
+    {
         DUMMY = 0;
         STOPPED = 1;
         PLAYING = 2;
@@ -267,8 +277,10 @@ message PlayingMode {
     Mode mode = 1;
 }
 
-message SyncMode {
-    enum Mode {
+message SyncMode
+{
+    enum Mode
+    {
         DUMMY = 0;
         INTERNAL = 1;
         MIDI = 2;
@@ -277,45 +289,52 @@ message SyncMode {
     Mode mode = 1;
 }
 
-message TimeSignature {
+message TimeSignature
+{
     int32 numerator = 1;
     int32 denominator = 2;
 }
 
-message CpuTimings {
+message CpuTimings
+{
     float average = 1;
     float min = 2;
     float max = 3;
 }
 
-message NoteOnRequest {
+message NoteOnRequest
+{
     TrackIdentifier track = 1;
     int32 channel = 2;
     int32 note = 3;
     float velocity = 4;
 }
 
-message NoteOffRequest {
+message NoteOffRequest
+{
     TrackIdentifier track = 1;
     int32 channel = 2;
     int32 note = 3;
     float velocity = 4;
 }
 
-message NoteAftertouchRequest {
+message NoteAftertouchRequest
+{
     TrackIdentifier track = 1;
     int32 channel = 2;
     int32 note = 3;
     float value = 4;
 }
 
-message NoteModulationRequest {
+message NoteModulationRequest
+{
     TrackIdentifier track = 1;
     int32 channel = 2;
     float value = 3;
 }
 
-message TrackInfo {
+message TrackInfo
+{
     int32  id = 1;
     string label = 2;
     string name = 3;
@@ -326,11 +345,13 @@ message TrackInfo {
     repeated ProcessorIdentifier processors = 8;
 }
 
-message TrackInfoList {
+message TrackInfoList
+{
     repeated TrackInfo tracks = 1;
 }
 
-message ProcessorInfo {
+message ProcessorInfo
+{
     int32  id = 1;
     string label = 2;
     string name = 3;
@@ -338,39 +359,47 @@ message ProcessorInfo {
     int32  program_count = 5;
 }
 
-message ProcessorInfoList {
+message ProcessorInfoList
+{
     repeated ProcessorInfo processors = 1;
 }
 
-message ProgramIdentifier {
+message ProgramIdentifier
+{
     int32 program = 1;
 }
 
-message ProcessorProgramIdentifier {
+message ProcessorProgramIdentifier
+{
     ProcessorIdentifier processor = 1;
     int32 program = 2;
 }
 
-message ProgramInfo {
+message ProgramInfo
+{
     ProgramIdentifier id = 1;
     string name = 2;
 }
 
-message ProgramInfoList {
+message ProgramInfoList
+{
     repeated ProgramInfo programs = 1;
 }
 
-message ProcessorProgramSetRequest {
+message ProcessorProgramSetRequest
+{
     ProcessorIdentifier processor = 1;
     ProgramIdentifier program = 2;
 }
 
-message ProcessorBypassStateSetRequest {
+message ProcessorBypassStateSetRequest
+{
     ProcessorIdentifier processor = 1;
     bool value = 2;
 }
 
-message ParameterInfo {
+message ParameterInfo
+{
     int32  id = 1;
     ParameterType  type = 2;
     string label = 3;
@@ -381,27 +410,33 @@ message ParameterInfo {
     float  max_domain_value = 8;
 }
 
-message ParameterInfoList {
+message ParameterInfoList
+{
     repeated ParameterInfo parameters = 1;
 }
 
-message ParameterIdRequest {
+message ParameterIdRequest
+{
     ProcessorIdentifier processor  = 1;
     string ParameterName = 2;
 }
 
-message ParameterValue {
+message ParameterValue
+{
     ParameterIdentifier parameter = 1;
     float value = 2;
 }
 
-message ParameterStringValue {
+message ParameterStringValue
+{
     ParameterIdentifier property = 1;
     string value = 2;
 }
 
-message PluginType {
-    enum Type {
+message PluginType
+{
+    enum Type
+    {
         DUMMY = 0;
         INTERNAL = 1;
         VST2X = 2;
@@ -411,23 +446,27 @@ message PluginType {
     Type type = 1;
 }
 
-message ProcessorPosition {
+message ProcessorPosition
+{
     bool add_to_back = 1;
     ProcessorIdentifier before_processor = 2;
 }
 
-message CreateTrackRequest {
+message CreateTrackRequest
+{
     string name = 1;
     int32  channels = 2;
 }
 
-message CreateMultibusTrackRequest {
+message CreateMultibusTrackRequest
+{
     string name = 1;
     int32  output_busses = 2;
     int32  input_busses  = 3;
 }
 
-message CreateProcessorRequest {
+message CreateProcessorRequest
+{
     string name = 1;
     string uid = 2;
     string path = 3;
@@ -436,24 +475,29 @@ message CreateProcessorRequest {
     ProcessorPosition position = 6;
 }
 
-message MoveProcessorRequest {
+message MoveProcessorRequest
+{
     ProcessorIdentifier processor = 1;
     TrackIdentifier     source_track = 2;
     TrackIdentifier     dest_track = 3;
     ProcessorPosition   position = 4;
 }
 
-message DeleteProcessorRequest{
+message DeleteProcessorRequest
+{
     ProcessorIdentifier processor = 1;
     TrackIdentifier     track = 2;
 }
 
-message ParameterNotificationRequest {
+message ParameterNotificationRequest
+{
     repeated ParameterIdentifier parameters = 1;
 }
 
-message MidiChannel {
-    enum Channel {
+message MidiChannel
+{
+    enum Channel
+    {
         MIDI_CH_1 = 1;
         MIDI_CH_2 = 2;
         MIDI_CH_3 = 3;
@@ -570,7 +614,8 @@ message TransportUpdate
 
 message TrackUpdate
 {
-enum Action {
+    enum Action
+    {
         TRACK_ADDED = 1;
         TRACK_DELETED = 2;
         PROCESSORS_CHANGED = 3;
@@ -581,7 +626,8 @@ enum Action {
 
 message ProcessorUpdate
 {
-enum Action {
+    enum Action
+    {
         PROCESSOR_ADDED = 1;
         PROCESSOR_DELETED = 2;
         PROCESSOR_MOVED = 3;
