@@ -30,7 +30,8 @@
 
 #include "library/constants.h"
 #include "base_event_dispatcher.h"
-#include "engine/track.h"
+#include "base_processor_container.h"
+#include "track.h"
 #include "library/base_performance_timer.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
@@ -56,7 +57,7 @@ enum class EngineReturnStatus
     ERROR,
     INVALID_N_CHANNELS,
     INVALID_PLUGIN_UID,
-    INVALID_PLUGIN_NAME,
+    INVALID_PLUGIN,
     INVALID_PLUGIN_TYPE,
     INVALID_PROCESSOR,
     INVALID_PARAMETER,
@@ -128,28 +129,28 @@ public:
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
                                                            int /*track_channel*/,
-                                                           const std::string& /*track_name*/)
+                                                           ObjectId /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_channel(int /*engine_channel*/,
                                                             int /*track_channel*/,
-                                                            const std::string& /*track_name*/)
+                                                            ObjectId /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
                                                        int /*track_bus*/,
-                                                       const std::string & /*track_name*/)
+                                                       ObjectId  /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_bus(int /*output_bus*/,
                                                         int /*track_bus*/,
-                                                        const std::string & /*track_name*/)
+                                                        ObjectId  /*track_name*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -195,13 +196,7 @@ public:
     {
         return EngineReturnStatus::OK;
     }
-
-
-    virtual int n_channels_in_track(int /*track_no*/)
-    {
-        return 2;
-    }
-
+    
     virtual bool realtime()
     {
         return true;
@@ -226,76 +221,50 @@ public:
 
     virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
 
-    virtual EngineReturnStatus send_rt_event(RtEvent& event) = 0;
+    virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
 
-    virtual EngineReturnStatus send_async_event(RtEvent& event) = 0;
-
-    virtual std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& /*name*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_track(const std::string & /*track_id*/,
+                                                                 int /*channel_count*/)
     {
-        return std::make_pair(EngineReturnStatus::OK, 0);
-    };
+        return {EngineReturnStatus::OK, 0};
+    }
 
-    virtual std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
-                                                                           const std::string& /*parameter_name*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string & /*track_id*/,
+                                                                          int /*input_busses*/,
+                                                                          int /*output_busses*/)
     {
-        return std::make_pair(EngineReturnStatus::OK, 0);
-    };
+        return {EngineReturnStatus::OK, 0};
+    }
 
-    virtual std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId /*id*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, "");
-    };
-
-    virtual std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& /*processor_name*/,
-                                                                                    const ObjectId /*id*/)
-    {
-        return std::make_pair(EngineReturnStatus::OK, "");
-    };
-
-    virtual EngineReturnStatus create_track(const std::string & /*track_id*/, int /*channel_count*/)
+    virtual EngineReturnStatus delete_track(ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus create_multibus_track(const std::string & /*track_id*/, int /*input_busses*/, int /*output_busses*/)
+    virtual std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string& /*uid*/,
+                                                                 const std::string& /*name*/,
+                                                                 const std::string& /*file*/,
+                                                                 PluginType /*plugin_type*/)
+    {
+        return {EngineReturnStatus::OK, ObjectId(0)};
+    }
+
+    virtual EngineReturnStatus add_plugin_to_track(ObjectId /*plugin_id*/,
+                                                   ObjectId /*track_id*/,
+                                                   std::optional<ObjectId> /*before_plugin_id*/ = std::nullopt)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus delete_track(const std::string & /*track_id*/)
+    virtual EngineReturnStatus remove_plugin_from_track(ObjectId /*plugin_id*/,
+                                                        ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
-    virtual EngineReturnStatus add_plugin_to_track(const std::string & /*track_id*/,
-                                                   const std::string & /*uid*/,
-                                                   const std::string & /*name*/,
-                                                   const std::string & /*file*/,
-                                                   PluginType /*plugin_type*/)
+    virtual EngineReturnStatus delete_plugin(ObjectId /*plugin_id*/)
     {
         return EngineReturnStatus::OK;
-    }
-
-    virtual EngineReturnStatus remove_plugin_from_track(const std::string & /*track_id*/,
-                                                        const std::string & /*plugin_id*/)
-    {
-        return EngineReturnStatus::OK;
-    }
-
-    virtual const Processor* processor(ObjectId /*processor_id*/) const {return nullptr;}
-
-    virtual Processor* mutable_processor(ObjectId /*processor_id*/) {return nullptr;}
-
-    virtual const std::map<std::string, std::unique_ptr<Processor>>& all_processors()
-    {
-        static std::map<std::string, std::unique_ptr<Processor>> tmp;
-        return tmp;
-    }
-
-    virtual const std::vector<Track*>& all_tracks()
-    {
-        static std::vector<Track*> tmp;
-        return tmp;
     }
 
     virtual dispatcher::BaseEventDispatcher* event_dispatcher()
@@ -314,6 +283,11 @@ public:
     }
 
     virtual performance::BasePerformanceTimer* performance_timer()
+    {
+        return nullptr;
+    }
+
+    virtual const BaseProcessorContainer* processor_container()
     {
         return nullptr;
     }

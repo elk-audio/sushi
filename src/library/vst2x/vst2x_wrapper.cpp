@@ -22,7 +22,7 @@
 
 #include "twine/twine.h"
 
-#include "library/vst2x_wrapper.h"
+#include "vst2x_wrapper.h"
 #include "library/midi_decoder.h"
 #include "logging.h"
 
@@ -40,6 +40,12 @@ constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosVal
                                                   kVstBarsValid | kVstTimeSigValid;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+
+Vst2xWrapper::~Vst2xWrapper()
+{
+    SUSHI_LOG_DEBUG("Unloading plugin {}", this->name());
+    _cleanup();
+}
 
 ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 {

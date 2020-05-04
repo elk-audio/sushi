@@ -17,8 +17,8 @@ const ProcessorInfo processor1{0, "proc 1", "proc 1", 0 ,0};
 const ProcessorInfo processor2{1, "proc 2", "proc 2", 1 ,1};
 const std::vector<ProcessorInfo> processors{processor1, processor2};
 
-const TrackInfo track1{0,"track 1","track 1",0,0,0,0,0};
-const TrackInfo track2{1,"track 2","track 2",1,1,1,1,1};
+const TrackInfo track1{0,"track 1","track 1",0,0,0,0,{}};
+const TrackInfo track2{1,"track 2","track 2",1,1,1,1,{}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float default_samplerate = 48000.0f;
@@ -336,7 +336,78 @@ public:
         return default_control_status;
     };
 
-    virtual ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override { return default_control_status; };
+    virtual ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override
+    {
+        return default_control_status;
+    };
+
+    ControlStatus create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _args_from_last_call["output_bus"] = std::to_string(output_bus);
+        _args_from_last_call["input_bus"] = std::to_string(input_bus.value_or(-1));
+        _recently_called = true;
+        return default_control_status;
+    }
+
+    ControlStatus create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _args_from_last_call["output_channel"] = std::to_string(output_channel);
+        _args_from_last_call["input_channel"] = std::to_string(input_channel.value_or(-1));
+        _recently_called = true;
+        return default_control_status;
+    }
+
+    ControlStatus delete_track(int track_id) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["track_id"] = std::to_string(track_id);
+        _recently_called = true;
+        return default_control_status;
+    }
+
+
+    ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                            PluginType type, int track_id, std::optional<int> before_processor_id) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _args_from_last_call["uid"] = uid;
+        _args_from_last_call["file"] = file;
+        _args_from_last_call["type"] = std::to_string(static_cast<int>(type));
+        _args_from_last_call["track_id"] = std::to_string(track_id);
+        _args_from_last_call["before_processor_id"] = std::to_string(before_processor_id.value_or(-1));
+        _recently_called = true;
+        return default_control_status;
+    }
+
+    ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["processor_id"] = std::to_string(processor_id);
+        _args_from_last_call["source_track_id"] = std::to_string(source_track_id);
+        _args_from_last_call["dest_track_id"] = std::to_string(dest_track_id);
+        _args_from_last_call["before_processor_id"] = std::to_string(before_processor.value_or(-1));
+        _recently_called = true;
+        return default_control_status;
+    }
+
+    ControlStatus delete_processor_from_track(int processor_id, int track_id) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["processor_id"] = std::to_string(processor_id);
+        _args_from_last_call["track_id"] = std::to_string(track_id);
+        _recently_called = true;
+        return default_control_status;
+    }
+
+    virtual ControlStatus subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
+    {
+        return default_control_status;
+    };
 
     std::unordered_map<std::string,std::string> get_args_from_last_call()
     {

@@ -1,58 +1,21 @@
 #include "gtest/gtest.h"
 
-#include "engine/transport.h"
-
 #define private public
-
 #include "engine/track.cpp"
 #undef private
 
-#include "test_utils/test_utils.h"
-#include "test_utils/host_control_mockup.h"
+#include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
 
-
+#include "test_utils/test_utils.h"
+#include "test_utils/host_control_mockup.h"
+#include "test_utils/dummy_processor.h"
 
 using namespace sushi;
 using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
-
-class DummyProcessor : public Processor
-{
-public:
-    DummyProcessor(HostControl host_control) : Processor(host_control)
-    {
-        _max_input_channels = 2;
-        _max_output_channels = 2;
-        _current_input_channels = _max_input_channels;
-        _current_output_channels = _max_output_channels;
-    }
-
-    ProcessorReturnCode init(float /* sample_rate */) override
-    {
-        return ProcessorReturnCode::OK;
-    }
-
-    void process_event(const RtEvent& /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
-    {
-        out_buffer = in_buffer;
-    }
-};
-
-class DummyMonoProcessor : public DummyProcessor
-{
-public:
-    DummyMonoProcessor(HostControl host_control) :DummyProcessor(host_control)
-    {
-        _max_input_channels = 1;
-        _max_output_channels = 1;
-        _current_input_channels = _max_input_channels;
-        _current_output_channels = _max_output_channels;
-    }
-};
 
 class TrackTest : public ::testing::Test
 {
@@ -116,11 +79,23 @@ TEST_F(TrackTest, TestMultibusSetup)
 TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor(_host_control.make_host_control_mockup());
-    _module_under_test.add(&test_processor);
+    DummyProcessor test_processor_2(_host_control.make_host_control_mockup());
+    // Add to back
+    auto ok = _module_under_test.add(&test_processor);
+    EXPECT_TRUE(ok);
     EXPECT_EQ(1u, _module_under_test._processors.size());
     EXPECT_FALSE(_module_under_test.remove(1234567u));
     EXPECT_EQ(1u, _module_under_test._processors.size());
+
+    // Add test_processor_2 to the front
+    ok = _module_under_test.add(&test_processor_2, test_processor.id());
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(2u, _module_under_test._processors.size());
+    EXPECT_EQ(&test_processor_2, _module_under_test._processors[0]);
+    EXPECT_EQ(&test_processor, _module_under_test._processors[1]);
+
     EXPECT_TRUE(_module_under_test.remove(test_processor.id()));
+    EXPECT_TRUE(_module_under_test.remove(test_processor_2.id()));
     EXPECT_TRUE(_module_under_test._processors.empty());
 }
 

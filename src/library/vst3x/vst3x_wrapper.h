@@ -32,9 +32,9 @@
 
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
-#include "library/vst3x_host_app.h"
+#include "vst3x_host_app.h"
 #include "library/processor.h"
-#include "library/vst3x_utils.h"
+#include "vst3x_utils.h"
 
 namespace sushi {
 namespace vst3 {
@@ -61,10 +61,7 @@ public:
         _enabled = false;
     }
 
-    virtual ~Vst3xWrapper()
-    {
-        _cleanup();
-    }
+    virtual ~Vst3xWrapper();
 
     /**
      * @brief Entry point for parameter changes from the plugin editor.

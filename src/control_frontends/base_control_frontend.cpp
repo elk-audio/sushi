@@ -83,30 +83,31 @@ void BaseControlFrontend::send_program_change_event(ObjectId processor, int prog
 void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new AddTrackEvent(name, channels, timestamp);
+    auto e = new AddTrackEvent(name, channels, 0, 0, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_track_event(const std::string &name)
+void BaseControlFrontend::send_remove_track_event(const std::string& /*name*/)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveTrackEvent(name, timestamp);
+    auto e = new RemoveTrackEvent(0, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_add_processor_event(const std::string &track, const std::string &uid,
+void BaseControlFrontend::send_add_processor_event(const std::string &/*track*/, const std::string &uid,
                                                    const std::string &name, const std::string &file,
-                                                   AddProcessorEvent::ProcessorType type)
+                                                   AddProcessorToTrackEvent::ProcessorType type)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new AddProcessorEvent(track, uid, name, file, type, timestamp);
+    // TODO - deprecate This entire class
+    auto e = new AddProcessorToTrackEvent(name, uid, file, type, 0, 0, timestamp);
     send_with_callback(e);
 }
 
-void BaseControlFrontend::send_remove_processor_event(const std::string &track, const std::string &name)
+void BaseControlFrontend::send_remove_processor_event(const std::string& /*track*/, const std::string& /*name*/)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveProcessorEvent(name, track, timestamp);
+    auto e = new RemoveProcessorEvent(0, 0, timestamp);
     send_with_callback(e);
 }
 

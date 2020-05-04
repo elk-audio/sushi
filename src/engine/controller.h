@@ -22,6 +22,8 @@
 #include "base_event_dispatcher.h"
 #include "transport.h"
 #include "library/base_performance_timer.h"
+#include "base_processor_container.h"
+#include "library/event_interface.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -30,7 +32,7 @@ namespace sushi {
 
 namespace engine {class BaseEngine;}
 
-class Controller : public ext::SushiControl
+class Controller : public ext::SushiControl, EventPoster
 {
 public:
     Controller(engine::BaseEngine* engine);
@@ -89,13 +91,37 @@ public:
     ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
     ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
 
-protected:
+    ext::ControlStatus                                  create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override;
+    ext::ControlStatus                                  create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override;
+    ext::ControlStatus                                  delete_track(int track_id) override;
+
+    ext::ControlStatus                                  create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                                                                  ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
+    ext::ControlStatus                                  move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) override;
+    ext::ControlStatus                                  delete_processor_from_track(int processor_id, int track_id) override;
+
+    ext::ControlStatus                                  subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
+ 
+    /* Inherited from EventPoster */
+    int process(Event* event) override;
+    int poster_id() override {return EventPosterId::CONTROLLER;}
+
+    static void                                         completion_callback(void *arg, Event* event, int status);
+
+private:
+
+    std::vector<int> _get_processor_ids(int track_id) const;
+    void _completion_callback(Event* event, int status);
+
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
-    engine::BaseEngine*                 _engine;
-    dispatcher::BaseEventDispatcher*    _event_dispatcher;
-    engine::Transport*                  _transport;
-    performance::BasePerformanceTimer*  _performance_timer;
+    engine::BaseEngine*                     _engine;
+    dispatcher::BaseEventDispatcher*        _event_dispatcher;
+    engine::Transport*                      _transport;
+    performance::BasePerformanceTimer*      _performance_timer;
+    const engine::BaseProcessorContainer*   _processors;
+
+    std::vector<ext::ControlListener*> _parameter_change_listeners;
 };
 
 } //namespace sushi

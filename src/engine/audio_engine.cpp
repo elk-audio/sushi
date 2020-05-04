@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <fstream>
@@ -38,16 +38,22 @@
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
-#include "library/vst2x_wrapper.h"
-#include "library/vst3x_wrapper.h"
+#include "library/vst2x/vst2x_wrapper.h"
+#include "library/vst3x/vst3x_wrapper.h"
 #include "library/lv2/lv2_wrapper.h"
 
 namespace sushi {
 namespace engine {
 
+constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
+
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
-constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
+
+constexpr int  MAX_TRACKS = 32;
+constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
+constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
+constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -85,18 +91,24 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     }
 }
 
+
+void remove_connections_matching_track(std::vector<AudioConnection>& list, ObjectId track_id)
+{
+    list.erase(std::remove_if(list.begin(), list.end(), [&](const auto& c) {
+        return c.track == track_id; }), list.end());
+}
+
 AudioEngine::AudioEngine(float sample_rate, int rt_cpu_cores) : BaseEngine::BaseEngine(sample_rate),
-                                                                _multicore_processing(rt_cpu_cores > 1),
-                                                                _rt_cores(rt_cpu_cores),
+                                                                _audio_graph(rt_cpu_cores, MAX_TRACKS),
                                                                 _transport(sample_rate),
                                                                 _clip_detector(sample_rate)
 {
     this->set_sample_rate(sample_rate);
+    _audio_in_connections.reserve(MAX_AUDIO_CONNECTIONS);
+    _audio_out_connections.reserve(MAX_AUDIO_CONNECTIONS);
+    _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
+    _gate_in_connections.reserve(MAX_GATE_CONNECTIONS);
     _event_dispatcher.run();
-    if (_multicore_processing)
-    {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_rt_cores);
-    }
 }
 
 AudioEngine::~AudioEngine()
@@ -112,9 +124,9 @@ AudioEngine::~AudioEngine()
 void AudioEngine::set_sample_rate(float sample_rate)
 {
     BaseEngine::set_sample_rate(sample_rate);
-    for (auto& node : _processors)
+    for (auto& node : _processors.all_processors())
     {
-        node.second->configure(sample_rate);
+        _processors.mutable_processor(node->id())->configure(sample_rate);
     }
     _transport.set_sample_rate(sample_rate);
     _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
@@ -151,33 +163,54 @@ EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
     return BaseEngine::set_cv_output_channels(channels);
 }
 
-EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, ObjectId track_id)
 {
-    auto processor_node = _processors.find(track_name);
-    if(processor_node == _processors.end())
+    auto track = _processors.track(track_id);
+    if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto track = static_cast<Track*>(processor_node->second.get());
     if (input_channel >= _audio_inputs || track_channel >= track->input_channels())
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
-    AudioConnection con = {input_channel, track_channel, track->id()};
-    _in_audio_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_name);
+
+    bool added = false;
+    AudioConnection con = {.engine_channel = input_channel, .track_channel = track_channel, .track = track->id()};
+
+    if (realtime())
+    {
+        auto event = RtEvent::make_add_audio_input_connection_event(con);
+        _send_control_event(event);
+        added = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        if (_audio_in_connections.size() < MAX_AUDIO_CONNECTIONS)
+        {
+            _audio_in_connections.push_back(con);
+            added = true;
+        }
+    }
+
+    if (added == false)
+    {
+        SUSHI_LOG_ERROR("Max number of output audio connections reached");
+        return EngineReturnStatus::ERROR;
+    }
+
+    SUSHI_LOG_INFO("Connected inputs {} to channel {} of track \"{}\"", input_channel, track_channel, track_id);
     return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel, int track_channel,
-                                                             const std::string& track_name)
+                                                             ObjectId track_id)
 {
-    auto processor_node = _processors.find(track_name);
-    if(processor_node == _processors.end())
+    auto track = _processors.mutable_track(track_id);
+    if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto track = static_cast<Track*>(processor_node->second.get());
     if (output_channel >= _audio_outputs || track_channel >= track->output_channels())
     {
         if (track_channel > track->max_output_channels())
@@ -186,30 +219,53 @@ EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel,
         }
         track->set_output_channels(track_channel + 1);
     }
-    AudioConnection con = {output_channel, track_channel, track->id()};
-    _out_audio_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_name, output_channel);
+
+    bool added = false;
+    AudioConnection con = {.engine_channel = output_channel, .track_channel = track_channel, .track = track->id()};
+
+    if (this->realtime())
+    {
+        auto event = RtEvent::make_add_audio_output_connection_event(con);
+        _send_control_event(event);
+        added = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        if (_audio_out_connections.size() < MAX_AUDIO_CONNECTIONS)
+        {
+            _audio_out_connections.push_back(con);
+            added = true;
+        }
+    }
+
+    if (added == false)
+    {
+        SUSHI_LOG_ERROR("Max number of output audio connections reached");
+        return EngineReturnStatus::ERROR;
+    }
+
+    SUSHI_LOG_INFO("Connected channel {} of track \"{}\" to output {}", track_channel, track_id, output_channel);
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::connect_audio_input_bus(int input_bus, int track_bus, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_input_bus(int input_bus, int track_bus, ObjectId track_id)
 {
-    auto status = connect_audio_input_channel(input_bus * 2, track_bus * 2, track_name);
+    auto status = connect_audio_input_channel(input_bus * 2, track_bus * 2, track_id);
     if (status != EngineReturnStatus::OK)
     {
         return status;
     }
-    return connect_audio_input_channel(input_bus * 2 + 1, track_bus * 2 + 1, track_name);
+    return connect_audio_input_channel(input_bus * 2 + 1, track_bus * 2 + 1, track_id);
 }
 
-EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int track_bus, const std::string& track_name)
+EngineReturnStatus AudioEngine::connect_audio_output_bus(int output_bus, int track_bus, ObjectId track_id)
 {
-    auto status = connect_audio_output_channel(output_bus * 2, track_bus * 2, track_name);
+    auto status = connect_audio_output_channel(output_bus * 2, track_bus * 2, track_id);
     if (status != EngineReturnStatus::OK)
     {
         return status;
     }
-    return connect_audio_output_channel(output_bus * 2 + 1, track_bus * 2 + 1, track_name);
+    return connect_audio_output_channel(output_bus * 2 + 1, track_bus * 2 + 1, track_id);
 }
 
 EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& processor_name,
@@ -220,21 +276,21 @@ EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& proce
     {
         return EngineReturnStatus::INVALID_CHANNEL;
     }
-    auto processor_node = _processors.find(processor_name);
-    if(processor_node == _processors.end())
+    auto processor = _processors.mutable_processor(processor_name);
+    if(processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    auto param = processor_node->second->parameter_from_name(parameter_name);
+    auto param = processor->parameter_from_name(parameter_name);
     if (param == nullptr)
     {
         return EngineReturnStatus::INVALID_PARAMETER;
     }
     CvConnection con;
-    con.processor_id = processor_node->second->id();
+    con.processor_id = processor->id();
     con.parameter_id = param->id();
     con.cv_id = cv_input_id;
-    _cv_in_routes.push_back(con);
+    _cv_in_connections.push_back(con);
     SUSHI_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
     return EngineReturnStatus::OK;
 }
@@ -247,17 +303,17 @@ EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor_node = _processors.find(processor_name);
-    if (processor_node == _processors.end())
+    auto processor = _processors.mutable_processor(processor_name);
+    if (processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    auto param = processor_node->second->parameter_from_name(parameter_name);
+    auto param = processor->parameter_from_name(parameter_name);
     if (param == nullptr)
     {
         return EngineReturnStatus::INVALID_PARAMETER;
     }
-    auto res = processor_node->second->connect_cv_from_parameter(param->id(), cv_output_id);
+    auto res = processor->connect_cv_from_parameter(param->id(), cv_output_id);
     if (res != ProcessorReturnCode::OK)
     {
         return EngineReturnStatus::ERROR;
@@ -275,17 +331,17 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor_node = _processors.find(processor_name);
-    if(processor_node == _processors.end())
+    auto processor = _processors.mutable_processor(processor_name);
+    if (processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
     GateConnection con;
-    con.processor_id = processor_node->second->id();
+    con.processor_id = processor->id();
     con.note_no = note_no;
     con.channel = channel;
     con.gate_id = gate_input_id;
-    _gate_in_routes.push_back(con);
+    _gate_in_connections.push_back(con);
     SUSHI_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
@@ -299,12 +355,12 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
     {
         return EngineReturnStatus::ERROR;
     }
-    auto processor_node = _processors.find(processor_name);
-    if(processor_node == _processors.end())
+    auto processor = _processors.mutable_processor(processor_name);
+    if(processor == nullptr)
     {
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    auto res = processor_node->second->connect_gate_from_processor(gate_output_id, channel, note_no);
+    auto res = processor->connect_gate_from_processor(gate_output_id, channel, note_no);
     if (res != ProcessorReturnCode::OK)
     {
         return EngineReturnStatus::ERROR;
@@ -341,123 +397,37 @@ void AudioEngine::enable_realtime(bool enabled)
         if (realtime())
         {
             auto event = RtEvent::make_stop_engine_event();
-            send_async_event(event);
+            _send_control_event(event);
         } else
         {
             _state.store(RealtimeState::STOPPED);
         }
     }
-};
-
-int AudioEngine::n_channels_in_track(int track)
-{
-    if (track <= static_cast<int>(_audio_graph.size()))
-    {
-        return _audio_graph[track]->input_channels();
-    }
-    return 0;
 }
 
-Processor* AudioEngine::_make_internal_plugin(const std::string& uid)
-{
-    Processor* instance = nullptr;
-    if (uid == "sushi.testing.passthrough")
-    {
-        instance = new passthrough_plugin::PassthroughPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.gain")
-    {
-        instance = new gain_plugin::GainPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.lfo")
-    {
-        instance = new lfo_plugin::LfoPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.equalizer")
-    {
-        instance = new equalizer_plugin::EqualizerPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.sampleplayer")
-    {
-        instance = new sample_player_plugin::SamplePlayerPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        instance = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.peakmeter")
-    {
-        instance = new peak_meter_plugin::PeakMeterPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.transposer")
-    {
-        instance = new transposer_plugin::TransposerPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.step_sequencer")
-    {
-        instance = new step_sequencer_plugin::StepSequencerPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.cv_to_control")
-    {
-        instance = new cv_to_control_plugin::CvToControlPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.control_to_cv")
-    {
-        instance = new control_to_cv_plugin::ControlToCvPlugin(_host_control);
-    }
-    else if (uid == "sushi.testing.wav_writer")
-    {
-        instance = new wav_writer_plugin::WavWriterPlugin(_host_control);
-    }
-    return instance;
-}
-
-EngineReturnStatus AudioEngine::_register_processor(Processor* processor, const std::string& name)
+EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> processor, const std::string& name)
 {
     if(name.empty())
     {
         SUSHI_LOG_ERROR("Plugin name is not specified");
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
+        return EngineReturnStatus::INVALID_PLUGIN;
     }
-    if(_processor_exists(name))
+    processor->set_name(name);
+    if (_processors.add_processor(processor) == false)
     {
         SUSHI_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    processor->set_name(name);
-    _processors[name] = std::move(std::unique_ptr<Processor>(processor));
     SUSHI_LOG_DEBUG("Succesfully registered processor {}.", name);
     return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::_deregister_processor(const std::string &name)
+void AudioEngine::_deregister_processor(Processor* processor)
 {
-    auto processor_node = _processors.find(name);
-    if (processor_node == _processors.end())
-    {
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
-    }
-    _processors.erase(processor_node);
-    return EngineReturnStatus::OK;
-}
-
-bool AudioEngine::_processor_exists(const std::string& processor_name)
-{
-    auto processor_node = _processors.find(processor_name);
-    if(processor_node == _processors.end())
-    {
-        return false;
-    }
-    return true;
-}
-
-bool AudioEngine::_processor_exists(const ObjectId uid)
-{
-    if(uid >= _realtime_processors.size() || _realtime_processors[uid] == nullptr)
-    {
-        return false;
-    }
-    return true;
+    assert(processor);
+    assert(processor->active_rt_processing() == false);
+    _processors.remove_processor(processor->id());
+    SUSHI_LOG_INFO("Successfully deregistered processor {}", processor->name());
 }
 
 bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
@@ -488,6 +458,25 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
     return true;
 }
 
+void AudioEngine::_remove_connections_from_track(ObjectId track_id)
+{
+    if (this->realtime())
+    {
+        AudioConnection con = {.engine_channel = 0, .track_channel = 0, .track = track_id};
+        auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
+        auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
+        _send_control_event(input_event);
+        _send_control_event(output_event);
+        _event_receiver.wait_for_response(input_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        _event_receiver.wait_for_response(output_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+    }
+    else
+    {
+        remove_connections_matching_track(_audio_in_connections, track_id);
+        remove_connections_matching_track(_audio_out_connections, track_id);
+    }
+}
+
 void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                                 SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                                 ControlBuffer* in_controls,
@@ -502,15 +491,8 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
 
     _transport.set_time(timestamp, samplecount);
 
-    RtEvent in_event;
-    while (_internal_control_queue.pop(in_event))
-    {
-        send_rt_event(in_event);
-    }
-    while (_main_in_queue.pop(in_event))
-    {
-        send_rt_event(in_event);
-    }
+    _process_internal_rt_events();
+    _send_rt_events_to_processors();
 
     if (_cv_inputs > 0)
     {
@@ -526,24 +508,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     }
     _copy_audio_to_tracks(in_buffer);
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wakeup_workers();
-        _retrieve_events_from_tracks(*out_controls);
-    }
-    else
-    {
-        for (auto& track : _audio_graph)
-        {
-            track->render();
-        }
-        _process_outgoing_events(*out_controls, _processor_out_queue);
-    }
+    // Render all tracks
+    _audio_graph.render();
 
-    if (_multicore_processing)
-    {
-        _worker_pool->wait_for_workers_idle();
-    }
+    _retrieve_events_from_tracks(*out_controls);
 
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _copy_audio_from_tracks(out_buffer);
@@ -563,7 +531,7 @@ void AudioEngine::set_tempo(float tempo)
     if (realtime_running)
     {
         auto e = RtEvent::make_tempo_event(0, tempo);
-        send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -574,7 +542,7 @@ void AudioEngine::set_time_signature(TimeSignature signature)
     if (realtime_running)
     {
         auto e = RtEvent::make_time_signature_event(0, signature);
-        send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -585,7 +553,7 @@ void AudioEngine::set_transport_mode(PlayingMode mode)
     if (realtime_running)
     {
         auto e = RtEvent::make_playing_mode_event(0, mode);
-        send_async_event(e);
+        _send_control_event(e);
     }
 }
 
@@ -596,315 +564,313 @@ void AudioEngine::set_tempo_sync_mode(SyncMode mode)
     if (realtime_running)
     {
         auto e = RtEvent::make_sync_mode_event(0, mode);
-        send_async_event(e);
+        _send_control_event(e);
     }
 }
 
-EngineReturnStatus AudioEngine::send_rt_event(RtEvent& event)
+EngineReturnStatus AudioEngine::send_rt_event(const RtEvent& event)
 {
-    if (_handle_internal_events(event))
-    {
-        return EngineReturnStatus::OK;
-    }
-    if (event.processor_id() > _realtime_processors.size())
-    {
-        SUSHI_LOG_WARNING("Invalid processor id {}.", event.processor_id());
-        return EngineReturnStatus::INVALID_PROCESSOR;
-    }
-    auto processor_node = _realtime_processors[event.processor_id()];
-    if (processor_node == nullptr)
-    {
-        SUSHI_LOG_WARNING("Invalid processor id {}.", event.processor_id());
-        return EngineReturnStatus::INVALID_PROCESSOR;
-    }
-    processor_node->process_event(event);
-    return EngineReturnStatus::OK;
+    auto status = _main_in_queue.push(event);
+    return status? EngineReturnStatus::OK : EngineReturnStatus::QUEUE_FULL;
 }
 
-EngineReturnStatus AudioEngine::send_async_event(RtEvent& event)
+EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
 {
+    // This queue will only handle engine control events, not processor events
+    assert(event.type() >= RtEventType::STOP_ENGINE);
     std::lock_guard<std::mutex> lock(_in_queue_lock);
-    if (_internal_control_queue.push(event))
+    if (_control_queue_in.push(event))
     {
         return EngineReturnStatus::OK;
     }
     return EngineReturnStatus::QUEUE_FULL;
 }
 
-
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::processor_id_from_name(const std::string& name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name,
+                                                                           int input_busses,
+                                                                           int output_busses)
 {
-    auto processor_node = _processors.find(name);
-    if (processor_node == _processors.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
-    }
-    return std::make_pair(EngineReturnStatus::OK, processor_node->second->id());
-}
-
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::parameter_id_from_name(const std::string& processor_name,
-                                                                            const std::string& parameter_name)
-{
-    auto processor_node = _processors.find(processor_name);
-    if (processor_node == _processors.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, 0);
-    }
-    auto param = processor_node->second->parameter_from_name(parameter_name);
-    if (param)
-    {
-        return std::make_pair(EngineReturnStatus::OK, param->id());
-    }
-    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, 0);
-};
-
-std::pair<EngineReturnStatus, const std::string> AudioEngine::processor_name_from_id(const ObjectId uid)
-{
-    if (!_processor_exists(uid))
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, std::string(""));
-    }
-    return std::make_pair(EngineReturnStatus::OK, _realtime_processors[uid]->name());
-}
-
-std::pair<EngineReturnStatus, const std::string> AudioEngine::parameter_name_from_id(const std::string &processor_name,
-                                                                                     const ObjectId id)
-{
-    auto processor_node = _processors.find(processor_name);
-    if (processor_node == _processors.end())
-    {
-        return std::make_pair(EngineReturnStatus::INVALID_PROCESSOR, "");
-    }
-    auto param = processor_node->second->parameter_from_id(id);
-    if (param)
-    {
-        return std::make_pair(EngineReturnStatus::OK, param->name());
-    }
-    return std::make_pair(EngineReturnStatus::INVALID_PARAMETER, "");
-}
-
-EngineReturnStatus AudioEngine::create_multibus_track(const std::string& name, int input_busses, int output_busses)
-{
-    if((input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES))
+    if(input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES)
     {
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
-        return EngineReturnStatus::INVALID_N_CHANNELS;
+        return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    Track* track = new Track(_host_control, input_busses, output_busses, &_process_timer);
-    return _register_new_track(name, track);
+    auto track = std::make_shared<Track>(_host_control, input_busses, output_busses, &_process_timer);
+    auto status = _register_new_track(name, track);
+    if (status != EngineReturnStatus::OK)
+    {
+        return {status, ObjectId(0)};
+    }
+    return {EngineReturnStatus::OK, track->id()};
 }
 
-EngineReturnStatus AudioEngine::create_track(const std::string &name, int channel_count)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::string &name, int channel_count)
 {
     if((channel_count < 0 || channel_count > 2))
     {
         SUSHI_LOG_ERROR("Invalid number of channels for new track");
-        return EngineReturnStatus::INVALID_N_CHANNELS;
+        return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    Track* track = new Track(_host_control, channel_count, &_process_timer);
-    return _register_new_track(name, track);
+    auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer);
+    auto status = _register_new_track(name, track);
+    if (status != EngineReturnStatus::OK)
+    {
+        return {status, ObjectId(0)};
+    }
+    return {EngineReturnStatus::OK, track->id()};
 }
 
-EngineReturnStatus AudioEngine::delete_track(const std::string &track_name)
+EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
 {
-    // TODO - Until it's decided how tracks report what processors they have,
-    // we assume that the track has no processors before deleting
-    auto track_node = _processors.find(track_name);
-    if (track_node == _processors.end())
+    auto track = _processors.mutable_track(track_id);
+    if (track == nullptr)
     {
-        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_name);
+        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto track = track_node->second.get();
+    if (_processors.processors_on_track(track->id()).size() > 0)
+    {
+        SUSHI_LOG_ERROR("Couldn't delete track {}, track not empty", track_id);
+        return EngineReturnStatus::ERROR;
+    }
+
     if (realtime())
     {
+        AudioConnection con = {.engine_channel = 0, .track_channel = 0, .track = track_id};
+        con.track = track->id();
+        auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
+        auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
         auto remove_track_event = RtEvent::make_remove_track_event(track->id());
         auto delete_event = RtEvent::make_remove_processor_event(track->id());
-        send_async_event(remove_track_event);
-        send_async_event(delete_event);
+        _send_control_event(input_event);
+        _send_control_event(output_event);
+        _send_control_event(remove_track_event);
+        _send_control_event(delete_event);
+        // The audio connection events are assumed to go through
         bool removed = _event_receiver.wait_for_response(remove_track_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track->name());
         }
-        return _deregister_processor(track_name);
     }
     else
     {
-        for (auto track_in_graph = _audio_graph.begin(); track_in_graph != _audio_graph.end(); ++track)
-        {
-            if (*track_in_graph == track)
-            {
-                _audio_graph.erase(track_in_graph);
-                _remove_processor_from_realtime_part(track->id());
-                return _deregister_processor(track_name);
-            }
-            SUSHI_LOG_WARNING("Plugin track {} was not in the audio graph", track_name);
-        }
-        return EngineReturnStatus::INVALID_TRACK;
+        // First remove the track from any audio connections, if realtime, this is done with RtEvents
+        _remove_connections_from_track(track->id());
+
+        _audio_graph.remove(track.get());
+        [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
+        SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id);
     }
+    _processors.remove_track(track->id());
+    _deregister_processor(track.get());
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED,
+                                                                 0, track->id(), IMMEDIATE_PROCESS));
+    return EngineReturnStatus::OK;
 }
 
-EngineReturnStatus AudioEngine::add_plugin_to_track(const std::string &track_name,
-                                                    const std::string &plugin_uid,
-                                                    const std::string &plugin_name,
-                                                    const std::string &plugin_path,
-                                                    PluginType plugin_type)
+std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::string &plugin_uid,
+                                                                  const std::string &plugin_name,
+                                                                  const std::string &plugin_path,
+                                                                  PluginType plugin_type)
 {
-    auto track_node = _processors.find(track_name);
-    if (track_node == _processors.end())
-    {
-        SUSHI_LOG_ERROR("Track named {} does not exist in processor list", track_name);
-        return EngineReturnStatus::INVALID_TRACK;
-    }
-    auto track = static_cast<Track*>(track_node->second.get());
-    Processor* plugin{nullptr};
+    std::shared_ptr<Processor> plugin;
     switch (plugin_type)
     {
         case PluginType::INTERNAL:
-            plugin = _make_internal_plugin(plugin_uid);
+            plugin = create_internal_plugin(plugin_uid, _host_control);
             if(plugin == nullptr)
             {
                 SUSHI_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
-                return EngineReturnStatus::INVALID_PLUGIN_UID;
+                return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
             }
             break;
 
         case PluginType::VST2X:
-            plugin = new vst2::Vst2xWrapper(_host_control, plugin_path);
+            plugin = std::make_shared<vst2::Vst2xWrapper>(_host_control, plugin_path);
             break;
 
         case PluginType::VST3X:
-            plugin = new vst3::Vst3xWrapper(_host_control, plugin_path, plugin_uid);
+            plugin = std::make_shared<vst3::Vst3xWrapper>(_host_control, plugin_path, plugin_uid);
             break;
 
         case PluginType::LV2:
-            plugin = new lv2::LV2_Wrapper(_host_control, plugin_path);
+            plugin = std::make_shared<lv2::LV2_Wrapper>(_host_control, plugin_path);
             break;
     }
 
     auto processor_status = plugin->init(_sample_rate);
-    if(processor_status != ProcessorReturnCode::OK)
+    if (processor_status != ProcessorReturnCode::OK)
     {
         SUSHI_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
-        return EngineReturnStatus::INVALID_PLUGIN_UID;
+        return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
     }
     EngineReturnStatus status = _register_processor(plugin, plugin_name);
     if(status != EngineReturnStatus::OK)
     {
         SUSHI_LOG_ERROR("Failed to register plugin {}", plugin_name);
-        delete plugin;
-        return status;
+        return {status, ObjectId(0)};
     }
+
     plugin->set_enabled(true);
-    if (realtime())
+    if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto insert_event = RtEvent::make_insert_processor_event(plugin);
-        auto add_event = RtEvent::make_add_processor_to_track_event(plugin->id(), track->id());
-        send_async_event(insert_event);
-        send_async_event(add_event);
+        auto insert_event = RtEvent::make_insert_processor_event(plugin.get());
+        _send_control_event(insert_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        if (!inserted || !added)
+        if (!inserted)
         {
-            SUSHI_LOG_ERROR("Failed to insert/add processor {} to processing part", plugin_name);
+            SUSHI_LOG_ERROR("Failed to insert plugin {} to processing part", plugin_name);
+            _deregister_processor(plugin.get());
+            return {EngineReturnStatus::INVALID_PROCESSOR, ObjectId(0)};
+        }
+    }
+    else
+    {
+        // If the engine is not running in realtime mode we can add the processor directly
+        _insert_processor_in_realtime_part(plugin.get());
+    }
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED,
+                                                                 plugin->id(), 0, IMMEDIATE_PROCESS));
+    return {EngineReturnStatus::OK, plugin->id()};
+}
+
+EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
+                                                    ObjectId track_id,
+                                                    std::optional<ObjectId> before_plugin_id)
+{
+    auto track = _processors.mutable_track(track_id);
+    if (track == nullptr)
+    {
+        SUSHI_LOG_ERROR("Track {} not found", track_id);
+        return EngineReturnStatus::INVALID_TRACK;
+    }
+
+    auto plugin = _processors.mutable_processor(plugin_id);
+    if (plugin == nullptr)
+    {
+        SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+
+    if (plugin->active_rt_processing())
+    {
+        SUSHI_LOG_ERROR("Plugin {} is already active on a track");
+        return EngineReturnStatus::ERROR;
+    }
+
+    if (this->realtime())
+    {
+        // In realtime mode we need to handle this in the audio thread
+        RtEvent add_event = RtEvent::make_add_processor_to_track_event(plugin_id, track_id, before_plugin_id);
+        _send_control_event(add_event);
+        bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        if (added == false)
+        {
+            SUSHI_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
     else
     {
         // If the engine is not running in realtime mode we can add the processor directly
-        _insert_processor_in_realtime_part(plugin);
-        if (track->add(plugin) == false)
+        _insert_processor_in_realtime_part(plugin.get());
+        bool added = track->add(plugin.get(), before_plugin_id);
+        if (added == false)
         {
             return EngineReturnStatus::ERROR;
         }
     }
+    // Add it to the engine's mirror of track processing chains
+    _processors.add_to_track(plugin, track->id(), before_plugin_id);
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
+                                                                 plugin_id, track_id, IMMEDIATE_PROCESS));
     return EngineReturnStatus::OK;
 }
 
-/* TODO - In the future it should be possible to remove plugins without deleting them
- * and consequentally to add them to a different track or have plugins not associated
- * to a particular track. */
-EngineReturnStatus AudioEngine::remove_plugin_from_track(const std::string &track_name, const std::string &plugin_name)
+EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id)
 {
-    auto track_node = _processors.find(track_name);
-    if (track_node == _processors.end())
+    auto plugin = _processors.processor(plugin_id);
+    auto track = _processors.mutable_track(track_id);
+    if (plugin == nullptr)
+    {
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+    if (track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    auto processor_node = _processors.find(plugin_name);
-    if (processor_node == _processors.end())
-    {
-        return EngineReturnStatus::INVALID_PLUGIN_NAME;
-    }
-    auto processor = processor_node->second.get();
-    Track* track = static_cast<Track*>(track_node->second.get());
+
     if (realtime())
     {
         // Send events to handle this in the rt domain
-        auto remove_event = RtEvent::make_remove_processor_from_track_event(processor->id(), track->id());
-        auto delete_event = RtEvent::make_remove_processor_event(processor->id());
-        send_async_event(remove_event);
-        send_async_event(delete_event);
-        bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        if (!remove_ok || !delete_ok)
-        {
-            SUSHI_LOG_ERROR("Failed to remove/delete processor {} from processing part", plugin_name);
-        }
+        auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
+        _send_control_event(remove_event);
+        [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        SUSHI_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
     }
     else
     {
-        if (!track->remove(processor->id()))
+        if (!track->remove(plugin.get()->id()))
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from track {}", plugin_name, track_name);
+            SUSHI_LOG_ERROR("Failed to remove processor {} from track_id {}", plugin_id, track_id);
+            return EngineReturnStatus::ERROR;
         }
+    }
+
+    _processors.remove_from_track(plugin_id, track_id);
+    return EngineReturnStatus::OK;
+}
+
+EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
+{
+    auto processor = _processors.mutable_processor(plugin_id);
+    if (processor == nullptr)
+    {
+        return EngineReturnStatus::INVALID_PLUGIN;
+    }
+    if (processor->active_rt_processing())
+    {
+        SUSHI_LOG_ERROR("Cannot delete processor {}, active on track", processor->name());
+        return EngineReturnStatus::ERROR;
+    }
+    if (realtime())
+    {
+        // Send events to handle this in the rt domain
+        auto delete_event = RtEvent::make_remove_processor_event(processor->id());
+        _send_control_event(delete_event);
+        [[maybe_unused]] bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        SUSHI_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id);
+    }
+    else
+    {
         _remove_processor_from_realtime_part(processor->id());
     }
-    return _deregister_processor(processor->name());
+
+    _deregister_processor(processor.get());
+    _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
+                                                                 processor->id(), 0, IMMEDIATE_PROCESS));
+    return EngineReturnStatus::OK;
 }
 
-const Processor* AudioEngine::processor(ObjectId processor_id) const
-{
-    return const_cast<AudioEngine*>(this)->mutable_processor(processor_id);
-}
-
-Processor* AudioEngine::mutable_processor(ObjectId processor_id)
-{
-    if (processor_id >= _realtime_processors.size())
-    {
-        return nullptr;
-    }
-    return _realtime_processors[processor_id];
-}
-
-EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Track* track)
+EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std::shared_ptr<Track> track)
 {
     track->init(_sample_rate);
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {
-        delete track;
+        track.reset();
         return status;
     }
-    if (_multicore_processing)
-    {
-        // Have tracks buffer their events internally as outputting directly might not be thread safe
-        track->set_event_output_internal();
-    }
-    else
-    {
-        track->set_event_output(&_processor_out_queue);
-    }
+
     if (realtime())
     {
-        auto insert_event = RtEvent::make_insert_processor_event(track);
+        auto insert_event = RtEvent::make_insert_processor_event(track.get());
         auto add_event = RtEvent::make_add_track_event(track->id());
-        send_async_event(insert_event);
-        send_async_event(add_event);
+        _send_control_event(insert_event);
+        _send_control_event(add_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
@@ -912,134 +878,200 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, Tra
             SUSHI_LOG_ERROR("Failed to insert/add track {} to processing part", name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
-    } else
-    {
-        _insert_processor_in_realtime_part(track);
-        _audio_graph.push_back(track);
     }
-    if (_multicore_processing)
+    else
     {
-        _worker_pool->add_worker(Track::ext_render_function, track);
+        if (_audio_graph.add(track.get()) == false)
+        {
+            SUSHI_LOG_ERROR("Error adding track {}, max number of tracks reached", track->name());
+            return EngineReturnStatus::ERROR;
+        }
+        if (_insert_processor_in_realtime_part(track.get()) == false)
+        {
+            SUSHI_LOG_ERROR("Error adding track {}", track->name());
+            return EngineReturnStatus::ERROR;
+        }
     }
-    SUSHI_LOG_INFO("Track {} successfully added to engine", name);
-    return EngineReturnStatus::OK;
+    if (_processors.add_track(track))
+    {
+        SUSHI_LOG_INFO("Track {} successfully added to engine", name);
+        _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_ADDED,
+                                                                     0, track->id(), IMMEDIATE_PROCESS));
+        return EngineReturnStatus::OK;
+    }
+    return EngineReturnStatus::ERROR;
 }
 
-bool AudioEngine::_handle_internal_events(RtEvent& event)
+void AudioEngine::_process_internal_rt_events()
 {
-    switch (event.type())
+    RtEvent event;
+    while(_control_queue_in.pop(event))
     {
-        case RtEventType::STOP_ENGINE:
+        switch (event.type())
         {
-            auto typed_event = event.returnable_event();
-            _state.store(RealtimeState::STOPPING);
-            typed_event->set_handled(true);
-            break;
-        }
-        case RtEventType::INSERT_PROCESSOR:
-        {
-            auto typed_event = event.processor_operation_event();
-            bool ok = _insert_processor_in_realtime_part(typed_event->instance());
-            typed_event->set_handled(ok);
-            break;
-        }
-        case RtEventType::REMOVE_PROCESSOR:
-        {
-            auto typed_event = event.processor_reorder_event();
-            bool ok = _remove_processor_from_realtime_part(typed_event->processor());
-            typed_event->set_handled(ok);
-            break;
-        }
-        case RtEventType::ADD_PROCESSOR_TO_TRACK:
-        {
-            auto typed_event = event.processor_reorder_event();
-            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-            Processor* processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
-            if (track && processor)
+            case RtEventType::STOP_ENGINE:
             {
-                auto ok = track->add(processor);
-                typed_event->set_handled(ok);
-            }
-            else
-            {
-                typed_event->set_handled(false);
-            }
-            break;
-        }
-        case RtEventType::REMOVE_PROCESSOR_FROM_TRACK:
-        {
-            auto typed_event = event.processor_reorder_event();
-            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-            if (track)
-            {
-                bool ok = track->remove(typed_event->processor());
-                typed_event->set_handled(ok);
-            }
-            else
+                auto typed_event = event.returnable_event();
+                _state.store(RealtimeState::STOPPING);
                 typed_event->set_handled(true);
-            break;
-        }
-        case RtEventType::ADD_TRACK:
-        {
-            auto typed_event = event.processor_reorder_event();
-            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-            if (track)
-            {
-                _audio_graph.push_back(track);
-                typed_event->set_handled(true);
+                break;
             }
-            else
-                typed_event->set_handled(false);
-            break;
-        }
-        case RtEventType::REMOVE_TRACK:
-        {
-            auto typed_event = event.processor_reorder_event();
-            Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-            if (track)
+            case RtEventType::TEMPO:
+            case RtEventType::TIME_SIGNATURE:
+            case RtEventType::PLAYING_MODE:
+            case RtEventType::SYNC_MODE:
             {
-                for (auto i = _audio_graph.begin(); i != _audio_graph.end(); ++i)
+                _transport.process_event(event);
+                break;
+            }
+            case RtEventType::INSERT_PROCESSOR:
+            {
+                auto typed_event = event.processor_operation_event();
+                bool inserted = _insert_processor_in_realtime_part(typed_event->instance());
+                typed_event->set_handled(inserted);
+                break;
+            }
+            case RtEventType::REMOVE_PROCESSOR:
+            {
+                auto typed_event = event.processor_reorder_event();
+                bool removed = _remove_processor_from_realtime_part(typed_event->processor());
+                typed_event->set_handled(removed);
+                break;
+            }
+            case RtEventType::ADD_PROCESSOR_TO_TRACK:
+            {
+                auto typed_event = event.processor_reorder_event();
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                Processor*processor = static_cast<Processor*>(_realtime_processors[typed_event->processor()]);
+                bool added = false;
+                if (track && processor)
                 {
-                    if ((*i)->id() == typed_event->track())
-                    {
-                        _audio_graph.erase(i);
-                        typed_event->set_handled(true);
-                        break;
-                    }
+                    added = track->add(processor, typed_event->before_processor());
                 }
+                typed_event->set_handled(added);
+                break;
             }
-            else
+            case RtEventType::REMOVE_PROCESSOR_FROM_TRACK:
+            {
+                auto typed_event = event.processor_reorder_event();
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool removed = false;
+                if (track)
+                {
+                    removed = track->remove(typed_event->processor());
+                }
+                typed_event->set_handled(removed);
+                break;
+            }
+            case RtEventType::ADD_TRACK:
+            {
+                auto typed_event = event.processor_reorder_event();
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool added = false;
+                if (track)
+                {
+                    added = _audio_graph.add(track);
+                }
+                typed_event->set_handled(added);
+                break;
+            }
+            case RtEventType::REMOVE_TRACK:
+            {
+                auto typed_event = event.processor_reorder_event();
+                Track* track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
+                bool removed = false;
+                if (track)
+                {
+                    removed = _audio_graph.remove(track);
+                }
+                typed_event->set_handled(removed);
+                break;
+            }
+            case RtEventType::ADD_AUDIO_CONNECTION:
+            {
+                auto typed_event = event.audio_connection_event();
+                auto& list = typed_event->input_connection()? _audio_in_connections : _audio_out_connections;
+                if (list.size() < MAX_AUDIO_CONNECTIONS)
+                {
+                    list.push_back(typed_event->connection());
+                    typed_event->set_handled(true);
+                    break;
+                }
                 typed_event->set_handled(false);
-            break;
-        }
-        case RtEventType::TEMPO:
-        case RtEventType::TIME_SIGNATURE:
-        case RtEventType::PLAYING_MODE:
-        case RtEventType::SYNC_MODE:
-        {
-            _transport.process_event(event);
-            break;
-        }
+                break;
+            }
+            case RtEventType::REMOVE_AUDIO_CONNECTION:
+            {
+                auto typed_event = event.audio_connection_event();
+                auto& list = typed_event->input_connection()? _audio_in_connections : _audio_out_connections;
+                // Note, currently this removes all connections related to a specific track
+                // If/when we allow access to the list of connection we might want to remove
+                // only the specific connection matching
+                remove_connections_matching_track(list, typed_event->connection().track);
+                typed_event->set_handled(true);
+                break;
+            }
 
-        default:
-            return false;
+            default:
+                break;
+        }
+        _control_queue_out.push(event); // Send event back to non-rt domain
     }
-    _control_queue_out.push(event); // Send event back to non-rt domain
-    return true;
 }
+
+void AudioEngine::_send_rt_events_to_processors()
+{
+    RtEvent event;
+    while(_main_in_queue.pop(event))
+    {
+        _send_rt_event(event);
+    }
+}
+
+void AudioEngine::_send_rt_event(const RtEvent& event)
+{
+    if (event.processor_id() < _realtime_processors.size() &&
+        _realtime_processors[event.processor_id()] != nullptr)
+    {
+        _realtime_processors[event.processor_id()]->process_event(event);
+    }
+}
+
 
 void AudioEngine::_retrieve_events_from_tracks(ControlBuffer& buffer)
 {
-    for (auto& track : _audio_graph)
+    for (auto& output : _audio_graph.event_outputs())
     {
-        auto& event_buffer = track->output_event_buffer();
-        _process_outgoing_events(buffer, event_buffer);
+        while (output.empty() == false)
+        {
+            const RtEvent& event = output.pop();
+            switch (event.type())
+            {
+                case RtEventType::CV_EVENT:
+                {
+                    auto typed_event = event.cv_event();
+                    buffer.cv_values[typed_event->cv_id()] = typed_event->value();
+                    break;
+                }
+
+                case RtEventType::GATE_EVENT:
+                {
+                    auto typed_event = event.gate_event();
+                    _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
+                    break;
+                }
+
+                default:
+                    _main_out_queue.push(event);
+            }
+        }
+        buffer.gate_values = _outgoing_gate_values;
     }
 }
 
 void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
 {
-    for (const auto& c : _in_audio_connections)
+    for (const auto& c : _audio_in_connections)
     {
         auto engine_in = ChunkSampleBuffer::create_non_owning_buffer(*input, c.engine_channel, 1);
         auto track_in = static_cast<Track*>(_realtime_processors[c.track])->input_channel(c.track_channel);
@@ -1050,7 +1082,7 @@ void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
 void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
 {
     output->clear();
-    for (const auto& c : _out_audio_connections)
+    for (const auto& c : _audio_out_connections)
     {
         auto track_out = static_cast<Track*>(_realtime_processors[c.track])->output_channel(c.track_channel);
         auto engine_out = ChunkSampleBuffer::create_non_owning_buffer(*output, c.engine_channel, 1);
@@ -1062,13 +1094,13 @@ void AudioEngine::print_timings_to_log()
 {
     if (_process_timer.enabled())
     {
-        for (const auto& processor : _processors)
+        for (const auto& processor : _processors.all_processors())
         {
-            auto id = processor.second->id();
+            auto id = processor->id();
             auto timings = _process_timer.timings_for_node(id);
             if (timings.has_value())
             {
-                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor.second->name(),
+                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
                               timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
             }
         }
@@ -1107,11 +1139,10 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
          << "us)\n\n" << std::setw(24) << "" << std::setw(16) << "average(%)" << std::setw(16) << "minimum(%)"
          << std::setw(16) << "maximum(%)" << std::endl;
 
-    for (const auto& track : _audio_graph)
+    for (const auto& track : _processors.all_tracks())
     {
         file << std::setw(0) << "Track: " << track->name() << "\n";
-        auto processors = track->process_chain();
-        for (auto& p : processors)
+        for (auto& p : _processors.processors_on_track(track->id()))
         {
             file << std::setw(8) << "" << std::setw(16) << p->name();
             print_single_timings_for_node(file, _process_timer, p->id());
@@ -1128,17 +1159,17 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
 
 void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
 {
-    for (const auto& r : _cv_in_routes)
+    for (const auto& r : _cv_in_connections)
     {
         float value = buffer.cv_values[r.cv_id];
         auto ev = RtEvent::make_parameter_change_event(r.processor_id, 0, r.parameter_id, value);
-        send_rt_event(ev);
+        _send_rt_event(ev);
     }
     // Get gate state changes by xor:ing with previous states
     auto gate_diffs = _prev_gate_values ^ buffer.gate_values;
     if (gate_diffs.any())
     {
-        for (const auto& r : _gate_in_routes)
+        for (const auto& r : _gate_in_connections)
         {
             if (gate_diffs[r.gate_id])
             {
@@ -1146,45 +1177,17 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
                 if (gate_high)
                 {
                     auto ev = RtEvent::make_note_on_event(r.processor_id, 0, r.channel, r.note_no, 1.0f);
-                    send_rt_event(ev);
+                    _send_rt_event(ev);
                 }
                 else
                 {
                     auto ev = RtEvent::make_note_off_event(r.processor_id, 0, r.channel, r.note_no, 1.0f);
-                    send_rt_event(ev);
+                    _send_rt_event(ev);
                 }
             }
         }
     }
     _prev_gate_values = buffer.gate_values;
-}
-
-void AudioEngine::_process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue)
-{
-    RtEvent event;
-    while (source_queue.pop(event))
-    {
-        switch (event.type())
-        {
-            case RtEventType::CV_EVENT:
-            {
-                auto typed_event = event.cv_event();
-                buffer.cv_values[typed_event->cv_id()] = typed_event->value();
-                break;
-            }
-
-            case RtEventType::GATE_EVENT:
-            {
-                auto typed_event = event.gate_event();
-                _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
-                break;
-            }
-
-            default:
-                _main_out_queue.push(event);
-        }
-    }
-    buffer.gate_values = _outgoing_gate_values;
 }
 
 RealtimeState update_state(RealtimeState current_state)
@@ -1198,6 +1201,59 @@ RealtimeState update_state(RealtimeState current_state)
         return RealtimeState::STOPPED;
     }
     return current_state;
+}
+
+std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control)
+{
+    if (uid == "sushi.testing.passthrough")
+    {
+        return std::make_shared<passthrough_plugin::PassthroughPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.gain")
+    {
+        return std::make_shared<gain_plugin::GainPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.lfo")
+    {
+        return std::make_shared<lfo_plugin::LfoPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.equalizer")
+    {
+        return std::make_shared<equalizer_plugin::EqualizerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.sampleplayer")
+    {
+        return std::make_shared<sample_player_plugin::SamplePlayerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.arpeggiator")
+    {
+        return std::make_shared<arpeggiator_plugin::ArpeggiatorPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.peakmeter")
+    {
+        return std::make_shared<peak_meter_plugin::PeakMeterPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.transposer")
+    {
+        return std::make_shared<transposer_plugin::TransposerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.step_sequencer")
+    {
+        return std::make_shared<step_sequencer_plugin::StepSequencerPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.cv_to_control")
+    {
+        return std::make_shared<cv_to_control_plugin::CvToControlPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.control_to_cv")
+    {
+        return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.wav_writer")
+    {
+        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(_host_control);
+    }
+    return nullptr;
 }
 
 } // namespace engine

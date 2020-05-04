@@ -150,6 +150,12 @@ void Vst3xWrapper::_cleanup()
     }
 }
 
+Vst3xWrapper::~Vst3xWrapper()
+{
+    SUSHI_LOG_DEBUG("Unloading plugin {}", this->name());
+    _cleanup();
+}
+
 ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;

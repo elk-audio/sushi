@@ -166,10 +166,10 @@ public:
         return _parameters_by_index;
     }
 
-    int max_input_channels() {return _max_input_channels;}
-    int max_output_channels() {return _max_output_channels;}
-    int input_channels() {return  _current_input_channels;}
-    int output_channels() {return _current_output_channels;}
+    int max_input_channels() const {return _max_input_channels;}
+    int max_output_channels() const {return _max_output_channels;}
+    int input_channels() const {return  _current_input_channels;}
+    int output_channels() const {return _current_output_channels;}
 
     /**
      * @brief Set the number of input audio channels of the Processor.
@@ -321,6 +321,26 @@ public:
      */
     virtual ProcessorReturnCode connect_gate_from_processor(int gate_output_id, int channel, int note_no);
 
+    /**
+     * @brief Set the on Track status. Call with true when adding a Processor to a track or
+     *        track to the engine, and false when removing it.
+     * @param active True if Processor is being added to a Track, False otherwise.
+     */
+    void set_active_rt_processing(bool active)
+    {
+        _on_track = active;
+    }
+
+    /**
+     * @brief Query whether the processor is currently active on a Track's processing chain
+     *        or if it's a Track, active in the engine.
+     * @return true if the Processor is on a track, false otherwise.
+     */
+    bool active_rt_processing() const
+    {
+        return _on_track;
+    }
+
 protected:
 
     /**
@@ -398,6 +418,7 @@ protected:
 
     bool _enabled{false};
     bool _bypassed{false};
+    bool _on_track{false};
 
     HostControl _host_control;
 

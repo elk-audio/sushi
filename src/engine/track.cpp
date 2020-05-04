@@ -102,27 +102,53 @@ void Track::configure(float sample_rate)
     }
 }
 
-bool Track::add(Processor* processor)
+bool Track::add(Processor* processor, std::optional<ObjectId> before_position)
 {
     if (_processors.size() >= TRACK_MAX_PROCESSORS || processor == this)
     {
         // If a track adds itself to its process chain, endless loops can arise
+        // In addition, _processors must not allocate if running in the rt-thread
         return false;
     }
-    _processors.push_back(processor);
-    processor->set_event_output(this);
-    _update_channel_config();
-    return true;
+    assert(processor->active_rt_processing() == false);
+
+    bool added = false;
+    if (before_position.has_value())
+    {
+        for (auto i = _processors.cbegin(); i != _processors.cend(); ++i)
+        {
+            if ((*i)->id() == *before_position) // * accesses value without throwing
+            {
+                _processors.insert(i, processor);
+                added = true;
+                break;
+            }
+        }
+    }
+    else
+    {
+        _processors.push_back(processor);
+        added = true;
+    }
+
+    if (added)
+    {
+        processor->set_event_output(this);
+        processor->set_active_rt_processing(true);
+        _update_channel_config();
+    }
+    return added;
 }
 
 bool Track::remove(ObjectId processor)
 {
-    for (auto plugin = _processors.begin(); plugin != _processors.end(); ++plugin)
+    for (auto i = _processors.begin(); i != _processors.end(); ++i)
     {
-        if ((*plugin)->id() == processor)
+        if ((*i)->id() == processor)
         {
-            (*plugin)->set_event_output(nullptr);
-            _processors.erase(plugin);
+            (*i)->set_event_output(nullptr);
+            (*i)->set_active_rt_processing(false);
+            _processors.erase(i);
             _update_channel_config();
             return true;
         }

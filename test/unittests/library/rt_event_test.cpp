@@ -121,10 +121,11 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
     EXPECT_EQ(0u, event.processor_reorder_event()->track());
 
-    event = RtEvent::make_add_processor_to_track_event(ObjectId(123), ObjectId(456));
+    event = RtEvent::make_add_processor_to_track_event(ObjectId(123), ObjectId(456), ObjectId(789));
     EXPECT_EQ(RtEventType::ADD_PROCESSOR_TO_TRACK, event.type());
     EXPECT_EQ(123u, event.processor_reorder_event()->processor());
     EXPECT_EQ(456u, event.processor_reorder_event()->track());
+    EXPECT_EQ(789u, event.processor_reorder_event()->before_processor().value_or(-1));
 
     event = RtEvent::make_remove_processor_from_track_event(ObjectId(123), ObjectId(456));
     EXPECT_EQ(RtEventType::REMOVE_PROCESSOR_FROM_TRACK, event.type());
@@ -151,6 +152,71 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(RtEventType::SYNC_MODE, event.type());
     EXPECT_EQ(28, event.sync_mode_event()->sample_offset());
     EXPECT_EQ(SyncMode::MIDI, event.sync_mode_event()->mode());
+
+    AudioConnection audio_con = {123, 345, 24};
+    event = RtEvent::make_add_audio_input_connection_event(audio_con);
+    EXPECT_EQ(RtEventType::ADD_AUDIO_CONNECTION, event.type());
+    EXPECT_TRUE(event.audio_connection_event()->input_connection());
+    EXPECT_FALSE(event.audio_connection_event()->output_connection());
+    EXPECT_EQ(audio_con.track, event.audio_connection_event()->connection().track);
+    EXPECT_EQ(audio_con.track_channel, event.audio_connection_event()->connection().track_channel);
+    EXPECT_EQ(audio_con.engine_channel, event.audio_connection_event()->connection().engine_channel);
+
+    event = RtEvent::make_add_audio_output_connection_event(audio_con);
+    EXPECT_EQ(RtEventType::ADD_AUDIO_CONNECTION, event.type());
+    EXPECT_FALSE(event.audio_connection_event()->input_connection());
+    EXPECT_TRUE(event.audio_connection_event()->output_connection());
+
+    event = RtEvent::make_remove_audio_input_connection_event(audio_con);
+    EXPECT_EQ(RtEventType::REMOVE_AUDIO_CONNECTION, event.type());
+    EXPECT_TRUE(event.audio_connection_event()->input_connection());
+
+    event = RtEvent::make_remove_audio_output_connection_event(audio_con);
+    EXPECT_EQ(RtEventType::REMOVE_AUDIO_CONNECTION, event.type());
+    EXPECT_TRUE(event.audio_connection_event()->output_connection());
+
+    CvConnection cv_con = {123, 345, 24};
+    event = RtEvent::make_add_cv_input_connection_event(cv_con);
+    EXPECT_EQ(RtEventType::ADD_CV_CONNECTION, event.type());
+    EXPECT_TRUE(event.cv_connection_event()->input_connection());
+    EXPECT_FALSE(event.cv_connection_event()->output_connection());
+    EXPECT_EQ(cv_con.cv_id, event.cv_connection_event()->connection().cv_id);
+    EXPECT_EQ(cv_con.parameter_id, event.cv_connection_event()->connection().parameter_id);
+    EXPECT_EQ(cv_con.processor_id, event.cv_connection_event()->connection().processor_id);
+
+    event = RtEvent::make_add_cv_output_connection_event(cv_con);
+    EXPECT_EQ(RtEventType::ADD_CV_CONNECTION, event.type());
+    EXPECT_TRUE(event.cv_connection_event()->output_connection());
+
+    event = RtEvent::make_remove_cv_input_connection_event(cv_con);
+    EXPECT_EQ(RtEventType::REMOVE_CV_CONNECTION, event.type());
+    EXPECT_TRUE(event.cv_connection_event()->input_connection());
+
+    event = RtEvent::make_remove_cv_output_connection_event(cv_con);
+    EXPECT_EQ(RtEventType::REMOVE_CV_CONNECTION, event.type());
+    EXPECT_TRUE(event.cv_connection_event()->output_connection());
+
+    GateConnection gate_con = {12, 34, 24, 78};
+    event = RtEvent::make_add_gate_input_connection_event(gate_con);
+    EXPECT_EQ(RtEventType::ADD_GATE_CONNECTION, event.type());
+    EXPECT_TRUE(event.gate_connection_event()->input_connection());
+    EXPECT_FALSE(event.gate_connection_event()->output_connection());
+    EXPECT_EQ(gate_con.processor_id, event.gate_connection_event()->connection().processor_id);
+    EXPECT_EQ(gate_con.channel, event.gate_connection_event()->connection().channel);
+    EXPECT_EQ(gate_con.gate_id, event.gate_connection_event()->connection().gate_id);
+    EXPECT_EQ(gate_con.note_no, event.gate_connection_event()->connection().note_no);
+
+    event = RtEvent::make_add_gate_output_connection_event(gate_con);
+    EXPECT_EQ(RtEventType::ADD_GATE_CONNECTION, event.type());
+    EXPECT_TRUE(event.gate_connection_event()->output_connection());
+
+    event = RtEvent::make_remove_gate_input_connection_event(gate_con);
+    EXPECT_EQ(RtEventType::REMOVE_GATE_CONNECTION, event.type());
+    EXPECT_TRUE(event.gate_connection_event()->input_connection());
+
+    event = RtEvent::make_remove_gate_output_connection_event(gate_con);
+    EXPECT_EQ(RtEventType::REMOVE_GATE_CONNECTION, event.type());
+    EXPECT_TRUE(event.gate_connection_event()->output_connection());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)

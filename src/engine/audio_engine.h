@@ -15,14 +15,12 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_ENGINE_H
 #define SUSHI_ENGINE_H
 
-#include <memory>
-#include <map>
 #include <vector>
 #include <utility>
 #include <mutex>
@@ -31,11 +29,13 @@
 
 #include "engine/event_dispatcher.h"
 #include "engine/base_engine.h"
-#include "track.h"
+#include "engine/track.h"
+#include "engine/processor_container.h"
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
 #include "engine/controller.h"
+#include "engine/audio_graph.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/elk_allocator.h"
@@ -75,7 +75,6 @@ private:
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
 };
-
 
 constexpr int MAX_RT_PROCESSOR_ID = 1000;
 
@@ -137,24 +136,24 @@ public:
      *        Not safe to call while the engine is running.
      * @param input_channel Index of the engine input channel to connect.
      * @param track_channel Index of the input channel of the track to connect to.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect to.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_input_channel(int input_channel,
                                                    int track_channel,
-                                                   const std::string& track_name) override;
+                                                   ObjectId track_id) override;
 
     /**
      * @brief Connect an output channel of a track to an engine output channel.
      *        Not safe to call while the engine is running.
      * @param output_channel Index of the engine output channel to connect to.
      * @param track_channel Index of the output channel of the track to connect from.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect from.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_output_channel(int output_channel,
                                                     int track_channel,
-                                                    const std::string& track_name) override;
+                                                    ObjectId track_id) override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -162,12 +161,12 @@ public:
      * @param input_bus The engine input bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The input bus of the track to connect to.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect to.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_input_bus(int input_bus,
                                                int track_bus,
-                                               const std::string& track_name) override;
+                                               ObjectId track_id) override;
 
     /**
      * @brief Connect an output bus of a track to an output bus (stereo pair)
@@ -175,12 +174,12 @@ public:
      * @param output_bus The engine outpus bus to use.
      *        bus 0 refers to channels 0-1, 1 to channels 2-3, etc
      * @param track_bus The output bus of the track to connect from.
-     * @param track_name The unique name of the track.
+     * @param track_id The id of the track to connect from.
      * @return EngineReturnStatus::OK if successful, error status otherwise
      */
     EngineReturnStatus connect_audio_output_bus(int output_bus,
                                                 int track_bus,
-                                                const std::string& track_name) override;
+                                                ObjectId track_id) override;
 
     /**
      * @brief Connect a control voltage input to control a parameter on a processor
@@ -253,14 +252,6 @@ public:
                                             int ppq_ticks) override;
 
     /**
-     * @brief Return the number of configured channels for a specific track
-     *
-     * @param track The index to the track
-     * @return Number of channels the track is configured to use.
-     */
-    int n_channels_in_track(int track) override;
-
-    /**
      * @brief Returns whether the engine is running in a realtime mode or not
      * @return true if the engine is currently processing in realtime mode, false otherwise
      */
@@ -268,7 +259,7 @@ public:
 
     /**
      * @brief Set the engine to operate in realtime mode. In this mode process_chunk and
-     *        send_rt_event is assumed to be called from a realtime thread.
+     *        _send_rt_event is assumed to be called from a realtime thread.
      *        All other function calls are assumed to be made from non-realtime threads
      *
      * @param enabled true to enable realtime mode, false to disable
@@ -324,61 +315,25 @@ public:
     /**
      * @brief Set the current mode of synchronising the engine tempo and beats. Default is
      *        INTERNAL.
-     * @param mode A SyncMode with the current mode of syncronisation
+     * @param mode A SyncMode with the current mode of synchronisation
      */
     void set_tempo_sync_mode(SyncMode mode) override;
+
     /**
-     * @brief Process an event directly. In a realtime processing setup this must be
-     *        called from the realtime thread before calling process_chunk()
+     * @brief Send an RtEvent directly to the realtime thread, should normally only be used
+     *        from an rt thread or in a context where the engine is not running in realtime mode
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(RtEvent& event) override;
+    EngineReturnStatus send_rt_event(const RtEvent& event) override;
 
-    /**
-     * @brief Called from a non-realtime thread to process an event in the realtime
-     * @param event The event to process
-     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
-     */
-    EngineReturnStatus send_async_event(RtEvent& event) override;
-    /**
-     * @brief Get the unique id of a processor given its name
-     * @param unique_name The unique name of a processor
-     * @return the unique id of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, ObjectId> processor_id_from_name(const std::string& name) override;
-
-    /**
-     * @brief Get the unique (per processor) id of a parameter.
-     * @param processor_name The unique name of a processor
-     * @param The unique name of a parameter of the above processor
-     * @return the unique id of the parameter, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, ObjectId> parameter_id_from_name(const std::string& /*processor_name*/,
-                                                                   const std::string& /*parameter_name*/);
-
-    /**
-     * @brief Get the unique name of a processor of a known unique id
-     * @param uid The unique id of the processor
-     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, const std::string> processor_name_from_id(const ObjectId uid) override;
-
-    /**
-     * @brief Get the unique name of a parameter with a known unique id
-     * @param processor_name The unique name of the processor
-     * @param id The unique id of the parameter to lookup.
-     * @return The name of the processor, only valid if status is EngineReturnStatus::OK
-     */
-    std::pair<EngineReturnStatus, const std::string> parameter_name_from_id(const std::string& processor_name,
-                                                                            const ObjectId id) override;
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
      * @param channel_count The number of channels in the track.
-     * @return EngineInitStatus::OK in case of success, different error code otherwise.
+     * @return the unique id of the track created, only valid if status is EngineReturnStatus::OK
      */
-    EngineReturnStatus create_track(const std::string& name, int channel_count) override;
+    std::pair<EngineReturnStatus, ObjectId> create_track(const std::string& name, int channel_count) override;
 
     /**
      * @brief Create an empty track
@@ -387,73 +342,56 @@ public:
      * @param output_busses The number of output stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
-     * @param track_name The unique name of the track to delete
+     * @param track_id The unique name of the track to delete
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus delete_track(const std::string &track_name) override;
+    EngineReturnStatus delete_track(ObjectId track_id) override;
 
     /**
-     * @brief Creates and adds a plugin to a track.
-     * @param track_id The unique id of the track to which the processor will be appended
+     * @brief Create a plugin instance, either from internal plugins or loaded from file.
+     *        The created plugin can then be added to tracks.
      * @param plugin_uid The unique id of the plugin
-     * @param plugin_name The name to give the plugin after loading
+     * @param plugin_name The name to give the plugin after loading, must be unique.
      * @param plugin_path The file to load the plugin from, only valid for external plugins
      * @param plugin_type The type of plugin, i.e. internal or external
+     * @return the unique id of the plugin created, only valid if status is EngineReturnStatus::OK
+     */
+    std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string &plugin_uid,
+                                                         const std::string &plugin_name,
+                                                         const std::string &plugin_path,
+                                                         PluginType plugin_type) override;
+
+    /**
+     * @brief Add a plugin to a track. The plugin must not currently be active on any track.
+     * @param track_id The id of the track to add the plugin to.
+     * @param plugin_id The id of the plugin to add.
+     * @param before_plugin_id If this parameter is passed with a value, the plugin will be
+     *        inserted after this plugin. If this parameter is empty, the plugin will be
+     *        placed at the back of the track's processing chain.
      * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    EngineReturnStatus add_plugin_to_track(const std::string &track_name,
-                                           const std::string &plugin_uid,
-                                           const std::string &plugin_name,
-                                           const std::string &plugin_path,
-                                           PluginType plugin_type) override;
+    EngineReturnStatus add_plugin_to_track(ObjectId plugin_id,
+                                           ObjectId track_id,
+                                           std::optional<ObjectId> before_plugin_id = std::nullopt) override;
 
     /**
      * @brief Remove a given plugin from a track and delete it
-     * @param track_name The unique name of the track that contains the plugin
-     * @param plugin_name The unique name of the plugin
+     * @param track_id The id of the track that contains the plugin
+     * @param plugin_id The id of the plugin
      * @return EngineReturnStatus::OK in case of success, different error code otherwise
      */
-    EngineReturnStatus remove_plugin_from_track(const std::string &track_name,
-                                                const std::string &plugin_name) override;
+    EngineReturnStatus remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id) override;
 
     /**
-     * @brief Access a particular processor by its unique id for querying
-     * @param processor_id The id of the processor
-     * @return A const pointer to the processor instance if found, nullptr otherwise
+     * @brief Delete and unload a plugin instance from Sushi. The plugin must
+     *        not currently be active on any track.
+     * @param plugin_id The id of the plugin to delete.
+     * @return EngineReturnStatus::OK in case of success, different error code otherwise.
      */
-    const Processor* processor(ObjectId processor_id) const override;
-
-    /**
-     * @brief Access a particular processor by its unique id for editing,
-     *        use with care and not from several threads at once
-     * @param processor_id The id of the processor
-     * @return A mutable pointer to the processor instance if found, nullptr otherwise
-     */
-    Processor* mutable_processor(ObjectId processor_id) override;
-
-    /**
-     * @brief Return all processors. Potentially dangerous so use with care and eventually
-     *        there should be better and safer ways of accessing processors.
-     * @return An std::map containing all registered processors.
-     */
-    const std::map<std::string, std::unique_ptr<Processor>>& all_processors() override
-    {
-        return _processors;
-    };
-
-    /**
-     * @brief Return all tracks. Potentially unsafe so use with care. Should
-     *        eventually be replaces with a better way of accessing tracks/processors
-     *        from outside the engine.
-     * @return An std::vector of containing all Tracks
-     */
-    const std::vector<Track*>& all_tracks() override
-    {
-        return _audio_graph;
-    }
+    EngineReturnStatus delete_plugin(ObjectId plugin_id) override;
 
     /**
      * @brief Enable audio clip detection on engine inputs
@@ -493,6 +431,11 @@ public:
         return &_process_timer;
     }
 
+    const BaseProcessorContainer* processor_container() override
+    {
+        return &_processors;
+    }
+
     /**
      * @brief Print the current processor timings (in enabled) in the log
      */
@@ -500,25 +443,19 @@ public:
 
 private:
     /**
-     * @brief Instantiate a plugin instance of a given type
-     * @param uid String unique id
-     * @return Pointer to plugin instance if uid is valid, nullptr otherwise
-     */
-    Processor* _make_internal_plugin(const std::string& uid);
-
-    /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
      * @param processor Processor to register
      */
-    EngineReturnStatus _register_processor(Processor* processor, const std::string& name);
+    EngineReturnStatus _register_processor(std::shared_ptr<Processor> processor, const std::string& name);
 
     /**
-     * @breif Remove a processor from the engine and delete it.
-     * @param name The unique name of the processor to delete
-     * @return True if the processor existed and it was correctly deleted
+     * @brief Remove a processor from the engine. The processor must not be active
+     *        on any track when called. The engine does not hold any references
+     *        to the processor after this function has returned.
+     * @param processor A pointer to the instance of the processor to delete
      */
-    EngineReturnStatus _deregister_processor(const std::string& name);
+    void _deregister_processor(Processor* processor);
 
     /**
      * @brief Add a registered processor to the realtime processing part.
@@ -536,33 +473,35 @@ private:
     bool _remove_processor_from_realtime_part(ObjectId processor);
 
     /**
+     * @brief Remove all audio connections from track
+     * @param track_id The id of the track to remove from
+     */
+    void _remove_connections_from_track(ObjectId track_id);
+    /**
      * @brief Register a newly created track
      * @param track Pointer to the track
-     * @return OK if succesfull, error code otherwise
+     * @return OK if successful, error code otherwise
      */
-    EngineReturnStatus _register_new_track(const std::string& name, Track* track);
+    EngineReturnStatus _register_new_track(const std::string& name, std::shared_ptr<Track> track);
 
     /**
-     * @brief Checks whether a processor exists in the engine.
-     * @param processor_name The unique name of the processor.
-     * @return Returns true if exists, false if it does not.
-     */
-    bool _processor_exists(const std::string& processor_name);
+    * @brief Called from a non-realtime thread to process a control event in the realtime thread
+    * @param event The event to process
+    * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
+    */
+    EngineReturnStatus _send_control_event(RtEvent& event);
 
     /**
-     * @brief Checks whether a processor exists in the engine.
-     * @param uid The unique id of the processor.
-     * @return Returns true if exists, false if it does not.
-     */
-    bool _processor_exists(ObjectId uid);
-
-    /**
-     * @brief Process events that are to be handles by the engine directly and
+     * @brief Process events that are to be handled by the engine directly and
      *        not by a particular processor.
      * @param event The event to handle
      * @return true if handled, false if not an engine event
      */
-    bool _handle_internal_events(RtEvent &event);
+    void _process_internal_rt_events();
+
+    void _send_rt_events_to_processors();
+
+    void _send_rt_event(const RtEvent& event);
 
     inline void _retrieve_events_from_tracks(ControlBuffer& buffer);
 
@@ -574,56 +513,25 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
-    void _process_outgoing_events(ControlBuffer& buffer, RtSafeRtEventFifo& source_queue);
-
-    const bool _multicore_processing;
-    const int  _rt_cores;
-
-    std::unique_ptr<twine::WorkerPool> _worker_pool;
-
-    std::vector<Track*> _audio_graph;
-
-    // All registered processors indexed by their unique name
-    std::map<std::string, std::unique_ptr<Processor>> _processors;
+    ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    AudioGraph                 _audio_graph;
 
-    struct AudioConnection
-    {
-        int engine_channel;
-        int track_channel;
-        ObjectId track;
-    };
-    std::vector<AudioConnection> _in_audio_connections;
-    std::vector<AudioConnection> _out_audio_connections;
+    std::vector<AudioConnection> _audio_in_connections;
+    std::vector<AudioConnection> _audio_out_connections;
+    std::vector<CvConnection>    _cv_in_connections;
+    std::vector<GateConnection>  _gate_in_connections;
 
-    struct CvConnection
-    {
-        ObjectId processor_id;
-        ObjectId parameter_id;
-        int cv_id;
-    };
-
-    struct GateConnection
-    {
-        ObjectId processor_id;
-        int gate_id;
-        int note_no;
-        int channel;
-    };
-
-    std::vector<CvConnection> _cv_in_routes;
-    std::vector<GateConnection> _gate_in_routes;
     BitSet32 _prev_gate_values{0};
     BitSet32 _outgoing_gate_values{0};
 
     std::atomic<RealtimeState> _state{RealtimeState::STOPPED};
 
-    RtSafeRtEventFifo _internal_control_queue;
+    RtSafeRtEventFifo _control_queue_in;
     RtSafeRtEventFifo _main_in_queue;
-    RtSafeRtEventFifo _processor_out_queue;
     RtSafeRtEventFifo _main_out_queue;
     RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
@@ -648,6 +556,13 @@ private:
  * @return A new, non-transient state
  */
 RealtimeState update_state(RealtimeState current_state);
+
+/**
+ * @brief Instantiate a plugin instance of a given type
+ * @param uid String unique id
+ * @return Pointer to plugin instance if uid is valid, nullptr otherwise
+ */
+std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control);
 
 } // namespace engine
 } // namespace sushi

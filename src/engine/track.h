@@ -68,15 +68,20 @@ public:
     void configure(float sample_rate) override;
 
     /**
-     * @brief Adds a plugin to the end of the track.
-     * @param The plugin to add.
+     * @brief Add a processor to the track's processing chain at the position before
+     *        The processor with id before_position.
+     *        Should be called from the audio thread or when the track is not processing.
+     * @param processor A pointer to the plugin instance to add.
+     * @param before_position The ObjectId of the succeeding plugin, if not set, the
+     *        processor will be added to the back of the track
+     * @return true if the insertion was successful, false otherwise
      */
-    bool add(Processor* processor);
+    bool add(Processor* processor, std::optional<ObjectId> before_position = std::nullopt);
 
     /**
      * @brief Remove a plugin from the track.
      * @param processor The ObjectId of the processor to remove
-     * @return true if the processor was found and succesfully removed, false otherwise
+     * @return true if the processor was found and successfully removed, false otherwise
      */
     bool remove(ObjectId processor);
 
@@ -152,7 +157,7 @@ public:
      * @brief Return the number of input busses of the track.
      * @return The number of input busses on the track.
      */
-    int input_busses()
+    int input_busses() const
     {
         return _input_busses;
     }
@@ -161,7 +166,7 @@ public:
      * @brief Return the number of input busses of the track.
      * @return The number of input busses on the track.
      */
-    int output_busses()
+    int output_busses() const
     {
         return _output_busses;
     }
@@ -198,11 +203,6 @@ public:
     {
         Processor::set_output_channels(channels);
         _update_channel_config();
-    }
-
-    const std::vector<Processor*> process_chain()
-    {
-        return _processors;
     }
 
     /* Inherited from RtEventPipe */

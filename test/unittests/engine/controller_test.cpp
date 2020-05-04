@@ -1,12 +1,10 @@
 #include "gtest/gtest.h"
 
-//#define private public
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
 #include "engine/midi_dispatcher.h"
 #include "engine/controller.cpp"
 #include "test_utils/test_utils.h"
-//#undef private
 
 using namespace sushi;
 using namespace sushi::engine;
@@ -19,8 +17,7 @@ class ControllerTest : public ::testing::Test
 {
 protected:
     ControllerTest()
-    {
-    }
+    {}
 
     void SetUp()
     {
@@ -39,8 +36,7 @@ protected:
     }
 
     void TearDown()
-    {
-    }
+    {}
 
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
@@ -60,14 +56,15 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(4, sig.numerator);
     EXPECT_EQ(4, sig.denominator);
     auto tracks = _module_under_test->get_tracks();
-    EXPECT_EQ(4u, tracks.size());
+
+    ASSERT_EQ(4u, tracks.size());
     EXPECT_EQ("main", tracks[0].name);
     EXPECT_EQ("", tracks[0].label);
     EXPECT_EQ(2, tracks[0].input_channels);
     EXPECT_EQ(1, tracks[0].input_busses);
     EXPECT_EQ(2, tracks[0].output_channels);
     EXPECT_EQ(1, tracks[0].output_busses);
-    EXPECT_EQ(3, tracks[0].processor_count);
+    EXPECT_EQ(3u, tracks[0].processors.size());
 
     EXPECT_EQ("monotrack", tracks[1].name);
     EXPECT_EQ("", tracks[1].label);
@@ -75,7 +72,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(1, tracks[1].input_busses);
     EXPECT_EQ(1, tracks[1].output_channels);
     EXPECT_EQ(1, tracks[1].output_busses);
-    EXPECT_EQ(3, tracks[1].processor_count);
+    EXPECT_EQ(3u, tracks[1].processors.size());
 
     EXPECT_EQ("monobustrack", tracks[2].name);
     EXPECT_EQ("", tracks[2].label);
@@ -83,7 +80,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(1, tracks[2].input_busses);
     EXPECT_EQ(2, tracks[2].output_channels);
     EXPECT_EQ(1, tracks[2].output_busses);
-    EXPECT_EQ(0, tracks[2].processor_count);
+    EXPECT_EQ(0u, tracks[2].processors.size());
 
     EXPECT_EQ("multi", tracks[3].name);
     EXPECT_EQ("", tracks[3].label);
@@ -91,7 +88,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(2, tracks[3].input_busses);
     EXPECT_EQ(4, tracks[3].output_channels);
     EXPECT_EQ(2, tracks[3].output_busses);
-    EXPECT_EQ(0, tracks[3].processor_count);
+    EXPECT_EQ(0u, tracks[3].processors.size());
 }
 
 TEST_F(ControllerTest, TestKeyboardControls)
@@ -112,6 +109,9 @@ TEST_F(ControllerTest, TestTrackControls)
     auto [status, id] = _module_under_test->get_track_id("main");
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
+    auto [track_not_found_status, processor_list] = _module_under_test->get_track_processors(ObjectId(1234));
+    ASSERT_EQ(ext::ControlStatus::NOT_FOUND, track_not_found_status);
+
     auto [info_status, info] = _module_under_test->get_track_info(id);
     ASSERT_EQ(ext::ControlStatus::OK, info_status);
 
@@ -121,7 +121,7 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ(1, info.input_busses);
     EXPECT_EQ(2, info.output_channels);
     EXPECT_EQ(1, info.output_busses);
-    EXPECT_EQ(3, info.processor_count);
+    EXPECT_EQ(3u, info.processors.size());
 
     auto [proc_status, processors] = _module_under_test->get_track_processors(id);
     ASSERT_EQ(ext::ControlStatus::OK, proc_status);
@@ -131,16 +131,19 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ("Passthrough", processors[0].label);
     EXPECT_EQ(0, processors[0].program_count);
     EXPECT_EQ(0, processors[0].parameter_count);
+    EXPECT_EQ(info.processors[0], processors[0].id);
 
     EXPECT_EQ("gain_0_l", processors[1].name);
     EXPECT_EQ("Gain", processors[1].label);
     EXPECT_EQ(0, processors[1].program_count);
     EXPECT_EQ(1, processors[1].parameter_count);
+    EXPECT_EQ(info.processors[1], processors[1].id);
 
     EXPECT_EQ("equalizer_0_l", processors[2].name);
     EXPECT_EQ("Equalizer", processors[2].label);
     EXPECT_EQ(0, processors[2].program_count);
     EXPECT_EQ(3, processors[2].parameter_count);
+    EXPECT_EQ(info.processors[2], processors[2].id);
 
     auto [param_status, parameters] = _module_under_test->get_track_parameters(id);
     ASSERT_EQ(ext::ControlStatus::OK, param_status);

@@ -20,13 +20,16 @@
 
 #include "library/event.h"
 #include "engine/base_engine.h"
+#include "logging.h"
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 
 /* GCC does not seem to get when a switch case handles all cases */
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
 namespace sushi {
 
-Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
+Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
     switch (rt_event.type())
     {
@@ -151,7 +154,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
     }
 }
 
-RtEvent KeyboardEvent::to_rt_event(int sample_offset)
+RtEvent KeyboardEvent::to_rt_event(int sample_offset) const
 {
     switch (_subtype)
     {
@@ -178,7 +181,7 @@ RtEvent KeyboardEvent::to_rt_event(int sample_offset)
     }
 }
 
-RtEvent ParameterChangeEvent::to_rt_event(int sample_offset)
+RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
 {
     switch (_subtype)
     {
@@ -197,110 +200,237 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset)
     }
 }
 
-RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/)
+RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/) const
 {
     return RtEvent::make_bypass_processor_event(this->processor_id(), this->bypass_enabled());
 }
 
-RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset)
+RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset) const
 {
     /* String in RtEvent must be passed as a pointer allocated outside of the event */
     auto string_value = new std::string(_string_value);
     return RtEvent::make_string_parameter_change_event(_processor_id, sample_offset, _parameter_id, string_value);
 }
 
-RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset)
+RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset) const
 {
     return RtEvent::make_data_parameter_change_event(_processor_id, sample_offset, _parameter_id, _blob_value);
 }
 
-int AddTrackEvent::execute(engine::BaseEngine*engine)
+int AddTrackEvent::execute(engine::BaseEngine* engine) const
 {
-    auto status = engine->create_track(_name, _channels);
-    switch (status)
+    auto [status, track_id] = engine->create_track(_name, _channels);
+    if (status != engine::EngineReturnStatus::OK)
     {
-        case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
-
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
-        default:
-            return AddTrackEvent::Status::INVALID_NAME;
+        return EventStatus::ERROR;
     }
+    if (_channels == 1)
+    {
+        status = engine->connect_audio_output_channel(_output_bus_channel, 0, track_id);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            engine->delete_track(track_id);
+            return EventStatus::ERROR;
+        }
+        if (_input_bus_channel.has_value())
+        {
+            status = engine->connect_audio_input_channel(_input_bus_channel.value(), 0, track_id);
+            if (status != engine::EngineReturnStatus::OK)
+            {
+                engine->delete_track(track_id);
+                return EventStatus::ERROR;
+            }
+        }
+    }
+    else if (_channels == 2)
+    {
+        status = engine->connect_audio_output_bus(_output_bus_channel, 0, track_id);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            engine->delete_track(track_id);
+            return EventStatus::ERROR;
+        }
+        if (_input_bus_channel.has_value())
+        {
+            status = engine->connect_audio_input_bus(_input_bus_channel.value(), 0, track_id);
+            if (status != engine::EngineReturnStatus::OK)
+            {
+                engine->delete_track(track_id);
+                return EventStatus::ERROR;
+            }
+        }
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+
+    return EventStatus::HANDLED_OK;
 }
 
-int RemoveTrackEvent::execute(engine::BaseEngine*engine)
+int RemoveTrackEvent::execute(engine::BaseEngine* engine) const
 {
-    auto status = engine->delete_track(_name);
+    auto track = engine->processor_container()->track(_track_id);
+    if (track == nullptr)
+    {
+        return EventStatus::ERROR;
+    }
+    auto processors = engine->processor_container()->processors_on_track(_track_id);
+
+    // Remove processors starting with the last, more efficient
+    for (auto i = processors.rbegin(); i != processors.rend(); ++i)
+    {
+        SUSHI_LOG_DEBUG("Removing plugin {} from track: {}", (*i)->name(), track->name());
+        auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
+        if (status == engine::EngineReturnStatus::OK)
+        {
+            status = engine->delete_plugin((*i)->id());
+        }
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to remove plugin {} from track {}", (*i)->name(), track->name());
+            return EventStatus::ERROR;
+        }
+    }
+
+    auto status = engine->delete_track(_track_id);
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
             return EventStatus::HANDLED_OK;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
         default:
             return RemoveTrackEvent::Status::INVALID_TRACK;
     }
 }
 
-int AddProcessorEvent::execute(engine::BaseEngine*engine)
+engine::PluginType to_engine(AddProcessorToTrackEvent::ProcessorType type)
 {
-    engine::PluginType plugin_type;
-    switch (_processor_type)
+    switch (type)
     {
-        case AddProcessorEvent::ProcessorType::INTERNAL:
-            plugin_type = engine::PluginType::INTERNAL;
-            break;
-
-        case AddProcessorEvent::ProcessorType::VST2X:
-            plugin_type = engine::PluginType::VST2X;
-            break;
-
-        case AddProcessorEvent::ProcessorType::VST3X:
-            plugin_type = engine::PluginType::VST3X;
-            break;
-
-        default:
-            /* GCC is overzealous and warns even with a class enum that plugin_type
-             * may be unitialised. This is apparently a by design and not a bug, see:
-             * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53479*/
-            __builtin_unreachable();
-    }
-
-    // TODO where to do validation?
-    auto status = engine->add_plugin_to_track(_track, _uid, _name, _file, plugin_type);
-    switch (status)
-    {
-        case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
-
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
-            return AddProcessorEvent::Status::INVALID_NAME;
-
-        case engine::EngineReturnStatus::INVALID_TRACK:
-            return AddProcessorEvent::Status::INVALID_CHAIN;
-
-        case engine::EngineReturnStatus::INVALID_PLUGIN_UID:
-            return AddProcessorEvent::Status::INVALID_UID;
-
-        default:
-            return AddProcessorEvent::Status::INVALID_PLUGIN;
+        case AddProcessorToTrackEvent::ProcessorType::INTERNAL:   return engine::PluginType::INTERNAL;
+        case AddProcessorToTrackEvent::ProcessorType::VST2X:      return engine::PluginType::VST2X;
+        case AddProcessorToTrackEvent::ProcessorType::VST3X:      return engine::PluginType::VST3X;
+        case AddProcessorToTrackEvent::ProcessorType::LV2:        return engine::PluginType::LV2;
+        default:                                                  return engine::PluginType::INTERNAL;
     }
 }
 
-int RemoveProcessorEvent::execute(engine::BaseEngine*engine)
+int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine) const
 {
-    auto status = engine->remove_plugin_from_track(_track, _name);
+    auto [status, plugin_id] = engine->load_plugin(_uid, _name, _file, to_engine(_processor_type));
     switch (status)
     {
         case engine::EngineReturnStatus::OK:
-            return EventStatus::HANDLED_OK;
+            break;
 
-        case engine::EngineReturnStatus::INVALID_PLUGIN_NAME:
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
+            return AddProcessorToTrackEvent::Status::INVALID_NAME;
+
+        case engine::EngineReturnStatus::INVALID_TRACK:
+            return AddProcessorToTrackEvent::Status::INVALID_TRACK;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN_UID:
+            return AddProcessorToTrackEvent::Status::INVALID_UID;
+
+        default:
+            return EventStatus::ERROR;
+    }
+
+    SUSHI_LOG_DEBUG("Adding plugin {} to track {}", _name, _track);
+    status = engine->add_plugin_to_track(plugin_id, _track, _before_processor);
+
+    if (status == engine::EngineReturnStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    SUSHI_LOG_ERROR("Failed to load plugin {} to track {}", plugin_id, _track);
+    engine->delete_plugin(plugin_id);
+    switch (status)
+    {
+        case engine::EngineReturnStatus::INVALID_TRACK:
+            return AddProcessorToTrackEvent::Status::INVALID_TRACK;
+
+        default:
+            return EventStatus::ERROR;
+    }
+}
+
+int MoveProcessorEvent::execute(engine::BaseEngine* engine) const
+{
+    auto old_plugin_order = engine->processor_container()->processors_on_track(_source_track);
+
+    auto status = engine->remove_plugin_from_track(_processor, _source_track);
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+            break;
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
+            return MoveProcessorEvent::Status::INVALID_NAME;
+
+        case engine::EngineReturnStatus::INVALID_TRACK:
+            return MoveProcessorEvent::Status::INVALID_SOURCE_TRACK;
+
+        default:
+            return EventStatus::ERROR;
+    }
+
+    status = engine->add_plugin_to_track(_processor, _dest_track, _before_processor);
+
+    if (status == engine::EngineReturnStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    SUSHI_LOG_ERROR("Failed to move processor {} from track {} to track {} with error {}, reverting",
+            _processor, _source_track, _dest_track, static_cast<int>(status));
+    /* If the insertion operation failed, we must put the processor back in the source track */
+    if (old_plugin_order.back()->id() == _processor)
+    {
+        [[maybe_unused]] auto replace_status = engine->add_plugin_to_track(_processor, _source_track);
+        SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
+                "Failed to replace processor {} on track {}", _processor, _source_track);
+    }
+    else
+    {
+        for (auto i = old_plugin_order.begin(); i != old_plugin_order.end(); ++i)
+        {
+            if ((*i)->id() == _processor)
+            {
+                i++;
+                ObjectId before = (*i)->id();
+                [[maybe_unused]] auto replace_status = engine->add_plugin_to_track(_processor, _source_track, before);
+                SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
+                           "Failed to replace processor {} on track {} before pos {}", _processor, _source_track, before);
+                break;
+            }
+        }
+    }
+    return MoveProcessorEvent::Status::INVALID_DEST_TRACK;
+}
+
+int RemoveProcessorEvent::execute(engine::BaseEngine* engine) const
+{
+    auto status = engine->remove_plugin_from_track(_name, _track);
+    switch (status)
+    {
+        case engine::EngineReturnStatus::OK:
+        {
+            status = engine->delete_plugin(_name);
+            if (status == engine::EngineReturnStatus::OK)
+            {
+                return EventStatus::HANDLED_OK;
+            }
+            return RemoveProcessorEvent::Status::INVALID_NAME;
+        }
+
+        case engine::EngineReturnStatus::INVALID_PLUGIN:
             return RemoveProcessorEvent::Status::INVALID_NAME;
 
         case engine::EngineReturnStatus::INVALID_TRACK:
         default:
-            return RemoveProcessorEvent::Status::INVALID_CHAIN;
+            return RemoveProcessorEvent::Status::INVALID_TRACK;
     }
 }
 
@@ -310,7 +440,7 @@ Event* AsynchronousProcessorWorkEvent::execute()
     return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
 }
 
-RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/)
+RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/) const
 {
     return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
@@ -321,9 +451,9 @@ Event* AsynchronousBlobDeleteEvent::execute()
     return nullptr;
 }
 
-int ProgramChangeEvent::execute(engine::BaseEngine* engine)
+int ProgramChangeEvent::execute(engine::BaseEngine* engine) const
 {
-    auto processor = engine->mutable_processor(_processor_id);
+    auto processor = engine->processor_container()->mutable_processor(_processor_id);
     if (processor != nullptr)
     {
         auto status = processor->set_program(_program_no);
@@ -335,31 +465,30 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
     return EventStatus::NOT_HANDLED;
 }
 
-int SetEngineTempoEvent::execute(engine::BaseEngine* engine)
+int SetEngineTempoEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_tempo(_tempo);
     return 0;
 }
 
-int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine)
+int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_time_signature(_signature);
     return 0;
 }
 
-int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine)
+int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_transport_mode(_mode);
     return 0;
 }
 
-int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine)
+int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_tempo_sync_mode(_mode);
     return 0;
 }
 
 #pragma GCC diagnostic pop
-
 
 } // end namespace sushi

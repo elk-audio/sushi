@@ -5,9 +5,13 @@
 #define private public
 #define protected public
 
+#include "engine/json_configurator.cpp"
+
+#undef private
+#undef protected
+
 #include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
-#include "engine/json_configurator.cpp"
 #include "test_utils/test_utils.h"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
@@ -81,28 +85,22 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_EQ(2, _engine->_audio_graph[0]->input_channels());
-    ASSERT_EQ(2, _engine->_audio_graph[0]->output_channels());
-    ASSERT_EQ(1, _engine->_audio_graph[1]->input_channels());
-    ASSERT_EQ(1, _engine->_audio_graph[1]->output_channels());
-    ASSERT_EQ(1, _engine->_audio_graph[2]->input_channels());
-    ASSERT_EQ(2, _engine->_audio_graph[2]->output_channels());
-    ASSERT_EQ(4, _engine->_audio_graph[3]->input_channels());
-    ASSERT_EQ(4, _engine->_audio_graph[3]->output_channels());
-    auto track_l = &_engine->_audio_graph[0]->_processors;
-    auto track_r = &_engine->_audio_graph[1]->_processors;
-    ASSERT_EQ(3u, track_l->size());
-    ASSERT_EQ(3u, track_r->size());
-    ASSERT_EQ(1, _engine->_audio_graph[1]->input_channels());
+    auto tracks = _engine->processor_container()->all_tracks();
 
-    /* TODO - Is this casting a good idea */
-    ASSERT_EQ("passthrough_0_l", static_cast<InternalPlugin*>(track_l->at(0))->name());
-    ASSERT_EQ("gain_0_l", static_cast<InternalPlugin*>(track_l->at(1))->name());
-    ASSERT_EQ("equalizer_0_l", static_cast<InternalPlugin*>(track_l->at(2))->name());
+    ASSERT_EQ(4u, tracks.size());
+    auto track_1_processors = _engine->processor_container()->processors_on_track(tracks[0]->id());
+    auto track_2_processors = _engine->processor_container()->processors_on_track(tracks[1]->id());
 
-    ASSERT_EQ("gain_0_r", static_cast<InternalPlugin*>(track_r->at(0))->name());
-    ASSERT_EQ("passthrough_0_r", static_cast<InternalPlugin*>(track_r->at(1))->name());
-    ASSERT_EQ("gain_1_r", static_cast<InternalPlugin*>(track_r->at(2))->name());
+    ASSERT_EQ(3u, track_1_processors.size());
+    ASSERT_EQ(3u, track_2_processors.size());
+
+    ASSERT_EQ("passthrough_0_l", track_1_processors[0]->name());
+    ASSERT_EQ("gain_0_l", track_1_processors[1]->name());
+    ASSERT_EQ("equalizer_0_l", track_1_processors[2]->name());
+
+    ASSERT_EQ("gain_0_r", track_2_processors[0]->name());
+    ASSERT_EQ("passthrough_0_r", track_2_processors[1]->name());
+    ASSERT_EQ("gain_1_r", track_2_processors[2]->name());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadMidi)

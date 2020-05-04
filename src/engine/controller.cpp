@@ -22,6 +22,7 @@
 #include "engine/base_engine.h"
 
 #include "logging.h"
+#include "control_notifications.h"
 
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
@@ -89,6 +90,18 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
     }
 }
 
+inline sushi::AddProcessorToTrackEvent::ProcessorType to_event_type(ext::PluginType type)
+{
+    switch (type)
+    {
+        case ext::PluginType::INTERNAL: return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
+        case ext::PluginType::VST2X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST2X;
+        case ext::PluginType::VST3X:    return sushi::AddProcessorToTrackEvent::ProcessorType::VST3X;
+        case ext::PluginType::LV2:      return sushi::AddProcessorToTrackEvent::ProcessorType::LV2;
+        default:                        return sushi::AddProcessorToTrackEvent::ProcessorType::INTERNAL;
+    }
+}
+
 inline ext::TimeSignature to_external(sushi::TimeSignature internal)
 {
     return {internal.numerator, internal.denominator};
@@ -107,8 +120,10 @@ inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
 Controller::Controller(engine::BaseEngine* engine) : _engine{engine}
 {
     _event_dispatcher = _engine->event_dispatcher();
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _transport = _engine->transport();
     _performance_timer = engine->performance_timer();
+    _processors = engine->processor_container();
 }
 
 Controller::~Controller() = default;
@@ -189,7 +204,7 @@ void Controller::set_timing_statistics_enabled(bool enabled)
 std::vector<ext::TrackInfo> Controller::get_tracks() const
 {
     SUSHI_LOG_DEBUG("get_tracks called");
-    auto& tracks = _engine->all_tracks();
+    auto tracks = _processors->all_tracks();
     std::vector<ext::TrackInfo> returns;
     for (const auto& t : tracks)
     {
@@ -201,7 +216,7 @@ std::vector<ext::TrackInfo> Controller::get_tracks() const
         info.input_channels = t->input_channels();
         info.output_busses = t->output_busses();
         info.output_channels = t->output_channels();
-        info.processor_count = static_cast<int>(t->process_chain().size());
+        info.processors = _get_processor_ids(t->id());
         returns.push_back(info);
     }
     return returns;
@@ -230,7 +245,8 @@ ext::ControlStatus Controller::send_note_aftertouch(int track_id, int channel, i
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    channel, note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;}
+    return ext::ControlStatus::OK;
+}
 
 ext::ControlStatus Controller::send_aftertouch(int track_id, int channel, float value)
 {
@@ -307,7 +323,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
 {
     SUSHI_LOG_DEBUG("get_track_info called with track {}", track_id);
     ext::TrackInfo info;
-    const auto& tracks = _engine->all_tracks();
+    const auto& tracks = _processors->all_tracks();
     for (const auto& track : tracks)
     {
         if (static_cast<int>(track->id()) == track_id)
@@ -319,7 +335,7 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
             info.input_busses = track->input_busses();
             info.output_channels = track->output_channels();
             info.output_busses = track->output_busses();
-            info.processor_count = static_cast<int>(track->process_chain().size());
+            info.processors = _get_processor_ids(track->id());
             return {ext::ControlStatus::OK, info};
         }
     }
@@ -329,33 +345,29 @@ std::pair<ext::ControlStatus, ext::TrackInfo> Controller::get_track_info(int tra
 std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> Controller::get_track_processors(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_track_processors called for track: {}", track_id);
-    const auto& tracks = _engine->all_tracks();
-    for (const auto& track : tracks)
+    const auto& tracks = _processors->processors_on_track(track_id);
+    std::vector<ext::ProcessorInfo> infos;
+    if (tracks.empty() && _processors->processor_exists(track_id) == false)
     {
-        if (static_cast<int>(track->id()) == track_id)
-        {
-            std::vector<ext::ProcessorInfo> infos;
-            const auto& procs = track->process_chain();
-            for (const auto& processor : procs)
-            {
-                ext::ProcessorInfo info;
-                info.label = processor->label();
-                info.name = processor->name();
-                info.id = processor->id();
-                info.parameter_count = processor->parameter_count();
-                info.program_count = processor->supports_programs()? processor->program_count() : 0;
-                infos.push_back(info);
-            }
-            return {ext::ControlStatus::OK, infos};
-        }
+        return {ext::ControlStatus::NOT_FOUND, infos};
     }
-    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::ProcessorInfo>()};
+    for (const auto& processor : tracks)
+    {
+        ext::ProcessorInfo info;
+        info.label = processor->label();
+        info.name = processor->name();
+        info.id = processor->id();
+        info.parameter_count = processor->parameter_count();
+        info.program_count = processor->supports_programs()? processor->program_count() : 0;
+        infos.push_back(info);
+    }
+    return {ext::ControlStatus::OK, infos};
 }
 
 std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_track_parameters(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_track_parameters called for track: {}", track_id);
-    const auto& tracks = _engine->all_tracks();
+    const auto& tracks = _processors->all_tracks();
     for (const auto& track : tracks)
     {
         if (static_cast<int>(track->id()) == track_id)
@@ -383,10 +395,10 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> Controller::get_t
 std::pair<ext::ControlStatus, int> Controller::get_processor_id(const std::string& processor_name) const
 {
     SUSHI_LOG_DEBUG("get_processor_id called with processor {}", processor_name);
-    auto [status, id] = _engine->processor_id_from_name(processor_name);
-    if (status == engine::EngineReturnStatus::OK)
+    auto processor = _processors->processor(processor_name);
+    if (processor)
     {
-        return {ext::ControlStatus::OK, id};
+        return {ext::ControlStatus::OK, processor->id()};
     }
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
@@ -395,7 +407,7 @@ std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info
 {
     SUSHI_LOG_DEBUG("get_processor_info called with processor {}", processor_id);
     ext::ProcessorInfo info;
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, info};
@@ -411,7 +423,7 @@ std::pair<ext::ControlStatus, ext::ProcessorInfo> Controller::get_processor_info
 std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_bypass_state called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, false};
@@ -422,7 +434,7 @@ std::pair<ext::ControlStatus, bool> Controller::get_processor_bypass_state(int p
 ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
     SUSHI_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
-    auto processor = _engine->mutable_processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->mutable_processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return ext::ControlStatus::NOT_FOUND;
@@ -434,7 +446,7 @@ ext::ControlStatus Controller::set_processor_bypass_state(int processor_id, bool
 std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_current_program called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, 0};
@@ -449,7 +461,7 @@ std::pair<ext::ControlStatus, int> Controller::get_processor_current_program(int
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_program_name(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_current_program_name called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, ""};
@@ -464,7 +476,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_current_pro
 std::pair<ext::ControlStatus, std::string> Controller::get_processor_program_name(int processor_id, int program_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, ""};
@@ -484,7 +496,7 @@ std::pair<ext::ControlStatus, std::string> Controller::get_processor_program_nam
 std::pair<ext::ControlStatus, std::vector<std::string>> Controller::get_processor_programs(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, std::vector<std::string>()};
@@ -513,27 +525,24 @@ std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>>
 Controller::get_processor_parameters(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_parameters called with processor {}", processor_id);
-    const auto& procs = _engine->all_processors();
-    for (const auto& proc : procs)
+    const auto proc = _processors->processor(processor_id);
+    if (proc)
     {
-        if (static_cast<int>(proc.second->id()) == processor_id)
+        std::vector<ext::ParameterInfo> infos;
+        const auto& params = proc->all_parameters();
+        for (const auto& param : params)
         {
-            std::vector<ext::ParameterInfo> infos;
-            const auto& params = proc.second->all_parameters();
-            for (const auto& param : params)
-            {
-                ext::ParameterInfo info;
-                info.label = param->label();
-                info.name = param->name();
-                info.unit = param->unit();
-                info.id = param->id();
-                info.type = ext::ParameterType::FLOAT;
-                info.min_domain_value = param->min_domain_value();
-                info.max_domain_value = param->max_domain_value();
-                infos.push_back(info);
-            }
-            return {ext::ControlStatus::OK, infos};
+            ext::ParameterInfo info;
+            info.label = param->label();
+            info.name = param->name();
+            info.unit = param->unit();
+            info.id = param->id();
+            info.type = ext::ParameterType::FLOAT;
+            info.min_domain_value = param->min_domain_value();
+            info.max_domain_value = param->max_domain_value();
+            infos.push_back(info);
         }
+        return {ext::ControlStatus::OK, infos};
     }
     return {ext::ControlStatus::NOT_FOUND, std::vector<ext::ParameterInfo>()};
 }
@@ -541,7 +550,7 @@ Controller::get_processor_parameters(int processor_id) const
 std::pair<ext::ControlStatus, int> Controller::get_parameter_id(int processor_id, const std::string& parameter_name) const
 {
     SUSHI_LOG_DEBUG("get_parameter_id called with processor {} and parameter {}", processor_id, parameter_name);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
         return {ext::ControlStatus::NOT_FOUND, 0};
@@ -558,7 +567,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
 {
     SUSHI_LOG_DEBUG("get_parameter_info called with processor {} and parameter {}", processor_id, parameter_id);
     ext::ParameterInfo info;
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
         auto descr = processor->parameter_from_id(static_cast<ObjectId>(parameter_id));
@@ -583,7 +592,7 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> Controller::get_parameter_info
 std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int processor_id, int parameter_id) const
 {
     SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
         auto[status, value] = processor->parameter_value(static_cast<ObjectId>(parameter_id));
@@ -597,8 +606,8 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value(int process
 
 std::pair<ext::ControlStatus, float> Controller::get_parameter_value_in_domain(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    SUSHI_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
         auto[status, value] = processor->parameter_value_in_domain(static_cast<ObjectId>(parameter_id));
@@ -613,7 +622,7 @@ std::pair<ext::ControlStatus, float> Controller::get_parameter_value_in_domain(i
 std::pair<ext::ControlStatus, std::string> Controller::get_parameter_value_as_string(int processor_id, int parameter_id) const
 {
     SUSHI_LOG_DEBUG("get_parameter_value_as_string called with processor {} and parameter {}", processor_id, parameter_id);
-    auto processor = _engine->processor(static_cast<ObjectId>(processor_id));
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
         auto[status, value] = processor->parameter_value_formatted(static_cast<ObjectId>(parameter_id));
@@ -651,6 +660,21 @@ ext::ControlStatus Controller::set_string_property_value(int /*processor_id*/, i
     return ext::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
+ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type, 
+                                                          ext::ControlListener* listener)
+{
+    switch (type)
+    {
+        case ext::NotificationType::PARAMETER_CHANGE: 
+            _parameter_change_listeners.push_back(listener); 
+            break;
+        default: 
+            break;
+    }
+
+    return ext::ControlStatus::OK;
+}
+
 std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node) const
 {
     if (_performance_timer->enabled())
@@ -663,6 +687,117 @@ std::pair<ext::ControlStatus, ext::CpuTimings> Controller::_get_timings(int node
         return {ext::ControlStatus::NOT_FOUND, {0,0,0}};
     }
     return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
+}
+
+ext::ControlStatus Controller::create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus)
+{
+    auto event = new AddTrackEvent(name, 2, input_bus, output_bus, IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel)
+{
+    auto event = new AddTrackEvent(name, 1, input_channel, output_channel, IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::delete_track(int track_id)
+{
+    auto event = new RemoveTrackEvent(ObjectId(track_id), IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                                         ext::PluginType type, int track_id, std::optional<int> before_processor_id)
+{
+    auto event = new AddProcessorToTrackEvent(name,
+                                              uid,
+                                              file,
+                                              to_event_type(type),
+                                              ObjectId(track_id),
+                                              before_processor_id,
+                                              IMMEDIATE_PROCESS);
+
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id)
+{
+    MoveProcessorEvent* event;
+    event = new MoveProcessorEvent(ObjectId(processor_id),
+                                   ObjectId(source_track_id),
+                                   ObjectId(dest_track_id),
+                                   before_processor_id,
+                                   IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus Controller::delete_processor_from_track(int processor_id, int track_id)
+{
+    auto event = new RemoveProcessorEvent(ObjectId(processor_id), ObjectId(track_id), IMMEDIATE_PROCESS);
+    event->set_completion_cb(Controller::completion_callback, this);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+void Controller::completion_callback(void*arg, Event*event, int status)
+{
+    reinterpret_cast<Controller*>(arg)->_completion_callback(event, status);
+}
+
+std::vector<int> Controller::_get_processor_ids(int track_id) const
+{
+    std::vector<int> ids;
+    auto processors = _processors->processors_on_track(ObjectId(track_id));
+    ids.reserve(processors.size());
+    for (const auto& p : processors)
+    {
+        ids.push_back(p->id());
+    }
+    return ids;
+}
+
+
+int Controller::process(Event* event)
+{
+    if (event->is_parameter_change_notification())
+    {
+        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
+        ext::ParameterChangeNotification notification((int)typed_event->processor_id(), 
+                                                      (int)typed_event->parameter_id(), 
+                                                      typed_event->float_value(), 
+                                                      typed_event->time());
+        for (auto& listener : _parameter_change_listeners)
+        {
+            listener->notification(&notification);
+        }
+        return EventStatus::HANDLED_OK;
+    }
+
+    return EventStatus::NOT_HANDLED;
+}
+
+void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
+{
+    if (status == EventStatus::HANDLED_OK)
+    {
+        SUSHI_LOG_INFO("Event {}, handled OK", event->id());
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
+    }
 }
 
 }// namespace sushi

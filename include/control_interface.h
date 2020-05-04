@@ -24,6 +24,7 @@
 #include <utility>
 #include <optional>
 #include <vector>
+#include <chrono>
 
 namespace sushi {
 namespace ext {
@@ -64,6 +65,14 @@ struct CpuTimings
     float avg;
     float min;
     float max;
+};
+
+enum class PluginType
+{
+    INTERNAL,
+    VST2X,
+    VST3X,
+    LV2
 };
 
 enum class ParameterType
@@ -111,8 +120,45 @@ struct TrackInfo
     int         input_busses;
     int         output_channels;
     int         output_busses;
-    int         processor_count;
+    std::vector<int> processors;
 };
+
+
+using Time = std::chrono::microseconds;
+
+enum class NotificationType
+{
+    PARAMETER_CHANGE,
+    TRACK_ADDED,
+    TRACK_REMOVED,
+    TRACK_CHANGED,
+    PROCESSOR_ADDED,
+    PROCESSOR_REMOVED
+};
+
+class ControlNotification
+{
+public:
+    virtual ~ControlNotification() = default;
+
+    NotificationType type() const {return _type;}
+    Time timestamp() const {return _timestamp;}
+
+protected:
+    ControlNotification(NotificationType type, Time timestamp) : _type(type),
+                                                                 _timestamp(timestamp) {}
+
+private:
+    NotificationType _type;
+    Time _timestamp;
+};
+
+
+class ControlListener
+{
+public:
+    virtual void notification(const ControlNotification* notification) = 0;
+}; 
 
 class SushiControl
 {
@@ -177,6 +223,16 @@ public:
     virtual ControlStatus                              set_parameter_value(int processor_id, int parameter_id, float value) = 0;
     virtual ControlStatus                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
+    // Audio graph control
+    virtual ControlStatus               create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) = 0;
+    virtual ControlStatus               create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) = 0;
+    virtual ControlStatus               delete_track(int track_id) = 0;
+    virtual ControlStatus               create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+                                                                  PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
+    virtual ControlStatus               move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) = 0;
+    virtual ControlStatus               delete_processor_from_track(int processor_id, int track_id) = 0;
+
+    virtual ControlStatus                              subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
 protected:
     SushiControl() = default;

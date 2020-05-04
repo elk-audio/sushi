@@ -1,10 +1,11 @@
 #include <thread>
 #include "gtest/gtest.h"
 
+#include "control_frontends/base_control_frontend.cpp"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define private public
-#include "control_frontends/base_control_frontend.cpp"
 #include "control_frontends/osc_frontend.cpp"
+#undef private
 #pragma GCC diagnostic pop
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
@@ -23,13 +24,7 @@ constexpr auto EVENT_WAIT_TIME = std::chrono::milliseconds(2);
 class TestOSCFrontend : public ::testing::Test
 {
 protected:
-    TestOSCFrontend()
-    {
-    }
-
-    ~TestOSCFrontend()
-    {
-    }
+    TestOSCFrontend() {}
 
     void SetUp()
     {
@@ -41,15 +36,16 @@ protected:
         _module_under_test.run();
     }
 
-    bool wait_for_event()
+    // If the test expects events NOT to be received, set the number of
+    // retries to something low (1-2) to keep test execution times down
+    bool wait_for_event(int retries = EVENT_WAIT_RETRIES)
     {
-        for (int i = 0; i < EVENT_WAIT_RETRIES; ++i)
+        for (int i = 0; i < retries; ++i)
         {
-            auto event = _controller.was_recently_called();
-            if (event)
+            if (_controller.was_recently_called())
             {
                 _controller.clear_recent_call();
-                return event;
+                return true;
             }
             std::this_thread::sleep_for(EVENT_WAIT_TIME);
         }
@@ -62,7 +58,6 @@ protected:
         lo_address_free(_address);
     }
 
-
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
@@ -74,15 +69,33 @@ TEST_F(TestOSCFrontend, TestConnectAll)
 {
     _module_under_test.connect_all();
     lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/proc_2/param_2", "f", 0.5f);
-    ASSERT_TRUE(wait_for_event());
+    EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/non/existing", "f", 0.5f);
-    ASSERT_FALSE(wait_for_event());
+    ASSERT_FALSE(wait_for_event(2));
+}
+
+TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
+{
+    // As this in only done in response to events, test the event handling at the same time
+    ObjectId processor_id = 0;
+    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED,
+                                             processor_id, 0, IMMEDIATE_PROCESS);
+    _module_under_test.process(&event);
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    EXPECT_TRUE(wait_for_event());
+
+    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
+                                        processor_id, 0, IMMEDIATE_PROCESS);
+
+    _module_under_test.process(&event);
+    lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
+    EXPECT_FALSE(wait_for_event(2));
 }
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)
@@ -306,6 +319,62 @@ TEST_F(TestOSCFrontend, TestResetProcessorTimings)
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
+}
+
+TEST_F(TestOSCFrontend, TestAddProcessorToTrack)
+{
+    lo_send(_address, "/engine/add_processor_to_track", "sssss", "plugin", "", "lib.so", "vst2x", "track");
+
+    ASSERT_TRUE(wait_for_event());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ("plugin", args["name"]);
+    EXPECT_EQ("", args["uid"]);
+    EXPECT_EQ("lib.so", args["file"]);
+    EXPECT_EQ(static_cast<int>(PluginType::VST2X), std::stoi(args["type"]));
+    EXPECT_EQ(0, std::stoi(args["track_id"]));
+    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
+
+    lo_send(_address, "/engine/add_processor_to_track", "ssssss", "plugin", "uid", "lib.so", "vst3x", "track", "track");
+
+    ASSERT_TRUE(wait_for_event());
+    args = _controller.get_args_from_last_call();
+    EXPECT_EQ("plugin", args["name"]);
+    EXPECT_EQ("uid", args["uid"]);
+    EXPECT_EQ("lib.so", args["file"]);
+    EXPECT_EQ(static_cast<int>(PluginType::VST3X), std::stoi(args["type"]));
+    EXPECT_EQ(0, std::stoi(args["track_id"]));
+    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
+}
+
+TEST_F(TestOSCFrontend, TestMoveProcessorOnTrack)
+{
+    lo_send(_address, "/engine/move_processor_on_track", "sss", "plugin", "track", "track_1");
+
+    ASSERT_TRUE(wait_for_event());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor_id"]));
+    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
+    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
+    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
+
+    lo_send(_address, "/engine/move_processor_on_track", "ssss", "plugin", "track", "track_1", "track_2");
+
+    ASSERT_TRUE(wait_for_event());
+    args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor_id"]));
+    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
+    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
+    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
+}
+
+TEST_F(TestOSCFrontend, TestDeleteProcesorFromTrack)
+{
+    lo_send(_address, "/engine/delete_processor_from_track", "ss", "plugin", "track");
+
+    ASSERT_TRUE(wait_for_event());
+    auto args = _controller.get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor_id"]));
+    EXPECT_EQ(0, std::stoi(args["track_id"]));
 }
 
 TEST(TestOSCFrontendInternal, TestMakeSafePath)

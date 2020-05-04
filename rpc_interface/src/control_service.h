@@ -21,21 +21,28 @@
 #ifndef SUSHI_SUSHICONTROLSERVICE_H
 #define SUSHI_SUSHICONTROLSERVICE_H
 
-#include <grpc++/grpc++.h>
+#include <atomic>
+#include <grpcpp/grpcpp.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "sushi_rpc.grpc.pb.h"
 #pragma GCC diagnostic pop
 
+#include "async_service_call_data.h"
 #include "../../include/control_interface.h"
 
 namespace sushi_rpc {
 
-class SushiControlService : public sushi_rpc::SushiController::Service
+using AsyncService = sushi_rpc::SushiController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::SushiController::Service>;
+
+class SushiControlService : public AsyncService, sushi::ext::ControlListener
 {
 public:
-    SushiControlService(sushi::ext::SushiControl* controller) : _controller{controller} {};
+    SushiControlService(sushi::ext::SushiControl* controller) : _controller{controller}
+    {
+        _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
+    };
 
     virtual ~SushiControlService() = default;
 
@@ -87,11 +94,29 @@ public:
      grpc::Status GetParameterValueInDomain(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericFloatValue* response) override;
      grpc::Status GetParameterValueAsString(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
      grpc::Status GetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
-     grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterValue* request, sushi_rpc::GenericVoidValue* response) override;
      grpc::Status SetStringPropertyValue(grpc::ServerContext* context, const sushi_rpc::StringPropertySetRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
-private:
+    // Audio Graph Control
+     grpc::Status CreateStereoTrack(grpc::ServerContext* context, const sushi_rpc::CreateStereoTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status CreateMonoTrack(grpc::ServerContext* context, const sushi_rpc::CreateMonoTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status DeleteTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status CreateProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::CreateProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status MoveProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::MoveProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
+     grpc::Status DeleteProcessorFromTrack(grpc::ServerContext* context, const sushi_rpc::DeleteProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
 
+     // Inherited from ControlListener
+     void notification(const sushi::ext::ControlNotification* notification) override;
+
+     // Subscribtion methods
+     void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+     void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+
+      // Shutdown method
+      void stop_all_call_data();
+private:
+    std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
+    std::mutex _subscriber_lock;
     sushi::ext::SushiControl* _controller;
 };
 

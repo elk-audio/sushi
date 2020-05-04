@@ -502,24 +502,30 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
 {
     auto name = track_def["name"].GetString();
     EngineReturnStatus status = EngineReturnStatus::ERROR;
+    ObjectId track_id;
     if (track_def["mode"] == "mono")
     {
-        status = _engine->create_track(name, 1);
+        std::tie(status, track_id) = _engine->create_track(name, 1);
     }
     else if (track_def["mode"] == "stereo")
     {
-        status = _engine->create_track(name, 2);
+        std::tie(status, track_id) = _engine->create_track(name, 2);
     }
     else if (track_def["mode"] == "multibus")
     {
         if (track_def.HasMember("input_busses") && track_def.HasMember("output_busses"))
         {
-            status = _engine->create_multibus_track(name, track_def["input_busses"].GetInt(),
-                                                    track_def["output_busses"].GetInt());
+            std::tie(status, track_id) = _engine->create_multibus_track(name,
+                                                                        track_def["input_busses"].GetInt(),
+                                                                        track_def["output_busses"].GetInt());
         }
     }
+    else
+    {
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+    }
 
-    if(status == EngineReturnStatus::INVALID_PLUGIN_NAME || status == EngineReturnStatus::INVALID_PROCESSOR)
+    if(status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
     {
         SUSHI_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
@@ -536,15 +542,19 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
     {
         if (con.HasMember("engine_bus"))
         {
-            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(),
+                                                      con["track_bus"].GetInt(),
+                                                      track_id);
         }
         else
         {
-            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(),
+                                                          con["track_channel"].GetInt(),
+                                                          track_id);
         }
         if(status != EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Error connection input bus to track \"{}\", error {}", name, static_cast<int>(status));
+            SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -553,11 +563,15 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
     {
         if (con.HasMember("engine_bus"))
         {
-            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(), con["track_bus"].GetInt(), name);
+            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(),
+                                                       con["track_bus"].GetInt(),
+                                                       track_id);
         }
         else
         {
-            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(), con["track_channel"].GetInt(), name);
+            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(),
+                                                           con["track_channel"].GetInt(),
+                                                           track_id);
 
         }
         if(status != EngineReturnStatus::OK)
@@ -584,19 +598,19 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_type = PluginType::VST2X;
             plugin_path = def["path"].GetString();
         }
-        else if(type == "lv2")
-        {
-            plugin_type = PluginType::LV2;
-            plugin_path = def["uri"].GetString();
-        }
-        else
+        else if(type == "vst3x")
         {
             plugin_uid = def["uid"].GetString();
             plugin_path = def["path"].GetString();
             plugin_type = PluginType::VST3X;
         }
+        else // Anything else should have been caught by the validation step before this
+        {
+            plugin_type = PluginType::LV2;
+            plugin_path = def["uri"].GetString();
+        }
 
-        status = _engine->add_plugin_to_track(name, plugin_uid, plugin_name, plugin_path, plugin_type);
+        auto [status, plugin_id] = _engine->load_plugin(plugin_uid, plugin_name, plugin_path, plugin_type);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
@@ -606,6 +620,11 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             }
             SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+        }
+        status = _engine->add_plugin_to_track(plugin_id, track_id);
+        if (status != EngineReturnStatus::OK)
+        {
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
         SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to"
                                " Chain \"{}\"", plugin_name, name);
@@ -630,45 +649,42 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))): IMMEDIATE_PROCESS;
 
     const rapidjson::Value& data = json_event["data"];
-    auto [status, processor_id] = _engine->processor_id_from_name(data["plugin_name"].GetString());
-    if (status != sushi::engine::EngineReturnStatus::OK)
+    auto processor = _engine->processor_container()->processor(data["plugin_name"].GetString());
+    if (processor == nullptr)
     {
         SUSHI_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
         return nullptr;
     }
     if (json_event["type"] == "parameter_change")
     {
-        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                      data["parameter_name"].GetString());
-        if (status != sushi::engine::EngineReturnStatus::OK)
+        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        if (parameter == nullptr)
         {
             SUSHI_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
         return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                        processor_id,
-                                        parameter_id,
+                                        processor->id(),
+                                        parameter->id(),
                                         data["value"].GetFloat(),
                                         timestamp);
     }
     if (json_event["type"] == "property_change")
     {
-        auto [status, parameter_id] = _engine->parameter_id_from_name(data["plugin_name"].GetString(),
-                                                                      data["property_name"].GetString());
-        if (status != sushi::engine::EngineReturnStatus::OK)
-        {
+        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        if (parameter == nullptr)        {
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new StringPropertyChangeEvent(processor_id,
-                                             parameter_id,
+        return new StringPropertyChangeEvent(processor->id(),
+                                             parameter->id(),
                                              data["value"].GetString(),
                                              timestamp);
     }
     if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
-                                 processor_id,
+                                 processor->id(),
                                  0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),
@@ -677,7 +693,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
-                                 processor_id,
+                                 processor->id(),
                                  0, // channel
                                  data["note"].GetUint(),
                                  data["velocity"].GetFloat(),

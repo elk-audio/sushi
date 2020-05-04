@@ -26,8 +26,8 @@
 #include <map>
 
 #include "library/processor.h"
-#include "library/vst2x_plugin_loader.h"
-#include "library/vst2x_midi_event_fifo.h"
+#include "vst2x_plugin_loader.h"
+#include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"
 
 namespace sushi {
@@ -63,10 +63,7 @@ public:
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
     }
 
-    virtual ~Vst2xWrapper()
-    {
-        _cleanup();
-    }
+    virtual ~Vst2xWrapper();
 
     /* Inherited from Processor */
     ProcessorReturnCode init(float sample_rate) override;

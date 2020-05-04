@@ -18,7 +18,10 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+
+#include "../../include/control_notifications.h"
 #include "control_service.h"
+#include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
@@ -91,7 +94,7 @@ inline const char* to_string(const sushi::ext::ControlStatus status)
         case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
         case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
         default:                                               return "INTERNAL";
-    } 
+    }
 }
 
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
@@ -155,7 +158,10 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     dest.set_input_busses(src.input_busses);
     dest.set_output_channels(src.output_channels);
     dest.set_output_busses(src.output_busses);
-    dest.set_processor_count(src.processor_count);
+    for (auto i : src.processors)
+    {
+        dest.mutable_processors()->Add()->set_id(i);
+    }
 }
 
 inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& src)
@@ -163,6 +169,18 @@ inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& s
     dest.set_average(src.avg);
     dest.set_min(src.min);
     dest.set_max(src.max);
+}
+
+inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
+{
+    switch (type)
+    {
+        case sushi_rpc::PluginType::INTERNAL:       return sushi::ext::PluginType::INTERNAL;
+        case sushi_rpc::PluginType::VST2X:          return sushi::ext::PluginType::VST2X;
+        case sushi_rpc::PluginType::VST3X:          return sushi::ext::PluginType::VST3X;
+        case sushi_rpc::PluginType::LV2:            return sushi::ext::PluginType::LV2;
+        default:                                    return sushi::ext::PluginType::INTERNAL;
+    }
 }
 
 grpc::Status SushiControlService::GetSamplerate(grpc::ServerContext* /*context*/,
@@ -620,7 +638,7 @@ grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*
 }
 
 grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterSetRequest* request,
+                                                    const sushi_rpc::ParameterValue* request,
                                                     sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_parameter_value(request->parameter().processor_id(),
@@ -637,6 +655,125 @@ grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*
                                                          request->property().parameter_id(),
                                                          request->value());
     return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::CreateStereoTrack(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::CreateStereoTrackRequest* request,
+                                                    sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> input_bus;
+    if (request->has_input())
+    {
+        input_bus = request->input_bus();
+    }
+    auto status = _controller->create_stereo_track(request->name(), request->output_bus(), input_bus);
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::CreateMonoTrack(grpc::ServerContext* /*context*/,
+                                                  const sushi_rpc::CreateMonoTrackRequest* request,
+                                                  sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> input_channel;
+    if (request->has_input())
+    {
+        input_channel = request->input_channel();
+    }
+    auto status = _controller->create_mono_track(request->name(), request->output_channel(), input_channel);
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::DeleteTrack(grpc::ServerContext* /*context*/,
+                                              const sushi_rpc::TrackIdentifier* request,
+                                              sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->delete_track(request->id());
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::CreateProcessorRequest* request,
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> before_processor = std::nullopt;
+    if (request->position().add_to_back() == false)
+    {
+        before_processor = request->position().before_processor().id();
+    }
+    auto status = _controller->create_processor_on_track(request->name(),
+                                                         request->uid(),
+                                                         request->path(),
+                                                         to_sushi_ext(request->type().type()),
+                                                         request->track().id(),
+                                                         before_processor);
+    return to_grpc_status(status);
+}
+
+grpc::Status SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
+{
+    std::optional<int> before_processor = std::nullopt;
+    if (request->position().add_to_back() == false)
+    {
+        before_processor = request->position().before_processor().id();
+    }
+    auto status = _controller->move_processor_on_track(request->processor().id(),
+                                                       request->source_track().id(),
+                                                       request->dest_track().id(),
+                                                       before_processor);
+    return to_grpc_status(status);
+
+}
+
+grpc::Status SushiControlService::DeleteProcessorFromTrack(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::DeleteProcessorRequest* request,
+                                                           sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->delete_processor_from_track(request->processor().id(),
+                                                           request->track().id());
+    return to_grpc_status(status);
+}
+
+
+void SushiControlService::notification(const sushi::ext::ControlNotification* notification)
+{
+    if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
+    {
+        auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+        auto notification_content = std::make_shared<ParameterValue>();
+        notification_content->set_value(typed_notification->value());
+        notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+        notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+
+        std::scoped_lock lock(_subscriber_lock);
+        for(auto& subscriber : _parameter_subscribers)
+        {
+            subscriber->push(notification_content);
+        }
+    }
+}
+
+void SushiControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+     {
+         std::scoped_lock lock(_subscriber_lock);
+         _parameter_subscribers.push_back(subscriber);
+     }
+
+void SushiControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_subscriber_lock);
+    _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
+                                            _parameter_subscribers.end(),
+                                            subscriber));
+}
+
+void SushiControlService::stop_all_call_data()
+{
+    for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->stop();
+        subscriber->proceed();
+    }
 }
 
 } // sushi_rpc

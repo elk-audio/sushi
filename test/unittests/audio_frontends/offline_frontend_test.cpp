@@ -16,6 +16,7 @@ using namespace sushi::midi_dispatcher;
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int CV_CHANNELS = 0;
+constexpr int AUDIO_CHANNELS = 2;
 
 class TestOfflineFrontend : public ::testing::Test
 {
@@ -27,6 +28,8 @@ protected:
     void SetUp()
     {
         _module_under_test = new OfflineFrontend(&_engine);
+        _engine.set_audio_input_channels(AUDIO_CHANNELS);
+        _engine.set_audio_output_channels(AUDIO_CHANNELS);
     }
 
     void TearDown()
@@ -69,13 +72,13 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
         EXPECT_TRUE(false) << "Error opening output file: " << output_file_name;
     }
 
-    float file_buffer[_engine.n_channels_in_track(0) * AUDIO_CHUNK_SIZE];
+    float file_buffer[AUDIO_CHANNELS * AUDIO_CHUNK_SIZE];
     unsigned int readcount;
     while ( (readcount = static_cast<unsigned int>(sf_readf_float(output_file,
                                                          &file_buffer[0],
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        for (unsigned int n=0; n<(readcount * _engine.n_channels_in_track(0)); n++)
+        for (unsigned int n=0; n<(readcount * AUDIO_CHANNELS); n++)
         {
             ASSERT_FLOAT_EQ(0.5f, file_buffer[n]);
         }
