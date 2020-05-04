@@ -24,7 +24,7 @@ service TransportController
     rpc GetSyncMode (GenericVoidValue) returns (SyncMode) {}
     rpc GetTimeSignature (GenericVoidValue) returns (TimeSignature) {}
     rpc GetTempo (GenericVoidValue) returns (GenericFloatValue) {}
-
+s
     rpc SetTempo (GenericFloatValue) returns (GenericVoidValue) {}
     rpc SetPlayingMode (PlayingMode) returns (GenericVoidValue) {}
     rpc SetSyncMode (SyncMode) returns (GenericVoidValue) {}
@@ -96,6 +96,7 @@ service ParameterController
     rpc GetParameterValue (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
+<<<<<<< HEAD
 
     rpc SetParameterValue (ParameterValue) returns (GenericVoidValue) {}
 }
@@ -186,7 +187,7 @@ service NotificationController
     rpcSubscribeToTrackChanges()returns(streamTrackUpdate){}
     rpcSubscribeToProcessorChanges()returns(streamProcessorUpdate){}
     rpcSubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){}
-    rpcSubscribeToParameterStringUpdates(ParameterNotificationRequest)returns(streamParameterStringValue){}
+    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
 }
 
 /**

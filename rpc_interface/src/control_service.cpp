@@ -18,7 +18,10 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+
+#include "../../include/control_notifications.h"
 #include "control_service.h"
+#include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
@@ -91,7 +94,7 @@ inline const char* to_string(const sushi::ext::ControlStatus status)
         case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
         case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
         default:                                               return "INTERNAL";
-    } 
+    }
 }
 
 inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
@@ -635,7 +638,7 @@ grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*
 }
 
 grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterSetRequest* request,
+                                                    const sushi_rpc::ParameterValue* request,
                                                     sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_parameter_value(request->parameter().processor_id(),
@@ -729,6 +732,48 @@ grpc::Status SushiControlService::DeleteProcessorFromTrack(grpc::ServerContext* 
     auto status = _controller->delete_processor_from_track(request->processor().id(),
                                                            request->track().id());
     return to_grpc_status(status);
+}
+
+
+void SushiControlService::notification(const sushi::ext::ControlNotification* notification)
+{
+    if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
+    {
+        auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+        auto notification_content = std::make_shared<ParameterValue>();
+        notification_content->set_value(typed_notification->value());
+        notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+        notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+
+        std::scoped_lock lock(_subscriber_lock);
+        for(auto& subscriber : _parameter_subscribers)
+        {
+            subscriber->push(notification_content);
+        }
+    }
+}
+
+void SushiControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+     {
+         std::scoped_lock lock(_subscriber_lock);
+         _parameter_subscribers.push_back(subscriber);
+     }
+
+void SushiControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_subscriber_lock);
+    _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
+                                            _parameter_subscribers.end(),
+                                            subscriber));
+}
+
+void SushiControlService::stop_all_call_data()
+{
+    for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->stop();
+        subscriber->proceed();
+    }
 }
 
 } // sushi_rpc

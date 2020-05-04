@@ -24,9 +24,12 @@
 #include <utility>
 #include <optional>
 #include <vector>
+#include <chrono>
 
 namespace sushi {
 namespace ext {
+
+using Time = std::chrono::microseconds;
 
 enum class ControlStatus
 {
@@ -131,7 +134,6 @@ struct SushiBuildInfo
     std::string                 build_date;
 };
 
-
 enum class MidiChannel
 {
     MIDI_CH_1,
@@ -199,6 +201,16 @@ struct MidiPCConnection
     int         processor_id;
     MidiChannel channel;
     int         port;
+};
+
+enum class NotificationType
+{
+    PARAMETER_CHANGE,
+    TRACK_ADDED,
+    TRACK_REMOVED,
+    TRACK_CHANGED,
+    PROCESSOR_ADDED,
+    PROCESSOR_REMOVED
 };
 
 class SystemController
@@ -394,7 +406,7 @@ protected:
 class CvGateController
 {
 public:
-    virtual ~CvGateRoutingController() = default;
+    virtual ~CvGateController() = default;
 
     virtual int                         get_cv_input_ports() const = 0;
     virtual int                         get_cv_output_ports() const = 0;
@@ -424,7 +436,7 @@ public:
     virtual ControlStatus               disconnect_all_gate_outputs_from_processor(int processor_id) = 0;
 
 protected:
-    CvGateRoutingController() = default;
+    CvGateController() = default;
 };
 
 class OscController
@@ -441,6 +453,32 @@ public:
 protected:
     OscController() = default;
 };
+
+
+class ControlNotification
+{
+public:
+    virtual ~ControlNotification() = default;
+
+    NotificationType type() const {return _type;}
+    Time timestamp() const {return _timestamp;}
+
+protected:
+    ControlNotification(NotificationType type, Time timestamp) : _type(type),
+                                                                 _timestamp(timestamp) {}
+
+private:
+    NotificationType _type;
+    Time _timestamp;
+};
+
+
+class ControlListener
+{
+public:
+    virtual void notification(const ControlNotification* notification) = 0;
+};
+
 class SushiControl
 {
 public:
@@ -457,6 +495,8 @@ public:
     AudioRoutingController* audio_routing_controller() {return _audio_routing_controller.get();}
     CvGateController*       cv_gate_controller() {return _cv_gate_controller.get();}
     OscController*          osc_controller() {return _osc_controller.get();}
+
+    virtual ControlStatus   subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
 protected:
     SushiControl() = default;
@@ -475,6 +515,9 @@ protected:
     //std::unique_ptr<NotificationController>    _notification_controller;
 
 };
+
+
+
 
 } // ext
 } // sushi
