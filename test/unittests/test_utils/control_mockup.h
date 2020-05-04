@@ -17,8 +17,8 @@ const ProcessorInfo processor1{0, "proc 1", "proc 1", 0 ,0};
 const ProcessorInfo processor2{1, "proc 2", "proc 2", 1 ,1};
 const std::vector<ProcessorInfo> processors{processor1, processor2};
 
-const TrackInfo track1{0,"track1","track1",0,0,0,0,{}};
-const TrackInfo track2{1,"track2","track2",1,1,1,1,{}};
+const TrackInfo track1{0,"track 1","track 1",0,0,0,0,{}};
+const TrackInfo track2{1,"track 2","track 2",1,1,1,1,{}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float default_samplerate = 48000.0f;
@@ -81,22 +81,22 @@ public:
     virtual float get_tempo() const override { return default_tempo; };
 
     virtual ControlStatus set_tempo(float tempo) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["tempo"] = std::to_string(tempo);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual TimeSignature get_time_signature() const override { return default_time_signature; };
 
     virtual ControlStatus set_time_signature(TimeSignature signature) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["numerator"] = std::to_string(signature.numerator);
         _args_from_last_call["denominator"] = std::to_string(signature.denominator);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual bool get_timing_statistics_enabled() const override
@@ -115,40 +115,40 @@ public:
 
     // Keyboard control
     virtual ControlStatus send_note_on(int track_id, int channel, int note, float velocity) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["track id"] = std::to_string(track_id);
         _args_from_last_call["channel"] = std::to_string(channel);
         _args_from_last_call["note"] = std::to_string(note);
         _args_from_last_call["velocity"] = std::to_string(velocity);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual ControlStatus send_note_off(int track_id, int channel, int note, float velocity) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["track id"] = std::to_string(track_id);
         _args_from_last_call["channel"] = std::to_string(channel);
         _args_from_last_call["note"] = std::to_string(note);
         _args_from_last_call["velocity"] = std::to_string(velocity);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["track id"] = std::to_string(track_id);
         _args_from_last_call["channel"] = std::to_string(channel);
         _args_from_last_call["note"] = std::to_string(note);
         _args_from_last_call["value"] = std::to_string(value);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual ControlStatus send_aftertouch(int track_id, int channel, float value) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["track id"] = std::to_string(track_id);
         _args_from_last_call["channel"] = std::to_string(channel);
@@ -179,28 +179,28 @@ public:
 
     // Cpu Timings
     virtual std::pair<ControlStatus, CpuTimings> get_engine_timings() const override
-    { 
-        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings); 
+    {
+        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings);
     };
 
     virtual std::pair<ControlStatus, CpuTimings> get_track_timings(int /* track_id */) const override
-    { 
-        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings); 
+    {
+        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings);
     };
 
     virtual std::pair<ControlStatus, CpuTimings> get_processor_timings(int /* processor_id */) const override
-    { 
-        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings); 
+    {
+        return std::pair<ControlStatus, CpuTimings>(default_control_status, default_timings);
     };
 
     virtual ControlStatus reset_all_timings() override
-    { 
+    {
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual ControlStatus reset_track_timings(int track_id) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["track id"] = std::to_string(track_id);
         _recently_called = true;
@@ -208,16 +208,16 @@ public:
     };
 
     virtual ControlStatus reset_processor_timings(int processor_id) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     // Track control
     virtual std::pair<ControlStatus, int> get_track_id(const std::string& /* track_name */) const override
-    { 
+    {
         return std::pair<ControlStatus, int>(default_control_status, track1.id);
     };
 
@@ -226,12 +226,12 @@ public:
         return std::pair<ControlStatus, TrackInfo>(default_control_status, track1);
     };
 
-    virtual std::pair<ControlStatus, std::vector<ProcessorInfo>> get_track_processors(int /* track_id */) const override 
+    virtual std::pair<ControlStatus, std::vector<ProcessorInfo>> get_track_processors(int /* track_id */) const override
     {
         return std::pair<ControlStatus, std::vector<ProcessorInfo>>(ControlStatus::OK, processors);
     };
 
-    virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_track_parameters(int /* processor_id */) const override 
+    virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_track_parameters(int /* processor_id */) const override
     {
         return std::pair<ControlStatus, std::vector<ParameterInfo>>(default_control_status, parameters);
     };
@@ -253,12 +253,12 @@ public:
     };
 
     virtual ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _args_from_last_call["bypass enabled"] = std::to_string(bypass_enabled);
         _recently_called = true;
-        return default_control_status; 
+        return default_control_status;
     };
 
     virtual std::pair<ControlStatus, int> get_processor_current_program(int /* processor_id */) const override
@@ -327,7 +327,7 @@ public:
     };
 
     virtual ControlStatus set_parameter_value(int processor_id, int parameter_id, float value) override
-    { 
+    {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _args_from_last_call["parameter id"] = std::to_string(parameter_id);

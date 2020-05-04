@@ -87,7 +87,7 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     auto tracks = _engine->processor_container()->all_tracks();
 
-    ASSERT_EQ(3u, tracks.size());
+    ASSERT_EQ(4u, tracks.size());
     auto track_1_processors = _engine->processor_container()->processors_on_track(tracks[0]->id());
     auto track_2_processors = _engine->processor_container()->processors_on_track(tracks[1]->id());
 

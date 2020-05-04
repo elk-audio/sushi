@@ -15,10 +15,10 @@
 
 /**
  * @brief Simple, non-thread safe fifo queue for use internally in the engine when
- *        concurrent access is not neccesary.
+ *        concurrent access is not necessary.
  *        Support for popping elements by value or reference, though in most cases
  *        the most efficient should be to iterate over the elements in place and
- *        the call clear()
+ *        then call clear()
  *        Capacity should ideally be a power of 2.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */

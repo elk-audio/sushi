@@ -56,9 +56,8 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(4, sig.numerator);
     EXPECT_EQ(4, sig.denominator);
     auto tracks = _module_under_test->get_tracks();
-    ASSERT_EQ(3u, tracks.size());
 
-    EXPECT_EQ(3u, tracks.size());
+    ASSERT_EQ(4u, tracks.size());
     EXPECT_EQ("main", tracks[0].name);
     EXPECT_EQ("", tracks[0].label);
     EXPECT_EQ(2, tracks[0].input_channels);
@@ -75,13 +74,21 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ(1, tracks[1].output_busses);
     EXPECT_EQ(3u, tracks[1].processors.size());
 
-    EXPECT_EQ("multi", tracks[2].name);
+    EXPECT_EQ("monobustrack", tracks[2].name);
     EXPECT_EQ("", tracks[2].label);
-    EXPECT_EQ(4, tracks[2].input_channels);
-    EXPECT_EQ(2, tracks[2].input_busses);
-    EXPECT_EQ(4, tracks[2].output_channels);
-    EXPECT_EQ(2, tracks[2].output_busses);
+    EXPECT_EQ(1, tracks[2].input_channels);
+    EXPECT_EQ(1, tracks[2].input_busses);
+    EXPECT_EQ(2, tracks[2].output_channels);
+    EXPECT_EQ(1, tracks[2].output_busses);
     EXPECT_EQ(0u, tracks[2].processors.size());
+
+    EXPECT_EQ("multi", tracks[3].name);
+    EXPECT_EQ("", tracks[3].label);
+    EXPECT_EQ(4, tracks[3].input_channels);
+    EXPECT_EQ(2, tracks[3].input_busses);
+    EXPECT_EQ(4, tracks[3].output_channels);
+    EXPECT_EQ(2, tracks[3].output_busses);
+    EXPECT_EQ(0u, tracks[3].processors.size());
 }
 
 TEST_F(ControllerTest, TestKeyboardControls)

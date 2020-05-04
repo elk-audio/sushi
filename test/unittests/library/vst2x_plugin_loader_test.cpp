@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "library/vst2x_plugin_loader.cpp"
+#include "library/vst2x/vst2x_plugin_loader.cpp"
 
 using namespace sushi;
 using namespace sushi::vst2;

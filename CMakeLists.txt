@@ -121,6 +121,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
+                      src/engine/audio_graph.cpp
                       src/engine/controller.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
@@ -129,6 +130,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/receiver.cpp
                       src/engine/event_timer.cpp
                       src/engine/transport.cpp
+                      src/engine/processor_container.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
@@ -136,8 +138,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/performance_timer.cpp
                       src/library/parameter_dump.cpp
                       src/library/processor.cpp
-                      src/library/vst2x_wrapper.cpp
-                      src/library/vst3x_wrapper.cpp
+                      src/library/vst2x/vst2x_wrapper.cpp
+                      src/library/vst3x/vst3x_wrapper.cpp
                       src/library/lv2/lv2_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
@@ -186,12 +188,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
-                        src/library/vst2x_wrapper.h
-                        src/library/vst3x_wrapper.h
+                        src/library/vst2x/vst2x_wrapper.h
+                        src/library/vst3x/vst3x_wrapper.h
                         src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
+                        src/engine/audio_graph.h
                         src/engine/controller.h
                         src/engine/track.h
                         src/engine/receiver.h
@@ -203,6 +206,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/midi_receiver.h
                         src/engine/host_control.h
                         src/engine/transport.h
+                        src/engine/processor_container.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/control_to_cv_plugin.h
                         src/plugins/cv_to_control_plugin.h
@@ -227,18 +231,18 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
 endif()
 
 if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x_host_callback.cpp
-                                src/library/vst2x_host_callback.h
-                                src/library/vst2x_plugin_loader.cpp
-                                src/library/vst2x_plugin_loader.h
-                                src/library/vst2x_midi_event_fifo.h)
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.cpp
+                                src/library/vst2x/vst2x_host_callback.h
+                                src/library/vst2x/vst2x_plugin_loader.cpp
+                                src/library/vst2x/vst2x_plugin_loader.h
+                                src/library/vst2x/vst2x_midi_event_fifo.h)
 endif()
 
 if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x_host_app.cpp
-                                src/library/vst3x_utils.cpp
-                                src/library/vst3x_host_app.h
-                                src/library/vst3x_utils.h)
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.cpp
+                                src/library/vst3x/vst3x_utils.cpp
+                                src/library/vst3x/vst3x_host_app.h
+                                src/library/vst3x/vst3x_utils.h)
 endif()
 
 if (${WITH_LV2})
@@ -249,6 +253,7 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_state.cpp
+                               src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp

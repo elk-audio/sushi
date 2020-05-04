@@ -12,6 +12,7 @@ using namespace sushi::dispatcher;
 
 constexpr int DUMMY_POSTER_ID = 1;
 constexpr int DUMMY_STATUS = 100;
+constexpr float TEST_SAMPLE_RATE = 44100.0;
 constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::milliseconds(1);
 
 bool completed = false;
@@ -80,7 +81,7 @@ protected:
         delete _module_under_test;
     }
     EventDispatcher*    _module_under_test;
-    EngineMockup        _test_engine{44100};
+    EngineMockup        _test_engine{TEST_SAMPLE_RATE};
     RtSafeRtEventFifo   _in_rt_queue;
     RtSafeRtEventFifo   _out_rt_queue;
     DummyPoster         _poster;
@@ -127,6 +128,11 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
     status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
     EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
 
+    status = _module_under_test->subscribe_to_engine_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->subscribe_to_engine_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
     EXPECT_EQ(EventDispatcherStatus::OK, status);
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
@@ -135,6 +141,11 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
     EXPECT_EQ(EventDispatcherStatus::OK, status);
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+
+    status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
+    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
     EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
 }
 
@@ -156,6 +167,18 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
     _in_rt_queue.push(rt_event);
 
     _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
+    crank_event_loop_once();
+
+    ASSERT_TRUE(_poster.event_received());
+}
+
+TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
+{
+    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
+                                                 123, 234, IMMEDIATE_PROCESS);
+    _module_under_test->post_event(event);
+
+    _module_under_test->subscribe_to_engine_notifications(&_poster);
     crank_event_loop_once();
 
     ASSERT_TRUE(_poster.event_received());
@@ -228,7 +251,7 @@ protected:
         delete _module_under_test;
     }
     Worker*          _module_under_test;
-    EngineMockup     _test_engine{44100};
+    EngineMockup     _test_engine{TEST_SAMPLE_RATE};
 };
 
 TEST_F(TestWorker, TestEventQueueingAndProcessing)

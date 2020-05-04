@@ -33,6 +33,8 @@
 #include "lv2_state.h"
 #include "lv2_control.h"
 
+#include "lv2_worker.h"
+
 namespace
 {
 
@@ -45,9 +47,17 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
+LV2_Wrapper::LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
+Processor(host_control),
+_plugin_path {lv2_plugin_uri}
+{
+    _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
+    _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
+}
+
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _sample_rate = sample_rate;
+    _model = std::make_unique<Model>(sample_rate, this);
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
@@ -59,7 +69,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
-    auto loading_return_code = _model->load_plugin(library_handle, _sample_rate);
+    auto loading_return_code = _model->load_plugin(library_handle, sample_rate);
 
     if (loading_return_code != ProcessorReturnCode::OK)
     {
@@ -79,9 +89,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
         SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
-
-    // Activate plugin
-    lilv_instance_activate(_model->plugin_instance());
 
     _model->set_play_state(PlayState::RUNNING);
 
@@ -103,6 +110,16 @@ void LV2_Wrapper::_fetch_plugin_name_and_label()
 void LV2_Wrapper::configure(float /*sample_rate*/)
 {
     SUSHI_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
+}
+
+const ParameterDescriptor* LV2_Wrapper::parameter_from_id(ObjectId id) const
+{
+    auto descriptor = _parameters_by_lv2_id.find(id);
+    if (descriptor !=  _parameters_by_lv2_id.end())
+    {
+        return descriptor->second;
+    }
+    return nullptr;
 }
 
 std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value(ObjectId parameter_id) const
@@ -160,9 +177,16 @@ std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_in_domain(Obj
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, value};
 }
 
-std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId /*parameter_id*/) const
+std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-// TODO: Populate parameter_value_formatted
+    auto valueTuple = parameter_value_in_domain(parameter_id);
+
+    if(valueTuple.first == ProcessorReturnCode::OK)
+    {
+        std::string parsedValue = std::to_string(valueTuple.second);
+        return {ProcessorReturnCode::OK, parsedValue};
+    }
+
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
 }
 
@@ -249,6 +273,9 @@ bool LV2_Wrapper::_register_parameters()
         {
             // Here I need to get the name of the port.
             auto nameNode = lilv_port_get_name(_model->plugin_class(), currentPort->lilv_port());
+            int portIndex = lilv_port_get_index(_model->plugin_class(), currentPort->lilv_port());
+
+            assert(portIndex == _pi); // This should only fail is the plugin's .ttl file is incorrect.
 
             const std::string name_as_string = lilv_node_as_string(nameNode);
             const std::string param_unit = "";
@@ -259,7 +286,7 @@ bool LV2_Wrapper::_register_parameters()
                     currentPort->min(), // range min
                     currentPort->max(), // range max
                     nullptr), // ParameterPreProcessor
-                    static_cast<ObjectId>(_pi)); // Registering the ObjectID as the index in LV2 plugin's ports list.
+                    static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
 
             if (param_inserted_ok)
             {
@@ -272,6 +299,17 @@ bool LV2_Wrapper::_register_parameters()
 
             lilv_node_free(nameNode);
         }
+    }
+
+    /* Create a "backwards map" from LV2 parameter ids to parameter indices.
+     * LV2 parameter ports have an integer ID, assigned in the ttl file.
+     * While often it starts from 0 and goes up to n-1 parameters, there is no
+     * guarantee. Very often this is not true, when in the ttl, the parameter ports,
+     * are preceded by other types of ports in the list (i.e. audio/midi i/o).
+     */
+    for (auto param : this->all_parameters())
+    {
+        _parameters_by_lv2_id[param->id()] = param;
     }
 
     return param_inserted_ok;
@@ -303,17 +341,13 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         if (_incoming_event_queue.push(event) == false)
         {
-            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            SUSHI_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else if(event.type() == RtEventType::SET_BYPASS)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-    }
-    else
-    {
-        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
+        _bypass_manager.set_bypass(bypassed, _model->sample_rate());
     }
 }
 
@@ -385,14 +419,12 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
             {
                 _model->set_play_state(PlayState::PAUSED);
 
-                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::non_rt_callback, this->id(), this);
-                _pending_event_id = e.async_work_event()->event_id();
+                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
                 output_event(e);
                 break;
             }
             case PlayState::PAUSED:
             {
-                // JALV cleared MIDI buffer here.
                 _flush_event_queue();
                 return;
             }
@@ -408,6 +440,14 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
 
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
 
+        /* Process any worker replies. */
+        if(_model->state_worker() != nullptr)
+        {
+            _model->state_worker()->emit_responses(_model->plugin_instance());
+        }
+
+        _model->worker()->emit_responses(_model->plugin_instance());
+
         _deliver_outputs_from_plugin(false);
 
         if (_bypass_manager.should_ramp())
@@ -417,34 +457,32 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
     }
 }
 
-void LV2_Wrapper::_non_rt_callback(EventId id)
+void LV2_Wrapper::_restore_state_callback(EventId)
 {
-    if (id == _pending_event_id)
+    /* Note that this doesn't handle multiple requests at once.
+     * Currently for the Pause functionality it is fine,
+     * but if extended to support other use it may note be. */
+    if(_model->state_to_set() != nullptr)
     {
-        /* Note that this doesn't handle multiple requests at once.
-         * Currently for the Pause functionality it is fine,
-         * but if extended to support other use it may note be. */
-        if(_model->state_to_set() != nullptr)
-        {
-            auto feature_list = _model->host_feature_list();
+        auto feature_list = _model->host_feature_list();
 
-            lilv_state_restore(_model->state_to_set(),
-                               _model->plugin_instance(),
-                               set_port_value,
-                               _model.get(),
-                               0,
-                               feature_list->data());
+        lilv_state_restore(_model->state_to_set(),
+                           _model->plugin_instance(),
+                           set_port_value,
+                           _model.get(),
+                           0,
+                           feature_list->data());
 
-            _model->set_state_to_set(nullptr);
+        _model->set_state_to_set(nullptr);
 
-            _model->request_update();
-            _model->set_play_state(PlayState::RUNNING);
-        }
+        _model->request_update();
+        _model->set_play_state(PlayState::RUNNING);
     }
-    else
-    {
-        SUSHI_LOG_WARNING("LV2 Wrapper: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
-    }
+}
+
+void LV2_Wrapper::_worker_callback(EventId)
+{
+    _model->worker()->worker_func();
 }
 
 void LV2_Wrapper::set_enabled(bool enabled)
@@ -471,6 +509,11 @@ void LV2_Wrapper::set_bypassed(bool bypassed)
 bool LV2_Wrapper::bypassed() const
 {
     return _bypass_manager.bypassed();
+}
+
+void LV2_Wrapper::output_worker_event(const RtEvent& event)
+{
+    output_event(event);
 }
 
 void LV2_Wrapper::_deliver_inputs_to_plugin()
@@ -863,7 +906,7 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER;
 
-ProcessorReturnCode Lv2Wrapper::init(float /*sample_rate*/)
+ProcessorReturnCode LV2_Wrapper::init(float /*sample_rate*/)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");

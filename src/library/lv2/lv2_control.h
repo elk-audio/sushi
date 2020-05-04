@@ -59,7 +59,7 @@ public:
     LilvNode* label;
     LV2_URID property; // Iff type == PROPERTY
     int index; // Iff type == PORT
-    LilvNode* group; // Port/control group, or NULL
+    LilvNode* group {nullptr}; // Port/control group, or NULL
 
     std::vector<ScalePoint> scale_points;
     LV2_URID value_type;

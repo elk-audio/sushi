@@ -29,7 +29,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 
 namespace sushi {
 
-Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
+Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
     switch (rt_event.type())
     {
@@ -154,7 +154,7 @@ Event* Event::from_rt_event(RtEvent& rt_event, Time timestamp)
     }
 }
 
-RtEvent KeyboardEvent::to_rt_event(int sample_offset)
+RtEvent KeyboardEvent::to_rt_event(int sample_offset) const
 {
     switch (_subtype)
     {
@@ -181,7 +181,7 @@ RtEvent KeyboardEvent::to_rt_event(int sample_offset)
     }
 }
 
-RtEvent ParameterChangeEvent::to_rt_event(int sample_offset)
+RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
 {
     switch (_subtype)
     {
@@ -200,24 +200,24 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset)
     }
 }
 
-RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/)
+RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/) const
 {
     return RtEvent::make_bypass_processor_event(this->processor_id(), this->bypass_enabled());
 }
 
-RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset)
+RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset) const
 {
     /* String in RtEvent must be passed as a pointer allocated outside of the event */
     auto string_value = new std::string(_string_value);
     return RtEvent::make_string_parameter_change_event(_processor_id, sample_offset, _parameter_id, string_value);
 }
 
-RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset)
+RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset) const
 {
     return RtEvent::make_data_parameter_change_event(_processor_id, sample_offset, _parameter_id, _blob_value);
 }
 
-int AddTrackEvent::execute(engine::BaseEngine* engine)
+int AddTrackEvent::execute(engine::BaseEngine* engine) const
 {
     auto [status, track_id] = engine->create_track(_name, _channels);
     if (status != engine::EngineReturnStatus::OK)
@@ -268,7 +268,7 @@ int AddTrackEvent::execute(engine::BaseEngine* engine)
     return EventStatus::HANDLED_OK;
 }
 
-int RemoveTrackEvent::execute(engine::BaseEngine* engine)
+int RemoveTrackEvent::execute(engine::BaseEngine* engine) const
 {
     auto track = engine->processor_container()->track(_track_id);
     if (track == nullptr)
@@ -281,9 +281,16 @@ int RemoveTrackEvent::execute(engine::BaseEngine* engine)
     for (auto i = processors.rbegin(); i != processors.rend(); ++i)
     {
         SUSHI_LOG_DEBUG("Removing plugin {} from track: {}", (*i)->name(), track->name());
-        [[maybe_unused]] auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
-        SUSHI_LOG_ERROR_IF(status != engine::EngineReturnStatus::OK, "Failed to remove plugin {} from track {}",
-                           (*i)->name(), track->name());
+        auto status = engine->remove_plugin_from_track((*i)->id(), _track_id);
+        if (status == engine::EngineReturnStatus::OK)
+        {
+            status = engine->delete_plugin((*i)->id());
+        }
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to remove plugin {} from track {}", (*i)->name(), track->name());
+            return EventStatus::ERROR;
+        }
     }
 
     auto status = engine->delete_track(_track_id);
@@ -310,7 +317,7 @@ engine::PluginType to_engine(AddProcessorToTrackEvent::ProcessorType type)
     }
 }
 
-int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
+int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine) const
 {
     auto [status, plugin_id] = engine->load_plugin(_uid, _name, _file, to_engine(_processor_type));
     switch (status)
@@ -350,7 +357,7 @@ int AddProcessorToTrackEvent::execute(engine::BaseEngine* engine)
     }
 }
 
-int MoveProcessorEvent::execute(engine::BaseEngine* engine)
+int MoveProcessorEvent::execute(engine::BaseEngine* engine) const
 {
     auto old_plugin_order = engine->processor_container()->processors_on_track(_source_track);
 
@@ -403,7 +410,7 @@ int MoveProcessorEvent::execute(engine::BaseEngine* engine)
     return MoveProcessorEvent::Status::INVALID_DEST_TRACK;
 }
 
-int RemoveProcessorEvent::execute(engine::BaseEngine* engine)
+int RemoveProcessorEvent::execute(engine::BaseEngine* engine) const
 {
     auto status = engine->remove_plugin_from_track(_name, _track);
     switch (status)
@@ -433,7 +440,7 @@ Event* AsynchronousProcessorWorkEvent::execute()
     return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
 }
 
-RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/)
+RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/) const
 {
     return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
@@ -444,7 +451,7 @@ Event* AsynchronousBlobDeleteEvent::execute()
     return nullptr;
 }
 
-int ProgramChangeEvent::execute(engine::BaseEngine* engine)
+int ProgramChangeEvent::execute(engine::BaseEngine* engine) const
 {
     auto processor = engine->processor_container()->mutable_processor(_processor_id);
     if (processor != nullptr)
@@ -458,25 +465,25 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine)
     return EventStatus::NOT_HANDLED;
 }
 
-int SetEngineTempoEvent::execute(engine::BaseEngine* engine)
+int SetEngineTempoEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_tempo(_tempo);
     return 0;
 }
 
-int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine)
+int SetEngineTimeSignatureEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_time_signature(_signature);
     return 0;
 }
 
-int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine)
+int SetEnginePlayingModeStateEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_transport_mode(_mode);
     return 0;
 }
 
-int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine)
+int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine) const
 {
     engine->set_tempo_sync_mode(_mode);
     return 0;

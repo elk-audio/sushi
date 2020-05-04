@@ -5,8 +5,7 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
-#include "test_utils/engine_mockup.h"
-#include "library/vst2x_wrapper.cpp"
+#include "library/vst2x/vst2x_wrapper.cpp"
 
 using namespace sushi;
 using namespace sushi::vst2;
@@ -202,11 +201,14 @@ TEST_F(TestVst2xWrapper, TestTimeInfo)
     _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(60, false);
     _host_control._transport.set_time_signature({4, 4}, false);
-    _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
+    _host_control._transport.set_time(std::chrono::seconds(2), static_cast<int64_t>(TEST_SAMPLE_RATE) * 2);
     auto time_info = _module_under_test->time_info();
-    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE), time_info->samplePos);
-    EXPECT_EQ(1'000'000'000, time_info->nanoSeconds);
-    EXPECT_FLOAT_EQ(1.0f, time_info->ppqPos);
+    /* For these numbers to match exactly, we need to choose a time interval which
+     * is an integer multiple of AUDIO_CHUNK_SIZE, hence 2 seconds at 48000, which
+     * is good up to AUDIO_CHUNK_SIZE = 256 */
+    EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE) * 2, time_info->samplePos);
+    EXPECT_EQ(2'000'000'000, time_info->nanoSeconds);
+    EXPECT_FLOAT_EQ(2.0f, time_info->ppqPos);
     EXPECT_FLOAT_EQ(60.0f, time_info->tempo);
     EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
     EXPECT_EQ(4, time_info->timeSigNumerator);

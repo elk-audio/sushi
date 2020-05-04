@@ -47,8 +47,10 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
                unittests/plugins/step_sequencer_test.cpp
+               unittests/engine/audio_graph_test.cpp
                unittests/engine/track_test.cpp
                unittests/engine/engine_test.cpp
+               unittests/engine/processor_container_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/engine/json_configurator_test.cpp
                unittests/engine/receiver_test.cpp
@@ -82,16 +84,16 @@ if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loader_test.cpp
                                  unittests/library/vst2x_midi_event_fifo_test.cpp
-                                 ${PROJECT_SOURCE_DIR}/src/library/vst2x_host_callback.cpp)
+                                 ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_host_callback.cpp)
 else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst2x_wrapper.cpp
-                                               ${PROJECT_SOURCE_DIR}/src/library/vst2x_wrapper.h)
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.cpp
+                                               ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.h)
 endif()
 
 if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x_wrapper.cpp)
+    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_wrapper.cpp)
 endif()
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)

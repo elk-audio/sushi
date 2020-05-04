@@ -18,9 +18,6 @@ constexpr int TEST_CHANNEL_COUNT = 4;
 using namespace sushi;
 using namespace sushi::engine;
 
-/*
-* Engine tests
-*/
 class TestClipDetector : public ::testing::Test
 {
 protected:
@@ -62,122 +59,13 @@ TEST_F(TestClipDetector, TestClipping)
     _module_under_test.detect_clipped_samples(buffer, queue, false);
     ASSERT_TRUE(queue.empty());
 
-    /* But calling with audio_inout set to true should trigger 2 new */
+    /* But calling with audio_input set to true should trigger 2 new */
     _module_under_test.detect_clipped_samples(buffer, queue, true);
     ASSERT_FALSE(queue.empty());
     ASSERT_TRUE(queue.pop(notification));
     ASSERT_EQ(ClipNotificationRtEvent::ClipChannelType::INPUT, notification.clip_notification_event()->channel_type());
     ASSERT_TRUE(queue.pop(notification));
     ASSERT_FALSE(queue.pop(notification));
-}
-
-class TestProcessorContainer : public ::testing::Test
-{
-protected:
-    TestProcessorContainer() {}
-
-    HostControlMockup  _hc;
-    ProcessorContainer _module_under_test;
-};
-
-TEST_F(TestProcessorContainer, TestAddingAndRemoving)
-{
-    auto proc_1 = std::make_shared<DummyProcessor>(_hc.make_host_control_mockup(SAMPLE_RATE));
-    proc_1->set_name("one");
-    auto proc_2 = std::make_shared<DummyProcessor>(_hc.make_host_control_mockup(SAMPLE_RATE));
-    proc_2->set_name("two");
-    auto id_1 = proc_1->id();
-    auto id_2 = proc_2->id();
-    ASSERT_TRUE(_module_under_test.add_processor(proc_1));
-    ASSERT_TRUE(_module_under_test.add_processor(proc_2));
-
-    // Assert false when adding proc_2 again
-    ASSERT_FALSE(_module_under_test.add_processor(proc_2));
-
-    // Access these processors
-    ASSERT_TRUE(_module_under_test.processor_exists(id_1));
-    ASSERT_TRUE(_module_under_test.processor_exists("two"));
-    ASSERT_EQ("one", _module_under_test.processor("one")->name());
-    ASSERT_EQ(id_2, _module_under_test.processor(id_2)->id());
-    ASSERT_EQ(proc_2, _module_under_test.mutable_processor(id_2));
-    ASSERT_EQ(proc_1, _module_under_test.mutable_processor(id_1));
-    ASSERT_EQ(2u, _module_under_test.all_processors().size());
-
-    // Access non-existing processors
-    ASSERT_FALSE(_module_under_test.processor_exists(ObjectId(123)));
-    ASSERT_FALSE(_module_under_test.processor_exists("three"));
-    ASSERT_EQ(nullptr, _module_under_test.processor("four"));
-    ASSERT_EQ(nullptr, _module_under_test.processor(ObjectId(234)));
-
-    // Remove processors
-    ASSERT_TRUE(_module_under_test.remove_processor(id_1));
-    ASSERT_TRUE(_module_under_test.remove_processor(id_2));
-    ASSERT_FALSE(_module_under_test.remove_processor(id_1));
-
-    ASSERT_FALSE(_module_under_test.processor_exists(id_1));
-    ASSERT_FALSE(_module_under_test.processor_exists("two"));
-    ASSERT_EQ(nullptr, _module_under_test.mutable_processor(id_2));
-    ASSERT_EQ(nullptr, _module_under_test.mutable_processor(id_1));
-}
-
-
-class TestAudioGraph : public ::testing::Test
-{
-protected:
-    TestAudioGraph() {}
-
-    void SetUp(int cores)
-    {
-        _module_under_test = std::make_unique<AudioGraph>(cores);
-    }
-
-    HostControlMockup             _hc;
-    std::unique_ptr<AudioGraph>   _module_under_test;
-    performance::PerformanceTimer _timer;
-    Track                         _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
-    Track                         _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
-};
-
-TEST_F(TestAudioGraph, TestSingleCoreOperation)
-{
-    SetUp(1);
-    ASSERT_TRUE(_module_under_test->add(&_track_1));
-    ASSERT_TRUE(_module_under_test->add(&_track_2));
-
-    ASSERT_EQ(1u, _module_under_test->_audio_graph.size());
-    ASSERT_EQ(2u, _module_under_test->_audio_graph[0].size());
-
-    _module_under_test->render();
-
-    ASSERT_TRUE(_module_under_test->remove(&_track_1));
-    ASSERT_TRUE(_module_under_test->remove(&_track_2));
-    ASSERT_FALSE(_module_under_test->remove(&_track_2));
-
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[0].size());
-}
-
-TEST_F(TestAudioGraph, TestMultiCoreOperation)
-{
-    SetUp(3);
-    ASSERT_TRUE(_module_under_test->add(&_track_1));
-    ASSERT_TRUE(_module_under_test->add(&_track_2));
-
-    // Tracks should end up in slot 0 and 1
-    ASSERT_EQ(3u, _module_under_test->_audio_graph.size());
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[0].size());
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[1].size());
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[2].size());
-
-    auto event = RtEvent::make_note_on_event(_track_1.id(), 0, 0, 48, 1.0f);
-    _track_1.process_event(event);
-    _track_2.process_event(event);
-    _module_under_test->render();
-
-    // Test that events were properly passed through
-    auto queues = _module_under_test->event_outputs();
-    EXPECT_EQ(1, queues[0].size());
-    EXPECT_EQ(1, queues[1].size());
-    EXPECT_EQ(0, queues[2].size());
 }
 
 TEST(TestUtilityFunctions, TestRemoveConnectionsMatchingTrack)
@@ -191,52 +79,6 @@ TEST(TestUtilityFunctions, TestRemoveConnectionsMatchingTrack)
     remove_connections_matching_track(test_vector, 9);
     EXPECT_EQ(1u, test_vector.size());
     EXPECT_EQ(3u, test_vector[0].track);
-}
-
-TEST_F(TestProcessorContainer, TestTrackManagement)
-{
-    auto proc_1 = std::make_shared<DummyProcessor>(_hc.make_host_control_mockup(SAMPLE_RATE));
-    proc_1->set_name("one");
-    auto proc_2 = std::make_shared<DummyProcessor>(_hc.make_host_control_mockup(SAMPLE_RATE));
-    proc_2->set_name("two");
-    auto track = std::make_shared<Track>(_hc.make_host_control_mockup(SAMPLE_RATE), 2, nullptr);
-    track->set_name("track");
-
-    ASSERT_TRUE(_module_under_test.add_processor(proc_1));
-    ASSERT_TRUE(_module_under_test.add_processor(proc_2));
-    ASSERT_TRUE(_module_under_test.add_processor(track));
-
-    ASSERT_TRUE(_module_under_test.add_track(track));
-    ASSERT_FALSE(_module_under_test.add_track(track));
-
-    ASSERT_TRUE(_module_under_test.add_to_track(proc_1, track->id(), std::nullopt));
-    ASSERT_TRUE(_module_under_test.add_to_track(proc_2, track->id(), proc_1->id()));
-
-    ASSERT_TRUE(_module_under_test.processor_exists(track->id()));
-    ASSERT_EQ(track, _module_under_test.track(track->id()));
-    ASSERT_EQ(track, _module_under_test.track("track"));
-    ASSERT_EQ(nullptr, _module_under_test.track("two"));
-
-    auto procs = _module_under_test.processors_on_track(track->id());
-    ASSERT_EQ(2u, procs.size());
-    ASSERT_EQ("two", procs[0]->name());
-    ASSERT_EQ("one", procs[1]->name());
-
-    ASSERT_TRUE(_module_under_test.remove_from_track(proc_2->id(), track->id()));
-    procs = _module_under_test.processors_on_track(track->id());
-    ASSERT_EQ(1u, procs.size());
-    ASSERT_EQ("one", procs[0]->name());
-
-    ASSERT_TRUE(_module_under_test.remove_from_track(proc_1->id(), track->id()));
-    ASSERT_TRUE(_module_under_test.remove_processor(proc_1->id()));
-    ASSERT_TRUE(_module_under_test.remove_processor(proc_2->id()));
-    ASSERT_TRUE(_module_under_test.remove_track(track->id()));
-    ASSERT_TRUE(_module_under_test.remove_processor(track->id()));
-
-    ASSERT_TRUE(_module_under_test.all_tracks().empty());
-    ASSERT_FALSE(_module_under_test.processor_exists("track"));
-    ASSERT_FALSE(_module_under_test.processor_exists("one"));
-    ASSERT_FALSE(_module_under_test.processor_exists("two"));
 }
 
 /*

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "library/vst2x_midi_event_fifo.h"
+#include "library/vst2x/vst2x_midi_event_fifo.h"
 
 using namespace sushi;
 using namespace sushi::vst2;

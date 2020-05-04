@@ -18,7 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "library/vst3x_utils.h"
+#include "vst3x_utils.h"
 
 namespace sushi {
 namespace vst3{

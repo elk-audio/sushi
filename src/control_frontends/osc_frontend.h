@@ -37,12 +37,14 @@ namespace sushi {
 namespace control_frontend {
 
 class OSCFrontend;
+
 struct OscConnection
 {
-    ObjectId processor;
-    ObjectId parameter;
-    OSCFrontend* instance;
+    ObjectId           processor;
+    ObjectId           parameter;
+    OSCFrontend*       instance;
     ext::SushiControl* controller;
+    void*              liblo_cb;
 };
 
 class OSCFrontend : public BaseControlFrontend
@@ -70,8 +72,8 @@ public:
      * @brief Connect osc to the bypass state of a given processor.
      *        The resulting osc path will be:
      *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
-     * 
-     * @param processor_name 
+     *
+     * @param processor_name
      * @return
      */
     bool connect_to_bypass_state(const std::string &processor_name);
@@ -105,6 +107,15 @@ public:
     bool connect_kb_to_track(const std::string &track_name);
 
     /**
+     * @brief Connect all parameters from a given processor.
+     *
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
+     */
+    bool connect_processor_parameters(const std::string& processor_name, int processor_id);
+
+    /**
      * @brief Register OSC callbacks far all parameters of all plugins and
      *        connect midi kb data to a track.
      *        This should eventually be replaced by a more elaborate way of
@@ -132,11 +143,19 @@ private:
 
     void _setup_engine_control();
 
+    bool _remove_processor_connections(ObjectId processor_id);
+
     std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
-                                                                       const std::string& parameter_name);
+                                                                        const std::string& parameter_name);
 
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
-                                                                       const std::string& osc_path_prefix);
+                                                                        const std::string& osc_path_prefix);
+
+    bool _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
+
+    bool _handle_clipping_notification(const ClippingNotificationEvent* event);
+
+    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
 
     lo_server_thread _osc_server;
     int _server_port;
