@@ -25,8 +25,8 @@ void SubscribeToParameterUpdatesCallData::proceed()
 
             for (auto& parameter_identifier : _request.parameters())
             {
-                _parameter_blacklist[_create_map_key(parameter_identifier.parameter_id(),
-                                                     parameter_identifier.processor_id())] = false;
+                _parameter_blacklist[_map_key(parameter_identifier.parameter_id(),
+                                              parameter_identifier.processor_id())] = false;
             }
             _first_iteration = false;
         }
@@ -34,8 +34,8 @@ void SubscribeToParameterUpdatesCallData::proceed()
         if (_notifications.empty() == false)
         {
             auto _reply = _notifications.pop();
-            auto key =  _create_map_key(_reply->parameter().parameter_id(),
-                                        _reply->parameter().processor_id());
+            auto key =  _map_key(_reply->parameter().parameter_id(),
+                                 _reply->parameter().processor_id());
             if (_parameter_blacklist.find(key) == _parameter_blacklist.end())
             {
                 _in_completion_queue = true;
@@ -52,7 +52,7 @@ void SubscribeToParameterUpdatesCallData::proceed()
         // queue. We then place it at the back with an alarm to serve the clients
         // in a round robin fashion.
         _status = CallStatus::PROCESS;
-        alert();
+        _alert();
     }
     else
     {
