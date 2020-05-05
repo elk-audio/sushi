@@ -18,7 +18,7 @@
 using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
-static const std::string WRITE_FILE = "write_test.wav";
+static const std::string WRITE_FILE = "write_test";
 constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
@@ -338,38 +338,29 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 1.0f);
     RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
 
-    // Test setting path
+    // Test setting path property
     _module_under_test->process_event(path_event);
-    ASSERT_EQ(*path, _module_under_test->_destination_file_property);
-    auto e = _fifo.pop();
-    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
-    ASSERT_FLOAT_EQ(0.0f, e.parameter_change_event()->value());
+    ASSERT_EQ(*path, *_module_under_test->_destination_file_property);
 
     // Test start recording and open file
     _module_under_test->process_event(start_recording_event);
-    e = _fifo.pop();
-    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
-    ASSERT_FLOAT_EQ(1.0f, e.parameter_change_event()->value());
-    e = _fifo.pop();
-    ASSERT_EQ(RtEventType::ASYNC_WORK, e.type());
-    ASSERT_NE(nullptr, _module_under_test->_output_file);
+    ASSERT_TRUE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_start_recording());
 
     // Test processing
-    _module_under_test->_recording->set_values(true, true);
+    _module_under_test->_recording_parameter->set_values(true, true);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, in_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Test Writing.
-    _module_under_test->_recording->set_values(false, false); // set recording to false to immediately write
+    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false to immediately write
     ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
 
     // Test end recording and close file
     _module_under_test->process_event(stop_recording_event);
-    e = _fifo.pop();
-    ASSERT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, e.type());
-    ASSERT_FLOAT_EQ(0.0f, e.parameter_change_event()->value());
-    ASSERT_EQ(nullptr, _module_under_test->_output_file);
+    ASSERT_FALSE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
 
     // Verify written samples
     SF_INFO soundfile_info;

@@ -16,20 +16,21 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
-    _recording = register_bool_parameter("recording", "Recording", "bool", false);
-    _write_speed = register_float_parameter("write_speed", "Write Speed", "writes/s",
-                                            DEFAULT_WRITE_INTERVAL,
-                                            MIN_WRITE_INTERVAL,
-                                            MAX_WRITE_INTERVAL);
-    register_string_property("destination_file", "Destination file", "path");
+    _recording_parameter = register_bool_parameter("recording", "Recording", "bool", false);
+    _write_speed_parameter = register_float_parameter("write_speed", "Write Speed", "writes/s",
+                                                      DEFAULT_WRITE_INTERVAL,
+                                                      MIN_WRITE_INTERVAL,
+                                                      MAX_WRITE_INTERVAL);
+    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_file",
+                                                               "Destination file",
+                                                               "");
+
+    assert(_recording_parameter && _write_speed_parameter && str_pr_ok);
 }
 
 WavWriterPlugin::~WavWriterPlugin()
 {
-    if (_recording->domain_value())
-    {
-        _stop_recording();
-    }
+    delete _destination_file_property;
 }
 
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
@@ -40,6 +41,7 @@ ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
     _soundfile_info.samplerate = sample_rate;
     _soundfile_info.channels = N_AUDIO_CHANNELS;
     _soundfile_info.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_24);
+    _write_speed = _write_speed_parameter->domain_value();
 
     return ProcessorReturnCode::OK;
 }
@@ -58,41 +60,10 @@ void WavWriterPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
-    case RtEventType::BOOL_PARAMETER_CHANGE:
-    case RtEventType::FLOAT_PARAMETER_CHANGE:
-    case RtEventType::INT_PARAMETER_CHANGE:
-    {
-        auto typed_event = event.parameter_change_event();
-        if (typed_event->param_id() == _recording->descriptor()->id())
-        {
-            if (typed_event->value())
-            {
-                _start_recording();
-            }
-            else
-            {
-                _stop_recording();
-            }
-        }
-        else
-        {
-            // Write speed can't be updated while recording
-            if (_recording->domain_value() == false)
-            {
-                InternalPlugin::process_event(event);
-            }
-        }
-        break;
-    }
-
     case RtEventType::STRING_PROPERTY_CHANGE:
     {
         auto typed_event = event.string_parameter_change_event();
-        if (*typed_event->value() != _destination_file_property)
-        {
-            _stop_recording();
-            _destination_file_property = *typed_event->value();
-        }
+        _destination_file_property = typed_event->value();
         break;
     }
 
@@ -106,7 +77,7 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
 {
     bypass_process(in_buffer, out_buffer);
     // Put samples in the ringbuffer already in interleaved format
-    if (_recording->processed_value())
+    if (_recording_parameter->processed_value())
     {
         for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
         {
@@ -116,37 +87,54 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
             }
         }
 
-        // Post RtEvent to write at an interval specified by WRITE_FREQUENCY
-        if (_flushed_samples_counter > FLUSH_FREQUENCY)
-        {
-            _post_write_event();
-            _flushed_samples_counter = 0;
-        }
-        _flushed_samples_counter += AUDIO_CHUNK_SIZE;
     }
-}
 
-void WavWriterPlugin::_start_recording()
-{
-    if (_destination_file_property.empty())
+    // Post RtEvent to write at an interval specified by POST_WRITE_FREQUENCY
+    if (_post_write_timer > POST_WRITE_FREQUENCY)
     {
-        _destination_file_property = DEFAULT_PATH + this->name() + "_output.wav";
+        _post_write_event();
+        _post_write_timer = 0;
     }
-    _file_buffer.resize(_soundfile_info.samplerate
-                        * _write_speed->descriptor()->max_domain_value()
-                        * _current_input_channels);
-
-    _output_file = sf_open(_destination_file_property.c_str(), SFM_WRITE, &_soundfile_info);
-    set_parameter_and_notify(_recording, true);
-    _post_write_event();
+    _post_write_timer++;
 }
 
-void WavWriterPlugin::_stop_recording()
+WavWriterStatus WavWriterPlugin::_start_recording()
 {
-    set_parameter_and_notify(_recording, false);
+    unsigned int file_buffer_size = _soundfile_info.samplerate
+                                  * _write_speed_parameter->descriptor()->max_domain_value()
+                                  * _current_input_channels;
+
+    if (_file_buffer.size() != file_buffer_size)
+    {
+        _file_buffer.resize(file_buffer_size);
+    }
+
+    // If no file name was passed. Set it to the default;
+    if (_destination_file_property == nullptr)
+    {
+        _destination_file_property = new std::string(DEFAULT_PATH + this->name() + "_output");
+    }
+    std::string file_path = _available_path(*_destination_file_property);
+    _output_file = sf_open(file_path.c_str(), SFM_WRITE, &_soundfile_info);
+    if (_output_file == nullptr)
+    {
+        SUSHI_LOG_ERROR("libsndfile error: {}", sf_strerror(_output_file));
+        return WavWriterStatus::FAILURE;
+    }
+    return WavWriterStatus::SUCCESS;
+}
+
+WavWriterStatus WavWriterPlugin::_stop_recording()
+{
     _write_to_file(); // write any leftover samples
-    sf_close(_output_file);
+    int status = sf_close(_output_file);
+    if (status != 0)
+    {
+        SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
+        return WavWriterStatus::FAILURE;
+    }
     _output_file = nullptr;
+    return WavWriterStatus::SUCCESS;
 }
 
 void WavWriterPlugin::_post_write_event()
@@ -173,13 +161,23 @@ int WavWriterPlugin::_write_to_file()
 
     _samples_written = 0;
 
-    unsigned int write_limit = static_cast<int>(_write_speed->domain_value() * _soundfile_info.samplerate);
-    if (_samples_received > write_limit || _recording->domain_value() == false)
+    unsigned int write_limit = static_cast<int>(_write_speed * _soundfile_info.samplerate);
+    if (_samples_received > write_limit || _recording_parameter->domain_value() == false)
     {
         while (_samples_written < _samples_received)
         {
-            _samples_written += sf_write_float(_output_file, &_file_buffer[_samples_written],
-                                               static_cast<sf_count_t>(_samples_received - _samples_written));
+            sf_count_t samples_to_write = static_cast<sf_count_t>(_samples_received - _samples_written);
+            if (sf_error(_output_file) == 0)
+            {
+                _samples_written += sf_write_float(_output_file,
+                                                  &_file_buffer[_samples_written],
+                                                   samples_to_write);
+            }
+            else
+            {
+                SUSHI_LOG_ERROR("libsndfile: {}", sf_strerror(_output_file));
+            }
+
         }
         sf_write_sync(_output_file);
         _samples_received = 0;
@@ -187,22 +185,58 @@ int WavWriterPlugin::_write_to_file()
     return _samples_written;
 }
 
-int WavWriterPlugin::_non_rt_callback(EventId id)
+int WavWriterPlugin::_non_rt_callback(EventId /* id */)
 {
-    if (id == _pending_event_id)
+    WavWriterStatus status = WavWriterStatus::SUCCESS;
+    if (_recording_parameter->domain_value())
     {
+        if (_output_file == nullptr)
+        {
+            // only change write speed before recording starts
+            _write_speed = _write_speed_parameter->domain_value();
+            status = _start_recording();
+        }
         int samples_written = _write_to_file();
         if (samples_written > 0)
         {
-            SUSHI_LOG_DEBUG("Successfully wrote {} samples", samples_written);
+            SUSHI_LOG_DEBUG("Sucessfully wrote {} samples", samples_written);
         }
-        return WavWriterStatus::SUCCESS;
     }
     else
     {
-        SUSHI_LOG_WARNING("EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
-        return WavWriterStatus::FAILURE;
+        if (_output_file)
+        {
+            status = _stop_recording();
+        }
     }
+    return status;
+}
+
+std::string WavWriterPlugin::_available_path(const std::string& requested_path)
+{
+    std::string suffix = ".wav";
+    std::string new_path = requested_path + suffix;
+    SF_INFO temp_info;
+    SNDFILE* temp_file = sf_open(new_path.c_str(), SFM_READ, &temp_info);
+    int suffix_counter = 1;
+    while (sf_error(temp_file) == 0)
+    {
+        int status = sf_close(temp_file);
+        if (status != 0)
+        {
+            SUSHI_LOG_ERROR("libsndfile error: {} {}",status, sf_error_number(status));
+        }
+        SUSHI_LOG_DEBUG("File {} already exists", new_path);
+        new_path = requested_path + "_" + std::to_string(suffix_counter) + suffix;
+        temp_file = sf_open(new_path.c_str(), SFM_READ, &temp_info);
+        suffix_counter++;
+    }
+    int status = sf_close(temp_file);
+    if (status != 0)
+    {
+        SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
+    }
+    return new_path;
 }
 
 } // namespace wav_writer_plugin

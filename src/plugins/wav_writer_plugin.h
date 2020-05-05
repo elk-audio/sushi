@@ -37,17 +37,16 @@ namespace wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
 constexpr int RINGBUFFER_SIZE = 65536;
-constexpr int FLUSH_FREQUENCY = (RINGBUFFER_SIZE / 4);
+constexpr int POST_WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4) / AUDIO_CHUNK_SIZE;
 constexpr float DEFAULT_WRITE_INTERVAL = 1.0f;
 constexpr float MAX_WRITE_INTERVAL = 4.0f;
 constexpr float MIN_WRITE_INTERVAL = 0.5f;
 
-namespace WavWriterStatus {
-enum WavWriter : int
+enum WavWriterStatus : int
 {
     SUCCESS = 0,
     FAILURE
-};}
+};
 
 class WavWriterPlugin : public InternalPlugin
 {
@@ -71,11 +70,12 @@ public:
     }
 
 private:
-    void _start_recording();
-    void _stop_recording();
+    WavWriterStatus _start_recording();
+    WavWriterStatus _stop_recording();
     void _post_write_event();
     int _write_to_file();
     int _non_rt_callback(EventId id);
+    std::string _available_path(const std::string& requested_path);
 
     memory_relaxed_aquire_release::CircularFifo<float, RINGBUFFER_SIZE> _ring_buffer;
 
@@ -83,12 +83,14 @@ private:
     SNDFILE* _output_file;
     SF_INFO _soundfile_info;
 
-    BoolParameterValue* _recording;
-    FloatParameterValue* _write_speed;
-    std::string _destination_file_property;
+    BoolParameterValue* _recording_parameter;
+    FloatParameterValue* _write_speed_parameter;
+    std::string* _destination_file_property{nullptr};
+
+    float _write_speed{0.0f};
 
     EventId _pending_event_id{0};
-    int _flushed_samples_counter{0};
+    int _post_write_timer{0};
     unsigned int _samples_received{0};
     sf_count_t _samples_written{0};
 

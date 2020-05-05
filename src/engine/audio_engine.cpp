@@ -1251,7 +1251,7 @@ std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostCo
     }
     else if (uid == "sushi.testing.wav_writer")
     {
-        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(_host_control);
+        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(host_control);
     }
     return nullptr;
 }
