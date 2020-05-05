@@ -165,6 +165,8 @@ private:
     std::atomic_bool _running;
 
     sushi::ext::SushiControl* _controller;
+    sushi::ext::AudioGraphController* _graph_controller;
+    sushi::ext::ParameterController*  _param_controller;
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;

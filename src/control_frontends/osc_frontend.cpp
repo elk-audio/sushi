@@ -51,7 +51,8 @@ static int osc_send_parameter_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     float value = argv[0]->f;
-    connection->controller->set_parameter_value(connection->processor, connection->parameter, value);
+    auto ctrl = connection->controller->parameter_controller();
+    ctrl->set_parameter_value(connection->processor, connection->parameter, value);
     SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
@@ -65,7 +66,8 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
-    connection->controller->set_string_property_value(connection->processor, connection->parameter, value);
+    auto controller = connection->controller->parameter_controller();
+    controller->set_string_property_value(connection->processor, connection->parameter, value);
     SUSHI_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
@@ -79,7 +81,8 @@ static int osc_send_bypass_state_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     bool isBypassed = (argv[0]->i == 0) ? false : true;
-    connection->controller->set_processor_bypass_state(connection->processor, isBypassed);
+    auto controller = connection->controller->audio_graph_controller();
+    controller->set_processor_bypass_state(connection->processor, isBypassed);
     SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
     return 0;
 }
@@ -96,18 +99,19 @@ static int osc_send_keyboard_note_event(const char* /*path*/,
     int channel = argv[1]->i;
     int note = argv[2]->i;
     float value = argv[3]->f;
+    auto controller = connection->controller->keyboard_controller();
 
     if (event == "note_on")
     {
-        connection->controller->send_note_on(connection->processor, channel, note, value);
+        controller->send_note_on(connection->processor, channel, note, value);
     }
     else if (event == "note_off")
     {
-        connection->controller->send_note_off(connection->processor, channel, note, value);
+        controller->send_note_off(connection->processor, channel, note, value);
     }
     else if (event == "note_aftertouch")
     {
-        connection->controller->send_note_aftertouch(connection->processor, channel, note, value);
+        controller->send_note_aftertouch(connection->processor, channel, note, value);
     }
     else
     {
@@ -129,18 +133,19 @@ static int osc_send_keyboard_modulation_event(const char* /*path*/,
     std::string_view event(&argv[0]->s);
     int channel = argv[1]->i;
     float value = argv[2]->f;
+    auto controller = connection->controller->keyboard_controller();
 
     if (event == "modulation")
     {
-        connection->controller->send_modulation(connection->processor, channel, value);
+        controller->send_modulation(connection->processor, channel, value);
     }
     else if (event == "pitch_bend")
     {
-        connection->controller->send_pitch_bend(connection->processor, channel, value);
+        controller->send_pitch_bend(connection->processor, channel, value);
     }
     else if (event == "aftertouch")
     {
-        connection->controller->send_aftertouch(connection->processor, channel, value);
+        controller->send_aftertouch(connection->processor, channel, value);
     }
     else
     {
@@ -160,7 +165,8 @@ static int osc_send_program_change_event(const char* /*path*/,
 {
     auto connection = static_cast<OscConnection*>(user_data);
     int program_id = argv[0]->i;
-    connection->controller->set_processor_program(connection->processor, program_id);
+    auto controller = connection->controller->program_controller();
+    controller->set_processor_program(connection->processor, program_id);
     return 0;
 }
 
@@ -171,10 +177,11 @@ static int osc_set_timing_statistics_enabled(const char* /*path*/,
                                              void* /*data*/,
                                              void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->timing_controller();
     bool is_enabled = (argv[0]->i == 0) ? false : true;
     SUSHI_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
-    instance->set_timing_statistics_enabled(is_enabled);
+
+    controller->set_timing_statistics_enabled(is_enabled);
     return 0;
 }
 
@@ -185,12 +192,15 @@ static int osc_reset_timing_statistics(const char* /*path*/,
                                        void* /*data*/,
                                        void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto ctrl = static_cast<ext::SushiControl*>(user_data);
+    auto timing_ctrl = ctrl->timing_controller();
+    auto processor_ctrl = ctrl->audio_graph_controller();
+
     std::string output_text = std::string(&argv[0]->s);
     std::string_view type = output_text;
     if (type == "all")
     {
-        auto status = instance->reset_all_timings();
+        auto status = timing_ctrl->reset_all_timings();
         if (status != ext::ControlStatus::OK)
         {
             SUSHI_LOG_WARNING("Failed to reset track timings of all tracks and processors");
@@ -200,11 +210,12 @@ static int osc_reset_timing_statistics(const char* /*path*/,
     else if (type == "track")
     {
         std::string track_name = std::string(&argv[1]->s);
-        auto [track_status, track_id] = instance->get_track_id(track_name);
+
+        auto [track_status, track_id] = processor_ctrl->get_track_id(track_name);
         if (track_status == ext::ControlStatus::OK)
         {
             output_text += " " + track_name;
-            instance->reset_track_timings(track_id);
+            timing_ctrl->reset_track_timings(track_id);
         }
         else
         {
@@ -215,11 +226,11 @@ static int osc_reset_timing_statistics(const char* /*path*/,
     else if (type == "processor")
     {
         std::string processor_name = std::string(&argv[1]->s);
-        auto [processor_status, processor_id] = instance->get_processor_id(processor_name);
+        auto [processor_status, processor_id] = processor_ctrl->get_processor_id(processor_name);
         if (processor_status == ext::ControlStatus::OK)
         {
             output_text += " " + processor_name;
-            instance->reset_processor_timings(processor_id);
+            timing_ctrl->reset_processor_timings(processor_id);
         }
         else
         {
@@ -243,10 +254,10 @@ static int osc_set_tempo(const char* /*path*/,
                                 void* /*data*/,
                                 void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
     float tempo = argv[0]->f;
     SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
-    instance->set_tempo(tempo);
+    controller->set_tempo(tempo);
     return 0;
 }
 
@@ -257,11 +268,11 @@ static int osc_set_time_signature(const char* /*path*/,
                                   void* /*data*/,
                                   void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
     int numerator = argv[0]->i;
     int denominator = argv[1]->i;
     SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
-    instance->set_time_signature({numerator, denominator});
+    controller->set_time_signature({numerator, denominator});
     return 0;
 }
 
@@ -272,7 +283,7 @@ static int osc_set_playing_mode(const char* /*path*/,
                                 void* /*data*/,
                                 void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
     std::string_view mode_str(&argv[0]->s);
     ext::PlayingMode mode;
     if (mode_str == "playing")
@@ -290,7 +301,7 @@ static int osc_set_playing_mode(const char* /*path*/,
     }
 
     SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
-    instance->set_playing_mode(mode);
+    controller->set_playing_mode(mode);
     return 0;
 }
 
@@ -301,7 +312,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
                                    void* /*data*/,
                                    void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
     std::string_view mode_str(&argv[0]->s);
     ext::SyncMode mode;
     if (mode_str == "internal")
@@ -322,7 +333,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
         return 0;
     }
     SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
-    instance->set_sync_mode(mode);
+    controller->set_sync_mode(mode);
     return 0;
 }
 
@@ -333,7 +344,7 @@ static int osc_add_processor_to_track(const char* /*path*/,
                                       void* /*data*/,
                                       void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
     std::string name(&argv[0]->s);
     std::string uid(&argv[1]->s);
     std::string file(&argv[2]->s);
@@ -368,7 +379,7 @@ static int osc_add_processor_to_track(const char* /*path*/,
     }
 
     SUSHI_LOG_DEBUG("Got a create processor on track request");
-    auto [status, track_id] = instance->get_processor_id(track);
+    auto [status, track_id] = controller->get_processor_id(track);
     if (status != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up Track {}", track);
@@ -376,17 +387,17 @@ static int osc_add_processor_to_track(const char* /*path*/,
     }
     if (add_to_back)
     {
-        instance->create_processor_on_track(name, uid, file, type, track_id, std::nullopt);
+        controller->create_processor_on_track(name, uid, file, type, track_id, std::nullopt);
     }
     else
     {
-        auto [status, before_id] = instance->get_processor_id(before);
+        auto [status, before_id] = controller->get_processor_id(before);
         if (status != ext::ControlStatus::OK)
         {
             SUSHI_LOG_WARNING("Error looking up processor {}", before);
             return 0;
         }
-        instance->create_processor_on_track(name, uid, file, type, track_id, before_id);
+        controller->create_processor_on_track(name, uid, file, type, track_id, before_id);
     }
     return 0;
 }
@@ -398,7 +409,7 @@ static int osc_move_processor(const char* /*path*/,
                               void* /*data*/,
                               void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
     std::string processor(&argv[0]->s);
     std::string source_track(&argv[1]->s);
     std::string dest_track(&argv[2]->s);
@@ -413,21 +424,21 @@ static int osc_move_processor(const char* /*path*/,
 
     SUSHI_LOG_DEBUG("Got a move processor on track request");
 
-    auto [status_proc, proc_id] = instance->get_processor_id(processor);
+    auto [status_proc, proc_id] = controller->get_processor_id(processor);
     if (status_proc != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up processor {}", processor);
         return 0;
     }
 
-    auto [status_src, src_id] = instance->get_processor_id(source_track);
+    auto [status_src, src_id] = controller->get_processor_id(source_track);
     if (status_src != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up source track {}", source_track);
         return 0;
     }
 
-    auto [status_dest, dest_id] = instance->get_processor_id(dest_track);
+    auto [status_dest, dest_id] = controller->get_processor_id(dest_track);
     if (status_dest != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up destination track {}", source_track);
@@ -436,17 +447,17 @@ static int osc_move_processor(const char* /*path*/,
 
     if (add_to_back)
     {
-        instance->move_processor_on_track(proc_id, src_id, dest_id, std::nullopt);
+        controller->move_processor_on_track(proc_id, src_id, dest_id, std::nullopt);
     }
     else
     {
-        auto [status, before_id] = instance->get_processor_id(before);
+        auto [status, before_id] = controller->get_processor_id(before);
         if (status != ext::ControlStatus::OK)
         {
             SUSHI_LOG_WARNING("Error looking up processor {}", before);
             return 0;
         }
-        instance->move_processor_on_track(proc_id, src_id, dest_id, before_id);
+        controller->move_processor_on_track(proc_id, src_id, dest_id, before_id);
     }
     return 0;
 }
@@ -458,24 +469,24 @@ static int osc_delete_processor(const char* /*path*/,
                                 void* /*data*/,
                                 void* user_data)
 {
-    auto instance = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
     std::string name(&argv[0]->s);
     std::string track(&argv[1]->s);
 
     SUSHI_LOG_DEBUG("Got a delete processor on track request");
-    auto [status, proc_id] = instance->get_processor_id(name);
+    auto [status, proc_id] = controller->get_processor_id(name);
     if (status != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up Processor {}", name);
         return 0;
     }
-    auto [track_status, track_id] = instance->get_processor_id(track);
+    auto [track_status, track_id] = controller->get_processor_id(track);
     if (track_status != ext::ControlStatus::OK)
     {
         SUSHI_LOG_WARNING("Error looking up Track {}", name);
         return 0;
     }
-    instance->delete_processor_from_track(proc_id, track_id);
+    controller->delete_processor_from_track(proc_id, track_id);
     return 0;
 }
 
@@ -488,7 +499,9 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                                           _osc_server(nullptr),
                                           _server_port(server_port),
                                           _send_port(send_port),
-                                          _controller(controller)
+                                          _controller(controller),
+                                          _graph_controller(controller->audio_graph_controller()),
+                                          _param_controller(controller->parameter_controller())
 {}
 
 ControlFrontendStatus OSCFrontend::init()
@@ -527,12 +540,12 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
                                                                                  const std::string& parameter_name)
 {
     std::string osc_path = "/parameter/";
-    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
     if (processor_status != ext::ControlStatus::OK)
     {
         return {nullptr, ""};
     }
-    auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
+    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
     if (parameter_status != ext::ControlStatus::OK)
     {
         return {nullptr, ""};
@@ -578,12 +591,12 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
 
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
-    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
     if (processor_status != ext::ControlStatus::OK)
     {
         return false;
     }
-    auto [parameter_status, parameter_id] = _controller->get_parameter_id(processor_id, parameter_name);
+    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
     if (parameter_status != ext::ControlStatus::OK)
     {
         return false;
@@ -599,7 +612,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
                                                                                  const std::string& osc_path_prefix)
 {
     std::string osc_path = osc_path_prefix;
-    auto [processor_status, processor_id] = _controller->get_processor_id(processor_name);
+    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
     if (processor_status != ext::ControlStatus::OK)
     {
         return {nullptr, ""};
@@ -662,7 +675,7 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 
 bool OSCFrontend::connect_processor_parameters(const std::string& processor_name, int processor_id)
 {
-    auto [parameters_status, parameters] = _controller->get_processor_parameters(processor_id);
+    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
     if (parameters_status != ext::ControlStatus::OK)
     {
         return false;
@@ -684,11 +697,11 @@ bool OSCFrontend::connect_processor_parameters(const std::string& processor_name
 
 void OSCFrontend::connect_all()
 {
-    auto tracks = _controller->get_tracks();
+    auto tracks = _graph_controller->get_all_tracks();
     for (auto& track : tracks)
     {
         connect_processor_parameters(track.name, track.id);
-        auto [processors_status, processors] = _controller->get_track_processors(track.id);
+        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
         if (processors_status != ext::ControlStatus::OK)
         {
             return;
@@ -824,7 +837,7 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
         case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
         {
             SUSHI_LOG_DEBUG("Received a PROCESSOR_ADDED notification for processor {}", event->processor());
-            auto [status, info] = _controller->get_processor_info(event->processor());
+            auto [status, info] = _graph_controller->get_processor_info(event->processor());
             if (status == ext::ControlStatus::OK)
             {
                 connect_to_bypass_state(info.name);
@@ -838,7 +851,7 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
         case AudioGraphNotificationEvent::Action::TRACK_ADDED:
         {
             SUSHI_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
-            auto [status, info] = _controller->get_track_info(event->track());
+            auto [status, info] = _graph_controller->get_track_info(event->track());
             if (status == ext::ControlStatus::OK)
             {
                 connect_kb_to_track(info.name);

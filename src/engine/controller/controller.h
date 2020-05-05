@@ -19,18 +19,20 @@
  */
 
 #include "control_interface.h"
-#include "base_event_dispatcher.h"
-#include "transport.h"
+#include "engine/base_event_dispatcher.h"
+#include "engine/transport.h"
 #include "library/base_performance_timer.h"
-#include "base_processor_container.h"
+#include "engine/base_processor_container.h"
 #include "library/event_interface.h"
+#include "sub_controllers.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
 
 namespace sushi {
+namespace engine {
 
-namespace engine {class BaseEngine;}
+class BaseEngine;
 
 class Controller : public ext::SushiControl, EventPoster
 {
@@ -39,7 +41,7 @@ public:
 
     ~Controller();
 
-    float                                               get_samplerate() const override;
+    /*float                                               get_samplerate() const override;
     ext::PlayingMode                                    get_playing_mode() const override;
     void                                                set_playing_mode(ext::PlayingMode playing_mode) override;
     ext::SyncMode                                       get_sync_mode() const override;
@@ -99,9 +101,9 @@ public:
                                                                                   ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
     ext::ControlStatus                                  move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) override;
     ext::ControlStatus                                  delete_processor_from_track(int processor_id, int track_id) override;
-
+*/
     ext::ControlStatus                                  subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
- 
+
     /* Inherited from EventPoster */
     int process(Event* event) override;
     int poster_id() override {return EventPosterId::CONTROLLER;}
@@ -121,8 +123,21 @@ private:
     performance::BasePerformanceTimer*      _performance_timer;
     const engine::BaseProcessorContainer*   _processors;
 
-    std::vector<ext::ControlListener*> _parameter_change_listeners;
+    std::vector<ext::ControlListener*>      _parameter_change_listeners;
+
+    controller_impl::SystemController       _system_controller_impl;
+    controller_impl::TransportController    _transport_controller_impl;
+    controller_impl::TimingController       _timing_controller_impl;
+    controller_impl::KeyboardController     _keyboard_controller_impl;
+    controller_impl::AudioGraphController   _audio_graph_controller_impl;
+    controller_impl::ProgramController      _program_controller_impl;
+    controller_impl::ParameterController    _parameter_controller_impl;
+    controller_impl::MidiController         _midi_controller_impl;
+    controller_impl::AudioRoutingController _audio_routing_controller_impl;
+    controller_impl::CvGateController       _cv_gate_controller_impl;
+    controller_impl::OscController          _osc_controller_impl;
 };
 
+} //namespace engine
 } //namespace sushi
 #endif //SUSHI_CONTROLLER_H

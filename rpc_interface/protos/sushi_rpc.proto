@@ -24,7 +24,7 @@ service TransportController
     rpc GetSyncMode (GenericVoidValue) returns (SyncMode) {}
     rpc GetTimeSignature (GenericVoidValue) returns (TimeSignature) {}
     rpc GetTempo (GenericVoidValue) returns (GenericFloatValue) {}
-s
+
     rpc SetTempo (GenericFloatValue) returns (GenericVoidValue) {}
     rpc SetPlayingMode (PlayingMode) returns (GenericVoidValue) {}
     rpc SetSyncMode (SyncMode) returns (GenericVoidValue) {}
@@ -96,7 +96,6 @@ service ParameterController
     rpc GetParameterValue (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueInDomain (ParameterIdentifier) returns (GenericFloatValue) {}
     rpc GetParameterValueAsString (ParameterIdentifier) returns (GenericStringValue) {}
-<<<<<<< HEAD
 
     rpc SetParameterValue (ParameterValue) returns (GenericVoidValue) {}
 }
@@ -182,11 +181,11 @@ service OscController
 
 service NotificationController
 {
-    rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
-    rpcSubscribeToTimingUpdates()returns(streamCpuTimings){}
-    rpcSubscribeToTrackChanges()returns(streamTrackUpdate){}
-    rpcSubscribeToProcessorChanges()returns(streamProcessorUpdate){}
-    rpcSubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){}
+/*    rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
+    rpc SubscribeToTimingUpdates()returns(streamCpuTimings){}
+    rpc SubscribeToTrackChanges()returns(streamTrackUpdate){}
+    rpc SubscribeToProcessorChanges()returns(streamProcessorUpdate){}
+    rpc SubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){} */
     rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
 }
 
@@ -499,6 +498,7 @@ message MidiChannel
 {
     enum Channel
     {
+        DUMMY = 0;
         MIDI_CH_1 = 1;
         MIDI_CH_2 = 2;
         MIDI_CH_3 = 3;
@@ -604,7 +604,7 @@ message OscParameterOutputList
 
 message TransportUpdate
 {
-    any_of Transport
+    oneof Transport
     {
         float           tempo = 1;
         PlayingMode     playing_mode = 2;
@@ -617,6 +617,7 @@ message TrackUpdate
 {
     enum Action
     {
+        DUMMY = 0;
         TRACK_ADDED = 1;
         TRACK_DELETED = 2;
         PROCESSORS_CHANGED = 3;
@@ -629,6 +630,7 @@ message ProcessorUpdate
 {
     enum Action
     {
+        DUMMY = 0;
         PROCESSOR_ADDED = 1;
         PROCESSOR_DELETED = 2;
         PROCESSOR_MOVED = 3;

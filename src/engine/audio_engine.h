@@ -34,7 +34,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
-#include "engine/controller.h"
+#include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"

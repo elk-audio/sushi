@@ -22,6 +22,7 @@
 #define SUSHI_CONTROL_INTERFACE_H
 
 #include <utility>
+#include <memory>
 #include <optional>
 #include <vector>
 #include <chrono>
@@ -153,7 +154,7 @@ enum class MidiChannel
     MIDI_CH_15,
     MIDI_CH_16,
     MIDI_CH_OMNI
-}
+};
 
 struct AudioConnection
 {
@@ -220,7 +221,7 @@ public:
 
     virtual std::string         get_interface_version() const = 0;
     virtual std::string         get_sushi_version() const = 0;
-    virtual SushiBuildInfo      get_sushi_buildinfo) const = 0;
+    virtual SushiBuildInfo      get_sushi_buildinfo() const = 0;
     virtual int                 get_input_audio_channel_count() const = 0;
     virtual int                 get_output_audio_channel_count() const = 0;
 
@@ -289,8 +290,8 @@ class AudioGraphController
 public:
     virtual ~AudioGraphController() = default;
 
-    virtual std::pair<ControlStatus, std::vector<ProcessorInfo>>  get_all_processors() const = 0;
-    virtual std::pair<ControlStatus, std::vector<TrackInfo>>      get_all_tracks() const = 0;
+    virtual std::vector<ProcessorInfo>                            get_all_processors() const = 0;
+    virtual std::vector<TrackInfo>                                get_all_tracks() const = 0;
     virtual std::pair<ControlStatus, int>                         get_track_id(const std::string& track_name) const = 0;
     virtual std::pair<ControlStatus, TrackInfo>                   get_track_info(int track_id) const = 0;
     virtual std::pair<ControlStatus, std::vector<ProcessorInfo>>  get_track_processors(int track_id) const = 0;
@@ -301,8 +302,8 @@ public:
     virtual ControlStatus   set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
 
     virtual ControlStatus   create_track(const std::string& name, int channels) = 0;
-    virtual ControlStatus   create_multibus_track(const std::string& name, int input_busses, int output_channels) = 0;
-    virtual ControlStatus   move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor) = 0;
+    virtual ControlStatus   create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
+    virtual ControlStatus   move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
     virtual ControlStatus   create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                       PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
 
@@ -392,9 +393,9 @@ public:
     virtual std::pair<ControlStatus, std::vector<AudioConnection>> get_output_connections_for_track(int track_id) const = 0;
 
     virtual ControlStatus                connect_input_channel_to_track(int track_id, int track_channel, int input_channel) = 0;
-    virtual ControlStatus                connect_output_channel_to_track(int track_id, int track_channel, int output_channel) ==;
+    virtual ControlStatus                connect_output_channel_to_track(int track_id, int track_channel, int output_channel) = 0;
 
-    virtual ControlStatus                disconnect_input(int track_id, int track_channel, int input_channel) = ;
+    virtual ControlStatus                disconnect_input(int track_id, int track_channel, int input_channel) = 0;
     virtual ControlStatus                disconnect_output(int track_id, int track_channel, int output_channel) = 0;
     virtual ControlStatus                disconnect_all_inputs_from_track(int track_id) = 0;
     virtual ControlStatus                disconnect_all_outputs_from_track(int track_id) = 0;
@@ -484,34 +485,55 @@ class SushiControl
 public:
     virtual ~SushiControl() = default;
 
-    SystemController*       system_controller() {return _system_controller.get();}
-    TransportController*    transport_controller() {return _transport_controller.get();}
-    TimingController*       timing_controller() {return _timing_controller.get();}
-    KeyboardController*     keyboard_controller() {return _keyboard_controller.get();}
-    AudioGraphController*   audio_graph_controller() {return _audio_graph_controller.get();}
-    ProgramController*      program_controller() {return _program_controller.get();}
-    ParameterController*    parameter_controller() {return _parameter_controller.get();}
-    MidiController*         midi_controller() {return _midi_controller.get();}
-    AudioRoutingController* audio_routing_controller() {return _audio_routing_controller.get();}
-    CvGateController*       cv_gate_controller() {return _cv_gate_controller.get();}
-    OscController*          osc_controller() {return _osc_controller.get();}
+    SystemController*       system_controller() {return _system_controller;}
+    TransportController*    transport_controller() {return _transport_controller;}
+    TimingController*       timing_controller() {return _timing_controller;}
+    KeyboardController*     keyboard_controller() {return _keyboard_controller;}
+    AudioGraphController*   audio_graph_controller() {return _audio_graph_controller;}
+    ProgramController*      program_controller() {return _program_controller;}
+    ParameterController*    parameter_controller() {return _parameter_controller;}
+    MidiController*         midi_controller() {return _midi_controller;}
+    AudioRoutingController* audio_routing_controller() {return _audio_routing_controller;}
+    CvGateController*       cv_gate_controller() {return _cv_gate_controller;}
+    OscController*          osc_controller() {return _osc_controller;}
 
     virtual ControlStatus   subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
 protected:
-    SushiControl() = default;
+    SushiControl(SystemController*       system_controller,
+                 TransportController*    transport_controller,
+                 TimingController*       timing_controller,
+                 KeyboardController*     keyboard_controller,
+                 AudioGraphController*   audio_graph_controller,
+                 ProgramController*      program_controller,
+                 ParameterController*    parameter_controller,
+                 MidiController*         midi_controller,
+                 AudioRoutingController* audio_routing_controller,
+                 CvGateController*       cv_gate_controller,
+                 OscController*          osc_controller) : _system_controller(system_controller),
+                                                           _transport_controller(transport_controller),
+                                                           _timing_controller(timing_controller),
+                                                           _keyboard_controller(keyboard_controller),
+                                                           _audio_graph_controller(audio_graph_controller),
+                                                           _program_controller(program_controller),
+                                                           _parameter_controller(parameter_controller),
+                                                           _midi_controller(midi_controller),
+                                                           _audio_routing_controller(audio_routing_controller),
+                                                           _cv_gate_controller(cv_gate_controller),
+                                                           _osc_controller(osc_controller) {}
 
-    std::unique_ptr<SystemController>           _system_controller;
-    std::unique_ptr<TransportController>        _transport_controller;
-    std::unique_ptr<TimingController>           _timing_controller;
-    std::unique_ptr<KeyboardController>         _keyboard_controller;
-    std::unique_ptr<AudioGraphController>       _audio_graph_controller;
-    std::unique_ptr<ProgramController>          _program_controller;
-    std::unique_ptr<ParameterController>        _parameter_controller;
-    std::unique_ptr<MidiController>             _midi_controller;
-    std::unique_ptr<AudioRoutingController>     _audio_routing_controller;
-    std::unique_ptr<CvGateController>           _cv_gate_controller;
-    std::unique_ptr<OscController>              _osc_controller;
+private:
+    SystemController*           _system_controller;
+    TransportController*        _transport_controller;
+    TimingController*           _timing_controller;
+    KeyboardController*         _keyboard_controller;
+    AudioGraphController*       _audio_graph_controller;
+    ProgramController*          _program_controller;
+    ParameterController*        _parameter_controller;
+    MidiController*             _midi_controller;
+    AudioRoutingController*     _audio_routing_controller;
+    CvGateController*           _cv_gate_controller;
+    OscController*              _osc_controller;
     //std::unique_ptr<NotificationController>    _notification_controller;
 
 };
