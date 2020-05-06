@@ -2,11 +2,23 @@
 
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
-#include "engine/midi_dispatcher.h"
 #include "engine/controller/controller.cpp"
 #include "test_utils/test_utils.h"
 
-#include "engine/controller/sub_controllers.cpp"
+/* Currently testing Controller as a complete class
+ * eventually we might want to test the individual
+ * controller interfaces separately */
+#include "engine/controller/system_controller.cpp"
+#include "engine/controller/transport_controller.cpp"
+#include "engine/controller/timing_controller.cpp"
+#include "engine/controller/keyboard_controller.cpp"
+#include "engine/controller/audio_graph_controller.cpp"
+#include "engine/controller/parameter_controller.cpp"
+#include "engine/controller/program_controller.cpp"
+#include "engine/controller/midi_controller.cpp"
+#include "engine/controller/audio_routing_controller.cpp"
+#include "engine/controller/cv_gate_controller.cpp"
+#include "engine/controller/osc_controller.cpp"
 
 using namespace sushi;
 using namespace sushi::engine;

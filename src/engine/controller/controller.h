@@ -24,7 +24,18 @@
 #include "library/base_performance_timer.h"
 #include "engine/base_processor_container.h"
 #include "library/event_interface.h"
-#include "sub_controllers.h"
+
+#include "system_controller.h"
+#include "transport_controller.h"
+#include "timing_controller.h"
+#include "keyboard_controller.h"
+#include "audio_graph_controller.h"
+#include "parameter_controller.h"
+#include "program_controller.h"
+#include "midi_controller.h"
+#include "audio_routing_controller.h"
+#include "cv_gate_controller.h"
+#include "osc_controller.h"
 
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
@@ -41,67 +52,6 @@ public:
 
     ~Controller();
 
-    /*float                                               get_samplerate() const override;
-    ext::PlayingMode                                    get_playing_mode() const override;
-    void                                                set_playing_mode(ext::PlayingMode playing_mode) override;
-    ext::SyncMode                                       get_sync_mode() const override;
-    void                                                set_sync_mode(ext::SyncMode sync_mode) override;
-    float                                               get_tempo() const override;
-    ext::ControlStatus                                  set_tempo(float tempo) override;
-    ext::TimeSignature                                  get_time_signature() const override;
-    ext::ControlStatus                                  set_time_signature(ext::TimeSignature signature) override;
-    bool                                                get_timing_statistics_enabled() const override;
-    void                                                set_timing_statistics_enabled(bool enabled) override;
-    std::vector<ext::TrackInfo>                         get_tracks() const override;
-
-    ext::ControlStatus                                  send_note_on(int track_id, int channel, int note, float velocity) override;
-    ext::ControlStatus                                  send_note_off(int track_id, int channel, int note, float velocity) override;
-    ext::ControlStatus                                  send_note_aftertouch(int track_id, int channel, int note, float value) override;
-    ext::ControlStatus                                  send_aftertouch(int track_id, int channel, float value) override;
-    ext::ControlStatus                                  send_pitch_bend(int track_id, int channel, float value) override;
-    ext::ControlStatus                                  send_modulation(int track_id, int channel, float value) override;
-
-    std::pair<ext::ControlStatus, ext::CpuTimings>      get_engine_timings() const override;
-    std::pair<ext::ControlStatus, ext::CpuTimings>      get_track_timings(int track_id) const override;
-    std::pair<ext::ControlStatus, ext::CpuTimings>      get_processor_timings(int processor_id) const override;
-    ext::ControlStatus                                  reset_all_timings() override;
-    ext::ControlStatus                                  reset_track_timings(int track_id) override;
-    ext::ControlStatus                                  reset_processor_timings(int processor_id) override;
-
-    std::pair<ext::ControlStatus, int>                  get_track_id(const std::string& track_name) const override;
-    std::pair<ext::ControlStatus, ext::TrackInfo>       get_track_info(int track_id) const override;
-    std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> get_track_processors(int track_id) const override;
-    std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_track_parameters(int processor_id) const override;
-
-    std::pair<ext::ControlStatus, int>                  get_processor_id(const std::string& processor_name) const override;
-    std::pair<ext::ControlStatus, ext::ProcessorInfo>   get_processor_info(int processor_id) const override;
-    std::pair<ext::ControlStatus, bool>                 get_processor_bypass_state(int processor_id) const override;
-    ext::ControlStatus                                  set_processor_bypass_state(int processor_id, bool bypass_enabled) override;
-    std::pair<ext::ControlStatus, int>                  get_processor_current_program(int processor_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_processor_current_program_name(int processor_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_processor_program_name(int processor_id, int program_id) const override;
-    std::pair<ext::ControlStatus, std::vector<std::string>> get_processor_programs(int processor_id) const override ;
-    ext::ControlStatus                                  set_processor_program(int processor_id, int program_id) override;
-    std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_processor_parameters(int processor_id) const override;
-
-    std::pair<ext::ControlStatus, int>                  get_parameter_id(int processor_id, const std::string& parameter) const override;
-    std::pair<ext::ControlStatus, ext::ParameterInfo>   get_parameter_info(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, float>                get_parameter_value(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, float>                get_parameter_value_in_domain(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_parameter_value_as_string(int processor_id, int parameter_id) const override;
-    std::pair<ext::ControlStatus, std::string>          get_string_property_value(int processor_id, int parameter_id) const override;
-    ext::ControlStatus                                  set_parameter_value(int processor_id, int parameter_id, float value) override;
-    ext::ControlStatus                                  set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
-
-    ext::ControlStatus                                  create_stereo_track(const std::string& name, int output_bus, std::optional<int> input_bus) override;
-    ext::ControlStatus                                  create_mono_track(const std::string& name, int output_channel, std::optional<int> input_channel) override;
-    ext::ControlStatus                                  delete_track(int track_id) override;
-
-    ext::ControlStatus                                  create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
-                                                                                  ext::PluginType type, int track_id, std::optional<int> before_processor_id) override;
-    ext::ControlStatus                                  move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) override;
-    ext::ControlStatus                                  delete_processor_from_track(int processor_id, int track_id) override;
-*/
     ext::ControlStatus                                  subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
 
     /* Inherited from EventPoster */
@@ -112,18 +62,12 @@ public:
 
 private:
 
-    std::vector<int> _get_processor_ids(int track_id) const;
     void _completion_callback(Event* event, int status);
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
+    std::vector<ext::ControlListener*>      _parameter_change_listeners;
 
     engine::BaseEngine*                     _engine;
-    dispatcher::BaseEventDispatcher*        _event_dispatcher;
-    engine::Transport*                      _transport;
-    performance::BasePerformanceTimer*      _performance_timer;
     const engine::BaseProcessorContainer*   _processors;
-
-    std::vector<ext::ControlListener*>      _parameter_change_listeners;
 
     controller_impl::SystemController       _system_controller_impl;
     controller_impl::TransportController    _transport_controller_impl;

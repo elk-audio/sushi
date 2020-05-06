@@ -2,42 +2,40 @@
 #define SUSHI_CONTROL_MOCKUP_H
 
 #include <bits/stdc++.h>
+#include <iostream>
 
 #include "control_interface.h"
 
 namespace sushi {
 namespace ext {
 
-const ParameterInfo parameter1{0,ParameterType::INT,"param 1", "param 1", "unit", 0, 0, 0};
-const ParameterInfo parameter2{1,ParameterType::FLOAT,"param 2", "param 2", "unit", 1, 1, 1};
-const ParameterInfo parameter3{2,ParameterType::BOOL,"param 3", "param 3", "unit", -1, -1, -1};
-const std::vector<ParameterInfo> parameters{parameter1, parameter2, parameter3};
+const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", 0, 0, 0};
+const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", 1, 1, 1};
+const ParameterInfo parameter_3{2, ParameterType::BOOL, "param 3", "param 3", "unit", -1, -1, -1};
+const std::vector<ParameterInfo> parameters{parameter_1, parameter_2, parameter_3};
 
-const ProcessorInfo processor1{0, "proc 1", "proc 1", 0 ,0};
-const ProcessorInfo processor2{1, "proc 2", "proc 2", 1 ,1};
-const std::vector<ProcessorInfo> processors{processor1, processor2};
+const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};
+const ProcessorInfo processor_2{1, "proc 2", "proc 2", 1 , 1};
+const std::vector<ProcessorInfo> processors{processor_1, processor_2};
 
 const TrackInfo track1{0,"track 1","track 1",0,0,0,0,{}};
 const TrackInfo track2{1,"track 2","track 2",1,1,1,1,{}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
-
-
-constexpr float DEFAULT_SAMPLERATE = 48000.0f;
-constexpr float default_tempo = 120.0f;
-constexpr float default_parameter_value = 0.745f;
-constexpr auto default_string_property = "string property";
-constexpr bool default_timing_statistics_enabled = false;
-constexpr bool default_bypass_state = false;
-constexpr PlayingMode default_playing_mode = PlayingMode::PLAYING;
-constexpr SyncMode default_sync_mode = SyncMode::INTERNAL;
-constexpr TimeSignature default_time_signature = TimeSignature{4,4};
-constexpr ControlStatus default_control_status = ControlStatus::OK;
-constexpr CpuTimings DEFAULT_TIMINGS = CpuTimings{1.0f, 0.5f, 1.5f};
-constexpr int default_program_id = 1;
-constexpr auto default_program_name = "program 1";
-constexpr ControlStatus DEFAULT_CONTROL_STATUS = ControlStatus::OK;
-const std::vector<std::string> default_programs = {default_program_name, "program 2"};
+constexpr float                 DEFAULT_SAMPLERATE = 48000.0f;
+constexpr float                 DEFAULT_TEMPO = 120.0f;
+constexpr float                 DEFAULT_PARAMETER_VALUE = 0.745f;
+constexpr auto                  DEFAULT_STRING_PROPERTY = "string property";
+constexpr bool                  DEFAULT_TIMING_STATISTICS_ENABLED = false;
+constexpr bool                  DEFAULT_BYPASS_STATE = false;
+constexpr PlayingMode           DEFAULT_PLAYING_MODE = PlayingMode::PLAYING;
+constexpr SyncMode              DEFAULT_SYNC_MODE = SyncMode::INTERNAL;
+constexpr TimeSignature         DEFAULT_TIME_SIGNATURE = TimeSignature{4, 4};
+constexpr ControlStatus         DEFAULT_CONTROL_STATUS = ControlStatus::OK;
+constexpr CpuTimings            DEFAULT_TIMINGS = CpuTimings{1.0f, 0.5f, 1.5f};
+constexpr int                   DEFAULT_PROGRAM_ID = 1;
+constexpr auto                  DEFAULT_PROGRAM_NAME = "program 1";
+const std::vector<std::string>  DEFAULT_PROGRAMS = {DEFAULT_PROGRAM_NAME, "program 2"};
 
 
 class TestableController
@@ -78,7 +76,7 @@ public:
 
     std::string get_sushi_version() const override {return "";}
 
-    SushiBuildInfo get_sushi_buildinfo() const override {return SushiBuildInfo();}
+    SushiBuildInfo get_sushi_build_info() const override {return SushiBuildInfo();}
 
     int get_input_audio_channel_count() const override {return 0;}
 
@@ -90,13 +88,13 @@ class TransportControllerMockup : public TransportController, public TestableCon
 public:
     float get_samplerate() const override {return DEFAULT_SAMPLERATE;};
 
-    PlayingMode get_playing_mode() const override {return default_playing_mode;};
+    PlayingMode get_playing_mode() const override {return DEFAULT_PLAYING_MODE;};
 
-    SyncMode get_sync_mode() const override {return default_sync_mode;}
+    SyncMode get_sync_mode() const override {return DEFAULT_SYNC_MODE;}
 
-    TimeSignature get_time_signature() const override {return default_time_signature;}
+    TimeSignature get_time_signature() const override {return DEFAULT_TIME_SIGNATURE;}
 
-    float get_tempo() const override {return default_tempo;}
+    float get_tempo() const override {return DEFAULT_TEMPO;}
 
     void set_sync_mode(SyncMode sync_mode) override
     {
@@ -131,7 +129,7 @@ public:
         _args_from_last_call.clear();
         _args_from_last_call["tempo"] = std::to_string(tempo);
         _recently_called = true;
-        return default_control_status;
+        return DEFAULT_CONTROL_STATUS;
     };
 
     ControlStatus set_time_signature(TimeSignature signature) override
@@ -140,7 +138,7 @@ public:
         _args_from_last_call["numerator"] = std::to_string(signature.numerator);
         _args_from_last_call["denominator"] = std::to_string(signature.denominator);
         _recently_called = true;
-        return default_control_status;
+        return DEFAULT_CONTROL_STATUS;
     };
 };
 
@@ -149,7 +147,7 @@ class TimingControllerMockup : public TimingController, public TestableControlle
 public:
     bool get_timing_statistics_enabled() const override
     {
-        return default_timing_statistics_enabled;
+        return DEFAULT_TIMING_STATISTICS_ENABLED;
     }
 
     void set_timing_statistics_enabled(bool enabled) override
@@ -289,17 +287,17 @@ public:
 
     std::pair<ControlStatus, int> get_processor_id(const std::string& /*processor_name*/) const override
     {
-        return {_return_status, processor1.id};
+        return {_return_status, processor_1.id};
     }
 
     std::pair<ControlStatus, ProcessorInfo> get_processor_info(int /*processor_id*/) const override
     {
-        return {_return_status, processor1};
+        return {_return_status, processor_1};
     }
 
     std::pair<ControlStatus, bool> get_processor_bypass_state(int /*processor_id*/) const override
     {
-        return {_return_status, default_bypass_state};
+        return {_return_status, DEFAULT_BYPASS_STATE};
     }
 
     ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override
@@ -385,22 +383,22 @@ class ProgramControllerMockup : public ProgramController, public TestableControl
 public:
     std::pair<ControlStatus, int> get_processor_current_program(int /*processor_id*/) const override
     {
-        return {_return_status, default_program_id};
+        return {_return_status, DEFAULT_PROGRAM_ID};
     }
 
     std::pair<ControlStatus, std::string> get_processor_current_program_name(int /*processor_id*/) const override
     {
-        return {_return_status, default_program_name};
+        return {_return_status, DEFAULT_PROGRAM_NAME};
     }
 
     std::pair<ControlStatus, std::string> get_processor_program_name(int /*processor_id*/, int /*program_id*/) const override
     {
-        return {_return_status, default_program_name};
+        return {_return_status, DEFAULT_PROGRAM_NAME};
     }
 
     std::pair<ControlStatus, std::vector<std::string>> get_processor_programs(int /*processor_id*/) const override
     {
-        return {_return_status, default_programs};
+        return {_return_status, DEFAULT_PROGRAMS};
     }
 
     ControlStatus set_processor_program(int processor_id, int program_id) override
@@ -427,32 +425,32 @@ class ParameterControllerMockup : public ParameterController, public TestableCon
 
     std::pair<ControlStatus, int> get_parameter_id(int /*processor_id*/, const std::string& /*parameter*/) const override
     {
-        return {_return_status, parameter1.id};
+        return {_return_status, parameter_1.id};
     }
 
     std::pair<ControlStatus, ParameterInfo> get_parameter_info(int /*processor_id*/, int /*parameter_id*/) const override
     {
-        return {_return_status, parameter1};
+        return {_return_status, parameter_1};
     }
 
     std::pair<ControlStatus, float> get_parameter_value(int /*processor_id*/, int /*parameter_id*/) const override
     {
-        return {_return_status, default_parameter_value};
+        return {_return_status, DEFAULT_PARAMETER_VALUE};
     }
 
     std::pair<ControlStatus, float> get_parameter_value_in_domain(int /*processor_id*/, int /*parameter_id*/) const override
     {
-        return {_return_status, default_parameter_value};
+        return {_return_status, DEFAULT_PARAMETER_VALUE};
     }
 
     std::pair<ControlStatus, std::string> get_parameter_value_as_string(int /*processor_id*/, int /*parameter_id*/) const override
     {
-        return {_return_status, std::to_string(default_parameter_value)};
+        return {_return_status, std::to_string(DEFAULT_PARAMETER_VALUE)};
     }
 
     std::pair<ControlStatus, std::string> get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const override
     {
-        return {_return_status, default_string_property};
+        return {_return_status, DEFAULT_STRING_PROPERTY};
     }
 
     ControlStatus set_parameter_value(int processor_id, int parameter_id, float value) override

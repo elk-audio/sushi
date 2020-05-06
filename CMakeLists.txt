@@ -122,8 +122,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
                       src/engine/audio_graph.cpp
-                      src/engine/controller/controller.cpp
-                      src/engine/controller/sub_controllers.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
@@ -132,6 +130,18 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/event_timer.cpp
                       src/engine/transport.cpp
                       src/engine/processor_container.cpp
+                      src/engine/controller/controller.cpp
+                      src/engine/controller/system_controller.cpp
+                      src/engine/controller/transport_controller.cpp
+                      src/engine/controller/timing_controller.cpp
+                      src/engine/controller/keyboard_controller.cpp
+                      src/engine/controller/audio_graph_controller.cpp
+                      src/engine/controller/parameter_controller.cpp
+                      src/engine/controller/program_controller.cpp
+                      src/engine/controller/midi_controller.cpp
+                      src/engine/controller/audio_routing_controller.cpp
+                      src/engine/controller/cv_gate_controller.cpp
+                      src/engine/controller/osc_controller.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
@@ -196,8 +206,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
                         src/engine/audio_graph.h
-                        src/engine/controller/controller.h
-                        src/engine/controller/sub_controllers.h
                         src/engine/track.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
@@ -209,6 +217,18 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/engine/processor_container.h
+                        src/engine/controller/controller.h
+                        src/engine/controller/system_controller.h
+                        src/engine/controller/transport_controller.h
+                        src/engine/controller/timing_controller.h
+                        src/engine/controller/keyboard_controller.h
+                        src/engine/controller/audio_graph_controller.h
+                        src/engine/controller/parameter_controller.h
+                        src/engine/controller/program_controller.h
+                        src/engine/controller/midi_controller.h
+                        src/engine/controller/audio_routing_controller.h
+                        src/engine/controller/cv_gate_controller.h
+                        src/engine/controller/osc_controller.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/control_to_cv_plugin.h
                         src/plugins/cv_to_control_plugin.h
