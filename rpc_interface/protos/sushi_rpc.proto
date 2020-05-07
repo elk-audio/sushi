@@ -181,7 +181,7 @@ service OscController
 
 service NotificationController
 {
-/*    rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
+/*  rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
     rpc SubscribeToTimingUpdates()returns(streamCpuTimings){}
     rpc SubscribeToTrackChanges()returns(streamTrackUpdate){}
     rpc SubscribeToProcessorChanges()returns(streamProcessorUpdate){}

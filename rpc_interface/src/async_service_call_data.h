@@ -33,12 +33,12 @@
 
 namespace sushi_rpc {
 
-class SushiControlService;
+class NotificationControlService;
 
 class CallData
 {
 public:
-    CallData(SushiControlService* service,
+    CallData(NotificationControlService* service,
              grpc::ServerCompletionQueue* async_rpc_queue) : _service(service),
                                                              _async_rpc_queue(async_rpc_queue),
                                                              _in_completion_queue(false),
@@ -59,7 +59,7 @@ public:
     }
 
 protected:
-    SushiControlService* _service;
+    NotificationControlService* _service;
     grpc::ServerCompletionQueue* _async_rpc_queue;
     grpc::ServerContext _ctx;
 
@@ -93,7 +93,7 @@ protected:
 class SubscribeToParameterUpdatesCallData : public CallData
 {
 public:
-    SubscribeToParameterUpdatesCallData(SushiControlService* service,
+    SubscribeToParameterUpdatesCallData(NotificationControlService* service,
                                         grpc::ServerCompletionQueue* async_rpc_queue)
         : CallData(service, async_rpc_queue),
           _responder(&_ctx),

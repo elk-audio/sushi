@@ -19,7 +19,7 @@
  */
 
 
-#include "../../include/control_notifications.h"
+#include "control_notifications.h"
 #include "control_service.h"
 #include "async_service_call_data.h"
 
@@ -33,8 +33,8 @@ inline sushi_rpc::ParameterType::Type to_grpc(const sushi::ext::ParameterType ty
         case sushi::ext::ParameterType::FLOAT:            return sushi_rpc::ParameterType::FLOAT;
         case sushi::ext::ParameterType::INT:              return sushi_rpc::ParameterType::INT;
         case sushi::ext::ParameterType::BOOL:             return sushi_rpc::ParameterType::BOOL;
-        case sushi::ext::ParameterType::STRING_PROPERTY:  return sushi_rpc::ParameterType::STRING_PROPERTY;;
-        case sushi::ext::ParameterType::DATA_PROPERTY:    return sushi_rpc::ParameterType::DATA_PROPERTY;;
+        case sushi::ext::ParameterType::STRING_PROPERTY:  return sushi_rpc::ParameterType::FLOAT; // Currently not supported i gRPC
+        case sushi::ext::ParameterType::DATA_PROPERTY:    return sushi_rpc::ParameterType::FLOAT; // Currently not supported i gRPC
         default:                                          return sushi_rpc::ParameterType::FLOAT;
     }
 }
@@ -183,66 +183,70 @@ inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type typ
     }
 }
 
-grpc::Status SushiControlService::GetSamplerate(grpc::ServerContext* /*context*/,
-                                                const sushi_rpc::GenericVoidValue* /*request*/,
-                                                sushi_rpc::GenericFloatValue* response)
+
+grpc::Status SystemControlService::GetInterfaceVersion(grpc::ServerContext* context,
+                                                       const sushi_rpc::GenericVoidValue* request,
+                                                       sushi_rpc::GenericStringValue* response)
+{
+    return Service::GetInterfaceVersion(context, request, response);
+}
+
+grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* context,
+                                                   const sushi_rpc::GenericVoidValue* request,
+                                                   sushi_rpc::GenericStringValue* response)
+{
+    return Service::GetSushiVersion(context, request, response);
+}
+
+grpc::Status SystemControlService::GetBuildInfo(grpc::ServerContext* context,
+                                                const sushi_rpc::GenericVoidValue* request,
+                                                sushi_rpc::SushiBuildInfo* response)
+{
+    return Service::GetBuildInfo(context, request, response);
+}
+
+grpc::Status SystemControlService::GetInputAudioChannelCount(grpc::ServerContext* context,
+                                                             const sushi_rpc::GenericVoidValue* request,
+                                                             sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetInputAudioChannelCount(context, request, response);
+}
+
+grpc::Status SystemControlService::GetOutputAudioChannelCount(grpc::ServerContext* context,
+                                                              const sushi_rpc::GenericVoidValue* request,
+                                                              sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetOutputAudioChannelCount(context, request, response);
+}
+
+
+grpc::Status TransportControlService::GetSamplerate(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::GenericVoidValue* /*request*/,
+                                                    sushi_rpc::GenericFloatValue* response)
 {
     response->set_value(_controller->get_samplerate());
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetPlayingMode(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::GenericVoidValue* /*request*/,
-                                                 sushi_rpc::PlayingMode* response)
+grpc::Status TransportControlService::GetPlayingMode(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::GenericVoidValue* /*request*/,
+                                                     sushi_rpc::PlayingMode* response)
 {
     response->set_mode(to_grpc(_controller->get_playing_mode()));
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SetPlayingMode(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::PlayingMode* request,
-                                                 sushi_rpc::GenericVoidValue* /*response*/)
-{
-    _controller->set_playing_mode(to_sushi_ext(request->mode()));
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetSyncMode(grpc::ServerContext* /*context*/,
-                                              const sushi_rpc::GenericVoidValue* /*request*/,
-                                              sushi_rpc::SyncMode* response)
+grpc::Status TransportControlService::GetSyncMode(grpc::ServerContext* /*context*/,
+                                                  const sushi_rpc::GenericVoidValue* /*request*/,
+                                                  sushi_rpc::SyncMode* response)
 {
     response->set_mode(to_grpc(_controller->get_sync_mode()));
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SetSyncMode(grpc::ServerContext* /*context*/,
-                                              const sushi_rpc::SyncMode*request,
-                                              sushi_rpc::GenericVoidValue* /*response*/)
-{
-    _controller->set_sync_mode(to_sushi_ext(request->mode()));
-    // TODO - set_sync_mode should return a status, not void
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetTempo(grpc::ServerContext* /*context*/,
-                                           const sushi_rpc::GenericVoidValue* /*request*/,
-                                           sushi_rpc::GenericFloatValue* response)
-{
-    response->set_value(_controller->get_tempo());
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::SetTempo(grpc::ServerContext* /*context*/,
-                                           const sushi_rpc::GenericFloatValue* request,
-                                           sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->set_tempo(request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::GenericVoidValue* /*request*/,
-                                                   sushi_rpc::TimeSignature* response)
+grpc::Status TransportControlService::GetTimeSignature(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::GenericVoidValue* /*request*/,
+                                                       sushi_rpc::TimeSignature* response)
 {
     auto ts = _controller->get_time_signature();
     response->set_denominator(ts.denominator);
@@ -250,9 +254,42 @@ grpc::Status SushiControlService::GetTimeSignature(grpc::ServerContext* /*contex
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::TimeSignature* request,
-                                                   sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status TransportControlService::GetTempo(grpc::ServerContext* /*context*/,
+                                               const sushi_rpc::GenericVoidValue* /*request*/,
+                                               sushi_rpc::GenericFloatValue* response)
+{
+    response->set_value(_controller->get_tempo());
+    return grpc::Status::OK;
+}
+
+grpc::Status TransportControlService::SetTempo(grpc::ServerContext* /*context*/,
+                                               const sushi_rpc::GenericFloatValue* request,
+                                               sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->set_tempo(request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status TransportControlService::SetPlayingMode(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::PlayingMode* request,
+                                                     sushi_rpc::GenericVoidValue* /*response*/)
+{
+    _controller->set_playing_mode(to_sushi_ext(request->mode()));
+    return grpc::Status::OK;
+}
+
+grpc::Status TransportControlService::SetSyncMode(grpc::ServerContext* /*context*/,
+                                                  const sushi_rpc::SyncMode*request,
+                                                  sushi_rpc::GenericVoidValue* /*response*/)
+{
+    _controller->set_sync_mode(to_sushi_ext(request->mode()));
+    // TODO - set_sync_mode should return a status, not void
+    return grpc::Status::OK;
+}
+
+grpc::Status TransportControlService::SetTimeSignature(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::TimeSignature* request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
     sushi::ext::TimeSignature ts;
     ts.numerator = request->numerator();
@@ -261,70 +298,26 @@ grpc::Status SushiControlService::SetTimeSignature(grpc::ServerContext* /*contex
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetTracks(grpc::ServerContext* /*context*/,
-                                            const sushi_rpc::GenericVoidValue* /*request*/,
-                                            sushi_rpc::TrackInfoList* response)
+grpc::Status TimingControlService::GetTimingsEnabled(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::GenericVoidValue* /*request*/,
+                                                     sushi_rpc::GenericBoolValue* response)
 {
-    auto tracks = _controller->get_tracks();
-    for (const auto& track : tracks)
-    {
-        auto info = response->add_tracks();
-        to_grpc(*info, track);
-    }
+    response->set_value(_controller->get_timing_statistics_enabled());
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SendNoteOn(grpc::ServerContext* /*context*/,
-                                             const sushi_rpc::NoteOnRequest*request,
-                                             sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->send_note_on(request->track().id(), request->channel(), request->note(), request->velocity());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SendNoteOff(grpc::ServerContext* /*context*/,
-                                              const sushi_rpc::NoteOffRequest* request,
-                                              sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->send_note_off(request->track().id(), request->channel(), request->note(), request->velocity());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SendNoteAftertouch(grpc::ServerContext* /*context*/,
-                                                     const sushi_rpc::NoteAftertouchRequest* request,
+grpc::Status TimingControlService::SetTimingsEnabled(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::GenericBoolValue* request,
                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->send_note_aftertouch(request->track().id(), request->channel(), request->note(), request->value());
-    return to_grpc_status(status);
+    // TODO - should not really be void here
+    _controller->set_timing_statistics_enabled(request->value());
+    return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SendAftertouch(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::NoteModulationRequest* request,
-                                                 sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->send_aftertouch(request->track().id(), request->channel(), request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SendPitchBend(grpc::ServerContext* /*context*/,
-                                                const sushi_rpc::NoteModulationRequest* request,
-                                                sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->send_pitch_bend(request->track().id(), request->channel(), request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SendModulation(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::NoteModulationRequest* request,
-                                                 sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->send_modulation(request->track().id(), request->channel(), request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::GenericVoidValue* /*request*/,
-                                                   sushi_rpc::CpuTimings* response)
+grpc::Status TimingControlService::GetEngineTimings(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::GenericVoidValue* /*request*/,
+                                                    sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_engine_timings();
     if (status != sushi::ext::ControlStatus::OK)
@@ -335,9 +328,9 @@ grpc::Status SushiControlService::GetEngineTimings(grpc::ServerContext* /*contex
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context*/,
-                                                  const sushi_rpc::TrackIdentifier* request,
-                                                  sushi_rpc::CpuTimings* response)
+grpc::Status TimingControlService::GetTrackTimings(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::TrackIdentifier* request,
+                                                   sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_track_timings(request->id());
     if (status != sushi::ext::ControlStatus::OK)
@@ -348,9 +341,9 @@ grpc::Status SushiControlService::GetTrackTimings(grpc::ServerContext* /*context
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*context*/,
-                                                      const sushi_rpc::ProcessorIdentifier* request,
-                                                      sushi_rpc::CpuTimings* response)
+grpc::Status TimingControlService::GetProcessorTimings(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::ProcessorIdentifier* request,
+                                                       sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_processor_timings(request->id());
     if (status != sushi::ext::ControlStatus::OK)
@@ -361,33 +354,107 @@ grpc::Status SushiControlService::GetProcessorTimings(grpc::ServerContext* /*con
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::ResetAllTimings(grpc::ServerContext* /*context*/,
-                                                  const sushi_rpc::GenericVoidValue* /*request*/,
-                                                  sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status TimingControlService::ResetAllTimings(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::GenericVoidValue* /*request*/,
+                                                   sushi_rpc::GenericVoidValue* /*response*/)
 {
     _controller->reset_all_timings();
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::ResetTrackTimings(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::TrackIdentifier* request,
-                                                    sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status TimingControlService::ResetTrackTimings(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::TrackIdentifier* request,
+                                                     sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->reset_track_timings(request->id());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::ResetProcessorTimings(grpc::ServerContext* /*context*/,
-                                                        const sushi_rpc::ProcessorIdentifier* request,
-                                                        sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status TimingControlService::ResetProcessorTimings(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::ProcessorIdentifier* request,
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->reset_processor_timings(request->id());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetTrackId(grpc::ServerContext* /*context*/,
-                                             const sushi_rpc::GenericStringValue* request,
-                                             sushi_rpc::TrackIdentifier* response)
+grpc::Status KeyboardControlService::SendNoteOn(grpc::ServerContext* /*context*/,
+                                                const sushi_rpc::NoteOnRequest*request,
+                                                sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_note_on(request->track().id(), request->channel(), request->note(), request->velocity());
+    return to_grpc_status(status);
+}
+
+grpc::Status KeyboardControlService::SendNoteOff(grpc::ServerContext* /*context*/,
+                                                 const sushi_rpc::NoteOffRequest* request,
+                                                 sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_note_off(request->track().id(), request->channel(), request->note(), request->velocity());
+    return to_grpc_status(status);
+}
+
+grpc::Status KeyboardControlService::SendNoteAftertouch(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::NoteAftertouchRequest* request,
+                                                        sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_note_aftertouch(request->track().id(), request->channel(), request->note(), request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status KeyboardControlService::SendAftertouch(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::NoteModulationRequest* request,
+                                                    sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_aftertouch(request->track().id(), request->channel(), request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status KeyboardControlService::SendPitchBend(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::NoteModulationRequest* request,
+                                                   sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_pitch_bend(request->track().id(), request->channel(), request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status KeyboardControlService::SendModulation(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::NoteModulationRequest* request,
+                                                    sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->send_modulation(request->track().id(), request->channel(), request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::GetAllProcessors(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::GenericVoidValue* /*request*/,
+                                                        sushi_rpc::ProcessorInfoList* response)
+{
+    auto processors = _controller->get_all_processors();
+    for (const auto& processor : processors)
+    {
+        auto info = response->add_processors();
+        to_grpc(*info, processor);
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status AudioGraphControlService::GetAllTracks(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::GenericVoidValue* /*request*/,
+                                                    sushi_rpc::TrackInfoList* response)
+{
+    auto tracks = _controller->get_all_tracks();
+    for (const auto& track : tracks)
+    {
+        auto info = response->add_tracks();
+        to_grpc(*info, track);
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status AudioGraphControlService::GetTrackId(grpc::ServerContext* /*context*/,
+                                                  const sushi_rpc::GenericStringValue* request,
+                                                  sushi_rpc::TrackIdentifier* response)
 {
     auto [status, id] = _controller->get_track_id(request->value());
     if (status != sushi::ext::ControlStatus::OK)
@@ -398,9 +465,9 @@ grpc::Status SushiControlService::GetTrackId(grpc::ServerContext* /*context*/,
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
-                                               const sushi_rpc::TrackIdentifier* request,
-                                               sushi_rpc::TrackInfo* response)
+grpc::Status AudioGraphControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::TrackIdentifier* request,
+                                                    sushi_rpc::TrackInfo* response)
 {
     auto [status, track] = _controller->get_track_info(request->id());
     if (status != sushi::ext::ControlStatus::OK)
@@ -411,9 +478,9 @@ grpc::Status SushiControlService::GetTrackInfo(grpc::ServerContext* /*context*/,
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*context*/,
-                                                     const sushi_rpc::TrackIdentifier* request,
-                                                     sushi_rpc::ProcessorInfoList* response)
+grpc::Status AudioGraphControlService::GetTrackProcessors(grpc::ServerContext* /*context*/,
+                                                          const sushi_rpc::TrackIdentifier* request,
+                                                          sushi_rpc::ProcessorInfoList* response)
 {
     auto [status, processors]= _controller->get_track_processors(request->id());
     for (const auto& processor : processors)
@@ -424,22 +491,9 @@ grpc::Status SushiControlService::GetTrackProcessors(grpc::ServerContext* /*cont
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetTrackParameters(grpc::ServerContext* /*context*/,
-                                                     const sushi_rpc::TrackIdentifier* request,
-                                                     sushi_rpc::ParameterInfoList* response)
-{
-    auto [status, parameters] = _controller->get_track_parameters(request->id());
-    for (const auto& parameter : parameters)
-    {
-        auto info = response->add_parameters();
-        to_grpc(*info, parameter);
-    }
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::GetProcessorId(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::GenericStringValue* request,
-                                                 sushi_rpc::ProcessorIdentifier* response)
+grpc::Status AudioGraphControlService::GetProcessorId(grpc::ServerContext* /*context*/,
+                                                      const sushi_rpc::GenericStringValue* request,
+                                                      sushi_rpc::ProcessorIdentifier* response)
 {
     auto [status, id] = _controller->get_processor_id(request->value());
     if (status != sushi::ext::ControlStatus::OK)
@@ -450,9 +504,9 @@ grpc::Status SushiControlService::GetProcessorId(grpc::ServerContext* /*context*
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetProcessorInfo(grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::ProcessorIdentifier* request,
-                                                   sushi_rpc::ProcessorInfo* response)
+grpc::Status AudioGraphControlService::GetProcessorInfo(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::ProcessorIdentifier* request,
+                                                        sushi_rpc::ProcessorInfo* response)
 {
     auto [status, processor] = _controller->get_processor_info(request->id());
     if (status != sushi::ext::ControlStatus::OK)
@@ -463,9 +517,9 @@ grpc::Status SushiControlService::GetProcessorInfo(grpc::ServerContext* /*contex
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::GetProcessorBypassState(grpc::ServerContext* /*context*/,
-                                                          const sushi_rpc::ProcessorIdentifier* request,
-                                                          sushi_rpc::GenericBoolValue* response)
+grpc::Status AudioGraphControlService::GetProcessorBypassState(grpc::ServerContext* /*context*/,
+                                                               const sushi_rpc::ProcessorIdentifier* request,
+                                                               sushi_rpc::GenericBoolValue* response)
 {
     auto [status, state] = _controller->get_processor_bypass_state(request->id());
     if (status != sushi::ext::ControlStatus::OK)
@@ -476,224 +530,41 @@ grpc::Status SushiControlService::GetProcessorBypassState(grpc::ServerContext* /
     return grpc::Status::OK;
 }
 
-grpc::Status SushiControlService::SetProcessorBypassState(grpc::ServerContext* /*context*/,
-                                                          const sushi_rpc::ProcessorBypassStateSetRequest* request,
-                                                          sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::SetProcessorBypassState(grpc::ServerContext* /*context*/,
+                                                               const sushi_rpc::ProcessorBypassStateSetRequest* request,
+                                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_processor_bypass_state(request->processor().id(), request->value());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetProcessorCurrentProgram(grpc::ServerContext* /*context*/,
-                                                             const sushi_rpc::ProcessorIdentifier* request,
-                                                             sushi_rpc::ProgramIdentifier* response)
+grpc::Status AudioGraphControlService::CreateTrack(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::CreateTrackRequest* request,
+                                                   sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto [status, program] = _controller->get_processor_current_program(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_program(program);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetProcessorCurrentProgramName(grpc::ServerContext* /*context*/,
-                                                                 const sushi_rpc::ProcessorIdentifier* request,
-                                                                 sushi_rpc::GenericStringValue* response)
-{
-    auto [status, program] = _controller->get_processor_current_program_name(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(program);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetProcessorProgramName(grpc::ServerContext* /*context*/,
-                                                          const sushi_rpc::ProcessorProgramIdentifier* request,
-                                                          sushi_rpc::GenericStringValue* response)
-{
-    auto [status, program] = _controller->get_processor_program_name(request->processor().id(), request->program());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(program);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetProcessorPrograms(grpc::ServerContext* /*context*/,
-                                                       const sushi_rpc::ProcessorIdentifier* request,
-                                                       sushi_rpc::ProgramInfoList* response)
-{
-    auto [status, programs] = _controller->get_processor_programs(request->id());
-    int id = 0;
-    for (auto& program : programs)
-    {
-        auto info = response->add_programs();
-        info->set_name(program);
-        info->mutable_id()->set_program(id++);
-    }
+    auto status = _controller->create_track(request->name(), request->channels());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::SetProcessorProgram(grpc::ServerContext* /*context*/,
-                                                      const sushi_rpc::ProcessorProgramSetRequest* request,
-                                                      sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::CreateMultibusTrackRequest* request,
+                                                           sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->set_processor_program(request->processor().id(), request->program().program());
+    auto status = _controller->create_multibus_track(request->name(), request->input_busses(), request->output_busses());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::GetProcessorParameters(grpc::ServerContext* /*context*/,
-                                                         const sushi_rpc::ProcessorIdentifier* request,
-                                                         sushi_rpc::ParameterInfoList* response)
-{
-    auto [status, parameters] = _controller->get_processor_parameters(request->id());
-    for (const auto& parameter : parameters)
-    {
-        auto info = response->add_parameters();
-        to_grpc(*info, parameter);
-    }
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::GetParameterId(grpc::ServerContext* /*context*/,
-                                                 const sushi_rpc::ParameterIdRequest* request,
-                                                 sushi_rpc::ParameterIdentifier* response)
-{
-    auto [status, id] = _controller->get_parameter_id(request->processor().id(), request->parametername());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status,  "No parameter with that name");
-    }
-    response->set_parameter_id(id);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetParameterInfo(::grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::ParameterIdentifier* request,
-                                                   sushi_rpc::ParameterInfo* response)
-{
-    auto [status, parameter] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    to_grpc(*response, parameter);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetParameterValue(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterIdentifier* request,
-                                                    sushi_rpc::GenericFloatValue* response)
-{
-    auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(value);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetParameterValueInDomain(grpc::ServerContext* /*context*/,
-                                                            const sushi_rpc::ParameterIdentifier* request,
-                                                            sushi_rpc::GenericFloatValue* response)
-{
-    auto [status, value] = _controller->get_parameter_value_in_domain(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(value);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetParameterValueAsString(grpc::ServerContext* /*context*/,
-                                                            const sushi_rpc::ParameterIdentifier* request,
-                                                            sushi_rpc::GenericStringValue* response)
-{
-    auto [status, value] = _controller->get_parameter_value_as_string(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(value);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::GetStringPropertyValue(grpc::ServerContext* /*context*/,
-                                                         const sushi_rpc::ParameterIdentifier* request,
-                                                         sushi_rpc::GenericStringValue* response)
-{
-    auto [status, value] = _controller->get_string_property_value(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    response->set_value(value);
-    return grpc::Status::OK;
-}
-
-grpc::Status SushiControlService::SetParameterValue(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::ParameterValue* request,
-                                                    sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->set_parameter_value(request->parameter().processor_id(),
-                                                   request->parameter().parameter_id(),
-                                                   request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::SetStringPropertyValue(grpc::ServerContext* /*context*/,
-                                                         const sushi_rpc::StringPropertySetRequest* request,
-                                                         sushi_rpc::GenericVoidValue* /*response*/)
-{
-    auto status = _controller->set_string_property_value(request->property().processor_id(),
-                                                         request->property().parameter_id(),
-                                                         request->value());
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::CreateStereoTrack(grpc::ServerContext* /*context*/,
-                                                    const sushi_rpc::CreateStereoTrackRequest* request,
-                                                    sushi_rpc::GenericVoidValue* /*response*/)
-{
-    std::optional<int> input_bus;
-    if (request->has_input())
-    {
-        input_bus = request->input_bus();
-    }
-    auto status = _controller->create_stereo_track(request->name(), request->output_bus(), input_bus);
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::CreateMonoTrack(grpc::ServerContext* /*context*/,
-                                                  const sushi_rpc::CreateMonoTrackRequest* request,
-                                                  sushi_rpc::GenericVoidValue* /*response*/)
-{
-    std::optional<int> input_channel;
-    if (request->has_input())
-    {
-        input_channel = request->input_channel();
-    }
-    auto status = _controller->create_mono_track(request->name(), request->output_channel(), input_channel);
-    return to_grpc_status(status);
-}
-
-grpc::Status SushiControlService::DeleteTrack(grpc::ServerContext* /*context*/,
-                                              const sushi_rpc::TrackIdentifier* request,
-                                              sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::DeleteTrack(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::TrackIdentifier* request,
+                                                   sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->delete_track(request->id());
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*context*/,
-                                                         const sushi_rpc::CreateProcessorRequest* request,
-                                                         sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::CreateProcessorOnTrack(grpc::ServerContext* /*context*/,
+                                                              const sushi_rpc::CreateProcessorRequest* request,
+                                                              sushi_rpc::GenericVoidValue* /*response*/)
 {
     std::optional<int> before_processor = std::nullopt;
     if (request->position().add_to_back() == false)
@@ -709,8 +580,8 @@ grpc::Status SushiControlService::CreateProcessorOnTrack(grpc::ServerContext* /*
     return to_grpc_status(status);
 }
 
-grpc::Status SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
-                                                       sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::MoveProcessorOnTrack(grpc::ServerContext* /*context*/, const sushi_rpc::MoveProcessorRequest*request,
+                                                            sushi_rpc::GenericVoidValue* /*response*/)
 {
     std::optional<int> before_processor = std::nullopt;
     if (request->position().add_to_back() == false)
@@ -725,17 +596,571 @@ grpc::Status SushiControlService::MoveProcessorOnTrack(grpc::ServerContext* /*co
 
 }
 
-grpc::Status SushiControlService::DeleteProcessorFromTrack(grpc::ServerContext* /*context*/,
-                                                           const sushi_rpc::DeleteProcessorRequest* request,
-                                                           sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::DeleteProcessorFromTrack(grpc::ServerContext* /*context*/,
+                                                                const sushi_rpc::DeleteProcessorRequest* request,
+                                                                sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->delete_processor_from_track(request->processor().id(),
                                                            request->track().id());
     return to_grpc_status(status);
 }
 
+grpc::Status ParameterControlService::GetTrackParameters(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::TrackIdentifier* request,
+                                                         sushi_rpc::ParameterInfoList* response)
+{
+    auto [status, parameters] = _controller->get_track_parameters(request->id());
+    for (const auto& parameter : parameters)
+    {
+        auto info = response->add_parameters();
+        to_grpc(*info, parameter);
+    }
+    return to_grpc_status(status);
+}
 
-void SushiControlService::notification(const sushi::ext::ControlNotification* notification)
+grpc::Status ParameterControlService::GetParameterId(grpc::ServerContext* /*context*/,
+                                                     const sushi_rpc::ParameterIdRequest* request,
+                                                     sushi_rpc::ParameterIdentifier* response)
+{
+    auto [status, id] = _controller->get_parameter_id(request->processor().id(), request->parametername());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status,  "No parameter with that name");
+    }
+    response->set_parameter_id(id);
+    return grpc::Status::OK;
+}
+
+grpc::Status ParameterControlService::GetParameterInfo(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::ParameterIdentifier* request,
+                                                       sushi_rpc::ParameterInfo* response)
+{
+    auto [status, parameter] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    to_grpc(*response, parameter);
+    return grpc::Status::OK;
+}
+
+grpc::Status ParameterControlService::GetParameterValue(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::ParameterIdentifier* request,
+                                                        sushi_rpc::GenericFloatValue* response)
+{
+    auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(value);
+    return grpc::Status::OK;
+}
+
+grpc::Status ParameterControlService::GetParameterValueInDomain(grpc::ServerContext* /*context*/,
+                                                                const sushi_rpc::ParameterIdentifier* request,
+                                                                sushi_rpc::GenericFloatValue* response)
+{
+    auto [status, value] = _controller->get_parameter_value_in_domain(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(value);
+    return grpc::Status::OK;
+}
+
+grpc::Status ParameterControlService::GetParameterValueAsString(grpc::ServerContext* /*context*/,
+                                                            const sushi_rpc::ParameterIdentifier* request,
+                                                            sushi_rpc::GenericStringValue* response)
+{
+    auto [status, value] = _controller->get_parameter_value_as_string(request->processor_id(), request->parameter_id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(value);
+    return grpc::Status::OK;
+}
+
+grpc::Status ParameterControlService::SetParameterValue(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::ParameterValue* request,
+                                                        sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->set_parameter_value(request->parameter().processor_id(),
+                                                   request->parameter().parameter_id(),
+                                                   request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status ProgramControlService::GetProcessorCurrentProgram(grpc::ServerContext* /*context*/,
+                                                               const sushi_rpc::ProcessorIdentifier* request,
+                                                               sushi_rpc::ProgramIdentifier* response)
+{
+    auto [status, program] = _controller->get_processor_current_program(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_program(program);
+    return grpc::Status::OK;
+}
+
+grpc::Status ProgramControlService::GetProcessorCurrentProgramName(grpc::ServerContext* /*context*/,
+                                                                   const sushi_rpc::ProcessorIdentifier* request,
+                                                                   sushi_rpc::GenericStringValue* response)
+{
+    auto [status, program] = _controller->get_processor_current_program_name(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(program);
+    return grpc::Status::OK;
+}
+
+grpc::Status ProgramControlService::GetProcessorProgramName(grpc::ServerContext* /*context*/,
+                                                            const sushi_rpc::ProcessorProgramIdentifier* request,
+                                                            sushi_rpc::GenericStringValue* response)
+{
+    auto [status, program] = _controller->get_processor_program_name(request->processor().id(), request->program());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    response->set_value(program);
+    return grpc::Status::OK;
+}
+
+grpc::Status ProgramControlService::GetProcessorPrograms(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::ProcessorIdentifier* request,
+                                                         sushi_rpc::ProgramInfoList* response)
+{
+    auto [status, programs] = _controller->get_processor_programs(request->id());
+    int id = 0;
+    for (auto& program : programs)
+    {
+        auto info = response->add_programs();
+        info->set_name(program);
+        info->mutable_id()->set_program(id++);
+    }
+    return to_grpc_status(status);
+}
+
+grpc::Status ProgramControlService::SetProcessorProgram(grpc::ServerContext* /*context*/,
+                                                        const sushi_rpc::ProcessorProgramSetRequest* request,
+                                                        sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->set_processor_program(request->processor().id(), request->program().program());
+    return to_grpc_status(status);
+}
+
+grpc::Status ParameterControlService::GetProcessorParameters(grpc::ServerContext* /*context*/,
+                                                             const sushi_rpc::ProcessorIdentifier* request,
+                                                             sushi_rpc::ParameterInfoList* response)
+{
+    auto [status, parameters] = _controller->get_processor_parameters(request->id());
+    for (const auto& parameter : parameters)
+    {
+        auto info = response->add_parameters();
+        to_grpc(*info, parameter);
+    }
+    return to_grpc_status(status);
+}
+
+grpc::Status MidiControlService::GetInputPorts(grpc::ServerContext* context,
+                                               const sushi_rpc::GenericVoidValue* request,
+                                               sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetInputPorts(context, request, response);
+}
+
+grpc::Status MidiControlService::GetOutputPorts(grpc::ServerContext* context,
+                                                const sushi_rpc::GenericVoidValue* request,
+                                                sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetOutputPorts(context, request, response);
+}
+
+grpc::Status MidiControlService::GetAllKbdInputConnections(grpc::ServerContext* context,
+                                                           const sushi_rpc::GenericVoidValue* request,
+                                                           sushi_rpc::MidiKbdConnectionList* response)
+{
+    return Service::GetAllKbdInputConnections(context, request, response);
+}
+
+grpc::Status MidiControlService::GetAllKbdOutputConnections(grpc::ServerContext* context,
+                                                            const sushi_rpc::GenericVoidValue* request,
+                                                            sushi_rpc::MidiKbdConnectionList* response)
+{
+    return Service::GetAllKbdOutputConnections(context, request, response);
+}
+
+grpc::Status MidiControlService::GetAllCCInputConnections(grpc::ServerContext* context,
+                                                          const sushi_rpc::GenericVoidValue* request,
+                                                          sushi_rpc::MidiCCConnectionList* response)
+{
+    return Service::GetAllCCInputConnections(context, request, response);
+}
+
+grpc::Status MidiControlService::GetAllPCInputConnections(grpc::ServerContext* context,
+                                                          const sushi_rpc::GenericVoidValue* request,
+                                                          sushi_rpc::MidiPCConnectionList* response)
+{
+    return Service::GetAllPCInputConnections(context, request, response);
+}
+
+grpc::Status MidiControlService::GetCCInputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                   const sushi_rpc::ProcessorIdentifier* request,
+                                                                   sushi_rpc::MidiCCConnectionList* response)
+{
+    return Service::GetCCInputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status MidiControlService::GetPCInputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                   const sushi_rpc::ProcessorIdentifier* request,
+                                                                   sushi_rpc::MidiPCConnectionList* response)
+{
+    return Service::GetPCInputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status MidiControlService::ConnectKbdInputToTrack(grpc::ServerContext* context,
+                                                        const sushi_rpc::MidiKbdConnection* request,
+                                                        sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectKbdInputToTrack(context, request, response);
+}
+
+grpc::Status MidiControlService::ConnectKbdOutputFromTrack(grpc::ServerContext* context,
+                                                           const sushi_rpc::MidiKbdConnection* request,
+                                                           sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectKbdOutputFromTrack(context, request, response);
+}
+
+grpc::Status MidiControlService::ConnectCCToParameter(grpc::ServerContext* context,
+                                                      const sushi_rpc::MidiCCConnection* request,
+                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectCCToParameter(context, request, response);
+}
+
+grpc::Status MidiControlService::ConnectPCToProcessor(grpc::ServerContext* context,
+                                                      const sushi_rpc::MidiPCConnection* request,
+                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectPCToProcessor(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectKbdInput(grpc::ServerContext* context,
+                                                    const sushi_rpc::MidiKbdConnection* request,
+                                                    sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectKbdInput(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectKbdOutput(grpc::ServerContext* context,
+                                                     const sushi_rpc::MidiKbdConnection* request,
+                                                     sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectKbdOutput(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectCC(grpc::ServerContext* context,
+                                              const sushi_rpc::MidiCCConnection* request,
+                                              sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectCC(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectPC(grpc::ServerContext* context,
+                                              const sushi_rpc::MidiPCConnection* request,
+                                              sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectPC(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectAllCCFromProcessor(grpc::ServerContext* context,
+                                                              const sushi_rpc::ProcessorIdentifier* request,
+                                                              sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllCCFromProcessor(context, request, response);
+}
+
+grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContext* context,
+                                                              const sushi_rpc::ProcessorIdentifier* request,
+                                                              sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllPCFromProcessor(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* context,
+                                                                const sushi_rpc::GenericVoidValue* request,
+                                                                sushi_rpc::AudioConnectionList* response)
+{
+    return Service::GetAllInputConnections(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerContext* context,
+                                                                 const sushi_rpc::GenericVoidValue* request,
+                                                                 sushi_rpc::AudioConnectionList* response)
+{
+    return Service::GetAllOutputConnections(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::ServerContext* context,
+                                                                     const sushi_rpc::GenericVoidValue* request,
+                                                                     sushi_rpc::AudioConnectionList* response)
+{
+    return Service::GetInputConnectionsForTrack(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::ServerContext* context,
+                                                                      const sushi_rpc::GenericVoidValue* request,
+                                                                      sushi_rpc::AudioConnectionList* response)
+{
+    return Service::GetOutputConnectionsForTrack(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::ServerContext* context,
+                                                                    const sushi_rpc::AudioConnection* request,
+                                                                    sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectInputChannelToTrack(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::ServerContext* context,
+                                                                       const sushi_rpc::AudioConnection* request,
+                                                                       sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectOutputChannelFromTrack(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* context,
+                                                         const sushi_rpc::AudioConnection* request,
+                                                         sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectInput(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* context,
+                                                          const sushi_rpc::AudioConnection* request,
+                                                          sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectOutput(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::ServerContext* context,
+                                                                      const sushi_rpc::TrackIdentifier* request,
+                                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllInputsFromTrack(context, request, response);
+}
+
+grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* context,
+                                                                      const sushi_rpc::TrackIdentifier* request,
+                                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllOutputFromTrack(context, request, response);
+}
+
+
+grpc::Status CvGateControlService::GetCvInputChannelCount(grpc::ServerContext* context,
+                                                          const sushi_rpc::GenericVoidValue* request,
+                                                          sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetCvInputChannelCount(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetCvOutputChannelCount(grpc::ServerContext* context,
+                                                           const sushi_rpc::GenericVoidValue* request,
+                                                           sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetCvOutputChannelCount(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetAllCvInputConnections(grpc::ServerContext* context,
+                                                            const sushi_rpc::GenericVoidValue* request,
+                                                            sushi_rpc::CvConnectionList* response)
+{
+    return Service::GetAllCvInputConnections(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetAllCvOutputConnections(grpc::ServerContext* context,
+                                                             const sushi_rpc::GenericVoidValue* request,
+                                                             sushi_rpc::CvConnectionList* response)
+{
+    return Service::GetAllCvOutputConnections(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetAllGateInputConnections(grpc::ServerContext* context,
+                                                              const sushi_rpc::GenericVoidValue* request,
+                                                              sushi_rpc::GateConnectionList* response)
+{
+    return Service::GetAllGateInputConnections(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetAllGateOutputConnections(grpc::ServerContext* context,
+                                                               const sushi_rpc::GenericVoidValue* request,
+                                                               sushi_rpc::GateConnectionList* response)
+{
+    return Service::GetAllGateOutputConnections(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetCvInputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                     const sushi_rpc::ProcessorIdentifier* request,
+                                                                     sushi_rpc::CvConnectionList* response)
+{
+    return Service::GetCvInputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetCvOutputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                      const sushi_rpc::ProcessorIdentifier* request,
+                                                                      sushi_rpc::CvConnectionList* response)
+{
+    return Service::GetCvOutputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetGateInputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                       const sushi_rpc::ProcessorIdentifier* request,
+                                                                       sushi_rpc::GateConnectionList* response)
+{
+    return Service::GetGateInputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::GetGateOutputConnectionsForProcessor(grpc::ServerContext* context,
+                                                                        const sushi_rpc::ProcessorIdentifier* request,
+                                                                        sushi_rpc::GateConnectionList* response)
+{
+    return Service::GetGateOutputConnectionsForProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::ConnectCvInputToParameter(grpc::ServerContext* context,
+                                                             const sushi_rpc::CvConnection* request,
+                                                             sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectCvInputToParameter(context, request, response);
+}
+
+grpc::Status CvGateControlService::ConnectCvOutputFromParameter(grpc::ServerContext* context,
+                                                                const sushi_rpc::CvConnection* request,
+                                                                sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectCvOutputFromParameter(context, request, response);
+}
+
+grpc::Status CvGateControlService::ConnectGateInputToProcessor(grpc::ServerContext* context,
+                                                               const sushi_rpc::GateConnection* request,
+                                                               sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectGateInputToProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::ConnectGateOutputFromProcessor(grpc::ServerContext* context,
+                                                                  const sushi_rpc::GateConnection* request,
+                                                                  sushi_rpc::GenericVoidValue* response)
+{
+    return Service::ConnectGateOutputFromProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectCvInput(grpc::ServerContext* context,
+                                                     const sushi_rpc::CvConnection* request,
+                                                     sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectCvInput(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectCvOutput(grpc::ServerContext* context,
+                                                      const sushi_rpc::CvConnection* request,
+                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectCvOutput(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectGateInput(grpc::ServerContext* context,
+                                                       const sushi_rpc::GateConnection* request,
+                                                       sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectGateInput(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectGateOutput(grpc::ServerContext* context,
+                                                        const sushi_rpc::GateConnection* request,
+                                                        sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectGateOutput(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectAllCvInputsFromProcessor(grpc::ServerContext* context,
+                                                                      const sushi_rpc::ProcessorIdentifier* request,
+                                                                      sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllCvInputsFromProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectAllCvOutputsFromProcessor(grpc::ServerContext* context,
+                                                                       const sushi_rpc::ProcessorIdentifier* request,
+                                                                       sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllCvOutputsFromProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectAllGateInputsFromProcessor(grpc::ServerContext* context,
+                                                                        const sushi_rpc::ProcessorIdentifier* request,
+                                                                        sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllGateInputsFromProcessor(context, request, response);
+}
+
+grpc::Status CvGateControlService::DisconnectAllGateOutputsFromProcessor(grpc::ServerContext* context,
+                                                                         const sushi_rpc::ProcessorIdentifier* request,
+                                                                         sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisconnectAllGateOutputsFromProcessor(context, request, response);
+}
+
+
+grpc::Status OscControlService::GetSendPort(grpc::ServerContext* context,
+                                            const sushi_rpc::GenericVoidValue* request,
+                                            sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetSendPort(context, request, response);
+}
+
+grpc::Status OscControlService::GetReceivePort(grpc::ServerContext* context,
+                                               const sushi_rpc::GenericVoidValue* request,
+                                               sushi_rpc::GenericIntValue* response)
+{
+    return Service::GetReceivePort(context, request, response);
+}
+
+grpc::Status OscControlService::GetEnabledParameterOutputs(grpc::ServerContext* context,
+                                                           const sushi_rpc::GenericVoidValue* request,
+                                                           sushi_rpc::OscParameterOutputList* response)
+{
+    return Service::GetEnabledParameterOutputs(context, request, response);
+}
+
+grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* context,
+                                                         const sushi_rpc::ParameterIdentifier* request,
+                                                         sushi_rpc::GenericVoidValue* response)
+{
+    return Service::EnableOutputForParameter(context, request, response);
+}
+
+grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* context,
+                                                          const sushi_rpc::ParameterIdentifier* request,
+                                                          sushi_rpc::GenericVoidValue* response)
+{
+    return Service::DisableOutputForParameter(context, request, response);
+}
+
+NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller}
+{
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
+}
+
+void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
 {
     if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
     {
@@ -753,21 +1178,21 @@ void SushiControlService::notification(const sushi::ext::ControlNotification* no
     }
 }
 
-void SushiControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
-     {
-         std::scoped_lock lock(_subscriber_lock);
-         _parameter_subscribers.push_back(subscriber);
-     }
+void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_subscriber_lock);
+    _parameter_subscribers.push_back(subscriber);
+}
 
-void SushiControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
 {
     std::scoped_lock lock(_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
-                                            _parameter_subscribers.end(),
-                                            subscriber));
+                                             _parameter_subscribers.end(),
+                                             subscriber));
 }
 
-void SushiControlService::stop_all_call_data()
+void NotificationControlService::stop_all_call_data()
 {
     for (auto& subscriber : _parameter_subscribers)
     {

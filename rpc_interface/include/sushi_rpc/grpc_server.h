@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,20 +15,18 @@
 
 /**
  * @brief gRPC Server
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_GRPCSERVER_H
 #define SUSHI_GRPCSERVER_H
 
 #include <memory>
-#include <string>
-#include <vector>
 #include <thread>
 #include <atomic>
-#include <unordered_map>
 
-#include "../../include/control_interface.h"
+/* Forward declare grpc and service classes so their definitions can be
+ * kept completely separate from the rest of the Sushi codebase */
 
 namespace grpc {
     class Server;
@@ -37,7 +35,18 @@ namespace grpc {
 }
 
 namespace sushi_rpc {
-class SushiControlService;
+
+class SystemControlService;
+class TransportControlService;
+class TimingControlService;
+class KeyboardControlService;
+class AudioGraphControlService;
+class ParameterControlService;
+class ProgramControlService;
+class MidiControlService;
+class AudioRoutingControlService;
+class OscControlService;
+class NotificationControlService;
 
 constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::milliseconds(50);
 
@@ -57,9 +66,20 @@ public:
     void AsyncRpcLoop();
 
 private:
-
     std::string                                     _listen_address;
-    std::unique_ptr<SushiControlService>            _service;
+
+    std::unique_ptr<SystemControlService>           _system_control_service;
+    std::unique_ptr<TransportControlService>        _transport_control_service;
+    std::unique_ptr<TimingControlService>           _timing_control_service;
+    std::unique_ptr<KeyboardControlService>         _keyboard_control_service;
+    std::unique_ptr<AudioGraphControlService>       _audio_graph_control_service;
+    std::unique_ptr<ParameterControlService>        _parameter_control_service;
+    std::unique_ptr<ProgramControlService>          _program_control_service;
+    std::unique_ptr<MidiControlService>             _midi_control_service;
+    std::unique_ptr<AudioRoutingControlService>     _audio_routing_control_service;
+    std::unique_ptr<OscControlService>              _osc_control_service;
+    std::unique_ptr<NotificationControlService>     _notification_control_service;
+
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;
     std::unique_ptr<grpc::Server>                   _server;
     std::unique_ptr<grpc::ServerCompletionQueue>    _async_rpc_queue;
