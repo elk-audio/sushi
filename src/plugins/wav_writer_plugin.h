@@ -33,6 +33,7 @@ namespace wav_writer_plugin {
 constexpr int N_AUDIO_CHANNELS = 2;
 constexpr int RINGBUFFER_SIZE = 65536 / AUDIO_CHUNK_SIZE;
 constexpr int POST_WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4);
+constexpr int SAMPLE_WRITE_LIMIT = 48000 * N_AUDIO_CHANNELS * 3600; // Limit file size to 1 hour of stereo audio
 constexpr float DEFAULT_WRITE_INTERVAL = 1.0f;
 constexpr float MAX_WRITE_INTERVAL = 4.0f;
 constexpr float MIN_WRITE_INTERVAL = 0.5f;
@@ -88,7 +89,7 @@ private:
     int _post_write_timer{0};
     unsigned int _samples_received{0};
     sf_count_t _samples_written{0};
-
+    sf_count_t _total_samples_written{0};
 };
 
 } // namespace wav_writer_plugin

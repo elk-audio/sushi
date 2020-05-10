@@ -200,7 +200,7 @@ int WavWriterPlugin::_write_to_file()
 int WavWriterPlugin::_non_rt_callback(EventId /* id */)
 {
     WavWriterStatus status = WavWriterStatus::SUCCESS;
-    if (_recording_parameter->domain_value())
+    if (_recording_parameter->domain_value() && _total_samples_written < SAMPLE_WRITE_LIMIT)
     {
         if (_output_file == nullptr)
         {
@@ -213,12 +213,14 @@ int WavWriterPlugin::_non_rt_callback(EventId /* id */)
         {
             SUSHI_LOG_DEBUG("Sucessfully wrote {} samples", samples_written);
         }
+        _total_samples_written += samples_written;
     }
     else
     {
         if (_output_file)
         {
             status = _stop_recording();
+            _total_samples_written = 0;
         }
     }
     return status;
