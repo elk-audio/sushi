@@ -79,14 +79,23 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
     // Put samples in the ringbuffer already in interleaved format
     if (_recording_parameter->processed_value())
     {
-        for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
+        std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS> temp_buffer;
+
+        // If input is mono put the same audio in both left and right channels.
+        if (in_buffer.channel_count() == 1)
         {
-            for (int k = 0; k < N_AUDIO_CHANNELS; k++)
+            for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
             {
-                _ring_buffer.push(in_buffer.channel(k)[n]);
+                float sample = in_buffer.channel(0)[i];
+                temp_buffer[i*2] = sample;
+                temp_buffer[i*2+1] = sample;
             }
         }
-
+        else
+        {
+            in_buffer.to_interleaved(&temp_buffer[0]);
+        }
+        _ring_buffer.push(temp_buffer);
     }
 
     // Post RtEvent to write at an interval specified by POST_WRITE_FREQUENCY
@@ -146,16 +155,19 @@ void WavWriterPlugin::_post_write_event()
 
 int WavWriterPlugin::_write_to_file()
 {
-    float cur_sample;
-    while (_ring_buffer.pop(cur_sample))
+    std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS> cur_buffer;
+    while (_ring_buffer.pop(cur_buffer))
     {
-        if (_samples_received > _file_buffer.size())
+        for (auto cur_sample : cur_buffer)
         {
-            _file_buffer.push_back(cur_sample);
-        }
-        else
-        {
-            _file_buffer[_samples_received++] = cur_sample;
+            if (_samples_received > _file_buffer.size())
+            {
+                _file_buffer.push_back(cur_sample);
+            }
+            else
+            {
+                _file_buffer[_samples_received++] = cur_sample;
+            }
         }
     }
 

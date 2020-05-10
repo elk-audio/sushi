@@ -14,17 +14,12 @@
  */
 
 /**
- * @brief Simple 8-step sequencer example.
+ * @brief Simple plugin for writing wav files.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_WAVE_WRITER_PLUGIN_H
 #define SUSHI_WAVE_WRITER_PLUGIN_H
-
-#include <memory>
-#include <thread>
-#include <atomic>
-#include <array>
 
 #include <sndfile.h>
 
@@ -36,8 +31,8 @@ namespace sushi {
 namespace wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
-constexpr int RINGBUFFER_SIZE = 65536;
-constexpr int POST_WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4) / AUDIO_CHUNK_SIZE;
+constexpr int RINGBUFFER_SIZE = 65536 / AUDIO_CHUNK_SIZE;
+constexpr int POST_WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4);
 constexpr float DEFAULT_WRITE_INTERVAL = 1.0f;
 constexpr float MAX_WRITE_INTERVAL = 4.0f;
 constexpr float MIN_WRITE_INTERVAL = 0.5f;
@@ -77,7 +72,7 @@ private:
     int _non_rt_callback(EventId id);
     std::string _available_path(const std::string& requested_path);
 
-    memory_relaxed_aquire_release::CircularFifo<float, RINGBUFFER_SIZE> _ring_buffer;
+    memory_relaxed_aquire_release::CircularFifo<std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS>, RINGBUFFER_SIZE> _ring_buffer;
 
     std::vector<float> _file_buffer;
     SNDFILE* _output_file;

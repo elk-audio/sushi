@@ -363,8 +363,14 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
 
     // Verify written samples
+    path->append(".wav");
     SF_INFO soundfile_info;
     SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
+    if (sf_error(file))
+    {
+        std::cout << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
+        FAIL();
+    }
     int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
     float written_data[number_of_samples];
     ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data, AUDIO_CHUNK_SIZE));
