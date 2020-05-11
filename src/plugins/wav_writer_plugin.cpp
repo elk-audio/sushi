@@ -173,6 +173,7 @@ int WavWriterPlugin::_write_to_file()
             else
             {
                 SUSHI_LOG_ERROR("libsndfile: {}", sf_strerror(_output_file));
+                return 0;
             }
 
         }
@@ -193,6 +194,10 @@ int WavWriterPlugin::_non_rt_callback(EventId /* id */)
             // only change write speed before recording starts
             _write_speed = _write_speed_parameter->domain_value();
             status = _start_recording();
+            if (status == WavWriterStatus::FAILURE)
+            {
+                return status;
+            }
         }
         int samples_written = _write_to_file();
         if (samples_written > 0)
