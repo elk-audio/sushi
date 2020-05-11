@@ -109,15 +109,6 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
 
 WavWriterStatus WavWriterPlugin::_start_recording()
 {
-    unsigned int file_buffer_size = _soundfile_info.samplerate
-                                  * _write_speed_parameter->descriptor()->max_domain_value()
-                                  * _current_input_channels;
-
-    if (_file_buffer.size() != file_buffer_size)
-    {
-        _file_buffer.resize(file_buffer_size);
-    }
-
     // If no file name was passed. Set it to the default;
     if (_destination_file_property == nullptr)
     {
@@ -160,14 +151,8 @@ int WavWriterPlugin::_write_to_file()
     {
         for (auto cur_sample : cur_buffer)
         {
-            if (_samples_received > _file_buffer.size())
-            {
-                _file_buffer.push_back(cur_sample);
-            }
-            else
-            {
-                _file_buffer[_samples_received++] = cur_sample;
-            }
+            _file_buffer.push_back(cur_sample);
+            _samples_received++;
         }
     }
 
@@ -192,6 +177,7 @@ int WavWriterPlugin::_write_to_file()
 
         }
         sf_write_sync(_output_file);
+        _file_buffer.clear();
         _samples_received = 0;
     }
     return _samples_written;
