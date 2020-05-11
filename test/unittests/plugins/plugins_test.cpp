@@ -368,8 +368,7 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
     if (sf_error(file))
     {
-        std::cout << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
-        FAIL();
+        FAIL() << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
     }
     int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
     float written_data[number_of_samples];
