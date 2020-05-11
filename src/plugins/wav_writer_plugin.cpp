@@ -36,8 +36,6 @@ WavWriterPlugin::~WavWriterPlugin()
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
 {
     memset(&_soundfile_info, 0, sizeof(_soundfile_info));
-    // TODO: query from host but currently SUSHI might not report the right value here,
-    // file needs to be open on samplerate / buffer update
     _soundfile_info.samplerate = sample_rate;
     _soundfile_info.channels = N_AUDIO_CHANNELS;
     _soundfile_info.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_24);
