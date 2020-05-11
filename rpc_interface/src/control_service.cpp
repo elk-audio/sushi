@@ -18,10 +18,8 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-
 #include "control_notifications.h"
 #include "control_service.h"
-#include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
@@ -33,8 +31,8 @@ inline sushi_rpc::ParameterType::Type to_grpc(const sushi::ext::ParameterType ty
         case sushi::ext::ParameterType::FLOAT:            return sushi_rpc::ParameterType::FLOAT;
         case sushi::ext::ParameterType::INT:              return sushi_rpc::ParameterType::INT;
         case sushi::ext::ParameterType::BOOL:             return sushi_rpc::ParameterType::BOOL;
-        case sushi::ext::ParameterType::STRING_PROPERTY:  return sushi_rpc::ParameterType::FLOAT; // Currently not supported i gRPC
-        case sushi::ext::ParameterType::DATA_PROPERTY:    return sushi_rpc::ParameterType::FLOAT; // Currently not supported i gRPC
+        case sushi::ext::ParameterType::STRING_PROPERTY:  return sushi_rpc::ParameterType::FLOAT; // Currently not supported in gRPC
+        case sushi::ext::ParameterType::DATA_PROPERTY:    return sushi_rpc::ParameterType::FLOAT; // Currently not supported in gRPC
         default:                                          return sushi_rpc::ParameterType::FLOAT;
     }
 }

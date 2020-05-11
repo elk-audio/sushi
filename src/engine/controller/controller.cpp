@@ -24,17 +24,10 @@
 #include "logging.h"
 #include "control_notifications.h"
 
-
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
 
 namespace sushi {
 namespace engine {
-
-
-
-
-
-
 
 Controller::Controller(engine::BaseEngine* engine) : ext::SushiControl(&_system_controller_impl,
                                                                        &_transport_controller_impl,

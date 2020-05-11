@@ -52,13 +52,13 @@ public:
 
     ~Controller();
 
-    ext::ControlStatus                                  subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
+    ext::ControlStatus subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
     int poster_id() override {return EventPosterId::CONTROLLER;}
 
-    static void                                         completion_callback(void *arg, Event* event, int status);
+    static void completion_callback(void *arg, Event* event, int status);
 
 private:
 
