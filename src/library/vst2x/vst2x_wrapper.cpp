@@ -496,7 +496,7 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
 
 #endif //SUSHI_BUILD_WITH_VST2
 #ifndef SUSHI_BUILD_WITH_VST2
-#include "library/vst2x_wrapper.h"
+#include "vst2x_wrapper.h"
 #include "logging.h"
 namespace sushi {
 namespace vst2 {
