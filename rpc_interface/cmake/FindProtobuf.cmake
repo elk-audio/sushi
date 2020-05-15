@@ -113,8 +113,15 @@ set_target_properties(protobuf::libprotoc PROPERTIES
     IMPORTED_LOCATION ${PROTOBUF_PROTOC_LIBRARY}
 )
 
-# Find the protoc Executable
-find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc)
+# Find the protoc executable.
+if("$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    # Use system protoc if not cross compiling
+    find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc)
+else()
+    # Use CMAKE_PROGRAM_PATH/protoc if cross compiling
+    find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc NO_CMAKE_FIND_ROOT_PATH)
+endif()
+
 mark_as_advanced(PROTOBUF_PROTOC_EXECUTABLE)
 add_executable(protobuf::protoc IMPORTED)
 set_target_properties(protobuf::protoc PROPERTIES
