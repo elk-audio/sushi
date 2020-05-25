@@ -40,8 +40,8 @@ protected:
 
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
-        _dispatcher = _engine.event_dispatcher();
-        _module_under_test = _engine.controller();
+
+        _module_under_test = std::make_unique<Controller>(&_engine);
         ChunkSampleBuffer buffer(8);
         ControlBuffer ctrl_buffer;
         // Run once so that pending changes are executed
@@ -49,15 +49,11 @@ protected:
         ASSERT_TRUE(_module_under_test != nullptr);
     }
 
-    void TearDown()
-    {}
-
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
     jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _path};
-    dispatcher::BaseEventDispatcher* _dispatcher;
-    ext::SushiControl* _module_under_test;
+    std::unique_ptr<ext::SushiControl> _module_under_test;
 };
 
 TEST_F(ControllerTest, TestMainEngineControls)

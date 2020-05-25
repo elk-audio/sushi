@@ -453,26 +453,23 @@ int main(int argc, char* argv[])
     }
     configurator.reset();
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Set up Controller and Control Frontends //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    auto controller = std::make_unique<sushi::engine::Controller>(engine.get());
+
     if (enable_parameter_dump)
     {
-        std::cout << sushi::generate_processor_parameter_document(engine->controller());
+        std::cout << sushi::generate_processor_parameter_document(controller.get());
         error_exit("");
     }
-
-    if (enable_timings)
-    {
-        engine->performance_timer()->enable(true);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Set up Control Frontends //
-    ////////////////////////////////////////////////////////////////////////////////
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), engine->controller(), osc_server_port, osc_send_port);
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), osc_server_port, osc_send_port);
         auto osc_status = osc_frontend->init();
         if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
         {
@@ -493,12 +490,17 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_frontend(midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, engine->controller());
+    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, controller.get());
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////
     // Start everything! //
     ////////////////////////////////////////////////////////////////////////////////
+
+    if (enable_timings)
+    {
+        engine->performance_timer()->enable(true);
+    }
 
     audio_frontend->run();
     midi_frontend->run();
