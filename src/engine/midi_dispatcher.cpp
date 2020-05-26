@@ -131,7 +131,7 @@ inline Event* make_program_change_event(const InputConnection &c,
 MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
                                                              _frontend(nullptr)
 {
-    // TODO - eventually we can pass the event dispatcher directly and avoid the engine dependency
+    // TODO: We can pass the event dispatcher directly and avoid the engine dependency
     _event_dispatcher = _engine->event_dispatcher();
     _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
@@ -142,7 +142,6 @@ MidiDispatcher::~MidiDispatcher()
     _event_dispatcher->unsubscribe_from_keyboard_events(this);
     _event_dispatcher->deregister_poster(this);
 }
-
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              const std::string &processor_name,
@@ -181,6 +180,14 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     return MidiDispatcherStatus::OK;
 }
 
+MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input,
+                                                                  const std::string& processor_name,
+                                                                  const std::string& parameter_name,
+                                                                  int cc_no)
+{
+
+}
+
 MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
                                                              const std::string& processor_name,
                                                              int channel)
@@ -204,10 +211,17 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     return MidiDispatcherStatus::OK;
 }
 
+MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input,
+                                                                  const std::string& processor_name)
+{
+
+}
+
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
                                                          const std::string &track_name,
                                                          int channel)
 {
+                                                        // TODO/Q: Why is midi_input restricted? It's not a channel is it?
     if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
@@ -224,6 +238,52 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     connection.max_range = 0;
     _kb_routes_in[midi_input][channel].push_back(connection);
     SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
+                                                              const std::string& track_name,
+                                                              int channel)
+{
+    // TODO: These midi_input checks should be made redundant eventually.
+    // TODO/Q: Why is midi_input restricted? It's not a channel is it?
+    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+    auto track = _engine->processor_container()->track(track_name);
+    if (track == nullptr)
+    {
+        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
+    }
+
+    /*
+     * _kb_routes_in is a (hash) map, with midi_input as key.
+     * It contains an array of vectors, with one entry per channel, plus one for OMNI.
+     * The contained vectors are of InputConnection objects - one per channel.
+     * If there are NO InputConnection objects in the vector for the channel/omni, there are no connections.
+     */
+
+    // connections is a iterator over pairs, of key + stored object.
+    // It can be a max of one connection, or empty.
+    auto connections = _kb_routes_in.find(midi_input); // All connections for the midi_input
+    if (connections != _kb_routes_in.end())
+    {
+        // ->second gives std::array<std::vector<InputConnection>, n> - an array of vectors size n.
+        // Iterating over chanel connections (channel can be default of OMNI):
+        for (auto i = connections->second[channel].begin(); i != connections->second[channel].end(); ++i)
+        {
+            // connection is for the specified target. Remove it!
+            if (i->target == track->id())
+            {
+                connections->second[channel].erase(i);
+                // Assuming only a single connection per target.
+                break;
+            }
+        }
+    }
+
+    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track \"{}\"", midi_input, track_name);
     return MidiDispatcherStatus::OK;
 }
 
