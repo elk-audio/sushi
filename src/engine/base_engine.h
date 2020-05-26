@@ -272,11 +272,6 @@ public:
         return nullptr;
     }
 
-    virtual ext::SushiControl* controller()
-    {
-        return nullptr;
-    }
-
     virtual engine::Transport* transport()
     {
         return nullptr;
