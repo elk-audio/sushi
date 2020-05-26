@@ -491,9 +491,9 @@ public:
         return std::vector<MidiCCConnection>();
     }
 
-    std::vector<MidiCCConnection> get_all_cc_output_connections() const override
+    std::vector<MidiPCConnection> get_all_pc_input_connections() const override
     {
-        return std::vector<MidiCCConnection>();
+        return std::vector<MidiPCConnection>();
     }
 
     std::pair<ControlStatus, std::vector<MidiCCConnection>>
@@ -502,10 +502,10 @@ public:
         return {_return_status, std::vector<MidiCCConnection>()};
     }
 
-    std::pair<ControlStatus, std::vector<MidiCCConnection>>
-    get_cc_output_connections_for_processor(int /*processor_id*/) const override
+    std::pair<ControlStatus, std::vector<MidiPCConnection>>
+    get_pc_input_connections_for_processor(int /*processor_id*/) const override
     {
-        return {_return_status, std::vector<MidiCCConnection>()};
+        return {_return_status, std::vector<MidiPCConnection>()};
     }
 
     ControlStatus connect_kbd_input_to_track(int /*track_id*/, MidiChannel /*channel*/, int /*port*/, bool /*raw_midi*/) override
@@ -513,17 +513,18 @@ public:
         return _return_status;
     }
 
-    ControlStatus connect_kbd_output_from_track(int /*track_id*/, MidiChannel /*channel*/, int /*port*/, bool /*raw_midi*/) override
+    ControlStatus connect_kbd_output_from_track(int /*track_id*/, MidiChannel /*channel*/, int /*port*/) override
     {
         return _return_status;
     }
 
     ControlStatus connect_cc_to_parameter(int /*processor_id*/,
+                                          int /*parameter_id*/,
                                           MidiChannel /*channel*/,
                                           int /*port*/,
                                           int /*cc_number*/,
-                                          int /*min_range*/,
-                                          int /*max_range*/,
+                                          float /*min_range*/,
+                                          float /*max_range*/,
                                           bool /*relative_mode*/) override
     {
         return _return_status;
@@ -534,7 +535,7 @@ public:
         return _return_status;
     }
 
-    ControlStatus disconnect_kbd_input(int /*track_id*/, MidiChannel /*channel*/, int /*port*/) override
+    ControlStatus disconnect_kbd_input(int /*track_id*/, MidiChannel /*channel*/, int /*port*/, bool /*raw_midi*/) override
     {
         return _return_status;
     }

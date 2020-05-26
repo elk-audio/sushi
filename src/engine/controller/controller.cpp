@@ -20,7 +20,6 @@
 
 #include "controller.h"
 #include "engine/base_engine.h"
-#include "engine/midi_dispatcher.h"
 
 #include "logging.h"
 #include "control_notifications.h"
@@ -49,7 +48,10 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                      _audio_graph_controller_impl(engine),
                                                      _program_controller_impl(engine),
                                                      _parameter_controller_impl(engine),
-                                                     _midi_controller_impl(engine, midi_dispatcher),
+                                                     _midi_controller_impl(engine,
+                                                                           midi_dispatcher,
+                                                                           &_audio_graph_controller_impl,
+                                                                           &_parameter_controller_impl),
                                                      _audio_routing_controller_impl(engine),
                                                      _cv_gate_controller_impl(engine),
                                                      _osc_controller_impl(engine)

@@ -224,8 +224,14 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             {
                 if(res == MidiDispatcherStatus::INVALID_MIDI_OUTPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
+                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified for midi "
                                            "channel connections in Json Config file.", con["port"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
+                else if(res == MidiDispatcherStatus::INVAlID_CHANNEL)
+                {
+                    SUSHI_LOG_ERROR("Invalid channel \"{}\" specified for midi "
+                                    "channel connections in Json Config file.", con["channel"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
                 SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "

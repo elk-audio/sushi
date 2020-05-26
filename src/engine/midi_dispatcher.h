@@ -34,7 +34,6 @@
 #include "control_frontends/base_midi_frontend.h"
 #include "base_engine.h"
 #include "base_event_dispatcher.h"
-#include "midi_receiver.h"
 #include "library/event_interface.h"
 
 namespace sushi {
@@ -70,9 +69,36 @@ enum class MidiDispatcherStatus
     INVAlID_CHANNEL
 };
 
-/* No real technical limit, just something arbitrarily high enough */
-constexpr int MAX_MIDI_INPUTS = 64;
-constexpr int MAX_MIDI_OUTPUTS = 64;
+// These structs are only used for returning query data, to midi_controller.
+struct CC_InputConnection
+{
+    InputConnection input_connection;
+    int channel;
+    int port;
+    int cc;
+};
+
+struct PC_InputConnection
+{
+    int processor_id;
+    int channel;
+    int port;
+};
+
+struct Kbd_InputConnection
+{
+    InputConnection input_connection;
+    int port;
+    int channel;
+    bool raw_midi;
+};
+
+struct Kbd_OutputConnection
+{
+    int track_id;
+    int port;
+    int channel;
+};
 
 class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
 {
@@ -89,6 +115,13 @@ public:
     {
         _frontend = frontend;
     }
+
+    // TODO:
+    // These input and output counts, correspond to the ins and outs
+    // instantiated in the AlsaMidiFrontend class.
+    // Now they are only used for sanity checks.
+    // When the AlsaMidiFrontent can dynamically create/remove i/o ports,
+    // this will need to be made to correspond!
 
     /**
      * @brief Sets the number of midi input ports.
@@ -155,8 +188,22 @@ public:
      */
     MidiDispatcherStatus disconnect_cc_from_parameter(int midi_input,
                                                       const std::string& processor_name,
-                                                      const std::string& parameter_name,
-                                                      int cc_no);
+                                                      int cc_no,
+                                                      int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections defined.
+     * @return A vector of CC_InputConnections.
+     */
+    std::vector<CC_InputConnection> get_all_cc_input_connections();
+
+    /**
+     * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections
+     * defined for the processor id passed as input.
+     * @param The id of the processor for which the connections are queried.
+     * @return A vector of CC_InputConnections.
+     */
+    std::vector<CC_InputConnection> get_cc_input_connections_for_processor(int processor_id);
 
     /**
      * @brief Connects midi program change messages to a processor.
@@ -176,7 +223,22 @@ public:
      * @return true if successfully disconnected
      */
     MidiDispatcherStatus disconnect_pc_from_processor(int midi_input,
-                                                      const std::string& processor_name);
+                                                      const std::string& processor_name,
+                                                      int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections defined.
+     * @return A vector of PC_InputConnections.
+     */
+    std::vector<PC_InputConnection> get_all_pc_input_connections();
+
+    /**
+     * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections
+     * defined for the processor id passed as input.
+     * @param The id of the processor for which the connections are queried.
+     * @return A vector of PC_InputConnections.
+     */
+    std::vector<PC_InputConnection> get_pc_input_connections_for_processor(int processor_id);
 
     /**
      * @brief Connect a midi input to a track
@@ -190,6 +252,8 @@ public:
                                              const std::string &track_name,
                                              int channel = midi::MidiChannel::OMNI);
 
+    //TODO: Should there be option All Channels below?
+
     /**
      * @brief Disconnect a midi input from a track
      * @param midi_input Index of the midi input
@@ -199,7 +263,13 @@ public:
      */
     MidiDispatcherStatus disconnect_kb_from_track(int midi_input,
                                                   const std::string& track_name,
-                                                  int channel = midi::MidiChannel::OMNI); // Should there be option All?
+                                                  int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Returns a vector of Kbd_InputConnections for all the Midi Keyboard input connections defined.
+     * @return A vector of Kbd_InputConnections.
+     */
+    std::vector<Kbd_InputConnection> get_all_kb_input_connections();
 
     /**
      * @brief Connect a midi input to a track and send unprocessed
@@ -220,7 +290,9 @@ public:
      * @return OK if successfully disconnected the track, error status otherwise
      */
     MidiDispatcherStatus disconnect_raw_midi_from_track(int midi_input,
-                                                        const std::string& track_name) {}
+                                                        const std::string& track_name,
+                                                        int channel = midi::MidiChannel::OMNI);
+
     /**
      * @brief Connect midi kb data from a track to a given midi output
      * @param midi_output Index of the midi out
@@ -238,15 +310,15 @@ public:
      * @param track_name The track/processor track from where the data originates
      * @return OK if successfully disconnected the track, error status otherwise
      */
-    MidiDispatcherStatus diconnect_track_from_output(int midi_output,
-                                                     const std::string& track_name) {}
+    MidiDispatcherStatus disconnect_track_from_output(int midi_output,
+                                                      const std::string& track_name,
+                                                      int channel);
 
     /**
-     * @brief Clears all connections made with connect_kb_to_track
-     *        and connect_cc_to_parameter.
+     * @brief Returns a vector of Kbd_OutputConnections for all the Midi Keyboard output connections defined.
+     * @return A vector of Kbd_OutputConnections.
      */
-    // NOT PC?
-    void clear_connections();
+    std::vector<Kbd_OutputConnection> get_all_kb_output_connections();
 
     /**
      * @brief Process a raw midi message and send it of according to the
@@ -268,6 +340,9 @@ public:
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
+    std::vector<CC_InputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
+    std::vector<PC_InputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
+
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
     std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
     std::map<int, std::array<std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
@@ -275,6 +350,12 @@ private:
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _raw_routes_in;
     int _midi_inputs{0};
     int _midi_outputs{0};
+
+    std::mutex _kb_routes_in_lock;
+    std::mutex _kb_routes_out_lock;
+    std::mutex _cc_routes_lock;
+    std::mutex _pc_routes_lock;
+    std::mutex _raw_routes_in_lock;
 
     engine::BaseEngine* _engine;
     midi_frontend::BaseMidiFrontend* _frontend;
