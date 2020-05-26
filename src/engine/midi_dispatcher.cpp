@@ -152,7 +152,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              bool use_relative_mode,
                                                              int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
@@ -192,7 +192,7 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
                                                              const std::string& processor_name,
                                                              int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
@@ -221,8 +221,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
                                                          const std::string &track_name,
                                                          int channel)
 {
-                                                        // TODO/Q: Why is midi_input restricted? It's not a channel is it?
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
@@ -246,8 +245,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
                                                               int channel)
 {
     // TODO: These midi_input checks should be made redundant eventually.
-    // TODO/Q: Why is midi_input restricted? It's not a channel is it?
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
@@ -264,7 +262,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
      * If there are NO InputConnection objects in the vector for the channel/omni, there are no connections.
      */
 
-    // connections is a iterator over pairs, of key + stored object.
+    // connections is an iterator over pairs, of key + stored object.
     // It can be a max of one connection, or empty.
     auto connections = _kb_routes_in.find(midi_input); // All connections for the midi_input
     if (connections != _kb_routes_in.end())
@@ -291,7 +289,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
                                                                const std::string &track_name,
                                                                int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
