@@ -100,12 +100,28 @@ public:
     }
 
     /**
+     * @brief Returns the number of midi input ports.
+     */
+    int get_midi_inputs()
+    {
+        return _midi_inputs;
+    }
+
+    /**
      * @brief Sets the number of midi output ports.
      * @param ports number of output ports.
      */
     void set_midi_outputs(int no_outputs)
     {
         _midi_outputs = no_outputs;
+    }
+
+    /**
+     * @brief Returns the number of midi output ports.
+     */
+    int get_midi_outputs()
+    {
+        return _midi_outputs;
     }
 
     /**

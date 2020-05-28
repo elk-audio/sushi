@@ -457,7 +457,7 @@ int main(int argc, char* argv[])
     // Set up Controller and Control Frontends //
     ////////////////////////////////////////////////////////////////////////////////
 
-    auto controller = std::make_unique<sushi::engine::Controller>(engine.get());
+    auto controller = std::make_unique<sushi::engine::Controller>(engine.get(), midi_dispatcher.get());
 
     if (enable_parameter_dump)
     {

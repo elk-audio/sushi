@@ -21,6 +21,8 @@
 #include "midi_controller.h"
 #include "logging.h"
 
+#include "engine/midi_dispatcher.h"
+
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi {
@@ -30,14 +32,19 @@ namespace controller_impl {
 // TODO - Remove when stubs have been properly implemented
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+MidiController::MidiController(BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) : _engine(engine),
+                                                                                                       _event_dispatcher(engine->event_dispatcher()),
+                                                                                                       _midi_dispatcher(midi_dispatcher)
+{}
+
 int MidiController::get_input_ports() const
 {
-    return 0;
+    return _midi_dispatcher->get_midi_inputs();
 }
 
 int MidiController::get_output_ports() const
 {
-    return 0;
+    return _midi_dispatcher->get_midi_outputs();
 }
 
 std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_input_connections() const

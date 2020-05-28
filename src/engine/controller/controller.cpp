@@ -20,6 +20,7 @@
 
 #include "controller.h"
 #include "engine/base_engine.h"
+#include "engine/midi_dispatcher.h"
 
 #include "logging.h"
 #include "control_notifications.h"
@@ -29,7 +30,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
 namespace sushi {
 namespace engine {
 
-Controller::Controller(engine::BaseEngine* engine) : ext::SushiControl(&_system_controller_impl,
+Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) : ext::SushiControl(&_system_controller_impl,
                                                                        &_transport_controller_impl,
                                                                        &_timing_controller_impl,
                                                                        &_keyboard_controller_impl,
@@ -48,7 +49,7 @@ Controller::Controller(engine::BaseEngine* engine) : ext::SushiControl(&_system_
                                                      _audio_graph_controller_impl(engine),
                                                      _program_controller_impl(engine),
                                                      _parameter_controller_impl(engine),
-                                                     _midi_controller_impl(engine),
+                                                     _midi_controller_impl(engine, midi_dispatcher),
                                                      _audio_routing_controller_impl(engine),
                                                      _cv_gate_controller_impl(engine),
                                                      _osc_controller_impl(engine)

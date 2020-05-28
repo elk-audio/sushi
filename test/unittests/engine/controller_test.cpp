@@ -41,7 +41,7 @@ protected:
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
 
-        _module_under_test = std::make_unique<Controller>(&_engine);
+        _module_under_test = std::make_unique<Controller>(&_engine, &_midi_dispatcher);
         ChunkSampleBuffer buffer(8);
         ControlBuffer ctrl_buffer;
         // Run once so that pending changes are executed

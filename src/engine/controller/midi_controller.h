@@ -26,13 +26,18 @@
 #include "engine/base_event_dispatcher.h"
 
 namespace sushi {
+
+namespace midi_dispatcher {
+class MidiDispatcher;
+}
+
 namespace engine {
 namespace controller_impl {
 
 class MidiController : public ext::MidiController
 {
 public:
-    MidiController(BaseEngine* engine) : _engine(engine) {}
+    MidiController(BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
 
     ~MidiController() override = default;
 
@@ -84,6 +89,8 @@ public:
 
 private:
     BaseEngine* _engine;
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
 } // namespace controller_impl

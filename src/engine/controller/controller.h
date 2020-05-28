@@ -41,6 +41,11 @@
 #define SUSHI_CONTROLLER_H
 
 namespace sushi {
+
+namespace midi_dispatcher {
+class MidiDispatcher;
+}
+
 namespace engine {
 
 class BaseEngine;
@@ -48,7 +53,7 @@ class BaseEngine;
 class Controller : public ext::SushiControl, EventPoster
 {
 public:
-    Controller(engine::BaseEngine* engine);
+    Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
 
     ~Controller();
 

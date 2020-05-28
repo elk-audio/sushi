@@ -770,14 +770,16 @@ grpc::Status MidiControlService::GetInputPorts(grpc::ServerContext* context,
                                                const sushi_rpc::GenericVoidValue* request,
                                                sushi_rpc::GenericIntValue* response)
 {
-    return Service::GetInputPorts(context, request, response);
+    response->set_value(_controller->get_input_ports());
+    return grpc::Status::OK;
 }
 
 grpc::Status MidiControlService::GetOutputPorts(grpc::ServerContext* context,
                                                 const sushi_rpc::GenericVoidValue* request,
                                                 sushi_rpc::GenericIntValue* response)
 {
-    return Service::GetOutputPorts(context, request, response);
+    response->set_value(_controller->get_output_ports());
+    return grpc::Status::OK;
 }
 
 grpc::Status MidiControlService::GetAllKbdInputConnections(grpc::ServerContext* context,
