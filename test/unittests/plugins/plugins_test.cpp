@@ -12,11 +12,14 @@
 #include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
+#include "plugins/wav_writer_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
+static const std::string WRITE_FILE = "write_test";
+constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
 {
@@ -289,4 +292,91 @@ TEST_F(TestLfoPlugin, TestProcess)
     ASSERT_TRUE(_queue.pop(event));
     EXPECT_EQ(RtEventType::CV_EVENT, event.type());
     EXPECT_EQ(2, event.cv_event()->cv_id());
+}
+
+class TestWavWriterPlugin : public ::testing::Test
+{
+protected:
+    TestWavWriterPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new wav_writer_plugin::WavWriterPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    wav_writer_plugin::WavWriterPlugin* _module_under_test;
+    RtEventFifo<10> _fifo;
+};
+
+TEST_F(TestWavWriterPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Wav writer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.wav_writer", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestWavWriterPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up buffers and events
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    std::string* path = new std::string("./");
+    path->append(WRITE_FILE);
+    RtEvent path_event = RtEvent::make_string_parameter_change_event(0, 0, 0, path);
+    RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 1.0f);
+    RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+
+    // Test setting path property
+    _module_under_test->process_event(path_event);
+    ASSERT_EQ(*path, *_module_under_test->_destination_file_property);
+
+    // Test start recording and open file
+    _module_under_test->process_event(start_recording_event);
+    ASSERT_TRUE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_start_recording());
+
+    // Test processing
+    _module_under_test->_recording_parameter->set_values(true, true);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, in_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Test Writing.
+    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false to immediately write
+    ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
+
+    // Test end recording and close file
+    _module_under_test->process_event(stop_recording_event);
+    ASSERT_FALSE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
+
+    // Verify written samples
+    path->append(".wav");
+    SF_INFO soundfile_info;
+    SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
+    if (sf_error(file))
+    {
+        FAIL() << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
+    }
+    int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
+    float written_data[number_of_samples];
+    ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data, AUDIO_CHUNK_SIZE));
+    for (int sample = 0; sample < number_of_samples; ++sample)
+    {
+        ASSERT_FLOAT_EQ(1.0f, written_data[sample]);
+    }
+    sf_close(file);
+    remove(path->c_str());
 }

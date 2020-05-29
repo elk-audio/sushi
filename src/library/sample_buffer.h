@@ -275,7 +275,7 @@ public:
     /**
      * @brief Copy buffer data in interleaved format to interleaved_buf
      */
-    void to_interleaved(float* interleaved_buf)
+    void to_interleaved(float* interleaved_buf) const
     {
         switch (_channel_count)
         {

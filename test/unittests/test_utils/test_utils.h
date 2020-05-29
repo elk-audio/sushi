@@ -74,6 +74,18 @@ inline void compare_buffers(const float static_array[][size], ChunkSampleBuffer&
     }
 }
 
+template <int size>
+inline void compare_buffers(ChunkSampleBuffer& buffer_1, ChunkSampleBuffer& buffer_2, int channels, float error_margin = 0.0001f)
+{
+    for (int i = 0; i < channels; i++)
+    {
+        for (int j = 0; j < std::min(AUDIO_CHUNK_SIZE, size); j++)
+        {
+            ASSERT_NEAR(buffer_1.channel(i)[j], buffer_2.channel(i)[j], error_margin);
+        }
+    }
+}
+
 // Utility for creating static buffers such as those used in vst2/lv2_wrapper_test, by copying values from console.
 template <int size>
 inline void print_buffer(ChunkSampleBuffer& buffer, int channels)
