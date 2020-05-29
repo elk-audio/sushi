@@ -82,6 +82,7 @@ private:
     BoolParameterValue* _recording_parameter;
     FloatParameterValue* _write_speed_parameter;
     std::string* _destination_file_property{nullptr};
+    std::string _actual_file_path;
 
     float _write_speed{0.0f};
 

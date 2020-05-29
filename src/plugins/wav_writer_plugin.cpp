@@ -112,13 +112,14 @@ WavWriterStatus WavWriterPlugin::_start_recording()
     {
         _destination_file_property = new std::string(DEFAULT_PATH + this->name() + "_output");
     }
-    std::string file_path = _available_path(*_destination_file_property);
-    _output_file = sf_open(file_path.c_str(), SFM_WRITE, &_soundfile_info);
+    _actual_file_path = _available_path(*_destination_file_property);
+    _output_file = sf_open(_actual_file_path.c_str(), SFM_WRITE, &_soundfile_info);
     if (_output_file == nullptr)
     {
         SUSHI_LOG_ERROR("libsndfile error: {}", sf_strerror(_output_file));
         return WavWriterStatus::FAILURE;
     }
+    SUSHI_LOG_INFO("Started recording to file: {}", _actual_file_path);
     return WavWriterStatus::SUCCESS;
 }
 
@@ -131,6 +132,7 @@ WavWriterStatus WavWriterPlugin::_stop_recording()
         SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
         return WavWriterStatus::FAILURE;
     }
+    SUSHI_LOG_INFO("Finished recording to file: {}", _actual_file_path);
     _output_file = nullptr;
     return WavWriterStatus::SUCCESS;
 }
