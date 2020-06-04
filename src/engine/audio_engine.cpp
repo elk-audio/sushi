@@ -38,6 +38,7 @@
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
+#include "plugins/mono_summing_plugin.h"
 #include "library/vst2x/vst2x_wrapper.h"
 #include "library/vst3x/vst3x_wrapper.h"
 #include "library/lv2/lv2_wrapper.h"
@@ -1252,6 +1253,10 @@ std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostCo
     else if (uid == "sushi.testing.wav_writer")
     {
         return std::make_shared<wav_writer_plugin::WavWriterPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.mono_summing")
+    {
+        return std::make_shared<mono_summing_plugin::MonoSummingPlugin>(host_control);
     }
     return nullptr;
 }
