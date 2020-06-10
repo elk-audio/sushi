@@ -354,6 +354,18 @@ public:
     }
 
     /**
+     * @brief Copy data channel from source buffer to all channels in this buffer. No bounds checking.
+     *
+     */
+    void replace(int source_channel, const SampleBuffer &source)
+    {
+        for (int dest_channel = 0; dest_channel < this->channel_count(); ++dest_channel)
+        {
+            this->replace(dest_channel, source_channel, source);
+        }
+    }
+
+    /**
      * @brief Copy data channel by channel into this buffer from source buffer. No bounds checking.
      */
     void replace(int dest_channel, int source_channel, const SampleBuffer &source)
@@ -389,6 +401,18 @@ public:
             {
                 _buffer[i] += source._buffer[i];
             }
+        }
+    }
+
+    /**
+     * @brief Sums one channel of source buffer into all channels of the buffer.
+     *
+     */
+    void add(int source_channel, const SampleBuffer& source)
+    {
+        for (int dest_channel = 0; dest_channel < this->channel_count(); ++dest_channel)
+        {
+            this->add(dest_channel, source_channel, source);
         }
     }
 
@@ -431,6 +455,17 @@ public:
             {
                 _buffer[i] += source._buffer[i] * gain;
             }
+        }
+    }
+
+    /**
+     * @brief Sums one channel of source buffer into all channels of the buffer after applying gain.
+     */
+    void add_with_gain(int source_channel, const SampleBuffer& source, float gain)
+    {
+        for (int dest_channel = 0; dest_channel < this->channel_count(); ++dest_channel)
+        {
+            this->add_with_gain(dest_channel, source_channel, source, gain);
         }
     }
 
@@ -482,6 +517,18 @@ public:
                     dest_data[i] += source_data[i] * (start + i * inc);
                 }
             }
+        }
+    }
+
+    /**
+    * @brief Sums one channel of source buffer into all channels of the buffer after applying
+    *        a linear gain ramp.
+    */
+    void add_with_ramp(int source_channel, const SampleBuffer& source, float start, float end)
+    {
+        for (int dest_channel = 0; dest_channel < this->channel_count(); ++dest_channel)
+        {
+            this->add_with_ramp(dest_channel, source_channel, source, start, end);
         }
     }
 
