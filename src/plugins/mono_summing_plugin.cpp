@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Plugin to sum all input channels and output the result to all output channels
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <algorithm>
@@ -39,16 +39,12 @@ void MonoSummingPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
 {
     if(_bypassed == false)
     {
-        ChunkSampleBuffer result(1);
-        result.clear();
-        for (int channel = 0; channel < input_channels(); ++channel)
+        int input_channel = 0;
+        out_buffer.replace(input_channel, in_buffer);
+        for (input_channel = 1; input_channel < in_buffer.channel_count(); ++input_channel)
         {
-            for (int sample = 0; sample < AUDIO_CHUNK_SIZE; ++sample)
-            {
-                result.channel(0)[sample] += in_buffer.channel(channel)[sample];
-            }
+            out_buffer.add(input_channel, in_buffer);
         }
-        out_buffer.replace(result);
     }
     else
     {

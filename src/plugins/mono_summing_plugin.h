@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Plugin to sum all input channels and output the result to all output channels
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_MONO_SUMMING_PLUGIN_H
@@ -39,13 +39,10 @@ public:
 
     void process_event(const RtEvent& event) override
     {
-        _event_queue.push(event);
+        InternalPlugin::process_event(event);
     };
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
-
-private:
-    RtSafeRtEventFifo _event_queue;
 };
 
 }// namespace mono_summing_plugin
