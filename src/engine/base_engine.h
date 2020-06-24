@@ -36,6 +36,7 @@
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/types.h"
+#include "library/connection_types.h"
 #include "control_interface.h"
 
 namespace sushi {
@@ -129,28 +130,52 @@ public:
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
                                                            int /*track_channel*/,
-                                                           ObjectId /*track_name*/)
+                                                           ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_channel(int /*engine_channel*/,
                                                             int /*track_channel*/,
-                                                            ObjectId /*track_name*/)
+                                                            ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus disconnect_audio_input_channel(int /*engine_channel*/,
+                                                              int /*track_channel*/,
+                                                              ObjectId /*track_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus disconnect_audio_output_channel(int /*engine_channel*/,
+                                                               int /*track_channel*/,
+                                                               ObjectId /*track_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual std::vector<AudioConnection> audio_input_connections()
+    {
+        return std::vector<AudioConnection>();
+    }
+
+    virtual std::vector<AudioConnection> audio_output_connections()
+    {
+        return std::vector<AudioConnection>();
+    }
+
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
                                                        int /*track_bus*/,
-                                                       ObjectId  /*track_name*/)
+                                                       ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_bus(int /*output_bus*/,
                                                         int /*track_bus*/,
-                                                        ObjectId  /*track_name*/)
+                                                        ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }

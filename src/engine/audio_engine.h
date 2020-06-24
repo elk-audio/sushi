@@ -36,6 +36,7 @@
 #include "engine/host_control.h"
 #include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
+#include "engine/connection_storage.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/elk_allocator.h"
@@ -154,6 +155,18 @@ public:
     EngineReturnStatus connect_audio_output_channel(int output_channel,
                                                     int track_channel,
                                                     ObjectId track_id) override;
+
+    virtual EngineReturnStatus disconnect_audio_input_channel(int engine_channel,
+                                                              int track_channel,
+                                                              ObjectId track_id) override;
+
+    virtual EngineReturnStatus disconnect_audio_output_channel(int engine_channel,
+                                                               int track_channel,
+                                                               ObjectId track_id) override;
+
+    virtual std::vector<AudioConnection> audio_input_connections() override;
+
+    virtual std::vector<AudioConnection> audio_output_connections() override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -492,6 +505,10 @@ private:
      * @param event The event to handle
      * @return true if handled, false if not an engine event
      */
+    EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, bool is_input);
+
+    EngineReturnStatus _disconnect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, bool is_input);
+
     void _process_internal_rt_events();
 
     void _send_rt_events_to_processors();
@@ -515,8 +532,8 @@ private:
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
 
-    std::vector<AudioConnection> _audio_in_connections;
-    std::vector<AudioConnection> _audio_out_connections;
+    ConnectionStorage<AudioConnection> _audio_in_connections;
+    ConnectionStorage<AudioConnection> _audio_out_connections;
     std::vector<CvConnection>    _cv_in_connections;
     std::vector<GateConnection>  _gate_in_connections;
 

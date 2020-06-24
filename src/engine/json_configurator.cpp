@@ -19,7 +19,7 @@
  */
 
 #include <fstream>
-
+#include <iostream>
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
@@ -554,6 +554,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
         if(status != EngineReturnStatus::OK)
         {
+            std::cout << "Input bus error" <<std::endl;
             SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
@@ -576,6 +577,8 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
         }
         if(status != EngineReturnStatus::OK)
         {
+            std::cout << "Output bus error" <<std::endl;
+
             SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }

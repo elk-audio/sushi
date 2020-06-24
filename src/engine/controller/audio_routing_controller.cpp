@@ -19,6 +19,7 @@
  */
 
 #include "audio_routing_controller.h"
+#include "controller_internal.h"
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
@@ -52,12 +53,14 @@ std::pair<ext::ControlStatus, std::vector<ext::AudioConnection>> AudioRoutingCon
 
 ext::ControlStatus AudioRoutingController::connect_input_channel_to_track(int track_id, int track_channel, int input_channel)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    auto status = _engine->connect_audio_input_channel(input_channel, track_channel, ObjectId(track_id));
+    return default_error_mapping(status);
 }
 
 ext::ControlStatus AudioRoutingController::connect_output_channel_to_track(int track_id, int track_channel, int output_channel)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    auto status = _engine->connect_audio_input_channel(output_channel, track_channel, ObjectId(track_id));
+    return default_error_mapping(status);
 }
 
 ext::ControlStatus AudioRoutingController::disconnect_input(int track_id, int track_channel, int input_channel)

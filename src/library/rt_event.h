@@ -28,6 +28,7 @@
 #include "id_generator.h"
 #include "library/types.h"
 #include "library/time.h"
+#include "library/connection_types.h"
 
 namespace sushi {
 
@@ -441,28 +442,6 @@ public:
 
 private:
     uint16_t  _event_id;
-};
-
-struct AudioConnection
-{
-    int engine_channel;
-    int track_channel;
-    ObjectId track;
-};
-
-struct CvConnection
-{
-    ObjectId processor_id;
-    ObjectId parameter_id;
-    int cv_id;
-};
-
-struct GateConnection
-{
-    ObjectId processor_id;
-    int gate_id;
-    int note_no;
-    int channel;
 };
 
 /* Base class for passing audio, cv and gate connections */
