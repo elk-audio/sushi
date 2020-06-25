@@ -78,7 +78,7 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     auto& counter = audio_input? _input_clip_count : _output_clip_count;
     for (int i = 0; i < buffer.channel_count(); ++i)
     {
-        if (buffer.count_clipped_samples(i, 1) > 0 && counter[i] >= _interval)
+        if (buffer.count_clipped_samples(i) > 0 && counter[i] >= _interval)
         {
             queue.push(RtEvent::make_clip_notification_event(0, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
                                                                    ClipNotificationRtEvent::ClipChannelType::OUTPUT));
