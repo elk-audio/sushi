@@ -397,3 +397,31 @@ TEST (TestSampleBuffer, TestCountClippedSamples)
     ASSERT_EQ(2, buffer.count_clipped_samples(1,1));
     ASSERT_EQ(1, buffer.count_clipped_samples(0,1));
 }
+
+TEST (TestSampleBuffer, TestPeakCalculation)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    ASSERT_FLOAT_EQ(0, buffer.calc_peak_value(0));
+
+    buffer.channel(0)[4] = 0.5f;
+    buffer.channel(1)[3] = 1.1f;
+    buffer.channel(1)[2] = -1.5f;
+    EXPECT_FLOAT_EQ(0.5, buffer.calc_peak_value(0));
+    EXPECT_FLOAT_EQ(1.5, buffer.calc_peak_value(1));
+}
+
+TEST (TestSampleBuffer, TestRMSCalculation)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer(2);
+    ASSERT_FLOAT_EQ(0, buffer.calc_rms_value(0));
+
+    // Fill channel 0 with a square wave and channel 1 with a sine wave
+    for (int i = 0; i < AUDIO_CHUNK_SIZE; ++i)
+    {
+        buffer.channel(0)[i] = i % 2 == 0? 1.0f : -1.0f;
+        buffer.channel(1)[i] = sinf(i * 0.5f);
+    }
+
+    EXPECT_FLOAT_EQ(1, buffer.calc_rms_value(0));
+    EXPECT_NEAR(1.0f / std::sqrt(2), buffer.calc_rms_value(1), 0.01);
+}
