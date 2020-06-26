@@ -10,42 +10,14 @@ using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::midi_dispatcher;
 
-class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
-{
-public:
-    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
-
-    virtual ~DummyMidiFrontend() {};
-
-    bool init() override {return true;}
-    void run()  override {}
-    void stop() override {}
-    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
-    {
-        _sent = true;
-        _input = input;
-    }
-    bool midi_sent_on_input(int input)
-    {
-        if (_sent && input == _input)
-        {
-            _sent = false;
-            return true;
-        }
-        return false;
-    }
-    private:
-    bool _sent{false};
-    int  _input;
-};
-
-const MidiDataByte TEST_NOTE_ON_CH2   = {0x92, 62, 55, 0}; /* Channel 2 */
-const MidiDataByte TEST_NOTE_OFF_CH3  = {0x83, 60, 45, 0}; /* Channel 3 */
-const MidiDataByte TEST_CTRL_CH_CH4   = {0xB4, 67, 75, 0}; /* Channel 4, cc 67 */
-const MidiDataByte TEST_CTRL_CH_CH5_2 = {0xB5, 40, 75, 0}; /* Channel 5, cc 40 */
-const MidiDataByte TEST_CTRL_CH_CH5_3 = {0xB5, 39, 75, 0}; /* Channel 5, cc 39 */
-const MidiDataByte TEST_PRG_CH_CH5   =  {0xC5, 40, 0, 0};  /* Channel 5, prg 40 */
-const MidiDataByte TEST_PRG_CH_CH4_2  = {0xC4, 45, 0, 0};  /* Channel 4, prg 45 */
+const MidiDataByte TEST_NOTE_ON_CH2   = {0x91, 62, 55, 0}; /* Channel 2 */
+const MidiDataByte TEST_NOTE_OFF_CH3  = {0x82, 60, 45, 0}; /* Channel 3 */
+const MidiDataByte TEST_CTRL_CH_CH4_67 = {0xB3, 67, 75, 0}; /* Channel 4, cc 67 */
+const MidiDataByte TEST_CTRL_CH_CH4_68 = {0xB3, 68, 75, 0}; /* Channel 4, cc 68 */
+const MidiDataByte TEST_CTRL_CH_CH5_2 = {0xB4, 40, 75, 0}; /* Channel 5, cc 40 */
+const MidiDataByte TEST_CTRL_CH_CH5_3 = {0xB4, 39, 75, 0}; /* Channel 5, cc 39 */
+const MidiDataByte TEST_PRG_CH_CH5   =  {0xC4, 40, 0, 0};  /* Channel 5, prg 40 */
+const MidiDataByte TEST_PRG_CH_CH4_2  = {0xC3, 45, 0, 0};  /* Channel 4, prg 45 */
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
@@ -144,63 +116,84 @@ protected:
     TestMidiDispatcher()
     {
     }
+
     void SetUp()
     {
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
-        _module_under_test.set_frontend(&_test_frontend);
+
+        _module_under_test = std::make_unique<MidiDispatcher>(_test_dispatcher,
+                                                              _test_engine.processor_container());
+
+        _module_under_test->set_frontend(&_test_frontend);
     }
 
     void TearDown()
     {
     }
+
     EngineMockup _test_engine{48000};
-    MidiDispatcher _module_under_test{&_test_engine};
     EventDispatcherMockup* _test_dispatcher;
     DummyMidiFrontend _test_frontend;
+
+    std::unique_ptr<MidiDispatcher> _module_under_test;
 };
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
 {
+    auto input_connections = _module_under_test->get_all_kb_input_connections();
+    EXPECT_TRUE(input_connections.size()==0);
+
     /* Send midi message without connections */
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_inputs(5);
-    _module_under_test.connect_kb_to_track(1, "processor");
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->set_midi_inputs(5);
+    _module_under_test->connect_kb_to_track(1, "processor");
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Disconnect OMNI */
-    _module_under_test.disconnect_kb_from_track(1, "processor");
+    _module_under_test->disconnect_kb_from_track(1, "processor");
 
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
-    // TODO/Q: Should I keep this at all?
-    // _module_under_test.clear_connections();
-
-    /* Connect with a specific midi channel (2) */
-    _module_under_test.connect_kb_to_track(2, "processor_2", 3);
-    _module_under_test.send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    /* Connect with a specific midi channel (3) */
+    _module_under_test->connect_kb_to_track(2,
+                                            "processor_2",
+                                            midi::MidiChannel::CH_3);
+    _module_under_test->send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(2, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
+
+    /* Test fetching connections */
+    input_connections = _module_under_test->get_all_kb_input_connections();
+    EXPECT_TRUE(input_connections.size() == 1);
 
     /* Disconnect specific midi channel */
-    _module_under_test.disconnect_kb_from_track(2, "processor_2", 3);
+    _module_under_test->disconnect_kb_from_track(2,
+                                                "processor_2",
+                                                midi::MidiChannel::CH_3);
 
-    _module_under_test.send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
+
+    input_connections = _module_under_test->get_all_kb_input_connections();
+    EXPECT_TRUE(input_connections.size() == 0);
 }
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 {
+    auto output_connections = _module_under_test->get_all_kb_output_connections();
+    EXPECT_TRUE(output_connections.size()==0);
+
     KeyboardEvent event_ch12(KeyboardEvent::Subtype::NOTE_ON,
                              5,
                              12,
@@ -216,16 +209,18 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                             IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
-    auto status = _module_under_test.process(&event_ch12);
+    auto status = _module_under_test->process(&event_ch12);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
 
     /* Connect track to output 1, channel 5 */
-    _module_under_test.set_midi_outputs(3);
-    auto ret = _module_under_test.connect_track_to_output(1, "processor", 5);
+    _module_under_test->set_midi_outputs(3);
+    auto ret = _module_under_test->connect_track_to_output(1,
+                                                           "processor",
+                                                           midi::MidiChannel::CH_5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 
-    status = _module_under_test.process(&event_ch5);
+    status = _module_under_test->process(&event_ch5);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
 
@@ -234,158 +229,208 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     // But maybe there was a reason why sending midi out cannot be tested?
     //EXPECT_TRUE(_test_frontend.midi_sent_on_input(1));
 
-    ret = _module_under_test.disconnect_track_from_output(1, "processor", 5);
+    output_connections = _module_under_test->get_all_kb_output_connections();
+    EXPECT_TRUE(output_connections.size() == 1);
+
+    ret = _module_under_test->disconnect_track_from_output(1,
+                                                "processor",
+                                                          midi::MidiChannel::CH_5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 
-    status = _module_under_test.process(&event_ch5);
+    status = _module_under_test->process(&event_ch5);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(1));
 
-    status = _module_under_test.process(&event_ch12);
+    status = _module_under_test->process(&event_ch12);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
     EXPECT_FALSE(_test_frontend.midi_sent_on_input(1));
+
+    output_connections = _module_under_test->get_all_kb_output_connections();
+    EXPECT_TRUE(output_connections.size() == 0);
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)
 {
     /* Send midi message without connections */
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_inputs(5);
-    _module_under_test.connect_raw_midi_to_track(1, "processor");
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->set_midi_inputs(5);
+    _module_under_test->connect_raw_midi_to_track(1, "processor");
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Disconnect OMNI */
-    _module_under_test.disconnect_raw_midi_from_track(1, "processor");
-    _module_under_test.send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->disconnect_raw_midi_from_track(1, "processor");
+    _module_under_test->send_midi(1, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
-    // TODO/Q: Should I keep this at all?
-    //_module_under_test.clear_connections();
+    /* Connect with a specific midi channel (3) */
+    _module_under_test->connect_raw_midi_to_track(2,
+                                                 "processor_2",
+                                                 midi::MidiChannel::CH_3);
 
-    /* Connect with a specific midi channel (2) */
-    _module_under_test.connect_raw_midi_to_track(2, "processor_2", 3);
-    _module_under_test.send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(2, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_NOTE_ON_CH2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Disconnect specific midi channel */
-    _module_under_test.disconnect_raw_midi_from_track(2, "processor", 3);
-    _module_under_test.send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->disconnect_raw_midi_from_track(2,
+                                                      "processor",
+                                                      midi::MidiChannel::CH_3);
+
+    _module_under_test->send_midi(2, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 }
 
 TEST_F(TestMidiDispatcher, TestCCDataConnection)
 {
+    const std::string processor_name = "processor";
+
     /* Test with no connections set */
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(5, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(5, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_inputs(5);
-    _module_under_test.connect_cc_to_parameter(1,
-                                               "processor",
-                                               "parameter",
-                                               67,
-                                               0,
-                                               false,
-                                               100);
+    _module_under_test->set_midi_inputs(5);
+    _module_under_test->connect_cc_to_parameter(1,
+                                                processor_name,
+                                                "param 1",
+                                                67,
+                                                0,
+                                                100,
+                                                false);
 
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
     /* Send on a different input and a msg with a different cc no */
-    _module_under_test.send_midi(5, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(5, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Disconnect OMNI */
-    _module_under_test.disconnect_cc_from_parameter(1,
-                                                    "processor",
+    _module_under_test->disconnect_cc_from_parameter(1,
+                                                    processor_name,
                                                     67);
 
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
-    // TODO: Remove or reinstate
-    //_module_under_test.clear_connections();
-
     /* Connect with a specific midi channel (5) */
-    _module_under_test.connect_cc_to_parameter(1,
-                                               "processor",
-                                               "parameter",
+    _module_under_test->connect_cc_to_parameter(1,
+                                               processor_name,
+                                               "param 1",
                                                40,
                                                0,
                                                100,
                                                false,
-                                               5);
+                                               midi::MidiChannel::CH_5);
 
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH4, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(2, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH5_3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH5_3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
+
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
+    EXPECT_FALSE(_test_dispatcher->got_event());
+
+    _module_under_test->connect_cc_to_parameter(1,
+                                               processor_name,
+                                               "param 1",
+                                               68,
+                                               0,
+                                               100,
+                                               false,
+                                               midi::MidiChannel::CH_4);
+
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(_test_dispatcher->got_event());
+
+    /* Test fetching connections */
+    auto input_connections = _module_under_test->get_all_cc_input_connections();
+    EXPECT_TRUE(input_connections.size()==2);
+
+    /* Tests fetching using a non-existent processor ID */
+    auto input_connection = _module_under_test->get_cc_input_connections_for_processor(1);
+    EXPECT_TRUE(input_connection.size()==0);
 
     /* Disconnect specific channel */
-    _module_under_test.disconnect_cc_from_parameter(1,
+    _module_under_test->disconnect_cc_from_parameter(1,
                                                     "processor",
                                                     40,
-                                                    5);
+                                                    midi::MidiChannel::CH_5);
 
-    _module_under_test.send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH5_2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
+
+    _module_under_test->send_midi(1, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(_test_dispatcher->got_event());
 }
 
 TEST_F(TestMidiDispatcher, TestProgramChangeConnection)
 {
+    const std::string processor_name_1 = "processor";
+    const std::string processor_name_2 = "processor_2";
+
     /* Send midi message without connections */
-    _module_under_test.send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
-    _module_under_test.send_midi(0, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Connect all midi channels (OMNI) */
-    _module_under_test.set_midi_inputs(5);
-    _module_under_test.connect_pc_to_processor(1, "processor");
-    _module_under_test.send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
+    _module_under_test->set_midi_inputs(5);
+    _module_under_test->connect_pc_to_processor(1, processor_name_1);
+    _module_under_test->send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(0, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     /* Disconnect OMNI */
-    _module_under_test.disconnect_pc_from_processor(1, "processor");
+    _module_under_test->disconnect_pc_from_processor(1, processor_name_1);
 
-    _module_under_test.send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(1, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
-
-    // TODO: Reinstate or remove
-    //_module_under_test.clear_connections();
 
     /* Connect with a specific midi channel (4) */
-    _module_under_test.connect_pc_to_processor(2, "processor_2", 4);
-    _module_under_test.send_midi(2, TEST_PRG_CH_CH4_2, IMMEDIATE_PROCESS);
+    _module_under_test->connect_pc_to_processor(2,
+                                               processor_name_2,
+                                               midi::MidiChannel::CH_4);
+
+    _module_under_test->send_midi(2, TEST_PRG_CH_CH4_2, IMMEDIATE_PROCESS);
     EXPECT_TRUE(_test_dispatcher->got_event());
 
-    _module_under_test.send_midi(2, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
+    _module_under_test->send_midi(2, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 
+    /* Test fetching connections */
+    auto input_connections = _module_under_test->get_all_pc_input_connections();
+    EXPECT_TRUE(input_connections.size()==1);
+
+    /* Tests fetching using a non-existent processor ID */
+    auto input_connection = _module_under_test->get_pc_input_connections_for_processor(2);
+    EXPECT_TRUE(input_connection.size()==0);
+
     /* Disconnect specific channel */
-    _module_under_test.disconnect_pc_from_processor(2, "processor_2", 4);
-    _module_under_test.send_midi(2, TEST_PRG_CH_CH4_2, IMMEDIATE_PROCESS);
+    _module_under_test->disconnect_pc_from_processor(2,
+                                                     processor_name_2,
+                                                     midi::MidiChannel::CH_4);
+
+    _module_under_test->send_midi(2, TEST_PRG_CH_CH4_2, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 }

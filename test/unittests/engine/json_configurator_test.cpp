@@ -31,7 +31,8 @@ protected:
         _engine = new AudioEngine(SAMPLE_RATE);
         _engine->set_audio_input_channels(ENGINE_CHANNELS);
         _engine->set_audio_output_channels(ENGINE_CHANNELS);
-        _midi_dispatcher = new MidiDispatcher(_engine);
+        _midi_dispatcher = new MidiDispatcher(_engine->event_dispatcher(),
+                                              _engine->processor_container());
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
         _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _path);

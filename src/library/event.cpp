@@ -20,6 +20,8 @@
 
 #include "library/event.h"
 #include "engine/base_engine.h"
+#include <control_interface.h>
+#include "engine/midi_dispatcher.h" // TODO: Define abstract interface for MD!?
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
@@ -28,6 +30,36 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
 namespace sushi {
+
+// TODO: I don't like this being here. It works, but I should move it.
+// It broke some unit tests that included .cpp files, this was a workaround.
+namespace ext {
+int int_from_midi_channel(ext::MidiChannel channel)
+{
+    switch (channel)
+    {
+        case sushi::ext::MidiChannel::MIDI_CH_1: return 0;
+        case sushi::ext::MidiChannel::MIDI_CH_2: return 1;
+        case sushi::ext::MidiChannel::MIDI_CH_3: return 2;
+        case sushi::ext::MidiChannel::MIDI_CH_4: return 3;
+        case sushi::ext::MidiChannel::MIDI_CH_5: return 4;
+        case sushi::ext::MidiChannel::MIDI_CH_6: return 5;
+        case sushi::ext::MidiChannel::MIDI_CH_7: return 6;
+        case sushi::ext::MidiChannel::MIDI_CH_8: return 7;
+        case sushi::ext::MidiChannel::MIDI_CH_9: return 8;
+        case sushi::ext::MidiChannel::MIDI_CH_10: return 9;
+        case sushi::ext::MidiChannel::MIDI_CH_11: return 10;
+        case sushi::ext::MidiChannel::MIDI_CH_12: return 11;
+        case sushi::ext::MidiChannel::MIDI_CH_13: return 12;
+        case sushi::ext::MidiChannel::MIDI_CH_14: return 13;
+        case sushi::ext::MidiChannel::MIDI_CH_15: return 14;
+        case sushi::ext::MidiChannel::MIDI_CH_16: return 15;
+        case sushi::ext::MidiChannel::MIDI_CH_OMNI: return 16;
+    }
+
+    return -1;
+}
+}
 
 Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
@@ -215,6 +247,195 @@ RtEvent StringPropertyChangeEvent::to_rt_event(int sample_offset) const
 RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset) const
 {
     return RtEvent::make_data_parameter_change_event(_processor_id, sample_offset, _parameter_id, _blob_value);
+}
+
+int KbdInputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    const int int_channel = ext::int_from_midi_channel(_channel);
+
+    midi_dispatcher::MidiDispatcherStatus status;
+    if(!_raw_midi)
+    {
+        if(_action == Action::Connect)
+        {
+            status = _midi_dispatcher->connect_kb_to_track(_port,
+                                                           _track_name,
+                                                           int_channel);
+        }
+        else
+        {
+            status = _midi_dispatcher->disconnect_kb_from_track(_port, // port maps to midi_input
+                                                                _track_name,
+                                                                int_channel);
+        }
+    }
+    else
+    {
+        if(_action == Action::Connect)
+        {
+            status = _midi_dispatcher->connect_raw_midi_to_track(_port,
+                                                                 _track_name,
+                                                                 int_channel);
+        }
+        else
+        {
+            status = _midi_dispatcher->disconnect_raw_midi_from_track(_port, // port maps to midi_input
+                                                                      _track_name,
+                                                                      int_channel);
+        }
+    }
+
+    if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+}
+
+int KbdOutputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    const int int_channel = ext::int_from_midi_channel(_channel);
+
+    midi_dispatcher::MidiDispatcherStatus status;
+
+    if(_action == Action::Connect)
+    {
+        status = _midi_dispatcher->connect_track_to_output(_port,
+                                                           _track_name,
+                                                           int_channel);
+    }
+    else
+    {
+        status = _midi_dispatcher->disconnect_track_from_output(_port,
+                                                                _track_name,
+                                                                int_channel);
+    }
+
+    if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+}
+
+int ConnectCCToParameterEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    const int int_channel = ext::int_from_midi_channel(_channel);
+
+    auto status = _midi_dispatcher->connect_cc_to_parameter(_port, // midi_input maps to port
+                                                            _processor_name,
+                                                            _parameter_name,
+                                                            _cc_number,
+                                                            _min_range,
+                                                            _max_range,
+                                                            _relative_mode,
+                                                            int_channel);
+
+    if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+}
+
+int DisconnectCCEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    const int int_channel = ext::int_from_midi_channel(_channel);
+
+    const auto status = _midi_dispatcher->disconnect_cc_from_parameter(_port, // port maps to midi_input
+                                                                       _processor_name,
+                                                                       _cc_number,
+                                                                       int_channel);
+
+    if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+}
+
+int PCToProcessorConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    const int int_channel = ext::int_from_midi_channel(_channel);
+
+    midi_dispatcher::MidiDispatcherStatus status;
+
+    if(_action == Action::Connect)
+    {
+        status = _midi_dispatcher->connect_pc_to_processor(_port, // midi_input maps to port
+                                                           _processor_name,
+                                                           int_channel);
+    }
+    else
+    {
+        status = _midi_dispatcher->disconnect_pc_from_processor(_port,
+                                                                _processor_name,
+                                                                int_channel);
+    }
+
+    if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+    {
+        return EventStatus::HANDLED_OK;
+    }
+    else
+    {
+        return EventStatus::ERROR;
+    }
+}
+
+int DisconnectAllCCFromProcessorEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    auto input_connections = _midi_dispatcher->get_all_cc_input_connections();
+    for (const auto& connection : input_connections)
+    {
+        const int int_channel = connection.channel;
+
+        const auto status = _midi_dispatcher->disconnect_cc_from_parameter(connection.port, // port maps to midi_input
+                                                                           _processor_name,
+                                                                           connection.cc,
+                                                                           int_channel);
+
+        if(status != midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            // TODO: We could do with a better error message.
+            return EventStatus::ERROR;
+        }
+    }
+
+    return EventStatus::HANDLED_OK;
+}
+
+int DisconnectAllPCFromProcessorEvent::execute(engine::BaseEngine* /*engine*/) const
+{
+    auto input_connections = _midi_dispatcher->get_all_pc_input_connections();
+    for (const auto& connection : input_connections)
+    {
+        const int int_channel = connection.channel;
+
+        const auto status = _midi_dispatcher->disconnect_pc_from_processor(connection.port, // port maps to midi_input
+                                                                           _processor_name,
+                                                                           int_channel);
+
+        if(status != midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            // TODO: We could do with a better error message.
+            return EventStatus::ERROR;
+        }
+    }
+
+    return EventStatus::HANDLED_OK;
 }
 
 int AddTrackEvent::execute(engine::BaseEngine* engine) const

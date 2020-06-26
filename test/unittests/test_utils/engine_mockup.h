@@ -6,9 +6,12 @@
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 #include "dummy_processor.h"
+#include "engine/midi_dispatcher.h"
 
 using namespace sushi;
+using namespace midi;
 using namespace sushi::engine;
+using namespace sushi::midi_dispatcher;
 
 // Dummy event dispatcher
 class EventDispatcherMockup : public dispatcher::BaseEventDispatcher
@@ -167,6 +170,37 @@ public:
 private:
     EventDispatcherMockup       _event_dispatcher;
     ProcessorContainerMockup    _processor_container;
+};
+
+// TODO: Should this really be here, or is it too specific for the engine_mockup scope,
+// thus needing its own file?
+class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
+{
+public:
+    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
+
+    virtual ~DummyMidiFrontend() {};
+
+    bool init() override {return true;}
+    void run()  override {}
+    void stop() override {}
+    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
+    {
+        _sent = true;
+        _input = input;
+    }
+    bool midi_sent_on_input(int input)
+    {
+        if (_sent && input == _input)
+        {
+            _sent = false;
+            return true;
+        }
+        return false;
+    }
+private:
+    bool _sent{false};
+    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

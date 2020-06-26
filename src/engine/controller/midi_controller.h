@@ -24,11 +24,12 @@
 #include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
+#include "engine/midi_dispatcher.h"
 
 namespace sushi {
 
-namespace midi_dispatcher {
-class MidiDispatcher;
+namespace ext {
+ext::MidiChannel midi_channel_from_int(int channel_int);
 }
 
 namespace engine {
@@ -54,7 +55,7 @@ public:
 
     std::vector<ext::MidiCCConnection> get_all_cc_input_connections() const override;
 
-    std::vector<ext::MidiPCConnection>  get_all_pc_input_connections() const override;
+    std::vector<ext::MidiPCConnection> get_all_pc_input_connections() const override;
 
     std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
     get_cc_input_connections_for_processor(int processor_id) const override;
@@ -92,6 +93,9 @@ public:
     ext::ControlStatus disconnect_all_pc_from_processor(int processor_id) override;
 
 private:
+    ext::MidiPCConnection _populate_pc_connection(const midi_dispatcher::PC_InputConnection& connection) const;
+    ext::MidiCCConnection _populate_cc_connection(const midi_dispatcher::CC_InputConnection& connection) const;
+
     BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;

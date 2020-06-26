@@ -20,7 +20,9 @@
 
 #include <algorithm>
 
+#include "base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"
+#include "base_engine.h"
 #include "library/midi_encoder.h"
 #include "logging.h"
 
@@ -29,8 +31,8 @@ namespace midi_dispatcher {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
-inline Event* make_note_on_event(const InputConnection &c,
-                                 const midi::NoteOnMessage &msg,
+inline Event* make_note_on_event(const InputConnection& c,
+                                 const midi::NoteOnMessage& msg,
                                  Time timestamp)
 {
     if (msg.velocity == 0)
@@ -42,47 +44,47 @@ inline Event* make_note_on_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_off_event(const InputConnection &c,
-                                  const midi::NoteOffMessage &msg,
+inline Event* make_note_off_event(const InputConnection& c,
+                                  const midi::NoteOffMessage& msg,
                                   Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_aftertouch_event(const InputConnection &c,
-                                         const midi::PolyKeyPressureMessage &msg,
+inline Event* make_note_aftertouch_event(const InputConnection& c,
+                                         const midi::PolyKeyPressureMessage& msg,
                                          Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
 }
 
-inline Event* make_aftertouch_event(const InputConnection &c,
-                                    const midi::ChannelPressureMessage &msg,
+inline Event* make_aftertouch_event(const InputConnection& c,
+                                    const midi::ChannelPressureMessage& msg,
                                     Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
 }
 
-inline Event* make_modulation_event(const InputConnection &c,
-                                    const midi::ControlChangeMessage &msg,
+inline Event* make_modulation_event(const InputConnection&c,
+                                    const midi::ControlChangeMessage& msg,
                                     Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_pitch_bend_event(const InputConnection &c,
-                                    const midi::PitchBendMessage &msg,
+inline Event* make_pitch_bend_event(const InputConnection& c,
+                                    const midi::PitchBendMessage& msg,
                                     Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
     return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_wrapped_midi_event(const InputConnection &c,
+inline Event* make_wrapped_midi_event(const InputConnection& c,
                                       const uint8_t* data,
                                       size_t size,
                                       Time timestamp)
@@ -92,8 +94,8 @@ inline Event* make_wrapped_midi_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(InputConnection &c,
-                                      const midi::ControlChangeMessage &msg,
+inline Event* make_param_change_event(InputConnection& c,
+                                      const midi::ControlChangeMessage& msg,
                                       Time timestamp)
 {
     uint8_t abs_value = msg.value;
@@ -120,18 +122,19 @@ inline Event* make_param_change_event(InputConnection &c,
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
-inline Event* make_program_change_event(const InputConnection &c,
-                                        const midi::ProgramChangeMessage &msg,
+inline Event* make_program_change_event(const InputConnection& c,
+                                        const midi::ProgramChangeMessage& msg,
                                         Time timestamp)
 {
     return new ProgramChangeEvent(c.target, msg.program, timestamp);
 }
 
-MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
-                                                             _frontend(nullptr)
+MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher,
+                               const engine::BaseProcessorContainer* processor_container) :
+                                                             _frontend(nullptr),
+                                                             _event_dispatcher(event_dispatcher),
+                                                             _processor_container(processor_container)
 {
-    // TODO: We can pass the event dispatcher directly and avoid the engine dependency
-    _event_dispatcher = _engine->event_dispatcher();
     _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
 }
@@ -143,8 +146,8 @@ MidiDispatcher::~MidiDispatcher()
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
-                                                             const std::string &processor_name,
-                                                             const std::string &parameter_name,
+                                                             const std::string& processor_name,
+                                                             const std::string& parameter_name,
                                                              int cc_no,
                                                              float min_range,
                                                              float max_range,
@@ -155,12 +158,12 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
+    const auto processor = _processor_container->processor(processor_name);
     if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_PROCESSOR;
     }
-    auto parameter = processor->parameter_from_name(parameter_name);
+    const auto parameter = processor->parameter_from_name(parameter_name);
     if (parameter == nullptr)
     {
         return MidiDispatcherStatus::INVALID_PARAMETER;
@@ -191,7 +194,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
+    const auto processor = _processor_container->processor(processor_name);
     if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_PROCESSOR;
@@ -236,7 +239,7 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
+    const auto processor = _processor_container->processor(processor_name);
     if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -262,7 +265,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
+    const auto processor = _processor_container->processor(processor_name);
     if (processor == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -299,14 +302,14 @@ std::vector<PC_InputConnection> MidiDispatcher::get_pc_input_connections_for_pro
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
-                                                         const std::string &track_name,
+                                                         const std::string& track_name,
                                                          int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -328,12 +331,12 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
                                                               const std::string& track_name,
                                                               int channel)
 {
-    // TODO: These midi_input checks should be made redundant eventually - when _midi_inputs isn't used.
+    // TODO: These midi_input checks here and elsewhere should be made redundant eventually - when _midi_inputs isn't used.
     if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -407,14 +410,14 @@ std::vector<Kbd_InputConnection> MidiDispatcher::get_all_kb_input_connections()
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
-                                                               const std::string &track_name,
+                                                               const std::string& track_name,
                                                                int channel)
 {
     if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -440,7 +443,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -448,7 +451,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
 
     std::scoped_lock lock(_raw_routes_in_lock);
 
-    auto connections = _raw_routes_in.find(midi_input); // All connections for the midi_input
+    const auto connections = _raw_routes_in.find(midi_input); // All connections for the midi_input
     if (connections != _raw_routes_in.end())
     {
         for (auto i = connections->second[channel].begin(); i != connections->second[channel].end(); ++i)
@@ -466,7 +469,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
     return MidiDispatcherStatus::OK;
 }
 
-MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &track_name, int channel)
+MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string& track_name, int channel)
 {
     if (channel >= midi::MidiChannel::OMNI)
     {
@@ -476,7 +479,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     {
         return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -484,8 +487,11 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     OutputConnection connection;
     connection.channel = channel;
     connection.output = midi_output;
-    connection.min_range = 1.234f; // TODO: Why are these here? Why not remove from OutputConnection struct?
+
+    // TODO: Why are these here? Why not remove from OutputConnection struct?
+    connection.min_range = 1.234f;
     connection.max_range = 4.5678f;
+
     connection.cc_number = 123;
 
     std::scoped_lock lock(_kb_routes_out_lock);
@@ -507,7 +513,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_outpu
     {
         return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
+    const auto track = _processor_container->track(track_name);
     if (track == nullptr)
     {
         return MidiDispatcherStatus::INVALID_CHAIN_NAME;
@@ -515,7 +521,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_outpu
 
     std::scoped_lock lock(_kb_routes_out_lock);
 
-    auto connections = _kb_routes_out.find(track->id());
+    const auto connections = _kb_routes_out.find(track->id());
     if (connections != _kb_routes_out.end())
     {
         for (auto connection = connections->second.begin(); connection != connections->second.end(); ++connection)
@@ -556,8 +562,8 @@ std::vector<Kbd_OutputConnection> MidiDispatcher::get_all_kb_output_connections(
 
 void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 {
-    int channel = midi::decode_channel(data);
-    int size = data.size();
+    const int channel = midi::decode_channel(data);
+    const int size = data.size();
     /* Dispatch raw midi messages */
     {
         std::scoped_lock lock(_raw_routes_in_lock);
@@ -819,6 +825,7 @@ std::vector<PC_InputConnection> MidiDispatcher::_get_pc_input_connections(std::o
     std::vector<PC_InputConnection> returns;
 
     std::scoped_lock lock(_pc_routes_lock);
+
     for(auto inputs_i = _pc_routes.begin(); inputs_i != _pc_routes.end(); ++inputs_i)
     {
         auto& channels = inputs_i->second;

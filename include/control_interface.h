@@ -275,12 +275,12 @@ class KeyboardController
 public:
     virtual ~KeyboardController() = default;
 
-    virtual ControlStatus   send_note_on(int track_id, int channel, int note, float velocity) = 0;
-    virtual ControlStatus   send_note_off(int track_id, int channel, int note, float velocity) = 0;
-    virtual ControlStatus   send_note_aftertouch(int track_id, int channel, int note, float value) = 0;
-    virtual ControlStatus   send_aftertouch(int track_id, int channel, float value) = 0;
-    virtual ControlStatus   send_pitch_bend(int track_id, int channel, float value) = 0;
-    virtual ControlStatus   send_modulation(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_note_on(int track_id, int channel, int note, float velocity) = 0;
+    virtual ControlStatus send_note_off(int track_id, int channel, int note, float velocity) = 0;
+    virtual ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) = 0;
+    virtual ControlStatus send_aftertouch(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_pitch_bend(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_modulation(int track_id, int channel, float value) = 0;
 
 protected:
     KeyboardController() = default;
@@ -300,16 +300,16 @@ public:
     virtual std::pair<ControlStatus, ProcessorInfo>               get_processor_info(int processor_id) const = 0;
     virtual std::pair<ControlStatus, bool>                        get_processor_bypass_state(int processor_id) const = 0;
 
-    virtual ControlStatus   set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
+    virtual ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
 
-    virtual ControlStatus   create_track(const std::string& name, int channels) = 0;
-    virtual ControlStatus   create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
-    virtual ControlStatus   move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
-    virtual ControlStatus   create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+    virtual ControlStatus create_track(const std::string& name, int channels) = 0;
+    virtual ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
+    virtual ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
+    virtual ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                       PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
 
-    virtual ControlStatus   delete_processor_from_track(int processor_id, int track_id) = 0;
-    virtual ControlStatus   delete_track(int track_id) = 0;
+    virtual ControlStatus delete_processor_from_track(int processor_id, int track_id) = 0;
+    virtual ControlStatus delete_track(int track_id) = 0;
 
 protected:
     AudioGraphController() = default;

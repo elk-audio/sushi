@@ -25,6 +25,7 @@
 #include <map>
 #include <array>
 #include <vector>
+#include <mutex>
 
 #include "library/constants.h"
 #include "library/types.h"
@@ -32,11 +33,13 @@
 #include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
-#include "base_engine.h"
-#include "base_event_dispatcher.h"
 #include "library/event_interface.h"
 
 namespace sushi {
+namespace engine {
+class BaseProcessorContainer;
+}
+
 namespace midi_dispatcher {
 
 struct InputConnection
@@ -105,12 +108,11 @@ class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
     SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(engine::BaseEngine* engine);
+    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher,
+                   const engine::BaseProcessorContainer* processor_container);
 
     virtual ~MidiDispatcher();
 
-    // TODO - Eventually have the frontend as a constructor argument
-    // Doesn't work now since the dispatcher is created in main
     void set_frontend(midi_frontend::BaseMidiFrontend* frontend)
     {
         _frontend = frontend;
@@ -170,8 +172,8 @@ public:
      * @return true if successfully forwarded midi message
      */
     MidiDispatcherStatus connect_cc_to_parameter(int midi_input,
-                                                 const std::string &processor_name,
-                                                 const std::string &parameter_name,
+                                                 const std::string& processor_name,
+                                                 const std::string& parameter_name,
                                                  int cc_no,
                                                  float min_range,
                                                  float max_range,
@@ -213,7 +215,7 @@ public:
      * @return true if successfully forwarded midi message
      */
     MidiDispatcherStatus connect_pc_to_processor(int midi_input,
-                                                 const std::string &processor_name,
+                                                 const std::string& processor_name,
                                                  int channel = midi::MidiChannel::OMNI);
 
     /**
@@ -249,10 +251,8 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_kb_to_track(int midi_input,
-                                             const std::string &track_name,
+                                             const std::string& track_name,
                                              int channel = midi::MidiChannel::OMNI);
-
-    //TODO: Should there be option All Channels below?
 
     /**
      * @brief Disconnect a midi input from a track
@@ -280,7 +280,7 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_raw_midi_to_track(int midi_input,
-                                                   const std::string &track_name,
+                                                   const std::string& track_name,
                                                    int channel = midi::MidiChannel::OMNI);
 
     /**
@@ -301,7 +301,7 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_track_to_output(int midi_output,
-                                                 const std::string &track_name,
+                                                 const std::string& track_name,
                                                  int channel);
 
     /**
@@ -357,9 +357,9 @@ private:
     std::mutex _pc_routes_lock;
     std::mutex _raw_routes_in_lock;
 
-    engine::BaseEngine* _engine;
     midi_frontend::BaseMidiFrontend* _frontend;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
+    const engine::BaseProcessorContainer* _processor_container;
 };
 
 } // end namespace midi_dispatcher

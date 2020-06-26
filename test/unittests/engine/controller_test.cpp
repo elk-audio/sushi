@@ -51,7 +51,7 @@ protected:
 
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
-    midi_dispatcher::MidiDispatcher _midi_dispatcher{&_engine};
+    midi_dispatcher::MidiDispatcher _midi_dispatcher{_engine.event_dispatcher(), _engine.processor_container()};
     jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _path};
     std::unique_ptr<ext::SushiControl> _module_under_test;
 };

@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include <control_interface.h>
+
 #include "types.h"
 #include "id_generator.h"
 #include "library/rt_event.h"
@@ -30,7 +32,13 @@
 #include "library/types.h"
 
 namespace sushi {
-namespace dispatcher {class EventDispatcher;};
+namespace dispatcher {class EventDispatcher;}
+namespace midi_dispatcher {class MidiDispatcher;}
+
+// TODO: ext namespace leaks into here - this can be resolved if MidiController events have their own namespace and files.
+namespace ext {
+int int_from_midi_channel(ext::MidiChannel channel);
+}
 
 class Event;
 
@@ -57,8 +65,8 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
 class Event
 {
     friend class dispatcher::EventDispatcher;
-public:
 
+public:
     virtual ~Event() {}
 
     /**
@@ -358,9 +366,9 @@ namespace engine {class BaseEngine;}
 class EngineEvent : public Event
 {
 public:
-    virtual bool process_asynchronously() const override {return true;}
+    bool process_asynchronously() const override {return true;}
 
-    virtual bool is_engine_event() const override {return true;}
+    bool is_engine_event() const override {return true;}
 
     virtual int execute(engine::BaseEngine* engine) const = 0;
 
@@ -504,7 +512,6 @@ private:
 class ProgramChangeEvent : public EngineEvent
 {
 public:
-
     ProgramChangeEvent(ObjectId processor_id,
                        int program_no,
                        Time timestamp) : EngineEvent(timestamp),
@@ -519,6 +526,193 @@ public:
 protected:
     ObjectId            _processor_id;
     int                 _program_no;
+};
+
+// TODO: MidiControllerEvent and its sub-classes could be in their own .h/.cpp files and namespace.
+
+class MidiControllerEvent : public EngineEvent
+{
+public:
+
+protected:
+    explicit MidiControllerEvent(Time timestamp,
+                                 midi_dispatcher::MidiDispatcher* midi_dispatcher) : EngineEvent(timestamp),
+                                                                                     _midi_dispatcher(midi_dispatcher) {}
+
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+};
+
+class KbdInputToTrackConnectionEvent : public MidiControllerEvent
+{
+public:
+    enum class Action {
+        Connect,
+        Disconnect
+    };
+
+    KbdInputToTrackConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                   const std::string& track_name,
+                                   ext::MidiChannel channel,
+                                   int port,
+                                   bool raw_midi,
+                                   Action action,
+                                   Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                     _track_name(track_name),
+                                                     _channel(channel),
+                                                     _port(port),
+                                                     _raw_midi(raw_midi),
+                                                     _action(action) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _track_name;
+    const ext::MidiChannel _channel;
+    const int _port;
+    const bool _raw_midi;
+    const Action _action;
+};
+
+class KbdOutputToTrackConnectionEvent : public MidiControllerEvent
+{
+public:
+    enum class Action {
+        Connect,
+        Disconnect
+    };
+
+    KbdOutputToTrackConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                    const std::string& track_name,
+                                    ext::MidiChannel channel,
+                                    int port,
+                                    Action action,
+                                    Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                      _track_name(track_name),
+                                                      _channel(channel),
+                                                      _port(port),
+                                                      _action(action) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _track_name;
+    const ext::MidiChannel _channel;
+    const int _port;
+    const Action _action;
+};
+
+class ConnectCCToParameterEvent : public MidiControllerEvent
+{
+public:
+    ConnectCCToParameterEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                              const std::string& processor_name,
+                              const std::string& parameter_name,
+                              ext::MidiChannel channel,
+                              int port,
+                              int cc_number,
+                              float min_range,
+                              float max_range,
+                              bool relative_mode,
+                              Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                _processor_name(processor_name),
+                                                _parameter_name(parameter_name),
+                                                _channel(channel),
+                                                _port(port),
+                                                _cc_number(cc_number),
+                                                _min_range(min_range),
+                                                _max_range(max_range),
+                                                _relative_mode(relative_mode) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _processor_name;
+    const std::string _parameter_name;
+    const ext::MidiChannel _channel;
+    const int _port;
+    const int _cc_number;
+    const float _min_range;
+    const float _max_range;
+    const bool _relative_mode;
+};
+
+class DisconnectCCEvent : public MidiControllerEvent
+{
+public:
+    DisconnectCCEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                      const std::string& processor_name,
+                      ext::MidiChannel channel,
+                      int port,
+                      int cc_number,
+                      Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                        _processor_name(processor_name),
+                                        _channel(channel),
+                                        _port(port),
+                                        _cc_number(cc_number) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    std::string _processor_name;
+    ext::MidiChannel _channel;
+    int _port;
+    int _cc_number;
+};
+
+class PCToProcessorConnectionEvent : public MidiControllerEvent
+{
+public:
+    enum class Action {
+        Connect,
+        Disconnect
+    };
+
+    PCToProcessorConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                 const std::string& processor_name,
+                                 ext::MidiChannel channel,
+                                 int port,
+                                 Action action,
+                                 Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                   _processor_name(processor_name),
+                                                   _channel(channel),
+                                                   _port(port),
+                                                   _action(action) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _processor_name;
+    const ext::MidiChannel _channel;
+    const int _port;
+    Action _action;
+};
+
+class DisconnectAllCCFromProcessorEvent : public MidiControllerEvent
+{
+public:
+    DisconnectAllCCFromProcessorEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                      const std::string& processor_name,
+                                      Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                        _processor_name(processor_name) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _processor_name;
+};
+
+class DisconnectAllPCFromProcessorEvent : public MidiControllerEvent
+{
+public:
+    DisconnectAllPCFromProcessorEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                      const std::string& processor_name,
+                                      Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                        _processor_name(processor_name) {}
+
+    int execute(engine::BaseEngine* /*engine*/) const override;
+
+private:
+    const std::string _processor_name;
 };
 
 class ClippingNotificationEvent : public Event
