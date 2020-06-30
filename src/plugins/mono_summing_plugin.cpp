@@ -39,11 +39,14 @@ void MonoSummingPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
 {
     if(_bypassed == false)
     {
-        int input_channel = 0;
-        out_buffer.replace(input_channel, in_buffer);
-        for (input_channel = 1; input_channel < in_buffer.channel_count(); ++input_channel)
+        for (int output_channel = 0; output_channel < out_buffer.channel_count(); ++output_channel)
         {
-            out_buffer.add(input_channel, in_buffer);
+            int input_channel = 0;
+            out_buffer.replace(output_channel, input_channel, in_buffer);
+            for (input_channel = 1; input_channel < in_buffer.channel_count(); ++input_channel)
+            {
+                out_buffer.add(output_channel, input_channel, in_buffer);
+            }
         }
     }
     else

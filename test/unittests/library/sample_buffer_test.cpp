@@ -233,15 +233,6 @@ TEST(TestSampleBuffer,TestReplace)
     // copy all channels of buffer 2 to buffer 1
     buffer_1.replace(buffer_2);
     test_utils::assert_buffer_value(2.0f, buffer_1);
-
-    test_utils::fill_sample_buffer(buffer_1, 1.0f);
-    // copy ch 1 of buffer 1 to all channels of buffer 2
-    buffer_2.replace(1, buffer_1);
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        ASSERT_FLOAT_EQ(1.0f, buffer_2.channel(0)[n]);
-        ASSERT_FLOAT_EQ(1.0f, buffer_2.channel(1)[n]);
-    }
 }
 
 TEST (TestSampleBuffer, TestAdd)
@@ -275,22 +266,6 @@ TEST (TestSampleBuffer, TestAdd)
     {
         ASSERT_FLOAT_EQ(5.0f, buffer.channel(0)[n]);
         ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
-    }
-
-    // Test adding one channel of stereo buffer to all channles of other stereo buffer
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        buffer.channel(0)[n] = 2.0f;
-        buffer.channel(1)[n] = 3.0f;
-        buffer_2.channel(0)[n] = 1.0f;
-        buffer_2.channel(1)[n] = 1.0f;
-    }
-
-    buffer_2.add(0, buffer);
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        ASSERT_FLOAT_EQ(3.0f, buffer_2.channel(0)[n]);
-        ASSERT_FLOAT_EQ(3.0f, buffer_2.channel(1)[n]);
     }
 }
 
@@ -333,22 +308,6 @@ TEST (TestSampleBuffer, TestAddWithGain)
     {
         ASSERT_FLOAT_EQ(7.0f, buffer.channel(0)[n]);
         ASSERT_FLOAT_EQ(6.0f, buffer.channel(1)[n]);
-    }
-
-    // Test adding one channel of stereo buffer to all channles of other stereo buffer with gain
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        buffer.channel(0)[n] = 2.0f;
-        buffer.channel(1)[n] = 3.0f;
-        buffer_2.channel(0)[n] = 1.0f;
-        buffer_2.channel(1)[n] = 1.0f;
-    }
-
-    buffer_2.add_with_gain(0, buffer, 3.0f);
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        ASSERT_FLOAT_EQ(7.0f, buffer_2.channel(0)[n]);
-        ASSERT_FLOAT_EQ(7.0f, buffer_2.channel(1)[n]);
     }
 }
 
@@ -423,25 +382,6 @@ TEST (TestSampleBuffer, TestAddWithRamp)
 
     ASSERT_FLOAT_EQ(3.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
     ASSERT_FLOAT_EQ(3.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
-
-    // Test adding one channel of stereo buffer to all channles of other stereo buffer with ramp
-    for (unsigned int n = 0; n < AUDIO_CHUNK_SIZE; ++n)
-    {
-        buffer.channel(0)[n] = 3.0f;
-        buffer.channel(1)[n] = 1.0f;
-        buffer_2.channel(0)[n] = 1.0f;
-        buffer_2.channel(1)[n] = 1.0f;
-    }
-
-    buffer_2.add_with_ramp(1, buffer, 1.0f, 2.0f);
-    ASSERT_FLOAT_EQ(2.0f, buffer_2.channel(0)[0]);
-    ASSERT_FLOAT_EQ(2.0f, buffer_2.channel(1)[0]);
-
-    ASSERT_NEAR(2.5f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
-    ASSERT_NEAR(2.5f, buffer_2.channel(1)[AUDIO_CHUNK_SIZE / 2 - 1], 0.05f);
-
-    ASSERT_FLOAT_EQ(3.0f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE - 1]);
-    ASSERT_FLOAT_EQ(3.0f, buffer_2.channel(1)[AUDIO_CHUNK_SIZE - 1]);
 }
 
 TEST (TestSampleBuffer, TestCountClippedSamples)
