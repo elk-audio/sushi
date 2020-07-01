@@ -392,6 +392,7 @@ public:
         }
     }
 
+
     /**
      * @brief Sums one channel of source buffer into one channel of the buffer.
      */
