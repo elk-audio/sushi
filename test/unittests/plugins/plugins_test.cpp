@@ -13,6 +13,7 @@
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
 #include "plugins/wav_writer_plugin.cpp"
+#include "plugins/mono_summing_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
@@ -433,4 +434,55 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     }
     sf_close(file);
     remove(path->c_str());
+}
+
+class TestMonoSummingPlugin : public ::testing::Test
+{
+protected:
+    TestMonoSummingPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new mono_summing_plugin::MonoSummingPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    mono_summing_plugin::MonoSummingPlugin* _module_under_test;
+    RtEventFifo<10> _fifo;
+};
+
+TEST_F(TestMonoSummingPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Mono summing", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.mono_summing", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestMonoSummingPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up buffers and events
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    for (int sample = 0; sample < AUDIO_CHUNK_SIZE; ++sample)
+    {
+        in_buffer.channel(0)[sample] = 1.0f;
+    }
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    for (int sample = 0; sample < AUDIO_CHUNK_SIZE; ++sample)
+    {
+        ASSERT_FLOAT_EQ(1.0f, in_buffer.channel(0)[sample]);
+        ASSERT_FLOAT_EQ(0.0f, in_buffer.channel(1)[sample]);
+    }
+    test_utils::assert_buffer_value(1.0f, out_buffer);
 }
