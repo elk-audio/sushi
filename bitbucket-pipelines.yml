@@ -10,13 +10,14 @@ pipelines:
           # Print the Linux version.
           #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
           - export TERM=linux
-          - echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
+          - echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
           - uname -a
           # Print the gcc version.
           - apt-get update -y
           - apt install build-essential -y
           - gcc --version
-          - apt-get install libjack-jackd2-dev libsndfile1-dev -y
+          - apt-get install -y -q libjack-jackd2-dev
+          - apt-get install -y -q libsndfile1-dev -y -q
           - wget https://cmake.org/files/v3.18/cmake-3.18.0-rc1-Linux-x86_64.tar.gz
           - tar xf cmake-3.18.0-rc1-Linux-x86_64.tar.gz
           - export PATH="`pwd`/cmake-3.18.0-rc1-Linux-x86_64/bin:$PATH"
