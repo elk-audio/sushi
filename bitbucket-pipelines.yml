@@ -1,7 +1,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: rikorose/gcc-cmake:gcc-8
+image: ubuntu:bionic
 
 pipelines:
   default:
@@ -23,8 +23,10 @@ pipelines:
           #- apt-get install cmake -y --force-yes
           # Print the CMake version.
           - cmake --version
+          #- git submodule update --init
           #- mkdir build
           #- cd build
+          #- echo "Trying to build"
           # Call the CMake.
           #- cmake ..
           # Build the project.
