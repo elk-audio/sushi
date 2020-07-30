@@ -8,6 +8,8 @@ pipelines:
     - step:
         script:
           # Print the Linux version.
+          #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+          - export TERM=linux
           - uname -a
           # Print the gcc version.
           - apt-get update -y
