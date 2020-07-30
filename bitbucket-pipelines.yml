@@ -13,9 +13,10 @@ pipelines:
           - apt-get update -y
           - apt install build-essential -y
           - gcc --version
-          - apt-get install cmake -y
-          - apt-get install libsoundio-dev -y
           - apt-get install libjack-jackd2-dev libsndfile1-dev -y
+          - wget https://cmake.org/files/v3.18/cmake-3.18.0-rc1-Linux-x86_64.tar.gz
+          - tar xf cmake-3.18.0-rc1-Linux-x86_64.tar.gz
+          - export PATH="`pwd`/cmake-3.18.0-rc1-Linux-x86_64/bin:$PATH"
           # Print the CMake version.
           - cmake --version
           #- git submodule update --init
