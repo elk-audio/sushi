@@ -10,17 +10,14 @@ pipelines:
           # Print the Linux version.
           - uname -a
           # Print the gcc version.
+          - apt-get update -qq
+          - apt install build-essential -y
           - gcc --version
-          #  Install a CMake 3.0.2 version.
-          #- apt-get update -qq
-          #- apt-get install cmake -y
-          #  Alternatively you could install a CMake 3.2.2 version through PPA repository. 
-          #- apt-get update -qq
-          #- apt-get install software-properties-common -y
+          - apt-get install software-properties-common -y
           # Add PPA repository.
-          #- echo 'deb http://ppa.launchpad.net/george-edison55/cmake-3.x/ubuntu trusty main' | tee -a /etc/apt/sources.list.d/cmake.list
-          #- apt-get update -qq
-          #- apt-get install cmake -y --force-yes
+          - echo 'deb http://ppa.launchpad.net/george-edison55/cmake-3.x/ubuntu trusty main' | tee -a /etc/apt/sources.list.d/cmake.list
+          - apt-get update -qq
+          - apt-get install cmake -y --force-yes
           # Print the CMake version.
           - cmake --version
           #- git submodule update --init
