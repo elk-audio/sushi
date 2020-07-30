@@ -1,0 +1,31 @@
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: gcc-cmake:gcc-8
+
+pipelines:
+  default:
+    - step:
+        script:
+          # Print the Linux version.
+          - uname -a
+          # Print the gcc version.
+          - gcc --version
+          #  Install a CMake 3.0.2 version.
+          #- apt-get update -qq
+          #- apt-get install cmake -y
+          #  Alternatively you could install a CMake 3.2.2 version through PPA repository. 
+          #- apt-get update -qq
+          #- apt-get install software-properties-common -y
+          # Add PPA repository.
+          #- echo 'deb http://ppa.launchpad.net/george-edison55/cmake-3.x/ubuntu trusty main' | tee -a /etc/apt/sources.list.d/cmake.list
+          #- apt-get update -qq
+          #- apt-get install cmake -y --force-yes
+          # Print the CMake version.
+          - cmake --version
+          #- mkdir build
+          #- cd build
+          # Call the CMake.
+          #- cmake ..
+          # Build the project.
+          #- make
