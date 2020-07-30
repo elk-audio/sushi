@@ -17,10 +17,8 @@ pipelines:
           - apt install build-essential -y
           - gcc --version
           - apt-get install -y -q libjack-jackd2-dev
-          - apt-get install -y -q libsndfile1-dev -y -q
-          - wget https://cmake.org/files/v3.18/cmake-3.18.0-rc1-Linux-x86_64.tar.gz
-          - tar xf cmake-3.18.0-rc1-Linux-x86_64.tar.gz
-          - export PATH="`pwd`/cmake-3.18.0-rc1-Linux-x86_64/bin:$PATH"
+          - apt-get install -y -q libsndfile1-dev
+          - apt-get install -y -q cmake
           # Print the CMake version.
           - cmake --version
           #- git submodule update --init
