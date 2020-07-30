@@ -10,6 +10,7 @@ pipelines:
           # Print the Linux version.
           #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
           - export TERM=linux
+          - echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
           - uname -a
           # Print the gcc version.
           - apt-get update -y
