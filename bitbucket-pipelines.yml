@@ -34,4 +34,4 @@ pipelines:
           # Call the CMake.
           - cmake .. -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=FALSE -DWITH_VST3=FALSE -DWITH_LV2=FALSE -DWITH_LV2_MDA_TESTS=FALSE -DWITH_LINK=FALSE -DWITH_RPC_INTERFACE=FALSE -DTWINE_WITH_XENOMAI=FALSE
           # Build the project.
-          - make -j 4 sushi
+          - make -j 4
