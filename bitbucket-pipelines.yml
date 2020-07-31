@@ -16,8 +16,8 @@ pipelines:
           - apt-get update -y
           - apt install build-essential -y
           - gcc --version
-          - apt-get install -y -q libjack-jackd2-dev
-          - apt-get install -y -q libsndfile1-dev
+          - apt-get install -y -q libjack-jackd2-dev liblo-dev
+          - apt-get install -y -q libsndfile1-dev libasound2-dev
           - apt-get install -y -q git
           - apt-get install -y -q cmake
           - git submodule update --init
