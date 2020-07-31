@@ -21,8 +21,8 @@ pipelines:
           - apt-get install -y -q git
           - apt-get install -y -q cmake
           - cmake --version
-          - apt-get install software-properties-common
-          - add-apt-repository ppa:ubuntu-toolchain-r/test
+          - apt-get install -y software-properties-common
+          - add-apt-repository -y ppa:ubuntu-toolchain-r/test
           - apt-get update -y
           - apt install gcc-8 g++-8 -y -q
           - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
