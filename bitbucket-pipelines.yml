@@ -1,7 +1,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: ubuntu:20.10
+image: ubuntu:bionic
 
 pipelines:
   default:
@@ -16,10 +16,11 @@ pipelines:
           - apt-get update -y
           - apt install build-essential -y
           - gcc --version
-          - apt-get install -y -q libjack-jackd2-dev liblo-dev
+          - apt-get install -y -q libjack-jackd2-dev liblo-dev python2.7-dev
           - apt-get install -y -q libsndfile1-dev libasound2-dev
           - apt-get install -y -q git
           - apt-get install -y -q cmake
+          - cmake --version
           - git submodule update --init
           - mkdir build
           - cd build
