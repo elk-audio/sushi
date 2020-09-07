@@ -207,7 +207,7 @@ inline void to_grpc(sushi_rpc::MidiKbdConnection& dest, const sushi::ext::MidiKb
 
 inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::ext::MidiCCConnection& src)
 {
-    dest.mutable_processor()->set_id(src.processor_id);
+    dest.mutable_parameter()->set_processor_id(src.processor_id);
     dest.mutable_parameter()->set_parameter_id(src.parameter_id);
     dest.mutable_parameter()->set_processor_id(src.processor_id);
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
@@ -558,7 +558,7 @@ grpc::Status AudioGraphControlService::GetTrackProcessors(grpc::ServerContext* /
                                                           const sushi_rpc::TrackIdentifier* request,
                                                           sushi_rpc::ProcessorInfoList* response)
 {
-    auto [status, processors]= _controller->get_track_processors(request->id());
+    auto [status, processors] = _controller->get_track_processors(request->id());
     for (const auto& processor : processors)
     {
         auto info = response->add_processors();
@@ -929,8 +929,7 @@ grpc::Status MidiControlService::GetCCInputConnectionsForProcessor(grpc::ServerC
     }
     else
     {
-        // TODO: We could do with a better error message.
-        return grpc::Status::CANCELLED;
+        return to_grpc_status(output_connections.first);
     }
 }
 
@@ -967,14 +966,7 @@ grpc::Status MidiControlService::ConnectKbdInputToTrack(grpc::ServerContext* /*c
 
     const auto status = _midi_controller->connect_kbd_input_to_track(track_id.id(), midi_channel, port, raw_midi);
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::ConnectKbdOutputFromTrack(grpc::ServerContext* /*context*/,
@@ -988,14 +980,7 @@ grpc::Status MidiControlService::ConnectKbdOutputFromTrack(grpc::ServerContext* 
 
     const auto status = _midi_controller->connect_kbd_output_from_track(track_id.id(), midi_channel, port);
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::ConnectCCToParameter(grpc::ServerContext* /*context*/,
@@ -1003,7 +988,7 @@ grpc::Status MidiControlService::ConnectCCToParameter(grpc::ServerContext* /*con
                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
     const auto midi_channel = to_sushi_ext(request->channel().channel());
-    const auto status = _midi_controller->connect_cc_to_parameter(request->processor().id(),
+    const auto status = _midi_controller->connect_cc_to_parameter(request->parameter().processor_id(),
                                                                   request->parameter().parameter_id(),
                                                                   midi_channel,
                                                                   request->port(),
@@ -1012,14 +997,7 @@ grpc::Status MidiControlService::ConnectCCToParameter(grpc::ServerContext* /*con
                                                                   request->max_range(),
                                                                   request->relative_mode());
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::ConnectPCToProcessor(grpc::ServerContext* /*context*/,
@@ -1034,14 +1012,7 @@ grpc::Status MidiControlService::ConnectPCToProcessor(grpc::ServerContext* /*con
 
     const auto status = _midi_controller->connect_pc_to_processor(processor_id, midi_channel, port);
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectKbdInput(grpc::ServerContext* /*context*/,
@@ -1055,14 +1026,7 @@ grpc::Status MidiControlService::DisconnectKbdInput(grpc::ServerContext* /*conte
     const auto raw_midi = request->raw_midi();
     const auto status = _midi_controller->disconnect_kbd_input(track_id.id(), midi_channel, port, raw_midi);
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectKbdOutput(grpc::ServerContext* /*context*/,
@@ -1076,14 +1040,7 @@ grpc::Status MidiControlService::DisconnectKbdOutput(grpc::ServerContext* /*cont
 
     const auto status = _midi_controller->disconnect_kbd_output(track_id.id(), midi_channel, port);
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectCC(grpc::ServerContext* /*context*/,
@@ -1091,20 +1048,12 @@ grpc::Status MidiControlService::DisconnectCC(grpc::ServerContext* /*context*/,
                                               sushi_rpc::GenericVoidValue* /*response*/)
 {
     const auto midi_channel = to_sushi_ext(request->channel().channel());
-    const auto status = _midi_controller->disconnect_cc(request->processor().id(),
+    const auto status = _midi_controller->disconnect_cc(request->parameter().processor_id(),
                                                         midi_channel,
                                                         request->port(),
                                                         request->cc_number());
 
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        // TODO: We could do with a better error message.
-        return grpc::Status::CANCELLED;
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectPC(grpc::ServerContext* /*context*/,
@@ -1114,19 +1063,10 @@ grpc::Status MidiControlService::DisconnectPC(grpc::ServerContext* /*context*/,
     const auto processor_id = request->processor().id();
     const MidiChannel_Channel channel = request->channel().channel();
     const auto port = request->port();
-
     sushi::ext::MidiChannel midi_channel = to_sushi_ext(channel);
 
     const auto status = _midi_controller->disconnect_pc(processor_id, midi_channel, port);
-
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectAllCCFromProcessor(grpc::ServerContext* /*context*/,
@@ -1135,15 +1075,7 @@ grpc::Status MidiControlService::DisconnectAllCCFromProcessor(grpc::ServerContex
 {
     const auto processor_id = request->id();
     const auto status = _midi_controller->disconnect_all_cc_from_processor(processor_id);
-
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContext* /*context*/,
@@ -1152,15 +1084,7 @@ grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContex
 {
     const auto processor_id = request->id();
     const auto status = _midi_controller->disconnect_all_pc_from_processor(processor_id);
-
-    if(status != sushi::ext::ControlStatus::OK)
-    {
-        return to_grpc_status(status);
-    }
-    else
-    {
-        return grpc::Status::OK;
-    }
+    return to_grpc_status(status);
 }
 
 grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* context,

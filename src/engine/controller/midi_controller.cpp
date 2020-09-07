@@ -26,7 +26,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi {
 
-// TODO: I don't like this being here. It works, but I should move it.
+// TODO: I don't like this being here. It works, but we should move it.
 // It broke some unit tests that included .cpp files, this was a workaround.
 namespace ext {
 ext::MidiChannel midi_channel_from_int(int channel_int)
@@ -58,6 +58,34 @@ ext::MidiChannel midi_channel_from_int(int channel_int)
 namespace engine {
 namespace controller_impl {
 
+ext::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConnection& connection)
+{
+    ext::MidiCCConnection ext_connection;
+
+    ext_connection.processor_id = connection.input_connection.target;
+    ext_connection.parameter_id = connection.input_connection.parameter;
+    ext_connection.min_range = connection.input_connection.min_range;
+    ext_connection.max_range = connection.input_connection.max_range;
+    ext_connection.relative_mode = connection.input_connection.relative;
+    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+    ext_connection.port = connection.port;
+    ext_connection.cc_number = connection.cc;
+
+    return ext_connection;
+}
+
+ext::MidiPCConnection populate_pc_connection(const midi_dispatcher::PCInputConnection& connection)
+{
+    ext::MidiPCConnection ext_connection;
+
+    ext_connection.processor_id = connection.processor_id;
+    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+    ext_connection.port = connection.port;
+
+    return ext_connection;
+}
+
+
 MidiController::MidiController(BaseEngine* engine,
                                midi_dispatcher::MidiDispatcher* midi_dispatcher,
                                ext::AudioGraphController* audio_graph_controller,
@@ -83,14 +111,14 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_input_connection
     std::vector<ext::MidiKbdConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_kb_input_connections();
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
         ext::MidiKbdConnection ext_connection;
-        ext_connection.track_id = connection->input_connection.target;
-        ext_connection.port = connection->port;
-        ext_connection.channel = ext::midi_channel_from_int(connection->channel);
-        ext_connection.raw_midi = connection->raw_midi;
-        returns.emplace_back(ext_connection);
+        ext_connection.track_id = connection.input_connection.target;
+        ext_connection.port = connection.port;
+        ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+        ext_connection.raw_midi = connection.raw_midi;
+        returns.push_back(ext_connection);
     }
 
     return returns;
@@ -101,14 +129,14 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_output_connectio
     std::vector<ext::MidiKbdConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_kb_output_connections();
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
         ext::MidiKbdConnection ext_connection;
-        ext_connection.track_id = connection->track_id;
-        ext_connection.port = connection->port;
-        ext_connection.channel = ext::midi_channel_from_int(connection->channel);
+        ext_connection.track_id = connection.track_id;
+        ext_connection.port = connection.port;
+        ext_connection.channel = ext::midi_channel_from_int(connection.channel);
         ext_connection.raw_midi = false;
-        returns.emplace_back(ext_connection);
+        returns.push_back(ext_connection);
     }
 
     return returns;
@@ -119,10 +147,10 @@ std::vector<ext::MidiCCConnection> MidiController::get_all_cc_input_connections(
     std::vector<ext::MidiCCConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_cc_input_connections();
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
-        auto ext_connection = _populate_cc_connection(*connection);
-        returns.emplace_back(ext_connection);
+        auto ext_connection = populate_cc_connection(connection);
+        returns.push_back(ext_connection);
     }
 
     return returns;
@@ -133,10 +161,10 @@ std::vector<ext::MidiPCConnection> MidiController::get_all_pc_input_connections(
     std::vector<ext::MidiPCConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_pc_input_connections();
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
-        auto ext_connection = _populate_pc_connection(*connection);
-        returns.emplace_back(ext_connection);
+        auto ext_connection = populate_pc_connection(connection);
+        returns.push_back(ext_connection);
     }
 
     return returns;
@@ -149,10 +177,10 @@ MidiController::get_cc_input_connections_for_processor(int processor_id) const
     returns.first = ext::ControlStatus::OK;
 
     const auto connections = _midi_dispatcher->get_cc_input_connections_for_processor(processor_id);
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
-        auto ext_connection = _populate_cc_connection(*connection);
-        returns.second.emplace_back(ext_connection);
+        auto ext_connection = populate_cc_connection(connection);
+        returns.second.push_back(ext_connection);
     }
 
     return returns;
@@ -165,10 +193,10 @@ MidiController::get_pc_input_connections_for_processor(int processor_id) const
     returns.first = ext::ControlStatus::OK;
 
     const auto connections = _midi_dispatcher->get_pc_input_connections_for_processor(processor_id);
-    for(auto connection = connections.begin(); connection != connections.end(); ++connection)
+    for (auto connection : connections)
     {
-        auto ext_connection = _populate_pc_connection(*connection);
-        returns.second.emplace_back(ext_connection);
+        auto ext_connection = populate_pc_connection(connection);
+        returns.second.push_back(ext_connection);
     }
 
     return returns;
@@ -179,12 +207,12 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
                                                               int port,
                                                               bool raw_midi)
 {
-    const auto track_info_tuple = _graph_controller->get_track_info(track_id);
-    if(track_info_tuple.first != ext::ControlStatus::OK)
+    const auto [status, track_info] = _graph_controller->get_track_info(track_id);
+    if (status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string track_name = track_info_tuple.second.name;
+    const std::string track_name = track_info.name;
 
     auto event = new KbdInputToTrackConnectionEvent(_midi_dispatcher,
                                                     track_name,
@@ -202,12 +230,12 @@ ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
                                                                  ext::MidiChannel channel,
                                                                  int port)
 {
-    const auto track_info_tuple = _graph_controller->get_track_info(track_id);
-    if(track_info_tuple.first != ext::ControlStatus::OK)
+    const auto [status, track_info] = _graph_controller->get_track_info(track_id);
+    if (status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string track_name = track_info_tuple.second.name;
+    const std::string track_name = track_info.name;
 
     auto event = new KbdOutputToTrackConnectionEvent(_midi_dispatcher,
                                                      track_name,
@@ -229,19 +257,19 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
                                                            float max_range,
                                                            bool relative_mode)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name =  processor_info_tuple.second.name;
+    const std::string processor_name =  processor_info.name;
 
-    const auto parameter_info_tuple = _parameter_controller->get_parameter_info(processor_id, parameter_id);
-    if(parameter_info_tuple.first != ext::ControlStatus::OK)
+    const auto [parameter_status, parameter_info] = _parameter_controller->get_parameter_info(processor_id, parameter_id);
+    if (parameter_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string parameter_name =parameter_info_tuple.second.name;
+    const std::string parameter_name =parameter_info.name;
 
     auto event = new ConnectCCToParameterEvent(_midi_dispatcher,
                                                processor_name,
@@ -260,12 +288,12 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
 
 ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext::MidiChannel channel, int port)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name =  processor_info_tuple.second.name;
+    const std::string processor_name =  processor_info.name;
 
     auto event = new PCToProcessorConnectionEvent(_midi_dispatcher,
                                                   processor_name,
@@ -280,12 +308,12 @@ ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext
 
 ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiChannel channel, int port, bool raw_midi)
 {
-    const auto track_info_tuple = _graph_controller->get_track_info(track_id);
-    if(track_info_tuple.first != ext::ControlStatus::OK)
+    const auto [status, track_info] = _graph_controller->get_track_info(track_id);
+    if (status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string track_name = track_info_tuple.second.name;
+    const std::string track_name = track_info.name;
 
     auto event = new KbdInputToTrackConnectionEvent(_midi_dispatcher,
                                                     track_name,
@@ -301,12 +329,12 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
 
 ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::MidiChannel channel, int port)
 {
-    const auto track_info_tuple = _graph_controller->get_track_info(track_id);
-    if(track_info_tuple.first != ext::ControlStatus::OK)
+    const auto [status, track_info] = _graph_controller->get_track_info(track_id);
+    if (status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string track_name = track_info_tuple.second.name;
+    const std::string track_name = track_info.name;
 
     auto event = new KbdOutputToTrackConnectionEvent(_midi_dispatcher,
                                                      track_name,
@@ -321,12 +349,12 @@ ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::Midi
 
 ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChannel channel, int port, int cc_number)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name = processor_info_tuple.second.name;
+    const std::string processor_name = processor_info.name;
 
     auto event = new DisconnectCCEvent(_midi_dispatcher,
                                        processor_name,
@@ -341,12 +369,12 @@ ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChan
 
 ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChannel channel, int port)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name = processor_info_tuple.second.name;
+    const std::string processor_name = processor_info.name;
 
     auto event = new PCToProcessorConnectionEvent(_midi_dispatcher,
                                                   processor_name,
@@ -361,12 +389,12 @@ ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChan
 
 ext::ControlStatus MidiController::disconnect_all_cc_from_processor(int processor_id)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name = processor_info_tuple.second.name;
+    const std::string processor_name = processor_info.name;
 
     auto event = new DisconnectAllCCFromProcessorEvent(_midi_dispatcher,
                                                        processor_name,
@@ -378,12 +406,12 @@ ext::ControlStatus MidiController::disconnect_all_cc_from_processor(int processo
 
 ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processor_id)
 {
-    const auto processor_info_tuple = _graph_controller->get_processor_info(processor_id);
-    if(processor_info_tuple.first != ext::ControlStatus::OK)
+    const auto [processor_status, processor_info] = _graph_controller->get_processor_info(processor_id);
+    if (processor_status != ext::ControlStatus::OK)
     {
         return ext::ControlStatus::NOT_FOUND;
     }
-    const std::string processor_name = processor_info_tuple.second.name;
+    const std::string processor_name = processor_info.name;
 
     auto event = new DisconnectAllPCFromProcessorEvent(_midi_dispatcher,
                                                        processor_name,
@@ -391,33 +419,6 @@ ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processo
 
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
-}
-
-ext::MidiCCConnection MidiController::_populate_cc_connection(const midi_dispatcher::CC_InputConnection& connection) const
-{
-    ext::MidiCCConnection ext_connection;
-
-    ext_connection.processor_id = connection.input_connection.target;
-    ext_connection.parameter_id = connection.input_connection.parameter;
-    ext_connection.min_range = connection.input_connection.min_range;
-    ext_connection.max_range = connection.input_connection.max_range;
-    ext_connection.relative_mode = connection.input_connection.relative;
-    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
-    ext_connection.port = connection.port;
-    ext_connection.cc_number = connection.cc;
-
-    return ext_connection;
-}
-
-ext::MidiPCConnection MidiController::_populate_pc_connection(const midi_dispatcher::PC_InputConnection& connection) const
-{
-    ext::MidiPCConnection ext_connection;
-
-    ext_connection.processor_id = connection.processor_id;
-    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
-    ext_connection.port = connection.port;
-
-    return ext_connection;
 }
 
 #pragma GCC diagnostic pop

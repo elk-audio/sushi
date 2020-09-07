@@ -21,7 +21,7 @@ static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
     return 0;
 }
 
-constexpr float TEST_SAMPLE_RATE = 480000;
+constexpr float TEST_SAMPLE_RATE = 44100;
 
 TEST(EventTest, TestToRtEvent)
 {

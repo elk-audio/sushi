@@ -566,11 +566,11 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _track_name;
-    const ext::MidiChannel _channel;
-    const int _port;
-    const bool _raw_midi;
-    const Action _action;
+    std::string _track_name;
+    ext::MidiChannel _channel;
+    int _port;
+    bool _raw_midi;
+    Action _action;
 };
 
 class KbdOutputToTrackConnectionEvent : public MidiControllerEvent
@@ -595,10 +595,10 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _track_name;
-    const ext::MidiChannel _channel;
-    const int _port;
-    const Action _action;
+    std::string _track_name;
+    ext::MidiChannel _channel;
+    int _port;
+    Action _action;
 };
 
 class ConnectCCToParameterEvent : public MidiControllerEvent
@@ -626,14 +626,14 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _processor_name;
-    const std::string _parameter_name;
-    const ext::MidiChannel _channel;
-    const int _port;
-    const int _cc_number;
-    const float _min_range;
-    const float _max_range;
-    const bool _relative_mode;
+    std::string _processor_name;
+    std::string _parameter_name;
+    ext::MidiChannel _channel;
+    int _port;
+    int _cc_number;
+    float _min_range;
+    float _max_range;
+    bool _relative_mode;
 };
 
 class DisconnectCCEvent : public MidiControllerEvent
@@ -681,9 +681,9 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _processor_name;
-    const ext::MidiChannel _channel;
-    const int _port;
+    std::string _processor_name;
+    ext::MidiChannel _channel;
+    int _port;
     Action _action;
 };
 
@@ -698,7 +698,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _processor_name;
+    std::string _processor_name;
 };
 
 class DisconnectAllPCFromProcessorEvent : public MidiControllerEvent
@@ -712,7 +712,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    const std::string _processor_name;
+    std::string _processor_name;
 };
 
 class ClippingNotificationEvent : public Event

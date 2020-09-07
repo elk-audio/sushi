@@ -31,7 +31,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 
 namespace sushi {
 
-// TODO: I don't like this being here. It works, but I should move it.
+// TODO: I don't like this being here. It works, but we should move it.
 // It broke some unit tests that included .cpp files, this was a workaround.
 namespace ext {
 int int_from_midi_channel(ext::MidiChannel channel)
@@ -55,9 +55,8 @@ int int_from_midi_channel(ext::MidiChannel channel)
         case sushi::ext::MidiChannel::MIDI_CH_15: return 14;
         case sushi::ext::MidiChannel::MIDI_CH_16: return 15;
         case sushi::ext::MidiChannel::MIDI_CH_OMNI: return 16;
+        default: return 16;
     }
-
-    return -1;
 }
 }
 

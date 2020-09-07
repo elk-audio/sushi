@@ -66,14 +66,14 @@ enum class MidiDispatcherStatus
     OK,
     INVALID_MIDI_INPUT,
     INVALID_MIDI_OUTPUT,
-    INVALID_CHAIN_NAME,
     INVALID_PROCESSOR,
+    INVALID_TRACK,
     INVALID_PARAMETER,
     INVAlID_CHANNEL
 };
 
 // These structs are only used for returning query data, to midi_controller.
-struct CC_InputConnection
+struct CCInputConnection
 {
     InputConnection input_connection;
     int channel;
@@ -81,14 +81,14 @@ struct CC_InputConnection
     int cc;
 };
 
-struct PC_InputConnection
+struct PCInputConnection
 {
     int processor_id;
     int channel;
     int port;
 };
 
-struct Kbd_InputConnection
+struct KbdInputConnection
 {
     InputConnection input_connection;
     int port;
@@ -96,7 +96,7 @@ struct Kbd_InputConnection
     bool raw_midi;
 };
 
-struct Kbd_OutputConnection
+struct KbdOutputConnection
 {
     int track_id;
     int port;
@@ -118,15 +118,9 @@ public:
         _frontend = frontend;
     }
 
-    // TODO:
-    // These input and output counts, correspond to the ins and outs
-    // instantiated in the AlsaMidiFrontend class.
-    // Now they are only used for sanity checks.
-    // When the AlsaMidiFrontent can dynamically create/remove i/o ports,
-    // this will need to be made to correspond!
-
     /**
      * @brief Sets the number of midi input ports.
+     * Not intended to be called dynamically, only once during creation.
      * @param ports number of input ports.
      */
     void set_midi_inputs(int no_inputs)
@@ -144,6 +138,7 @@ public:
 
     /**
      * @brief Sets the number of midi output ports.
+     * Not intended to be called dynamically, only once during creation.
      * @param ports number of output ports.
      */
     void set_midi_outputs(int no_outputs)
@@ -197,7 +192,7 @@ public:
      * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections defined.
      * @return A vector of CC_InputConnections.
      */
-    std::vector<CC_InputConnection> get_all_cc_input_connections();
+    std::vector<CCInputConnection> get_all_cc_input_connections();
 
     /**
      * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections
@@ -205,7 +200,7 @@ public:
      * @param The id of the processor for which the connections are queried.
      * @return A vector of CC_InputConnections.
      */
-    std::vector<CC_InputConnection> get_cc_input_connections_for_processor(int processor_id);
+    std::vector<CCInputConnection> get_cc_input_connections_for_processor(int processor_id);
 
     /**
      * @brief Connects midi program change messages to a processor.
@@ -232,7 +227,7 @@ public:
      * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections defined.
      * @return A vector of PC_InputConnections.
      */
-    std::vector<PC_InputConnection> get_all_pc_input_connections();
+    std::vector<PCInputConnection> get_all_pc_input_connections();
 
     /**
      * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections
@@ -240,7 +235,7 @@ public:
      * @param The id of the processor for which the connections are queried.
      * @return A vector of PC_InputConnections.
      */
-    std::vector<PC_InputConnection> get_pc_input_connections_for_processor(int processor_id);
+    std::vector<PCInputConnection> get_pc_input_connections_for_processor(int processor_id);
 
     /**
      * @brief Connect a midi input to a track
@@ -269,7 +264,7 @@ public:
      * @brief Returns a vector of Kbd_InputConnections for all the Midi Keyboard input connections defined.
      * @return A vector of Kbd_InputConnections.
      */
-    std::vector<Kbd_InputConnection> get_all_kb_input_connections();
+    std::vector<KbdInputConnection> get_all_kb_input_connections();
 
     /**
      * @brief Connect a midi input to a track and send unprocessed
@@ -318,7 +313,7 @@ public:
      * @brief Returns a vector of Kbd_OutputConnections for all the Midi Keyboard output connections defined.
      * @return A vector of Kbd_OutputConnections.
      */
-    std::vector<Kbd_OutputConnection> get_all_kb_output_connections();
+    std::vector<KbdOutputConnection> get_all_kb_output_connections();
 
     /**
      * @brief Process a raw midi message and send it of according to the
@@ -340,8 +335,8 @@ public:
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
-    std::vector<CC_InputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
-    std::vector<PC_InputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
+    std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
+    std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
 
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
     std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
