@@ -379,7 +379,8 @@ protected:
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
 {
-    const std::string track_name = "track 1";
+    auto track = _test_engine.processor_container()->track("track 1");
+    ObjectId track_id = track->id();
 
     const bool raw_midi = false; // Do another with true?
 
@@ -389,7 +390,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
     _midi_dispatcher.set_midi_inputs(5);
 
     auto connection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                           track_name,
+                                                           track_id,
                                                            channel,
                                                            port,
                                                            raw_midi,
@@ -403,7 +404,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
     EXPECT_TRUE(_test_dispatcher->got_event());
 
     auto disconnection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                              track_name,
+                                                              track_id,
                                                               channel,
                                                               port,
                                                               raw_midi,
@@ -419,7 +420,8 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
 {
-    const std::string track_name = "track 1";
+    auto track = _test_engine.processor_container()->track("track 1");
+    ObjectId track_id = track->id();
 
     const bool raw_midi = true; // Do another with true?
 
@@ -429,7 +431,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
     _midi_dispatcher.set_midi_inputs(5);
 
     auto connection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                           track_name,
+                                                           track_id,
                                                            channel,
                                                            port,
                                                            raw_midi,
@@ -443,7 +445,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
     EXPECT_TRUE(_test_dispatcher->got_event());
 
     auto disconnection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                              track_name,
+                                                              track_id,
                                                               channel,
                                                               port,
                                                               raw_midi,
@@ -459,7 +461,8 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
 {
-    const std::string track_name = "track 1";
+    auto track = _test_engine.processor_container()->track("track 1");
+    ObjectId track_id = track->id();
 
     KeyboardEvent event_ch5(KeyboardEvent::Subtype::NOTE_ON,
                             1,
@@ -479,7 +482,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
     _midi_dispatcher.set_midi_outputs(5);
 
     auto connection_event = KbdOutputToTrackConnectionEvent(&_midi_dispatcher,
-                                                            track_name,
+                                                            track_id,
                                                             channel,
                                                             port,
                                                             KbdOutputToTrackConnectionEvent::Action::Connect,
@@ -496,7 +499,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
     //EXPECT_TRUE(_test_frontend.midi_sent_on_input(0));
 
     auto disconnection_event = KbdOutputToTrackConnectionEvent(&_midi_dispatcher,
-                                                               track_name,
+                                                               track_id,
                                                                channel,
                                                                port,
                                                                KbdOutputToTrackConnectionEvent::Action::Disconnect,
@@ -514,7 +517,11 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
 {
     ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_4;
     int port = 0;
-    const std::string processor_name = "processor";
+
+    // The id for the mock processor is generated by a static atomic counter in BaseIdGenetator, so needs to be fetched.
+    auto processor = _test_engine.processor_container()->processor("processor");
+    ObjectId processor_id = processor->id();
+
     const std::string parameter_name = "param 1";
 
     _midi_dispatcher.set_midi_inputs(5);
@@ -531,7 +538,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     // Connect CC Number 67:
 
     auto connect_event1 = ConnectCCToParameterEvent(&_midi_dispatcher,
-                                                    processor_name,
+                                                    processor_id,
                                                     parameter_name,
                                                     channel,
                                                     port,
@@ -547,7 +554,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     // Connect CC Number 68:
 
     auto connect_event2 = ConnectCCToParameterEvent(&_midi_dispatcher,
-                                                    processor_name,
+                                                    processor_id,
                                                     parameter_name,
                                                     channel,
                                                     port,
@@ -572,7 +579,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     // Connect CC Number 70:
 
     auto connect_event3 = ConnectCCToParameterEvent(&_midi_dispatcher,
-                                                    processor_name,
+                                                    processor_id,
                                                     parameter_name,
                                                     channel,
                                                     port,
@@ -597,7 +604,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     // Disconnect CC Number 67 only:
 
     auto disconnect_event = DisconnectCCEvent(&_midi_dispatcher,
-                                              processor_name,
+                                              processor_id,
                                               channel,
                                               port,
                                               67, // cc_number
@@ -618,7 +625,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     // Disconnect all remaining CC's:
 
     auto disconnect_all_event = DisconnectAllCCFromProcessorEvent(&_midi_dispatcher,
-                                                                  processor_name,
+                                                                  processor_id,
                                                                   IMMEDIATE_PROCESS);
 
     auto event_status_disconnect_all = disconnect_all_event.execute(&_test_engine);
@@ -637,7 +644,10 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
 TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
 {
     int port = 0;
-    const std::string processor_name = "processor";
+
+    // The id for the mock processor is generated by a static atomic counter in BaseIdGenetator, so needs to be fetched.
+    auto processor = _test_engine.processor_container()->processor("processor");
+    ObjectId processor_id = processor->id();
 
     _midi_dispatcher.set_midi_inputs(5);
 
@@ -647,7 +657,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto connect_event1 = PCToProcessorConnectionEvent(&_midi_dispatcher,
-                                                       processor_name,
+                                                       processor_id,
                                                        sushi::ext::MidiChannel::MIDI_CH_5,
                                                        port,
                                                        PCToProcessorConnectionEvent::Action::Connect,
@@ -665,8 +675,8 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto connect_event2 = PCToProcessorConnectionEvent(&_midi_dispatcher,
-                                                       processor_name,
-                                               sushi::ext::MidiChannel::MIDI_CH_6,
+                                                       processor_id,
+                                                       sushi::ext::MidiChannel::MIDI_CH_6,
                                                        port,
                                                        PCToProcessorConnectionEvent::Action::Connect,
                                                        IMMEDIATE_PROCESS);
@@ -683,7 +693,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto connect_event3 = PCToProcessorConnectionEvent(&_midi_dispatcher,
-                                                       processor_name,
+                                                       processor_id,
                                                sushi::ext::MidiChannel::MIDI_CH_7,
                                                        port,
                                                        PCToProcessorConnectionEvent::Action::Connect,
@@ -698,7 +708,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     // Disconnect Channel 5 only:
 
     auto disconnect_event = PCToProcessorConnectionEvent(&_midi_dispatcher,
-                                                         processor_name,
+                                                         processor_id,
                                                          sushi::ext::MidiChannel::MIDI_CH_5,
                                                          port,
                                                          PCToProcessorConnectionEvent::Action::Disconnect,
@@ -719,7 +729,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     // Disconnect all channels:
 
     auto disconnect_all_event = DisconnectAllPCFromProcessorEvent(&_midi_dispatcher,
-                                                                  processor_name,
+                                                                  processor_id,
                                                                   IMMEDIATE_PROCESS);
 
     auto event_status_disconnect_all = disconnect_all_event.execute(&_test_engine);

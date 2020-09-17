@@ -323,6 +323,7 @@ int main(int argc, char* argv[])
                                                                                     engine->processor_container());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
                                                                               midi_dispatcher.get(),
+                                                                              engine->processor_container(),
                                                                               config_filename);
 
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>                 midi_frontend;

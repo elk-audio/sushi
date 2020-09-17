@@ -551,13 +551,13 @@ public:
     };
 
     KbdInputToTrackConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                   const std::string& track_name,
+                                   ObjectId track_id,
                                    ext::MidiChannel channel,
                                    int port,
                                    bool raw_midi,
                                    Action action,
                                    Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                     _track_name(track_name),
+                                                     _track_id(track_id),
                                                      _channel(channel),
                                                      _port(port),
                                                      _raw_midi(raw_midi),
@@ -566,7 +566,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _track_name;
+    ObjectId _track_id;
     ext::MidiChannel _channel;
     int _port;
     bool _raw_midi;
@@ -582,12 +582,12 @@ public:
     };
 
     KbdOutputToTrackConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                    const std::string& track_name,
+                                    ObjectId track_id,
                                     ext::MidiChannel channel,
                                     int port,
                                     Action action,
                                     Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                      _track_name(track_name),
+                                                      _track_id(track_id),
                                                       _channel(channel),
                                                       _port(port),
                                                       _action(action) {}
@@ -595,7 +595,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _track_name;
+    ObjectId _track_id;
     ext::MidiChannel _channel;
     int _port;
     Action _action;
@@ -605,7 +605,7 @@ class ConnectCCToParameterEvent : public MidiControllerEvent
 {
 public:
     ConnectCCToParameterEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                              const std::string& processor_name,
+                              ObjectId processor_id,
                               const std::string& parameter_name,
                               ext::MidiChannel channel,
                               int port,
@@ -614,7 +614,7 @@ public:
                               float max_range,
                               bool relative_mode,
                               Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                _processor_name(processor_name),
+                                                _processor_id(processor_id),
                                                 _parameter_name(parameter_name),
                                                 _channel(channel),
                                                 _port(port),
@@ -626,7 +626,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _processor_name;
+    ObjectId _processor_id;
     std::string _parameter_name;
     ext::MidiChannel _channel;
     int _port;
@@ -640,12 +640,12 @@ class DisconnectCCEvent : public MidiControllerEvent
 {
 public:
     DisconnectCCEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                      const std::string& processor_name,
+                      ObjectId processor_id,
                       ext::MidiChannel channel,
                       int port,
                       int cc_number,
                       Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                        _processor_name(processor_name),
+                                        _processor_id(processor_id),
                                         _channel(channel),
                                         _port(port),
                                         _cc_number(cc_number) {}
@@ -653,7 +653,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _processor_name;
+    ObjectId _processor_id;
     ext::MidiChannel _channel;
     int _port;
     int _cc_number;
@@ -668,12 +668,12 @@ public:
     };
 
     PCToProcessorConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                 const std::string& processor_name,
+                                 ObjectId processor_id,
                                  ext::MidiChannel channel,
                                  int port,
                                  Action action,
                                  Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                   _processor_name(processor_name),
+                                                   _processor_id(processor_id),
                                                    _channel(channel),
                                                    _port(port),
                                                    _action(action) {}
@@ -681,7 +681,7 @@ public:
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _processor_name;
+    ObjectId _processor_id;
     ext::MidiChannel _channel;
     int _port;
     Action _action;
@@ -691,28 +691,28 @@ class DisconnectAllCCFromProcessorEvent : public MidiControllerEvent
 {
 public:
     DisconnectAllCCFromProcessorEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                      const std::string& processor_name,
+                                      ObjectId processor_id,
                                       Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                        _processor_name(processor_name) {}
+                                                        _processor_id(processor_id) {}
 
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _processor_name;
+    ObjectId _processor_id;
 };
 
 class DisconnectAllPCFromProcessorEvent : public MidiControllerEvent
 {
 public:
     DisconnectAllPCFromProcessorEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                      const std::string& processor_name,
+                                      ObjectId processor_id,
                                       Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                        _processor_name(processor_name) {}
+                                                        _processor_id(processor_id) {}
 
     int execute(engine::BaseEngine* /*engine*/) const override;
 
 private:
-    std::string _processor_name;
+    ObjectId _processor_id;
 };
 
 class ClippingNotificationEvent : public Event

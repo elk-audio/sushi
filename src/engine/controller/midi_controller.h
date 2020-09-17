@@ -40,7 +40,6 @@ class MidiController : public ext::MidiController
 public:
     MidiController(BaseEngine* engine,
                    midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                   ext::AudioGraphController* audio_graph_controller,
                    ext::ParameterController* parameter_controller);
 
     ~MidiController() override = default;
@@ -96,7 +95,6 @@ private:
     BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
-    ext::AudioGraphController* _graph_controller;
     ext::ParameterController* _parameter_controller;
 };
 

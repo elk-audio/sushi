@@ -185,17 +185,27 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
         for (const auto& con : midi["track_connections"].GetArray())
         {
             bool raw_midi = con["raw_midi"].GetBool();
+
+            auto track_name = con["track"].GetString();
+            const auto track = _processor_container->track(track_name);
+            if (track == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+
             MidiDispatcherStatus res;
             if (raw_midi)
             {
                 res = _midi_dispatcher->connect_raw_midi_to_track(con["port"].GetInt(),
-                                                                  con["track"].GetString(),
+                                                                  track->id(),
                                                                   _get_midi_channel(con["channel"]));
             }
             else
             {
                 res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
-                                                            con["track"].GetString(),
+                                                            track->id(),
                                                             _get_midi_channel(con["channel"]));
             }
             if (res != MidiDispatcherStatus::OK)
@@ -206,9 +216,6 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
-                                       "track connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -217,8 +224,17 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& con : midi["track_out_connections"].GetArray())
         {
+            auto track_name = con["track"].GetString();
+            const auto track = _processor_container->track(track_name);
+            if (track == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+
             auto res = _midi_dispatcher->connect_track_to_output(con["port"].GetInt(),
-                                                                 con["track"].GetString(),
+                                                                 track->id(),
                                                                  _get_midi_channel(con["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -234,9 +250,6 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                     "channel connections in Json Config file.", con["channel"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
-                                       "track connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -245,8 +258,17 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& con : midi["program_change_connections"].GetArray())
         {
+            auto processor_name = con["plugin"].GetString();
+            const auto processor = _processor_container->processor(processor_name);
+            if (processor == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                                "connection in Json config file.", processor_name);
+                return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            }
+
             auto res = _midi_dispatcher->connect_pc_to_processor(con["port"].GetInt(),
-                                                                 con["plugin"].GetString(),
+                                                                 processor->id(),
                                                                  _get_midi_channel(con["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -256,9 +278,6 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                    "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
-                               "connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -274,8 +293,20 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                 is_relative = (cc_mode.compare("relative") == 0);
             }
 
+            auto processor_name = cc_map["plugin_name"].GetString();
+
+            const auto processor = _processor_container->processor(processor_name);
+            if (processor == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                                "connection in Json config file.", processor_name);
+                return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            }
+
+            ObjectId processor_id = processor->id();
+
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
-                                                                 cc_map["plugin_name"].GetString(),
+                                                                 processor_id,
                                                                  cc_map["parameter_name"].GetString(),
                                                                  cc_map["cc_number"].GetInt(),
                                                                  cc_map["min_range"].GetFloat(),

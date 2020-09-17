@@ -257,14 +257,12 @@ int KbdInputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) cons
     {
         if(_action == Action::Connect)
         {
-            status = _midi_dispatcher->connect_kb_to_track(_port,
-                                                           _track_name,
-                                                           int_channel);
+            status = _midi_dispatcher->connect_kb_to_track(_port, _track_id, int_channel);
         }
         else
         {
             status = _midi_dispatcher->disconnect_kb_from_track(_port, // port maps to midi_input
-                                                                _track_name,
+                                                                _track_id,
                                                                 int_channel);
         }
     }
@@ -272,14 +270,12 @@ int KbdInputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) cons
     {
         if(_action == Action::Connect)
         {
-            status = _midi_dispatcher->connect_raw_midi_to_track(_port,
-                                                                 _track_name,
-                                                                 int_channel);
+            status = _midi_dispatcher->connect_raw_midi_to_track(_port, _track_id, int_channel);
         }
         else
         {
             status = _midi_dispatcher->disconnect_raw_midi_from_track(_port, // port maps to midi_input
-                                                                      _track_name,
+                                                                      _track_id,
                                                                       int_channel);
         }
     }
@@ -302,15 +298,11 @@ int KbdOutputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) con
 
     if(_action == Action::Connect)
     {
-        status = _midi_dispatcher->connect_track_to_output(_port,
-                                                           _track_name,
-                                                           int_channel);
+        status = _midi_dispatcher->connect_track_to_output(_port, _track_id, int_channel);
     }
     else
     {
-        status = _midi_dispatcher->disconnect_track_from_output(_port,
-                                                                _track_name,
-                                                                int_channel);
+        status = _midi_dispatcher->disconnect_track_from_output(_port, _track_id, int_channel);
     }
 
     if(status == midi_dispatcher::MidiDispatcherStatus::OK)
@@ -328,7 +320,7 @@ int ConnectCCToParameterEvent::execute(engine::BaseEngine* /*engine*/) const
     const int int_channel = ext::int_from_midi_channel(_channel);
 
     auto status = _midi_dispatcher->connect_cc_to_parameter(_port, // midi_input maps to port
-                                                            _processor_name,
+                                                            _processor_id,
                                                             _parameter_name,
                                                             _cc_number,
                                                             _min_range,
@@ -351,7 +343,7 @@ int DisconnectCCEvent::execute(engine::BaseEngine* /*engine*/) const
     const int int_channel = ext::int_from_midi_channel(_channel);
 
     const auto status = _midi_dispatcher->disconnect_cc_from_parameter(_port, // port maps to midi_input
-                                                                       _processor_name,
+                                                                       _processor_id,
                                                                        _cc_number,
                                                                        int_channel);
 
@@ -374,13 +366,13 @@ int PCToProcessorConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
     if(_action == Action::Connect)
     {
         status = _midi_dispatcher->connect_pc_to_processor(_port, // midi_input maps to port
-                                                           _processor_name,
+                                                           _processor_id,
                                                            int_channel);
     }
     else
     {
         status = _midi_dispatcher->disconnect_pc_from_processor(_port,
-                                                                _processor_name,
+                                                                _processor_id,
                                                                 int_channel);
     }
 
@@ -396,21 +388,12 @@ int PCToProcessorConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
 
 int DisconnectAllCCFromProcessorEvent::execute(engine::BaseEngine* /*engine*/) const
 {
-    auto input_connections = _midi_dispatcher->get_all_cc_input_connections();
-    for (const auto& connection : input_connections)
+    const auto status = _midi_dispatcher->disconnect_all_cc_from_processor(_processor_id);
+
+    if(status != midi_dispatcher::MidiDispatcherStatus::OK)
     {
-        const int int_channel = connection.channel;
-
-        const auto status = _midi_dispatcher->disconnect_cc_from_parameter(connection.port, // port maps to midi_input
-                                                                           _processor_name,
-                                                                           connection.cc,
-                                                                           int_channel);
-
-        if(status != midi_dispatcher::MidiDispatcherStatus::OK)
-        {
-            // TODO: We could do with a better error message.
-            return EventStatus::ERROR;
-        }
+        // TODO: We could do with a better error message.
+        return EventStatus::ERROR;
     }
 
     return EventStatus::HANDLED_OK;
@@ -418,20 +401,12 @@ int DisconnectAllCCFromProcessorEvent::execute(engine::BaseEngine* /*engine*/) c
 
 int DisconnectAllPCFromProcessorEvent::execute(engine::BaseEngine* /*engine*/) const
 {
-    auto input_connections = _midi_dispatcher->get_all_pc_input_connections();
-    for (const auto& connection : input_connections)
+    const auto status = _midi_dispatcher->disconnect_all_pc_from_processor(_processor_id);
+
+    if(status != midi_dispatcher::MidiDispatcherStatus::OK)
     {
-        const int int_channel = connection.channel;
-
-        const auto status = _midi_dispatcher->disconnect_pc_from_processor(connection.port, // port maps to midi_input
-                                                                           _processor_name,
-                                                                           int_channel);
-
-        if(status != midi_dispatcher::MidiDispatcherStatus::OK)
-        {
-            // TODO: We could do with a better error message.
-            return EventStatus::ERROR;
-        }
+        // TODO: We could do with a better error message.
+        return EventStatus::ERROR;
     }
 
     return EventStatus::HANDLED_OK;

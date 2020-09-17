@@ -35,7 +35,7 @@ protected:
                                               _engine->processor_container());
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
-        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _path);
+        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _engine->processor_container(), _path);
     }
 
     void TearDown()
