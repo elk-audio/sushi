@@ -868,7 +868,6 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
 
             while(inputs_found != input_connections.end())
             {
-                // TODO: Do we want status messages to be used also from these?
                 disconnect_kb_from_track(inputs_found->port,
                                          track_id,
                                          inputs_found->channel);
@@ -890,7 +889,6 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
 
             while(outputs_found != output_connections.end())
             {
-                // TODO: Do we want status messages to be used also from these?
                 disconnect_track_from_output(outputs_found->port,
                                              track_id,
                                              outputs_found->channel);

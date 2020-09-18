@@ -20,6 +20,8 @@
 
 #include "midi_controller.h"
 
+#include "midi_controller_events.h"
+
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
