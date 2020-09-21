@@ -247,7 +247,7 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
     SetUp("libvst2_test_plugin.so");
-    ASSERT_FALSE(_host_control._dummy_dispatcher.got_event());
+    ASSERT_EQ(_host_control._dummy_dispatcher.got_event(), EventStatus::NOT_HANDLED);
     _module_under_test->notify_parameter_change(0, 0.5f);
     auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
     ASSERT_FALSE(event == nullptr);

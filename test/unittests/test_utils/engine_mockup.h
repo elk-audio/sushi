@@ -17,6 +17,11 @@ using namespace sushi::midi_dispatcher;
 class EventDispatcherMockup : public dispatcher::BaseEventDispatcher
 {
 public:
+    enum class Action {
+        Discard,
+        Execute
+    };
+
     ~EventDispatcherMockup()
     {
         while (!_queue.empty())
@@ -39,17 +44,47 @@ public:
         _queue.push_front(event);
     }
 
-    bool got_event()
+    int got_event(Action action = Action::Discard, engine::BaseEngine* engine = nullptr)
     {
+        EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
+
         if (_queue.empty())
         {
-            return false;
-        } else
+            return status;
+        }
+        else
         {
-            Event* e = _queue.back();
+            auto event = _queue.back();
+
+            if(action == Action::Execute)
+            {
+                // The below really shouldn't be needed, it breaks the "Liskov substitution principle".
+                // All events should have an execute() method, with no "is_engine_event" and the like
+                // being necessary.
+                if (event->is_engine_event())
+                {
+                    if(engine == nullptr)
+                    {
+                        // To execute, a non-null engine is needed.
+                        // This will not be a problem when engine is not an argument to execute().
+                        assert(false);
+                    }
+
+                    // If we go with Lambas in events, the engine can just be captured in the Lambda.
+                    // If not, is should be a parameter to the Event class constructor.
+                    auto typed_event = static_cast<EngineEvent*>(event);
+
+                    status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
+                }
+            }
+            else
+            {
+                status = EventStatus::HANDLED_OK;
+            }
+
             _queue.pop_back();
-            delete e;
-            return true;
+            delete event;
+            return status;
         }
     }
 

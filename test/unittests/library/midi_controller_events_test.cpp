@@ -38,98 +38,70 @@ protected:
         _midi_dispatcher.set_frontend(&_test_frontend);
     }
 
-    void TearDown()
-    {
-
-    }
+    void TearDown() {}
 
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_test_engine.event_dispatcher(), _test_engine.processor_container()};
+    sushi::ext::ControlMockup _controller; // TODO: Maybe just the ParameterControllerMockup?
+    MidiController _midi_controller{&_test_engine, &_midi_dispatcher, _controller.parameter_controller_mockup()};
     EventDispatcherMockup* _test_dispatcher;
     DummyMidiFrontend _test_frontend;
-    sushi::ext::ControlMockup _controller;
 };
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
 {
     auto track = _test_engine.processor_container()->track("track 1");
     ObjectId track_id = track->id();
-
-    const bool raw_midi = false; // Do another with true?
-
+    bool raw_midi = false;
     ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_3;
     int port = 1;
 
     _midi_dispatcher.set_midi_inputs(5);
 
-    auto connection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                           track_id,
-                                                           channel,
-                                                           port,
-                                                           raw_midi,
-                                                           KbdInputToTrackConnectionEvent::Action::Connect,
-                                                           IMMEDIATE_PROCESS);
-
-    auto event_status_connect = connection_event.execute(&_test_engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect);
+    auto event_status_connect = _midi_controller.connect_kbd_input_to_track(track_id, channel, port, raw_midi);
+    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect);
+    // That the engine is passed as argument to execute violates the Liskov Substitution Principle and should not be necessary.
+    // A refactor to how events work would solve that.
+    auto execution_status1 = _test_dispatcher->got_event(EventDispatcherMockup::Action::Execute, &_test_engine);
+    ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
-    auto disconnection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                              track_id,
-                                                              channel,
-                                                              port,
-                                                              raw_midi,
-                                                              KbdInputToTrackConnectionEvent::Action::Disconnect,
-                                                              IMMEDIATE_PROCESS);
-
-    auto event_status_disconnect = disconnection_event.execute(&_test_engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect);
+    auto event_status_disconnect =  _midi_controller.disconnect_kbd_input(track_id, channel, port, raw_midi);
+    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    auto execution_status2 = _test_dispatcher->got_event(EventDispatcherMockup::Action::Execute, &_test_engine);
+    ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 }
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
 {
     auto track = _test_engine.processor_container()->track("track 1");
     ObjectId track_id = track->id();
-
-    const bool raw_midi = true; // Do another with true?
-
+    bool raw_midi = true;
     ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_3;
     int port = 1;
 
     _midi_dispatcher.set_midi_inputs(5);
 
-    auto connection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                           track_id,
-                                                           channel,
-                                                           port,
-                                                           raw_midi,
-                                                           KbdInputToTrackConnectionEvent::Action::Connect,
-                                                           IMMEDIATE_PROCESS);
-
-    auto event_status_connect = connection_event.execute(&_test_engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect);
+    auto event_status_connect = _midi_controller.connect_kbd_input_to_track(track_id, channel, port, raw_midi);
+    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect);
+    auto execution_status1 = _test_dispatcher->got_event(EventDispatcherMockup::Action::Execute, &_test_engine);
+    ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
-    auto disconnection_event = KbdInputToTrackConnectionEvent(&_midi_dispatcher,
-                                                              track_id,
-                                                              channel,
-                                                              port,
-                                                              raw_midi,
-                                                              KbdInputToTrackConnectionEvent::Action::Disconnect,
-                                                              IMMEDIATE_PROCESS);
-
-    auto event_status_disconnect = disconnection_event.execute(&_test_engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect);
+    auto event_status_disconnect =  _midi_controller.disconnect_kbd_input(track_id, channel, port, raw_midi);
+    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    auto execution_status2 = _test_dispatcher->got_event(EventDispatcherMockup::Action::Execute, &_test_engine);
+    ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_NOTE_OFF_CH3, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 }
 
 TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
@@ -200,13 +172,13 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     _midi_dispatcher.set_midi_inputs(5);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_70, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     // Connect CC Number 67:
 
@@ -241,13 +213,13 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect2);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_70, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     // Connect CC Number 70:
 
@@ -266,13 +238,13 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect3);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_70, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Disconnect CC Number 67 only:
 
@@ -287,13 +259,13 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_70, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Disconnect all remaining CC's:
 
@@ -305,13 +277,13 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect_all);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_68, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_CTRL_CH_CH4_70, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 }
 
 TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
@@ -327,7 +299,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     // Connect Channel 5:
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     auto connect_event1 = PCToProcessorConnectionEvent(&_midi_dispatcher,
                                                        processor_id,
@@ -340,12 +312,12 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect1);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Connect Channel 6:
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH6, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     auto connect_event2 = PCToProcessorConnectionEvent(&_midi_dispatcher,
                                                        processor_id,
@@ -358,12 +330,12 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect2);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH6, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Connect Channel 7:
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH7, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     auto connect_event3 = PCToProcessorConnectionEvent(&_midi_dispatcher,
                                                        processor_id,
@@ -376,7 +348,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_connect3);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH7, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Disconnect Channel 5 only:
 
@@ -391,13 +363,13 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH6, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH7, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::HANDLED_OK);
 
     // Disconnect all channels:
 
@@ -409,11 +381,11 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     ASSERT_EQ(EventStatus::HANDLED_OK, event_status_disconnect_all);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH5, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH6, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH7, IMMEDIATE_PROCESS);
-    EXPECT_FALSE(_test_dispatcher->got_event());
+    ASSERT_EQ(_test_dispatcher->got_event(), EventStatus::NOT_HANDLED);
 }

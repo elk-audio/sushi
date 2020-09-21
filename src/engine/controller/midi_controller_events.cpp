@@ -31,48 +31,6 @@ namespace engine {
 // TODO: Change their namespace?
 namespace controller_impl {
 
-int KbdInputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
-{
-    const int int_channel = ext::int_from_midi_channel(_channel);
-
-    midi_dispatcher::MidiDispatcherStatus status;
-    if(!_raw_midi)
-    {
-        if(_action == Action::Connect)
-        {
-            status = _midi_dispatcher->connect_kb_to_track(_port, _track_id, int_channel);
-        }
-        else
-        {
-            status = _midi_dispatcher->disconnect_kb_from_track(_port, // port maps to midi_input
-                                                                _track_id,
-                                                                int_channel);
-        }
-    }
-    else
-    {
-        if(_action == Action::Connect)
-        {
-            status = _midi_dispatcher->connect_raw_midi_to_track(_port, _track_id, int_channel);
-        }
-        else
-        {
-            status = _midi_dispatcher->disconnect_raw_midi_from_track(_port, // port maps to midi_input
-                                                                      _track_id,
-                                                                      int_channel);
-        }
-    }
-
-    if(status == midi_dispatcher::MidiDispatcherStatus::OK)
-    {
-        return EventStatus::HANDLED_OK;
-    }
-    else
-    {
-        return EventStatus::ERROR;
-    }
-}
-
 int KbdOutputToTrackConnectionEvent::execute(engine::BaseEngine* /*engine*/) const
 {
     const int int_channel = ext::int_from_midi_channel(_channel);

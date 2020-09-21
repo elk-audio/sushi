@@ -21,6 +21,8 @@
 #ifndef SUSHI_MIDI_CONTROLLER_EVENTS_H
 #define SUSHI_MIDI_CONTROLLER_EVENTS_H
 
+#include <functional>
+
 #include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
@@ -43,35 +45,21 @@ protected:
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
-class KbdInputToTrackConnectionEvent : public MidiControllerEvent
+class MidiControllerLambdaEvent : public MidiControllerEvent
 {
 public:
-    enum class Action {
-        Connect,
-        Disconnect
-    };
+    MidiControllerLambdaEvent(Time timestamp,
+                              // TODO: This parameter can be removed too, and be captured instead.
+                              midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                              std::function<int(midi_dispatcher::MidiDispatcher*)> function) : MidiControllerEvent(timestamp, midi_dispatcher),
+                                                                                               m_function(function) {}
 
-    KbdInputToTrackConnectionEvent(midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                                   ObjectId track_id,
-                                   ext::MidiChannel channel,
-                                   int port,
-                                   bool raw_midi,
-                                   Action action,
-                                   Time timestamp) : MidiControllerEvent(timestamp, midi_dispatcher),
-                                                     _track_id(track_id),
-                                                     _channel(channel),
-                                                     _port(port),
-                                                     _raw_midi(raw_midi),
-                                                     _action(action) {}
+    int execute(engine::BaseEngine* /*engine*/) const override {
+        return m_function(_midi_dispatcher);
+    }
 
-    int execute(engine::BaseEngine* /*engine*/) const override;
-
-private:
-    ObjectId _track_id;
-    ext::MidiChannel _channel;
-    int _port;
-    bool _raw_midi;
-    Action _action;
+protected:
+    std::function<int(midi_dispatcher::MidiDispatcher*)> m_function;
 };
 
 class KbdOutputToTrackConnectionEvent : public MidiControllerEvent
