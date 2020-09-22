@@ -215,24 +215,32 @@ MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input
 
 MidiDispatcherStatus MidiDispatcher::disconnect_all_cc_from_processor(ObjectId processor_id)
 {
-    MidiDispatcherStatus status = MidiDispatcherStatus::OK;
+    std::scoped_lock lock(_cc_routes_lock);
 
-    auto input_cc_connections = get_all_cc_input_connections();
-    for (const auto& connection : input_cc_connections)
+    for(auto input_i = _cc_routes.begin(); input_i != _cc_routes.end(); ++input_i)
     {
-        auto current_status = disconnect_cc_from_parameter(connection.port, // port maps to midi_input
-                                                           processor_id,
-                                                           connection.cc,
-                                                           connection.channel);
-
-        if(current_status != midi_dispatcher::MidiDispatcherStatus::OK)
+        auto& cc_channel_matrix = input_i->second;
+        for(size_t cc_i = 0 ; cc_i < cc_channel_matrix.size(); ++cc_i)
         {
-            // This only gets the last error status, but that is better than nothing.
-            status = current_status;
+            auto& channels = cc_channel_matrix[cc_i];
+            for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+            {
+                auto& connection_vector = cc_channel_matrix[cc_i][channel_i];
+                auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                                     connection_vector.end(),
+                                                     [&](const auto& c)
+                                                     {
+                                                         return c.target == processor_id;
+                                                     });
+
+                connection_vector.erase(erase_iterator, connection_vector.end());
+
+                SUSHI_LOG_INFO("Disconnected all CC's from processor ID \"{}\"", processor_id);
+            }
         }
     }
 
-    return status;
+    return MidiDispatcherStatus::OK;
 }
 
 std::vector<CCInputConnection> MidiDispatcher::get_all_cc_input_connections()
@@ -294,23 +302,28 @@ MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input
 
 MidiDispatcherStatus MidiDispatcher::disconnect_all_pc_from_processor(ObjectId processor_id)
 {
-    MidiDispatcherStatus status = MidiDispatcherStatus::OK;
+    std::scoped_lock lock(_pc_routes_lock);
 
-    auto input_pc_connections = get_all_pc_input_connections();
-    for (const auto& connection : input_pc_connections)
+    for(auto inputs_i = _pc_routes.begin(); inputs_i != _pc_routes.end(); ++inputs_i)
     {
-        auto current_status = disconnect_pc_from_processor(connection.port, // port maps to midi_input
-                                                           processor_id,
-                                                           connection.channel);
-
-        if(current_status != midi_dispatcher::MidiDispatcherStatus::OK)
+        auto& channels = inputs_i->second;
+        for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
         {
-            // This only gets the last error status, but that is better than nothing.
-            status = current_status;
+            auto& connection_vector = channels[channel_i];
+            auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                                 connection_vector.end(),
+                                                 [&](const auto& c)
+                                                 {
+                                                     return c.target == processor_id;
+                                                 });
+
+            connection_vector.erase(erase_iterator, connection_vector.end());
+
+            SUSHI_LOG_INFO("Disconnected all PC's from processor ID \"{}\"", processor_id);
         }
     }
 
-    return status;
+    return MidiDispatcherStatus::OK;
 }
 
 std::vector<PCInputConnection> MidiDispatcher::get_all_pc_input_connections()
@@ -895,7 +908,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
                 outputs_found++;
             }
 
-            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for processor {}", event->track());
+            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
             break;
         }
         case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
