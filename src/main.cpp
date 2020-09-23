@@ -319,8 +319,7 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
-    auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher(),
-                                                                                    engine->processor_container());
+    auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
                                                                               midi_dispatcher.get(),
                                                                               engine->processor_container(),

@@ -129,10 +129,8 @@ inline Event* make_program_change_event(const InputConnection& c,
     return new ProgramChangeEvent(c.target, msg.program, timestamp);
 }
 
-MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher,
-                               const engine::BaseProcessorContainer* processor_container) : _frontend(nullptr),
-                                                                                            _event_dispatcher(event_dispatcher),
-                                                                                            _processor_container(processor_container)
+MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher) : _frontend(nullptr),
+                                                                                    _event_dispatcher(event_dispatcher)
 {
     _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
@@ -148,7 +146,7 @@ MidiDispatcher::~MidiDispatcher()
 
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
                                                              ObjectId processor_id,
-                                                             const std::string& parameter_name,
+                                                             ObjectId parameter_id,
                                                              int cc_no,
                                                              float min_range,
                                                              float max_range,
@@ -159,20 +157,10 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
-    const auto processor = _processor_container->processor(processor_id);
-    if (processor == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_PROCESSOR;
-    }
-    const auto parameter = processor->parameter_from_name(parameter_name);
-    if (parameter == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_PARAMETER;
-    }
 
     InputConnection connection;
     connection.target = processor_id;
-    connection.parameter = parameter->id();
+    connection.parameter = parameter_id;
     connection.min_range = min_range;
     connection.max_range = max_range;
     connection.relative = use_relative_mode;
@@ -181,8 +169,8 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     std::scoped_lock lock(_cc_routes_lock);
 
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected parameter \"{}\" "
-                           "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor->name());
+    SUSHI_LOG_INFO("Connected parameter ID \"{}\" "
+                           "(cc number \"{}\") to processor ID \"{}\"", parameter_id, cc_no, processor_id);
     return MidiDispatcherStatus::OK;
 }
 

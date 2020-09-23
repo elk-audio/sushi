@@ -38,7 +38,7 @@ protected:
     }
 
     EngineMockup _engine{SAMPLE_RATE};
-    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher(), _engine.processor_container()};
+    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
     OfflineFrontend* _module_under_test;
 };
 

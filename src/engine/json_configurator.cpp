@@ -303,11 +303,16 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                 return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
             }
 
-            ObjectId processor_id = processor->id();
+            auto parameter_name = cc_map["parameter_name"].GetString();
+            const auto parameter = processor->parameter_from_name(parameter_name);
+            if (parameter == nullptr)
+            {
+                return JsonConfigReturnStatus::INVALID_PARAMETER;
+            }
 
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
-                                                                 processor_id,
-                                                                 cc_map["parameter_name"].GetString(),
+                                                                 processor->id(),
+                                                                 parameter->id(),
                                                                  cc_map["cc_number"].GetInt(),
                                                                  cc_map["min_range"].GetFloat(),
                                                                  cc_map["max_range"].GetFloat(),

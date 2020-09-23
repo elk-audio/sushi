@@ -260,16 +260,9 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
                                                            float max_range,
                                                            bool relative_mode)
 {
-    const auto [parameter_status, parameter_info] = _parameter_controller->get_parameter_info(processor_id, parameter_id);
-    if (parameter_status != ext::ControlStatus::OK)
-    {
-        return ext::ControlStatus::NOT_FOUND;
-    }
-    const std::string parameter_name =parameter_info.name;
-
     auto event = new ConnectCCToParameterEvent(_midi_dispatcher,
                                                processor_id,
-                                               parameter_name,
+                                               parameter_id,
                                                channel,
                                                port,
                                                cc_number,

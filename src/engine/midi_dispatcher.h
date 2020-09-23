@@ -111,8 +111,7 @@ class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
     SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher,
-                   const engine::BaseProcessorContainer* processor_container);
+    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
 
     virtual ~MidiDispatcher();
 
@@ -171,7 +170,7 @@ public:
      */
     MidiDispatcherStatus connect_cc_to_parameter(int midi_input,
                                                  ObjectId processor_id,
-                                                 const std::string& parameter_name,
+                                                 ObjectId parameter_id,
                                                  int cc_no,
                                                  float min_range,
                                                  float max_range,
@@ -373,7 +372,6 @@ private:
 
     midi_frontend::BaseMidiFrontend* _frontend;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
-    const engine::BaseProcessorContainer* _processor_container;
 };
 
 } // end namespace midi_dispatcher

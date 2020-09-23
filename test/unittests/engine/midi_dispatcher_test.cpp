@@ -129,8 +129,7 @@ protected:
     EngineMockup _test_engine{48000};
     EventDispatcherMockup _test_dispatcher;
     DummyMidiFrontend _test_frontend;
-    MidiDispatcher _module_under_test{&_test_dispatcher,
-                                      _test_engine.processor_container()};
+    MidiDispatcher _module_under_test{&_test_dispatcher};
 };
 
 TEST_F(TestMidiDispatcher, TestKeyboardDataConnection)
@@ -306,6 +305,9 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     auto processor = _test_engine.processor_container()->processor("processor");
     ObjectId processor_id = processor->id();
 
+    const auto parameter = processor->parameter_from_name("param 1");
+    ObjectId parameter_id = parameter->id();
+
     /* Test with no connections set */
     _module_under_test.send_midi(1, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
     _module_under_test.send_midi(5, TEST_CTRL_CH_CH4_67, IMMEDIATE_PROCESS);
@@ -316,7 +318,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     _module_under_test.set_midi_inputs(5);
     _module_under_test.connect_cc_to_parameter(1,
                                                processor_id,
-                                               "param 1",
+                                               parameter_id,
                                                67,
                                                0,
                                                100,
@@ -341,7 +343,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
     /* Connect with a specific midi channel (5) */
     _module_under_test.connect_cc_to_parameter(1,
                                                processor_id,
-                                               "param 1",
+                                               parameter_id,
                                                40,
                                                0,
                                                100,
@@ -361,7 +363,7 @@ TEST_F(TestMidiDispatcher, TestCCDataConnection)
 
     _module_under_test.connect_cc_to_parameter(1,
                                                processor_id,
-                                               "param 1",
+                                               parameter_id,
                                                68,
                                                0,
                                                100,
