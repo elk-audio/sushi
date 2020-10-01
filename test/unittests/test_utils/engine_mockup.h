@@ -44,42 +44,48 @@ public:
         _queue.push_front(event);
     }
 
-    int got_event(Action action = Action::Discard, engine::BaseEngine* engine = nullptr)
+    /**
+     * Call this to check if an event was received, and then discard it.
+     * @return
+     */
+    bool got_event()
+    {
+        if (_queue.empty())
+        {
+            return false;
+        } else
+        {
+            Event* e = _queue.back();
+            _queue.pop_back();
+            delete e;
+            return true;
+        }
+    }
+
+    /**
+     * Call this to check if an event was received, execute it, and then discard it.
+     * @param engine reference for the events execute method.
+     * @return The execution status of the event.
+     */
+    int execute_event(engine::BaseEngine* engine)
     {
         EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
 
         if (_queue.empty())
         {
             return status;
-        }
-        else
+        } else
         {
             auto event = _queue.back();
 
-            if(action == Action::Execute)
+            if (event->is_engine_event())
             {
-                // The below really shouldn't be needed, it breaks the "Liskov substitution principle".
-                // All events should have an execute() method, with no "is_engine_event" and the like
-                // being necessary.
-                if (event->is_engine_event())
-                {
-                    if(engine == nullptr)
-                    {
-                        // To execute, a non-null engine is needed.
-                        // This will not be a problem when engine is not an argument to execute().
-                        assert(false);
-                    }
+                // TODO: If we go with Lambdas in all executable events,
+                // the engine can just be captured in the Lambda.
+                // If not, it should be a parameter to the Event class constructor.
+                auto typed_event = static_cast<EngineEvent*>(event);
 
-                    // If we go with Lambas in events, the engine can just be captured in the Lambda.
-                    // If not, is should be a parameter to the Event class constructor.
-                    auto typed_event = static_cast<EngineEvent*>(event);
-
-                    status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
-                }
-            }
-            else
-            {
-                status = EventStatus::HANDLED_OK;
+                status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
             }
 
             _queue.pop_back();

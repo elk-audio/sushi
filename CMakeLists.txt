@@ -138,7 +138,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/controller/audio_graph_controller.cpp
                       src/engine/controller/parameter_controller.cpp
                       src/engine/controller/program_controller.cpp
-                      src/engine/controller/midi_controller_events.cpp
                       src/engine/controller/midi_controller.cpp
                       src/engine/controller/audio_routing_controller.cpp
                       src/engine/controller/cv_gate_controller.cpp
@@ -226,7 +225,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/controller/audio_graph_controller.h
                         src/engine/controller/parameter_controller.h
                         src/engine/controller/program_controller.h
-                        src/engine/controller/midi_controller_events.h
                         src/engine/controller/midi_controller.h
                         src/engine/controller/audio_routing_controller.h
                         src/engine/controller/cv_gate_controller.h

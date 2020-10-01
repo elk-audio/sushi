@@ -376,6 +376,22 @@ protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
 };
 
+template <typename LambdaType>
+class LambdaEvent : public EngineEvent
+{
+public:
+    LambdaEvent(LambdaType work_lambda,
+                Time timestamp) : EngineEvent(timestamp),
+                                  _work_lambda(work_lambda) {}
+
+    int execute(engine::BaseEngine*) const override {
+        return _work_lambda();
+    }
+
+protected:
+    LambdaType _work_lambda;
+};
+
 class AddTrackEvent : public EngineEvent
 {
 public:

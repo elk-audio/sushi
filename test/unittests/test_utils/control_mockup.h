@@ -9,9 +9,9 @@
 namespace sushi {
 namespace ext {
 
-const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", 0, 0, 0};
-const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", 1, 1, 1};
-const ParameterInfo parameter_3{2, ParameterType::BOOL, "param 3", "param 3", "unit", -1, -1, -1};
+const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", false, 0, 0};
+const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", true, 1, 1};
+const ParameterInfo parameter_3{2, ParameterType::BOOL, "param 3", "param 3", "unit", false, -1, -1};
 const std::vector<ParameterInfo> parameters{parameter_1, parameter_2, parameter_3};
 
 const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};

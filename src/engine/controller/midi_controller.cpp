@@ -20,8 +20,6 @@
 
 #include "midi_controller.h"
 
-#include "midi_controller_events.h"
-
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
@@ -209,16 +207,16 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
 {
     const int int_channel = ext::int_from_midi_channel(channel);
 
-    auto lambda = [int_channel, track_id, port, raw_midi](midi_dispatcher::MidiDispatcher* midi_dispatcher)
+    auto lambda = [=] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         if(!raw_midi)
         {
-            status = midi_dispatcher->connect_kb_to_track(port, track_id, int_channel);
+            status = _midi_dispatcher->connect_kb_to_track(port, track_id, int_channel);
         }
         else
         {
-            status = midi_dispatcher->connect_raw_midi_to_track(port, track_id, int_channel);
+            status = _midi_dispatcher->connect_raw_midi_to_track(port, track_id, int_channel);
         }
 
         if(status == midi_dispatcher::MidiDispatcherStatus::OK)
@@ -231,7 +229,8 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
         }
     };
 
-    auto event = new MidiControllerLambdaEvent(IMMEDIATE_PROCESS, _midi_dispatcher, lambda);
+    // If you get a compilation error here, it is due to a bug in gcc 8 - upgrade to 9.
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
@@ -240,13 +239,24 @@ ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
                                                                  ext::MidiChannel channel,
                                                                  int port)
 {
-    auto event = new KbdOutputToTrackConnectionEvent(_midi_dispatcher,
-                                                     track_id,
-                                                     channel,
-                                                     port,
-                                                     KbdOutputToTrackConnectionEvent::Action::Connect,
-                                                     IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        midi_dispatcher::MidiDispatcherStatus status;
+        status = _midi_dispatcher->connect_track_to_output(port, track_id, int_channel);
+
+        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
@@ -260,30 +270,57 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
                                                            float max_range,
                                                            bool relative_mode)
 {
-    auto event = new ConnectCCToParameterEvent(_midi_dispatcher,
-                                               processor_id,
-                                               parameter_id,
-                                               channel,
-                                               port,
-                                               cc_number,
-                                               min_range,
-                                               max_range,
-                                               relative_mode,
-                                               IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        auto status = _midi_dispatcher->connect_cc_to_parameter(port, // midi_input maps to port
+                                                                processor_id,
+                                                                parameter_id,
+                                                                cc_number,
+                                                                min_range,
+                                                                max_range,
+                                                                relative_mode,
+                                                                int_channel);
+
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext::MidiChannel channel, int port)
 {
-    auto event = new PCToProcessorConnectionEvent(_midi_dispatcher,
-                                                  processor_id,
-                                                  channel,
-                                                  port,
-                                                  PCToProcessorConnectionEvent::Action::Connect,
-                                                  IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        midi_dispatcher::MidiDispatcherStatus status;
+
+        status = _midi_dispatcher->connect_pc_to_processor(port, // midi_input maps to port
+                                                           processor_id,
+                                                           int_channel);
+
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
@@ -292,20 +329,20 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
 {
     const int int_channel = ext::int_from_midi_channel(channel);
 
-    auto lambda = [int_channel, track_id, port, raw_midi](midi_dispatcher::MidiDispatcher* midi_dispatcher)
+    auto lambda = [=]() -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         if(!raw_midi)
         {
-            status = midi_dispatcher->disconnect_kb_from_track(port, // port maps to midi_input
-                                                               track_id,
-                                                               int_channel);
+            status = _midi_dispatcher->disconnect_kb_from_track(port, // port maps to midi_input
+                                                                track_id,
+                                                                int_channel);
         }
         else
         {
-            status = midi_dispatcher->disconnect_raw_midi_from_track(port, // port maps to midi_input
-                                                                     track_id,
-                                                                     int_channel);
+            status = _midi_dispatcher->disconnect_raw_midi_from_track(port, // port maps to midi_input
+                                                                      track_id,
+                                                                      int_channel);
         }
 
         if(status == midi_dispatcher::MidiDispatcherStatus::OK)
@@ -318,7 +355,7 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
         }
     };
 
-    auto event = new MidiControllerLambdaEvent(IMMEDIATE_PROCESS, _midi_dispatcher, lambda);
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
 
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
@@ -326,59 +363,119 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
 
 ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::MidiChannel channel, int port)
 {
-    auto event = new KbdOutputToTrackConnectionEvent(_midi_dispatcher,
-                                                     track_id,
-                                                     channel,
-                                                     port,
-                                                     KbdOutputToTrackConnectionEvent::Action::Disconnect,
-                                                     IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        midi_dispatcher::MidiDispatcherStatus status;
+        status = _midi_dispatcher->disconnect_track_from_output(port, track_id, int_channel);
+
+        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChannel channel, int port, int cc_number)
 {
-    auto event = new DisconnectCCEvent(_midi_dispatcher,
-                                       processor_id,
-                                       channel,
-                                       port,
-                                       cc_number,
-                                       IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        const auto status = _midi_dispatcher->disconnect_cc_from_parameter(port, // port maps to midi_input
+                                                                           processor_id,
+                                                                           cc_number,
+                                                                           int_channel);
+
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChannel channel, int port)
 {
-    auto event = new PCToProcessorConnectionEvent(_midi_dispatcher,
-                                                  processor_id,
-                                                  channel,
-                                                  port,
-                                                  PCToProcessorConnectionEvent::Action::Disconnect,
-                                                  IMMEDIATE_PROCESS);
+    const int int_channel = ext::int_from_midi_channel(channel);
 
+    auto lambda = [=] () -> int
+    {
+        midi_dispatcher::MidiDispatcherStatus status;
+
+        status = _midi_dispatcher->disconnect_pc_from_processor(port,
+                                                                processor_id,
+                                                                int_channel);
+
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus MidiController::disconnect_all_cc_from_processor(int processor_id)
 {
-    auto event = new DisconnectAllCCFromProcessorEvent(_midi_dispatcher,
-                                                       processor_id,
-                                                       IMMEDIATE_PROCESS);
+    auto lambda = [=] () -> int
+    {
+        const auto status = _midi_dispatcher->disconnect_all_cc_from_processor(processor_id);
 
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processor_id)
 {
-    auto event = new DisconnectAllPCFromProcessorEvent(_midi_dispatcher,
-                                                       processor_id,
-                                                       IMMEDIATE_PROCESS);
+    auto lambda = [=] () -> int
+    {
+        const auto status = _midi_dispatcher->disconnect_all_pc_from_processor(processor_id);
 
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
+        {
+            return EventStatus::HANDLED_OK;
+        }
+        else
+        {
+            return EventStatus::ERROR;
+        }
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
