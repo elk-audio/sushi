@@ -493,16 +493,19 @@ static int osc_delete_processor(const char* /*path*/,
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
-                         ext::SushiControl* controller,
                          int server_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
                                           _server_port(server_port),
-                                          _send_port(send_port),
-                                          _controller(controller),
-                                          _graph_controller(controller->audio_graph_controller()),
-                                          _param_controller(controller->parameter_controller())
+                                          _send_port(send_port)
 {}
+
+void OSCFrontend::set_controller_reference(ext::SushiControl* controller)
+{
+    _controller = controller;
+    _graph_controller = controller->audio_graph_controller();
+    _param_controller = controller->parameter_controller();
+}
 
 ControlFrontendStatus OSCFrontend::init()
 {
@@ -773,6 +776,10 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/set_timing_statistics_enabled", "i", osc_set_timing_statistics_enabled, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "s", osc_reset_timing_statistics, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
+
+
+    // TODO Ilias: We should remove these:
+    // They are already outdated.
     lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "sssss", osc_add_processor_to_track, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "ssssss", osc_add_processor_to_track, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/move_processor_on_track", "sss", osc_move_processor, this->_controller);

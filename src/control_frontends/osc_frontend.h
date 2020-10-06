@@ -50,9 +50,11 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int server_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, int server_port, int send_port);
 
     ~OSCFrontend();
+
+    void set_controller_reference(ext::SushiControl* controller);
 
     /**
      * @brief Connect osc to a given parameter of a given processor.
@@ -164,12 +166,15 @@ private:
 
     std::atomic_bool _running;
 
-    sushi::ext::SushiControl* _controller;
-    sushi::ext::AudioGraphController* _graph_controller;
-    sushi::ext::ParameterController*  _param_controller;
+    sushi::ext::SushiControl* _controller {nullptr};
+    sushi::ext::AudioGraphController* _graph_controller {nullptr};
+    sushi::ext::ParameterController*  _param_controller {nullptr};
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
+
+    // TODO Ilias: Make a uint64 key that contains both ObjectID's
+    // Gustav did something like this in grpc, _map_key. Make this more general!
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 

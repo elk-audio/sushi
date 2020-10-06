@@ -28,6 +28,7 @@ protected:
 
     void SetUp()
     {
+        _module_under_test.set_controller_reference(&_controller);
         std::stringstream port_stream;
         port_stream << _server_port;
         auto port_str = port_stream.str();
@@ -62,7 +63,7 @@ protected:
     int _server_port{OSC_TEST_SERVER_PORT};
     lo_address _address;
     sushi::ext::ControlMockup _controller;
-    OSCFrontend _module_under_test{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
+    OSCFrontend _module_under_test{&_test_engine, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
 };
 
 TEST_F(TestOSCFrontend, TestConnectAll)

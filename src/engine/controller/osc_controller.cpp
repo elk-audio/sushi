@@ -27,6 +27,9 @@ namespace controller_impl {
 // TODO - Remove when stubs have been properly implemented
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+
+// TODO Ilias: Q Where do we keep these values now?
+
 int OscController::get_send_port() const
 {
     return 0;
@@ -50,6 +53,11 @@ ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, 
 ext::ControlStatus OscController::disable_output_for_parameter(int processor_id, int parameter_id)
 {
     return ext::ControlStatus::UNSUPPORTED_OPERATION;
+}
+
+void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
+{
+    _osc_frontend = osc_frontend;
 }
 
 #pragma GCC diagnostic pop

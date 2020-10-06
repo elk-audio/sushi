@@ -112,5 +112,10 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
     }
 }
 
+void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
+{
+    _osc_controller_impl.set_osc_frontend(osc_frontend);
+}
+
 }// namespace engine
 }// namespace sushi

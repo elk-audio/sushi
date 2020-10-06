@@ -21,6 +21,7 @@
 #ifndef SUSHI_OSC_CONTROLLER_H
 #define SUSHI_OSC_CONTROLLER_H
 
+#include <control_frontends/osc_frontend.h>
 #include "control_interface.h"
 #include "engine/base_engine.h"
 
@@ -32,6 +33,8 @@ class OscController : public ext::OscController
 {
 public:
     OscController(BaseEngine* engine) : _engine(engine) {}
+
+    void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
     ~OscController() override = default;
 
@@ -46,7 +49,8 @@ public:
     ext::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
 
 private:
-    BaseEngine* _engine;
+    BaseEngine* _engine {nullptr};
+    control_frontend::OSCFrontend* _osc_frontend {nullptr};
 };
 
 } // namespace controller_impl
