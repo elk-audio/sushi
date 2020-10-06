@@ -261,7 +261,7 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
     EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
     EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
 
-    /* Lower valume and run until the hold time has passed */
+    /* Lower volume and run until the hold time has passed */
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
     for (int i = 0; i <= TEST_SAMPLERATE * 6 / AUDIO_CHUNK_SIZE ; ++i)
     {

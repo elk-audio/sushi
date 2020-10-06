@@ -43,7 +43,7 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    void _process_rms(const ChunkSampleBuffer& in, bool linked);
+    void _process_peak_detection(const ChunkSampleBuffer& in, bool linked);
 
     void _process_clip_detection(const ChunkSampleBuffer& in, bool linked);
 

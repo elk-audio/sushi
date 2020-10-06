@@ -79,7 +79,7 @@ void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     bypass_process(in_buffer, out_buffer);
 
     bool linked = _link_channels_parameter->processed_value();
-    _process_rms(in_buffer, linked);
+    _process_peak_detection(in_buffer, linked);
     _process_clip_detection(in_buffer, linked);
 }
 
@@ -104,7 +104,7 @@ void PeakMeterPlugin::_update_refresh_interval(float sample_rate)
     }
 }
 
-void PeakMeterPlugin::_process_rms(const ChunkSampleBuffer& in, bool linked)
+void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool linked)
 {
     float peak[MAX_METERED_CHANNELS] = {0,0};
     int channels = std::min(MAX_METERED_CHANNELS, in.channel_count());
