@@ -340,10 +340,10 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
-                         int server_port,
+                         int receive_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
-                                          _server_port(server_port),
+                                          _receive_port(receive_port),
                                           _send_port(send_port)
 {}
 
@@ -357,7 +357,7 @@ void OSCFrontend::set_controller_reference(ext::SushiControl* controller)
 ControlFrontendStatus OSCFrontend::init()
 {
     std::stringstream port_stream;
-    port_stream << _server_port;
+    port_stream << _receive_port;
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
     if (_osc_server == nullptr)
     {
@@ -417,7 +417,11 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     {
         return false;
     }
-    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server,
+                                          osc_path.c_str(),
+                                          "f",
+                                          osc_send_parameter_change_event,
+                                          connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -432,7 +436,11 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
     {
         return false;
     }
-    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server,
+                                          osc_path.c_str(),
+                                          "s",
+                                          osc_send_string_parameter_change_event,
+                                          connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -453,8 +461,28 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     }
     std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" +
                                             osc::make_safe_path(parameter_name);
+
     _outgoing_connections[processor_id][parameter_id] = id_string;
+
     SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    return true;
+}
+
+bool OSCFrontend::disconnect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
+{
+    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
+    if (parameter_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+
+    _outgoing_connections[processor_id].erase(parameter_id);
+
     return true;
 }
 
@@ -468,7 +496,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
         return {nullptr, ""};
     }
     osc_path = osc_path + osc::make_safe_path(processor_name);
-    OscConnection* connection = new OscConnection;
+    auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
     connection->instance = this;
@@ -721,6 +749,31 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
     return EventStatus::HANDLED_OK;
+}
+
+int OSCFrontend::get_receive_port() const
+{
+    return _receive_port;
+}
+
+int OSCFrontend::get_send_port() const
+{
+    return _send_port;
+}
+
+std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
+{
+    auto outputs = std::vector<std::string>();
+
+    for (const auto& connectionPair : _outgoing_connections)
+    {
+        for (const auto& connection : connectionPair.second)
+        {
+            outputs.push_back(connection.second);
+        }
+    }
+
+    return outputs;
 }
 
 } // namespace control_frontend

@@ -27,32 +27,91 @@ namespace controller_impl {
 // TODO - Remove when stubs have been properly implemented
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-
-// TODO Ilias: Q Where do we keep these values now?
+OscController::OscController(BaseEngine* engine) : _engine(engine),
+                                                   _event_dispatcher(engine->event_dispatcher()),
+                                                   _processors(engine->processor_container()) {}
 
 int OscController::get_send_port() const
 {
-    return 0;
+    return _osc_frontend->get_send_port();
 }
 
 int OscController::get_receive_port() const
 {
-    return 0;
+    return _osc_frontend->get_receive_port();
 }
 
 std::vector<std::string> OscController::get_enabled_parameter_outputs() const
 {
-    return std::vector<std::string>();
+    return _osc_frontend->get_enabled_parameter_outputs();
 }
 
 ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, int parameter_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    auto lambda = [=] () -> int
+    {
+        // Here we SHOULD use name, since it is needed for building the OSC "Address Path".
+        // We could avoid the _processors dependency here, though not crucial, by having 4 parameters to the call.
+
+        auto processor = _processors->processor(processor_id);
+        if (processor == nullptr)
+        {
+            return EventStatus::ERROR;
+        }
+
+        auto parameter_descriptor = processor->parameter_from_id(parameter_id);
+        if (parameter_descriptor == nullptr)
+        {
+            return EventStatus::ERROR;
+        }
+
+        bool status = _osc_frontend->connect_from_parameter(processor->name(), parameter_descriptor->name());
+
+        if(status == false)
+        {
+            return EventStatus::ERROR;
+        }
+
+        return EventStatus::HANDLED_OK;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus OscController::disable_output_for_parameter(int processor_id, int parameter_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    auto lambda = [=] () -> int
+    {
+        // Here we SHOULD use name, since it is needed for building the OSC "Address Path".
+        // We could avoid the _processors dependency here, though not crucial, by having 4 parameters to the call.
+
+        auto processor = _processors->processor(processor_id);
+        if (processor == nullptr)
+        {
+            return EventStatus::ERROR;
+        }
+
+        auto parameter_descriptor = processor->parameter_from_id(parameter_id);
+        if (parameter_descriptor == nullptr)
+        {
+            return EventStatus::ERROR;
+        }
+
+        bool status = _osc_frontend->disconnect_from_parameter(processor->name(), parameter_descriptor->name());
+
+        if(status == false)
+        {
+            return EventStatus::ERROR;
+        }
+
+        return EventStatus::HANDLED_OK;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
