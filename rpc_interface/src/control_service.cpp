@@ -1351,7 +1351,6 @@ grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* co
 
     auto status = _controller->enable_output_for_parameter(processor_id, parameter_id);
 
-    // TODO Ilias: Check that all status messages are covered.
     return to_grpc_status(status);
 }
 
@@ -1364,7 +1363,6 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* c
 
     auto status = _controller->disable_output_for_parameter(processor_id, parameter_id);
 
-    // TODO Ilias: Check that all status messages are covered.
     return to_grpc_status(status);
 }
 
