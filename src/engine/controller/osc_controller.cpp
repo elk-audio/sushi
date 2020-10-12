@@ -33,12 +33,12 @@ OscController::OscController(BaseEngine* engine) : _engine(engine),
 
 int OscController::get_send_port() const
 {
-    return _osc_frontend->get_send_port();
+    return _osc_frontend->send_port();
 }
 
 int OscController::get_receive_port() const
 {
-    return _osc_frontend->get_receive_port();
+    return _osc_frontend->receive_port();
 }
 
 std::vector<std::string> OscController::get_enabled_parameter_outputs() const

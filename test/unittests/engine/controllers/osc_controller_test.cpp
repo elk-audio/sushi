@@ -27,23 +27,17 @@ protected:
     void SetUp()
     {
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
-        _osc_frontend.set_controller_reference(&_controller);
         ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend.init());
         _osc_controller.set_osc_frontend(&_osc_frontend);
-        // Since we do not want OSC messages to be sent/received, in lieu of a mock class,
-        // the frontend is not started with .run().
-        // TODO: Check if a mock osc frontent is a good idea? No...
     }
 
-     void TearDown() {
-        // And not stopped with .stop().
-    }
+    void TearDown() {}
 
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
 
     sushi::ext::ControlMockup _controller;
     OscController _osc_controller{&_test_engine};
-    OSCFrontend _osc_frontend{&_test_engine, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
+    OSCFrontend _osc_frontend{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
     EventDispatcherMockup* _test_dispatcher;
 };
 
@@ -57,7 +51,7 @@ TEST_F(OscControllerEventTestFrontend, TestBasicPolling)
 
     auto enabled_outputs = _osc_controller.get_enabled_parameter_outputs();
 
-    ASSERT_EQ(enabled_outputs.size(), 0);
+    ASSERT_EQ(enabled_outputs.size(), 0u);
 }
 
 TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
@@ -77,7 +71,7 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
 
     auto enabled_outputs1 = _osc_controller.get_enabled_parameter_outputs();
 
-    ASSERT_EQ(enabled_outputs1.size(), 1);
+    ASSERT_EQ(enabled_outputs1.size(), 1u);
 
     ASSERT_EQ(enabled_outputs1[0], "/parameter/processor/param_1");
 
@@ -89,5 +83,5 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
 
     auto enabled_outputs2 = _osc_controller.get_enabled_parameter_outputs();
 
-    ASSERT_EQ(enabled_outputs2.size(), 0);
+    ASSERT_EQ(enabled_outputs2.size(), 0u);
 }

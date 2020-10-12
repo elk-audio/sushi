@@ -1313,24 +1313,24 @@ grpc::Status CvGateControlService::DisconnectAllGateOutputsFromProcessor(grpc::S
 }
 
 
-grpc::Status OscControlService::GetSendPort(grpc::ServerContext* context,
-                                            const sushi_rpc::GenericVoidValue* request,
+grpc::Status OscControlService::GetSendPort(grpc::ServerContext* /*context*/,
+                                            const sushi_rpc::GenericVoidValue* /*request*/,
                                             sushi_rpc::GenericIntValue* response)
 {
     response->set_value(_controller->get_send_port());
     return grpc::Status::OK;
 }
 
-grpc::Status OscControlService::GetReceivePort(grpc::ServerContext* context,
-                                               const sushi_rpc::GenericVoidValue* request,
+grpc::Status OscControlService::GetReceivePort(grpc::ServerContext* /*context*/,
+                                               const sushi_rpc::GenericVoidValue* /*request*/,
                                                sushi_rpc::GenericIntValue* response)
 {
     response->set_value(_controller->get_receive_port());
     return grpc::Status::OK;
 }
 
-grpc::Status OscControlService::GetEnabledParameterOutputs(grpc::ServerContext* context,
-                                                           const sushi_rpc::GenericVoidValue* request,
+grpc::Status OscControlService::GetEnabledParameterOutputs(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::GenericVoidValue* /*request*/,
                                                            sushi_rpc::OscParameterOutputList* response)
 {
     auto enabled_outputs = _controller->get_enabled_parameter_outputs();
@@ -1342,9 +1342,9 @@ grpc::Status OscControlService::GetEnabledParameterOutputs(grpc::ServerContext* 
     return grpc::Status::OK;
 }
 
-grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* context,
+grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* /*context*/,
                                                          const sushi_rpc::ParameterIdentifier* request,
-                                                         sushi_rpc::GenericVoidValue* response)
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
 {
     const auto processor_id = request->processor_id();
     const auto parameter_id = request->parameter_id();
@@ -1354,9 +1354,9 @@ grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* co
     return to_grpc_status(status);
 }
 
-grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* context,
+grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* /*context*/,
                                                           const sushi_rpc::ParameterIdentifier* request,
-                                                          sushi_rpc::GenericVoidValue* response)
+                                                          sushi_rpc::GenericVoidValue* /*response*/)
 {
     const auto processor_id = request->processor_id();
     const auto parameter_id = request->parameter_id();

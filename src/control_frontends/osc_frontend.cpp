@@ -340,19 +340,16 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
+                         ext::SushiControl* controller,
                          int receive_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
                                           _receive_port(receive_port),
-                                          _send_port(send_port)
+                                          _send_port(send_port),
+                                          _controller(controller),
+                                          _graph_controller(controller->audio_graph_controller()),
+                                          _param_controller(controller->parameter_controller())
 {}
-
-void OSCFrontend::set_controller_reference(ext::SushiControl* controller)
-{
-    _controller = controller;
-    _graph_controller = controller->audio_graph_controller();
-    _param_controller = controller->parameter_controller();
-}
 
 ControlFrontendStatus OSCFrontend::init()
 {
@@ -750,12 +747,12 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
     return EventStatus::HANDLED_OK;
 }
 
-int OSCFrontend::get_receive_port() const
+int OSCFrontend::receive_port() const
 {
     return _receive_port;
 }
 
-int OSCFrontend::get_send_port() const
+int OSCFrontend::send_port() const
 {
     return _send_port;
 }

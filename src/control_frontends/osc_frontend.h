@@ -50,11 +50,9 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, int receive_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int receive_port, int send_port);
 
     ~OSCFrontend();
-
-    void set_controller_reference(ext::SushiControl* controller);
 
     /**
      * @brief Connect osc to a given parameter of a given processor.
@@ -152,9 +150,9 @@ public:
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
-    int get_receive_port() const;
+    int receive_port() const;
 
-    int get_send_port() const;
+    int send_port() const;
 
 private:
     void _completion_callback(Event* event, int return_status) override;
