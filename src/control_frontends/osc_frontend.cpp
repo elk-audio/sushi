@@ -563,7 +563,6 @@ bool OSCFrontend::connect_processor_parameters(const std::string& processor_name
         if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
         {
             connect_to_parameter(processor_name, param.name);
-            connect_from_parameter(processor_name, param.name);
         }
         if (param.type == ext::ParameterType::STRING_PROPERTY)
         {

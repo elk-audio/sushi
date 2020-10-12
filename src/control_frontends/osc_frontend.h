@@ -193,8 +193,6 @@ private:
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
 
-    // TODO Ilias: Make a uint64 key that contains both ObjectID's
-    // Gustav did something like this in grpc, _map_key. Make this more general!
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 
