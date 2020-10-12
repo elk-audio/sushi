@@ -31,7 +31,7 @@ namespace controller_impl {
 class SystemController : public ext::SystemController
 {
 public:
-    SystemController(BaseEngine* engine) : _engine(engine) {}
+    SystemController(BaseEngine* engine);
 
     ~SystemController() = default;
 
@@ -47,6 +47,14 @@ public:
 
 private:
     BaseEngine* _engine;
+
+    std::string _interface_version;
+    std::string _sushi_version;
+    std::vector<std::string> _build_options;
+    ext::SushiBuildInfo _build_info;
+
+    int _audio_inputs{0};
+    int _audio_outputs{0};
 };
 
 } // namespace controller_impl
