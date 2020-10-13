@@ -28,7 +28,7 @@ namespace controller_impl {
 
 SystemController::SystemController(BaseEngine* engine) : _engine(engine)
 {
-    // TODO Ilias: Populate this.
+    // TODO Ilias: Populate interface version!
     _interface_version = "1.2.3. POPULATE THIS PLACEHOLDER";
 
     _sushi_version = std::to_string(SUSHI__VERSION_MAJ) + "." +
@@ -48,7 +48,7 @@ SystemController::SystemController(BaseEngine* engine) : _engine(engine)
     _build_options.push_back("jack");
 #endif
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    _build_options.push_back(xenomai");
+    _build_options.push_back("xenomai");
 #endif
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _build_options.push_back("rpc control");
@@ -58,15 +58,13 @@ SystemController::SystemController(BaseEngine* engine) : _engine(engine)
 #endif
 
     // TODO Ilias: What is this? Where do I get it? Isn't it already in _sushi_version fetched separately?
-    // std::string version;
-
     _build_info.version = _sushi_version;
+
     _build_info.build_options = _build_options;
     _build_info.audio_buffer_size = AUDIO_CHUNK_SIZE;
     _build_info.commit_hash = SUSHI_GIT_COMMIT_HASH;
     _build_info.build_date = SUSHI_BUILD_TIMESTAMP;
 
-    // TODO Ilias: populate:
     _audio_inputs = engine->audio_input_channels();
     _audio_outputs = engine->audio_output_channels();
 }

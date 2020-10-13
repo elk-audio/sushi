@@ -264,35 +264,52 @@ grpc::Status SystemControlService::GetInterfaceVersion(grpc::ServerContext* cont
                                                        const sushi_rpc::GenericVoidValue* request,
                                                        sushi_rpc::GenericStringValue* response)
 {
+    // TODO Ilias - do when grpc interface version is implemented!
     return Service::GetInterfaceVersion(context, request, response);
 }
 
-grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* context,
-                                                   const sushi_rpc::GenericVoidValue* request,
+grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::GenericStringValue* response)
 {
-    return Service::GetSushiVersion(context, request, response);
+    response->set_value(_controller->get_sushi_version());
+    return grpc::Status::OK;
 }
 
-grpc::Status SystemControlService::GetBuildInfo(grpc::ServerContext* context,
-                                                const sushi_rpc::GenericVoidValue* request,
+grpc::Status SystemControlService::GetBuildInfo(grpc::ServerContext* /*context*/,
+                                                const sushi_rpc::GenericVoidValue* /*request*/,
                                                 sushi_rpc::SushiBuildInfo* response)
 {
-    return Service::GetBuildInfo(context, request, response);
+    auto build_info = _controller->get_sushi_build_info();
+
+    response->set_version(build_info.version);
+
+    for (auto& option : build_info.build_options)
+    {
+        response->add_build_options(option);
+    }
+
+    response->set_audio_buffer_size(build_info.audio_buffer_size);
+    response->set_commit_hash(build_info.commit_hash);
+    response->set_build_date(build_info.build_date);
+
+    return grpc::Status::OK;
 }
 
-grpc::Status SystemControlService::GetInputAudioChannelCount(grpc::ServerContext* context,
-                                                             const sushi_rpc::GenericVoidValue* request,
+grpc::Status SystemControlService::GetInputAudioChannelCount(grpc::ServerContext* /*context*/,
+                                                             const sushi_rpc::GenericVoidValue* /*request*/,
                                                              sushi_rpc::GenericIntValue* response)
 {
-    return Service::GetInputAudioChannelCount(context, request, response);
+    response->set_value(_controller->get_input_audio_channel_count());
+    return grpc::Status::OK;
 }
 
-grpc::Status SystemControlService::GetOutputAudioChannelCount(grpc::ServerContext* context,
-                                                              const sushi_rpc::GenericVoidValue* request,
+grpc::Status SystemControlService::GetOutputAudioChannelCount(grpc::ServerContext* /*context*/,
+                                                              const sushi_rpc::GenericVoidValue* /*request*/,
                                                               sushi_rpc::GenericIntValue* response)
 {
-    return Service::GetOutputAudioChannelCount(context, request, response);
+    response->set_value(_controller->get_output_audio_channel_count());
+    return grpc::Status::OK;
 }
 
 
