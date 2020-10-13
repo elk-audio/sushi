@@ -53,30 +53,6 @@ enum class FrontendType
     NONE
 };
 
-constexpr std::array SUSHI_ENABLED_BUILD_OPTIONS = {
-#ifdef SUSHI_BUILD_WITH_VST2
-        "vst2",
-#endif
-#ifdef SUSHI_BUILD_WITH_VST3
-        "vst3",
-#endif
-#ifdef SUSHI_BUILD_WITH_LV2
-        "lv2",
-#endif
-#ifdef SUSHI_BUILD_WITH_JACK
-        "jack",
-#endif
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-        "xenomai",
-#endif
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-        "rpc control",
-#endif
-#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
-        "ableton link",
-#endif
-};
-
 bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
@@ -99,16 +75,14 @@ void error_exit(const std::string& message)
     std::exit(1);
 }
 
-void print_version_and_build_info()
+void print_version_and_build_info(const CompileTimeSettings& compile_time_settings)
 {
-    std::cout << "\nVersion "   << SUSHI__VERSION_MAJ << "."
-                                << SUSHI__VERSION_MIN << "."
-                                << SUSHI__VERSION_REV << std::endl;
+    std::cout << "\nVersion "   << compile_time_settings.sushi_version << std::endl;
 
     std::cout << "Build options enabled: ";
-    for (const auto& o : SUSHI_ENABLED_BUILD_OPTIONS)
+    for (const auto& o : CompileTimeSettings::enabled_build_options)
     {
-        if (o != SUSHI_ENABLED_BUILD_OPTIONS.front())
+        if (o != CompileTimeSettings::enabled_build_options.front())
         {
            std::cout << ", ";
         }
@@ -180,6 +154,8 @@ int main(int argc, char* argv[])
     bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
+    CompileTimeSettings compile_time_settings;
+
     for (int i=0; i<cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
@@ -193,7 +169,7 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_VERSION:
             {
-                print_version_and_build_info();
+                print_version_and_build_info(compile_time_settings);
                 std::exit(1);
             }
             break;

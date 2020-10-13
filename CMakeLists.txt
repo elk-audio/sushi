@@ -170,6 +170,7 @@ set(COMPILATION_UNITS src/main.cpp
 # Enumerate all the headers separately so that CLion can index them
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
+                        src/compile_time_settings.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h

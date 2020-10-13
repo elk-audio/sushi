@@ -21,8 +21,8 @@
 #ifndef SUSHI_SYSTEM_CONTROLLER_H
 #define SUSHI_SYSTEM_CONTROLLER_H
 
+#include <compile_time_settings.h>
 #include "control_interface.h"
-#include "engine/base_engine.h"
 
 namespace sushi {
 namespace engine {
@@ -31,7 +31,7 @@ namespace controller_impl {
 class SystemController : public ext::SystemController
 {
 public:
-    SystemController(BaseEngine* engine);
+    SystemController(int inputs, int outputs);
 
     ~SystemController() = default;
 
@@ -46,15 +46,13 @@ public:
     int get_output_audio_channel_count() const override;
 
 private:
-    BaseEngine* _engine;
+    CompileTimeSettings _cts;
 
-    std::string _interface_version;
-    std::string _sushi_version;
     std::vector<std::string> _build_options;
     ext::SushiBuildInfo _build_info;
 
-    int _audio_inputs{0};
-    int _audio_outputs{0};
+    const int _audio_inputs{0};
+    const int _audio_outputs{0};
 };
 
 } // namespace controller_impl
