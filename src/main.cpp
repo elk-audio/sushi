@@ -19,18 +19,13 @@
  */
 
 #include <vector>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <csignal>
-#include <memory>
 #include <condition_variable>
 
 #include "twine/src/twine_internal.h"
 
 #include "logging.h"
-#include "options.h"
-#include "generated/version.h"
 #include "engine/audio_engine.h"
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
@@ -39,6 +34,7 @@
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/alsa_midi_frontend.h"
 #include "library/parameter_dump.h"
+#include "compile_time_settings.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -90,9 +86,9 @@ void print_version_and_build_info(const CompileTimeSettings& compile_time_settin
     }
     std::cout << std::endl;
 
-    std::cout << "Audio buffer size in frames: " << AUDIO_CHUNK_SIZE << std::endl;
-    std::cout << "Git commit: " << SUSHI_GIT_COMMIT_HASH << std::endl;
-    std::cout << "Built on: " << SUSHI_BUILD_TIMESTAMP << std::endl;
+    std::cout << "Audio buffer size in frames: " << CompileTimeSettings::audio_chunk_size << std::endl;
+    std::cout << "Git commit: " << CompileTimeSettings::git_commit_hash << std::endl;
+    std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -137,14 +133,14 @@ int main(int argc, char* argv[])
     std::string input_filename;
     std::string output_filename;
 
-    std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
-    std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
-    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
-    std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
+    std::string log_level = std::string(CompileTimeSettings::log_level_default);
+    std::string log_filename = std::string(CompileTimeSettings::log_filename_default);
+    std::string config_filename = std::string(CompileTimeSettings::json_filename_default);
+    std::string jack_client_name = std::string(CompileTimeSettings::jack_client_name_default);
     std::string jack_server_name = std::string("");
-    int osc_server_port = SUSHI_OSC_SERVER_PORT;
-    int osc_send_port = SUSHI_OSC_SEND_PORT;
-    std::string grpc_listening_address = std::string(SUSHI_GRPC_LISTENING_PORT);
+    int osc_server_port = CompileTimeSettings::osc_server_port;
+    int osc_send_port = CompileTimeSettings::osc_send_port;
+    std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
@@ -156,7 +152,7 @@ int main(int argc, char* argv[])
 
     CompileTimeSettings compile_time_settings;
 
-    for (int i=0; i<cl_parser.optionsCount(); i++)
+    for (int i = 0; i<cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
         switch(opt.index())
@@ -294,7 +290,7 @@ int main(int argc, char* argv[])
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT, rt_cpu_cores);
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default, rt_cpu_cores);
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
                                                                               midi_dispatcher.get(),

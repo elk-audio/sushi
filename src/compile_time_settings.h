@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Methods for querying all compile - time configuration (build options, version, githash, etc).
+ * @brief Methods for querying compile - time configuration (build options, version, githash, etc).
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
@@ -24,6 +24,7 @@
 #include <string>
 #include <array>
 #include "generated/version.h"
+#include "options.h"
 
 struct CompileTimeSettings
 {
@@ -33,6 +34,24 @@ struct CompileTimeSettings
     const std::string sushi_version{ std::to_string(SUSHI__VERSION_MAJ) + "." +
                                      std::to_string(SUSHI__VERSION_MIN) + "." +
                                      std::to_string(SUSHI__VERSION_REV)};
+
+    static constexpr char git_commit_hash[] = SUSHI_GIT_COMMIT_HASH;
+
+    static constexpr char build_timestamp[] = SUSHI_BUILD_TIMESTAMP;
+
+    static constexpr int audio_chunk_size = AUDIO_CHUNK_SIZE;
+
+    static constexpr int sample_rate_default = SUSHI_SAMPLE_RATE_DEFAULT;
+
+    static constexpr char log_level_default[] = SUSHI_LOG_LEVEL_DEFAULT;
+    static constexpr char log_filename_default[] = SUSHI_LOG_FILENAME_DEFAULT;
+    static constexpr char json_filename_default[] = SUSHI_JSON_FILENAME_DEFAULT;
+    static constexpr char jack_client_name_default[] = SUSHI_JACK_CLIENT_NAME_DEFAULT;
+
+    static constexpr int osc_server_port = SUSHI_OSC_SERVER_PORT;
+    static constexpr int osc_send_port = SUSHI_OSC_SEND_PORT;
+
+    static constexpr char grpc_listening_port[] = SUSHI_GRPC_LISTENING_PORT;
 
     static constexpr std::array enabled_build_options = {
 #ifdef SUSHI_BUILD_WITH_VST2
