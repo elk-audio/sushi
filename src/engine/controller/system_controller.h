@@ -35,8 +35,6 @@ public:
 
     ~SystemController() = default;
 
-    std::string get_interface_version() const override;
-
     std::string get_sushi_version() const override;
 
     ext::SushiBuildInfo get_sushi_build_info() const override;

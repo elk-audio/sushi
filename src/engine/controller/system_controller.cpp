@@ -32,18 +32,11 @@ SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inpu
         _build_options.push_back(option);
     }
 
-    // TODO Ilias: What is this? Where do I get it? Isn't it already in _sushi_version fetched separately?
     _build_info.version = _cts.sushi_version;
-
     _build_info.build_options = _build_options;
     _build_info.audio_buffer_size = AUDIO_CHUNK_SIZE;
     _build_info.commit_hash = SUSHI_GIT_COMMIT_HASH;
     _build_info.build_date = SUSHI_BUILD_TIMESTAMP;
-}
-
-std::string SystemController::get_interface_version() const
-{
-    return _cts.interface_version;
 }
 
 std::string SystemController::get_sushi_version() const

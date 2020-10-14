@@ -259,15 +259,6 @@ inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type typ
     }
 }
 
-
-grpc::Status SystemControlService::GetInterfaceVersion(grpc::ServerContext* context,
-                                                       const sushi_rpc::GenericVoidValue* request,
-                                                       sushi_rpc::GenericStringValue* response)
-{
-    // TODO Ilias - do when grpc interface version is implemented!
-    return Service::GetInterfaceVersion(context, request, response);
-}
-
 grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* /*context*/,
                                                    const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::GenericStringValue* response)

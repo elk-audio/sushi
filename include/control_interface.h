@@ -220,7 +220,6 @@ class SystemController
 public:
     virtual ~SystemController() = default;
 
-    virtual std::string         get_interface_version() const = 0;
     virtual std::string         get_sushi_version() const = 0;
     virtual SushiBuildInfo      get_sushi_build_info() const = 0;
     virtual int                 get_input_audio_channel_count() const = 0;

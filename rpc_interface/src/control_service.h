@@ -39,7 +39,6 @@ class SystemControlService : public SystemController::Service
 public:
     SystemControlService(sushi::ext::SushiControl* controller) : _controller{controller->system_controller()} {}
 
-    grpc::Status GetInterfaceVersion(grpc::ServerContext* context,const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status GetSushiVersion(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status GetBuildInfo(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::SushiBuildInfo* response) override;
     grpc::Status GetInputAudioChannelCount(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;

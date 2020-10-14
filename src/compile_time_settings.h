@@ -25,17 +25,8 @@
 #include <array>
 #include "generated/version.h"
 
-// TODO Ilias: Look into whether this can be all made constexpr :)
-// Interesting exercise, but probably not worth the effort..
-class CompileTimeSettings
+struct CompileTimeSettings
 {
-public:
-    CompileTimeSettings() = default;
-    ~CompileTimeSettings() = default;
-
-    // TODO Ilias: Populate interface version!
-    const std::string interface_version = "1.2.3. POPULATE THIS PLACEHOLDER";
-
     // Doing this the constexpr way takes quite a bit of copied code from the internet,
     // for a small performance gain. First to convert int to char[], then to concatenate char[].
     // Maybe worth it if we reuse those methods throughout, but not just for this once...
