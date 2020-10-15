@@ -41,7 +41,7 @@ SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inpu
 
 std::string SystemController::get_sushi_version() const
 {
-    return _cts.sushi_version;
+    return std::string(_cts.sushi_version);
 }
 
 ext::SushiBuildInfo SystemController::get_sushi_build_info() const

@@ -71,9 +71,9 @@ void error_exit(const std::string& message)
     std::exit(1);
 }
 
-void print_version_and_build_info(const CompileTimeSettings& compile_time_settings)
+void print_version_and_build_info()
 {
-    std::cout << "\nVersion "   << compile_time_settings.sushi_version << std::endl;
+    std::cout << "\nVersion "   << CompileTimeSettings::sushi_version << std::endl;
 
     std::cout << "Build options enabled: ";
     for (const auto& o : CompileTimeSettings::enabled_build_options)
@@ -150,8 +150,6 @@ int main(int argc, char* argv[])
     bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
-    CompileTimeSettings compile_time_settings;
-
     for (int i = 0; i<cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
@@ -165,7 +163,7 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_VERSION:
             {
-                print_version_and_build_info(compile_time_settings);
+                print_version_and_build_info();
                 std::exit(1);
             }
             break;

@@ -28,30 +28,25 @@
 
 struct CompileTimeSettings
 {
-    // Doing this the constexpr way takes quite a bit of copied code from the internet,
-    // for a small performance gain. First to convert int to char[], then to concatenate char[].
-    // Maybe worth it if we reuse those methods throughout, but not just for this once...
-    const std::string sushi_version{ std::to_string(SUSHI__VERSION_MAJ) + "." +
-                                     std::to_string(SUSHI__VERSION_MIN) + "." +
-                                     std::to_string(SUSHI__VERSION_REV)};
+    static constexpr auto sushi_version = SUSHI_STRINGIZE(SUSHI__VERSION_MAJ) "." SUSHI_STRINGIZE(SUSHI__VERSION_MIN) "." SUSHI_STRINGIZE(SUSHI__VERSION_REV);
 
-    static constexpr char git_commit_hash[] = SUSHI_GIT_COMMIT_HASH;
+    static constexpr auto git_commit_hash = SUSHI_GIT_COMMIT_HASH;
 
-    static constexpr char build_timestamp[] = SUSHI_BUILD_TIMESTAMP;
+    static constexpr auto build_timestamp = SUSHI_BUILD_TIMESTAMP;
 
-    static constexpr int audio_chunk_size = AUDIO_CHUNK_SIZE;
+    static constexpr auto audio_chunk_size = AUDIO_CHUNK_SIZE;
 
-    static constexpr int sample_rate_default = SUSHI_SAMPLE_RATE_DEFAULT;
+    static constexpr auto sample_rate_default = SUSHI_SAMPLE_RATE_DEFAULT;
 
-    static constexpr char log_level_default[] = SUSHI_LOG_LEVEL_DEFAULT;
-    static constexpr char log_filename_default[] = SUSHI_LOG_FILENAME_DEFAULT;
-    static constexpr char json_filename_default[] = SUSHI_JSON_FILENAME_DEFAULT;
-    static constexpr char jack_client_name_default[] = SUSHI_JACK_CLIENT_NAME_DEFAULT;
+    static constexpr auto log_level_default = SUSHI_LOG_LEVEL_DEFAULT;
+    static constexpr auto log_filename_default = SUSHI_LOG_FILENAME_DEFAULT;
+    static constexpr auto json_filename_default = SUSHI_JSON_FILENAME_DEFAULT;
+    static constexpr auto jack_client_name_default = SUSHI_JACK_CLIENT_NAME_DEFAULT;
 
-    static constexpr int osc_server_port = SUSHI_OSC_SERVER_PORT;
-    static constexpr int osc_send_port = SUSHI_OSC_SEND_PORT;
+    static constexpr auto osc_server_port = SUSHI_OSC_SERVER_PORT;
+    static constexpr auto osc_send_port = SUSHI_OSC_SEND_PORT;
 
-    static constexpr char grpc_listening_port[] = SUSHI_GRPC_LISTENING_PORT;
+    static constexpr auto grpc_listening_port = SUSHI_GRPC_LISTENING_PORT;
 
     static constexpr std::array enabled_build_options = {
 #ifdef SUSHI_BUILD_WITH_VST2
