@@ -51,7 +51,6 @@ public:
     /**
      * @brief Set the state of the call data to FINISH to make it destroy itself
      *        on the next call to proceed.
-     *
      */
     void stop()
     {
@@ -81,7 +80,6 @@ protected:
      * @brief Put the call data object at the back of the gRPC completion queue.
      *        This will result in an error if this object is already placed in
      *        the queue.
-     *
      */
     void _alert()
     {

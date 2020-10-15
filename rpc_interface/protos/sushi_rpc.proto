@@ -181,11 +181,10 @@ service OscController
 
 service NotificationController
 {
-/*  rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
-    rpc SubscribeToTimingUpdates()returns(streamCpuTimings){}
-    rpc SubscribeToTrackChanges()returns(streamTrackUpdate){}
-    rpc SubscribeToProcessorChanges()returns(streamProcessorUpdate){}
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){} */
+    rpc SubscribeToTransportChanges(GenericVoidValue) returns (stream TransportUpdate) {}
+    rpc SubscribeToTimingUpdates(GenericVoidValue) returns (stream CpuTimings) {}
+    rpc SubscribeToTrackChanges(TrackNotificationRequest) returns (stream TrackUpdate) {}
+    rpc SubscribeToProcessorChanges(ProcessorNotificationRequest) returns (stream ProcessorUpdate) {}
     rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
 }
 
@@ -487,6 +486,16 @@ message DeleteProcessorRequest
 {
     ProcessorIdentifier processor = 1;
     TrackIdentifier     track = 2;
+}
+
+message TrackNotificationRequest
+{
+    repeated TrackIdentifier tracks = 1;
+}
+
+message ProcessorNotificationRequest
+{
+    repeated ProcessorIdentifier processors = 1;
 }
 
 message ParameterNotificationRequest
