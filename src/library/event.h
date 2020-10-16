@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include <control_interface.h>
+
 #include "types.h"
 #include "id_generator.h"
 #include "library/rt_event.h"
@@ -30,7 +32,13 @@
 #include "library/types.h"
 
 namespace sushi {
-namespace dispatcher {class EventDispatcher;};
+namespace dispatcher {class EventDispatcher;}
+namespace midi_dispatcher {class MidiDispatcher;}
+
+// TODO: ext namespace leaks into here - this can be resolved if MidiController events have their own namespace and files.
+namespace ext {
+int int_from_midi_channel(ext::MidiChannel channel);
+}
 
 class Event;
 
@@ -57,8 +65,8 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
 class Event
 {
     friend class dispatcher::EventDispatcher;
-public:
 
+public:
     virtual ~Event() {}
 
     /**
@@ -358,14 +366,30 @@ namespace engine {class BaseEngine;}
 class EngineEvent : public Event
 {
 public:
-    virtual bool process_asynchronously() const override {return true;}
+    bool process_asynchronously() const override {return true;}
 
-    virtual bool is_engine_event() const override {return true;}
+    bool is_engine_event() const override {return true;}
 
     virtual int execute(engine::BaseEngine* engine) const = 0;
 
 protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
+};
+
+template <typename LambdaType>
+class LambdaEvent : public EngineEvent
+{
+public:
+    LambdaEvent(LambdaType work_lambda,
+                Time timestamp) : EngineEvent(timestamp),
+                                  _work_lambda(work_lambda) {}
+
+    int execute(engine::BaseEngine*) const override {
+        return _work_lambda();
+    }
+
+protected:
+    LambdaType _work_lambda;
 };
 
 class AddTrackEvent : public EngineEvent
@@ -504,7 +528,6 @@ private:
 class ProgramChangeEvent : public EngineEvent
 {
 public:
-
     ProgramChangeEvent(ObjectId processor_id,
                        int program_no,
                        Time timestamp) : EngineEvent(timestamp),

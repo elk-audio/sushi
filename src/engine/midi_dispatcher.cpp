@@ -20,7 +20,9 @@
 
 #include <algorithm>
 
+#include "base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"
+#include "base_engine.h"
 #include "library/midi_encoder.h"
 #include "logging.h"
 
@@ -29,8 +31,8 @@ namespace midi_dispatcher {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
-inline Event* make_note_on_event(const InputConnection &c,
-                                 const midi::NoteOnMessage &msg,
+inline Event* make_note_on_event(const InputConnection& c,
+                                 const midi::NoteOnMessage& msg,
                                  Time timestamp)
 {
     if (msg.velocity == 0)
@@ -42,47 +44,47 @@ inline Event* make_note_on_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_off_event(const InputConnection &c,
-                                  const midi::NoteOffMessage &msg,
+inline Event* make_note_off_event(const InputConnection& c,
+                                  const midi::NoteOffMessage& msg,
                                   Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_aftertouch_event(const InputConnection &c,
-                                         const midi::PolyKeyPressureMessage &msg,
+inline Event* make_note_aftertouch_event(const InputConnection& c,
+                                         const midi::PolyKeyPressureMessage& msg,
                                          Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
 }
 
-inline Event* make_aftertouch_event(const InputConnection &c,
-                                    const midi::ChannelPressureMessage &msg,
+inline Event* make_aftertouch_event(const InputConnection& c,
+                                    const midi::ChannelPressureMessage& msg,
                                     Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
 }
 
-inline Event* make_modulation_event(const InputConnection &c,
-                                    const midi::ControlChangeMessage &msg,
+inline Event* make_modulation_event(const InputConnection& c,
+                                    const midi::ControlChangeMessage& msg,
                                     Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
     return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_pitch_bend_event(const InputConnection &c,
-                                    const midi::PitchBendMessage &msg,
+inline Event* make_pitch_bend_event(const InputConnection& c,
+                                    const midi::PitchBendMessage& msg,
                                     Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
     return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_wrapped_midi_event(const InputConnection &c,
+inline Event* make_wrapped_midi_event(const InputConnection& c,
                                       const uint8_t* data,
                                       size_t size,
                                       Time timestamp)
@@ -92,8 +94,8 @@ inline Event* make_wrapped_midi_event(const InputConnection &c,
     return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(InputConnection &c,
-                                      const midi::ControlChangeMessage &msg,
+inline Event* make_param_change_event(InputConnection& c,
+                                      const midi::ControlChangeMessage& msg,
                                       Time timestamp)
 {
     uint8_t abs_value = msg.value;
@@ -120,137 +122,352 @@ inline Event* make_param_change_event(InputConnection &c,
     return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
-inline Event* make_program_change_event(const InputConnection &c,
-                                        const midi::ProgramChangeMessage &msg,
+inline Event* make_program_change_event(const InputConnection& c,
+                                        const midi::ProgramChangeMessage& msg,
                                         Time timestamp)
 {
     return new ProgramChangeEvent(c.target, msg.program, timestamp);
 }
 
-
-MidiDispatcher::MidiDispatcher(engine::BaseEngine* engine) : _engine(engine),
-                                                             _frontend(nullptr)
+MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher) : _frontend(nullptr),
+                                                                                    _event_dispatcher(event_dispatcher)
 {
-    // TODO - eventually we can pass the event dispatcher directly and avoid the engine dependency
-    _event_dispatcher = _engine->event_dispatcher();
     _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
+    _event_dispatcher->subscribe_to_engine_notifications(this);
 }
 
 MidiDispatcher::~MidiDispatcher()
 {
     _event_dispatcher->unsubscribe_from_keyboard_events(this);
+    _event_dispatcher->unsubscribe_from_engine_notifications(this);
     _event_dispatcher->deregister_poster(this);
 }
 
-
 MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
-                                                             const std::string &processor_name,
-                                                             const std::string &parameter_name,
+                                                             ObjectId processor_id,
+                                                             ObjectId parameter_id,
                                                              int cc_no,
                                                              float min_range,
                                                              float max_range,
                                                              bool use_relative_mode,
                                                              int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus ::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
-    if (processor == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_PROCESSOR;
-    }
-    auto parameter = processor->parameter_from_name(parameter_name);
-    if (parameter == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_PARAMETER;
-    }
 
     InputConnection connection;
-    connection.target = processor->id();
-    connection.parameter = parameter->id();
+    connection.target = processor_id;
+    connection.parameter = parameter_id;
     connection.min_range = min_range;
     connection.max_range = max_range;
     connection.relative = use_relative_mode;
     connection.virtual_abs_value = 64;
+
+    std::scoped_lock lock(_cc_routes_lock);
+
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected parameter \"{}\" "
-                           "(cc number \"{}\") to processor \"{}\"", parameter_name, cc_no, processor_name);
+    SUSHI_LOG_INFO("Connected parameter ID \"{}\" "
+                           "(cc number \"{}\") to processor ID \"{}\"", parameter_id, cc_no, processor_id);
     return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input,
+                                                                  ObjectId processor_id,
+                                                                  int cc_no,
+                                                                  int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+
+    std::scoped_lock lock(_cc_routes_lock);
+
+    auto connections = _cc_routes.find(midi_input);
+    auto& connection_vector = connections->second[cc_no][channel];
+    auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                         connection_vector.end(),
+                                         [&](const auto& c) {
+        return c.target == processor_id;
+    });
+
+    connection_vector.erase(erase_iterator, connection_vector.end());
+
+    SUSHI_LOG_INFO("Disconnected "
+                   "(cc number \"{}\") from processor ID \"{}\"", cc_no, processor_id);
+    return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_all_cc_from_processor(ObjectId processor_id)
+{
+    std::scoped_lock lock(_cc_routes_lock);
+
+    for(auto input_i = _cc_routes.begin(); input_i != _cc_routes.end(); ++input_i)
+    {
+        auto& cc_channel_matrix = input_i->second;
+        for(size_t cc_i = 0 ; cc_i < cc_channel_matrix.size(); ++cc_i)
+        {
+            auto& channels = cc_channel_matrix[cc_i];
+            for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+            {
+                auto& connection_vector = cc_channel_matrix[cc_i][channel_i];
+                auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                                     connection_vector.end(),
+                                                     [&](const auto& c)
+                                                     {
+                                                         return c.target == processor_id;
+                                                     });
+
+                connection_vector.erase(erase_iterator, connection_vector.end());
+
+                SUSHI_LOG_INFO("Disconnected all CC's from processor ID \"{}\"", processor_id);
+            }
+        }
+    }
+
+    return MidiDispatcherStatus::OK;
+}
+
+std::vector<CCInputConnection> MidiDispatcher::get_all_cc_input_connections()
+{
+    return _get_cc_input_connections(std::nullopt);
+}
+
+std::vector<CCInputConnection> MidiDispatcher::get_cc_input_connections_for_processor(int processor_id)
+{
+    return _get_cc_input_connections(processor_id);
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
-                                                             const std::string& processor_name,
+                                                             ObjectId processor_id,
                                                              int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto processor = _engine->processor_container()->processor(processor_name);
-    if (processor == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
-    }
+
     InputConnection connection;
-    connection.target = processor->id();
+    connection.target = processor_id;
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
+
+    std::scoped_lock lock(_pc_routes_lock);
+
     _pc_routes[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor \"{}\"", midi_input, processor_name);
+    SUSHI_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor id\"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input,
+                                                                  ObjectId processor_id,
+                                                                  int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+
+    std::scoped_lock lock(_pc_routes_lock);
+
+    auto connections = _pc_routes.find(midi_input);
+    auto& connection_vector = connections->second[channel];
+    auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                         connection_vector.end(),
+                                         [&](const auto& c) {
+                                             return c.target == processor_id;
+                                         });
+
+    connection_vector.erase(erase_iterator, connection_vector.end());
+
+    SUSHI_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
+    return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_all_pc_from_processor(ObjectId processor_id)
+{
+    std::scoped_lock lock(_pc_routes_lock);
+
+    for(auto inputs_i = _pc_routes.begin(); inputs_i != _pc_routes.end(); ++inputs_i)
+    {
+        auto& channels = inputs_i->second;
+        for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+        {
+            auto& connection_vector = channels[channel_i];
+            auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                                 connection_vector.end(),
+                                                 [&](const auto& c)
+                                                 {
+                                                     return c.target == processor_id;
+                                                 });
+
+            connection_vector.erase(erase_iterator, connection_vector.end());
+
+            SUSHI_LOG_INFO("Disconnected all PC's from processor ID \"{}\"", processor_id);
+        }
+    }
+
+    return MidiDispatcherStatus::OK;
+}
+
+std::vector<PCInputConnection> MidiDispatcher::get_all_pc_input_connections()
+{
+    return _get_pc_input_connections(std::nullopt);
+}
+
+std::vector<PCInputConnection> MidiDispatcher::get_pc_input_connections_for_processor(int processor_id)
+{
+    return _get_pc_input_connections(processor_id);
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
-                                                         const std::string &track_name,
+                                                         ObjectId track_id,
                                                          int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
-    if (track == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
-    }
+
     InputConnection connection;
-    connection.target = track->id();
+    connection.target = track_id;
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
+
+    std::scoped_lock lock(_kb_routes_in_lock);
+
     _kb_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
+                                                              ObjectId track_id,
+                                                              int channel)
+{
+    // TODO: These midi_input checks here and elsewhere should be made redundant eventually - when _midi_inputs isn't used.
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+
+    std::scoped_lock lock(_kb_routes_in_lock);
+
+    auto connections = _kb_routes_in.find(midi_input); // All connections for the midi_input
+    auto& connection_vector = connections->second[channel];
+    auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                         connection_vector.end(),
+                                         [&](const auto& c) {
+                                             return c.target == track_id;
+                                         });
+
+    connection_vector.erase(erase_iterator, connection_vector.end());
+
+
+    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    return MidiDispatcherStatus::OK;
+}
+
+std::vector<KbdInputConnection> MidiDispatcher::get_all_kb_input_connections()
+{
+    std::vector<KbdInputConnection> returns;
+
+    std::scoped_lock lock_in(_kb_routes_in_lock);
+
+    // Adding kbd connections:
+    for(auto inputs_i = _kb_routes_in.begin(); inputs_i != _kb_routes_in.end(); ++inputs_i)
+    {
+        auto& channels = inputs_i->second;
+        for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+        {
+            for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
+            {
+                KbdInputConnection conn;
+                conn.input_connection = *connection.base();
+                conn.port = inputs_i->first;
+                conn.channel = channel_i;
+                conn.raw_midi = false;
+                returns.emplace_back(conn);
+            }
+        }
+    }
+
+    std::scoped_lock lock_raw(_raw_routes_in_lock);
+
+    // Adding Raw midi connections:
+    for(auto inputs_i = _raw_routes_in.begin(); inputs_i != _raw_routes_in.end(); ++inputs_i)
+    {
+        auto channels = inputs_i->second;
+        for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+        {
+            for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
+            {
+                KbdInputConnection conn;
+                conn.input_connection = *connection.base();
+                conn.port = inputs_i->first;
+                conn.channel = channel_i;
+                conn.raw_midi = true;
+                returns.emplace_back(conn);
+            }
+        }
+    }
+
+    return returns;
 }
 
 MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
-                                                               const std::string &track_name,
+                                                               ObjectId track_id,
                                                                int channel)
 {
-    if (midi_input >= _midi_inputs || midi_input < 0 || midi_input > midi::MidiChannel::OMNI)
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
     {
         return MidiDispatcherStatus::INVALID_MIDI_INPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
-    if (track == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
-    }
+
     InputConnection connection;
-    connection.target = track->id();
+    connection.target = track_id;
     connection.parameter = 0;
     connection.min_range = 0;
     connection.max_range = 0;
+
+    std::scoped_lock lock(_raw_routes_in_lock);
+
     _raw_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track \"{}\"", midi_input, track_name);
+    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
-MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, const std::string &track_name, int channel)
+MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_input,
+                                                                    ObjectId track_id,
+                                                                    int channel)
+{
+    if (midi_input >= _midi_inputs || midi_input < 0 || channel > midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_INPUT;
+    }
+
+    std::scoped_lock lock(_raw_routes_in_lock);
+
+    auto connections = _raw_routes_in.find(midi_input); // All connections for the midi_input
+    auto& connection_vector = connections->second[channel];
+    auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                         connection_vector.end(),
+                                         [&](const auto& c) {
+                                             return c.target == track_id;
+                                         });
+
+    connection_vector.erase(erase_iterator, connection_vector.end());
+
+    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    return MidiDispatcherStatus::OK;
+}
+
+MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, ObjectId track_id, int channel)
 {
     if (channel >= midi::MidiChannel::OMNI)
     {
@@ -260,34 +477,82 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, co
     {
         return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
     }
-    auto track = _engine->processor_container()->track(track_name);
-    if (track == nullptr)
-    {
-        return MidiDispatcherStatus::INVALID_CHAIN_NAME;
-    }
+
     OutputConnection connection;
     connection.channel = channel;
     connection.output = midi_output;
+
+    // TODO: Why are these here? Why not remove from OutputConnection struct?
     connection.min_range = 1.234f;
     connection.max_range = 4.5678f;
+
     connection.cc_number = 123;
-    _kb_routes_out[track->id()].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI from track \"{}\" to port \"{}\" with channel {}", track_name, midi_output, channel);
+
+    std::scoped_lock lock(_kb_routes_out_lock);
+
+    _kb_routes_out[track_id].push_back(connection);
+    SUSHI_LOG_INFO("Connected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 
-void MidiDispatcher::clear_connections()
+MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_output,
+                                                                  ObjectId track_id,
+                                                                  int channel)
 {
-    _cc_routes.clear();
-    _kb_routes_in.clear();
+    if (channel >= midi::MidiChannel::OMNI)
+    {
+        return MidiDispatcherStatus::INVAlID_CHANNEL;
+    }
+    if (midi_output >= _midi_outputs || midi_output < 0)
+    {
+        return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
+    }
+
+    std::scoped_lock lock(_kb_routes_out_lock);
+
+    auto connections = _kb_routes_out.find(track_id);
+    auto& connection_vector = connections->second;
+    auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                         connection_vector.end(),
+                                         [&](const auto& c) {
+                                             return (c.channel == channel) && (c.output == midi_output);
+                                         });
+
+    connection_vector.erase(erase_iterator, connection_vector.end());
+
+    SUSHI_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
+    return MidiDispatcherStatus::OK;
+}
+
+std::vector<KbdOutputConnection> MidiDispatcher::get_all_kb_output_connections()
+{
+    std::vector<KbdOutputConnection> returns;
+
+    std::scoped_lock lock(_kb_routes_out_lock);
+
+    for(auto outputs_i = _kb_routes_out.begin(); outputs_i != _kb_routes_out.end(); ++outputs_i)
+    {
+        for (auto connection = outputs_i->second.begin(); connection != outputs_i->second.end(); ++connection)
+        {
+            KbdOutputConnection conn;
+            conn.track_id = outputs_i->first;
+            conn.port = connection->output;
+            conn.channel = connection->channel;
+            returns.emplace_back(conn);
+        }
+    }
+
+    return returns;
 }
 
 void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 {
-    int channel = midi::decode_channel(data);
-    int size = data.size();
+    const int channel = midi::decode_channel(data);
+    const int size = data.size();
     /* Dispatch raw midi messages */
     {
+        std::scoped_lock lock(_raw_routes_in_lock);
+
         const auto& cons = _raw_routes_in.find(port);
         if (cons != _raw_routes_in.end())
         {
@@ -302,6 +567,8 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
         }
     }
 
+    std::scoped_lock lock(_kb_routes_in_lock);
+
     /* Dispatch decoded midi messages */
     midi::MessageType type = midi::decode_message_type(data);
     switch (type)
@@ -309,6 +576,9 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
         case midi::MessageType::CONTROL_CHANGE:
         {
             midi::ControlChangeMessage decoded_msg = midi::decode_control_change(data);
+
+            std::scoped_lock lock(_cc_routes_lock);
+
             const auto& cons = _cc_routes.find(port);
             if (cons != _cc_routes.end())
             {
@@ -432,6 +702,8 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
         case midi::MessageType::PROGRAM_CHANGE:
         {
             midi::ProgramChangeMessage decoded_msg = midi::decode_program_change(data);
+
+            std::scoped_lock lock(_pc_routes_lock);
             const auto& cons = _pc_routes.find(port);
             if (cons != _pc_routes.end())
             {
@@ -454,6 +726,8 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 
 int MidiDispatcher::process(Event* event)
 {
+    std::scoped_lock lock(_kb_routes_out_lock);
+
     if (event->is_keyboard_event())
     {
         auto typed_event = static_cast<KeyboardEvent*>(event);
@@ -493,7 +767,145 @@ int MidiDispatcher::process(Event* event)
         }
         return EventStatus::HANDLED_OK;
     }
+    else if (event->is_audio_graph_notification())
+    {
+        _handle_audio_graph_notification(static_cast<AudioGraphNotificationEvent*>(event));
+    }
+
     return EventStatus::NOT_HANDLED;
+}
+
+std::vector<CCInputConnection> MidiDispatcher::_get_cc_input_connections(std::optional<int> processor_id_filter)
+{
+    std::vector<CCInputConnection> returns;
+
+    std::scoped_lock lock(_cc_routes_lock);
+
+    for(auto input_i = _cc_routes.begin(); input_i != _cc_routes.end(); ++input_i)
+    {
+        auto& cc_channel_matrix = input_i->second;
+        for(size_t cc_i = 0 ; cc_i < cc_channel_matrix.size(); ++cc_i)
+        {
+            auto& channels = cc_channel_matrix[cc_i];
+            for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+            {
+                auto& connections = cc_channel_matrix[cc_i][channel_i];
+                for (auto connection = connections.begin(); connection != connections.end(); ++connection)
+                {
+                    if(!processor_id_filter.has_value() ||
+                       processor_id_filter == connection->target)
+                    {
+                        CCInputConnection conn;
+                        conn.input_connection = *(connection.base());
+                        conn.channel = channel_i;
+                        conn.port = input_i->first;
+                        conn.cc = cc_i;
+                        returns.emplace_back(conn);
+                    }
+                }
+            }
+        }
+    }
+
+    return returns;
+}
+
+std::vector<PCInputConnection> MidiDispatcher::_get_pc_input_connections(std::optional<int> processor_id_filter)
+{
+    std::vector<PCInputConnection> returns;
+
+    std::scoped_lock lock(_pc_routes_lock);
+
+    for(auto inputs_i = _pc_routes.begin(); inputs_i != _pc_routes.end(); ++inputs_i)
+    {
+        auto& channels = inputs_i->second;
+        for(size_t channel_i = 0 ; channel_i < channels.size(); ++channel_i)
+        {
+            for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
+            {
+                if(!processor_id_filter.has_value() ||
+                   processor_id_filter == connection->target)
+                {
+                    PCInputConnection conn;
+                    conn.processor_id = connection->target;
+                    conn.channel = channel_i;
+                    conn.port = inputs_i->first;
+                    returns.emplace_back(conn);
+                }
+            }
+        }
+    }
+
+    return returns;
+}
+
+bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificationEvent* event)
+{
+    switch (event->action())
+    {
+        case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+        {
+            auto processor_id = event->processor();
+
+            disconnect_all_cc_from_processor(processor_id);
+
+            disconnect_all_pc_from_processor(processor_id);
+
+            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}", event
+                    ->processor());
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::TRACK_DELETED:
+        {
+            auto track_id = event->track();
+
+            auto input_connections = get_all_kb_input_connections();
+            auto inputs_found = std::find_if(input_connections.begin(),
+                                             input_connections.end(),
+                                             [&](const auto& connection)
+                                             {
+                                                 return connection.input_connection.target == track_id;
+                                             });
+
+            while(inputs_found != input_connections.end())
+            {
+                disconnect_kb_from_track(inputs_found->port,
+                                         track_id,
+                                         inputs_found->channel);
+
+                disconnect_raw_midi_from_track(inputs_found->port,
+                                               track_id,
+                                               inputs_found->channel);
+
+                inputs_found++;
+            }
+
+            auto output_connections = get_all_kb_output_connections();
+            auto outputs_found = std::find_if(output_connections.begin(),
+                                              output_connections.end(),
+                                             [&](const auto& connection)
+                                             {
+                                                 return connection.track_id == track_id;
+                                             });
+
+            while(outputs_found != output_connections.end())
+            {
+                disconnect_track_from_output(outputs_found->port,
+                                             track_id,
+                                             outputs_found->channel);
+                outputs_found++;
+            }
+
+            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
+        case AudioGraphNotificationEvent::Action::TRACK_ADDED:
+        case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
+            break;
+    }
+
+    return EventStatus::HANDLED_OK;
 }
 
 } // end namespace midi_dispatcher

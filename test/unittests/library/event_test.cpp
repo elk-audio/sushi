@@ -6,7 +6,15 @@
 
 #include "engine/audio_engine.h"
 
+#include "control_frontends/base_control_frontend.h"
+#include "test_utils/engine_mockup.h"
+#include "test_utils/control_mockup.h"
+
+using namespace midi;
 using namespace sushi;
+using namespace sushi::engine;
+using namespace sushi::control_frontend;
+using namespace sushi::midi_dispatcher;
 
 static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 {

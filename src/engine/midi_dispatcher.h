@@ -25,6 +25,7 @@
 #include <map>
 #include <array>
 #include <vector>
+#include <mutex>
 
 #include "library/constants.h"
 #include "library/types.h"
@@ -32,16 +33,20 @@
 #include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
-#include "base_engine.h"
-#include "base_event_dispatcher.h"
-#include "midi_receiver.h"
 #include "library/event_interface.h"
 
 namespace sushi {
+namespace engine {
+class BaseProcessorContainer;
+}
+
 namespace midi_dispatcher {
 
 struct InputConnection
 {
+    // TODO: This can be track_id, if the InputConnection is member of KbdInputConnection.
+    // It can also be processor_id, if the InputConnection is member of CCInputConnection.
+    // Disambiguating would be safer.
     ObjectId target;
     ObjectId parameter;
     float min_range;
@@ -64,10 +69,41 @@ enum class MidiDispatcherStatus
     OK,
     INVALID_MIDI_INPUT,
     INVALID_MIDI_OUTPUT,
-    INVALID_CHAIN_NAME,
     INVALID_PROCESSOR,
+    INVALID_TRACK,
     INVALID_PARAMETER,
     INVAlID_CHANNEL
+};
+
+// These structs are only used for returning query data, to midi_controller.
+struct CCInputConnection
+{
+    InputConnection input_connection;
+    int channel;
+    int port;
+    int cc;
+};
+
+struct PCInputConnection
+{
+    int processor_id;
+    int channel;
+    int port;
+};
+
+struct KbdInputConnection
+{
+    InputConnection input_connection;
+    int port;
+    int channel;
+    bool raw_midi;
+};
+
+struct KbdOutputConnection
+{
+    ObjectId track_id;
+    int port;
+    int channel;
 };
 
 class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
@@ -75,27 +111,36 @@ class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
     SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(engine::BaseEngine* engine);
+    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
 
     virtual ~MidiDispatcher();
 
-    // TODO - Eventually have the frontend as a constructor argument
-    // Doesn't work now since the dispatcher is created in main
     void set_frontend(midi_frontend::BaseMidiFrontend* frontend)
     {
         _frontend = frontend;
     }
-/**
- * @brief Sets the number of midi input ports.
- * @param ports number of input ports.
- */
+
+    /**
+     * @brief Sets the number of midi input ports.
+     * Not intended to be called dynamically, only once during creation.
+     * @param ports number of input ports.
+     */
     void set_midi_inputs(int no_inputs)
     {
         _midi_inputs = no_inputs;
     }
 
     /**
+     * @brief Returns the number of midi input ports.
+     */
+    int get_midi_inputs()
+    {
+        return _midi_inputs;
+    }
+
+    /**
      * @brief Sets the number of midi output ports.
+     * Not intended to be called dynamically, only once during creation.
      * @param ports number of output ports.
      */
     void set_midi_outputs(int no_outputs)
@@ -104,20 +149,28 @@ public:
     }
 
     /**
+     * @brief Returns the number of midi output ports.
+     */
+    int get_midi_outputs()
+    {
+        return _midi_outputs;
+    }
+
+    /**
      * @brief Connects a midi control change message to a given parameter.
      *        Eventually you should be able to set range, curve etc here.
-     * @brief midi_input Index to the registered midi output.
+     * @param midi_input Index to the registered midi output.
      * @param processor The processor target
      * @param parameter The parameter to map to
      * @param cc_no The cc id to use
      * @param min_range Minimum range for this controller
      * @param max_range Maximum range for this controller
      * @param channel If not OMNI, only the given channel will be connected.
-     * @return true if successfully forwarded midi message
+     * @return OK if successfully forwarded midi message
      */
     MidiDispatcherStatus connect_cc_to_parameter(int midi_input,
-                                                 const std::string &processor_name,
-                                                 const std::string &parameter_name,
+                                                 ObjectId processor_id,
+                                                 ObjectId parameter_id,
                                                  int cc_no,
                                                  float min_range,
                                                  float max_range,
@@ -125,15 +178,80 @@ public:
                                                  int channel = midi::MidiChannel::OMNI);
 
     /**
-    * @brief Connects midi program change messages to a processor.
-    * @brief midi_input Index to the registered midi output.
-    * @param processor The processor target
-    * @param channel If not OMNI, only the given channel will be connected.
-    * @return true if successfully forwarded midi message
-    */
+     * @brief Disconnects a midi control change message from a given parameter.
+     * @param midi_input Index to the registered midi output.
+     * @param processor_id The processor target
+     * @param parameter The parameter mapped
+     * @param cc_no The cc id to use
+     * @return OK if successfully disconnected
+     */
+    MidiDispatcherStatus disconnect_cc_from_parameter(int midi_input,
+                                                      ObjectId processor_id,
+                                                      int cc_no,
+                                                      int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Disconnects all midi control change messages from a given processor's parameters.
+     * @param processor_id The processor target
+     * @return OK if successfully disconnected
+     */
+    MidiDispatcherStatus disconnect_all_cc_from_processor(ObjectId processor_id);
+
+    /**
+     * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections defined.
+     * @return A vector of CC_InputConnections.
+     */
+    std::vector<CCInputConnection> get_all_cc_input_connections();
+
+    /**
+     * @brief Returns a vector of CC_InputConnections for all the Midi Control Change input connections
+     * defined for the processor id passed as input.
+     * @param The id of the processor for which the connections are queried.
+     * @return A vector of CC_InputConnections.
+     */
+    std::vector<CCInputConnection> get_cc_input_connections_for_processor(int processor_id);
+
+    /**
+     * @brief Connects midi program change messages to a processor.
+     * @param midi_input Index to the registered midi output.
+     * @param processor The processor target
+     * @param channel If not OMNI, only the given channel will be connected.
+     * @return OK if successfully forwarded midi message
+     */
     MidiDispatcherStatus connect_pc_to_processor(int midi_input,
-                                                 const std::string &processor_name,
+                                                 ObjectId processor_id,
                                                  int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Disconnects midi program change messages from a processor.
+     * @param midi_input Index to the registered midi output.
+     * @param processor The processor target
+     * @return OK if successfully disconnected
+     */
+    MidiDispatcherStatus disconnect_pc_from_processor(int midi_input,
+                                                      ObjectId processor_id,
+                                                      int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Disconnects all midi program change messages from a given processor.
+     * @param processor_id The processor target
+     * @return OK if successfully disconnected
+     */
+    MidiDispatcherStatus disconnect_all_pc_from_processor(ObjectId processor_id);
+
+    /**
+     * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections defined.
+     * @return A vector of PC_InputConnections.
+     */
+    std::vector<PCInputConnection> get_all_pc_input_connections();
+
+    /**
+     * @brief Returns a vector of PC_InputConnections for all the Midi Program Change input connections
+     * defined for the processor id passed as input.
+     * @param The id of the processor for which the connections are queried.
+     * @return A vector of PC_InputConnections.
+     */
+    std::vector<PCInputConnection> get_pc_input_connections_for_processor(int processor_id);
 
     /**
      * @brief Connect a midi input to a track
@@ -144,8 +262,25 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_kb_to_track(int midi_input,
-                                             const std::string &track_name,
+                                             ObjectId track_id,
                                              int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Disconnect a midi input from a track
+     * @param midi_input Index of the midi input
+     * @param track_name The track/processor track
+     * @param channel If not OMNI, only the given channel will be connected.
+     * @return OK if successfully disconnected from the track, error status otherwise
+     */
+    MidiDispatcherStatus disconnect_kb_from_track(int midi_input,
+                                                  ObjectId track_id,
+                                                  int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Returns a vector of Kbd_InputConnections for all the Midi Keyboard input connections defined.
+     * @return A vector of Kbd_InputConnections.
+     */
+    std::vector<KbdInputConnection> get_all_kb_input_connections();
 
     /**
      * @brief Connect a midi input to a track and send unprocessed
@@ -156,8 +291,18 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_raw_midi_to_track(int midi_input,
-                                                   const std::string &track_name,
+                                                   ObjectId track_id,
                                                    int channel = midi::MidiChannel::OMNI);
+
+    /**
+     * @brief Disconnect a midi input from a track.
+     * @param midi_input Index of the midi input
+     * @param track_name The track/processor track to disconnect
+     * @return OK if successfully disconnected the track, error status otherwise
+     */
+    MidiDispatcherStatus disconnect_raw_midi_from_track(int midi_input,
+                                                        ObjectId track_id,
+                                                        int channel = midi::MidiChannel::OMNI);
 
     /**
      * @brief Connect midi kb data from a track to a given midi output
@@ -167,13 +312,24 @@ public:
      * @return OK if successfully connected the track, error status otherwise
      */
     MidiDispatcherStatus connect_track_to_output(int midi_output,
-                                                 const std::string &track_name,
+                                                 ObjectId track_id,
                                                  int channel);
+
     /**
-     * @brief Clears all connections made with connect_kb_to_track
-     *        and connect_cc_to_parameter.
+     * @brief Disconnect midi kb data from a track to a given midi output
+     * @param midi_output Index of the midi out
+     * @param track_name The track/processor track from where the data originates
+     * @return OK if successfully disconnected the track, error status otherwise
      */
-    void clear_connections();
+    MidiDispatcherStatus disconnect_track_from_output(int midi_output,
+                                                      ObjectId track_id,
+                                                      int channel);
+
+    /**
+     * @brief Returns a vector of Kbd_OutputConnections for all the Midi Keyboard output connections defined.
+     * @return A vector of Kbd_OutputConnections.
+     */
+    std::vector<KbdOutputConnection> get_all_kb_output_connections();
 
     /**
      * @brief Process a raw midi message and send it of according to the
@@ -195,6 +351,10 @@ public:
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
+    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+
+    std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
+    std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
 
     std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
     std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
@@ -204,7 +364,12 @@ private:
     int _midi_inputs{0};
     int _midi_outputs{0};
 
-    engine::BaseEngine* _engine;
+    std::mutex _kb_routes_in_lock;
+    std::mutex _kb_routes_out_lock;
+    std::mutex _cc_routes_lock;
+    std::mutex _pc_routes_lock;
+    std::mutex _raw_routes_in_lock;
+
     midi_frontend::BaseMidiFrontend* _frontend;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 };

@@ -72,8 +72,10 @@ class JsonConfigurator
 public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                     const engine::BaseProcessorContainer* processor_container,
                      const std::string& path) : _engine(engine),
                                                 _midi_dispatcher(midi_dispatcher),
+                                                _processor_container(processor_container),
                                                 _document_path(path){}
 
     ~JsonConfigurator() {}
@@ -179,6 +181,7 @@ private:
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    const engine::BaseProcessorContainer* _processor_container;
 
     std::string _document_path;
     rapidjson::Document _json_data;

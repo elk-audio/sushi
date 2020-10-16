@@ -189,6 +189,7 @@ struct MidiKbdConnection
 struct MidiCCConnection
 {
     int         processor_id;
+    int         parameter_id;
     MidiChannel channel;
     int         port;
     int         cc_number;
@@ -274,12 +275,12 @@ class KeyboardController
 public:
     virtual ~KeyboardController() = default;
 
-    virtual ControlStatus   send_note_on(int track_id, int channel, int note, float velocity) = 0;
-    virtual ControlStatus   send_note_off(int track_id, int channel, int note, float velocity) = 0;
-    virtual ControlStatus   send_note_aftertouch(int track_id, int channel, int note, float value) = 0;
-    virtual ControlStatus   send_aftertouch(int track_id, int channel, float value) = 0;
-    virtual ControlStatus   send_pitch_bend(int track_id, int channel, float value) = 0;
-    virtual ControlStatus   send_modulation(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_note_on(int track_id, int channel, int note, float velocity) = 0;
+    virtual ControlStatus send_note_off(int track_id, int channel, int note, float velocity) = 0;
+    virtual ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) = 0;
+    virtual ControlStatus send_aftertouch(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_pitch_bend(int track_id, int channel, float value) = 0;
+    virtual ControlStatus send_modulation(int track_id, int channel, float value) = 0;
 
 protected:
     KeyboardController() = default;
@@ -299,16 +300,16 @@ public:
     virtual std::pair<ControlStatus, ProcessorInfo>               get_processor_info(int processor_id) const = 0;
     virtual std::pair<ControlStatus, bool>                        get_processor_bypass_state(int processor_id) const = 0;
 
-    virtual ControlStatus   set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
+    virtual ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
 
-    virtual ControlStatus   create_track(const std::string& name, int channels) = 0;
-    virtual ControlStatus   create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
-    virtual ControlStatus   move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
-    virtual ControlStatus   create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
+    virtual ControlStatus create_track(const std::string& name, int channels) = 0;
+    virtual ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
+    virtual ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
+    virtual ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                       PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
 
-    virtual ControlStatus   delete_processor_from_track(int processor_id, int track_id) = 0;
-    virtual ControlStatus   delete_track(int track_id) = 0;
+    virtual ControlStatus delete_processor_from_track(int processor_id, int track_id) = 0;
+    virtual ControlStatus delete_track(int track_id) = 0;
 
 protected:
     AudioGraphController() = default;
@@ -361,17 +362,17 @@ public:
     virtual std::vector<MidiKbdConnection> get_all_kbd_input_connections() const = 0;
     virtual std::vector<MidiKbdConnection> get_all_kbd_output_connections() const = 0;
     virtual std::vector<MidiCCConnection>  get_all_cc_input_connections() const = 0;
-    virtual std::vector<MidiCCConnection>  get_all_cc_output_connections() const = 0;
+    virtual std::vector<MidiPCConnection>  get_all_pc_input_connections() const = 0;
     virtual std::pair<ControlStatus, std::vector<MidiCCConnection>> get_cc_input_connections_for_processor(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<MidiCCConnection>> get_cc_output_connections_for_processor(int processor_id) const = 0;
+    virtual std::pair<ControlStatus, std::vector<MidiPCConnection>> get_pc_input_connections_for_processor(int processor_id) const = 0;
 
     virtual ControlStatus connect_kbd_input_to_track(int track_id, MidiChannel channel, int port, bool raw_midi) = 0;
-    virtual ControlStatus connect_kbd_output_from_track(int track_id, MidiChannel channel, int port, bool raw_midi) = 0;
-    virtual ControlStatus connect_cc_to_parameter(int processor_id, MidiChannel channel, int port, int cc_number,
-                                                            int min_range, int max_range, bool relative_mode ) = 0;
+    virtual ControlStatus connect_kbd_output_from_track(int track_id, MidiChannel channel, int port) = 0;
+    virtual ControlStatus connect_cc_to_parameter(int processor_id, int parameter_id, MidiChannel channel, int port,
+                                                  int cc_number, float min_range, float max_range, bool relative_mode) = 0;
     virtual ControlStatus connect_pc_to_processor(int processor_id, MidiChannel channel, int port) = 0;
 
-    virtual ControlStatus disconnect_kbd_input(int track_id, MidiChannel channel, int port) = 0;
+    virtual ControlStatus disconnect_kbd_input(int track_id, MidiChannel channel, int port, bool raw_midi) = 0;
     virtual ControlStatus disconnect_kbd_output(int track_id, MidiChannel channel, int port) = 0;
     virtual ControlStatus disconnect_cc(int processor_id, MidiChannel channel, int port, int cc_number) = 0;
     virtual ControlStatus disconnect_pc(int processor_id, MidiChannel channel, int port) = 0;
@@ -538,11 +539,7 @@ private:
 
 };
 
-
-
-
 } // ext
 } // sushi
-
 
 #endif //SUSHI_CONTROL_INTERFACE_H

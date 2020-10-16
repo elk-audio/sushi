@@ -163,7 +163,7 @@ private:
 class MidiControlService : public MidiController::Service
 {
 public:
-    MidiControlService(sushi::ext::SushiControl* controller) : _controller{controller->program_controller()} {}
+    MidiControlService(sushi::ext::SushiControl* controller) : _midi_controller{controller->midi_controller()} {}
 
     grpc::Status GetInputPorts(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
     grpc::Status GetOutputPorts(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
@@ -185,7 +185,7 @@ public:
     grpc::Status DisconnectAllPCFromProcessor(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
 
 private:
-    sushi::ext::ProgramController* _controller;
+    sushi::ext::MidiController* _midi_controller;
 };
 
 class AudioRoutingControlService : public AudioRoutingController::Service

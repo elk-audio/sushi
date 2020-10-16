@@ -571,12 +571,12 @@ message MidiKbdConnectionList
 
 message MidiCCConnection
 {
-    ProcessorIdentifier processor = 1;
+    ParameterIdentifier parameter = 1;
     MidiChannel         channel = 2;
     int32               port = 3;
     int32               cc_number = 4;
-    int32               min_range = 5;
-    int32               max_range = 6;
+    float               min_range = 5;
+    float               max_range = 6;
     bool                relative_mode = 7;
 }
 

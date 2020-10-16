@@ -24,15 +24,23 @@
 #include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
+#include "engine/midi_dispatcher.h"
 
 namespace sushi {
+
+namespace ext {
+ext::MidiChannel midi_channel_from_int(int channel_int);
+}
+
 namespace engine {
 namespace controller_impl {
 
 class MidiController : public ext::MidiController
 {
 public:
-    MidiController(BaseEngine* engine) : _engine(engine) {}
+    MidiController(BaseEngine* engine,
+                   midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                   ext::ParameterController* parameter_controller);
 
     ~MidiController() override = default;
 
@@ -46,31 +54,32 @@ public:
 
     std::vector<ext::MidiCCConnection> get_all_cc_input_connections() const override;
 
-    std::vector<ext::MidiCCConnection> get_all_cc_output_connections() const override;
+    std::vector<ext::MidiPCConnection> get_all_pc_input_connections() const override;
 
     std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
     get_cc_input_connections_for_processor(int processor_id) const override;
 
-    std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
-    get_cc_output_connections_for_processor(int processor_id) const override;
+    std::pair<ext::ControlStatus, std::vector<ext::MidiPCConnection>>
+    get_pc_input_connections_for_processor(int processor_id) const override;
 
     ext::ControlStatus
     connect_kbd_input_to_track(int track_id, ext::MidiChannel channel, int port, bool raw_midi) override;
 
     ext::ControlStatus
-    connect_kbd_output_from_track(int track_id, ext::MidiChannel channel, int port, bool raw_midi) override;
+    connect_kbd_output_from_track(int track_id, ext::MidiChannel channel, int port) override;
 
     ext::ControlStatus connect_cc_to_parameter(int processor_id,
+                                               int parameter_id,
                                                ext::MidiChannel channel,
                                                int port,
                                                int cc_number,
-                                               int min_range,
-                                               int max_range,
+                                               float min_range,
+                                               float max_range,
                                                bool relative_mode) override;
 
     ext::ControlStatus connect_pc_to_processor(int processor_id, ext::MidiChannel channel, int port) override;
 
-    ext::ControlStatus disconnect_kbd_input(int track_id, ext::MidiChannel channel, int port) override;
+    ext::ControlStatus disconnect_kbd_input(int track_id, ext::MidiChannel channel, int port, bool raw_midi) override;
 
     ext::ControlStatus disconnect_kbd_output(int track_id, ext::MidiChannel channel, int port) override;
 
@@ -84,6 +93,9 @@ public:
 
 private:
     BaseEngine* _engine;
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
+    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    ext::ParameterController* _parameter_controller;
 };
 
 } // namespace controller_impl

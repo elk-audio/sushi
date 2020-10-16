@@ -6,14 +6,22 @@
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 #include "dummy_processor.h"
+#include "engine/midi_dispatcher.h"
 
 using namespace sushi;
+using namespace midi;
 using namespace sushi::engine;
+using namespace sushi::midi_dispatcher;
 
 // Dummy event dispatcher
 class EventDispatcherMockup : public dispatcher::BaseEventDispatcher
 {
 public:
+    enum class Action {
+        Discard,
+        Execute
+    };
+
     ~EventDispatcherMockup()
     {
         while (!_queue.empty())
@@ -36,6 +44,10 @@ public:
         _queue.push_front(event);
     }
 
+    /**
+     * Call this to check if an event was received, and then discard it.
+     * @return
+     */
     bool got_event()
     {
         if (_queue.empty())
@@ -47,6 +59,38 @@ public:
             _queue.pop_back();
             delete e;
             return true;
+        }
+    }
+
+    /**
+     * Call this to check if an event was received, execute it, and then discard it.
+     * @param engine reference for the events execute method.
+     * @return The execution status of the event.
+     */
+    int execute_event(engine::BaseEngine* engine)
+    {
+        EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
+
+        if (_queue.empty())
+        {
+            return status;
+        } else
+        {
+            auto event = _queue.back();
+
+            if (event->is_engine_event())
+            {
+                // TODO: If we go with Lambdas in all executable events,
+                // the engine can just be captured in the Lambda.
+                // If not, it should be a parameter to the Event class constructor.
+                auto typed_event = static_cast<EngineEvent*>(event);
+
+                status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
+            }
+
+            _queue.pop_back();
+            delete event;
+            return status;
         }
     }
 
@@ -167,6 +211,37 @@ public:
 private:
     EventDispatcherMockup       _event_dispatcher;
     ProcessorContainerMockup    _processor_container;
+};
+
+// TODO: Should this really be here, or is it too specific for the engine_mockup scope,
+// thus needing its own file?
+class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
+{
+public:
+    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
+
+    virtual ~DummyMidiFrontend() {};
+
+    bool init() override {return true;}
+    void run()  override {}
+    void stop() override {}
+    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
+    {
+        _sent = true;
+        _input = input;
+    }
+    bool midi_sent_on_input(int input)
+    {
+        if (_sent && input == _input)
+        {
+            _sent = false;
+            return true;
+        }
+        return false;
+    }
+private:
+    bool _sent{false};
+    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H
