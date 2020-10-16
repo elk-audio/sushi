@@ -85,6 +85,8 @@ private:
     controller_impl::AudioRoutingController _audio_routing_controller_impl;
     controller_impl::CvGateController       _cv_gate_controller_impl;
     controller_impl::OscController          _osc_controller_impl;
+
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
 } //namespace engine

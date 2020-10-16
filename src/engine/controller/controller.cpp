@@ -56,10 +56,17 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                      _osc_controller_impl(engine)
 
 {
+
+    _event_dispatcher = engine->event_dispatcher();
     _processors = engine->processor_container();
+
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
 }
 
-Controller::~Controller() = default;
+Controller::~Controller()
+{
+    _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
+}
 
 ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type,
                                                           ext::ControlListener* listener)
