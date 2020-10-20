@@ -7,6 +7,21 @@
 namespace sushi {
 namespace ext {
 
+// TODO Ilias: Consider refactoring to reduce duplication by using Lambdas.
+
+class ProcessorAddedNotification : public ControlNotification
+{
+public:
+    ProcessorAddedNotification(int processor_id, Time timestamp)
+            : ControlNotification(NotificationType::PROCESSOR_ADDED, timestamp),
+              _processor_id(processor_id) {}
+
+    int processor_id() const {return _processor_id;}
+
+private:
+    int _processor_id;
+};
+
 class ParameterChangeNotification : public ControlNotification
 {
 public:
@@ -25,7 +40,6 @@ private:
     int _parameter_id;
     float _value;
 };
-
 
 class TrackNotification : public ControlNotification
 {

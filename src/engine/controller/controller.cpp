@@ -61,11 +61,13 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
     _processors = engine->processor_container();
 
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
+    _event_dispatcher->subscribe_to_engine_notifications(this);
 }
 
 Controller::~Controller()
 {
     _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
+    _event_dispatcher->unsubscribe_from_engine_notifications(this);
 }
 
 ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type,
@@ -75,6 +77,9 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
     {
         case ext::NotificationType::PARAMETER_CHANGE:
             _parameter_change_listeners.push_back(listener);
+            break;
+        case ext::NotificationType::PROCESSOR_ADDED:
+            _processor_added_listeners.push_back(listener);
             break;
         default:
             break;
@@ -101,6 +106,29 @@ int Controller::process(Event* event)
         {
             listener->notification(&notification);
         }
+        return EventStatus::HANDLED_OK;
+    }
+    else if (event->is_audio_graph_notification())
+    {
+        auto typed_event = static_cast<AudioGraphNotificationEvent*>(event);
+
+        switch(typed_event->action())
+        {
+            case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
+            {
+                ext::ProcessorAddedNotification notification(static_cast<int>(typed_event->processor()),
+                                                             typed_event->time());
+                for (auto& listener : _processor_added_listeners)
+                {
+                    listener->notification(&notification);
+                }
+
+                break;
+            }
+            case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
+                break;
+        }
+
         return EventStatus::HANDLED_OK;
     }
 

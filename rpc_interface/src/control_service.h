@@ -255,9 +255,17 @@ private:
     sushi::ext::OscController* _controller;
 };
 
-using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::NotificationController::Service>;
+// TODO Ilias: Is this really the only way? I guess it's OK... Oh how I love gRPC!
+using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
+        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
+        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
+        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTimingUpdates<
+        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
+        sushi_rpc::NotificationController::Service
+        >>>>>;
 
-class NotificationControlService : public AsyncService, sushi::ext::ControlListener
+class NotificationControlService : public AsyncService,
+                                   private sushi::ext::ControlListener
 {
 public:
     NotificationControlService(sushi::ext::SushiControl* controller);
@@ -265,15 +273,25 @@ public:
     // Inherited from ControlListener
     void notification(const sushi::ext::ControlNotification* notification) override;
 
+    void subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
+    void unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
+
     void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
     void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
 
     void stop_all_call_data();
 
 private:
+    // TODO Ilias: Should I really have separate lists of subscribers, not just one for all events?
+    std::vector<SubscribeToProcessorChangesCallData*> _processor_subscribers;
+    std::mutex _processor_subscriber_lock;
+
     std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
-    std::mutex _subscriber_lock;
+    std::mutex _parameter_subscriber_lock;
+
     sushi::ext::SushiControl* _controller;
+
+    sushi::ext::AudioGraphController* _audio_graph_controller;
 };
 
 }// sushi_rpc

@@ -66,10 +66,11 @@ public:
     static void completion_callback(void *arg, Event* event, int status);
 
 private:
-
     void _completion_callback(Event* event, int status);
 
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
+// TODO Ilias: Eventually rename to processor update, or merge with above
+    std::vector<ext::ControlListener*>      _processor_added_listeners;
 
     engine::BaseEngine*                     _engine;
     const engine::BaseProcessorContainer*   _processors;

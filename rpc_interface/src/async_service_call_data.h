@@ -52,10 +52,7 @@ public:
      * @brief Set the state of the call data to FINISH to make it destroy itself
      *        on the next call to proceed.
      */
-    void stop()
-    {
-        _status = CallStatus::FINISH;
-    }
+    void stop();
 
 protected:
     NotificationControlService* _service;
@@ -81,11 +78,37 @@ protected:
      *        This will result in an error if this object is already placed in
      *        the queue.
      */
-    void _alert()
+    void _alert();
+};
+
+// TODO Ilias: Reduce duplication between CallData subclasses when I've understood them better.
+// Templatize on ProcessorUpdate / ParameterValue?
+class SubscribeToProcessorChangesCallData : public CallData
+{
+public:
+    SubscribeToProcessorChangesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : CallData(service, async_rpc_queue),
+              _responder(&_ctx),
+              _first_iteration(true),
+              _active(false)
     {
-        _in_completion_queue = true;
-        _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+        proceed();
     }
+
+    void proceed() override;
+
+    void push(std::shared_ptr<ProcessorUpdate> notification);
+
+private:
+    ProcessorNotificationRequest _processor_notification_request;
+
+    grpc::ServerAsyncWriter<ProcessorUpdate> _responder;
+
+    bool _first_iteration;
+    bool _active;
+
+    SynchronizedQueue<std::shared_ptr<ProcessorUpdate>> _notifications;
 };
 
 class SubscribeToParameterUpdatesCallData : public CallData
@@ -93,27 +116,17 @@ class SubscribeToParameterUpdatesCallData : public CallData
 public:
     SubscribeToParameterUpdatesCallData(NotificationControlService* service,
                                         grpc::ServerCompletionQueue* async_rpc_queue)
-        : CallData(service, async_rpc_queue),
-          _responder(&_ctx),
-          _first_iteration(true),
-          _active(false)
+            : CallData(service, async_rpc_queue),
+              _responder(&_ctx),
+              _first_iteration(true),
+              _active(false)
     {
         proceed();
     }
 
-    virtual void proceed() override;
+    void proceed() override;
 
-    void push(std::shared_ptr<ParameterValue> notification)
-    {
-        if (_active)
-        {
-            _notifications.push(notification);
-        }
-        if (_in_completion_queue == false)
-        {
-            _alert();
-        }
-    }
+    void push(std::shared_ptr<ParameterValue> notification);
 
 private:
     int64_t _map_key(int parameter_id, int processor_id)
@@ -121,7 +134,7 @@ private:
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
 
-    ParameterNotificationRequest _request;
+    ParameterNotificationRequest _parameter_notification_request;
     grpc::ServerAsyncWriter<ParameterValue> _responder;
 
     bool _first_iteration;

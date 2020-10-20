@@ -1348,8 +1348,10 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* c
     return Service::DisableOutputForParameter(context, request, response);
 }
 
-NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller}
+NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
+                                                                                               _audio_graph_controller{controller->audio_graph_controller()}
 {
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_ADDED, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
 }
 
@@ -1363,23 +1365,53 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
         notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
         notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
 
-        std::scoped_lock lock(_subscriber_lock);
+        std::scoped_lock lock(_parameter_subscriber_lock);
         for(auto& subscriber : _parameter_subscribers)
+        {
+            subscriber->push(notification_content);
+        }
+    }
+    else if (notification->type() == sushi::ext::NotificationType::PROCESSOR_ADDED)
+    {
+        auto typed_notification = static_cast<const sushi::ext::ProcessorAddedNotification*>(notification);
+        auto notification_content = std::make_shared<ProcessorUpdate>();
+
+       notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
+
+        auto [status, processor] = _audio_graph_controller->get_processor_info(typed_notification->processor_id());
+        to_grpc(*notification_content->mutable_track(), processor);
+
+        std::scoped_lock lock(_processor_subscriber_lock);
+        for(auto& subscriber : _processor_subscribers)
         {
             subscriber->push(notification_content);
         }
     }
 }
 
+void NotificationControlService::subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_processor_subscriber_lock);
+    _processor_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_processor_subscriber_lock);
+    _processor_subscribers.erase(std::remove(_processor_subscribers.begin(),
+                                             _processor_subscribers.end(),
+                                             subscriber));
+}
+
 void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
 {
-    std::scoped_lock lock(_subscriber_lock);
+    std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.push_back(subscriber);
 }
 
 void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
 {
-    std::scoped_lock lock(_subscriber_lock);
+    std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
                                              _parameter_subscribers.end(),
                                              subscriber));
@@ -1388,6 +1420,12 @@ void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToP
 void NotificationControlService::stop_all_call_data()
 {
     for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->stop();
+        subscriber->proceed();
+    }
+
+    for (auto& subscriber : _processor_subscribers)
     {
         subscriber->stop();
         subscriber->proceed();

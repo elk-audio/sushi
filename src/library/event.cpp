@@ -129,7 +129,7 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                      typed_ev->midi_data(),
                                      timestamp);
         }
-        // TODO Fill for all events
+        // TODO: Fill for all events
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
             auto typed_ev = rt_event.parameter_change_event();
