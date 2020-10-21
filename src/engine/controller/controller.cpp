@@ -79,7 +79,11 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
             _parameter_change_listeners.push_back(listener);
             break;
         case ext::NotificationType::PROCESSOR_ADDED:
-            _processor_added_listeners.push_back(listener);
+        case ext::NotificationType::PROCESSOR_DELETED:
+//      case ext::NotificationType::PROCESSOR_MOVED:
+            if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) == _processor_update_listeners.end()) {
+                _processor_update_listeners.push_back(listener);
+            }
             break;
         default:
             break;
@@ -116,9 +120,10 @@ int Controller::process(Event* event)
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
             {
-                ext::ProcessorAddedNotification notification(static_cast<int>(typed_event->processor()),
-                                                             typed_event->time());
-                for (auto& listener : _processor_added_listeners)
+                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_ADDED,
+                                                        static_cast<int>(typed_event->processor()),
+                                                        typed_event->time());
+                for (auto& listener : _processor_update_listeners)
                 {
                     listener->notification(&notification);
                 }
@@ -126,7 +131,22 @@ int Controller::process(Event* event)
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
+            {
+// TODO Ilias: Ensure this is wired up if needed!
                 break;
+            }
+            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+            {
+                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_DELETED,
+                                                        static_cast<int>(typed_event->processor()),
+                                                        typed_event->time());
+                for (auto& listener : _processor_update_listeners)
+                {
+                    listener->notification(&notification);
+                }
+
+                break;
+            }
         }
 
         return EventStatus::HANDLED_OK;

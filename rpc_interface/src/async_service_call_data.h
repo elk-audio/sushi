@@ -82,7 +82,7 @@ protected:
 };
 
 // TODO Ilias: Reduce duplication between CallData subclasses when I've understood them better.
-// Templatize on ProcessorUpdate / ParameterValue?
+// Templateize on ProcessorUpdate / ParameterValue?
 class SubscribeToProcessorChangesCallData : public CallData
 {
 public:

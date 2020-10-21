@@ -9,11 +9,11 @@ namespace ext {
 
 // TODO Ilias: Consider refactoring to reduce duplication by using Lambdas.
 
-class ProcessorAddedNotification : public ControlNotification
+class ProcessorNotification : public ControlNotification
 {
 public:
-    ProcessorAddedNotification(int processor_id, Time timestamp)
-            : ControlNotification(NotificationType::PROCESSOR_ADDED, timestamp),
+    ProcessorNotification(NotificationType type, int processor_id, Time timestamp)
+            : ControlNotification(type, timestamp),
               _processor_id(processor_id) {}
 
     int processor_id() const {return _processor_id;}

@@ -212,7 +212,7 @@ enum class NotificationType
     TRACK_REMOVED,
     TRACK_CHANGED,
     PROCESSOR_ADDED,
-    PROCESSOR_REMOVED
+    PROCESSOR_DELETED
 };
 
 class SystemController

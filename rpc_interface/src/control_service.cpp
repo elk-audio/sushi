@@ -1351,7 +1351,12 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* c
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
+// TODO Ilias: It shouldn't be optional to subscribe to only one PROCESSOR UPDATE NOTIFICATION really, we should signal that it's all or nothing, no?
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_ADDED, this);
+// TODO Ilias: Ensure this is wired up if needed!
+    // _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_MOVED, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_DELETED, this);
+
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
 }
 
@@ -1373,10 +1378,31 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
     }
     else if (notification->type() == sushi::ext::NotificationType::PROCESSOR_ADDED)
     {
-        auto typed_notification = static_cast<const sushi::ext::ProcessorAddedNotification*>(notification);
+        auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
         auto notification_content = std::make_shared<ProcessorUpdate>();
 
        notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
+
+        auto [status, processor] = _audio_graph_controller->get_processor_info(typed_notification->processor_id());
+        to_grpc(*notification_content->mutable_track(), processor);
+
+        std::scoped_lock lock(_processor_subscriber_lock);
+        for(auto& subscriber : _processor_subscribers)
+        {
+            subscriber->push(notification_content);
+        }
+    }
+    // TODO Ilias: Ensure this is wired up if needed!
+//    else if (notification->type() == sushi::ext::NotificationType::PROCESSOR_MOVED)
+//    {
+//
+//    }
+    else if (notification->type() == sushi::ext::NotificationType::PROCESSOR_DELETED)
+    {
+        auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
+        auto notification_content = std::make_shared<ProcessorUpdate>();
+
+        notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
 
         auto [status, processor] = _audio_graph_controller->get_processor_info(typed_notification->processor_id());
         to_grpc(*notification_content->mutable_track(), processor);
