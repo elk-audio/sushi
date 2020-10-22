@@ -19,7 +19,6 @@
  */
 
 #include "audio_routing_controller.h"
-#include "controller_internal.h"
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
