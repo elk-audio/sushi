@@ -81,36 +81,6 @@ protected:
     void _alert();
 };
 
-// TODO Ilias: Reduce duplication between CallData subclasses when I've understood them better.
-// Templatize on ProcessorUpdate / ParameterValue?
-class SubscribeToProcessorChangesCallData : public CallData
-{
-public:
-    SubscribeToProcessorChangesCallData(NotificationControlService* service,
-                                        grpc::ServerCompletionQueue* async_rpc_queue)
-            : CallData(service, async_rpc_queue),
-              _responder(&_ctx),
-              _first_iteration(true),
-              _active(false)
-    {
-        proceed();
-    }
-
-    void proceed() override;
-
-    void push(std::shared_ptr<ProcessorUpdate> notification);
-
-private:
-    ProcessorNotificationRequest _processor_notification_request;
-
-    grpc::ServerAsyncWriter<ProcessorUpdate> _responder;
-
-    bool _first_iteration;
-    bool _active;
-
-    SynchronizedQueue<std::shared_ptr<ProcessorUpdate>> _notifications;
-};
-
 template <class VALUE, class NOTIFICATION_REQUEST>
 class SubscribeToUpdatesCallData : public CallData
 {
@@ -120,7 +90,7 @@ public:
             : CallData(service, async_rpc_queue),
               _responder(&_ctx)
     {
-        proceed();
+        // Classes inheriting from this, should call proceed() in their constructor.
     }
 
     void proceed() override
@@ -211,7 +181,13 @@ class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<Pa
 public:
     SubscribeToParameterUpdatesCallData(NotificationControlService* service,
                                         grpc::ServerCompletionQueue* async_rpc_queue)
-            : SubscribeToUpdatesCallData(service, async_rpc_queue) {}
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        // TODO Ilias:
+        // Proceed calls pure virtual functions, but if it is called from the constructor of the class
+        // that defines them it should be ok no?
+        proceed();
+    }
 
     ~SubscribeToParameterUpdatesCallData() = default;
 
@@ -254,10 +230,56 @@ protected:
         }
     }
 
+private:
     int64_t _map_key(int parameter_id, int processor_id)
     {
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
+};
+
+class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, ProcessorNotificationRequest>
+{
+public:
+    SubscribeToProcessorChangesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        // TODO Ilias:
+        // Proceed calls pure virtual functions, but if it is called from the constructor of the class
+        // that defines them it should be ok no?
+        proceed();
+    }
+
+    ~SubscribeToProcessorChangesCallData() = default;
+
+protected:
+    void respawn() override
+    {
+        new SubscribeToProcessorChangesCallData(_service, _async_rpc_queue);
+    }
+
+    void subscribe() override
+    {
+        _service->RequestSubscribeToProcessorChanges(&_ctx,
+                                                     &_notification_request,
+                                                     &_responder,
+                                                     _async_rpc_queue,
+                                                     _async_rpc_queue,
+                                                     this);
+        _service->subscribe_to_processor_changes(this);
+    }
+
+    void unsubscribe() override
+    {
+        _service->unsubscribe_from_processor_changes(this);
+    }
+
+    bool checkIfBlacklisted(const ProcessorUpdate& reply) override
+    {
+        return false;
+    }
+
+    void populateBlacklist() override {}
 };
 
 }
