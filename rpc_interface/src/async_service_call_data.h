@@ -118,9 +118,7 @@ public:
     SubscribeToUpdatesCallData(NotificationControlService* service,
                                grpc::ServerCompletionQueue* async_rpc_queue)
             : CallData(service, async_rpc_queue),
-              _responder(&_ctx),
-              _first_iteration(true),
-              _active(false)
+              _responder(&_ctx)
     {
         proceed();
     }
@@ -193,40 +191,19 @@ protected:
     virtual void subscribe() = 0;
     virtual void unsubscribe() = 0;
 
-    // TODO Ilias: Make this general
-    virtual bool checkIfBlacklisted(const VALUE& reply)
-    {
-        auto key =  _map_key(reply.parameter().parameter_id(),
-                             reply.parameter().processor_id());
-
-        return !(_blacklist.find(key) == _blacklist.end());
-    }
-
-    // TODO Ilias: Make this general
-    virtual void populateBlacklist()
-    {
-        for (auto& identifier : _notification_request.parameters())
-        {
-            _blacklist[_map_key(identifier.parameter_id(),
-                                identifier.processor_id())] = false;
-        }
-    }
-
-    // TODO Ilias: Make this general
-    int64_t _map_key(int parameter_id, int processor_id)
-    {
-        return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
-    }
+    virtual bool checkIfBlacklisted(const VALUE& reply) = 0;
+    virtual void populateBlacklist() = 0;
 
     NOTIFICATION_REQUEST _notification_request;
     grpc::ServerAsyncWriter<VALUE> _responder;
 
-    SynchronizedQueue<std::shared_ptr<VALUE>> _notifications;
     std::unordered_map<int64_t, bool> _blacklist;
 
 private:
-    bool _first_iteration;
-    bool _active;
+    SynchronizedQueue<std::shared_ptr<VALUE>> _notifications;
+
+    bool _first_iteration{true};
+    bool _active{false};
 };
 
 class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationRequest>
@@ -259,8 +236,29 @@ protected:
     {
         _service->unsubscribe_from_parameter_updates(this);
     }
-};
 
+    bool checkIfBlacklisted(const ParameterValue& reply) override
+    {
+        auto key =  _map_key(reply.parameter().parameter_id(),
+                             reply.parameter().processor_id());
+
+        return !(_blacklist.find(key) == _blacklist.end());
+    }
+
+    void populateBlacklist() override
+    {
+        for (auto& identifier : _notification_request.parameters())
+        {
+            _blacklist[_map_key(identifier.parameter_id(),
+                                identifier.processor_id())] = false;
+        }
+    }
+
+    int64_t _map_key(int parameter_id, int processor_id)
+    {
+        return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
+    }
+};
 
 }
 #endif // SUSHI_ASYNCSERVICECALLDATA_H
