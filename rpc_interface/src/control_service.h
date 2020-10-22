@@ -34,7 +34,7 @@
 namespace sushi_rpc {
 
 class SubscribeToProcessorChangesCallData;
-template <class VALUE, class NOTIFICATION_REQUEST>
+
 class SubscribeToParameterUpdatesCallData;
 
 class SystemControlService : public SystemController::Service
@@ -279,8 +279,8 @@ public:
     void subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
     void unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
 
-    void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData<ParameterValue, ParameterNotificationRequest>* subscriber);
-    void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData<ParameterValue, ParameterNotificationRequest>* subscriber);
+    void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+    void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
 
     void stop_all_call_data();
 
@@ -289,7 +289,7 @@ private:
     std::vector<SubscribeToProcessorChangesCallData*> _processor_subscribers;
     std::mutex _processor_subscriber_lock;
 
-    std::vector<SubscribeToParameterUpdatesCallData<ParameterValue, ParameterNotificationRequest>*> _parameter_subscribers;
+    std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
     std::mutex _parameter_subscriber_lock;
 
     sushi::ext::SushiControl* _controller;

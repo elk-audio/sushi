@@ -82,7 +82,7 @@ protected:
 };
 
 // TODO Ilias: Reduce duplication between CallData subclasses when I've understood them better.
-// Templateize on ProcessorUpdate / ParameterValue?
+// Templatize on ProcessorUpdate / ParameterValue?
 class SubscribeToProcessorChangesCallData : public CallData
 {
 public:
@@ -112,11 +112,11 @@ private:
 };
 
 template <class VALUE, class NOTIFICATION_REQUEST>
-class SubscribeToParameterUpdatesCallData : public CallData
+class SubscribeToUpdatesCallData : public CallData
 {
 public:
-    SubscribeToParameterUpdatesCallData(NotificationControlService* service,
-                                        grpc::ServerCompletionQueue* async_rpc_queue)
+    SubscribeToUpdatesCallData(NotificationControlService* service,
+                               grpc::ServerCompletionQueue* async_rpc_queue)
             : CallData(service, async_rpc_queue),
               _responder(&_ctx),
               _first_iteration(true),
@@ -130,42 +130,26 @@ public:
         if (_status == CallStatus::CREATE)
         {
             _status = CallStatus::PROCESS;
-            _service->RequestSubscribeToParameterUpdates(&_ctx,
-                                                         &_parameter_notification_request,
-                                                         &_responder,
-                                                         _async_rpc_queue,
-                                                         _async_rpc_queue,
-                                                         this);
+            subscribe();
             _in_completion_queue = true;
-            _service->subscribe_to_parameter_updates(this);
         }
         else if (_status == CallStatus::PROCESS)
         {
             if (_first_iteration)
             {
-                // Spawn a new CallData instance to serve new clients while we process
-                // the one for this CallData. The instance will deallocate itself as
-                // part of its FINISH state.
-                new SubscribeToParameterUpdatesCallData<VALUE, NOTIFICATION_REQUEST>(_service, _async_rpc_queue);
+                respawn();
                 _active = true;
-
-                for (auto& parameter_identifier : _parameter_notification_request.parameters())
-                {
-                    _blacklist[_map_key(parameter_identifier.parameter_id(),
-                                        parameter_identifier.processor_id())] = false;
-                }
+                populateBlacklist();
                 _first_iteration = false;
             }
 
             if (_notifications.empty() == false)
             {
-                auto _reply = _notifications.pop();
-                auto key =  _map_key(_reply->parameter().parameter_id(),
-                                     _reply->parameter().processor_id());
-                if (_blacklist.find(key) == _blacklist.end())
+                auto reply = _notifications.pop();
+                if (checkIfBlacklisted(*reply.get()) == false)
                 {
                     _in_completion_queue = true;
-                    _responder.Write(*_reply.get(), this);
+                    _responder.Write(*reply.get(), this);
                     _status = CallStatus::PUSH_TO_BACK;
                     return;
                 }
@@ -183,7 +167,7 @@ public:
         else
         {
             assert(_status == CallStatus::FINISH);
-            _service->unsubscribe_from_parameter_updates(this);
+            unsubscribe();
             delete this;
         }
     }
@@ -199,21 +183,84 @@ public:
             _alert();
         }
     }
-private:
+
+protected:
+    // Spawn a new CallData instance to serve new clients while we process
+    // the one for this CallData. The instance will deallocate itself as
+    // part of its FINISH state, in proceed().
+    virtual void respawn() = 0;
+
+    virtual void subscribe() = 0;
+    virtual void unsubscribe() = 0;
+
+    // TODO Ilias: Make this general
+    virtual bool checkIfBlacklisted(const VALUE& reply)
+    {
+        auto key =  _map_key(reply.parameter().parameter_id(),
+                             reply.parameter().processor_id());
+
+        return !(_blacklist.find(key) == _blacklist.end());
+    }
+
+    // TODO Ilias: Make this general
+    virtual void populateBlacklist()
+    {
+        for (auto& identifier : _notification_request.parameters())
+        {
+            _blacklist[_map_key(identifier.parameter_id(),
+                                identifier.processor_id())] = false;
+        }
+    }
+
+    // TODO Ilias: Make this general
     int64_t _map_key(int parameter_id, int processor_id)
     {
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
 
-    NOTIFICATION_REQUEST _parameter_notification_request;
+    NOTIFICATION_REQUEST _notification_request;
     grpc::ServerAsyncWriter<VALUE> _responder;
 
+    SynchronizedQueue<std::shared_ptr<VALUE>> _notifications;
+    std::unordered_map<int64_t, bool> _blacklist;
+
+private:
     bool _first_iteration;
     bool _active;
-
-    std::unordered_map<int64_t, bool> _blacklist;
-    SynchronizedQueue<std::shared_ptr<VALUE>> _notifications;
 };
+
+class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationRequest>
+{
+public:
+    SubscribeToParameterUpdatesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue) {}
+
+    ~SubscribeToParameterUpdatesCallData() = default;
+
+protected:
+    void respawn() override
+    {
+        new SubscribeToParameterUpdatesCallData(_service, _async_rpc_queue);
+    }
+
+    void subscribe() override
+    {
+        _service->RequestSubscribeToParameterUpdates(&_ctx,
+                                                     &_notification_request,
+                                                     &_responder,
+                                                     _async_rpc_queue,
+                                                     _async_rpc_queue,
+                                                     this);
+        _service->subscribe_to_parameter_updates(this);
+    }
+
+    void unsubscribe() override
+    {
+        _service->unsubscribe_from_parameter_updates(this);
+    }
+};
+
 
 }
 #endif // SUSHI_ASYNCSERVICECALLDATA_H

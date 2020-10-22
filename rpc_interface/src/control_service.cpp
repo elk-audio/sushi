@@ -1431,13 +1431,13 @@ void NotificationControlService::unsubscribe_from_processor_changes(SubscribeToP
                                              subscriber));
 }
 
-void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData<ParameterValue, ParameterNotificationRequest>* subscriber)
+void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.push_back(subscriber);
 }
 
-void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData<ParameterValue, ParameterNotificationRequest>* subscriber)
+void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
