@@ -93,76 +93,21 @@ public:
         // Classes inheriting from this, should call proceed() in their constructor.
     }
 
-    void proceed() override
-    {
-        if (_status == CallStatus::CREATE)
-        {
-            _status = CallStatus::PROCESS;
-            subscribe();
-            _in_completion_queue = true;
-        }
-        else if (_status == CallStatus::PROCESS)
-        {
-            if (_first_iteration)
-            {
-                respawn();
-                _active = true;
-                populateBlacklist();
-                _first_iteration = false;
-            }
+    void proceed() override;
 
-            if (_notifications.empty() == false)
-            {
-                auto reply = _notifications.pop();
-                if (checkIfBlacklisted(*reply.get()) == false)
-                {
-                    _in_completion_queue = true;
-                    _responder.Write(*reply.get(), this);
-                    _status = CallStatus::PUSH_TO_BACK;
-                    return;
-                }
-            }
-            _in_completion_queue = false;
-        }
-        else if (_status == CallStatus::PUSH_TO_BACK)
-        {
-            // Since a call to write adds the object at the front of the completion
-            // queue. We then place it at the back with an alarm to serve the clients
-            // in a round robin fashion.
-            _status = CallStatus::PROCESS;
-            _alert();
-        }
-        else
-        {
-            assert(_status == CallStatus::FINISH);
-            unsubscribe();
-            delete this;
-        }
-    }
-
-    void push(std::shared_ptr<VALUE> notification)
-    {
-        if (_active)
-        {
-            _notifications.push(notification);
-        }
-        if (_in_completion_queue == false)
-        {
-            _alert();
-        }
-    }
+    void push(std::shared_ptr<VALUE> notification);
 
 protected:
     // Spawn a new CallData instance to serve new clients while we process
     // the one for this CallData. The instance will deallocate itself as
     // part of its FINISH state, in proceed().
-    virtual void respawn() = 0;
+    virtual void _respawn() = 0;
 
-    virtual void subscribe() = 0;
-    virtual void unsubscribe() = 0;
+    virtual void _subscribe() = 0;
+    virtual void _unsubscribe() = 0;
 
-    virtual bool checkIfBlacklisted(const VALUE& reply) = 0;
-    virtual void populateBlacklist() = 0;
+    virtual bool _checkIfBlacklisted(const VALUE& reply) = 0;
+    virtual void _populateBlacklist() = 0;
 
     NOTIFICATION_REQUEST _notification_request;
     grpc::ServerAsyncWriter<VALUE> _responder;
@@ -192,46 +137,14 @@ public:
     ~SubscribeToParameterUpdatesCallData() = default;
 
 protected:
-    void respawn() override
-    {
-        new SubscribeToParameterUpdatesCallData(_service, _async_rpc_queue);
-    }
-
-    void subscribe() override
-    {
-        _service->RequestSubscribeToParameterUpdates(&_ctx,
-                                                     &_notification_request,
-                                                     &_responder,
-                                                     _async_rpc_queue,
-                                                     _async_rpc_queue,
-                                                     this);
-        _service->subscribe_to_parameter_updates(this);
-    }
-
-    void unsubscribe() override
-    {
-        _service->unsubscribe_from_parameter_updates(this);
-    }
-
-    bool checkIfBlacklisted(const ParameterValue& reply) override
-    {
-        auto key =  _map_key(reply.parameter().parameter_id(),
-                             reply.parameter().processor_id());
-
-        return !(_blacklist.find(key) == _blacklist.end());
-    }
-
-    void populateBlacklist() override
-    {
-        for (auto& identifier : _notification_request.parameters())
-        {
-            _blacklist[_map_key(identifier.parameter_id(),
-                                identifier.processor_id())] = false;
-        }
-    }
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _checkIfBlacklisted(const ParameterValue& reply) override;
+    void _populateBlacklist() override;
 
 private:
-    int64_t _map_key(int parameter_id, int processor_id)
+    int64_t _map_key(int parameter_id, int processor_id) const
     {
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
@@ -253,33 +166,11 @@ public:
     ~SubscribeToProcessorChangesCallData() = default;
 
 protected:
-    void respawn() override
-    {
-        new SubscribeToProcessorChangesCallData(_service, _async_rpc_queue);
-    }
-
-    void subscribe() override
-    {
-        _service->RequestSubscribeToProcessorChanges(&_ctx,
-                                                     &_notification_request,
-                                                     &_responder,
-                                                     _async_rpc_queue,
-                                                     _async_rpc_queue,
-                                                     this);
-        _service->subscribe_to_processor_changes(this);
-    }
-
-    void unsubscribe() override
-    {
-        _service->unsubscribe_from_processor_changes(this);
-    }
-
-    bool checkIfBlacklisted(const ProcessorUpdate& reply) override
-    {
-        return false;
-    }
-
-    void populateBlacklist() override {}
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _checkIfBlacklisted(const ProcessorUpdate& reply) override;
+    void _populateBlacklist() override {}
 };
 
 }
