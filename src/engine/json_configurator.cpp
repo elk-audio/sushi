@@ -19,6 +19,7 @@
  */
 
 #include <fstream>
+
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
