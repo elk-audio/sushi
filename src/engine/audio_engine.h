@@ -156,17 +156,17 @@ public:
                                                     int track_channel,
                                                     ObjectId track_id) override;
 
-    virtual EngineReturnStatus disconnect_audio_input_channel(int engine_channel,
-                                                              int track_channel,
-                                                              ObjectId track_id) override;
+    EngineReturnStatus disconnect_audio_input_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
 
-    virtual EngineReturnStatus disconnect_audio_output_channel(int engine_channel,
-                                                               int track_channel,
-                                                               ObjectId track_id) override;
+    EngineReturnStatus disconnect_audio_output_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
 
-    virtual std::vector<AudioConnection> audio_input_connections() override;
+    std::vector<AudioConnection> audio_input_connections() override;
 
-    virtual std::vector<AudioConnection> audio_output_connections() override;
+    std::vector<AudioConnection> audio_output_connections() override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of

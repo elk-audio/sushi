@@ -579,14 +579,14 @@ public:
         return std::vector<AudioConnection>();
     }
 
-    std::pair<ControlStatus, std::vector<AudioConnection>> get_input_connections_for_track(int /*track_id*/) const override
+    std::vector<AudioConnection> get_input_connections_for_track(int /*track_id*/) const override
     {
-        return {_return_status, std::vector<AudioConnection>()};
+        return std::vector<AudioConnection>();
     }
 
-    std::pair<ControlStatus, std::vector<AudioConnection>> get_output_connections_for_track(int /*track_id*/) const override
+    std::vector<AudioConnection> get_output_connections_for_track(int /*track_id*/) const override
     {
-        return {_return_status, std::vector<AudioConnection>()};
+        return std::vector<AudioConnection>();
     }
 
     ControlStatus connect_input_channel_to_track(int /*track_id*/, int /*track_channel*/, int /*input_channel*/) override

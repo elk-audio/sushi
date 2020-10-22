@@ -871,8 +871,10 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
     auto& storage = is_input ? _audio_in_connections : _audio_out_connections;
     bool realtime = this->realtime();
 
-    AudioConnection con = {.engine_channel = engine_channel, .track_channel = track_channel, .track = track->id()};
-    bool added = storage.add(con, realtime);
+    AudioConnection con = {.engine_channel = engine_channel,
+                           .track_channel = track_channel,
+                           .track = track->id()};
+    bool added = storage.add(con, !realtime);
 
     if (added && realtime)
     {
@@ -910,7 +912,7 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
     bool realtime = this->realtime();
 
     AudioConnection con = {.engine_channel = engine_channel, .track_channel = track_channel, .track = track->id()};
-    bool removed = storage.remove(con, realtime);
+    bool removed = storage.remove(con, !realtime);
 
     if (removed && realtime)
     {

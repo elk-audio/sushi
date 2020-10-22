@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <mutex>
+#include <type_traits>
 #include <cassert>
 
 #include <twine/twine.h>
@@ -36,75 +37,122 @@ template <typename T>
 class ConnectionStorage
 {
 public:
-    ConnectionStorage(int max_connections) : _max_connections(max_connections)
+    ConnectionStorage(int max_connections) : _capacity(max_connections)
     {
-        _connections_rt.reserve(max_connections);
+        _items_rt.reserve(max_connections);
     }
 
+    /**
+     * @brief Get the current items, called from rt threads only, should not be called
+     *        be called concurrently with add_rt()
+     * @return A reference to a vector of elements in the container
+     */
     const std::vector<T>& connections_rt() const
     {
         assert(twine::is_current_thread_realtime());
-        return _connections_rt;
+        return _items_rt;
     }
 
-    std::vector<T> connections()
+    /**
+     * @brief Get the current elements, called from not-rt threads only. Returns a copy of the
+     *        items currently in the container
+     * @return A vector of elements in the container
+     */
+    std::vector<T> connections() const
     {
         assert(twine::is_current_thread_realtime() == false);
         std::scoped_lock<std::mutex> lock(_non_rt_lock);
-        auto copy = _connections;
+        auto copy = _items;
         return copy;
     }
 
-    bool add(const T& element, bool realtime_running)
+    /**
+     * @brief Add an element to the container. Should only be called from a non-rt thread
+     * @param element   The element to add to the container.
+     * @param add_to_rt If true, also adds the element to the rt-part of the container.
+     *                  This should only be set to true if there are no concurrent calls from a
+     *                  rt thread to the container. If set to false, add_rt() needs to be called
+     *                  from an rt thread afterwards.
+     * @return True if the element was successfully added, false if the max capacity was reached.
+     */
+    bool add(const T& element, bool add_to_rt)
     {
         assert(twine::is_current_thread_realtime() == false);
         std::scoped_lock<std::mutex> lock(_non_rt_lock);
-        if (_connections.size() < _max_connections)
+        if (_items.size() < _capacity)
         {
-            _connections.push_back(element);
-            if (realtime_running == false)
+            _items.push_back(element);
+            if (add_to_rt)
             {
-                _connections_rt.push_back(element);
+                _items_rt.push_back(element);
             }
             return true;
         }
         return false;
     }
 
+    /**
+     * @brief Add an element to the rt part of the container. Should only be called from an rt thread
+     * @param element   The element to add to the container.
+     * @return True if the element was successfully added, false if the max capacity was reached.
+     */
     bool add_rt(const T& element)
     {
         assert(twine::is_current_thread_realtime());
-        assert(_connections_rt.size() < _max_connections);
-        _connections_rt.push_back(element);
+        assert(_items_rt.size() < _capacity);
+        _items_rt.push_back(element);
         return true;
     }
 
-    bool remove(const T& pattern, bool realtime_running)
+    /**
+     * @brief Remove an element from the container. Should only be called from a non-rt thread
+     * @param pattern   Elements matching this pattern will be removed.
+     * @param remove_from_rt If true, also removes the element from the rt-part of the container.
+     *                       This should only be set to true if there are no concurrent calls from a
+     *                       rt thread to the container. If set to false, remove_rt() needs to be
+     *                       called from an rt thread afterwards.
+     * @return True if the element was found and successfully deleted.
+     */
+    bool remove(const T& pattern, bool remove_from_rt)
     {
         assert(twine::is_current_thread_realtime() == false);
         std::scoped_lock<std::mutex> lock(_non_rt_lock);
-        auto original_size = _connections.size();
-        _connections.erase(std::remove(_connections.begin(), _connections.end(), pattern), _connections.end());
-        if (realtime_running == false)
+        auto original_size = _items.size();
+        _items.erase(std::remove(_items.begin(), _items.end(), pattern), _items.end());
+        if (remove_from_rt)
         {
-            _connections_rt.erase(std::remove(_connections_rt.begin(), _connections_rt.end(), pattern), _connections_rt.end());
+            _items_rt.erase(std::remove(_items_rt.begin(), _items_rt.end(), pattern), _items_rt.end());
         }
-        return !(original_size == _connections.size());
+        return (original_size != _items.size());
     }
 
+    /**
+     * @brief Remove an element from the rt part of the container. Should only be called from an rt thread
+     * @param pattern   Elements matching this pattern will be removed.
+     * @return True if the element was found and successfully deleted.
+     */
     bool remove_rt(const T& pattern)
     {
         assert(twine::is_current_thread_realtime());
-        auto original_size = _connections.size();
-        _connections_rt.erase(std::remove(_connections_rt.begin(), _connections_rt.end(), pattern), _connections_rt.end());
-        return !(original_size == _connections.size());
+        auto original_size = _items.size();
+        _items_rt.erase(std::remove(_items_rt.begin(), _items_rt.end(), pattern), _items_rt.end());
+        return (original_size != _items.size());
+    }
+
+    size_t capacity() const
+    {
+        return _capacity;
     }
 
 private:
-    std::vector<T> _connections;
-    std::vector<T> _connections_rt;
-    size_t         _max_connections;
-    std::mutex     _non_rt_lock;
+    // For the mutable rt-operations to be guaranteed rt-safe (no allocations) these must hold
+    static_assert(std::is_nothrow_copy_constructible<T>::value);
+    static_assert(std::is_nothrow_destructible<T>::value);
+
+    std::vector<T>      _items;
+    std::vector<T>      _items_rt;
+    size_t              _capacity;
+    mutable std::mutex  _non_rt_lock;
 };
 
 } // sushi

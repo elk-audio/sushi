@@ -576,7 +576,7 @@ private:
 };
 
 /**
- * @brief Container class for rt events. Functionally this take the role of a
+ * @brief Container class for rt events. Functionally this takes the role of a
  *        baseclass for events, from which you can access the derived event
  *        classes via function calls that essentially casts the event to the
  *        given rt event type.
