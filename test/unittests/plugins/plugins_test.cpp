@@ -223,7 +223,7 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
 
     /* Process enough samples to catch some event outputs */
     ASSERT_TRUE(_fifo.empty());
@@ -232,14 +232,68 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
         _module_under_test->process_audio(in_buffer, out_buffer);
     }
     /* check that audio goes through unprocessed */
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+    test_utils::assert_buffer_value(0.5f, out_buffer);
 
     RtEvent event;
     ASSERT_TRUE(_fifo.pop(event));
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
-    /*  The value should approach 0 dB eventually, but test that it is reasonably close */
-    EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
+    /*  The rms and dB calculations are tested separately, just test that it a reasonable value */
+    EXPECT_GT(event.parameter_change_event()->value(), 0.5f);
+}
+
+TEST_F(TestPeakMeterPlugin, TestClipDetection)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    auto first_channel = ChunkSampleBuffer::create_non_owning_buffer(in_buffer, 0, 1);
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
+    test_utils::fill_sample_buffer(first_channel, 1.5f);
+
+    auto clip_l_id = _module_under_test->parameter_from_name("right_clip")->id();
+    auto clip_r_id = _module_under_test->parameter_from_name("left_clip")->id();
+
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Run once and check that the parameter value has changed for the left channel*/
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Lower volume and run until the hold time has passed */
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
+    for (int i = 0; i <= TEST_SAMPLERATE * 6 / AUDIO_CHUNK_SIZE ; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+    }
+
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Pop the first event and verify it was a clip parameter change */
+    RtEvent event;
+    ASSERT_TRUE(_fifo.pop(event));
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+    EXPECT_EQ(clip_l_id, event.parameter_change_event()->param_id());
+
+    /* Test with linked channels */
+    test_utils::fill_sample_buffer(first_channel, 1.5f);
+    event = RtEvent::make_parameter_change_event(0,0,_module_under_test->parameter_from_name("link_channels")->id(), 1.0f);
+    _module_under_test->process_event(event);
+    /* Run once and check that the parameter value has changed for both channels */
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_r_id).second);
+}
+
+TEST(TestPeakMeterPluginInternal, TestTodBConversion)
+{
+    EXPECT_FLOAT_EQ(0.0f, peak_meter_plugin::to_normalised_dB(0.0f));         // minimum
+    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981), 0.0001); // -48 dB
+    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001);  //  0 dB
+    EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(15.9f));        // +24 dB
+    EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(251.2f));       // +48 dB (clamped)
 }
 
 class TestLfoPlugin : public ::testing::Test
