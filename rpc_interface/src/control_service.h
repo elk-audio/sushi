@@ -258,7 +258,6 @@ private:
     sushi::ext::OscController* _controller;
 };
 
-// TODO Ilias: Is this really the only way? I guess it's OK... Oh how I love gRPC!
 using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
         sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
         sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
@@ -276,23 +275,18 @@ public:
     // Inherited from ControlListener
     void notification(const sushi::ext::ControlNotification* notification) override;
 
-    // TODO Ilias: The below could all have the same name, since they take different types.
-    // That way call data overrides are reduced.
-    void subscribe_to_track_changes(SubscribeToTrackChangesCallData* subscriber);
-    void unsubscribe_from_track_changes(SubscribeToTrackChangesCallData* subscriber);
+    void subscribe(SubscribeToTrackChangesCallData* subscriber);
+    void unsubscribe(SubscribeToTrackChangesCallData* subscriber);
 
-    void subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
-    void unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
+    void subscribe(SubscribeToProcessorChangesCallData* subscriber);
+    void unsubscribe(SubscribeToProcessorChangesCallData* subscriber);
 
-    void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
-    void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+    void subscribe(SubscribeToParameterUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToParameterUpdatesCallData* subscriber);
 
     void stop_all_call_data();
 
 private:
-    // TODO Ilias: Should I really have separate lists of subscribers, not just one for all events?
-    // Really the below could even be templatized.
-
     std::vector<SubscribeToTrackChangesCallData*> _track_subscribers;
     std::mutex _track_subscriber_lock;
 

@@ -34,8 +34,6 @@
 
 namespace sushi_rpc {
 
-// TODO Ilias: merge CallData, and SubscribeToUpdatesCallData
-
 class CallData
 {
 public:

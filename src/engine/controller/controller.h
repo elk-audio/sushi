@@ -69,7 +69,6 @@ private:
     void _completion_callback(Event* event, int status);
 
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
-// TODO Ilias: Eventually merge with above?
     std::vector<ext::ControlListener*>      _processor_update_listeners;
     std::vector<ext::ControlListener*>      _track_update_listeners;
 

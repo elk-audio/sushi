@@ -115,12 +115,12 @@ void SubscribeToParameterUpdatesCallData::_subscribe()
                                                  _async_rpc_queue,
                                                  _async_rpc_queue,
                                                  this);
-    _service->subscribe_to_parameter_updates(this);
+    _service->subscribe(this);
 }
 
 void SubscribeToParameterUpdatesCallData::_unsubscribe()
 {
-    _service->unsubscribe_from_parameter_updates(this);
+    _service->unsubscribe(this);
 }
 
 bool SubscribeToParameterUpdatesCallData::_checkIfBlacklisted(const ParameterValue& reply)
@@ -153,12 +153,12 @@ void SubscribeToProcessorChangesCallData::_subscribe()
                                                  _async_rpc_queue,
                                                  _async_rpc_queue,
                                                  this);
-    _service->subscribe_to_processor_changes(this);
+    _service->subscribe(this);
 }
 
 void SubscribeToProcessorChangesCallData::_unsubscribe()
 {
-    _service->unsubscribe_from_processor_changes(this);
+    _service->unsubscribe(this);
 }
 
 bool SubscribeToProcessorChangesCallData::_checkIfBlacklisted(const ProcessorUpdate& reply)
@@ -179,12 +179,12 @@ void SubscribeToTrackChangesCallData::_subscribe()
                                              _async_rpc_queue,
                                              _async_rpc_queue,
                                              this);
-    _service->subscribe_to_track_changes(this);
+    _service->subscribe(this);
 }
 
 void SubscribeToTrackChangesCallData::_unsubscribe()
 {
-    _service->unsubscribe_from_track_changes(this);
+    _service->unsubscribe(this);
 }
 
 bool SubscribeToTrackChangesCallData::_checkIfBlacklisted(const TrackUpdate& reply)

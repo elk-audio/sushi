@@ -1353,8 +1353,6 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* c
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
-// TODO Ilias: It shouldn't be optional to subscribe to only one TRACK/PROCESSOR UPDATE NOTIFICATION really,
-// we should signal that it's all or nothing, no?
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_ADDED, this);
 // TODO Ilias: Ensure this is wired up if needed!
     // _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_MOVED, this);
@@ -1468,13 +1466,13 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
     }
 }
 
-void NotificationControlService::subscribe_to_track_changes(SubscribeToTrackChangesCallData* subscriber)
+void NotificationControlService::subscribe(SubscribeToTrackChangesCallData* subscriber)
 {
     std::scoped_lock lock(_track_subscriber_lock);
     _track_subscribers.push_back(subscriber);
 }
 
-void NotificationControlService::unsubscribe_from_track_changes(SubscribeToTrackChangesCallData* subscriber)
+void NotificationControlService::unsubscribe(SubscribeToTrackChangesCallData* subscriber)
 {
     std::scoped_lock lock(_track_subscriber_lock);
     _track_subscribers.erase(std::remove(_track_subscribers.begin(),
@@ -1482,13 +1480,13 @@ void NotificationControlService::unsubscribe_from_track_changes(SubscribeToTrack
                                                  subscriber));
 }
 
-void NotificationControlService::subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber)
+void NotificationControlService::subscribe(SubscribeToProcessorChangesCallData* subscriber)
 {
     std::scoped_lock lock(_processor_subscriber_lock);
     _processor_subscribers.push_back(subscriber);
 }
 
-void NotificationControlService::unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber)
+void NotificationControlService::unsubscribe(SubscribeToProcessorChangesCallData* subscriber)
 {
     std::scoped_lock lock(_processor_subscriber_lock);
     _processor_subscribers.erase(std::remove(_processor_subscribers.begin(),
@@ -1496,13 +1494,13 @@ void NotificationControlService::unsubscribe_from_processor_changes(SubscribeToP
                                                      subscriber));
 }
 
-void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+void NotificationControlService::subscribe(SubscribeToParameterUpdatesCallData* subscriber)
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.push_back(subscriber);
 }
 
-void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData* subscriber)
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),

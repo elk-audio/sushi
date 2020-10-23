@@ -7,8 +7,6 @@
 namespace sushi {
 namespace ext {
 
-// TODO Ilias: Consider refactoring to reduce duplication by using Lambdas.
-
 class ProcessorNotification : public ControlNotification
 {
 public:

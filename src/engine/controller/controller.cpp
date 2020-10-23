@@ -56,7 +56,6 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                      _osc_controller_impl(engine)
 
 {
-
     _event_dispatcher = engine->event_dispatcher();
     _processors = engine->processor_container();
 
@@ -82,7 +81,8 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::PROCESSOR_DELETED:
 // TODO Ilias: Add processor move notification?
 //      case ext::NotificationType::PROCESSOR_MOVED:
-            if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) == _processor_update_listeners.end()) {
+            if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) ==
+                _processor_update_listeners.end()) {
                 _processor_update_listeners.push_back(listener);
             }
             break;
@@ -90,7 +90,8 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::TRACK_DELETED:
 // TODO Ilias: Add track move notification?
 //      case ext::NotificationType::TRACK_CHANGED:
-            if (std::find(_track_update_listeners.begin(), _track_update_listeners.end(), listener) == _track_update_listeners.end()) {
+            if (std::find(_track_update_listeners.begin(), _track_update_listeners.end(), listener) ==
+                _track_update_listeners.end()) {
                 _track_update_listeners.push_back(listener);
             }
             break;
