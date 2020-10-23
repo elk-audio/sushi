@@ -16,7 +16,7 @@
 /**
  * @brief Wrapper around spdlog and custom logging macros
  * *
- * If -DSUSHI_DISABLE_LOGGING is passed as a compiler argument, all logging code
+ * If -DSUSHI_DISABLE_LOGGING is passed as a definition, all logging code
  * disappears without a trace. Useful for testing and outside releases.
  *
  * Usage:
@@ -30,7 +30,7 @@
  * spdlog supports ostream style too, but that doesn't work with
  * SUSHI_DISABLE_LOGGING unfortunately
  *
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef LOGGING_H
@@ -166,7 +166,7 @@ private:
 #define SUSHI_LOG_ERROR_IF(...)
 #define SUSHI_LOG_CRITICAL_IF(...)
 
-#define SUSHI_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL) 0
+#define SUSHI_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL)
 #define SUSHI_LOG_GET_ERROR_MESSAGE(retcode) ""
 
 #endif
