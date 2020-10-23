@@ -44,32 +44,15 @@ private:
 class TrackNotification : public ControlNotification
 {
 public:
-    const TrackInfo& info() {return _info;}
+    TrackNotification(NotificationType type, int track_id, Time timestamp)
+            : ControlNotification(type, timestamp),
+              _track_id(track_id) {}
 
-protected:
-    TrackNotification(NotificationType type, TrackInfo info, Time timestamp) 
-    : ControlNotification(type, timestamp),
-      _info(info) {}
+    int track_id() const {return _track_id;}
 
 private:
-    TrackInfo _info;
+    int _track_id;
 };
-
-class TrackAddedNotification : public TrackNotification
-{
-public:
-    TrackAddedNotification(TrackInfo info, Time timestamp) 
-    : TrackNotification(NotificationType::TRACK_ADDED, info, timestamp) {}
-};
-
-class TrackChangedNotification : public TrackNotification
-{
-public:
-    TrackChangedNotification(TrackInfo info, Time timestamp) 
-    : TrackNotification(NotificationType::TRACK_CHANGED, info, timestamp) {}
-};
-
-
 
 } // ext
 } // sushi

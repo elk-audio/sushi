@@ -33,8 +33,8 @@
 
 namespace sushi_rpc {
 
+class SubscribeToTrackChangesCallData;
 class SubscribeToProcessorChangesCallData;
-
 class SubscribeToParameterUpdatesCallData;
 
 class SystemControlService : public SystemController::Service
@@ -276,6 +276,11 @@ public:
     // Inherited from ControlListener
     void notification(const sushi::ext::ControlNotification* notification) override;
 
+    // TODO Ilias: The below could all have the same name, since they take different types.
+    // That way call data overrides are reduced.
+    void subscribe_to_track_changes(SubscribeToTrackChangesCallData* subscriber);
+    void unsubscribe_from_track_changes(SubscribeToTrackChangesCallData* subscriber);
+
     void subscribe_to_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
     void unsubscribe_from_processor_changes(SubscribeToProcessorChangesCallData* subscriber);
 
@@ -286,6 +291,11 @@ public:
 
 private:
     // TODO Ilias: Should I really have separate lists of subscribers, not just one for all events?
+    // Really the below could even be templatized.
+
+    std::vector<SubscribeToTrackChangesCallData*> _track_subscribers;
+    std::mutex _track_subscriber_lock;
+
     std::vector<SubscribeToProcessorChangesCallData*> _processor_subscribers;
     std::mutex _processor_subscriber_lock;
 

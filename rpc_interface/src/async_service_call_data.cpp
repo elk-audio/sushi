@@ -96,6 +96,9 @@ void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::push(std::shared_p
     }
 }
 
+// Pre-Declaring what template instantiation is needed for SubscribeToUpdatesCallData,
+// or it will not link.
+template class SubscribeToUpdatesCallData<TrackUpdate, TrackNotificationRequest>;
 template class SubscribeToUpdatesCallData<ProcessorUpdate, ProcessorNotificationRequest>;
 template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationRequest>;
 
@@ -159,6 +162,32 @@ void SubscribeToProcessorChangesCallData::_unsubscribe()
 }
 
 bool SubscribeToProcessorChangesCallData::_checkIfBlacklisted(const ProcessorUpdate& reply)
+{
+    return false;
+}
+
+void SubscribeToTrackChangesCallData::_respawn()
+{
+    new SubscribeToTrackChangesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToTrackChangesCallData::_subscribe()
+{
+    _service->RequestSubscribeToTrackChanges(&_ctx,
+                                             &_notification_request,
+                                             &_responder,
+                                             _async_rpc_queue,
+                                             _async_rpc_queue,
+                                             this);
+    _service->subscribe_to_track_changes(this);
+}
+
+void SubscribeToTrackChangesCallData::_unsubscribe()
+{
+    _service->unsubscribe_from_track_changes(this);
+}
+
+bool SubscribeToTrackChangesCallData::_checkIfBlacklisted(const TrackUpdate& reply)
 {
     return false;
 }

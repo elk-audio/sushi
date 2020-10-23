@@ -80,9 +80,18 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
             break;
         case ext::NotificationType::PROCESSOR_ADDED:
         case ext::NotificationType::PROCESSOR_DELETED:
+// TODO Ilias: Add processor move notification?
 //      case ext::NotificationType::PROCESSOR_MOVED:
             if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) == _processor_update_listeners.end()) {
                 _processor_update_listeners.push_back(listener);
+            }
+            break;
+        case ext::NotificationType::TRACK_ADDED:
+        case ext::NotificationType::TRACK_DELETED:
+// TODO Ilias: Add track move notification?
+//      case ext::NotificationType::TRACK_CHANGED:
+            if (std::find(_track_update_listeners.begin(), _track_update_listeners.end(), listener) == _track_update_listeners.end()) {
+                _track_update_listeners.push_back(listener);
             }
             break;
         default:
@@ -141,6 +150,32 @@ int Controller::process(Event* event)
                                                         static_cast<int>(typed_event->processor()),
                                                         typed_event->time());
                 for (auto& listener : _processor_update_listeners)
+                {
+                    listener->notification(&notification);
+                }
+
+                break;
+            }
+            case AudioGraphNotificationEvent::Action::TRACK_ADDED:
+            {
+                ext::TrackNotification notification(ext::NotificationType::TRACK_ADDED,
+                                                    typed_event->track(),
+                                                    typed_event->time());
+                for (auto& listener : _track_update_listeners)
+                {
+                    listener->notification(&notification);
+                }
+
+                break;
+            }
+// TODO Ilias: Ensure this is wired up if needed!
+// case AudioGraphNotificationEvent::Action::TRACK_MOVED / CHANGED?:
+            case AudioGraphNotificationEvent::Action::TRACK_DELETED:
+            {
+                ext::TrackNotification notification(ext::NotificationType::TRACK_DELETED,
+                                                    typed_event->track(),
+                                                    typed_event->time());
+                for (auto& listener : _track_update_listeners)
                 {
                     listener->notification(&notification);
                 }

@@ -30,10 +30,11 @@
 #pragma GCC diagnostic pop
 
 #include "library/synchronised_fifo.h"
-
 #include "control_service.h"
 
 namespace sushi_rpc {
+
+// TODO Ilias: merge CallData, and SubscribeToUpdatesCallData
 
 class CallData
 {
@@ -98,7 +99,7 @@ public:
     void push(std::shared_ptr<VALUE> notification);
 
 protected:
-    // Spawn a new CallData instance to serve new clients while we process
+    // Spawns a new CallData instance to serve new clients while we process
     // the one for this CallData. The instance will deallocate itself as
     // part of its FINISH state, in proceed().
     virtual void _respawn() = 0;
@@ -129,7 +130,7 @@ public:
             : SubscribeToUpdatesCallData(service, async_rpc_queue)
     {
         // TODO Ilias:
-        // Proceed calls pure virtual functions, but if it is called from the constructor of the class
+        // proceed() calls pure virtual functions, but if it is called from the constructor of the class
         // that defines them it should be ok no?
         proceed();
     }
@@ -157,9 +158,6 @@ public:
                                         grpc::ServerCompletionQueue* async_rpc_queue)
             : SubscribeToUpdatesCallData(service, async_rpc_queue)
     {
-        // TODO Ilias:
-        // Proceed calls pure virtual functions, but if it is called from the constructor of the class
-        // that defines them it should be ok no?
         proceed();
     }
 
@@ -170,6 +168,26 @@ protected:
     void _subscribe() override;
     void _unsubscribe() override;
     bool _checkIfBlacklisted(const ProcessorUpdate& reply) override;
+    void _populateBlacklist() override {}
+};
+
+class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, TrackNotificationRequest>
+{
+public:
+    SubscribeToTrackChangesCallData(NotificationControlService* service,
+                                    grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToTrackChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _checkIfBlacklisted(const TrackUpdate& reply) override;
     void _populateBlacklist() override {}
 };
 
