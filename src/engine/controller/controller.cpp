@@ -79,8 +79,7 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
             break;
         case ext::NotificationType::PROCESSOR_ADDED:
         case ext::NotificationType::PROCESSOR_DELETED:
-// TODO Ilias: Add processor move notification?
-//      case ext::NotificationType::PROCESSOR_MOVED:
+        case ext::NotificationType::PROCESSOR_MOVED:
             if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) ==
                 _processor_update_listeners.end()) {
                 _processor_update_listeners.push_back(listener);
@@ -130,6 +129,7 @@ int Controller::process(Event* event)
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
             {
+// TODO Ilias: Reduce duplication here:
                 ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_ADDED,
                                                         static_cast<int>(typed_event->processor()),
                                                         typed_event->time());
@@ -142,7 +142,14 @@ int Controller::process(Event* event)
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
             {
-// TODO Ilias: Ensure this is wired up if needed!
+                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_MOVED,
+                                                        static_cast<int>(typed_event->processor()),
+                                                        typed_event->time());
+                for (auto& listener : _processor_update_listeners)
+                {
+                    listener->notification(&notification);
+                }
+
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:

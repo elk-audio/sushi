@@ -212,6 +212,7 @@ enum class NotificationType
     TRACK_DELETED,
     TRACK_CHANGED,
     PROCESSOR_ADDED,
+    PROCESSOR_MOVED,
     PROCESSOR_DELETED
 };
 

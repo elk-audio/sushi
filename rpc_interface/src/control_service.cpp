@@ -1354,8 +1354,7 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_ADDED, this);
-// TODO Ilias: Ensure this is wired up if needed!
-    // _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_MOVED, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_MOVED, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_DELETED, this);
 
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_ADDED, this);
@@ -1368,6 +1367,7 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
 
 void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
 {
+    // TODO Ilias: Reduce duplication below!
     switch(notification->type())
     {
         case sushi::ext::NotificationType::PARAMETER_CHANGE:
@@ -1403,8 +1403,24 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
             }
             break;
         }
-// TODO Ilias: Ensure this is wired up if needed!
-// sushi::ext::NotificationType::PROCESSOR_MOVED
+        case sushi::ext::NotificationType::PROCESSOR_MOVED:
+        {
+            auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
+            auto notification_content = std::make_shared<ProcessorUpdate>();
+
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_MOVED);
+
+            auto[status, processor_info] = _audio_graph_controller
+                    ->get_processor_info(typed_notification->processor_id());
+            to_grpc(*notification_content->mutable_track(), processor_info);
+
+            std::scoped_lock lock(_processor_subscriber_lock);
+            for (auto& subscriber : _processor_subscribers)
+            {
+                subscriber->push(notification_content);
+            }
+            break;
+        }
         case sushi::ext::NotificationType::PROCESSOR_DELETED:
         {
             auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
@@ -1442,7 +1458,7 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
             break;
         }
 // TODO Ilias: Ensure this is wired up if needed!
-// sushi::ext::NotificationType::PROCESSOR_MOVED
+// sushi::ext::NotificationType::TRACK_MOVED
         case sushi::ext::NotificationType::TRACK_DELETED:
         {
             auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
