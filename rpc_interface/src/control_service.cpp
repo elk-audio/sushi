@@ -1367,118 +1367,96 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
 
 void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
 {
-    // TODO Ilias: Reduce duplication below!
     switch(notification->type())
     {
         case sushi::ext::NotificationType::PARAMETER_CHANGE:
         {
-            auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-            auto notification_content = std::make_shared<ParameterValue>();
-            notification_content->set_value(typed_notification->value());
-            notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
-            notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
-
-            std::scoped_lock lock(_parameter_subscriber_lock);
-            for (auto& subscriber : _parameter_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
+            _forward_parameter_notification_to_subscribers(notification);
             break;
         }
         case sushi::ext::NotificationType::PROCESSOR_ADDED:
         {
-            auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
-            auto notification_content = std::make_shared<ProcessorUpdate>();
-
-            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
-
-            auto[status, processor_info] = _audio_graph_controller
-                    ->get_processor_info(typed_notification->processor_id());
-            to_grpc(*notification_content->mutable_track(), processor_info);
-
-            std::scoped_lock lock(_processor_subscriber_lock);
-            for (auto& subscriber : _processor_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
+            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_ADDED);
             break;
         }
         case sushi::ext::NotificationType::PROCESSOR_MOVED:
         {
-            auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
-            auto notification_content = std::make_shared<ProcessorUpdate>();
-
-            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_MOVED);
-
-            auto[status, processor_info] = _audio_graph_controller
-                    ->get_processor_info(typed_notification->processor_id());
-            to_grpc(*notification_content->mutable_track(), processor_info);
-
-            std::scoped_lock lock(_processor_subscriber_lock);
-            for (auto& subscriber : _processor_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
+            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_MOVED);
             break;
         }
         case sushi::ext::NotificationType::PROCESSOR_DELETED:
         {
-            auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
-            auto notification_content = std::make_shared<ProcessorUpdate>();
-
-            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
-
-            auto[status, processor_info] = _audio_graph_controller
-                    ->get_processor_info(typed_notification->processor_id());
-            to_grpc(*notification_content->mutable_track(), processor_info);
-
-            std::scoped_lock lock(_processor_subscriber_lock);
-            for (auto& subscriber : _processor_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
+            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_DELETED);
             break;
         }
         case sushi::ext::NotificationType::TRACK_ADDED:
         {
-            auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
-            auto notification_content = std::make_shared<TrackUpdate>();
+            _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_ADDED);
 
-            notification_content->set_action(TrackUpdate_Action_TRACK_ADDED);
-
-            auto[status, track_info] = _audio_graph_controller->get_track_info(typed_notification->track_id());
-
-            to_grpc(*notification_content->mutable_track(), track_info);
-
-            std::scoped_lock lock(_track_subscriber_lock);
-            for (auto& subscriber : _track_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
             break;
         }
 // TODO Ilias: Ensure this is wired up if needed!
 // sushi::ext::NotificationType::TRACK_MOVED
         case sushi::ext::NotificationType::TRACK_DELETED:
         {
-            auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
-            auto notification_content = std::make_shared<TrackUpdate>();
-
-            notification_content->set_action(TrackUpdate_Action_TRACK_DELETED);
-
-            auto[status, track_info] = _audio_graph_controller->get_track_info(typed_notification->track_id());
-
-            to_grpc(*notification_content->mutable_track(), track_info);
-
-            std::scoped_lock lock(_track_subscriber_lock);
-            for (auto& subscriber : _track_subscribers)
-            {
-                subscriber->push(notification_content);
-            }
+            _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_DELETED);
             break;
         }
         default:
             break;
+    }
+}
+
+void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+    auto notification_content = std::make_shared<ParameterValue>();
+    notification_content->set_value(typed_notification->value());
+    notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+    notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+
+    std::scoped_lock lock(_parameter_subscriber_lock);
+    for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
+                                                                            sushi_rpc::TrackUpdate_Action action)
+{
+    auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
+    auto notification_content = std::make_shared<TrackUpdate>();
+
+    notification_content->set_action(action);
+
+    auto[status, track_info] = _audio_graph_controller->get_track_info(typed_notification->track_id());
+
+    to_grpc(*notification_content->mutable_track(), track_info);
+
+    std::scoped_lock lock(_track_subscriber_lock);
+    for (auto& subscriber : _track_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
+                                                                                sushi_rpc::ProcessorUpdate_Action action)
+{
+    auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
+    auto notification_content = std::make_shared<ProcessorUpdate>();
+
+    notification_content->set_action(action);
+
+    auto[status, processor_info] = _audio_graph_controller
+            ->get_processor_info(typed_notification->processor_id());
+    to_grpc(*notification_content->mutable_track(), processor_info);
+
+    std::scoped_lock lock(_processor_subscriber_lock);
+    for (auto& subscriber : _processor_subscribers)
+    {
+        subscriber->push(notification_content);
     }
 }
 

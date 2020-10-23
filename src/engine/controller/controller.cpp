@@ -110,84 +110,39 @@ int Controller::process(Event* event)
 {
     if (event->is_parameter_change_notification())
     {
-        auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
-        ext::ParameterChangeNotification notification((int)typed_event->processor_id(),
-                                                      (int)typed_event->parameter_id(),
-                                                      typed_event->float_value(),
-                                                      typed_event->time());
-        for (auto& listener : _parameter_change_listeners)
-        {
-            listener->notification(&notification);
-        }
+        _notify_parameter_listeners(event);
         return EventStatus::HANDLED_OK;
     }
     else if (event->is_audio_graph_notification())
     {
         auto typed_event = static_cast<AudioGraphNotificationEvent*>(event);
-
         switch(typed_event->action())
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
             {
-// TODO Ilias: Reduce duplication here:
-                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_ADDED,
-                                                        static_cast<int>(typed_event->processor()),
-                                                        typed_event->time());
-                for (auto& listener : _processor_update_listeners)
-                {
-                    listener->notification(&notification);
-                }
-
+                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_ADDED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
             {
-                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_MOVED,
-                                                        static_cast<int>(typed_event->processor()),
-                                                        typed_event->time());
-                for (auto& listener : _processor_update_listeners)
-                {
-                    listener->notification(&notification);
-                }
-
+                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_MOVED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
             {
-                ext::ProcessorNotification notification(ext::NotificationType::PROCESSOR_DELETED,
-                                                        static_cast<int>(typed_event->processor()),
-                                                        typed_event->time());
-                for (auto& listener : _processor_update_listeners)
-                {
-                    listener->notification(&notification);
-                }
-
+                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_DELETED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::TRACK_ADDED:
             {
-                ext::TrackNotification notification(ext::NotificationType::TRACK_ADDED,
-                                                    typed_event->track(),
-                                                    typed_event->time());
-                for (auto& listener : _track_update_listeners)
-                {
-                    listener->notification(&notification);
-                }
-
+                _notify_track_listeners(typed_event, ext::NotificationType::TRACK_ADDED);
                 break;
             }
 // TODO Ilias: Ensure this is wired up if needed!
 // case AudioGraphNotificationEvent::Action::TRACK_MOVED / CHANGED?:
             case AudioGraphNotificationEvent::Action::TRACK_DELETED:
             {
-                ext::TrackNotification notification(ext::NotificationType::TRACK_DELETED,
-                                                    typed_event->track(),
-                                                    typed_event->time());
-                for (auto& listener : _track_update_listeners)
-                {
-                    listener->notification(&notification);
-                }
-
+                _notify_track_listeners(typed_event, ext::NotificationType::TRACK_DELETED);
                 break;
             }
         }
@@ -196,6 +151,43 @@ int Controller::process(Event* event)
     }
 
     return EventStatus::NOT_HANDLED;
+}
+
+void Controller::_notify_parameter_listeners(Event* event) const
+{
+    auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
+    ext::ParameterChangeNotification notification((int)typed_event->processor_id(),
+                                                  (int)typed_event->parameter_id(),
+                                                  typed_event->float_value(),
+                                                  typed_event->time());
+    for (auto& listener : _parameter_change_listeners)
+    {
+        listener->notification(&notification);
+    }
+}
+
+void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
+                                         ext::NotificationType ext_notification) const
+{
+    ext::TrackNotification notification(ext_notification,
+                            typed_event->track(),
+                            typed_event->time());
+    for (auto& listener : _track_update_listeners)
+    {
+        listener->notification(&notification);
+    }
+}
+
+void Controller::_notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
+                                             ext::NotificationType ext_notification) const
+{
+    ext::ProcessorNotification notification(ext_notification,
+                                static_cast<int>(typed_event->processor()),
+                                typed_event->time());
+    for (auto& listener : _processor_update_listeners)
+    {
+        listener->notification(&notification);
+    }
 }
 
 void Controller::_completion_callback([[maybe_unused]] Event* event, int status)

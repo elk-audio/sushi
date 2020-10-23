@@ -127,9 +127,6 @@ public:
                                         grpc::ServerCompletionQueue* async_rpc_queue)
             : SubscribeToUpdatesCallData(service, async_rpc_queue)
     {
-        // TODO Ilias:
-        // proceed() calls pure virtual functions, but if it is called from the constructor of the class
-        // that defines them it should be ok no?
         proceed();
     }
 
