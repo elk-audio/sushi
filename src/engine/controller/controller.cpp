@@ -87,8 +87,6 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
             break;
         case ext::NotificationType::TRACK_ADDED:
         case ext::NotificationType::TRACK_DELETED:
-// TODO Ilias: Add track move notification?
-//      case ext::NotificationType::TRACK_CHANGED:
             if (std::find(_track_update_listeners.begin(), _track_update_listeners.end(), listener) ==
                 _track_update_listeners.end()) {
                 _track_update_listeners.push_back(listener);
@@ -138,8 +136,6 @@ int Controller::process(Event* event)
                 _notify_track_listeners(typed_event, ext::NotificationType::TRACK_ADDED);
                 break;
             }
-// TODO Ilias: Ensure this is wired up if needed!
-// case AudioGraphNotificationEvent::Action::TRACK_MOVED / CHANGED?:
             case AudioGraphNotificationEvent::Action::TRACK_DELETED:
             {
                 _notify_track_listeners(typed_event, ext::NotificationType::TRACK_DELETED);

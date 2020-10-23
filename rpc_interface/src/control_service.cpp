@@ -1358,8 +1358,6 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_DELETED, this);
 
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_ADDED, this);
-// TODO Ilias: Ensure this is wired up if needed!
-    // _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_MOVED, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_DELETED, this);
 
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
@@ -1392,11 +1390,8 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
         case sushi::ext::NotificationType::TRACK_ADDED:
         {
             _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_ADDED);
-
             break;
         }
-// TODO Ilias: Ensure this is wired up if needed!
-// sushi::ext::NotificationType::TRACK_MOVED
         case sushi::ext::NotificationType::TRACK_DELETED:
         {
             _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_DELETED);
