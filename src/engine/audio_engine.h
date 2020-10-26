@@ -450,6 +450,11 @@ public:
     void print_timings_to_log() override;
 
 private:
+    enum class Direction : bool
+    {
+        INPUT = true,
+        OUTPUT = false
+    };
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
@@ -485,6 +490,7 @@ private:
      * @param track_id The id of the track to remove from
      */
     void _remove_connections_from_track(ObjectId track_id);
+
     /**
      * @brief Register a newly created track
      * @param track Pointer to the track
@@ -499,15 +505,9 @@ private:
     */
     EngineReturnStatus _send_control_event(RtEvent& event);
 
-    /**
-     * @brief Process events that are to be handled by the engine directly and
-     *        not by a particular processor.
-     * @param event The event to handle
-     * @return true if handled, false if not an engine event
-     */
-    EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, bool is_input);
+    EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
 
-    EngineReturnStatus _disconnect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, bool is_input);
+    EngineReturnStatus _disconnect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
 
     void _process_internal_rt_events();
 

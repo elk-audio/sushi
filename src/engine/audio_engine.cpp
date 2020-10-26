@@ -157,22 +157,22 @@ EngineReturnStatus AudioEngine::set_cv_output_channels(int channels)
 
 EngineReturnStatus AudioEngine::connect_audio_input_channel(int input_channel, int track_channel, ObjectId track_id)
 {
-    return _connect_audio_channel(input_channel, track_channel, track_id, true);
+    return _connect_audio_channel(input_channel, track_channel, track_id, Direction::INPUT);
 }
 
 EngineReturnStatus AudioEngine::connect_audio_output_channel(int output_channel, int track_channel, ObjectId track_id)
 {
-    return _connect_audio_channel(output_channel, track_channel, track_id, false);
+    return _connect_audio_channel(output_channel, track_channel, track_id, Direction::OUTPUT);
 }
 
 EngineReturnStatus AudioEngine::disconnect_audio_input_channel(int engine_channel, int track_channel, ObjectId track_name)
 {
-    return _disconnect_audio_channel(engine_channel, track_channel, track_name, true);
+    return _disconnect_audio_channel(engine_channel, track_channel, track_name, Direction::INPUT);
 }
 
 EngineReturnStatus AudioEngine::disconnect_audio_output_channel(int engine_channel, int track_channel, ObjectId track_name)
 {
-    return _disconnect_audio_channel(engine_channel, track_channel, track_name, false);
+    return _disconnect_audio_channel(engine_channel, track_channel, track_name, Direction::OUTPUT);
 }
 
 std::vector<AudioConnection> AudioEngine::audio_input_connections()
@@ -841,14 +841,15 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
 EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
                                                        int track_channel,
                                                        ObjectId track_id,
-                                                       bool is_input)
+                                                       Direction direction)
 {
     auto track = _processors.mutable_track(track_id);
     if(track == nullptr)
     {
         return EngineReturnStatus::INVALID_TRACK;
     }
-    if (is_input)
+
+    if (direction == Direction::INPUT)
     {
         if (engine_channel >= _audio_inputs || track_channel >= track->input_channels())
         {
@@ -868,7 +869,7 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
         }
     }
 
-    auto& storage = is_input ? _audio_in_connections : _audio_out_connections;
+    auto& storage = direction == Direction::INPUT ? _audio_in_connections : _audio_out_connections;
     bool realtime = this->realtime();
 
     AudioConnection con = {.engine_channel = engine_channel,
@@ -878,8 +879,8 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
 
     if (added && realtime)
     {
-        auto event = is_input? RtEvent::make_add_audio_input_connection_event(con) :
-                               RtEvent::make_add_audio_output_connection_event(con);
+        auto event = direction == Direction::INPUT ? RtEvent::make_add_audio_input_connection_event(con) :
+                                                     RtEvent::make_add_audio_output_connection_event(con);
         _send_control_event(event);
         added = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
@@ -890,17 +891,19 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
     }
     else if (added == false)
     {
-        SUSHI_LOG_ERROR("Max number of {} audio connections reached", is_input ? "input" : "output");
+        SUSHI_LOG_ERROR("Max number of {} audio connections reached", direction == Direction::INPUT ? "input" : "output");
         return EngineReturnStatus::ERROR;
     }
 
-    SUSHI_LOG_INFO("Connected engine {} {} to channel {} of track \"{}\"", is_input ? "input" : "output", engine_channel, track_channel, track_id);    return EngineReturnStatus::OK;
+    SUSHI_LOG_INFO("Connected engine {} {} to channel {} of track \"{}\"",
+                        direction == Direction::INPUT ? "input" : "output", engine_channel, track_channel, track_id);
+    return EngineReturnStatus::OK;
 }
 
 EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
                                                           int track_channel,
                                                           ObjectId track_id,
-                                                          bool is_input)
+                                                          Direction direction)
 {
     auto track = _processors.track(track_id);
     if(track == nullptr)
@@ -908,7 +911,7 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
         return EngineReturnStatus::INVALID_TRACK;
     }
 
-    auto& storage = is_input ? _audio_in_connections : _audio_out_connections;
+    auto& storage = direction == Direction::INPUT ? _audio_in_connections : _audio_out_connections;
     bool realtime = this->realtime();
 
     AudioConnection con = {.engine_channel = engine_channel, .track_channel = track_channel, .track = track->id()};
@@ -916,19 +919,20 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
 
     if (removed && realtime)
     {
-        auto event = is_input? RtEvent::make_remove_audio_input_connection_event(con) :
-                     RtEvent::make_remove_audio_output_connection_event(con);
+        auto event = direction == Direction::INPUT ? RtEvent::make_remove_audio_input_connection_event(con) :
+                                                     RtEvent::make_remove_audio_output_connection_event(con);
         _send_control_event(event);
         removed = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         SUSHI_LOG_ERROR_IF(removed == false, "Failed to remove audio connection in realtime thread");
     }
     else if (removed == false)
     {
-        SUSHI_LOG_ERROR("Failed to remove {} audio connection", is_input ? "input" : "output");
+        SUSHI_LOG_ERROR("Failed to remove {} audio connection", direction == Direction::INPUT ? "input" : "output");
         return EngineReturnStatus::ERROR;
     }
 
-    SUSHI_LOG_INFO("Removed {} audio connection from channel {} of track \"{}\" and engine channel {}", is_input ? "input" : "output", track_channel, track->name(), engine_channel);
+    SUSHI_LOG_INFO("Removed {} audio connection from channel {} of track \"{}\" and engine channel {}",
+                         direction == Direction::INPUT ? "input" : "output", track_channel, track->name(), engine_channel);
     return EngineReturnStatus::OK;
 }
 
