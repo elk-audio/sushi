@@ -259,12 +259,12 @@ private:
 };
 
 using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
-        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
-        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
-        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTimingUpdates<
-        sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
-        sushi_rpc::NotificationController::Service
-        >>>>>;
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTimingUpdates<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
+                     sushi_rpc::NotificationController::Service
+                     >>>>>;
 
 class NotificationControlService : public AsyncService,
                                    private sushi::ext::ControlListener

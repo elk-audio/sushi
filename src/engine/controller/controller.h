@@ -68,6 +68,14 @@ public:
 private:
     void _completion_callback(Event* event, int status);
 
+    void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
+                                     ext::NotificationType ext_notification) const;
+
+    void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
+                                 ext::NotificationType ext_notification) const;
+
+    void _notify_parameter_listeners(Event* event) const;
+
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
     std::vector<ext::ControlListener*>      _processor_update_listeners;
     std::vector<ext::ControlListener*>      _track_update_listeners;
@@ -88,14 +96,6 @@ private:
     controller_impl::OscController          _osc_controller_impl;
 
     dispatcher::BaseEventDispatcher* _event_dispatcher;
-
-    void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                     ext::NotificationType ext_notification) const;
-
-    void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                 ext::NotificationType ext_notification) const;
-
-    void _notify_parameter_listeners(Event* event) const;
 };
 
 } //namespace engine

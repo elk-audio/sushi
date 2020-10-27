@@ -50,14 +50,14 @@ void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::proceed()
         {
             _respawn();
             _active = true;
-            _populateBlacklist();
+            _populate_blocklist();
             _first_iteration = false;
         }
 
         if (_notifications.empty() == false)
         {
             auto reply = _notifications.pop();
-            if (_checkIfBlacklisted(*reply.get()) == false)
+            if (_check_if_blocklisted(*reply.get()) == false)
             {
                 _in_completion_queue = true;
                 _responder.Write(*reply.get(), this);
@@ -123,19 +123,19 @@ void SubscribeToParameterUpdatesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToParameterUpdatesCallData::_checkIfBlacklisted(const ParameterValue& reply)
+bool SubscribeToParameterUpdatesCallData::_check_if_blocklisted(const ParameterValue& reply)
 {
     auto key =  _map_key(reply.parameter().parameter_id(),
                          reply.parameter().processor_id());
 
-    return !(_blacklist.find(key) == _blacklist.end());
+    return !(_blocklist.find(key) == _blocklist.end());
 }
 
-void SubscribeToParameterUpdatesCallData::_populateBlacklist()
+void SubscribeToParameterUpdatesCallData::_populate_blocklist()
 {
     for (auto& identifier : _notification_request.parameters())
     {
-        _blacklist[_map_key(identifier.parameter_id(),
+        _blocklist[_map_key(identifier.parameter_id(),
                             identifier.processor_id())] = false;
     }
 }
@@ -161,7 +161,7 @@ void SubscribeToProcessorChangesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToProcessorChangesCallData::_checkIfBlacklisted(const ProcessorUpdate& reply)
+bool SubscribeToProcessorChangesCallData::_check_if_blocklisted(const ProcessorUpdate& reply)
 {
     return false;
 }
@@ -187,7 +187,7 @@ void SubscribeToTrackChangesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToTrackChangesCallData::_checkIfBlacklisted(const TrackUpdate& reply)
+bool SubscribeToTrackChangesCallData::_check_if_blocklisted(const TrackUpdate& reply)
 {
     return false;
 }

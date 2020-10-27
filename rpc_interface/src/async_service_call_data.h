@@ -80,7 +80,7 @@ protected:
     void _alert();
 };
 
-template <class VALUE, class NOTIFICATION_REQUEST>
+template <class ValueType, class NotificationRequestType>
 class SubscribeToUpdatesCallData : public CallData
 {
 public:
@@ -94,7 +94,7 @@ public:
 
     void proceed() override;
 
-    void push(std::shared_ptr<VALUE> notification);
+    void push(std::shared_ptr<ValueType> notification);
 
 protected:
     // Spawns a new CallData instance to serve new clients while we process
@@ -105,16 +105,16 @@ protected:
     virtual void _subscribe() = 0;
     virtual void _unsubscribe() = 0;
 
-    virtual bool _checkIfBlacklisted(const VALUE& reply) = 0;
-    virtual void _populateBlacklist() = 0;
+    virtual bool _check_if_blocklisted(const ValueType& reply) = 0;
+    virtual void _populate_blocklist() = 0;
 
-    NOTIFICATION_REQUEST _notification_request;
-    grpc::ServerAsyncWriter<VALUE> _responder;
+    NotificationRequestType _notification_request;
+    grpc::ServerAsyncWriter<ValueType> _responder;
 
-    std::unordered_map<int64_t, bool> _blacklist;
+    std::unordered_map<int64_t, bool> _blocklist;
 
 private:
-    SynchronizedQueue<std::shared_ptr<VALUE>> _notifications;
+    SynchronizedQueue<std::shared_ptr<ValueType>> _notifications;
 
     bool _first_iteration{true};
     bool _active{false};
@@ -136,8 +136,8 @@ protected:
     void _respawn() override;
     void _subscribe() override;
     void _unsubscribe() override;
-    bool _checkIfBlacklisted(const ParameterValue& reply) override;
-    void _populateBlacklist() override;
+    bool _check_if_blocklisted(const ParameterValue& reply) override;
+    void _populate_blocklist() override;
 
 private:
     int64_t _map_key(int parameter_id, int processor_id) const
@@ -162,8 +162,8 @@ protected:
     void _respawn() override;
     void _subscribe() override;
     void _unsubscribe() override;
-    bool _checkIfBlacklisted(const ProcessorUpdate& reply) override;
-    void _populateBlacklist() override {}
+    bool _check_if_blocklisted(const ProcessorUpdate& reply) override;
+    void _populate_blocklist() override {}
 };
 
 class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, TrackNotificationRequest>
@@ -182,8 +182,8 @@ protected:
     void _respawn() override;
     void _subscribe() override;
     void _unsubscribe() override;
-    bool _checkIfBlacklisted(const TrackUpdate& reply) override;
-    void _populateBlacklist() override {}
+    bool _check_if_blocklisted(const TrackUpdate& reply) override;
+    void _populate_blocklist() override {}
 };
 
 }
