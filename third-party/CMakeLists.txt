@@ -4,6 +4,17 @@ add_subdirectory(fifo EXCLUDE_FROM_ALL)
 
 add_subdirectory(lv2_host)
 
+############################
+#  spdlog compile options  #
+############################
+# Build spdlog as a static library - improves compile times a lot
+set(SPDLOG_BUILD_SHARED ON CACHE BOOL "" FORCE)
+# Disable unused features
+set(SPDLOG_NO_THREAD_ID ON CACHE BOOL "" FORCE)
+set(SPDLOG_NO_ATOMIC_LEVELS ON CACHE BOOL "" FORCE)
+
+add_subdirectory(spdlog)
+
 ##########################
 #  VST3SDK and examples  #
 ##########################

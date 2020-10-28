@@ -87,14 +87,14 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
 
 std::string Logger::get_error_message(SUSHI_LOG_ERROR_CODE status)
 {
-    static std::string error_messages[] = 
+    constexpr std::array error_messages =
     {
         "Ok",
         "Invalid Log Level",
         "Failed to start logger"
     };
 
-    return error_messages[status];
+    return error_messages.at(status);
 }
 
 std::shared_ptr<spdlog::logger> Logger::setup_logging()
