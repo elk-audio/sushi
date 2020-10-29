@@ -73,6 +73,21 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     return port;
 }
 
+/**
+ * @brief Filters midi messages currently not handled by sushi
+ * @param type Alsa event type enumeration (see alsa/seq_event.h)
+ * @return true if the event type corresponds to a midi message that should be handled by sushi
+ *              false otherwise.
+ */
+bool is_midi_for_sushi(snd_seq_event_type_t type)
+{
+    if (type >= SND_SEQ_EVENT_NOTE && type <= SND_SEQ_EVENT_REGPARAM)
+    {
+        return true;
+    }
+    return false;
+}
+
 AlsaMidiFrontend::AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher),
           _inputs(inputs),
@@ -184,12 +199,7 @@ void AlsaMidiFrontend::_poll_function()
             uint8_t data_buffer[ALSA_EVENT_MAX_SIZE]{0};
             while (snd_seq_event_input(_seq_handle, &ev) > 0)
             {
-                // TODO - Consider if we should be filtering at all here or in the dispatcher instead
-                if ((ev->type == SND_SEQ_EVENT_NOTEON)
-                    || (ev->type == SND_SEQ_EVENT_NOTEOFF)
-                    || (ev->type == SND_SEQ_EVENT_CONTROLLER)
-                    || (ev->type == SND_SEQ_EVENT_PGMCHANGE)
-                    || (ev->type == SND_SEQ_EVENT_PITCHBEND))
+                if (is_midi_for_sushi(ev->type))
                 {
                     auto byte_count = snd_midi_event_decode(_input_parser, data_buffer, sizeof(data_buffer), ev);
                     if (byte_count > 0)
