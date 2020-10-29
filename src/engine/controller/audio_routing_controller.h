@@ -20,8 +20,10 @@
 
 #ifndef SUSHI_AUDIO_ROUTING_CONTROLLER_H
 #define SUSHI_AUDIO_ROUTING_CONTROLLER_H
+
 #include "control_interface.h"
 #include "engine/base_engine.h"
+#include "engine/base_event_dispatcher.h"
 
 namespace sushi {
 namespace engine {
@@ -30,7 +32,8 @@ namespace controller_impl {
 class AudioRoutingController : public ext::AudioRoutingController
 {
 public:
-    AudioRoutingController(BaseEngine* engine) : _engine(engine) {}
+    AudioRoutingController(BaseEngine* engine) : _engine(engine),
+                                                 _event_dispatcher(engine->event_dispatcher()) {}
 
     ~AudioRoutingController() override = default;
 
@@ -38,9 +41,9 @@ public:
 
     std::vector<ext::AudioConnection> get_all_output_connections() const override;
 
-    std::pair<ext::ControlStatus, std::vector<ext::AudioConnection>> get_input_connections_for_track(int track_id) const override;
+    std::vector<ext::AudioConnection> get_input_connections_for_track(int track_id) const override;
 
-    std::pair<ext::ControlStatus, std::vector<ext::AudioConnection>> get_output_connections_for_track(int track_id) const override;
+    std::vector<ext::AudioConnection> get_output_connections_for_track(int track_id) const override;
 
     ext::ControlStatus connect_input_channel_to_track(int track_id, int track_channel, int input_channel) override;
 
@@ -56,6 +59,7 @@ public:
 
 private:
     BaseEngine* _engine;
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
 } // namespace controller_impl

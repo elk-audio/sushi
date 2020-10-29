@@ -194,8 +194,8 @@ public:
 
     grpc::Status GetAllInputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
     grpc::Status GetAllOutputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
-    grpc::Status GetInputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
-    grpc::Status GetOutputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
+    grpc::Status GetInputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::AudioConnectionList* response) override;
+    grpc::Status GetOutputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::AudioConnectionList* response) override;
     grpc::Status ConnectInputChannelToTrack(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectOutputChannelFromTrack(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectInput(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;

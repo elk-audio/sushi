@@ -389,8 +389,8 @@ public:
 
     virtual std::vector<AudioConnection> get_all_input_connections() const = 0;
     virtual std::vector<AudioConnection> get_all_output_connections() const = 0;
-    virtual std::pair<ControlStatus, std::vector<AudioConnection>> get_input_connections_for_track(int track_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<AudioConnection>> get_output_connections_for_track(int track_id) const = 0;
+    virtual std::vector<AudioConnection> get_input_connections_for_track(int track_id) const = 0;
+    virtual std::vector<AudioConnection> get_output_connections_for_track(int track_id) const = 0;
 
     virtual ControlStatus                connect_input_channel_to_track(int track_id, int track_channel, int input_channel) = 0;
     virtual ControlStatus                connect_output_channel_to_track(int track_id, int track_channel, int output_channel) = 0;

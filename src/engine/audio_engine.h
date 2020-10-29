@@ -36,6 +36,7 @@
 #include "engine/host_control.h"
 #include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
+#include "engine/connection_storage.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/elk_allocator.h"
@@ -154,6 +155,18 @@ public:
     EngineReturnStatus connect_audio_output_channel(int output_channel,
                                                     int track_channel,
                                                     ObjectId track_id) override;
+
+    EngineReturnStatus disconnect_audio_input_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
+
+    EngineReturnStatus disconnect_audio_output_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
+
+    std::vector<AudioConnection> audio_input_connections() override;
+
+    std::vector<AudioConnection> audio_output_connections() override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -437,6 +450,11 @@ public:
     void print_timings_to_log() override;
 
 private:
+    enum class Direction : bool
+    {
+        INPUT = true,
+        OUTPUT = false
+    };
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
@@ -472,6 +490,7 @@ private:
      * @param track_id The id of the track to remove from
      */
     void _remove_connections_from_track(ObjectId track_id);
+
     /**
      * @brief Register a newly created track
      * @param track Pointer to the track
@@ -486,12 +505,10 @@ private:
     */
     EngineReturnStatus _send_control_event(RtEvent& event);
 
-    /**
-     * @brief Process events that are to be handled by the engine directly and
-     *        not by a particular processor.
-     * @param event The event to handle
-     * @return true if handled, false if not an engine event
-     */
+    EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
+
+    EngineReturnStatus _disconnect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
+
     void _process_internal_rt_events();
 
     void _send_rt_events_to_processors();
@@ -515,8 +532,8 @@ private:
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
 
-    std::vector<AudioConnection> _audio_in_connections;
-    std::vector<AudioConnection> _audio_out_connections;
+    ConnectionStorage<AudioConnection> _audio_in_connections;
+    ConnectionStorage<AudioConnection> _audio_out_connections;
     std::vector<CvConnection>    _cv_in_connections;
     std::vector<GateConnection>  _gate_in_connections;
 
