@@ -21,9 +21,9 @@
 #include <fstream>
 #include <string>
 #include <climits>
-
-#include <dirent.h>
 #include <cstdlib>
+#include <dirent.h>
+#include <unistd.h>
 
 #include <pluginterfaces/base/ustring.h>
 #include <pluginterfaces/vst/ivstmidicontrollers.h>
