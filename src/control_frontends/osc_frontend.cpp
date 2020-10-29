@@ -337,167 +337,14 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
     return 0;
 }
 
-static int osc_add_processor_to_track(const char* /*path*/,
-                                      const char* /*types*/,
-                                      lo_arg** argv,
-                                      int argc,
-                                      void* /*data*/,
-                                      void* user_data)
-{
-    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
-    std::string name(&argv[0]->s);
-    std::string uid(&argv[1]->s);
-    std::string file(&argv[2]->s);
-    std::string type_str(&argv[3]->s);
-    std::string track(&argv[4]->s);
-    std::string before;
-    bool add_to_back = true;
-
-    if (argc > 5)
-    {
-        before = std::string(&argv[5]->s);
-        add_to_back = false;
-    }
-
-    auto type = ext::PluginType::INTERNAL;
-    if (type_str == "vst2x")
-    {
-        type = ext::PluginType::VST2X;
-    }
-    else if (type_str == "vst3x")
-    {
-        type = ext::PluginType::VST3X;
-    }
-    else if (type_str == "lv2")
-    {
-        type = ext::PluginType::LV2;
-    }
-    else if (type_str != "internal")
-    {
-        SUSHI_LOG_INFO("Unrecognised Plugin type \"{}\" received", type_str);
-        return 0;
-    }
-
-    SUSHI_LOG_DEBUG("Got a create processor on track request");
-    auto [status, track_id] = controller->get_processor_id(track);
-    if (status != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up Track {}", track);
-        return 0;
-    }
-    if (add_to_back)
-    {
-        controller->create_processor_on_track(name, uid, file, type, track_id, std::nullopt);
-    }
-    else
-    {
-        auto [status, before_id] = controller->get_processor_id(before);
-        if (status != ext::ControlStatus::OK)
-        {
-            SUSHI_LOG_WARNING("Error looking up processor {}", before);
-            return 0;
-        }
-        controller->create_processor_on_track(name, uid, file, type, track_id, before_id);
-    }
-    return 0;
-}
-
-static int osc_move_processor(const char* /*path*/,
-                              const char* /*types*/,
-                              lo_arg** argv,
-                              int argc,
-                              void* /*data*/,
-                              void* user_data)
-{
-    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
-    std::string processor(&argv[0]->s);
-    std::string source_track(&argv[1]->s);
-    std::string dest_track(&argv[2]->s);
-    std::string before;
-    bool add_to_back = true;
-
-    if (argc > 3)
-    {
-        before = std::string_view(&argv[3]->s);
-        add_to_back = false;
-    }
-
-    SUSHI_LOG_DEBUG("Got a move processor on track request");
-
-    auto [status_proc, proc_id] = controller->get_processor_id(processor);
-    if (status_proc != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up processor {}", processor);
-        return 0;
-    }
-
-    auto [status_src, src_id] = controller->get_processor_id(source_track);
-    if (status_src != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up source track {}", source_track);
-        return 0;
-    }
-
-    auto [status_dest, dest_id] = controller->get_processor_id(dest_track);
-    if (status_dest != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up destination track {}", source_track);
-        return 0;
-    }
-
-    if (add_to_back)
-    {
-        controller->move_processor_on_track(proc_id, src_id, dest_id, std::nullopt);
-    }
-    else
-    {
-        auto [status, before_id] = controller->get_processor_id(before);
-        if (status != ext::ControlStatus::OK)
-        {
-            SUSHI_LOG_WARNING("Error looking up processor {}", before);
-            return 0;
-        }
-        controller->move_processor_on_track(proc_id, src_id, dest_id, before_id);
-    }
-    return 0;
-}
-
-static int osc_delete_processor(const char* /*path*/,
-                                const char* /*types*/,
-                                lo_arg** argv,
-                                int /*argc*/,
-                                void* /*data*/,
-                                void* user_data)
-{
-    auto controller = static_cast<ext::SushiControl*>(user_data)->audio_graph_controller();
-    std::string name(&argv[0]->s);
-    std::string track(&argv[1]->s);
-
-    SUSHI_LOG_DEBUG("Got a delete processor on track request");
-    auto [status, proc_id] = controller->get_processor_id(name);
-    if (status != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up Processor {}", name);
-        return 0;
-    }
-    auto [track_status, track_id] = controller->get_processor_id(track);
-    if (track_status != ext::ControlStatus::OK)
-    {
-        SUSHI_LOG_WARNING("Error looking up Track {}", name);
-        return 0;
-    }
-    controller->delete_processor_from_track(proc_id, track_id);
-    return 0;
-}
-
 }; // anonymous namespace
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          ext::SushiControl* controller,
-                         int server_port,
+                         int receive_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _osc_server(nullptr),
-                                          _server_port(server_port),
+                                          _receive_port(receive_port),
                                           _send_port(send_port),
                                           _controller(controller),
                                           _graph_controller(controller->audio_graph_controller()),
@@ -507,7 +354,7 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
 ControlFrontendStatus OSCFrontend::init()
 {
     std::stringstream port_stream;
-    port_stream << _server_port;
+    port_stream << _receive_port;
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
     if (_osc_server == nullptr)
     {
@@ -567,7 +414,11 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     {
         return false;
     }
-    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "f", osc_send_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server,
+                                          osc_path.c_str(),
+                                          "f",
+                                          osc_send_parameter_change_event,
+                                          connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -582,7 +433,11 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
     {
         return false;
     }
-    auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "s", osc_send_string_parameter_change_event, connection);
+    auto cb = lo_server_thread_add_method(_osc_server,
+                                          osc_path.c_str(),
+                                          "s",
+                                          osc_send_string_parameter_change_event,
+                                          connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
@@ -603,8 +458,28 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     }
     std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" +
                                             osc::make_safe_path(parameter_name);
+
     _outgoing_connections[processor_id][parameter_id] = id_string;
+
     SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    return true;
+}
+
+bool OSCFrontend::disconnect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
+{
+    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
+    if (processor_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
+    if (parameter_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+
+    _outgoing_connections[processor_id].erase(parameter_id);
+
     return true;
 }
 
@@ -618,7 +493,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
         return {nullptr, ""};
     }
     osc_path = osc_path + osc::make_safe_path(processor_name);
-    OscConnection* connection = new OscConnection;
+    auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
     connection->instance = this;
@@ -685,7 +560,6 @@ bool OSCFrontend::connect_processor_parameters(const std::string& processor_name
         if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
         {
             connect_to_parameter(processor_name, param.name);
-            connect_from_parameter(processor_name, param.name);
         }
         if (param.type == ext::ParameterType::STRING_PROPERTY)
         {
@@ -773,11 +647,6 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/set_timing_statistics_enabled", "i", osc_set_timing_statistics_enabled, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "s", osc_reset_timing_statistics, this->_controller);
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "sssss", osc_add_processor_to_track, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/add_processor_to_track", "ssssss", osc_add_processor_to_track, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/move_processor_on_track", "sss", osc_move_processor, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/move_processor_on_track", "ssss", osc_move_processor, this->_controller);
-    lo_server_thread_add_method(_osc_server, "/engine/delete_processor_from_track", "ss", osc_delete_processor, this->_controller);
 }
 
 bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
@@ -876,6 +745,31 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
     return EventStatus::HANDLED_OK;
+}
+
+int OSCFrontend::receive_port() const
+{
+    return _receive_port;
+}
+
+int OSCFrontend::send_port() const
+{
+    return _send_port;
+}
+
+std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
+{
+    auto outputs = std::vector<std::string>();
+
+    for (const auto& connectionPair : _outgoing_connections)
+    {
+        for (const auto& connection : connectionPair.second)
+        {
+            outputs.push_back(connection.second);
+        }
+    }
+
+    return outputs;
 }
 
 } // namespace control_frontend

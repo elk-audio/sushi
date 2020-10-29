@@ -170,6 +170,7 @@ set(COMPILATION_UNITS src/main.cpp
 # Enumerate all the headers separately so that CLion can index them
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
+                        src/compile_time_settings.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h
@@ -312,7 +313,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
@@ -385,6 +385,7 @@ set(COMMON_LIBRARIES
     pthread
     dl
     fifo
+    spdlog
     ${TWINE_LIB}
 )
 

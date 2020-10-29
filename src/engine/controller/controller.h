@@ -46,6 +46,10 @@ namespace midi_dispatcher {
 class MidiDispatcher;
 }
 
+namespace control_frontend {
+class OSCFrontend;
+}
+
 namespace engine {
 
 class BaseEngine;
@@ -65,8 +69,9 @@ public:
 
     static void completion_callback(void *arg, Event* event, int status);
 
-private:
+    void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
+private:
     void _completion_callback(Event* event, int status);
 
     std::vector<ext::ControlListener*>      _parameter_change_listeners;

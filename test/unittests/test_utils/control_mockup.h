@@ -72,8 +72,6 @@ protected:
 class SystemControllerMockup : public SystemController, public TestableController
 {
 public:
-    std::string get_interface_version() const override {return "";}
-
     std::string get_sushi_version() const override {return "";}
 
     SushiBuildInfo get_sushi_build_info() const override {return SushiBuildInfo();}

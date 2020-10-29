@@ -9,7 +9,6 @@ package sushi_rpc;
 
 service SystemController
 {
-    rpc GetInterfaceVersion (GenericVoidValue) returns (GenericStringValue) {}
     rpc GetSushiVersion (GenericVoidValue) returns (GenericStringValue) {}
     rpc GetBuildInfo (GenericVoidValue) returns (SushiBuildInfo) {}
 

@@ -321,62 +321,6 @@ TEST_F(TestOSCFrontend, TestResetProcessorTimings)
     EXPECT_EQ(0, std::stoi(args["processor_id"]));
 }
 
-TEST_F(TestOSCFrontend, TestAddProcessorToTrack)
-{
-    lo_send(_address, "/engine/add_processor_to_track", "sssss", "plugin", "", "lib.so", "vst2x", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
-    EXPECT_EQ("plugin", args["name"]);
-    EXPECT_EQ("", args["uid"]);
-    EXPECT_EQ("lib.so", args["file"]);
-    EXPECT_EQ(static_cast<int>(PluginType::VST2X), std::stoi(args["type"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
-    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
-
-    lo_send(_address, "/engine/add_processor_to_track", "ssssss", "plugin", "uid", "lib.so", "vst3x", "track", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
-    EXPECT_EQ("plugin", args["name"]);
-    EXPECT_EQ("uid", args["uid"]);
-    EXPECT_EQ("lib.so", args["file"]);
-    EXPECT_EQ(static_cast<int>(PluginType::VST3X), std::stoi(args["type"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
-    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
-}
-
-TEST_F(TestOSCFrontend, TestMoveProcessorOnTrack)
-{
-    lo_send(_address, "/engine/move_processor_on_track", "sss", "plugin", "track", "track_1");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
-    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
-
-    lo_send(_address, "/engine/move_processor_on_track", "ssss", "plugin", "track", "track_1", "track_2");
-
-    ASSERT_TRUE(wait_for_event());
-    args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
-}
-
-TEST_F(TestOSCFrontend, TestDeleteProcesorFromTrack)
-{
-    lo_send(_address, "/engine/delete_processor_from_track", "ss", "plugin", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
-}
-
 TEST(TestOSCFrontendInternal, TestMakeSafePath)
 {
     EXPECT_EQ("s_p_a_c_e_", make_safe_path("s p a c e "));

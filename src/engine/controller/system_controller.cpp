@@ -18,36 +18,45 @@
  * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <library/constants.h>
 #include "system_controller.h"
 
 namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-
-std::string SystemController::get_interface_version() const
+SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inputs}, _audio_outputs{outputs}
 {
-    return "";
+    for(auto& option : _cts.enabled_build_options)
+    {
+        _build_options.push_back(option);
+    }
+
+    _build_info.version = _cts.sushi_version;
+    _build_info.build_options = _build_options;
+    _build_info.audio_buffer_size = AUDIO_CHUNK_SIZE;
+    _build_info.commit_hash = SUSHI_GIT_COMMIT_HASH;
+    _build_info.build_date = SUSHI_BUILD_TIMESTAMP;
 }
 
 std::string SystemController::get_sushi_version() const
 {
-    return "";
+    return std::string(_cts.sushi_version);
 }
 
 ext::SushiBuildInfo SystemController::get_sushi_build_info() const
 {
-    return ext::SushiBuildInfo();
+    return _build_info;
 }
 
 int SystemController::get_input_audio_channel_count() const
 {
-    return 0;
+    return _audio_inputs;
 }
 
 int SystemController::get_output_audio_channel_count() const
 {
-    return 0;
+    return _audio_outputs;
 }
 
 } // namespace controller_impl
