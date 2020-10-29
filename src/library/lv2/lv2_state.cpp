@@ -34,7 +34,7 @@ static int populate_preset_list(Model* model, const LilvNode *node, const LilvNo
     std::string node_string = lilv_node_as_string(node);
     std::string title_string = lilv_node_as_string(title);
 
-    model->state()->program_names().emplace_back(std::move(node_string));
+    model->state()->program_names().push_back(std::move(node_string));
 
     return 0;
 }

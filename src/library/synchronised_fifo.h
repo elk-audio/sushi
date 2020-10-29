@@ -47,7 +47,7 @@ public:
         std::lock_guard<std::mutex> lock(_queue_mutex);
         T message = std::move(_queue.back());
         _queue.pop_back();
-        return std::move(message);
+        return message;
     }
 
     void wait_for_data(const std::chrono::milliseconds& timeout)

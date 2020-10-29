@@ -77,7 +77,7 @@ ControlID ControlID::new_port_control(Port* port, Model* model, uint32_t index)
 
                 sp.value = lilv_node_as_float(lilv_scale_point_get_value(scale_point));
                 sp.label = lilv_node_as_string(lilv_scale_point_get_label(scale_point));
-                id.scale_points.emplace_back(std::move(sp));
+                id.scale_points.push_back(std::move(sp));
             }
         }
 
