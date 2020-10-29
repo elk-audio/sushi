@@ -427,7 +427,6 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Set up Controller and Control Frontends //
     ////////////////////////////////////////////////////////////////////////////////
-
     auto controller = std::make_unique<sushi::engine::Controller>(engine.get(), midi_dispatcher.get());
 
     if (enable_parameter_dump)
@@ -439,8 +438,12 @@ int main(int argc, char* argv[])
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
+                                                                              controller.get(),
+                                                                              osc_server_port,
+                                                                              osc_send_port);
+        controller->set_osc_frontend(osc_frontend.get());
 
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), osc_server_port, osc_send_port);
         auto osc_status = osc_frontend->init();
         if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
         {
