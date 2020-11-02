@@ -1374,6 +1374,18 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* /
     return to_grpc_status(status);
 }
 
+grpc::Status OscControlService::EnableAllOutput(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericVoidValue* response)
+{
+    auto status = _controller->enable_all_output();
+    return to_grpc_status(status);
+}
+
+grpc::Status OscControlService::DisableAllOutput(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericVoidValue* response)
+{
+    auto status = _controller->disable_all_output();
+    return to_grpc_status(status);
+}
+
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller}
 {
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);

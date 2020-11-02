@@ -548,7 +548,7 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     return true;
 }
 
-bool OSCFrontend::connect_processor_parameters(const std::string& processor_name, int processor_id)
+bool OSCFrontend::connect_to_processor_parameters(const std::string& processor_name, int processor_id)
 {
     auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
     if (parameters_status != ext::ControlStatus::OK)
@@ -557,7 +557,9 @@ bool OSCFrontend::connect_processor_parameters(const std::string& processor_name
     }
     for (auto& param : parameters)
     {
-        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+        if (param.type == ext::ParameterType::FLOAT ||
+            param.type == ext::ParameterType::INT ||
+            param.type == ext::ParameterType::BOOL)
         {
             connect_to_parameter(processor_name, param.name);
         }
@@ -569,12 +571,47 @@ bool OSCFrontend::connect_processor_parameters(const std::string& processor_name
     return true;
 }
 
-void OSCFrontend::connect_all()
+bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name, int processor_id)
+{
+    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
+    if (parameters_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    for (auto& param : parameters)
+    {
+        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+        {
+            connect_from_parameter(processor_name, param.name);
+        }
+        // TODO Ilias: Currently only numerical parameters. Should it perhaps also be String/Other?
+    }
+    return true;
+}
+
+bool OSCFrontend::disconnect_from_processor_parameters(const std::string& processor_name, int processor_id)
+{
+    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
+    if (parameters_status != ext::ControlStatus::OK)
+    {
+        return false;
+    }
+    for (auto& param : parameters)
+    {
+        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+        {
+            disconnect_from_parameter(processor_name, param.name);
+        }
+        // TODO Ilias: Currently only numerical parameters. Should it perhaps also be String/Other?
+    }
+    return true;
+}
+
+void OSCFrontend::connect_all_midi()
 {
     auto tracks = _graph_controller->get_all_tracks();
     for (auto& track : tracks)
     {
-        connect_processor_parameters(track.name, track.id);
         auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
         if (processors_status != ext::ControlStatus::OK)
         {
@@ -582,7 +619,6 @@ void OSCFrontend::connect_all()
         }
         for (auto& processor : processors)
         {
-            connect_processor_parameters(processor.name, processor.id);
             if (processor.program_count > 0)
             {
                 connect_to_program_change(processor.name);
@@ -590,6 +626,63 @@ void OSCFrontend::connect_all()
             connect_to_bypass_state(processor.name);
         }
         connect_kb_to_track(track.name);
+    }
+}
+
+void OSCFrontend::connect_to_all_parameters()
+{
+    auto tracks = _graph_controller->get_all_tracks();
+    for (auto& track : tracks)
+    {
+        connect_to_processor_parameters(track.name, track.id);
+        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
+        if (processors_status != ext::ControlStatus::OK)
+        {
+            return;
+        }
+        for (auto& processor : processors)
+        {
+            connect_to_processor_parameters(processor.name, processor.id);
+
+        }
+    }
+}
+
+void OSCFrontend::connect_from_all_parameters()
+{
+    auto tracks = _graph_controller->get_all_tracks();
+    for (auto& track : tracks)
+    {
+        connect_from_processor_parameters(track.name, track.id);
+        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
+        if (processors_status != ext::ControlStatus::OK)
+        {
+            return;
+        }
+        for (auto& processor : processors)
+        {
+            connect_from_processor_parameters(processor.name, processor.id);
+        }
+    }
+}
+
+void OSCFrontend::disconnect_from_all_parameters()
+{
+    // TODO Ilias: Maybe do differently.
+
+    auto tracks = _graph_controller->get_all_tracks();
+    for (auto& track : tracks)
+    {
+        disconnect_from_processor_parameters(track.name, track.id);
+        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
+        if (processors_status != ext::ControlStatus::OK)
+        {
+            return;
+        }
+        for (auto& processor : processors)
+        {
+            disconnect_from_processor_parameters(processor.name, processor.id);
+        }
     }
 }
 
@@ -711,7 +804,7 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             {
                 connect_to_bypass_state(info.name);
                 connect_to_program_change(info.name);
-                connect_processor_parameters(info.name, event->processor());
+                connect_to_processor_parameters(info.name, event->processor());
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
             break;
@@ -725,7 +818,7 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             {
                 connect_kb_to_track(info.name);
                 connect_to_bypass_state(info.name);
-                connect_processor_parameters(info.name, event->track());
+                connect_to_processor_parameters(info.name, event->track());
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
             break;

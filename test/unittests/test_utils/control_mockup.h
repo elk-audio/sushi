@@ -751,6 +751,16 @@ public:
     {
         return _return_status;
     }
+
+    ControlStatus enable_all_output() override
+    {
+        return _return_status;
+    }
+
+    ControlStatus disable_all_output() override
+    {
+        return _return_status;
+    }
 };
 
 class ControlMockup : public SushiControl

@@ -117,21 +117,48 @@ public:
     bool connect_kb_to_track(const std::string& track_name);
 
     /**
-     * @brief Connect all parameters from a given processor.
-     *
+     * @brief Connect to control all parameters from a given processor.
      * @param processor_name The name of the processor to connect.
      * @param processor_id The id of the processor to connect.
      * @return
      */
-    bool connect_processor_parameters(const std::string& processor_name, int processor_id);
+    bool connect_to_processor_parameters(const std::string& processor_name, int processor_id);
 
     /**
-     * @brief Register OSC callbacks far all parameters of all plugins and
-     *        connect midi kb data to a track.
-     *        This should eventually be replaced by a more elaborate way of
-     *        registering parameters.
+     * @brief Enable OSC broadcasting of all parameters from a given processor.
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
      */
-    void connect_all();
+    bool connect_from_processor_parameters(const std::string& processor_name, int processor_id);
+
+    /**
+     * @brief Disable OSC broadcasting of all parameters from a given processor.
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
+     */
+    bool disconnect_from_processor_parameters(const std::string& processor_name, int processor_id);
+
+    /**
+     * @brief Register OSC callbacks far all midi kb and pc data to tracks and processors.
+     */
+    void connect_all_midi();
+
+    /**
+     * @brief Register OSC control paths far all parameters of all plugins.
+     */
+    void connect_to_all_parameters();
+
+    /**
+     * @brief Register OSC callbacks far all parameters of all plugins.
+     */
+    void connect_from_all_parameters();
+
+    /**
+     * @brief Deregister OSC callbacks far all parameters of all plugins.
+     */
+    void disconnect_from_all_parameters();
 
     /**
      * Returns all OSC Address Patterns that are currently enabled to output state changes.

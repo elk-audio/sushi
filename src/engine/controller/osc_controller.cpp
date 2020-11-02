@@ -119,6 +119,32 @@ void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend
     _osc_frontend = osc_frontend;
 }
 
+ext::ControlStatus OscController::enable_all_output()
+{
+    auto lambda = [=] () -> int
+    {
+        _osc_frontend->connect_from_all_parameters();
+        return EventStatus::HANDLED_OK;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus OscController::disable_all_output()
+{
+    auto lambda = [=] () -> int
+    {
+        _osc_frontend->disconnect_from_all_parameters();
+        return EventStatus::HANDLED_OK;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
 #pragma GCC diagnostic pop
 
 } // namespace controller_impl

@@ -249,6 +249,8 @@ public:
     grpc::Status GetEnabledParameterOutputs(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::OscParameterOutputList* response) override;
     grpc::Status EnableOutputForParameter(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisableOutputForParameter(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status EnableAllOutput(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status DisableAllOutput(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericVoidValue* response) override;
 
 private:
     sushi::ext::OscController* _controller;

@@ -49,6 +49,10 @@ public:
 
     ext::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
 
+    ext::ControlStatus enable_all_output() override;
+
+    ext::ControlStatus disable_all_output() override;
+
 private:
     BaseEngine* _engine {nullptr};
     dispatcher::BaseEventDispatcher* _event_dispatcher;

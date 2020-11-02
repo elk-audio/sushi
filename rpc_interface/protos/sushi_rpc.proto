@@ -176,6 +176,8 @@ service OscController
     rpc GetEnabledParameterOutputs (GenericVoidValue) returns (OscParameterOutputList) {}
     rpc EnableOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
     rpc DisableOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
+    rpc EnableAllOutput (GenericVoidValue) returns (GenericVoidValue) {}
+    rpc DisableAllOutput (GenericVoidValue) returns (GenericVoidValue) {}
 }
 
 service NotificationController

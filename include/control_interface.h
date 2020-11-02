@@ -450,6 +450,8 @@ public:
     virtual std::vector<std::string> get_enabled_parameter_outputs() const = 0;
     virtual ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) = 0;
     virtual ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) = 0;
+    virtual ControlStatus enable_all_output() = 0;
+    virtual ControlStatus disable_all_output() = 0;
 
 protected:
     OscController() = default;
