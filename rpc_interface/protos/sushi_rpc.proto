@@ -183,9 +183,9 @@ service NotificationController
 {
     rpc SubscribeToTransportChanges(GenericVoidValue) returns (stream TransportUpdate) {}
     rpc SubscribeToTimingUpdates(GenericVoidValue) returns (stream CpuTimings) {}
-    rpc SubscribeToTrackChanges(TrackNotificationRequest) returns (stream TrackUpdate) {}
-    rpc SubscribeToProcessorChanges(ProcessorNotificationRequest) returns (stream ProcessorUpdate) {}
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
+    rpc SubscribeToTrackChanges(GenericVoidValue) returns (stream TrackUpdate) {}
+    rpc SubscribeToProcessorChanges(GenericVoidValue) returns (stream ProcessorUpdate) {}
+    rpc SubscribeToParameterUpdates(ParameterNotificationBlocklist) returns (stream ParameterValue) {}
 }
 
 /**
@@ -488,17 +488,7 @@ message DeleteProcessorRequest
     TrackIdentifier     track = 2;
 }
 
-message TrackNotificationRequest
-{
-    repeated TrackIdentifier tracks = 1;
-}
-
-message ProcessorNotificationRequest
-{
-    repeated ProcessorIdentifier processors = 1;
-}
-
-message ParameterNotificationRequest
+message ParameterNotificationBlocklist
 {
     repeated ParameterIdentifier parameters = 1;
 }

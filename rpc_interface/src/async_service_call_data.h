@@ -80,7 +80,7 @@ protected:
     void _alert();
 };
 
-template <class ValueType, class NotificationRequestType>
+template <class ValueType, class NotificationBlocklistType>
 class SubscribeToUpdatesCallData : public CallData
 {
 public:
@@ -108,10 +108,8 @@ protected:
     virtual bool _check_if_blocklisted(const ValueType& reply) = 0;
     virtual void _populate_blocklist() = 0;
 
-    NotificationRequestType _notification_request;
+    NotificationBlocklistType _notification_blocklist;
     grpc::ServerAsyncWriter<ValueType> _responder;
-
-    std::unordered_map<int64_t, bool> _blocklist;
 
 private:
     SynchronizedQueue<std::shared_ptr<ValueType>> _notifications;
@@ -120,7 +118,7 @@ private:
     bool _active{false};
 };
 
-class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationRequest>
+class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>
 {
 public:
     SubscribeToParameterUpdatesCallData(NotificationControlService* service,
@@ -144,9 +142,11 @@ private:
     {
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
+
+    std::unordered_map<int64_t, bool> _blocklist;
 };
 
-class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, ProcessorNotificationRequest>
+class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>
 {
 public:
     SubscribeToProcessorChangesCallData(NotificationControlService* service,
@@ -166,7 +166,7 @@ protected:
     void _populate_blocklist() override {}
 };
 
-class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, TrackNotificationRequest>
+class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>
 {
 public:
     SubscribeToTrackChangesCallData(NotificationControlService* service,

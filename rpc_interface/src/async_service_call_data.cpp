@@ -98,9 +98,9 @@ void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::push(std::shared_p
 
 // Pre-Declaring what template instantiation is needed for SubscribeToUpdatesCallData,
 // or it will not link.
-template class SubscribeToUpdatesCallData<TrackUpdate, TrackNotificationRequest>;
-template class SubscribeToUpdatesCallData<ProcessorUpdate, ProcessorNotificationRequest>;
-template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationRequest>;
+template class SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>;
+template class SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>;
+template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>;
 
 void SubscribeToParameterUpdatesCallData::_respawn()
 {
@@ -110,7 +110,7 @@ void SubscribeToParameterUpdatesCallData::_respawn()
 void SubscribeToParameterUpdatesCallData::_subscribe()
 {
     _service->RequestSubscribeToParameterUpdates(&_ctx,
-                                                 &_notification_request,
+                                                 &_notification_blocklist,
                                                  &_responder,
                                                  _async_rpc_queue,
                                                  _async_rpc_queue,
@@ -133,7 +133,7 @@ bool SubscribeToParameterUpdatesCallData::_check_if_blocklisted(const ParameterV
 
 void SubscribeToParameterUpdatesCallData::_populate_blocklist()
 {
-    for (auto& identifier : _notification_request.parameters())
+    for (auto& identifier : _notification_blocklist.parameters())
     {
         _blocklist[_map_key(identifier.parameter_id(),
                             identifier.processor_id())] = false;
@@ -148,7 +148,7 @@ void SubscribeToProcessorChangesCallData::_respawn()
 void SubscribeToProcessorChangesCallData::_subscribe()
 {
     _service->RequestSubscribeToProcessorChanges(&_ctx,
-                                                 &_notification_request,
+                                                 &_notification_blocklist,
                                                  &_responder,
                                                  _async_rpc_queue,
                                                  _async_rpc_queue,
@@ -174,7 +174,7 @@ void SubscribeToTrackChangesCallData::_respawn()
 void SubscribeToTrackChangesCallData::_subscribe()
 {
     _service->RequestSubscribeToTrackChanges(&_ctx,
-                                             &_notification_request,
+                                             &_notification_blocklist,
                                              &_responder,
                                              _async_rpc_queue,
                                              _async_rpc_queue,
