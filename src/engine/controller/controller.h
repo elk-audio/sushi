@@ -69,10 +69,10 @@ private:
     void _completion_callback(Event* event, int status);
 
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                     ext::NotificationType ext_notification) const;
+                                     ext::ProcessorAction action) const;
 
     void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                 ext::NotificationType ext_notification) const;
+                                 ext::TrackAction action) const;
 
     void _notify_parameter_listeners(Event* event) const;
 

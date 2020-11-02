@@ -208,11 +208,21 @@ struct MidiPCConnection
 enum class NotificationType
 {
     PARAMETER_CHANGE,
-    TRACK_ADDED,
-    TRACK_DELETED,
-    PROCESSOR_ADDED,
-    PROCESSOR_MOVED,
-    PROCESSOR_DELETED
+    TRACK_UPDATE,
+    PROCESSOR_UPDATE
+};
+
+enum class ProcessorAction
+{
+    ADDED,
+    DELETED,
+    MOVED
+};
+
+enum class TrackAction
+{
+    ADDED,
+    DELETED
 };
 
 class SystemController
@@ -456,7 +466,6 @@ protected:
     OscController() = default;
 };
 
-
 class ControlNotification
 {
 public:
@@ -473,7 +482,6 @@ private:
     NotificationType _type;
     Time _timestamp;
 };
-
 
 class ControlListener
 {

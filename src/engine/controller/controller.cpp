@@ -77,20 +77,11 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::PARAMETER_CHANGE:
             _parameter_change_listeners.push_back(listener);
             break;
-        case ext::NotificationType::PROCESSOR_ADDED:
-        case ext::NotificationType::PROCESSOR_DELETED:
-        case ext::NotificationType::PROCESSOR_MOVED:
-            if (std::find(_processor_update_listeners.begin(), _processor_update_listeners.end(), listener) ==
-                _processor_update_listeners.end()) {
-                _processor_update_listeners.push_back(listener);
-            }
+        case ext::NotificationType::PROCESSOR_UPDATE:
+            _processor_update_listeners.push_back(listener);
             break;
-        case ext::NotificationType::TRACK_ADDED:
-        case ext::NotificationType::TRACK_DELETED:
-            if (std::find(_track_update_listeners.begin(), _track_update_listeners.end(), listener) ==
-                _track_update_listeners.end()) {
-                _track_update_listeners.push_back(listener);
-            }
+        case ext::NotificationType::TRACK_UPDATE:
+            _track_update_listeners.push_back(listener);
             break;
         default:
             break;
@@ -118,27 +109,27 @@ int Controller::process(Event* event)
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
             {
-                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_ADDED);
+                _notify_processor_listeners(typed_event, ext::ProcessorAction::ADDED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
             {
-                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_MOVED);
+                _notify_processor_listeners(typed_event, ext::ProcessorAction::MOVED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
             {
-                _notify_processor_listeners(typed_event, ext::NotificationType::PROCESSOR_DELETED);
+                _notify_processor_listeners(typed_event, ext::ProcessorAction::DELETED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::TRACK_ADDED:
             {
-                _notify_track_listeners(typed_event, ext::NotificationType::TRACK_ADDED);
+                _notify_track_listeners(typed_event, ext::TrackAction::ADDED);
                 break;
             }
             case AudioGraphNotificationEvent::Action::TRACK_DELETED:
             {
-                _notify_track_listeners(typed_event, ext::NotificationType::TRACK_DELETED);
+                _notify_track_listeners(typed_event, ext::TrackAction::DELETED);
                 break;
             }
         }
@@ -163,9 +154,9 @@ void Controller::_notify_parameter_listeners(Event* event) const
 }
 
 void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                         ext::NotificationType ext_notification) const
+                                         ext::TrackAction action) const
 {
-    ext::TrackNotification notification(ext_notification,
+    ext::TrackNotification notification(action,
                             typed_event->track(),
                             typed_event->time());
     for (auto& listener : _track_update_listeners)
@@ -175,9 +166,9 @@ void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* type
 }
 
 void Controller::_notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                             ext::NotificationType ext_notification) const
+                                             ext::ProcessorAction action) const
 {
-    ext::ProcessorNotification notification(ext_notification,
+    ext::ProcessorNotification notification(action,
                                 static_cast<int>(typed_event->processor()),
                                 typed_event->time());
     for (auto& listener : _processor_update_listeners)

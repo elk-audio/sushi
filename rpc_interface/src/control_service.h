@@ -288,12 +288,8 @@ public:
 
 private:
     void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
-
-    void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
-                                                        sushi_rpc::ProcessorUpdate_Action action);
-
-    void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
-                                                    sushi_rpc::TrackUpdate_Action action);
+    void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
 
     std::vector<SubscribeToTrackChangesCallData*> _track_subscribers;
     std::mutex _track_subscriber_lock;

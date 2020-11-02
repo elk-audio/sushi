@@ -10,14 +10,17 @@ namespace ext {
 class ProcessorNotification : public ControlNotification
 {
 public:
-    ProcessorNotification(NotificationType type, int processor_id, Time timestamp)
-            : ControlNotification(type, timestamp),
-              _processor_id(processor_id) {}
+    ProcessorNotification(ProcessorAction action, int processor_id, Time timestamp)
+            : ControlNotification(NotificationType::PROCESSOR_UPDATE, timestamp),
+              _processor_id(processor_id),
+              _action(action) {}
 
     int processor_id() const {return _processor_id;}
+    ProcessorAction action() const {return _action;}
 
 private:
     int _processor_id;
+    ProcessorAction _action;
 };
 
 class ParameterChangeNotification : public ControlNotification
@@ -42,14 +45,17 @@ private:
 class TrackNotification : public ControlNotification
 {
 public:
-    TrackNotification(NotificationType type, int track_id, Time timestamp)
-            : ControlNotification(type, timestamp),
-              _track_id(track_id) {}
+    TrackNotification(TrackAction action, int track_id, Time timestamp)
+            : ControlNotification(NotificationType::TRACK_UPDATE, timestamp),
+              _track_id(track_id),
+              _action(action) {}
 
     int track_id() const {return _track_id;}
+    TrackAction action() const {return _action;}
 
 private:
     int _track_id;
+    TrackAction _action;
 };
 
 } // ext

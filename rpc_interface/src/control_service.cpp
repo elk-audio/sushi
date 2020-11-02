@@ -1353,13 +1353,8 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* c
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_ADDED, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_MOVED, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_DELETED, this);
-
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_ADDED, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_DELETED, this);
-
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
 }
 
@@ -1372,29 +1367,14 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
             _forward_parameter_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PROCESSOR_ADDED:
+        case sushi::ext::NotificationType::PROCESSOR_UPDATE:
         {
-            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_ADDED);
+            _forward_processor_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PROCESSOR_MOVED:
+        case sushi::ext::NotificationType::TRACK_UPDATE:
         {
-            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_MOVED);
-            break;
-        }
-        case sushi::ext::NotificationType::PROCESSOR_DELETED:
-        {
-            _forward_processor_notification_to_subscribers(notification, ProcessorUpdate_Action_PROCESSOR_DELETED);
-            break;
-        }
-        case sushi::ext::NotificationType::TRACK_ADDED:
-        {
-            _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_ADDED);
-            break;
-        }
-        case sushi::ext::NotificationType::TRACK_DELETED:
-        {
-            _forward_track_notification_to_subscribers(notification, TrackUpdate_Action_TRACK_DELETED);
+            _forward_track_notification_to_subscribers(notification);
             break;
         }
         default:
@@ -1417,13 +1397,30 @@ void NotificationControlService::_forward_parameter_notification_to_subscribers(
     }
 }
 
-void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
-                                                                            sushi_rpc::TrackUpdate_Action action)
+void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
     auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
     auto notification_content = std::make_shared<TrackUpdate>();
+    auto action = typed_notification->action();
 
-    notification_content->set_action(action);
+    switch(action)
+    {
+        case sushi::ext::TrackAction::ADDED:
+        {
+            notification_content->set_action(TrackUpdate_Action_TRACK_ADDED);
+            break;
+        }
+        case sushi::ext::TrackAction::DELETED:
+        {
+            notification_content->set_action(TrackUpdate_Action_TRACK_DELETED);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
 
     auto[status, track_info] = _audio_graph_controller->get_track_info(typed_notification->track_id());
 
@@ -1436,13 +1433,35 @@ void NotificationControlService::_forward_track_notification_to_subscribers(cons
     }
 }
 
-void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification,
-                                                                                sushi_rpc::ProcessorUpdate_Action action)
+void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
     auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
     auto notification_content = std::make_shared<ProcessorUpdate>();
+    auto action = typed_notification->action();
 
-    notification_content->set_action(action);
+    switch(action)
+    {
+        case sushi::ext::ProcessorAction::ADDED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
+            break;
+        }
+        case sushi::ext::ProcessorAction::DELETED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
+            break;
+        }
+        case sushi::ext::ProcessorAction::MOVED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_MOVED);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
 
     auto[status, processor_info] = _audio_graph_controller
             ->get_processor_info(typed_notification->processor_id());
