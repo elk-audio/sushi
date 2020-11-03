@@ -619,7 +619,6 @@ message TrackUpdate
         DUMMY = 0;
         TRACK_ADDED = 1;
         TRACK_DELETED = 2;
-        PROCESSORS_CHANGED = 3;
     }
     Action          action = 1;
     TrackIdentifier track = 2;
