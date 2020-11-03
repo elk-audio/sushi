@@ -52,13 +52,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
     auto raspa_config = static_cast<const XenomaiRaspaFrontendConfiguration*>(_config);
 
-    auto cv_audio_status = config_audio_channels(raspa_config);
-    if (cv_audio_status != AudioFrontendStatus::OK)
-    {
-        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
-        return cv_audio_status;
-    }
-
     unsigned int debug_flags = 0;
     if (raspa_config->break_on_mode_sw)
     {
@@ -70,6 +63,13 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     {
         SUSHI_LOG_ERROR("Error opening RASPA: {}", raspa_get_error_msg(-raspa_ret));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+
+    auto cv_audio_status = config_audio_channels(raspa_config);
+    if (cv_audio_status != AudioFrontendStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
+        return cv_audio_status;
     }
 
     auto raspa_sample_rate = raspa_get_sampling_rate();
