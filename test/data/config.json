@@ -191,7 +191,12 @@
         ]
     },
     "osc" : {
-
+        "osc_outputs" : [
+            {
+                "processor" : "synth",
+                "parameter" : "cutoff"
+            }
+        ]
     },
     "cv_control" : {
         "cv_inputs" : [

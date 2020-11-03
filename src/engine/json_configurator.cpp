@@ -345,12 +345,62 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
 
 JsonConfigReturnStatus JsonConfigurator::load_osc()
 {
-    auto [status, osc] = _parse_section(JsonSection::OSC);
+    auto [status, osc_config] = _parse_section(JsonSection::OSC);
     if(status != JsonConfigReturnStatus::OK)
     {
         return status;
     }
 
+    if (osc_config.HasMember("enable_all_outputs"))
+    {
+        bool enabled = osc_config["enable_all_outputs"].GetBool();
+        if(enabled)
+        {
+            _osc_frontend->connect_from_all_parameters();
+        }
+        else // While the current default is off, it may not always be, so why not have this wired up.
+        {
+            _osc_frontend->disconnect_from_all_parameters();
+        }
+        SUSHI_LOG_INFO("Setting engine input clip detection {}", enabled ? "enabled" : "disabled");
+    }
+
+    if (osc_config.HasMember("osc_outputs"))
+    {
+        for (const auto& osc_out : osc_config["osc_outputs"].GetArray())
+        {
+            auto processor_name = osc_out["processor"].GetString();
+
+            if (osc_out.HasMember("parameter"))
+            {
+                bool res = _osc_frontend->connect_from_parameter(processor_name,
+                                                                osc_out["parameter"].GetString());
+                if (res != true)
+                {
+                    SUSHI_LOG_ERROR("Failed to enable osc output of parameter {} on processor {}",
+                                    osc_out["parameter"].GetString(),
+                                    processor_name);
+                }
+            }
+            else
+            {
+                auto processor = _processor_container->processor(processor_name);
+                bool res = false;
+
+                if(processor.get() != nullptr)
+                {
+                    res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
+                }
+
+                if (res != true)
+                {
+                    SUSHI_LOG_ERROR("Failed to enable osc output of parameter {} on processor {}",
+                                    osc_out["parameter"].GetString(),
+                                    processor_name);
+                }
+            }
+        }
+    }
     return JsonConfigReturnStatus::OK;
 }
 
@@ -485,6 +535,11 @@ JsonConfigurator::load_event_list()
             events.push_back(e);
     }
     return std::make_pair(JsonConfigReturnStatus::OK, events);
+}
+
+void JsonConfigurator::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
+{
+    _osc_frontend = osc_frontend;
 }
 
 std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_parse_section(JsonSection section)

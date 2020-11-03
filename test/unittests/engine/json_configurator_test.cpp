@@ -13,13 +13,17 @@
 #include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
 #include "test_utils/test_utils.h"
+#include "test_utils/control_mockup.h"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
+constexpr int OSC_TEST_SERVER_PORT = 24024;
+constexpr int OSC_TEST_SEND_PORT = 24023;
 
 using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::jsonconfig;
+using namespace sushi::control_frontend;
 
 class TestJsonConfigurator : public ::testing::Test
 {
@@ -28,28 +32,35 @@ protected:
 
     void SetUp()
     {
-        _engine = new AudioEngine(SAMPLE_RATE);
+        _engine = std::make_unique<AudioEngine>(SAMPLE_RATE);
         _engine->set_audio_input_channels(ENGINE_CHANNELS);
         _engine->set_audio_output_channels(ENGINE_CHANNELS);
-        _midi_dispatcher = new MidiDispatcher(_engine->event_dispatcher());
+        _midi_dispatcher = std::make_unique<MidiDispatcher>(_engine->event_dispatcher());
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
-        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _engine->processor_container(), _path);
+        _module_under_test = std::make_unique<JsonConfigurator>(_engine.get(), _midi_dispatcher.get(), _engine->processor_container(), _path);
+
+        _osc_frontend = std::make_unique<OSCFrontend>(_engine.get(), &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+        // TODO Ilias: OSCFrontend should be refactored to not need starting and stopping in init, without crashing tests.
+        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend->init());
+
+        _module_under_test->set_osc_frontend(_osc_frontend.get());
     }
 
     void TearDown()
     {
-        delete _module_under_test;
-        delete _midi_dispatcher;
-        delete _engine;
     }
 
     /* Helper functions */
     JsonConfigReturnStatus _make_track(const rapidjson::Value &track);
 
-    AudioEngine* _engine;
-    MidiDispatcher* _midi_dispatcher;
-    JsonConfigurator* _module_under_test;
+    std::unique_ptr<AudioEngine> _engine;
+    std::unique_ptr<MidiDispatcher> _midi_dispatcher;
+
+    sushi::ext::ControlMockup _controller;
+    std::unique_ptr<OSCFrontend> _osc_frontend;
+
+    std::unique_ptr<JsonConfigurator> _module_under_test;
     std::string _path;
 };
 
@@ -60,8 +71,8 @@ JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value 
 
 TEST_F(TestJsonConfigurator, TestInstantiation)
 {
-    EXPECT_TRUE(_engine);
-    EXPECT_TRUE(_module_under_test);
+    EXPECT_TRUE(_engine.get());
+    EXPECT_TRUE(_module_under_test.get());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -121,15 +132,17 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    _midi_dispatcher->set_midi_inputs(1);
+
+    auto outputs_before = _osc_frontend->get_enabled_parameter_outputs();
+
+    ASSERT_EQ(0, outputs_before.size());
 
     status = _module_under_test->load_osc();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-// TODO Ilias: Finish this!
-//    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
-//    ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
-//    ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
-//    ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
+
+    auto outputs_after = _osc_frontend->get_enabled_parameter_outputs();
+
+    ASSERT_EQ(1u, outputs_after.size());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadCvGateControl)

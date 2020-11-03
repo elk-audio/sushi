@@ -209,7 +209,7 @@ private:
     int _send_port;
     lo_address _osc_out_address;
 
-    std::atomic_bool _running;
+    std::atomic_bool _running {false};
 
     sushi::ext::SushiControl* _controller {nullptr};
     sushi::ext::AudioGraphController* _graph_controller {nullptr};

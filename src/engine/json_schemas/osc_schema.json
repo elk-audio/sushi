@@ -12,7 +12,32 @@ R"(
       "type": "object",
       "properties":
       {
-
+        "enable_all_outputs":
+        {
+          "type": "boolean"
+        },
+        "osc_outputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "processor":
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameter":
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["processor"]
+          }
+        }
       }
     }
   }

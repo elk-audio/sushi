@@ -31,6 +31,7 @@
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"
+#include <control_frontends/osc_frontend.h>
 
 namespace sushi {
 namespace jsonconfig {
@@ -78,7 +79,7 @@ public:
                      const std::string& path) : _engine(engine),
                                                 _midi_dispatcher(midi_dispatcher),
                                                 _processor_container(processor_container),
-                                                _document_path(path){}
+                                                _document_path(path) {}
 
     ~JsonConfigurator() {}
 
@@ -140,6 +141,8 @@ public:
      */
     std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
 
+    void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
+
 private:
     /**
      * @brief Helper function to retrieve a particular section of the json configuration
@@ -190,6 +193,7 @@ private:
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    control_frontend::OSCFrontend* _osc_frontend {nullptr};
     const engine::BaseProcessorContainer* _processor_container;
 
     std::string _document_path;

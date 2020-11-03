@@ -396,11 +396,6 @@ int main(int argc, char* argv[])
     {
         error_exit("Failed to load MIDI mapping from Json config file");
     }
-    status = configurator->load_osc();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
-    {
-        error_exit("Failed to load OSC echo specification from Json config file");
-    }
     status = configurator->load_cv_gate();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
     {
@@ -427,7 +422,6 @@ int main(int argc, char* argv[])
             error_exit("Failed to load Events from Json config file");
         }
     }
-    configurator.reset();
 
     ////////////////////////////////////////////////////////////////////////////////
     // Set up Controller and Control Frontends //
@@ -448,6 +442,7 @@ int main(int argc, char* argv[])
                                                                               osc_server_port,
                                                                               osc_send_port);
         controller->set_osc_frontend(osc_frontend.get());
+        configurator->set_osc_frontend(osc_frontend.get());
 
         auto osc_status = osc_frontend->init();
         if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
@@ -456,11 +451,19 @@ int main(int argc, char* argv[])
         }
         osc_frontend->connect_all_midi();
         osc_frontend->connect_to_all_parameters();
+
+        status = configurator->load_osc();
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
+        {
+            error_exit("Failed to load OSC echo specification from Json config file");
+        }
     }
     else
     {
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_dispatcher.get());
     }
+
+    configurator.reset();
 
     auto midi_ok = midi_frontend->init();
     if (!midi_ok)
