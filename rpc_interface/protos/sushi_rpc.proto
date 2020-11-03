@@ -621,8 +621,8 @@ message TrackUpdate
         TRACK_DELETED = 2;
         PROCESSORS_CHANGED = 3;
     }
-    Action      action = 1;
-    TrackInfo   track = 2;
+    Action          action = 1;
+    TrackIdentifier track = 2;
 }
 
 message ProcessorUpdate
@@ -634,6 +634,7 @@ message ProcessorUpdate
         PROCESSOR_DELETED = 2;
         PROCESSOR_MOVED = 3;
     }
-    Action         action = 1;
-    ProcessorInfo  track = 2;
+    Action              action = 1;
+    ProcessorIdentifier processor = 2;
+    TrackIdentifier     parent_track = 3;
 }

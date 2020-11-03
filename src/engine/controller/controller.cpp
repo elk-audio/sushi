@@ -157,8 +157,8 @@ void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* type
                                          ext::TrackAction action) const
 {
     ext::TrackNotification notification(action,
-                            typed_event->track(),
-                            typed_event->time());
+                                        typed_event->track(),
+                                        typed_event->time());
     for (auto& listener : _track_update_listeners)
     {
         listener->notification(&notification);
@@ -169,8 +169,9 @@ void Controller::_notify_processor_listeners(const AudioGraphNotificationEvent* 
                                              ext::ProcessorAction action) const
 {
     ext::ProcessorNotification notification(action,
-                                static_cast<int>(typed_event->processor()),
-                                typed_event->time());
+                                            static_cast<int>(typed_event->processor()),
+                                            static_cast<int>(typed_event->track()),
+                                            typed_event->time());
     for (auto& listener : _processor_update_listeners)
     {
         listener->notification(&notification);

@@ -1422,9 +1422,7 @@ void NotificationControlService::_forward_track_notification_to_subscribers(cons
         }
     }
 
-    auto[status, track_info] = _audio_graph_controller->get_track_info(typed_notification->track_id());
-
-    to_grpc(*notification_content->mutable_track(), track_info);
+    notification_content->mutable_track()->set_id(typed_notification->track_id());
 
     std::scoped_lock lock(_track_subscriber_lock);
     for (auto& subscriber : _track_subscribers)
@@ -1463,9 +1461,8 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
         }
     }
 
-    auto[status, processor_info] = _audio_graph_controller
-            ->get_processor_info(typed_notification->processor_id());
-    to_grpc(*notification_content->mutable_track(), processor_info);
+    notification_content->mutable_processor()->set_id(typed_notification->processor_id());
+    notification_content->mutable_parent_track()->set_id(typed_notification->parent_track_id());
 
     std::scoped_lock lock(_processor_subscriber_lock);
     for (auto& subscriber : _processor_subscribers)

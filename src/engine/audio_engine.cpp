@@ -785,7 +785,9 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     // Add it to the engine's mirror of track processing chains
     _processors.add_to_track(plugin, track->id(), before_plugin_id);
     _event_dispatcher.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
-                                                                 plugin_id, track_id, IMMEDIATE_PROCESS));
+                                                                 plugin_id,
+                                                                 track_id,
+                                                                 IMMEDIATE_PROCESS));
     return EngineReturnStatus::OK;
 }
 
