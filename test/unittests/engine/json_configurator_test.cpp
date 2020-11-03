@@ -117,6 +117,21 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
 }
 
+TEST_F(TestJsonConfigurator, TestLoadOsc)
+{
+    auto status = _module_under_test->load_tracks();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+    _midi_dispatcher->set_midi_inputs(1);
+
+    status = _module_under_test->load_osc();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+// TODO Ilias: Finish this!
+//    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
+//    ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
+//    ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
+//    ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
+}
+
 TEST_F(TestJsonConfigurator, TestLoadCvGateControl)
 {
     auto status = _module_under_test->load_tracks();

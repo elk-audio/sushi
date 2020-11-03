@@ -396,6 +396,11 @@ int main(int argc, char* argv[])
     {
         error_exit("Failed to load MIDI mapping from Json config file");
     }
+    status = configurator->load_osc();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
+    {
+        error_exit("Failed to load OSC echo specification from Json config file");
+    }
     status = configurator->load_cv_gate();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
     {

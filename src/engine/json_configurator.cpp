@@ -343,6 +343,16 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     return JsonConfigReturnStatus::OK;
 }
 
+JsonConfigReturnStatus JsonConfigurator::load_osc()
+{
+    auto [status, osc] = _parse_section(JsonSection::OSC);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+
+    return JsonConfigReturnStatus::OK;
+}
 
 JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
 {
@@ -518,6 +528,14 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["midi"]};
+
+        case JsonSection::OSC:
+            if(_json_data.HasMember("osc") == false)
+            {
+                SUSHI_LOG_INFO("Config file does not have OSC mapping definitions");
+                return {JsonConfigReturnStatus::NO_OSC_DEFINITIONS, _json_data};
+            }
+            return {JsonConfigReturnStatus::OK, _json_data["osc"]};
 
         case JsonSection::CV_GATE:
             if(_json_data.HasMember("cv_control") == false)
@@ -765,6 +783,12 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
             schema_char_array =
                 #include "json_schemas/midi_schema.json"
                                                        ;
+            break;
+
+        case JsonSection::OSC:
+            schema_char_array =
+                #include "json_schemas/osc_schema.json"
+                                                      ;
             break;
 
         case JsonSection::CV_GATE:

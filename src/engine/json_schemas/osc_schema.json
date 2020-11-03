@@ -1,0 +1,20 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi OSC JSON Schema",
+  "description": "JSON Schema to validate OSC definitions",
+
+  "type": "object",
+  "properties":
+  {
+    "osc":
+    {
+      "type": "object",
+      "properties":
+      {
+
+      }
+    }
+  }
+}
+)"
