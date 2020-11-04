@@ -135,6 +135,7 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
     EXPECT_EQ(0u, _engine.processor_container()->processors_on_track(_track_id).size());
     EXPECT_EQ(1u, _engine.processor_container()->processors_on_track(track_2_id).size());
 
+    // Delete the processor from the new track
     status = _module_under_test.delete_processor_from_track(proc_id, track_2_id);
     ASSERT_EQ(ext::ControlStatus::OK, status);
     std::this_thread::sleep_for(TEST_DELAY);

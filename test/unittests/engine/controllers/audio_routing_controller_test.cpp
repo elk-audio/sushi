@@ -79,7 +79,7 @@ TEST_F(AudioRoutingControllerTest, TestGettingAudioRouting)
 
 TEST_F(AudioRoutingControllerTest, TestSettingAudioRouting)
 {
-    // Connect using the controller functions (which does it by events)
+    // Connect using controller functions (using events)
     auto status = _module_under_test.connect_input_channel_to_track(_track_id, 0, 2);
     ASSERT_EQ(ext::ControlStatus::OK, status);
     status = _module_under_test.connect_input_channel_to_track(_track_id, 1, 3);
@@ -120,7 +120,7 @@ TEST_F(AudioRoutingControllerTest, TestRemovingAudioRouting)
     engine_status = _engine.connect_audio_output_bus(2, 0, _track_id);
     ASSERT_EQ(EngineReturnStatus::OK, engine_status);
 
-    // Disconnect using the controller functions (which do it by events)
+    // Disconnect using controller functions (using events)
     auto status = _module_under_test.disconnect_input(_track_id, 0, 2);
     ASSERT_EQ(ext::ControlStatus::OK, status);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
