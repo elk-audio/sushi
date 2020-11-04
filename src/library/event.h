@@ -37,12 +37,6 @@ namespace dispatcher
     class EventDispatcher;
     class Worker;
 }
-namespace midi_dispatcher {class MidiDispatcher;}
-
-// TODO: ext namespace leaks into here - this can be resolved if MidiController events have their own namespace and files.
-namespace ext {
-int int_from_midi_channel(ext::MidiChannel channel);
-}
 
 class Event;
 
