@@ -41,7 +41,7 @@ protected:
         _module_under_test = std::make_unique<JsonConfigurator>(_engine.get(), _midi_dispatcher.get(), _engine->processor_container(), _path);
 
         _osc_frontend = std::make_unique<OSCFrontend>(_engine.get(), &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
-        // TODO Ilias: OSCFrontend should be refactored to not need starting and stopping in init, without crashing tests.
+        // TODO: OSCFrontend should be refactored to not need starting and stopping in init, without crashing tests.
         ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend->init());
 
         _module_under_test->set_osc_frontend(_osc_frontend.get());

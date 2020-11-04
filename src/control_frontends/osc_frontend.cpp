@@ -584,7 +584,6 @@ bool OSCFrontend::connect_from_processor_parameters(const std::string& processor
         {
             connect_from_parameter(processor_name, param.name);
         }
-        // TODO Ilias: Currently only numerical parameters. Should it perhaps also be String/Other?
     }
     return true;
 }
@@ -598,11 +597,7 @@ bool OSCFrontend::disconnect_from_processor_parameters(const std::string& proces
     }
     for (auto& param : parameters)
     {
-        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
-        {
-            disconnect_from_parameter(processor_name, param.name);
-        }
-        // TODO Ilias: Currently only numerical parameters. Should it perhaps also be String/Other?
+        disconnect_from_parameter(processor_name, param.name);
     }
     return true;
 }
@@ -668,20 +663,17 @@ void OSCFrontend::connect_from_all_parameters()
 
 void OSCFrontend::disconnect_from_all_parameters()
 {
-    // TODO Ilias: Maybe do differently.
-
     auto tracks = _graph_controller->get_all_tracks();
     for (auto& track : tracks)
     {
         disconnect_from_processor_parameters(track.name, track.id);
         auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
-        if (processors_status != ext::ControlStatus::OK)
+        if (processors_status == ext::ControlStatus::OK)
         {
-            return;
-        }
-        for (auto& processor : processors)
-        {
-            disconnect_from_processor_parameters(processor.name, processor.id);
+            for (auto& processor : processors)
+            {
+                disconnect_from_processor_parameters(processor.name, processor.id);
+            }
         }
     }
 }
