@@ -224,10 +224,10 @@ ext::ControlStatus AudioGraphController::move_processor_on_track(int processor_i
                     processor_id, source_track_id, dest_track_id);
     auto lambda = [=] () -> int
     {
-        auto old_plugin_order = _processors->processors_on_track(source_track_id);
+        auto plugin_order = _processors->processors_on_track(source_track_id);
 
         if (_processors->processor_exists(dest_track_id) == false ||
-             old_plugin_order.empty())
+            plugin_order.empty())
         {
             // Normally controllers aren't supposed to do this kind of pre-check as is results in
             // double look ups of Processor and Track objects. But given the amount of work needed to
@@ -250,11 +250,11 @@ ext::ControlStatus AudioGraphController::move_processor_on_track(int processor_i
 
             // If the insertion operation failed, we must put the processor back in the source track
             std::optional<ObjectId> position(std::nullopt);
-            if (old_plugin_order.back()->id() != static_cast<ObjectId>(processor_id))
+            if (plugin_order.back()->id() != static_cast<ObjectId>(processor_id))
             {
                 // plugin position should be the id of the plugin that originally came after
-                auto p = std::find_if(old_plugin_order.cbegin(), old_plugin_order.cend(),
-                                       [&] (const auto& p) {return p->id() == static_cast<ObjectId>(processor_id);});
+                auto p = std::find_if(plugin_order.cbegin(), plugin_order.cend(),
+                                      [&] (const auto& p) {return p->id() == static_cast<ObjectId>(processor_id);});
                 position = std::optional<ObjectId>((*p++)->id());
             }
 
