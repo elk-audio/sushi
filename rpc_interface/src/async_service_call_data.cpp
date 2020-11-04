@@ -35,8 +35,8 @@ void CallData::stop()
     _status = CallStatus::FINISH;
 }
 
-template<class VALUE, class NOTIFICATION_REQUEST>
-void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::proceed()
+template<class ValueType, class BlocklistType>
+void SubscribeToUpdatesCallData<ValueType, BlocklistType>::proceed()
 {
     if (_status == CallStatus::CREATE)
     {
@@ -83,8 +83,8 @@ void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::proceed()
     }
 }
 
-template<class VALUE, class NOTIFICATION_REQUEST>
-void SubscribeToUpdatesCallData<VALUE, NOTIFICATION_REQUEST>::push(std::shared_ptr<VALUE> notification)
+template<class ValueType, class BlocklistType>
+void SubscribeToUpdatesCallData<ValueType, BlocklistType>::push(std::shared_ptr<ValueType> notification)
 {
     if (_active)
     {

@@ -80,7 +80,7 @@ protected:
     void _alert();
 };
 
-template <class ValueType, class NotificationBlocklistType>
+template <class ValueType, class BlocklistType>
 class SubscribeToUpdatesCallData : public CallData
 {
 public:
@@ -108,7 +108,7 @@ protected:
     virtual bool _check_if_blocklisted(const ValueType& reply) = 0;
     virtual void _populate_blocklist() = 0;
 
-    NotificationBlocklistType _notification_blocklist;
+    BlocklistType _notification_blocklist;
     grpc::ServerAsyncWriter<ValueType> _responder;
 
 private:
