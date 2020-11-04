@@ -128,8 +128,8 @@ service AudioRoutingController
 {
     rpc GetAllInputConnections (GenericVoidValue) returns (AudioConnectionList) {}
     rpc GetAllOutputConnections (GenericVoidValue) returns (AudioConnectionList) {}
-    rpc GetInputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
-    rpc GetOutputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
+    rpc GetInputConnectionsForTrack (TrackIdentifier) returns (AudioConnectionList) {}
+    rpc GetOutputConnectionsForTrack (TrackIdentifier) returns (AudioConnectionList) {}
 
     rpc ConnectInputChannelToTrack (AudioConnection) returns (GenericVoidValue) {}
     rpc ConnectOutputChannelFromTrack (AudioConnection) returns (GenericVoidValue) {}

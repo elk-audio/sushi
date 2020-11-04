@@ -28,6 +28,7 @@
 #include "id_generator.h"
 #include "library/types.h"
 #include "library/time.h"
+#include "library/connection_types.h"
 
 namespace sushi {
 
@@ -443,28 +444,6 @@ private:
     uint16_t  _event_id;
 };
 
-struct AudioConnection
-{
-    int engine_channel;
-    int track_channel;
-    ObjectId track;
-};
-
-struct CvConnection
-{
-    ObjectId processor_id;
-    ObjectId parameter_id;
-    int cv_id;
-};
-
-struct GateConnection
-{
-    ObjectId processor_id;
-    int gate_id;
-    int note_no;
-    int channel;
-};
-
 /* Base class for passing audio, cv and gate connections */
 /* slightly hackish to repurpose the processor_id field for storing a
  * bool, but it allows us to keep the size down to 32 bytes.
@@ -597,7 +576,7 @@ private:
 };
 
 /**
- * @brief Container class for rt events. Functionally this take the role of a
+ * @brief Container class for rt events. Functionally this takes the role of a
  *        baseclass for events, from which you can access the derived event
  *        classes via function calls that essentially casts the event to the
  *        given rt event type.

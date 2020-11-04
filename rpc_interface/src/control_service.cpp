@@ -249,6 +249,13 @@ inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& s
     dest.set_max(src.max);
 }
 
+inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::ext::AudioConnection& src)
+{
+    dest.mutable_track()->set_id(src.track_id);
+    dest.set_track_channel(src.track_channel);
+    dest.set_engine_channel(src.engine_channel);
+}
+
 inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
 {
     switch (type)
@@ -1097,76 +1104,113 @@ grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContex
     return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* context,
-                                                                const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* /*context*/,
+                                                                const sushi_rpc::GenericVoidValue* /*request*/,
                                                                 sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetAllInputConnections(context, request, response);
+    auto connections = _controller->get_all_input_connections();
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerContext* context,
-                                                                 const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerContext* /*context*/,
+                                                                 const sushi_rpc::GenericVoidValue* /*request*/,
                                                                  sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetAllOutputConnections(context, request, response);
+    auto connections = _controller->get_all_output_connections();
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::ServerContext* context,
-                                                                     const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::ServerContext* /*context*/,
+                                                                     const sushi_rpc::TrackIdentifier* request,
                                                                      sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetInputConnectionsForTrack(context, request, response);
+    auto connections = _controller->get_input_connections_for_track(request->id());
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::ServerContext* context,
-                                                                      const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::ServerContext* /*context*/,
+                                                                      const sushi_rpc::TrackIdentifier* request,
                                                                       sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetOutputConnectionsForTrack(context, request, response);
+    auto connections = _controller->get_output_connections_for_track(request->id());
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::ServerContext* /*context*/,
                                                                     const sushi_rpc::AudioConnection* request,
-                                                                    sushi_rpc::GenericVoidValue* response)
+                                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::ConnectInputChannelToTrack(context, request, response);
+    auto status = _controller->connect_input_channel_to_track(request->track().id(),
+                                                              request->track_channel(),
+                                                              request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::ServerContext* /*context*/,
                                                                        const sushi_rpc::AudioConnection* request,
-                                                                       sushi_rpc::GenericVoidValue* response)
+                                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::ConnectOutputChannelFromTrack(context, request, response);
+    auto status = _controller->connect_output_channel_to_track(request->track().id(),
+                                                               request->track_channel(),
+                                                               request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* /*context*/,
                                                          const sushi_rpc::AudioConnection* request,
-                                                         sushi_rpc::GenericVoidValue* response)
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectInput(context, request, response);
+    auto status = _controller->disconnect_input(request->track().id(),
+                                                request->track_channel(),
+                                                request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* /*context*/,
                                                           const sushi_rpc::AudioConnection* request,
-                                                          sushi_rpc::GenericVoidValue* response)
+                                                          sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectOutput(context, request, response);
+    auto status = _controller->disconnect_output(request->track().id(),
+                                                 request->track_channel(),
+                                                 request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::ServerContext* /*context*/,
                                                                       const sushi_rpc::TrackIdentifier* request,
-                                                                      sushi_rpc::GenericVoidValue* response)
+                                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectAllInputsFromTrack(context, request, response);
+    auto status = _controller->disconnect_all_inputs_from_track(request->id());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* /*context*/,
                                                                       const sushi_rpc::TrackIdentifier* request,
-                                                                      sushi_rpc::GenericVoidValue* response)
+                                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectAllOutputFromTrack(context, request, response);
+    auto status = _controller->disconnect_all_outputs_from_track(request->id());
+    return to_grpc_status(status);
 }
-
 
 grpc::Status CvGateControlService::GetCvInputChannelCount(grpc::ServerContext* context,
                                                           const sushi_rpc::GenericVoidValue* request,

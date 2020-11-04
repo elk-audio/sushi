@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-#undef private
-
 #include "engine/audio_engine.h"
 
 #include "control_frontends/base_control_frontend.h"

@@ -68,19 +68,6 @@ TEST_F(TestClipDetector, TestClipping)
     ASSERT_FALSE(queue.pop(notification));
 }
 
-TEST(TestUtilityFunctions, TestRemoveConnectionsMatchingTrack)
-{
-    std::vector<AudioConnection> test_vector = {{1,2,4}, {1,2,4}, {1,2,9}, {1,2,3}, {1,2,4}};
-
-    remove_connections_matching_track(test_vector, ObjectId(4));
-    EXPECT_EQ(2u, test_vector.size());
-    EXPECT_EQ(9u, test_vector[0].track);
-
-    remove_connections_matching_track(test_vector, 9);
-    EXPECT_EQ(1u, test_vector.size());
-    EXPECT_EQ(3u, test_vector[0].track);
-}
-
 /*
 * Engine tests
 */
@@ -364,7 +351,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     status = _module_under_test->delete_track(track_id);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0].size());
+    ASSERT_EQ(0u, _module_under_test->audio_input_connections().size());
 
     // Assert that they were also deleted from the map of processors
     ASSERT_FALSE(_processors->processor_exists("main"));
@@ -402,6 +389,9 @@ TEST_F(TestEngine, TestAudioConnections)
     status = _module_under_test->connect_audio_output_channel(1, 0, track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
+    EXPECT_EQ(1u, _module_under_test->audio_input_connections().size());
+    EXPECT_EQ(1u, _module_under_test->audio_output_connections().size());
+
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &control_buffer, &control_buffer, Time(0), 0);
     EXPECT_FLOAT_EQ(0.0, out_buffer.channel(0)[0]);
     EXPECT_FLOAT_EQ(1.0, out_buffer.channel(1)[0]);
@@ -426,11 +416,12 @@ TEST_F(TestEngine, TestAudioConnections)
     EXPECT_FLOAT_EQ(0.0, out_buffer.channel(3)[0]);
 
     // Remove the connections
+    _module_under_test->enable_realtime(false);
     rt = std::thread(faux_rt_thread, _module_under_test.get(), &in_buffer, &out_buffer, &control_buffer);
     _module_under_test->_remove_connections_from_track(track_id);
     rt.join();
-    EXPECT_EQ(0u, _module_under_test->_audio_in_connections.size());
-    EXPECT_EQ(0u, _module_under_test->_audio_out_connections.size());
+    EXPECT_EQ(0u, _module_under_test->audio_input_connections().size());
+    EXPECT_EQ(0u, _module_under_test->audio_output_connections().size());
 }
 
 TEST_F(TestEngine, TestSetCvChannels)

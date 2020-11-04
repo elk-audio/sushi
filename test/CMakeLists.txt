@@ -58,14 +58,15 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/event_timer_test.cpp
                unittests/engine/transport_test.cpp
                unittests/engine/controller_test.cpp
+               unittests/engine/controllers/audio_routing_controller_test.cpp
+               unittests/engine/controllers/osc_controller_test.cpp
+               unittests/engine/controllers/midi_controller_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
                unittests/dsp_library/sample_wrapper_test.cpp
                unittests/dsp_library/value_smoother_test.cpp
                unittests/library/event_test.cpp
-               unittests/engine/controllers/midi_controller_test.cpp
-               unittests/engine/controllers/osc_controller_test.cpp
                unittests/library/processor_test.cpp
                unittests/library/sample_buffer_test.cpp
                unittests/library/midi_decoder_test.cpp
