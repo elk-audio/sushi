@@ -114,6 +114,16 @@ public:
         _audio_outputs = channels;
     }
 
+    int audio_input_channels()
+    {
+        return _audio_inputs;
+    }
+
+    int audio_output_channels()
+    {
+        return _audio_outputs;
+    }
+
     virtual EngineReturnStatus set_cv_input_channels(int channels)
     {
         _cv_inputs = channels;

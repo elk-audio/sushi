@@ -41,7 +41,8 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                                        &_cv_gate_controller_impl,
                                                                        &_osc_controller_impl),
                                                      _engine(engine),
-                                                     _system_controller_impl(engine),
+                                                     _system_controller_impl(engine->audio_input_channels(),
+                                                                             engine->audio_output_channels()),
                                                      _transport_controller_impl(engine),
                                                      _timing_controller_impl(engine),
                                                      _keyboard_controller_impl(engine),
@@ -188,6 +189,11 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
     {
         SUSHI_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
     }
+}
+
+void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
+{
+    _osc_controller_impl.set_osc_frontend(osc_frontend);
 }
 
 }// namespace engine

@@ -368,7 +368,6 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
 
     connection_vector.erase(erase_iterator, connection_vector.end());
 
-
     SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }

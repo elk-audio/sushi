@@ -46,6 +46,10 @@ namespace midi_dispatcher {
 class MidiDispatcher;
 }
 
+namespace control_frontend {
+class OSCFrontend;
+}
+
 namespace engine {
 
 class BaseEngine;
@@ -65,7 +69,10 @@ public:
 
     static void completion_callback(void *arg, Event* event, int status);
 
+    void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
+
 private:
+
     void _completion_callback(Event* event, int status);
 
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,

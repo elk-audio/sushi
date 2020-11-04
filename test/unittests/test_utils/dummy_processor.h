@@ -14,6 +14,7 @@ public:
         _max_output_channels = 2;
         _current_input_channels = _max_input_channels;
         _current_output_channels = _max_output_channels;
+        set_name("processor");
         this->register_parameter(new ParameterDescriptor("param 1", "param 1", "", ParameterType::FLOAT));
         this->register_parameter(new ParameterDescriptor("gain", "gain", "", ParameterType::FLOAT));
     }

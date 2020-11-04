@@ -20,8 +20,8 @@
 #include <cstdio>
 #include "optionparser.h"
 
-#define SUSHI_Q(x) #x
-#define SUSHI_QUOTE(x) SUSHI_Q(x)
+#define _SUSHI_STRINGIZE(X) #X
+#define SUSHI_STRINGIZE(X) _SUSHI_STRINGIZE(X)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Options Defaults
@@ -301,7 +301,7 @@ const optionparser::Descriptor usage[] =
         "p",
         "osc-rcv-port",
         SushiArg::NonEmpty,
-        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_QUOTE(SUSHI_OSC_SERVER_PORT) "]."
+        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SERVER_PORT) "]."
     },
     {
         OPT_IDX_OSC_SEND_PORT,
@@ -309,7 +309,7 @@ const optionparser::Descriptor usage[] =
         "",
         "osc-send-port",
         SushiArg::NonEmpty,
-        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_QUOTE(SUSHI_OSC_SEND_PORT) "]."
+        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SEND_PORT) "]."
     },
     {
         OPT_IDX_GRPC_LISTEN_ADDRESS,

@@ -50,7 +50,7 @@ struct OscConnection
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int server_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int receive_port, int send_port);
 
     ~OSCFrontend();
 
@@ -62,11 +62,11 @@ public:
      * @param parameter_name Name of the parameter
      * @return
      */
-    bool connect_to_parameter(const std::string &processor_name,
-                              const std::string &parameter_name);
+    bool connect_to_parameter(const std::string& processor_name,
+                              const std::string& parameter_name);
 
-    bool connect_to_string_parameter(const std::string &processor_name,
-                                     const std::string &parameter_name);
+    bool connect_to_string_parameter(const std::string& processor_name,
+                                     const std::string& parameter_name);
 
     /**
      * @brief Connect osc to the bypass state of a given processor.
@@ -76,7 +76,7 @@ public:
      * @param processor_name
      * @return
      */
-    bool connect_to_bypass_state(const std::string &processor_name);
+    bool connect_to_bypass_state(const std::string& processor_name);
 
     /**
      * @brief Connect program change messages to a specific processor.
@@ -85,7 +85,7 @@ public:
      * @param processor_name Name of the processor
      * @return
      */
-    bool connect_to_program_change(const std::string & processor_name);
+    bool connect_to_program_change(const std::string& processor_name);
 
     /**
      * @brief Output changes from the given parameter of the given
@@ -95,8 +95,18 @@ public:
      * @param parameter_name
      * @return
      */
-    bool connect_from_parameter(const std::string &processor_name,
-                                const std::string &parameter_name);
+    bool connect_from_parameter(const std::string& processor_name,
+                                const std::string& parameter_name);
+
+    /**
+     * @brief Stops the broadcasting of OSC messages reflecting changes of a parameter.
+     * @param processor_name
+     * @param parameter_name
+     * @return
+     */
+    bool disconnect_from_parameter(const std::string& processor_name,
+                                   const std::string& parameter_name);
+
     /**
      * @brief Connect keyboard messages to a given track.
      *        The target osc path will be:
@@ -104,7 +114,7 @@ public:
      * @param track_name The track to send to
      * @return true
      */
-    bool connect_kb_to_track(const std::string &track_name);
+    bool connect_kb_to_track(const std::string& track_name);
 
     /**
      * @brief Connect all parameters from a given processor.
@@ -123,6 +133,12 @@ public:
      */
     void connect_all();
 
+    /**
+     * Returns all OSC Address Patterns that are currently enabled to output state changes.
+     * @return
+     */
+    std::vector<std::string> get_enabled_parameter_outputs();
+
     void run() override {_start_server();}
 
     void stop() override {_stop_server();}
@@ -133,6 +149,10 @@ public:
     int process(Event* event) override;
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
+
+    int receive_port() const;
+
+    int send_port() const;
 
 private:
     void _completion_callback(Event* event, int return_status) override;
@@ -158,18 +178,19 @@ private:
     bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
 
     lo_server_thread _osc_server;
-    int _server_port;
+    int _receive_port;
     int _send_port;
     lo_address _osc_out_address;
 
     std::atomic_bool _running;
 
-    sushi::ext::SushiControl* _controller;
-    sushi::ext::AudioGraphController* _graph_controller;
-    sushi::ext::ParameterController*  _param_controller;
+    sushi::ext::SushiControl* _controller {nullptr};
+    sushi::ext::AudioGraphController* _graph_controller {nullptr};
+    sushi::ext::ParameterController*  _param_controller {nullptr};
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
+
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 
