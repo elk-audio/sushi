@@ -141,22 +141,17 @@ public:
     bool disconnect_from_processor_parameters(const std::string& processor_name, int processor_id);
 
     /**
-     * @brief Register OSC callbacks far all midi kb and pc data to tracks and processors.
+     * @brief Register OSC callbacks for all midi kb and pc data to tracks and processors.
      */
-    void connect_all_midi();
+    void connect_to_all();
 
     /**
-     * @brief Register OSC control paths far all parameters of all plugins.
-     */
-    void connect_to_all_parameters();
-
-    /**
-     * @brief Register OSC callbacks far all parameters of all plugins.
+     * @brief Register OSC callbacks for all parameters of all plugins.
      */
     void connect_from_all_parameters();
 
     /**
-     * @brief Deregister OSC callbacks far all parameters of all plugins.
+     * @brief Deregister OSC callbacks for all parameters of all plugins.
      */
     void disconnect_from_all_parameters();
 

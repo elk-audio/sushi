@@ -364,7 +364,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
             _osc_frontend->disconnect_from_all_parameters();
             _osc_frontend->set_connect_from_all_parameters(false);
         }
-        SUSHI_LOG_INFO("Setting engine input clip detection {}", enabled ? "enabled" : "disabled");
+        SUSHI_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
     }
 
     if (osc_config.HasMember("osc_outputs"))

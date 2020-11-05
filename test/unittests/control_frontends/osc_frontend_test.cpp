@@ -67,7 +67,7 @@ protected:
 
 TEST_F(TestOSCFrontend, TestConnectAll)
 {
-    _module_under_test.connect_to_all_parameters();
+    _module_under_test.connect_to_all();
     lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
     EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);

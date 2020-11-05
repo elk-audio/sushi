@@ -31,7 +31,7 @@
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"
-#include <control_frontends/osc_frontend.h>
+#include "control_frontends/osc_frontend.h"
 
 namespace sushi {
 namespace jsonconfig {

@@ -32,24 +32,18 @@ protected:
 
     void SetUp()
     {
-        _engine = std::make_unique<AudioEngine>(SAMPLE_RATE);
-        _engine->set_audio_input_channels(ENGINE_CHANNELS);
-        _engine->set_audio_output_channels(ENGINE_CHANNELS);
-        _midi_dispatcher = std::make_unique<MidiDispatcher>(_engine->event_dispatcher());
+        _engine.set_audio_input_channels(ENGINE_CHANNELS);
+        _engine.set_audio_output_channels(ENGINE_CHANNELS);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
-        _module_under_test = std::make_unique<JsonConfigurator>(_engine.get(),
-                                                                _midi_dispatcher.get(),
-                                                                _engine->processor_container(), _path);
+        _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
+                                                                &_midi_dispatcher,
+                                                                _engine.processor_container(),
+                                                                _path);
 
-        _osc_frontend = std::make_unique<OSCFrontend>(_engine.get(),
-                                                      &_controller,
-                                                      OSC_TEST_SERVER_PORT,
-                                                      OSC_TEST_SEND_PORT);
+        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend.init());
 
-        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend->init());
-
-        _module_under_test->set_osc_frontend(_osc_frontend.get());
+        _module_under_test->set_osc_frontend(&_osc_frontend);
     }
 
     void TearDown()
@@ -59,25 +53,23 @@ protected:
     /* Helper functions */
     JsonConfigReturnStatus _make_track(const rapidjson::Value &track);
 
-    std::unique_ptr<AudioEngine> _engine;
-    std::unique_ptr<MidiDispatcher> _midi_dispatcher;
+    AudioEngine _engine{SAMPLE_RATE};
+    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
 
     sushi::ext::ControlMockup _controller;
-    std::unique_ptr<OSCFrontend> _osc_frontend;
+    OSCFrontend _osc_frontend{&_engine,
+                              &_controller,
+                              OSC_TEST_SERVER_PORT,
+                              OSC_TEST_SEND_PORT};
 
     std::unique_ptr<JsonConfigurator> _module_under_test;
+
     std::string _path;
 };
 
 JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track)
 {
     return _module_under_test->_make_track(track);
-}
-
-TEST_F(TestJsonConfigurator, TestInstantiation)
-{
-    EXPECT_TRUE(_engine.get());
-    EXPECT_TRUE(_module_under_test.get());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -94,18 +86,18 @@ TEST_F(TestJsonConfigurator, TestLoadHostConfig)
 {
     auto status = _module_under_test->load_host_config();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_FLOAT_EQ(48000.0f, _engine->sample_rate());
+    ASSERT_FLOAT_EQ(48000.0f, _engine.sample_rate());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadTracks)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    auto tracks = _engine->processor_container()->all_tracks();
+    auto tracks = _engine.processor_container()->all_tracks();
 
     ASSERT_EQ(4u, tracks.size());
-    auto track_1_processors = _engine->processor_container()->processors_on_track(tracks[0]->id());
-    auto track_2_processors = _engine->processor_container()->processors_on_track(tracks[1]->id());
+    auto track_1_processors = _engine.processor_container()->processors_on_track(tracks[0]->id());
+    auto track_2_processors = _engine.processor_container()->processors_on_track(tracks[1]->id());
 
     ASSERT_EQ(3u, track_1_processors.size());
     ASSERT_EQ(3u, track_2_processors.size());
@@ -123,14 +115,14 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    _midi_dispatcher->set_midi_inputs(1);
+    _midi_dispatcher.set_midi_inputs(1);
 
     status = _module_under_test->load_midi();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher._kb_routes_in.size());
+    ASSERT_EQ(1u, _midi_dispatcher._cc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher._raw_routes_in.size());
+    ASSERT_EQ(1u, _midi_dispatcher._pc_routes.size());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadOsc)
@@ -138,14 +130,14 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
-    auto outputs_before = _osc_frontend->get_enabled_parameter_outputs();
+    auto outputs_before = _osc_frontend.get_enabled_parameter_outputs();
 
     ASSERT_EQ(0, outputs_before.size());
 
     status = _module_under_test->load_osc();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
-    auto outputs_after = _osc_frontend->get_enabled_parameter_outputs();
+    auto outputs_after = _osc_frontend.get_enabled_parameter_outputs();
 
     ASSERT_EQ(1u, outputs_after.size());
 }

@@ -602,29 +602,7 @@ bool OSCFrontend::disconnect_from_processor_parameters(const std::string& proces
     return true;
 }
 
-void OSCFrontend::connect_all_midi()
-{
-    auto tracks = _graph_controller->get_all_tracks();
-    for (auto& track : tracks)
-    {
-        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
-        if (processors_status != ext::ControlStatus::OK)
-        {
-            return;
-        }
-        for (auto& processor : processors)
-        {
-            if (processor.program_count > 0)
-            {
-                connect_to_program_change(processor.name);
-            }
-            connect_to_bypass_state(processor.name);
-        }
-        connect_kb_to_track(track.name);
-    }
-}
-
-void OSCFrontend::connect_to_all_parameters()
+void OSCFrontend::connect_to_all()
 {
     auto tracks = _graph_controller->get_all_tracks();
     for (auto& track : tracks)
@@ -638,8 +616,13 @@ void OSCFrontend::connect_to_all_parameters()
         for (auto& processor : processors)
         {
             connect_to_processor_parameters(processor.name, processor.id);
-
+            if (processor.program_count > 0)
+            {
+                connect_to_program_change(processor.name);
+            }
+            connect_to_bypass_state(processor.name);
         }
+        connect_kb_to_track(track.name);
     }
 }
 

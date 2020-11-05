@@ -449,8 +449,7 @@ int main(int argc, char* argv[])
         {
             error_exit("Failed to setup OSC frontend");
         }
-        osc_frontend->connect_all_midi();
-        osc_frontend->connect_to_all_parameters();
+        osc_frontend->connect_to_all();
 
         status = configurator->load_osc();
         if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
