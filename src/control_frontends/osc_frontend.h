@@ -181,7 +181,12 @@ public:
 
     int send_port() const;
 
+    bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
+    void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
+
 private:
+    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+
     void _completion_callback(Event* event, int return_status) override;
 
     void _start_server();
@@ -202,12 +207,12 @@ private:
 
     bool _handle_clipping_notification(const ClippingNotificationEvent* event);
 
-    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
-
     lo_server_thread _osc_server;
     int _receive_port;
     int _send_port;
     lo_address _osc_out_address;
+
+    bool _connect_from_all_parameters{false};
 
     std::atomic_bool _running {false};
 

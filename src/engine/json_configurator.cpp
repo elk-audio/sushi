@@ -357,10 +357,12 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         if(enabled)
         {
             _osc_frontend->connect_from_all_parameters();
+            _osc_frontend->set_connect_from_all_parameters(true);
         }
         else // While the current default is off, it may not always be, so why not have this wired up.
         {
             _osc_frontend->disconnect_from_all_parameters();
+            _osc_frontend->set_connect_from_all_parameters(false);
         }
         SUSHI_LOG_INFO("Setting engine input clip detection {}", enabled ? "enabled" : "disabled");
     }
@@ -387,7 +389,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
                 auto processor = _processor_container->processor(processor_name);
                 bool res = false;
 
-                if(processor.get() != nullptr)
+                if(processor != nullptr)
                 {
                     res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
                 }

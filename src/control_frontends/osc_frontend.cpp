@@ -797,6 +797,10 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 connect_to_bypass_state(info.name);
                 connect_to_program_change(info.name);
                 connect_to_processor_parameters(info.name, event->processor());
+                if(_connect_from_all_parameters)
+                {
+                    connect_from_processor_parameters(info.name, event->processor());
+                }
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
             break;
@@ -811,6 +815,10 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 connect_kb_to_track(info.name);
                 connect_to_bypass_state(info.name);
                 connect_to_processor_parameters(info.name, event->track());
+                if(_connect_from_all_parameters)
+                {
+                    connect_from_processor_parameters(info.name, event->processor());
+                }
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
             break;
