@@ -30,7 +30,7 @@ GENERATE_RELEASE=true
 BUILD_PROJECTS=false
 CMAKE_EXTRA_ARGS=""
 PROJECT_DIR_REL="`dirname \"$0\"`"
-PROJECT_DIR=`python -c "import os; print(os.path.abspath(\"$PROJECT_DIR_REL\"))"`
+PROJECT_DIR=$PWD
 BUILD_DIR=$PROJECT_DIR/build
 
 ######################
