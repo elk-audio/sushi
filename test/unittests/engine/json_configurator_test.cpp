@@ -40,10 +40,6 @@ protected:
                                                                 &_midi_dispatcher,
                                                                 _engine.processor_container(),
                                                                 _path);
-
-        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend.init());
-
-        _module_under_test->set_osc_frontend(&_osc_frontend);
     }
 
     void TearDown()
@@ -57,10 +53,6 @@ protected:
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
 
     sushi::ext::ControlMockup _controller;
-    OSCFrontend _osc_frontend{&_engine,
-                              &_controller,
-                              OSC_TEST_SERVER_PORT,
-                              OSC_TEST_SEND_PORT};
 
     std::unique_ptr<JsonConfigurator> _module_under_test;
 
@@ -127,17 +119,28 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 
 TEST_F(TestJsonConfigurator, TestLoadOsc)
 {
+    // osc_frontend is only used in this test, and since the frequent creation/deletion of it
+    // currently is unstable, it is best to not create/delete it more often than
+    // absolutely needed.
+    OSCFrontend osc_frontend{&_engine,
+                              &_controller,
+                              OSC_TEST_SERVER_PORT,
+                              OSC_TEST_SEND_PORT};
+
+    ASSERT_EQ(ControlFrontendStatus::OK, osc_frontend.init());
+    _module_under_test->set_osc_frontend(&osc_frontend);
+
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
-    auto outputs_before = _osc_frontend.get_enabled_parameter_outputs();
+    auto outputs_before = osc_frontend.get_enabled_parameter_outputs();
 
     ASSERT_EQ(0, outputs_before.size());
 
     status = _module_under_test->load_osc();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
-    auto outputs_after = _osc_frontend.get_enabled_parameter_outputs();
+    auto outputs_after = osc_frontend.get_enabled_parameter_outputs();
 
     ASSERT_EQ(1u, outputs_after.size());
 }
