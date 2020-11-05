@@ -12,32 +12,49 @@ R"(
       "type": "object",
       "properties":
       {
-        "enable_all_outputs":
-        {
-          "type": "boolean"
-        },
-        "osc_outputs":
-        {
-          "type":"array",
-          "items":
+        "oneOf":
+        [
           {
-            "type": "object",
-            "properties":
+            "enable_all_processor_outputs":
             {
-              "processor":
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              "parameter":
-              {
-                "type": "string",
-                "minLength": 1
-              }
+              "type": "boolean"
             },
-            "required": ["processor"]
+            "enabled_processor_outputs":
+            {
+              "type": "array",
+              "items":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "processor":
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "parameter_blocklist":
+                    {
+                      "type": "array",
+                      "items":
+                      {
+                        "type": "object",
+                        "properties":
+                        {
+                          "parameter":
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "required": ["parameter"]
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": ["processor"]
+              }
+            }
           }
-        }
+        ]
       }
     }
   }

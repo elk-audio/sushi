@@ -351,9 +351,9 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         return status;
     }
 
-    if (osc_config.HasMember("enable_all_outputs"))
+    if (osc_config.HasMember("enable_all_processor_outputs"))
     {
-        bool enabled = osc_config["enable_all_outputs"].GetBool();
+        bool enabled = osc_config["enable_all_processor_outputs"].GetBool();
         if(enabled)
         {
             _osc_frontend->connect_from_all_parameters();
@@ -367,38 +367,28 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         SUSHI_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
     }
 
-    if (osc_config.HasMember("osc_outputs"))
+    if (osc_config.HasMember("enabled_processor_outputs"))
     {
-        for (const auto& osc_out : osc_config["osc_outputs"].GetArray())
+        for (const auto& osc_out : osc_config["enabled_processor_outputs"].GetArray())
         {
             auto processor_name = osc_out["processor"].GetString();
-
-            if (osc_out.HasMember("parameter"))
+            auto processor = _processor_container->processor(processor_name);
+            bool res = false;
+            if(processor != nullptr)
             {
-                bool res = _osc_frontend->connect_from_parameter(processor_name,
-                                                                osc_out["parameter"].GetString());
-                if (res != true)
-                {
-                    SUSHI_LOG_ERROR("Failed to enable osc output of parameter {} on processor {}",
-                                    osc_out["parameter"].GetString(),
-                                    processor_name);
-                }
+                res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
             }
-            else
+            if (res != true)
             {
-                auto processor = _processor_container->processor(processor_name);
-                bool res = false;
+                SUSHI_LOG_ERROR("Failed to enable osc parameter output on processor {}", processor_name);
+            }
 
-                if(processor != nullptr)
+            if (osc_out.HasMember("parameter_blocklist"))
+            {
+                for (const auto& parameter : osc_out["parameter_blocklist"].GetArray())
                 {
-                    res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
-                }
-
-                if (res != true)
-                {
-                    SUSHI_LOG_ERROR("Failed to enable osc output of parameter {} on processor {}",
-                                    osc_out["parameter"].GetString(),
-                                    processor_name);
+                    auto parameter_name = parameter["parameter"].GetString();
+                    _osc_frontend->disconnect_from_parameter(processor_name, parameter_name);
                 }
             }
         }

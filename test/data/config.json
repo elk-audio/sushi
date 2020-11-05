@@ -191,10 +191,9 @@
         ]
     },
     "osc" : {
-        "osc_outputs" : [
+        "enabled_processor_outputs" : [
             {
-                "processor" : "synth",
-                "parameter" : "cutoff"
+                "processor" : "gain_0_l"
             }
         ]
     },

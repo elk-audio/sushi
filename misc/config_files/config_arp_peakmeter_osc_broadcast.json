@@ -46,7 +46,7 @@
         ]
     },
     "osc" : {
-        "osc_outputs" : [
+        "enabled_processor_outputs" : [
             {
                 "processor" : "peakmeter"
             }
