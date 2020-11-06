@@ -12,13 +12,9 @@
 #include "engine/controller/transport_controller.cpp"
 #include "engine/controller/timing_controller.cpp"
 #include "engine/controller/keyboard_controller.cpp"
-#include "engine/controller/audio_graph_controller.cpp"
 #include "engine/controller/parameter_controller.cpp"
 #include "engine/controller/program_controller.cpp"
-#include "engine/controller/midi_controller.cpp"
-#include "engine/controller/audio_routing_controller.cpp"
 #include "engine/controller/cv_gate_controller.cpp"
-#include "engine/controller/osc_controller.cpp"
 
 using namespace sushi;
 using namespace sushi::engine;
