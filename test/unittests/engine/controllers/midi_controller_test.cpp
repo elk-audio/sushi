@@ -5,6 +5,7 @@
 #include "control_frontends/base_control_frontend.h"
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
+#include "engine/controller/midi_controller.cpp"
 
 using namespace midi;
 using namespace sushi;

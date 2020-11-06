@@ -32,12 +32,10 @@
 #include "library/types.h"
 
 namespace sushi {
-namespace dispatcher {class EventDispatcher;}
-namespace midi_dispatcher {class MidiDispatcher;}
-
-// TODO: ext namespace leaks into here - this can be resolved if MidiController events have their own namespace and files.
-namespace ext {
-int int_from_midi_channel(ext::MidiChannel channel);
+namespace dispatcher
+{
+    class EventDispatcher;
+    class Worker;
 }
 
 class Event;
@@ -65,6 +63,7 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
 class Event
 {
     friend class dispatcher::EventDispatcher;
+    friend class dispatcher::Worker;
 
 public:
     virtual ~Event() {}
@@ -127,23 +126,21 @@ public:
         _completion_cb = callback;
         _callback_arg = data;
     }
-    //int         sender() {return _sender;}
-
-    // TODO - put these under protected if possible
-    EventCompletionCallback completion_cb() {return _completion_cb;}
-    void*       callback_arg() {return _callback_arg;}
 
 protected:
     explicit Event(Time timestamp) : _timestamp(timestamp) {}
 
-    /* Only the dispatcher can set the receiver */
-    void set_receiver(int receiver) {_receiver = receiver;}
+    /* Only the dispatcher can set the receiver and call the completion callback */
+    void                    set_receiver(int receiver) {_receiver = receiver;}
+    EventCompletionCallback completion_cb() const {return _completion_cb;}
+    void*                   callback_arg() const {return _callback_arg;}
 
-    int         _receiver{0};
-    Time        _timestamp;
+private:
+    int                     _receiver{0};
+    Time                    _timestamp;
     EventCompletionCallback _completion_cb{nullptr};
-    void*       _callback_arg{nullptr};
-    EventId     _id{EventIdGenerator::new_id()};
+    void*                   _callback_arg{nullptr};
+    EventId                 _id{EventIdGenerator::new_id()};
 };
 
 class KeyboardEvent : public Event
@@ -210,7 +207,7 @@ public:
     float           value() {return _velocity;}
     MidiDataByte    midi_data() {return _midi_data;}
 
-protected:
+private:
     Subtype         _subtype;
     ObjectId        _processor_id;
     int             _channel;
@@ -279,7 +276,7 @@ public:
     RtEvent to_rt_event(int sample_offset) const override;
     ObjectId property_id() const {return _parameter_id;}
 
-protected:
+private:
     std::string _string_value;
 };
 
@@ -301,7 +298,7 @@ public:
     ObjectId property_id() const {return _parameter_id;}
     BlobData blob_value() const {return _blob_value;}
 
-protected:
+private:
     BlobData _blob_value;
 };
 
@@ -406,7 +403,7 @@ public:
     ObjectId            processor_id() {return _processor_id;}
     int                 program_no() {return _program_no;}
 
-protected:
+private:
     ObjectId            _processor_id;
     int                 _program_no;
 };
@@ -428,7 +425,7 @@ public:
     ClipChannelType channel_type() const {return _channel_type;}
 
 private:
-    int _channel;
+    int             _channel;
     ClipChannelType _channel_type;
 };
 
@@ -493,7 +490,7 @@ public:
 
     virtual Event* execute() override;
 
-protected:
+private:
     AsynchronousWorkCallback _work_callback;
     void*                    _data;
     ObjectId                 _rt_processor;

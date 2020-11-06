@@ -2,6 +2,7 @@
 
 #include "engine/audio_engine.h"
 #include "control_frontends/base_control_frontend.h"
+#include "engine/controller/audio_routing_controller.cpp"
 
 using namespace sushi;
 using namespace sushi::engine;
