@@ -96,19 +96,17 @@ void GrpcServer::stop()
     _running.store(false);
     _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
     _async_rpc_queue->Shutdown();
-
     if (_worker.joinable())
     {
         _worker.join();
     }
-
-    _notification_control_service->stop_all_call_data();
 
     void* tag;
     bool ok;
 
     //empty completion queue
     while(_async_rpc_queue->Next(&tag, &ok));
+    _notification_control_service->stop_all_call_data();
 }
 
 void GrpcServer::waitForCompletion()

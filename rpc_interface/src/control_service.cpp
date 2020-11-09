@@ -1587,14 +1587,17 @@ void NotificationControlService::stop_all_call_data()
 {
     for (auto& subscriber : _parameter_subscribers)
     {
-        subscriber->stop();
-        subscriber->proceed();
+        delete subscriber;
     }
 
     for (auto& subscriber : _processor_subscribers)
     {
-        subscriber->stop();
-        subscriber->proceed();
+        delete subscriber;
+    }
+
+    for (auto& subscriber : _track_subscribers)
+    {
+        delete subscriber;
     }
 }
 
