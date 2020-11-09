@@ -56,7 +56,7 @@ public:
 
     ext::ControlStatus create_track(const std::string& name, int channels) override;
 
-    ext::ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_channels) override;
+    ext::ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
 
     ext::ControlStatus move_processor_on_track(int processor_id,
                                                int source_track_id,
@@ -74,11 +74,9 @@ public:
 
     ext::ControlStatus delete_track(int track_id) override;
 
-    static void completion_callback(void *arg, Event* event, int status);
 
 private:
     std::vector<int> _get_processor_ids(int track_id) const;
-    void _completion_callback(Event* event, int status);
 
     engine::BaseEngine*                     _engine;
     dispatcher::BaseEventDispatcher*        _event_dispatcher;

@@ -26,8 +26,6 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi {
 
-// TODO: I don't like this being here. It works, but we should move it.
-// It broke some unit tests that included .cpp files, this was a workaround.
 namespace ext {
 ext::MidiChannel midi_channel_from_int(int channel_int)
 {
@@ -51,6 +49,30 @@ ext::MidiChannel midi_channel_from_int(int channel_int)
         case 15: return sushi::ext::MidiChannel::MIDI_CH_16;
         case 16: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
         default: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
+    }
+}
+int int_from_midi_channel(ext::MidiChannel channel)
+{
+    switch (channel)
+    {
+        case sushi::ext::MidiChannel::MIDI_CH_1: return 0;
+        case sushi::ext::MidiChannel::MIDI_CH_2: return 1;
+        case sushi::ext::MidiChannel::MIDI_CH_3: return 2;
+        case sushi::ext::MidiChannel::MIDI_CH_4: return 3;
+        case sushi::ext::MidiChannel::MIDI_CH_5: return 4;
+        case sushi::ext::MidiChannel::MIDI_CH_6: return 5;
+        case sushi::ext::MidiChannel::MIDI_CH_7: return 6;
+        case sushi::ext::MidiChannel::MIDI_CH_8: return 7;
+        case sushi::ext::MidiChannel::MIDI_CH_9: return 8;
+        case sushi::ext::MidiChannel::MIDI_CH_10: return 9;
+        case sushi::ext::MidiChannel::MIDI_CH_11: return 10;
+        case sushi::ext::MidiChannel::MIDI_CH_12: return 11;
+        case sushi::ext::MidiChannel::MIDI_CH_13: return 12;
+        case sushi::ext::MidiChannel::MIDI_CH_14: return 13;
+        case sushi::ext::MidiChannel::MIDI_CH_15: return 14;
+        case sushi::ext::MidiChannel::MIDI_CH_16: return 15;
+        case sushi::ext::MidiChannel::MIDI_CH_OMNI: return 16;
+        default: return 16;
     }
 }
 }
