@@ -134,9 +134,9 @@ public:
     bool remove_rt(const T& pattern)
     {
         assert(twine::is_current_thread_realtime());
-        auto original_size = _items.size();
+        auto original_size = _items_rt.size();
         _items_rt.erase(std::remove(_items_rt.begin(), _items_rt.end(), pattern), _items_rt.end());
-        return (original_size != _items.size());
+        return (original_size != _items_rt.size());
     }
 
     size_t capacity() const

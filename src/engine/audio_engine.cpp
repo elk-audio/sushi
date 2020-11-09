@@ -570,20 +570,16 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
         return EngineReturnStatus::ERROR;
     }
 
+    // First remove any audio connections, if realtime, this is done with RtEvents
+    _remove_connections_from_track(track->id());
+
     if (realtime())
     {
-        AudioConnection con = {.engine_channel = 0, .track_channel = 0, .track = track_id};
-        con.track = track->id();
-        auto input_event = RtEvent::make_remove_audio_input_connection_event(con);
-        auto output_event = RtEvent::make_remove_audio_output_connection_event(con);
-        auto remove_track_event = RtEvent::make_remove_track_event(track->id());
+        auto remove_event = RtEvent::make_remove_track_event(track->id());
         auto delete_event = RtEvent::make_remove_processor_event(track->id());
-        _send_control_event(input_event);
-        _send_control_event(output_event);
-        _send_control_event(remove_track_event);
+        _send_control_event(remove_event);
         _send_control_event(delete_event);
-        // The audio connection events are assumed to go through
-        bool removed = _event_receiver.wait_for_response(remove_track_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
+        bool removed = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
@@ -592,9 +588,6 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     }
     else
     {
-        // First remove the track from any audio connections, if realtime, this is done with RtEvents
-        _remove_connections_from_track(track->id());
-
         _audio_graph.remove(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id);
@@ -1026,6 +1019,7 @@ void AudioEngine::_process_internal_rt_events()
             case RtEventType::ADD_AUDIO_CONNECTION:
             {
                 auto typed_event = event.audio_connection_event();
+                assert(_realtime_processors[typed_event->connection().track]);
                 auto& storage = typed_event->input_connection() ? _audio_in_connections : _audio_out_connections;
                 typed_event->set_handled(storage.add_rt(typed_event->connection()));
                 break;
