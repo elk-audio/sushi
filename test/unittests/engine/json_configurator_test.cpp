@@ -17,8 +17,6 @@
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
-constexpr int OSC_TEST_SERVER_PORT = 24024;
-constexpr int OSC_TEST_SEND_PORT = 24023;
 
 using namespace sushi;
 using namespace sushi::engine;
@@ -119,15 +117,14 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 
 TEST_F(TestJsonConfigurator, TestLoadOsc)
 {
-    // osc_frontend is only used in this test, and since the frequent creation/deletion of it
-    // currently is unstable, it is best to not create/delete it more often than
-    // absolutely needed.
+    // osc_frontend is only used in this test, so no need to keep in harness.
+    constexpr int OSC_TEST_SERVER_PORT = 24024;
+    constexpr int OSC_TEST_SEND_PORT = 24023;
     OSCFrontend osc_frontend{&_engine,
                               &_controller,
                               OSC_TEST_SERVER_PORT,
                               OSC_TEST_SEND_PORT};
 
-    ASSERT_EQ(ControlFrontendStatus::OK, osc_frontend.init());
     _module_under_test->set_osc_frontend(&osc_frontend);
 
     auto status = _module_under_test->load_tracks();

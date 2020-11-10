@@ -202,12 +202,14 @@ private:
 
     bool _handle_clipping_notification(const ClippingNotificationEvent* event);
 
-    lo_server_thread _osc_server;
+    lo_server_thread _osc_server {nullptr};
     int _receive_port;
     int _send_port;
-    lo_address _osc_out_address;
+    lo_address _osc_out_address {nullptr};
 
-    bool _connect_from_all_parameters{false};
+    bool _connect_from_all_parameters {false};
+
+    std::atomic_bool _osc_initialized {false};
 
     std::atomic_bool _running {false};
 

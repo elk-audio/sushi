@@ -343,7 +343,6 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          ext::SushiControl* controller,
                          int receive_port,
                          int send_port) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
-                                          _osc_server(nullptr),
                                           _receive_port(receive_port),
                                           _send_port(send_port),
                                           _controller(controller),
@@ -365,9 +364,13 @@ ControlFrontendStatus OSCFrontend::init()
     std::stringstream send_port_stream;
     send_port_stream << _send_port;
     _osc_out_address = lo_address_new(nullptr, send_port_stream.str().c_str());
+
     _setup_engine_control();
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
+
+    _osc_initialized = true;
+
     return ControlFrontendStatus::OK;
 }
 
@@ -377,10 +380,15 @@ OSCFrontend::~OSCFrontend()
     {
         _stop_server();
     }
-    lo_server_thread_free(_osc_server);
-    lo_address_free(_osc_out_address);
-    _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
-    _event_dispatcher->unsubscribe_from_engine_notifications(this);
+
+    if (_osc_initialized) // These are set up in init, where also _osc_initialized is set to true.
+    {
+        _osc_initialized = false;
+        _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
+        _event_dispatcher->unsubscribe_from_engine_notifications(this);
+        lo_server_thread_free(_osc_server);
+        lo_address_free(_osc_out_address);
+    }
 }
 
 std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection(const std::string& processor_name,
@@ -398,7 +406,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
         return {nullptr, ""};
     }
     osc_path = osc_path + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
-    OscConnection* connection = new OscConnection;
+    auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
     connection->instance = this;
@@ -410,7 +418,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
 {
     auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
-    if (connection == nullptr)
+    if (connection == nullptr || _osc_initialized == false)
     {
         return false;
     }
@@ -429,7 +437,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                               const std::string& parameter_name)
 {
     auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
-    if (connection == nullptr)
+    if (connection == nullptr || _osc_initialized == false)
     {
         return false;
     }
@@ -504,7 +512,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
 bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 {
     auto [connection, osc_path] = _create_processor_connection(processor_name, "/bypass/");
-    if (connection == nullptr)
+    if (connection == nullptr || _osc_initialized == false)
     {
         return false;
     }
@@ -518,7 +526,7 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
     auto [connection, osc_path] = _create_processor_connection(track_name, "/keyboard_event/");
-    if (connection == nullptr)
+    if (connection == nullptr || _osc_initialized == false)
     {
         return false;
     }
@@ -537,7 +545,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
     auto [connection, osc_path] = _create_processor_connection(processor_name, "/program/");
-    if (connection == nullptr)
+    if (connection == nullptr || _osc_initialized == false)
     {
         return false;
     }
@@ -680,30 +688,29 @@ int OSCFrontend::process(Event* event)
     return EventStatus::HANDLED_OK;
 }
 
-void OSCFrontend::_completion_callback(Event* event, int return_status)
+int OSCFrontend::receive_port() const
 {
-    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+    return _receive_port;
 }
 
-void OSCFrontend::_start_server()
+int OSCFrontend::send_port() const
 {
-    _running.store(true);
-
-    int ret = lo_server_thread_start(_osc_server);
-    if (ret < 0)
-    {
-        SUSHI_LOG_ERROR("Error {} while starting OSC server thread", ret);
-    }
+    return _send_port;
 }
 
-void OSCFrontend::_stop_server()
+std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
 {
-    _running.store(false);
-    int ret = lo_server_thread_stop(_osc_server);
-    if (ret < 0)
+    auto outputs = std::vector<std::string>();
+
+    for (const auto& connectionPair : _outgoing_connections)
     {
-        SUSHI_LOG_ERROR("Error {} while stopping OSC server thread", ret);
+        for (const auto& connection : connectionPair.second)
+        {
+            outputs.push_back(connection.second);
+        }
     }
+
+    return outputs;
 }
 
 void OSCFrontend::_setup_engine_control()
@@ -717,8 +724,40 @@ void OSCFrontend::_setup_engine_control()
     lo_server_thread_add_method(_osc_server, "/engine/reset_timing_statistics", "ss", osc_reset_timing_statistics, this->_controller);
 }
 
+void OSCFrontend::_completion_callback(Event* event, int return_status)
+{
+    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+}
+
+void OSCFrontend::_start_server()
+{
+    assert(_osc_initialized);
+
+    _running.store(true);
+
+    int ret = lo_server_thread_start(_osc_server);
+    if (ret < 0)
+    {
+        SUSHI_LOG_ERROR("Error {} while starting OSC server thread", ret);
+    }
+}
+
+void OSCFrontend::_stop_server()
+{
+    assert(_osc_initialized);
+
+    _running.store(false);
+    int ret = lo_server_thread_stop(_osc_server);
+    if (ret < 0)
+    {
+        SUSHI_LOG_ERROR("Error {} while stopping OSC server thread", ret);
+    }
+}
+
 bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
 {
+    assert(_osc_initialized);
+
     int count = 0;
     for (const auto& c : _connections)
     {
@@ -821,31 +860,6 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
     return EventStatus::HANDLED_OK;
-}
-
-int OSCFrontend::receive_port() const
-{
-    return _receive_port;
-}
-
-int OSCFrontend::send_port() const
-{
-    return _send_port;
-}
-
-std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
-{
-    auto outputs = std::vector<std::string>();
-
-    for (const auto& connectionPair : _outgoing_connections)
-    {
-        for (const auto& connection : connectionPair.second)
-        {
-            outputs.push_back(connection.second);
-        }
-    }
-
-    return outputs;
 }
 
 } // namespace control_frontend
