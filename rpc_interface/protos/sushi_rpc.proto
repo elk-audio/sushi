@@ -630,7 +630,6 @@ message ProcessorUpdate
         DUMMY = 0;
         PROCESSOR_ADDED = 1;
         PROCESSOR_DELETED = 2;
-        PROCESSOR_MOVED = 3;
     }
     Action              action = 1;
     ProcessorIdentifier processor = 2;

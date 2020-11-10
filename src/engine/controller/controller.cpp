@@ -108,22 +108,17 @@ int Controller::process(Event* event)
         auto typed_event = static_cast<AudioGraphNotificationEvent*>(event);
         switch(typed_event->action())
         {
-            case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
+            case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK:
             {
                 _notify_processor_listeners(typed_event, ext::ProcessorAction::ADDED);
                 break;
             }
-            case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
-            {
-                _notify_processor_listeners(typed_event, ext::ProcessorAction::MOVED);
-                break;
-            }
-            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+            case AudioGraphNotificationEvent::Action::PROCESSOR_REMOVED_FROM_TRACK:
             {
                 _notify_processor_listeners(typed_event, ext::ProcessorAction::DELETED);
                 break;
             }
-            case AudioGraphNotificationEvent::Action::TRACK_ADDED:
+            case AudioGraphNotificationEvent::Action::TRACK_CREATED:
             {
                 _notify_track_listeners(typed_event, ext::TrackAction::ADDED);
                 break;
@@ -133,6 +128,10 @@ int Controller::process(Event* event)
                 _notify_track_listeners(typed_event, ext::TrackAction::DELETED);
                 break;
             }
+            case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
+            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+                // External listeners are only notified once processors are added to a track
+                break;
         }
 
         return EventStatus::HANDLED_OK;
@@ -144,8 +143,8 @@ int Controller::process(Event* event)
 void Controller::_notify_parameter_listeners(Event* event) const
 {
     auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
-    ext::ParameterChangeNotification notification((int)typed_event->processor_id(),
-                                                  (int)typed_event->parameter_id(),
+    ext::ParameterChangeNotification notification(static_cast<int>(typed_event->processor_id()),
+                                                  static_cast<int>(typed_event->parameter_id()),
                                                   typed_event->float_value(),
                                                   typed_event->time());
     for (auto& listener : _parameter_change_listeners)

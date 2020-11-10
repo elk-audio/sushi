@@ -174,7 +174,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
 {
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
+    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
                                                  123, 234, IMMEDIATE_PROCESS);
     _module_under_test->post_event(event);
 

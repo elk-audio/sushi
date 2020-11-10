@@ -849,13 +849,15 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
 
             disconnect_all_pc_from_processor(processor_id);
 
-            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}", event
-                    ->processor());
+            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}", event->processor());
             break;
         }
         case AudioGraphNotificationEvent::Action::TRACK_DELETED:
         {
             auto track_id = event->track();
+
+            disconnect_all_cc_from_processor(track_id);
+            disconnect_all_pc_from_processor(track_id);
 
             auto input_connections = get_all_kb_input_connections();
             auto inputs_found = std::find_if(input_connections.begin(),
@@ -897,9 +899,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
             SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
             break;
         }
-        case AudioGraphNotificationEvent::Action::PROCESSOR_MOVED:
-        case AudioGraphNotificationEvent::Action::TRACK_ADDED:
-        case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
+        default:
             break;
     }
 

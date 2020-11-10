@@ -434,11 +434,12 @@ class AudioGraphNotificationEvent : public Event
 public:
     enum class Action
     {
-        PROCESSOR_ADDED,
+        PROCESSOR_CREATED,
         PROCESSOR_DELETED,
-        PROCESSOR_MOVED,
-        TRACK_ADDED,
-        TRACK_DELETED,
+        PROCESSOR_ADDED_TO_TRACK,
+        PROCESSOR_REMOVED_FROM_TRACK,
+        TRACK_CREATED,
+        TRACK_DELETED
     };
 
     AudioGraphNotificationEvent(Action action,

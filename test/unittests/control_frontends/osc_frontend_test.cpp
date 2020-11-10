@@ -84,7 +84,7 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
 {
     // As this in only done in response to events, test the event handling at the same time
     ObjectId processor_id = 0;
-    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED,
+    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
                                              processor_id, 0, IMMEDIATE_PROCESS);
     _module_under_test.process(&event);
     lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);

@@ -1519,11 +1519,6 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
             notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
             break;
         }
-        case sushi::ext::ProcessorAction::MOVED:
-        {
-            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_MOVED);
-            break;
-        }
         default:
         {
             assert(false);
