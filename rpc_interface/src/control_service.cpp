@@ -1423,8 +1423,10 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* /
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRANSPORT_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::CPU_TIMING_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
 }
 
@@ -1432,14 +1434,14 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
 {
     switch(notification->type())
     {
-        case sushi::ext::NotificationType::PARAMETER_CHANGE:
+        case sushi::ext::NotificationType::TRANSPORT_UPDATE:
         {
-            _forward_parameter_notification_to_subscribers(notification);
+            _forward_transport_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PROCESSOR_UPDATE:
+        case sushi::ext::NotificationType::CPU_TIMING_UPDATE:
         {
-            _forward_processor_notification_to_subscribers(notification);
+            _forward_cpu_timing_notification_to_subscribers(notification);
             break;
         }
         case sushi::ext::NotificationType::TRACK_UPDATE:
@@ -1447,21 +1449,80 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
             _forward_track_notification_to_subscribers(notification);
             break;
         }
+        case sushi::ext::NotificationType::PROCESSOR_UPDATE:
+        {
+            _forward_processor_notification_to_subscribers(notification);
+            break;
+        }
+        case sushi::ext::NotificationType::PARAMETER_CHANGE:
+        {
+            _forward_parameter_notification_to_subscribers(notification);
+            break;
+        }
         default:
             break;
     }
 }
 
-void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_transport_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-    auto notification_content = std::make_shared<ParameterValue>();
-    notification_content->set_value(typed_notification->value());
-    notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
-    notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+    auto typed_notification = static_cast<const sushi::ext::TransportNotification*>(notification);
+    auto notification_content = std::make_shared<TransportUpdate>();
+    auto action = typed_notification->action();
 
-    std::scoped_lock lock(_parameter_subscriber_lock);
-    for (auto& subscriber : _parameter_subscribers)
+    switch(action)
+    {
+        case sushi::ext::TransportAction::TEMPO_CHANGED:
+        {
+            float value = std::get<float>(typed_notification->value());
+            notification_content->set_tempo(value);
+            break;
+        }
+        case sushi::ext::TransportAction::PLAYING_MODE_CHANGED:
+        {
+            auto grpc_playing_mode = to_grpc(std::get<sushi::ext::PlayingMode>(typed_notification->value()));
+            notification_content->mutable_playing_mode()->set_mode(grpc_playing_mode);
+            break;
+        }
+        case sushi::ext::TransportAction::SYNC_MODE_CHANGED:
+        {
+            auto grpc_sync_mode = to_grpc(std::get<sushi::ext::SyncMode>(typed_notification->value()));
+            notification_content->mutable_sync_mode()->set_mode(grpc_sync_mode);
+            break;
+        }
+        case sushi::ext::TransportAction::TIME_SIGNATURE_CHANGED:
+        {
+            auto mutable_time_signature = notification_content->mutable_time_signature();
+            const auto source_time_signature = std::get<sushi::ext::TimeSignature>(typed_notification->value());
+            mutable_time_signature->set_denominator(source_time_signature.denominator);
+            mutable_time_signature->set_numerator(source_time_signature.numerator);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
+
+    std::scoped_lock lock(_transport_subscriber_lock);
+    for (auto& subscriber : _transport_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_cpu_timing_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::CpuTimingNotification*>(notification);
+    auto notification_content = std::make_shared<CpuTimings>();
+    auto timings = typed_notification->cpu_timings();
+    notification_content->set_average(timings.avg);
+    notification_content->set_min(timings.min);
+    notification_content->set_max(timings.max);
+
+    std::scoped_lock lock(_timing_subscriber_lock);
+    for (auto& subscriber : _timing_subscribers)
     {
         subscriber->push(notification_content);
     }
@@ -1541,6 +1602,49 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
     }
 }
 
+void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+    auto notification_content = std::make_shared<ParameterValue>();
+    notification_content->set_value(typed_notification->value());
+    notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+    notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+
+    std::scoped_lock lock(_parameter_subscriber_lock);
+    for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::subscribe(SubscribeToTransportChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_transport_subscriber_lock);
+    _transport_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToTransportChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_transport_subscriber_lock);
+    _transport_subscribers.erase(std::remove(_transport_subscribers.begin(),
+                                             _transport_subscribers.end(),
+                                             subscriber));
+}
+
+void NotificationControlService::subscribe(SubscribeToCpuTimingUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_timing_subscriber_lock);
+    _timing_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToCpuTimingUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_timing_subscriber_lock);
+    _timing_subscribers.erase(std::remove(_timing_subscribers.begin(),
+                                          _timing_subscribers.end(),
+                                          subscriber));
+}
+
 void NotificationControlService::subscribe(SubscribeToTrackChangesCallData* subscriber)
 {
     std::scoped_lock lock(_track_subscriber_lock);
@@ -1583,8 +1687,18 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
                                                      subscriber));
 }
 
-void NotificationControlService::stop_all_call_data()
+void NotificationControlService::delete_all_subscribers()
 {
+    for (auto& subscriber : _transport_subscribers)
+    {
+        delete subscriber;
+    }
+
+    for (auto& subscriber : _timing_subscribers)
+    {
+        delete subscriber;
+    }
+
     for (auto& subscriber : _track_subscribers)
     {
         delete subscriber;

@@ -180,11 +180,11 @@ service OscController
 
 service NotificationController
 {
-    rpc SubscribeToTransportChanges(GenericVoidValue) returns (stream TransportUpdate) {}
-    rpc SubscribeToTimingUpdates(GenericVoidValue) returns (stream CpuTimings) {}
-    rpc SubscribeToTrackChanges(GenericVoidValue) returns (stream TrackUpdate) {}
-    rpc SubscribeToProcessorChanges(GenericVoidValue) returns (stream ProcessorUpdate) {}
-    rpc SubscribeToParameterUpdates(ParameterNotificationBlocklist) returns (stream ParameterValue) {}
+    rpc SubscribeToTransportChanges (GenericVoidValue) returns (stream TransportUpdate) {}
+    rpc SubscribeToEngineCpuTimingUpdates (GenericVoidValue) returns (stream CpuTimings) {}
+    rpc SubscribeToTrackChanges (GenericVoidValue) returns (stream TrackUpdate) {}
+    rpc SubscribeToProcessorChanges (GenericVoidValue) returns (stream ProcessorUpdate) {}
+    rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterValue) {}
 }
 
 /**

@@ -88,7 +88,6 @@ private:
     std::atomic<bool>                               _running;
 };
 
-
 }// sushi_rpc
 
 #endif //SUSHI_GRPCSERVER_H

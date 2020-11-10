@@ -98,9 +98,115 @@ void SubscribeToUpdatesCallData<ValueType, BlocklistType>::push(std::shared_ptr<
 
 // Pre-Declaring what template instantiation is needed for SubscribeToUpdatesCallData,
 // or it will not link.
+template class SubscribeToUpdatesCallData<TransportUpdate, GenericVoidValue>;
+template class SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>;
+
+void SubscribeToTransportChangesCallData::_respawn()
+{
+    new SubscribeToTransportChangesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToTransportChangesCallData::_subscribe()
+{
+    _service->RequestSubscribeToTransportChanges(&_ctx,
+                                                 &_notification_blocklist,
+                                                 &_responder,
+                                                 _async_rpc_queue,
+                                                 _async_rpc_queue,
+                                                 this);
+    _service->subscribe(this);
+}
+
+void SubscribeToTransportChangesCallData::_unsubscribe()
+{
+    _service->unsubscribe(this);
+}
+
+bool SubscribeToTransportChangesCallData::_check_if_blocklisted(const TransportUpdate&)
+{
+    return false;
+}
+
+void SubscribeToCpuTimingUpdatesCallData::_respawn()
+{
+    new SubscribeToCpuTimingUpdatesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToCpuTimingUpdatesCallData::_subscribe()
+{
+    _service->RequestSubscribeToEngineCpuTimingUpdates(&_ctx,
+                                                       &_notification_blocklist,
+                                                       &_responder,
+                                                       _async_rpc_queue,
+                                                       _async_rpc_queue,
+                                                       this);
+    _service->subscribe(this);
+}
+
+void SubscribeToCpuTimingUpdatesCallData::_unsubscribe()
+{
+    _service->unsubscribe(this);
+}
+
+bool SubscribeToCpuTimingUpdatesCallData::_check_if_blocklisted(const CpuTimings&)
+{
+    return false;
+}
+
+void SubscribeToTrackChangesCallData::_respawn()
+{
+    new SubscribeToTrackChangesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToTrackChangesCallData::_subscribe()
+{
+    _service->RequestSubscribeToTrackChanges(&_ctx,
+                                             &_notification_blocklist,
+                                             &_responder,
+                                             _async_rpc_queue,
+                                             _async_rpc_queue,
+                                             this);
+    _service->subscribe(this);
+}
+
+void SubscribeToTrackChangesCallData::_unsubscribe()
+{
+    _service->unsubscribe(this);
+}
+
+bool SubscribeToTrackChangesCallData::_check_if_blocklisted(const TrackUpdate&)
+{
+    return false;
+}
+
+void SubscribeToProcessorChangesCallData::_respawn()
+{
+    new SubscribeToProcessorChangesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToProcessorChangesCallData::_subscribe()
+{
+    _service->RequestSubscribeToProcessorChanges(&_ctx,
+                                                 &_notification_blocklist,
+                                                 &_responder,
+                                                 _async_rpc_queue,
+                                                 _async_rpc_queue,
+                                                 this);
+    _service->subscribe(this);
+}
+
+void SubscribeToProcessorChangesCallData::_unsubscribe()
+{
+    _service->unsubscribe(this);
+}
+
+bool SubscribeToProcessorChangesCallData::_check_if_blocklisted(const ProcessorUpdate&)
+{
+    return false;
+}
 
 void SubscribeToParameterUpdatesCallData::_respawn()
 {
@@ -140,55 +246,4 @@ void SubscribeToParameterUpdatesCallData::_populate_blocklist()
     }
 }
 
-void SubscribeToProcessorChangesCallData::_respawn()
-{
-    new SubscribeToProcessorChangesCallData(_service, _async_rpc_queue);
-}
-
-void SubscribeToProcessorChangesCallData::_subscribe()
-{
-    _service->RequestSubscribeToProcessorChanges(&_ctx,
-                                                 &_notification_blocklist,
-                                                 &_responder,
-                                                 _async_rpc_queue,
-                                                 _async_rpc_queue,
-                                                 this);
-    _service->subscribe(this);
-}
-
-void SubscribeToProcessorChangesCallData::_unsubscribe()
-{
-    _service->unsubscribe(this);
-}
-
-bool SubscribeToProcessorChangesCallData::_check_if_blocklisted(const ProcessorUpdate& reply)
-{
-    return false;
-}
-
-void SubscribeToTrackChangesCallData::_respawn()
-{
-    new SubscribeToTrackChangesCallData(_service, _async_rpc_queue);
-}
-
-void SubscribeToTrackChangesCallData::_subscribe()
-{
-    _service->RequestSubscribeToTrackChanges(&_ctx,
-                                             &_notification_blocklist,
-                                             &_responder,
-                                             _async_rpc_queue,
-                                             _async_rpc_queue,
-                                             this);
-    _service->subscribe(this);
-}
-
-void SubscribeToTrackChangesCallData::_unsubscribe()
-{
-    _service->unsubscribe(this);
-}
-
-bool SubscribeToTrackChangesCallData::_check_if_blocklisted(const TrackUpdate& reply)
-{
-    return false;
-}
 } // namespace sushi_rpc

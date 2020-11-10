@@ -33,6 +33,8 @@
 
 namespace sushi_rpc {
 
+class SubscribeToTransportChangesCallData;
+class SubscribeToCpuTimingUpdatesCallData;
 class SubscribeToTrackChangesCallData;
 class SubscribeToProcessorChangesCallData;
 class SubscribeToParameterUpdatesCallData;
@@ -260,7 +262,7 @@ private:
 using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
-                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTimingUpdates<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToEngineCpuTimingUpdates<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
                      sushi_rpc::NotificationController::Service
                      >>>>>;
@@ -274,6 +276,12 @@ public:
     // Inherited from ControlListener
     void notification(const sushi::ext::ControlNotification* notification) override;
 
+    void subscribe(SubscribeToTransportChangesCallData* subscriber);
+    void unsubscribe(SubscribeToTransportChangesCallData* subscriber);
+
+    void subscribe(SubscribeToCpuTimingUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToCpuTimingUpdatesCallData* subscriber);
+
     void subscribe(SubscribeToTrackChangesCallData* subscriber);
     void unsubscribe(SubscribeToTrackChangesCallData* subscriber);
 
@@ -283,12 +291,20 @@ public:
     void subscribe(SubscribeToParameterUpdatesCallData* subscriber);
     void unsubscribe(SubscribeToParameterUpdatesCallData* subscriber);
 
-    void stop_all_call_data();
+    void delete_all_subscribers();
 
 private:
-    void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
-    void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_transport_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_cpu_timing_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
     void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+
+    std::vector<SubscribeToTransportChangesCallData*> _transport_subscribers;
+    std::mutex _transport_subscriber_lock;
+
+    std::vector<SubscribeToCpuTimingUpdatesCallData*> _timing_subscribers;
+    std::mutex _timing_subscriber_lock;
 
     std::vector<SubscribeToTrackChangesCallData*> _track_subscribers;
     std::mutex _track_subscriber_lock;

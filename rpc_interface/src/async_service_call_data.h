@@ -118,6 +118,86 @@ private:
     bool _active{false};
 };
 
+class SubscribeToTransportChangesCallData : public SubscribeToUpdatesCallData<TransportUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToTransportChangesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToTransportChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const TransportUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToCpuTimingUpdatesCallData : public SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>
+{
+public:
+    SubscribeToCpuTimingUpdatesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToCpuTimingUpdatesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const CpuTimings& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToTrackChangesCallData(NotificationControlService* service,
+                                    grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToTrackChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const TrackUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToProcessorChangesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToProcessorChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const ProcessorUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
 class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>
 {
 public:
@@ -144,46 +224,6 @@ private:
     }
 
     std::unordered_map<int64_t, bool> _blocklist;
-};
-
-class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>
-{
-public:
-    SubscribeToProcessorChangesCallData(NotificationControlService* service,
-                                        grpc::ServerCompletionQueue* async_rpc_queue)
-            : SubscribeToUpdatesCallData(service, async_rpc_queue)
-    {
-        proceed();
-    }
-
-    ~SubscribeToProcessorChangesCallData() = default;
-
-protected:
-    void _respawn() override;
-    void _subscribe() override;
-    void _unsubscribe() override;
-    bool _check_if_blocklisted(const ProcessorUpdate& reply) override;
-    void _populate_blocklist() override {}
-};
-
-class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>
-{
-public:
-    SubscribeToTrackChangesCallData(NotificationControlService* service,
-                                    grpc::ServerCompletionQueue* async_rpc_queue)
-            : SubscribeToUpdatesCallData(service, async_rpc_queue)
-    {
-        proceed();
-    }
-
-    ~SubscribeToTrackChangesCallData() = default;
-
-protected:
-    void _respawn() override;
-    void _subscribe() override;
-    void _unsubscribe() override;
-    bool _check_if_blocklisted(const TrackUpdate& reply) override;
-    void _populate_blocklist() override {}
 };
 
 }

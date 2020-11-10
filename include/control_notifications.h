@@ -2,10 +2,60 @@
 #ifndef SUSHI_CONTROL_NOTIFICATIONS_H
 #define SUSHI_CONTROL_NOTIFICATIONS_H
 
+#include <variant>
 #include "control_interface.h"
 
 namespace sushi {
 namespace ext {
+
+using TransportNotificationValue = std::variant<float, PlayingMode, SyncMode, TimeSignature>;
+
+class TransportNotification : public ControlNotification
+{
+public:
+    TransportNotification(TransportAction action,
+                          TransportNotificationValue value,
+                          Time timestamp)
+            : ControlNotification(NotificationType::TRANSPORT_UPDATE, timestamp),
+              _value(value),
+              _action(action) {}
+
+    TransportAction action() const {return _action;}
+    TransportNotificationValue value() const {return _value;}
+
+private:
+    TransportNotificationValue _value;
+    TransportAction _action;
+};
+
+class CpuTimingNotification : public ControlNotification
+{
+public:
+    CpuTimingNotification(CpuTimings timings, Time timestamp)
+            : ControlNotification(NotificationType::CPU_TIMING_UPDATE, timestamp),
+              _cpu_timings(timings) {}
+
+    CpuTimings cpu_timings() const {return _cpu_timings;}
+
+private:
+    CpuTimings _cpu_timings;
+};
+
+class TrackNotification : public ControlNotification
+{
+public:
+    TrackNotification(TrackAction action, int track_id, Time timestamp)
+            : ControlNotification(NotificationType::TRACK_UPDATE, timestamp),
+              _track_id(track_id),
+              _action(action) {}
+
+    int track_id() const {return _track_id;}
+    TrackAction action() const {return _action;}
+
+private:
+    int _track_id;
+    TrackAction _action;
+};
 
 class ProcessorNotification : public ControlNotification
 {
@@ -43,22 +93,6 @@ private:
     int _processor_id;
     int _parameter_id;
     float _value;
-};
-
-class TrackNotification : public ControlNotification
-{
-public:
-    TrackNotification(TrackAction action, int track_id, Time timestamp)
-            : ControlNotification(NotificationType::TRACK_UPDATE, timestamp),
-              _track_id(track_id),
-              _action(action) {}
-
-    int track_id() const {return _track_id;}
-    TrackAction action() const {return _action;}
-
-private:
-    int _track_id;
-    TrackAction _action;
 };
 
 } // ext

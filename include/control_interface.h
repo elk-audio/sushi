@@ -207,9 +207,11 @@ struct MidiPCConnection
 
 enum class NotificationType
 {
-    PARAMETER_CHANGE,
+    TRANSPORT_UPDATE,
+    CPU_TIMING_UPDATE,
     TRACK_UPDATE,
-    PROCESSOR_UPDATE
+    PROCESSOR_UPDATE,
+    PARAMETER_CHANGE
 };
 
 enum class ProcessorAction
@@ -225,6 +227,14 @@ enum class TrackAction
     DELETED
 };
 
+enum class TransportAction
+{
+    PLAYING_MODE_CHANGED,
+    SYNC_MODE_CHANGED,
+    TIME_SIGNATURE_CHANGED,
+    TEMPO_CHANGED
+};
+
 class SystemController
 {
 public:
@@ -238,7 +248,6 @@ public:
 protected:
     SystemController() = default;
 };
-
 
 class TransportController
 {

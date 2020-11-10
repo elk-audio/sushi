@@ -50,6 +50,8 @@ GrpcServer::~GrpcServer() = default;
 
 void GrpcServer::AsyncRpcLoop()
 {
+    new SubscribeToTransportChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
+    new SubscribeToCpuTimingUpdatesCallData(_notification_control_service.get(), _async_rpc_queue.get());
     new SubscribeToTrackChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
     new SubscribeToProcessorChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
     new SubscribeToParameterUpdatesCallData(_notification_control_service.get(), _async_rpc_queue.get());
@@ -106,7 +108,7 @@ void GrpcServer::stop()
 
     //empty completion queue
     while(_async_rpc_queue->Next(&tag, &ok));
-    _notification_control_service->stop_all_call_data();
+    _notification_control_service->delete_all_subscribers();
 }
 
 void GrpcServer::waitForCompletion()
@@ -114,4 +116,4 @@ void GrpcServer::waitForCompletion()
     _server->Wait();
 }
 
-}// sushi_rpc
+} // sushi_rpc
