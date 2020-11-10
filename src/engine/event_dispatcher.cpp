@@ -77,6 +77,8 @@ void EventDispatcher::stop()
 
 EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto r : _keyboard_event_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -87,6 +89,8 @@ EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster*
 
 EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto r : _parameter_change_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -97,6 +101,8 @@ EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notificatio
 
 EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto r : _engine_notification_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -233,6 +239,8 @@ Event*EventDispatcher::_next_event()
 
 void EventDispatcher::_publish_keyboard_events(Event* event)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto& listener : _keyboard_event_listeners)
     {
         listener->process(event);
@@ -241,6 +249,8 @@ void EventDispatcher::_publish_keyboard_events(Event* event)
 
 void EventDispatcher::_publish_parameter_events(Event* event)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto& listener : _parameter_change_listeners)
     {
         listener->process(event);
@@ -249,6 +259,8 @@ void EventDispatcher::_publish_parameter_events(Event* event)
 
 void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto& listener : _engine_notification_listeners)
     {
         listener->process(event);
@@ -267,6 +279,8 @@ EventDispatcherStatus EventDispatcher::deregister_poster(EventPoster* poster)
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto i = _keyboard_event_listeners.begin(); i != _keyboard_event_listeners.end(); ++i)
     {
         if (*i == receiver)
@@ -280,6 +294,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPos
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto i = _parameter_change_listeners.begin(); i != _parameter_change_listeners.end(); ++i)
     {
         if (*i == receiver)
@@ -293,6 +309,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster*receiver)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto i = _engine_notification_listeners.begin(); i != _engine_notification_listeners.end(); ++i)
     {
         if (*i == receiver)
