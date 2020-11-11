@@ -52,13 +52,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
     auto raspa_config = static_cast<const XenomaiRaspaFrontendConfiguration*>(_config);
 
-    auto cv_audio_status = config_audio_channels(raspa_config);
-    if (cv_audio_status != AudioFrontendStatus::OK)
-    {
-        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
-        return cv_audio_status;
-    }
-
     unsigned int debug_flags = 0;
     if (raspa_config->break_on_mode_sw)
     {
@@ -72,7 +65,20 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
+    auto cv_audio_status = config_audio_channels(raspa_config);
+    if (cv_audio_status != AudioFrontendStatus::OK)
+    {
+        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
+        return cv_audio_status;
+    }
+
     auto raspa_sample_rate = raspa_get_sampling_rate();
+    if (raspa_sample_rate == 0)
+    {
+        SUSHI_LOG_ERROR("Raspa has invalid sample rate of 0.");
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+
     if (_engine->sample_rate() != raspa_sample_rate)
     {
         SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({})", _engine->sample_rate(), raspa_sample_rate);
@@ -146,10 +152,19 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     {
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+
+    auto num_total_input_channels = raspa_get_num_input_channels();
+    auto num_total_output_channels = raspa_get_num_output_channels();
+    if (num_total_input_channels == 0 && num_total_output_channels == 0)
+    {
+        SUSHI_LOG_ERROR("RASPA has no input or output channels.");
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+
     _cv_input_channels = config->cv_inputs;
     _cv_output_channels = config->cv_outputs;
-    _audio_input_channels = raspa_get_num_input_channels() - _cv_input_channels;
-    _audio_output_channels = raspa_get_num_output_channels() - _cv_output_channels;
+    _audio_input_channels = num_total_input_channels - _cv_input_channels;
+    _audio_output_channels = num_total_output_channels - _cv_output_channels;
     _engine->set_audio_input_channels(_audio_input_channels);
     _engine->set_audio_output_channels(_audio_output_channels);
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
