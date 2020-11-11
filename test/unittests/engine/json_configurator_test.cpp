@@ -126,6 +126,7 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
                               OSC_TEST_SEND_PORT};
 
     _module_under_test->set_osc_frontend(&osc_frontend);
+    ASSERT_EQ(ControlFrontendStatus::OK, osc_frontend.init());
 
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
