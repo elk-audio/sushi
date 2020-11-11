@@ -28,11 +28,23 @@
 /* Forward declare grpc and service classes so their definitions can be
  * kept completely separate from the rest of the Sushi codebase */
 
+#if GOOGLE_PROTOBUF_VERSION > 3007001
+namespace grpc_impl {
+#else
 namespace grpc {
+#endif
     class Server;
     class ServerBuilder;
     class ServerCompletionQueue;
 }
+
+#if GOOGLE_PROTOBUF_VERSION > 3007001
+namespace grpc {
+    typedef grpc_impl::Server Server;
+    typedef grpc_impl::ServerBuilder ServerBuilder;
+    typedef grpc_impl::ServerCompletionQueue ServerCompletionQueue;
+}
+#endif
 
 namespace sushi_rpc {
 

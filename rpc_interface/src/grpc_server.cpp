@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 
-#include "control_interface.h"
 #include "control_service.h"
 #include "sushi_rpc/grpc_server.h"
 #include "async_service_call_data.h"
