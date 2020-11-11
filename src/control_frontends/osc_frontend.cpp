@@ -417,6 +417,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
 bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
 {
+    assert(_osc_initialized);
     if (_osc_initialized == false)
     {
         return false;
@@ -441,6 +442,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
 bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                               const std::string& parameter_name)
 {
+    assert(_osc_initialized);
     if (_osc_initialized == false)
     {
         return false;
@@ -521,6 +523,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
 
 bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 {
+    assert(_osc_initialized);
     if (_osc_initialized == false)
     {
         return false;
@@ -540,6 +543,7 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
+    assert(_osc_initialized);
     if (_osc_initialized == false)
     {
         return false;
@@ -564,6 +568,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 
 bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
+    assert(_osc_initialized);
     if (_osc_initialized == false)
     {
         return false;
