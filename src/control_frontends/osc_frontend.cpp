@@ -417,8 +417,13 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection
 bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                        const std::string& parameter_name)
 {
+    if (_osc_initialized == false)
+    {
+        return false;
+    }
+
     auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
-    if (connection == nullptr || _osc_initialized == false)
+    if (connection == nullptr)
     {
         return false;
     }
@@ -436,8 +441,13 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
 bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                               const std::string& parameter_name)
 {
+    if (_osc_initialized == false)
+    {
+        return false;
+    }
+
     auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
-    if (connection == nullptr || _osc_initialized == false)
+    if (connection == nullptr)
     {
         return false;
     }
@@ -511,8 +521,13 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
 
 bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 {
+    if (_osc_initialized == false)
+    {
+        return false;
+    }
+
     auto [connection, osc_path] = _create_processor_connection(processor_name, "/bypass/");
-    if (connection == nullptr || _osc_initialized == false)
+    if (connection == nullptr)
     {
         return false;
     }
@@ -525,8 +540,13 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
 
 bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 {
+    if (_osc_initialized == false)
+    {
+        return false;
+    }
+
     auto [connection, osc_path] = _create_processor_connection(track_name, "/keyboard_event/");
-    if (connection == nullptr || _osc_initialized == false)
+    if (connection == nullptr)
     {
         return false;
     }
@@ -544,8 +564,13 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
 
 bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 {
+    if (_osc_initialized == false)
+    {
+        return false;
+    }
+
     auto [connection, osc_path] = _create_processor_connection(processor_name, "/program/");
-    if (connection == nullptr || _osc_initialized == false)
+    if (connection == nullptr)
     {
         return false;
     }
@@ -671,6 +696,8 @@ void OSCFrontend::disconnect_from_all_parameters()
 
 int OSCFrontend::process(Event* event)
 {
+    assert(_osc_initialized);
+
     if (event->is_parameter_change_notification())
     {
         _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
