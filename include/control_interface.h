@@ -217,8 +217,7 @@ enum class NotificationType
 enum class ProcessorAction
 {
     ADDED,
-    DELETED,
-    MOVED
+    DELETED
 };
 
 enum class TrackAction

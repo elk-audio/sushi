@@ -841,9 +841,9 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
 {
     switch(event->action())
     {
-        case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED:
+        case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
         {
-            SUSHI_LOG_DEBUG("Received a PROCESSOR_ADDED notification for processor {}", event->processor());
+            SUSHI_LOG_DEBUG("Received a PROCESSOR_CREATED notification for processor {}", event->processor());
             auto [status, info] = _graph_controller->get_processor_info(event->processor());
             if (status == ext::ControlStatus::OK)
             {
@@ -859,7 +859,7 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
         }
 
-        case AudioGraphNotificationEvent::Action::TRACK_ADDED:
+        case AudioGraphNotificationEvent::Action::TRACK_CREATED:
         {
             SUSHI_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
             auto [status, info] = _graph_controller->get_track_info(event->track());
