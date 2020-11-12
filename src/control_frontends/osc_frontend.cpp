@@ -366,10 +366,9 @@ ControlFrontendStatus OSCFrontend::init()
     _osc_out_address = lo_address_new(nullptr, send_port_stream.str().c_str());
 
     _setup_engine_control();
+    _osc_initialized = true;
     _event_dispatcher->subscribe_to_parameter_change_notifications(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
-
-    _osc_initialized = true;
 
     return ControlFrontendStatus::OK;
 }
@@ -383,9 +382,9 @@ OSCFrontend::~OSCFrontend()
 
     if (_osc_initialized) // These are set up in init, where also _osc_initialized is set to true.
     {
-        _osc_initialized = false;
         _event_dispatcher->unsubscribe_from_parameter_change_notifications(this);
         _event_dispatcher->unsubscribe_from_engine_notifications(this);
+        _osc_initialized = false;
         lo_server_thread_free(_osc_server);
         lo_address_free(_osc_out_address);
     }
