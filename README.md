@@ -69,7 +69,7 @@ Sushi carries most dependencies as submodules and will build and link with them 
 
   * Raspa - Only required if building for an Elk Powered board and is included in the Elk cross compiling SDK.
 
-  * gRPC - Can either be installed with packages libgrpc++-dev and protobuf-compiler-grpc, or installed from source and installed system wide. See [https://github.com/grpc/grpc/blob/master/src/cpp/README.md] for instructions. Current gRPC version in sushi is 1.14.1 and current protobuf version 3.6.1. Other versions can't be guaranteed to work.
+  * gRPC - Can either be installed with packages libgrpc++-dev and protobuf-compiler-grpc, or installed from source and installed system wide. See [https://github.com/grpc/grpc/blob/master/src/cpp/README.md] for instructions. Current gRPC version in native sushi is 1.16.1 with protobuf version 3.6.1. For Elk OS the grpc version is 1.24.1 with protobuf version 3.11. Other versions can't be guaranteed to work.
 
   * For LV2:
 
