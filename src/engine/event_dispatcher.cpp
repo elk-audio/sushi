@@ -60,9 +60,12 @@ EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
 
 void EventDispatcher::run()
 {
-    _running = true;
-    _event_thread = std::thread(&EventDispatcher::_event_loop, this);
-    _worker.run();
+    if (_running == false)
+    {
+        _running = true;
+        _event_thread = std::thread(&EventDispatcher::_event_loop, this);
+        _worker.run();
+    }
 }
 
 void EventDispatcher::stop()

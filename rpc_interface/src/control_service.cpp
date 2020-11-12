@@ -18,8 +18,10 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "control_notifications.h"
 #include "control_service.h"
+#include "control_notifications.h"
+
+#include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
@@ -245,6 +247,13 @@ inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& s
     dest.set_average(src.avg);
     dest.set_min(src.min);
     dest.set_max(src.max);
+}
+
+inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::ext::AudioConnection& src)
+{
+    dest.mutable_track()->set_id(src.track_id);
+    dest.set_track_channel(src.track_channel);
+    dest.set_engine_channel(src.engine_channel);
 }
 
 inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
@@ -1095,76 +1104,113 @@ grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContex
     return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* context,
-                                                                const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerContext* /*context*/,
+                                                                const sushi_rpc::GenericVoidValue* /*request*/,
                                                                 sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetAllInputConnections(context, request, response);
+    auto connections = _controller->get_all_input_connections();
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerContext* context,
-                                                                 const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerContext* /*context*/,
+                                                                 const sushi_rpc::GenericVoidValue* /*request*/,
                                                                  sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetAllOutputConnections(context, request, response);
+    auto connections = _controller->get_all_output_connections();
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::ServerContext* context,
-                                                                     const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::ServerContext* /*context*/,
+                                                                     const sushi_rpc::TrackIdentifier* request,
                                                                      sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetInputConnectionsForTrack(context, request, response);
+    auto connections = _controller->get_input_connections_for_track(request->id());
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::ServerContext* context,
-                                                                      const sushi_rpc::GenericVoidValue* request,
+grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::ServerContext* /*context*/,
+                                                                      const sushi_rpc::TrackIdentifier* request,
                                                                       sushi_rpc::AudioConnectionList* response)
 {
-    return Service::GetOutputConnectionsForTrack(context, request, response);
+    auto connections = _controller->get_output_connections_for_track(request->id());
+    for (const auto& connection : connections)
+    {
+        auto c = response->add_connections();
+        to_grpc(*c, connection);
+    }
+    return grpc::Status::OK;
 }
 
-grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::ServerContext* /*context*/,
                                                                     const sushi_rpc::AudioConnection* request,
-                                                                    sushi_rpc::GenericVoidValue* response)
+                                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::ConnectInputChannelToTrack(context, request, response);
+    auto status = _controller->connect_input_channel_to_track(request->track().id(),
+                                                              request->track_channel(),
+                                                              request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::ServerContext* /*context*/,
                                                                        const sushi_rpc::AudioConnection* request,
-                                                                       sushi_rpc::GenericVoidValue* response)
+                                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::ConnectOutputChannelFromTrack(context, request, response);
+    auto status = _controller->connect_output_channel_to_track(request->track().id(),
+                                                               request->track_channel(),
+                                                               request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* /*context*/,
                                                          const sushi_rpc::AudioConnection* request,
-                                                         sushi_rpc::GenericVoidValue* response)
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectInput(context, request, response);
+    auto status = _controller->disconnect_input(request->track().id(),
+                                                request->track_channel(),
+                                                request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* /*context*/,
                                                           const sushi_rpc::AudioConnection* request,
-                                                          sushi_rpc::GenericVoidValue* response)
+                                                          sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectOutput(context, request, response);
+    auto status = _controller->disconnect_output(request->track().id(),
+                                                 request->track_channel(),
+                                                 request->engine_channel());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::ServerContext* /*context*/,
                                                                       const sushi_rpc::TrackIdentifier* request,
-                                                                      sushi_rpc::GenericVoidValue* response)
+                                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectAllInputsFromTrack(context, request, response);
+    auto status = _controller->disconnect_all_inputs_from_track(request->id());
+    return to_grpc_status(status);
 }
 
-grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* context,
+grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* /*context*/,
                                                                       const sushi_rpc::TrackIdentifier* request,
-                                                                      sushi_rpc::GenericVoidValue* response)
+                                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return Service::DisconnectAllOutputFromTrack(context, request, response);
+    auto status = _controller->disconnect_all_outputs_from_track(request->id());
+    return to_grpc_status(status);
 }
-
 
 grpc::Status CvGateControlService::GetCvInputChannelCount(grpc::ServerContext* context,
                                                           const sushi_rpc::GenericVoidValue* request,
@@ -1386,49 +1432,298 @@ grpc::Status OscControlService::DisableAllOutput(grpc::ServerContext* context, c
     return to_grpc_status(status);
 }
 
-NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller}
+NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
+                                                                                               _audio_graph_controller{controller->audio_graph_controller()}
 {
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRANSPORT_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::CPU_TIMING_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
 }
 
 void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
 {
-    if (notification->type() == sushi::ext::NotificationType::PARAMETER_CHANGE)
+    switch(notification->type())
     {
-        auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-        auto notification_content = std::make_shared<ParameterValue>();
-        notification_content->set_value(typed_notification->value());
-        notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
-        notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
-
-        std::scoped_lock lock(_subscriber_lock);
-        for(auto& subscriber : _parameter_subscribers)
+        case sushi::ext::NotificationType::TRANSPORT_UPDATE:
         {
-            subscriber->push(notification_content);
+            _forward_transport_notification_to_subscribers(notification);
+            break;
         }
+        case sushi::ext::NotificationType::CPU_TIMING_UPDATE:
+        {
+            _forward_cpu_timing_notification_to_subscribers(notification);
+            break;
+        }
+        case sushi::ext::NotificationType::TRACK_UPDATE:
+        {
+            _forward_track_notification_to_subscribers(notification);
+            break;
+        }
+        case sushi::ext::NotificationType::PROCESSOR_UPDATE:
+        {
+            _forward_processor_notification_to_subscribers(notification);
+            break;
+        }
+        case sushi::ext::NotificationType::PARAMETER_CHANGE:
+        {
+            _forward_parameter_notification_to_subscribers(notification);
+            break;
+        }
+        default:
+            break;
     }
 }
 
-void NotificationControlService::subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+void NotificationControlService::_forward_transport_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
-    std::scoped_lock lock(_subscriber_lock);
-    _parameter_subscribers.push_back(subscriber);
+    auto typed_notification = static_cast<const sushi::ext::TransportNotification*>(notification);
+    auto notification_content = std::make_shared<TransportUpdate>();
+    auto action = typed_notification->action();
+
+    switch(action)
+    {
+        case sushi::ext::TransportAction::TEMPO_CHANGED:
+        {
+            float value = std::get<float>(typed_notification->value());
+            notification_content->set_tempo(value);
+            break;
+        }
+        case sushi::ext::TransportAction::PLAYING_MODE_CHANGED:
+        {
+            auto grpc_playing_mode = to_grpc(std::get<sushi::ext::PlayingMode>(typed_notification->value()));
+            notification_content->mutable_playing_mode()->set_mode(grpc_playing_mode);
+            break;
+        }
+        case sushi::ext::TransportAction::SYNC_MODE_CHANGED:
+        {
+            auto grpc_sync_mode = to_grpc(std::get<sushi::ext::SyncMode>(typed_notification->value()));
+            notification_content->mutable_sync_mode()->set_mode(grpc_sync_mode);
+            break;
+        }
+        case sushi::ext::TransportAction::TIME_SIGNATURE_CHANGED:
+        {
+            auto mutable_time_signature = notification_content->mutable_time_signature();
+            const auto source_time_signature = std::get<sushi::ext::TimeSignature>(typed_notification->value());
+            mutable_time_signature->set_denominator(source_time_signature.denominator);
+            mutable_time_signature->set_numerator(source_time_signature.numerator);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
+
+    std::scoped_lock lock(_transport_subscriber_lock);
+    for (auto& subscriber : _transport_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
 }
 
-void NotificationControlService::unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber)
+void NotificationControlService::_forward_cpu_timing_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
-    std::scoped_lock lock(_subscriber_lock);
-    _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
-                                             _parameter_subscribers.end(),
+    auto typed_notification = static_cast<const sushi::ext::CpuTimingNotification*>(notification);
+    auto notification_content = std::make_shared<CpuTimings>();
+    auto timings = typed_notification->cpu_timings();
+    notification_content->set_average(timings.avg);
+    notification_content->set_min(timings.min);
+    notification_content->set_max(timings.max);
+
+    std::scoped_lock lock(_timing_subscriber_lock);
+    for (auto& subscriber : _timing_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
+    auto notification_content = std::make_shared<TrackUpdate>();
+    auto action = typed_notification->action();
+
+    switch(action)
+    {
+        case sushi::ext::TrackAction::ADDED:
+        {
+            notification_content->set_action(TrackUpdate_Action_TRACK_ADDED);
+            break;
+        }
+        case sushi::ext::TrackAction::DELETED:
+        {
+            notification_content->set_action(TrackUpdate_Action_TRACK_DELETED);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
+
+    notification_content->mutable_track()->set_id(typed_notification->track_id());
+
+    std::scoped_lock lock(_track_subscriber_lock);
+    for (auto& subscriber : _track_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
+    auto notification_content = std::make_shared<ProcessorUpdate>();
+    auto action = typed_notification->action();
+
+    switch(action)
+    {
+        case sushi::ext::ProcessorAction::ADDED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
+            break;
+        }
+        case sushi::ext::ProcessorAction::DELETED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
+            break;
+        }
+        case sushi::ext::ProcessorAction::MOVED:
+        {
+            notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_MOVED);
+            break;
+        }
+        default:
+        {
+            assert(false);
+            break;
+        }
+    }
+
+    notification_content->mutable_processor()->set_id(typed_notification->processor_id());
+    notification_content->mutable_parent_track()->set_id(typed_notification->parent_track_id());
+
+    std::scoped_lock lock(_processor_subscriber_lock);
+    for (auto& subscriber : _processor_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+    auto notification_content = std::make_shared<ParameterValue>();
+    notification_content->set_value(typed_notification->value());
+    notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
+    notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
+
+    std::scoped_lock lock(_parameter_subscriber_lock);
+    for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::subscribe(SubscribeToTransportChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_transport_subscriber_lock);
+    _transport_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToTransportChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_transport_subscriber_lock);
+    _transport_subscribers.erase(std::remove(_transport_subscribers.begin(),
+                                             _transport_subscribers.end(),
                                              subscriber));
 }
 
-void NotificationControlService::stop_all_call_data()
+void NotificationControlService::subscribe(SubscribeToCpuTimingUpdatesCallData* subscriber)
 {
+    std::scoped_lock lock(_timing_subscriber_lock);
+    _timing_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToCpuTimingUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_timing_subscriber_lock);
+    _timing_subscribers.erase(std::remove(_timing_subscribers.begin(),
+                                          _timing_subscribers.end(),
+                                          subscriber));
+}
+
+void NotificationControlService::subscribe(SubscribeToTrackChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_track_subscriber_lock);
+    _track_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToTrackChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_track_subscriber_lock);
+    _track_subscribers.erase(std::remove(_track_subscribers.begin(),
+                                                 _track_subscribers.end(),
+                                                 subscriber));
+}
+
+void NotificationControlService::subscribe(SubscribeToProcessorChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_processor_subscriber_lock);
+    _processor_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToProcessorChangesCallData* subscriber)
+{
+    std::scoped_lock lock(_processor_subscriber_lock);
+    _processor_subscribers.erase(std::remove(_processor_subscribers.begin(),
+                                                     _processor_subscribers.end(),
+                                                     subscriber));
+}
+
+void NotificationControlService::subscribe(SubscribeToParameterUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_parameter_subscriber_lock);
+    _parameter_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_parameter_subscriber_lock);
+    _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
+                                                     _parameter_subscribers.end(),
+                                                     subscriber));
+}
+
+void NotificationControlService::delete_all_subscribers()
+{
+    for (auto& subscriber : _transport_subscribers)
+    {
+        delete subscriber;
+    }
+
+    for (auto& subscriber : _timing_subscribers)
+    {
+        delete subscriber;
+    }
+
+    for (auto& subscriber : _track_subscribers)
+    {
+        delete subscriber;
+    }
+
     for (auto& subscriber : _parameter_subscribers)
     {
-        subscriber->stop();
-        subscriber->proceed();
+        delete subscriber;
+    }
+
+    for (auto& subscriber : _processor_subscribers)
+    {
+        delete subscriber;
     }
 }
 

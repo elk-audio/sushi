@@ -29,10 +29,15 @@
 #include "sushi_rpc.grpc.pb.h"
 #pragma GCC diagnostic pop
 
-#include "async_service_call_data.h"
 #include "control_interface.h"
 
 namespace sushi_rpc {
+
+class SubscribeToTransportChangesCallData;
+class SubscribeToCpuTimingUpdatesCallData;
+class SubscribeToTrackChangesCallData;
+class SubscribeToProcessorChangesCallData;
+class SubscribeToParameterUpdatesCallData;
 
 class SystemControlService : public SystemController::Service
 {
@@ -194,8 +199,8 @@ public:
 
     grpc::Status GetAllInputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
     grpc::Status GetAllOutputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
-    grpc::Status GetInputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
-    grpc::Status GetOutputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::AudioConnectionList* response) override;
+    grpc::Status GetInputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::AudioConnectionList* response) override;
+    grpc::Status GetOutputConnectionsForTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::AudioConnectionList* response) override;
     grpc::Status ConnectInputChannelToTrack(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectOutputChannelFromTrack(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectInput(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
@@ -256,9 +261,16 @@ private:
     sushi::ext::OscController* _controller;
 };
 
-using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<sushi_rpc::NotificationController::Service>;
+using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToEngineCpuTimingUpdates<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
+                     sushi_rpc::NotificationController::Service
+                     >>>>>;
 
-class NotificationControlService : public AsyncService, sushi::ext::ControlListener
+class NotificationControlService : public AsyncService,
+                                   private sushi::ext::ControlListener
 {
 public:
     NotificationControlService(sushi::ext::SushiControl* controller);
@@ -266,15 +278,48 @@ public:
     // Inherited from ControlListener
     void notification(const sushi::ext::ControlNotification* notification) override;
 
-    void subscribe_to_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
-    void unsubscribe_from_parameter_updates(SubscribeToParameterUpdatesCallData* subscriber);
+    void subscribe(SubscribeToTransportChangesCallData* subscriber);
+    void unsubscribe(SubscribeToTransportChangesCallData* subscriber);
 
-    void stop_all_call_data();
+    void subscribe(SubscribeToCpuTimingUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToCpuTimingUpdatesCallData* subscriber);
+
+    void subscribe(SubscribeToTrackChangesCallData* subscriber);
+    void unsubscribe(SubscribeToTrackChangesCallData* subscriber);
+
+    void subscribe(SubscribeToProcessorChangesCallData* subscriber);
+    void unsubscribe(SubscribeToProcessorChangesCallData* subscriber);
+
+    void subscribe(SubscribeToParameterUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToParameterUpdatesCallData* subscriber);
+
+    void delete_all_subscribers();
 
 private:
+    void _forward_transport_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_cpu_timing_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+
+    std::vector<SubscribeToTransportChangesCallData*> _transport_subscribers;
+    std::mutex _transport_subscriber_lock;
+
+    std::vector<SubscribeToCpuTimingUpdatesCallData*> _timing_subscribers;
+    std::mutex _timing_subscriber_lock;
+
+    std::vector<SubscribeToTrackChangesCallData*> _track_subscribers;
+    std::mutex _track_subscriber_lock;
+
+    std::vector<SubscribeToProcessorChangesCallData*> _processor_subscribers;
+    std::mutex _processor_subscriber_lock;
+
     std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
-    std::mutex _subscriber_lock;
+    std::mutex _parameter_subscriber_lock;
+
     sushi::ext::SushiControl* _controller;
+
+    sushi::ext::AudioGraphController* _audio_graph_controller;
 };
 
 }// sushi_rpc

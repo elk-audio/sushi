@@ -207,12 +207,32 @@ struct MidiPCConnection
 
 enum class NotificationType
 {
-    PARAMETER_CHANGE,
-    TRACK_ADDED,
-    TRACK_REMOVED,
-    TRACK_CHANGED,
-    PROCESSOR_ADDED,
-    PROCESSOR_REMOVED
+    TRANSPORT_UPDATE,
+    CPU_TIMING_UPDATE,
+    TRACK_UPDATE,
+    PROCESSOR_UPDATE,
+    PARAMETER_CHANGE
+};
+
+enum class ProcessorAction
+{
+    ADDED,
+    DELETED,
+    MOVED
+};
+
+enum class TrackAction
+{
+    ADDED,
+    DELETED
+};
+
+enum class TransportAction
+{
+    PLAYING_MODE_CHANGED,
+    SYNC_MODE_CHANGED,
+    TIME_SIGNATURE_CHANGED,
+    TEMPO_CHANGED
 };
 
 class SystemController
@@ -228,7 +248,6 @@ public:
 protected:
     SystemController() = default;
 };
-
 
 class TransportController
 {
@@ -389,8 +408,8 @@ public:
 
     virtual std::vector<AudioConnection> get_all_input_connections() const = 0;
     virtual std::vector<AudioConnection> get_all_output_connections() const = 0;
-    virtual std::pair<ControlStatus, std::vector<AudioConnection>> get_input_connections_for_track(int track_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<AudioConnection>> get_output_connections_for_track(int track_id) const = 0;
+    virtual std::vector<AudioConnection> get_input_connections_for_track(int track_id) const = 0;
+    virtual std::vector<AudioConnection> get_output_connections_for_track(int track_id) const = 0;
 
     virtual ControlStatus                connect_input_channel_to_track(int track_id, int track_channel, int input_channel) = 0;
     virtual ControlStatus                connect_output_channel_to_track(int track_id, int track_channel, int output_channel) = 0;
@@ -457,7 +476,6 @@ protected:
     OscController() = default;
 };
 
-
 class ControlNotification
 {
 public:
@@ -474,7 +492,6 @@ private:
     NotificationType _type;
     Time _timestamp;
 };
-
 
 class ControlListener
 {

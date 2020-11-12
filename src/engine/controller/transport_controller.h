@@ -21,7 +21,6 @@
 #ifndef SUSHI_TRANSPORT_CONTROLLER_H
 #define SUSHI_TRANSPORT_CONTROLLER_H
 
-
 #include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
@@ -54,7 +53,6 @@ public:
     ext::ControlStatus set_time_signature(ext::TimeSignature signature) override;
 
 private:
-
     BaseEngine*                         _engine;
     engine::Transport*                  _transport;
     dispatcher::BaseEventDispatcher*    _event_dispatcher;

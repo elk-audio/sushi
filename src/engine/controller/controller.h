@@ -72,9 +72,20 @@ public:
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
+
     void _completion_callback(Event* event, int status);
 
+    void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
+                                     ext::ProcessorAction action) const;
+
+    void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
+                                 ext::TrackAction action) const;
+
+    void _notify_parameter_listeners(Event* event) const;
+
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
+    std::vector<ext::ControlListener*>      _processor_update_listeners;
+    std::vector<ext::ControlListener*>      _track_update_listeners;
 
     engine::BaseEngine*                     _engine;
     const engine::BaseProcessorContainer*   _processors;
@@ -90,6 +101,8 @@ private:
     controller_impl::AudioRoutingController _audio_routing_controller_impl;
     controller_impl::CvGateController       _cv_gate_controller_impl;
     controller_impl::OscController          _osc_controller_impl;
+
+    dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
 } //namespace engine

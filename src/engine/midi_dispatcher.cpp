@@ -725,10 +725,9 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 
 int MidiDispatcher::process(Event* event)
 {
-    std::scoped_lock lock(_kb_routes_out_lock);
-
     if (event->is_keyboard_event())
     {
+        std::scoped_lock lock(_kb_routes_out_lock);
         auto typed_event = static_cast<KeyboardEvent*>(event);
         const auto& cons = _kb_routes_out.find(typed_event->processor_id());
         if (cons != _kb_routes_out.end())

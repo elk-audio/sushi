@@ -50,6 +50,6 @@ struct TimeSignature
     int denominator;
 };
 
-} // end namespace sushi
+} // namespace sushi
 
 #endif //SUSHI_TYPES_H

@@ -354,7 +354,7 @@ void Model::_create_controls(bool writable)
 
         if (record.value_type)
         {
-            _controls.emplace_back(std::move(record));
+            _controls.push_back(std::move(record));
         }
         else
         {

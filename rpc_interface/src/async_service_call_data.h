@@ -30,10 +30,9 @@
 #pragma GCC diagnostic pop
 
 #include "library/synchronised_fifo.h"
+#include "control_service.h"
 
 namespace sushi_rpc {
-
-class NotificationControlService;
 
 class CallData
 {
@@ -51,12 +50,8 @@ public:
     /**
      * @brief Set the state of the call data to FINISH to make it destroy itself
      *        on the next call to proceed.
-     *
      */
-    void stop()
-    {
-        _status = CallStatus::FINISH;
-    }
+    void stop();
 
 protected:
     NotificationControlService* _service;
@@ -81,56 +76,154 @@ protected:
      * @brief Put the call data object at the back of the gRPC completion queue.
      *        This will result in an error if this object is already placed in
      *        the queue.
-     *
      */
-    void _alert()
-    {
-        _in_completion_queue = true;
-        _alarm.Set(_async_rpc_queue, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
-    }
+    void _alert();
 };
 
-class SubscribeToParameterUpdatesCallData : public CallData
+template <class ValueType, class BlocklistType>
+class SubscribeToUpdatesCallData : public CallData
 {
 public:
-    SubscribeToParameterUpdatesCallData(NotificationControlService* service,
+    SubscribeToUpdatesCallData(NotificationControlService* service,
+                               grpc::ServerCompletionQueue* async_rpc_queue)
+            : CallData(service, async_rpc_queue),
+              _responder(&_ctx)
+    {
+        // Classes inheriting from this, should call proceed() in their constructor.
+    }
+
+    void proceed() override;
+
+    void push(std::shared_ptr<ValueType> notification);
+
+protected:
+    // Spawns a new CallData instance to serve new clients while we process
+    // the one for this CallData. The instance will deallocate itself as
+    // part of its FINISH state, in proceed().
+    virtual void _respawn() = 0;
+
+    virtual void _subscribe() = 0;
+    virtual void _unsubscribe() = 0;
+
+    virtual bool _check_if_blocklisted(const ValueType& reply) = 0;
+    virtual void _populate_blocklist() = 0;
+
+    BlocklistType _notification_blocklist;
+    grpc::ServerAsyncWriter<ValueType> _responder;
+
+private:
+    SynchronizedQueue<std::shared_ptr<ValueType>> _notifications;
+
+    bool _first_iteration{true};
+    bool _active{false};
+};
+
+class SubscribeToTransportChangesCallData : public SubscribeToUpdatesCallData<TransportUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToTransportChangesCallData(NotificationControlService* service,
                                         grpc::ServerCompletionQueue* async_rpc_queue)
-        : CallData(service, async_rpc_queue),
-          _responder(&_ctx),
-          _first_iteration(true),
-          _active(false)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
     {
         proceed();
     }
 
-    virtual void proceed() override;
+    ~SubscribeToTransportChangesCallData() = default;
 
-    void push(std::shared_ptr<ParameterValue> notification)
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const TransportUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToCpuTimingUpdatesCallData : public SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>
+{
+public:
+    SubscribeToCpuTimingUpdatesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
     {
-        if (_active)
-        {
-            _notifications.push(notification);
-        }
-        if (_in_completion_queue == false)
-        {
-            _alert();
-        }
+        proceed();
     }
 
+    ~SubscribeToCpuTimingUpdatesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const CpuTimings& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToTrackChangesCallData : public SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToTrackChangesCallData(NotificationControlService* service,
+                                    grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToTrackChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const TrackUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToProcessorChangesCallData : public SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>
+{
+public:
+    SubscribeToProcessorChangesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToProcessorChangesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const ProcessorUpdate& reply) override;
+    void _populate_blocklist() override {}
+};
+
+class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>
+{
+public:
+    SubscribeToParameterUpdatesCallData(NotificationControlService* service,
+                                        grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToParameterUpdatesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const ParameterValue& reply) override;
+    void _populate_blocklist() override;
+
 private:
-    int64_t _map_key(int parameter_id, int processor_id)
+    int64_t _map_key(int parameter_id, int processor_id) const
     {
         return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
     }
 
-    ParameterNotificationRequest _request;
-    grpc::ServerAsyncWriter<ParameterValue> _responder;
-
-    bool _first_iteration;
-    bool _active;
-
-    std::unordered_map<int64_t, bool> _parameter_blacklist;
-    SynchronizedQueue<std::shared_ptr<ParameterValue>> _notifications;
+    std::unordered_map<int64_t, bool> _blocklist;
 };
 
 }

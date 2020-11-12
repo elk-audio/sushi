@@ -128,8 +128,8 @@ service AudioRoutingController
 {
     rpc GetAllInputConnections (GenericVoidValue) returns (AudioConnectionList) {}
     rpc GetAllOutputConnections (GenericVoidValue) returns (AudioConnectionList) {}
-    rpc GetInputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
-    rpc GetOutputConnectionsForTrack (GenericVoidValue) returns (AudioConnectionList) {}
+    rpc GetInputConnectionsForTrack (TrackIdentifier) returns (AudioConnectionList) {}
+    rpc GetOutputConnectionsForTrack (TrackIdentifier) returns (AudioConnectionList) {}
 
     rpc ConnectInputChannelToTrack (AudioConnection) returns (GenericVoidValue) {}
     rpc ConnectOutputChannelFromTrack (AudioConnection) returns (GenericVoidValue) {}
@@ -182,12 +182,11 @@ service OscController
 
 service NotificationController
 {
-/*  rpc SubscribeToTransportChanges() returns (stream TransportUpdate) {}
-    rpc SubscribeToTimingUpdates()returns(streamCpuTimings){}
-    rpc SubscribeToTrackChanges()returns(streamTrackUpdate){}
-    rpc SubscribeToProcessorChanges()returns(streamProcessorUpdate){}
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest)returns(streamParameterValue){} */
-    rpc SubscribeToParameterUpdates(ParameterNotificationRequest) returns (stream ParameterValue) {}
+    rpc SubscribeToTransportChanges (GenericVoidValue) returns (stream TransportUpdate) {}
+    rpc SubscribeToEngineCpuTimingUpdates (GenericVoidValue) returns (stream CpuTimings) {}
+    rpc SubscribeToTrackChanges (GenericVoidValue) returns (stream TrackUpdate) {}
+    rpc SubscribeToProcessorChanges (GenericVoidValue) returns (stream ProcessorUpdate) {}
+    rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterValue) {}
 }
 
 /**
@@ -490,7 +489,7 @@ message DeleteProcessorRequest
     TrackIdentifier     track = 2;
 }
 
-message ParameterNotificationRequest
+message ParameterNotificationBlocklist
 {
     repeated ParameterIdentifier parameters = 1;
 }
@@ -621,10 +620,9 @@ message TrackUpdate
         DUMMY = 0;
         TRACK_ADDED = 1;
         TRACK_DELETED = 2;
-        PROCESSORS_CHANGED = 3;
     }
-    Action      action = 1;
-    TrackInfo   track = 2;
+    Action          action = 1;
+    TrackIdentifier track = 2;
 }
 
 message ProcessorUpdate
@@ -636,6 +634,7 @@ message ProcessorUpdate
         PROCESSOR_DELETED = 2;
         PROCESSOR_MOVED = 3;
     }
-    Action         action = 1;
-    ProcessorInfo  track = 2;
+    Action              action = 1;
+    ProcessorIdentifier processor = 2;
+    TrackIdentifier     parent_track = 3;
 }

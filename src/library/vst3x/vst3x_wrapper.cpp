@@ -69,7 +69,7 @@ std::vector<std::string> get_preset_locations()
     char* home_dir = getenv("HOME");
     if (home_dir != nullptr)
     {
-        locations.emplace_back(std::string(home_dir) + "/.vst3/presets/");
+        locations.push_back(std::string(home_dir) + "/.vst3/presets/");
     }
     SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
     locations.emplace_back("/usr/share/vst3/presets/");
@@ -118,7 +118,7 @@ void add_patches(const std::string& path, std::vector<std::string>& patches)
             if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
             {
                 SUSHI_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
-                patches.emplace_back(std::move(path + "/" + patch_name));
+                patches.push_back(std::move(path + "/" + patch_name));
             }
         }
         else if (entry->d_type == DT_DIR && entry->d_name[0] != '.') /* Dirty way to ignore ./,../ and hidden files */
@@ -459,7 +459,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
                 auto res = mutable_unit->getProgramName(_main_program_list_id, i, buffer);
                 if (res == Steinberg::kResultOk)
                 {
-                    programs.emplace_back(to_ascii_str(buffer));
+                    programs.push_back(to_ascii_str(buffer));
                 } else
                 {
                     SUSHI_LOG_INFO("Program name returned error {} on {}", res, i);
@@ -468,7 +468,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
             }
             else if (_file_based_programs)
             {
-                programs.emplace_back(extract_preset_name(_program_files[i]));
+                programs.push_back(extract_preset_name(_program_files[i]));
             }
         }
         SUSHI_LOG_INFO("Return list with {} programs", programs.size());
@@ -973,7 +973,7 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
 
 #endif //SUSHI_BUILD_WITH_VST3
 #ifndef SUSHI_BUILD_WITH_VST3
-#include "library/vst3x_wrapper.h"
+#include "vst3x_wrapper.h"
 #include "logging.h"
 namespace sushi {
 namespace vst3 {
