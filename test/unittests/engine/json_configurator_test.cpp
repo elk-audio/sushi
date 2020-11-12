@@ -133,7 +133,7 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
 
     auto outputs_before = osc_frontend.get_enabled_parameter_outputs();
 
-    ASSERT_EQ(0, outputs_before.size());
+    ASSERT_EQ(0u, outputs_before.size());
 
     status = _module_under_test->load_osc();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
