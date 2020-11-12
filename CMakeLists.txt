@@ -385,7 +385,7 @@ set(COMMON_LIBRARIES
     pthread
     dl
     fifo
-    spdlog
+    spdlog::spdlog
     ${TWINE_LIB}
 )
 
