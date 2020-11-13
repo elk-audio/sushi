@@ -37,6 +37,8 @@
 #include "plugins/step_sequencer_plugin.h"
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
+#include "plugins/wav_writer_plugin.h"
+#include "plugins/mono_summing_plugin.h"
 #include "library/vst2x/vst2x_wrapper.h"
 #include "library/vst3x/vst3x_wrapper.h"
 #include "library/lv2/lv2_wrapper.h"
@@ -77,7 +79,7 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
     auto& counter = audio_input? _input_clip_count : _output_clip_count;
     for (int i = 0; i < buffer.channel_count(); ++i)
     {
-        if (buffer.count_clipped_samples(i, 1) > 0 && counter[i] >= _interval)
+        if (buffer.count_clipped_samples(i) > 0 && counter[i] >= _interval)
         {
             queue.push(RtEvent::make_clip_notification_event(0, i, audio_input? ClipNotificationRtEvent::ClipChannelType::INPUT:
                                                                    ClipNotificationRtEvent::ClipChannelType::OUTPUT));
@@ -1283,6 +1285,14 @@ std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostCo
     else if (uid == "sushi.testing.control_to_cv")
     {
         return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.wav_writer")
+    {
+        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.mono_summing")
+    {
+        return std::make_shared<mono_summing_plugin::MonoSummingPlugin>(host_control);
     }
     return nullptr;
 }

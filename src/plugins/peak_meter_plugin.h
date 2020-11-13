@@ -22,6 +22,7 @@
 #define SUSHI_PEAK_METER_PLUGIN_H
 
 #include "library/internal_plugin.h"
+#include "dsp_library/value_smoother.h"
 
 namespace sushi {
 namespace peak_meter_plugin {
@@ -42,13 +43,28 @@ public:
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
+    void _process_peak_detection(const ChunkSampleBuffer& in, bool linked);
+
+    void _process_clip_detection(const ChunkSampleBuffer& in, bool linked);
+
     void _update_refresh_interval(float sample_rate);
 
-    FloatParameterValue* _left_level;
-    FloatParameterValue* _right_level;
+    // Output parameters
+    std::array<FloatParameterValue*, MAX_METERED_CHANNELS> _level_parameters;
+    std::array<BoolParameterValue*, MAX_METERED_CHANNELS> _clip_parameters;
+
+    // Input parameters
+    BoolParameterValue*  _link_channels_parameter;
+
+    uint64_t _clip_hold_samples;
+    std::array<uint64_t, MAX_METERED_CHANNELS> _clip_hold_count{ {0, 0}};
+    std::array<bool, MAX_METERED_CHANNELS> _clipped { {false, false}};
+
     int _refresh_interval;
     int _sample_count{0};
-    float _smoothing_coef{0.0f};
+
+    std::array<ValueSmootherFilter<float>, MAX_METERED_CHANNELS> _smoothers;
+
     std::array<float, MAX_METERED_CHANNELS> _smoothed{ {0.0f} };
 };
 

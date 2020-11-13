@@ -12,11 +12,15 @@
 #include "plugins/lfo_plugin.cpp"
 #include "plugins/equalizer_plugin.cpp"
 #include "plugins/peak_meter_plugin.cpp"
+#include "plugins/wav_writer_plugin.cpp"
+#include "plugins/mono_summing_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
+static const std::string WRITE_FILE = "write_test";
+constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
 {
@@ -219,7 +223,7 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
 
     /* Process enough samples to catch some event outputs */
     ASSERT_TRUE(_fifo.empty());
@@ -228,14 +232,68 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
         _module_under_test->process_audio(in_buffer, out_buffer);
     }
     /* check that audio goes through unprocessed */
-    test_utils::assert_buffer_value(1.0f, out_buffer);
+    test_utils::assert_buffer_value(0.5f, out_buffer);
 
     RtEvent event;
     ASSERT_TRUE(_fifo.pop(event));
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
-    /*  The value should approach 0 dB eventually, but test that it is reasonably close */
-    EXPECT_GT(event.parameter_change_event()->value(), -8.0f);
+    /*  The rms and dB calculations are tested separately, just test that it a reasonable value */
+    EXPECT_GT(event.parameter_change_event()->value(), 0.5f);
+}
+
+TEST_F(TestPeakMeterPlugin, TestClipDetection)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    auto first_channel = ChunkSampleBuffer::create_non_owning_buffer(in_buffer, 0, 1);
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
+    test_utils::fill_sample_buffer(first_channel, 1.5f);
+
+    auto clip_l_id = _module_under_test->parameter_from_name("right_clip")->id();
+    auto clip_r_id = _module_under_test->parameter_from_name("left_clip")->id();
+
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Run once and check that the parameter value has changed for the left channel*/
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Lower volume and run until the hold time has passed */
+    test_utils::fill_sample_buffer(in_buffer, 0.5f);
+    for (int i = 0; i <= TEST_SAMPLERATE * 6 / AUDIO_CHUNK_SIZE ; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+    }
+
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+
+    /* Pop the first event and verify it was a clip parameter change */
+    RtEvent event;
+    ASSERT_TRUE(_fifo.pop(event));
+    EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
+    EXPECT_EQ(clip_l_id, event.parameter_change_event()->param_id());
+
+    /* Test with linked channels */
+    test_utils::fill_sample_buffer(first_channel, 1.5f);
+    event = RtEvent::make_parameter_change_event(0,0,_module_under_test->parameter_from_name("link_channels")->id(), 1.0f);
+    _module_under_test->process_event(event);
+    /* Run once and check that the parameter value has changed for both channels */
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_r_id).second);
+}
+
+TEST(TestPeakMeterPluginInternal, TestTodBConversion)
+{
+    EXPECT_FLOAT_EQ(0.0f, peak_meter_plugin::to_normalised_dB(0.0f));         // minimum
+    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981), 0.0001); // -48 dB
+    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001);  //  0 dB
+    EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(15.9f));        // +24 dB
+    EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(251.2f));       // +48 dB (clamped)
 }
 
 class TestLfoPlugin : public ::testing::Test
@@ -289,4 +347,142 @@ TEST_F(TestLfoPlugin, TestProcess)
     ASSERT_TRUE(_queue.pop(event));
     EXPECT_EQ(RtEventType::CV_EVENT, event.type());
     EXPECT_EQ(2, event.cv_event()->cv_id());
+}
+
+class TestWavWriterPlugin : public ::testing::Test
+{
+protected:
+    TestWavWriterPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new wav_writer_plugin::WavWriterPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    wav_writer_plugin::WavWriterPlugin* _module_under_test;
+    RtEventFifo<10> _fifo;
+};
+
+TEST_F(TestWavWriterPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Wav writer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.wav_writer", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestWavWriterPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up buffers and events
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+    std::string* path = new std::string("./");
+    path->append(WRITE_FILE);
+    RtEvent path_event = RtEvent::make_string_parameter_change_event(0, 0, 0, path);
+    RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 1.0f);
+    RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+
+    // Test setting path property
+    _module_under_test->process_event(path_event);
+    ASSERT_EQ(*path, *_module_under_test->_destination_file_property);
+
+    // Test start recording and open file
+    _module_under_test->process_event(start_recording_event);
+    ASSERT_TRUE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_start_recording());
+
+    // Test processing
+    _module_under_test->_recording_parameter->set_values(true, true);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_value(1.0f, in_buffer);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Test Writing.
+    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false to immediately write
+    ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
+
+    // Test end recording and close file
+    _module_under_test->process_event(stop_recording_event);
+    ASSERT_FALSE(_module_under_test->_recording_parameter->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
+
+    // Verify written samples
+    path->append(".wav");
+    SF_INFO soundfile_info;
+    SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
+    if (sf_error(file))
+    {
+        FAIL() << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
+    }
+    int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
+    float written_data[number_of_samples];
+    ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data, AUDIO_CHUNK_SIZE));
+    for (int sample = 0; sample < number_of_samples; ++sample)
+    {
+        ASSERT_FLOAT_EQ(1.0f, written_data[sample]);
+    }
+    sf_close(file);
+    remove(path->c_str());
+}
+
+class TestMonoSummingPlugin : public ::testing::Test
+{
+protected:
+    TestMonoSummingPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new mono_summing_plugin::MonoSummingPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    mono_summing_plugin::MonoSummingPlugin* _module_under_test;
+    RtEventFifo<10> _fifo;
+};
+
+TEST_F(TestMonoSummingPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Mono summing", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.mono_summing", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestMonoSummingPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up buffers and events
+    SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
+    for (int sample = 0; sample < AUDIO_CHUNK_SIZE; ++sample)
+    {
+        in_buffer.channel(0)[sample] = 1.0f;
+    }
+    SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
+
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    for (int sample = 0; sample < AUDIO_CHUNK_SIZE; ++sample)
+    {
+        ASSERT_FLOAT_EQ(1.0f, in_buffer.channel(0)[sample]);
+        ASSERT_FLOAT_EQ(0.0f, in_buffer.channel(1)[sample]);
+    }
+    test_utils::assert_buffer_value(1.0f, out_buffer);
 }

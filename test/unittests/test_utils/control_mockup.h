@@ -2,7 +2,6 @@
 #define SUSHI_CONTROL_MOCKUP_H
 
 #include <bits/stdc++.h>
-#include <iostream>
 
 #include "control_interface.h"
 

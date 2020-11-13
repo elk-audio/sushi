@@ -346,8 +346,13 @@ public:
                                                                   _processed_value(value) {}
 
     ParameterType type() const {return _type;}
+
     bool processed_value() const {return _processed_value;}
+
     bool domain_value() const {return _processed_value;}
+
+    float normalized_value() const {return _processed_value? 1.0f : 0.0f;}
+
     ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set_values(bool value, bool raw_value) { _processed_value = value; _processed_value = raw_value;}
