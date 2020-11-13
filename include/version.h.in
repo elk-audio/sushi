@@ -2,8 +2,8 @@
 #define __version_h__
 
 #define SUSHI__VERSION_MAJ  0
-#define SUSHI__VERSION_MIN  10
-#define SUSHI__VERSION_REV  3
+#define SUSHI__VERSION_MIN  11
+#define SUSHI__VERSION_REV  0
 
 #define SUSHI_GIT_COMMIT_HASH "@GIT_COMMIT_HASH@"
 #define SUSHI_BUILD_TIMESTAMP "@BUILD_TIMESTAMP@"

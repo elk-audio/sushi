@@ -1,3 +1,23 @@
+## 0.11.0
+
+New Features:
+  * Expanded gRPC control interface, including push-style notifications
+  * Dynamic loading and routing of tracks and plugins
+  * Configurable OSC parameter output
+  * Wave writer plugin
+  * Mono summing plugin
+  * Improved peak meter plugin
+
+Fixes:
+  * Aftertouch messages not forwarded in Alsa midi frontend
+  * Ensuring silence when track gain is 0
+  * Fix for generate script when python2.7 is missing
+  * Fix to accommodate v1.16 and v1.24 of gRPC libraries
+  * Raspa frontend initialisation order fix
+  * Internal event system refactor
+  * Controller class refactor and split into sub-controllers
+  * Logging library built statically - improves compile time
+
 ## 0.10.3
 
 Fixes:
