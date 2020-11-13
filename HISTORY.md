@@ -4,7 +4,7 @@ New Features:
   * Expanded gRPC control interface, including push-style notifications
   * Dynamic loading and routing of tracks and plugins
   * Configurable OSC parameter output
-  * Wave writer plugin
+  * Wav writer plugin
   * Mono summing plugin
   * Improved peak meter plugin
 
