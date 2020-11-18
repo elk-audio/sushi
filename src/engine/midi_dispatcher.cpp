@@ -306,10 +306,9 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_pc_from_processor(ObjectId p
                                                  });
 
             connection_vector.erase(erase_iterator, connection_vector.end());
-
-            SUSHI_LOG_INFO("Disconnected all PC's from processor ID \"{}\"", processor_id);
         }
     }
+    SUSHI_LOG_INFO("Disconnected all PC's from processor ID \"{}\"", processor_id);
 
     return MidiDispatcherStatus::OK;
 }

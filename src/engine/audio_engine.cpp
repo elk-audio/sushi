@@ -399,18 +399,18 @@ bool AudioEngine::_remove_processor_from_realtime_part(ObjectId processor)
 
 void AudioEngine::_remove_connections_from_track(ObjectId track_id)
 {
-    for (auto con : _audio_in_connections.connections())
-    {
-        if (con.track == track_id)
-        {
-            this->disconnect_audio_input_channel(con.engine_channel, con.track_channel, con.track);
-        }
-    }
     for (auto con : _audio_out_connections.connections())
     {
         if (con.track == track_id)
         {
             this->disconnect_audio_output_channel(con.engine_channel, con.track_channel, con.track);
+        }
+    }
+    for (auto con : _audio_in_connections.connections())
+    {
+        if (con.track == track_id)
+        {
+            this->disconnect_audio_input_channel(con.engine_channel, con.track_channel, con.track);
         }
     }
 }
