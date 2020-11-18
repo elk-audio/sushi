@@ -77,7 +77,7 @@ private:
     std::vector<unsigned int> _output_clip_count;
 };
 
-constexpr int MAX_RT_PROCESSOR_ID = 1000;
+constexpr int MAX_RT_PROCESSOR_ID = 100000;
 
 class AudioEngine : public BaseEngine
 {
