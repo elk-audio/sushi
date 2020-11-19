@@ -57,7 +57,7 @@ service KeyboardController
 service AudioGraphController
 {
     rpc GetAllProcessors (GenericVoidValue) returns (ProcessorInfoList) {}
-    rpc GetAllTracks(GenericVoidValue) returns (TrackInfoList) {}
+    rpc GetAllTracks (GenericVoidValue) returns (TrackInfoList) {}
     rpc GetTrackId (GenericStringValue) returns (TrackIdentifier) {}
     rpc GetTrackInfo (TrackIdentifier) returns (TrackInfo) {}
     rpc GetTrackProcessors (TrackIdentifier) returns (ProcessorInfoList) {}
@@ -67,13 +67,13 @@ service AudioGraphController
 
     rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
 
-    rpc CreateTrack(CreateTrackRequest) returns (GenericVoidValue) {}
-    rpc CreateMultibusTrack(CreateMultibusTrackRequest) returns (GenericVoidValue) {}
-    rpc CreateProcessorOnTrack(CreateProcessorRequest) returns (GenericVoidValue) {}
-    rpc MoveProcessorOnTrack(MoveProcessorRequest) returns (GenericVoidValue) {}
+    rpc CreateTrack (CreateTrackRequest) returns (GenericVoidValue) {}
+    rpc CreateMultibusTrack (CreateMultibusTrackRequest) returns (GenericVoidValue) {}
+    rpc CreateProcessorOnTrack (CreateProcessorRequest) returns (GenericVoidValue) {}
+    rpc MoveProcessorOnTrack (MoveProcessorRequest) returns (GenericVoidValue) {}
 
-    rpc DeleteProcessorFromTrack(DeleteProcessorRequest) returns (GenericVoidValue) {}
-    rpc DeleteTrack(TrackIdentifier) returns (GenericVoidValue) {}
+    rpc DeleteProcessorFromTrack (DeleteProcessorRequest) returns (GenericVoidValue) {}
+    rpc DeleteTrack (TrackIdentifier) returns (GenericVoidValue) {}
 }
 
 service ProgramController
