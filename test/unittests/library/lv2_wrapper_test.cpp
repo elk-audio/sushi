@@ -478,12 +478,8 @@ TEST_F(TestLv2Wrapper, TestSynth)
 
     if(AUDIO_CHUNK_SIZE == 64)
     {
+        // Buffer comparisons after NOTE_OFF events in LV2 tests require buffer size == 64
         test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
-    }
-    else
-    {
-        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
-                  << std::endl;
     }
 
     // Setting program once first without checking audio output,
