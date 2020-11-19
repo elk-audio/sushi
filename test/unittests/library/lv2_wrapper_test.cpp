@@ -285,7 +285,8 @@ TEST_F(TestLv2Wrapper, TestTimeInfo)
 // optional for eg-sampler, but required for its sample-loading feature.
 TEST_F(TestLv2Wrapper, TestSynchronousStateAndWorkerThreads)
 {
-    SetUp("http://lv2plug.in/plugins/eg-sampler");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-sampler");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
@@ -444,12 +445,7 @@ TEST_F(TestLv2Wrapper, TestSynth)
 {
     SetUp("http://drobilla.net/plugins/mda/JX10");
 
-    if (_module_under_test == nullptr)
-    {
-        std::cout << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run."
-                  << std::endl;
-        return;
-    }
+    ASSERT_TRUE(_module_under_test != nullptr)  << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run.";
 
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
