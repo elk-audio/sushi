@@ -22,7 +22,7 @@ if (${WITH_VST2})
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
     # Suppress VST SDK warnings
     set_target_properties(vst2_test_plugin PROPERTIES
-            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing"
+            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing -Wno-stringop-truncation"
         )
     target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )

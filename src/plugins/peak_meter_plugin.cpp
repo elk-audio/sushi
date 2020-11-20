@@ -69,8 +69,8 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
 
     _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels", "", false);
 
-    for (const auto& i : _level_parameters) { assert(i);}
-    for (const auto& i : _clip_parameters) { assert(i);}
+    for ([[maybe_unused]] const auto& i : _level_parameters) { assert(i);}
+    for ([[maybe_unused]] const auto& i : _clip_parameters) { assert(i);}
     assert(_link_channels_parameter);
 }
 
