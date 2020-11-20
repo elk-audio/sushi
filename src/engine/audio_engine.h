@@ -91,8 +91,12 @@ public:
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
      *                     With values >1 tracks will be processed in parallel threads.
+     * @param evend_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
+     *                         If nullptr, a normal EventDispatcher is created and used.
      */
-    explicit AudioEngine(float sample_rate, int rt_cpu_cores = 1);
+    explicit AudioEngine(float sample_rate,
+                         int rt_cpu_cores = 1,
+                         dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
      ~AudioEngine();
 
@@ -426,7 +430,7 @@ public:
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
-        return &_event_dispatcher;
+        return _event_dispatcher.get();
     }
 
     sushi::engine::Transport* transport() override
@@ -550,9 +554,9 @@ private:
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
 
-    dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
+    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
+    HostControl _host_control{nullptr, &_transport};
 
-    HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
     bool _timings_enabled{false};
 

@@ -67,7 +67,7 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
     auto event_status_enable = _osc_controller.enable_output_for_parameter(processor_id, parameter_id);
 
     ASSERT_EQ(ext::ControlStatus::OK, event_status_enable);
-    auto execution_status1 = _test_dispatcher->execute_event(&_test_engine);
+    auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     auto enabled_outputs1 = _osc_controller.get_enabled_parameter_outputs();
@@ -79,7 +79,7 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
     auto event_status_disable = _osc_controller.disable_output_for_parameter(processor_id, parameter_id);
 
     ASSERT_EQ(ext::ControlStatus::OK, event_status_disable);
-    auto execution_status2 = _test_dispatcher->execute_event(&_test_engine);
+    auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
     auto enabled_outputs2 = _osc_controller.get_enabled_parameter_outputs();
