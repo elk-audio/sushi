@@ -2,6 +2,7 @@
 
 New Features:
   * Expanded gRPC control interface, including push-style notifications
+  * Bumped recommended gRPC version
   * Dynamic loading and routing of tracks and plugins
   * Configurable OSC parameter output
   * Wav writer plugin
@@ -16,7 +17,8 @@ Fixes:
   * Raspa frontend initialisation order fix
   * Internal event system refactor
   * Controller class refactor and split into sub-controllers
-  * Logging library built statically - improves compile time
+  * Logging library built statically - faster compile time
+  * Fix for timing sensitive unit tests
 
 ## 0.10.3
 
