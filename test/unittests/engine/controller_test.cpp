@@ -81,7 +81,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ("", tracks[1].label);
     EXPECT_EQ(1, tracks[1].input_channels);
     EXPECT_EQ(1, tracks[1].input_busses);
-    EXPECT_EQ(1, tracks[1].output_channels);
+    EXPECT_EQ(2, tracks[1].output_channels);    // This should be 2 because it's connected to a stereo engine bus
     EXPECT_EQ(1, tracks[1].output_busses);
     EXPECT_EQ(3u, tracks[1].processors.size());
 
