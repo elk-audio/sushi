@@ -63,35 +63,40 @@ public:
     }
 
     /**
-     * Call this to check if an event was received, execute it, and then discard it.
+     * Call this to check if an engine event was received, execute it, and then discard it.
+     * Non-engine events are discarded, and only the first engine event found is executed.
      * @param engine reference for the events execute method.
      * @return The execution status of the event.
      */
-    int execute_event(engine::BaseEngine* engine)
+    int execute_engine_event(engine::BaseEngine* engine)
     {
         EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
 
-        if (_queue.empty())
-        {
-            return status;
-        } else
+        while(_queue.empty() == false)
         {
             auto event = _queue.back();
-
+            // There can be notification events before, which we want to ignore when mocking.
             if (event->is_engine_event())
             {
-                // TODO: If we go with Lambdas in all executable events,
-                // the engine can just be captured in the Lambda.
-                // If not, it should be a parameter to the Event class constructor.
+                /* TODO: If we go with Lambdas in all executable events,
+                 * the engine can just be captured in the Lambda.
+                 * If not, it should be a parameter to the Event class constructor.
+                 */
                 auto typed_event = static_cast<EngineEvent*>(event);
 
                 status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
-            }
 
-            _queue.pop_back();
-            delete event;
-            return status;
+                _queue.pop_back();
+                delete event;
+                return status;
+            } else
+            {
+                _queue.pop_back();
+                delete event;
+            }
         }
+
+        return status;
     }
 
     std::unique_ptr<Event> retrieve_event()

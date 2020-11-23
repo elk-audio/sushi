@@ -325,7 +325,7 @@ ext::ControlStatus AudioGraphController::delete_processor_from_track(int process
 
 ext::ControlStatus AudioGraphController::delete_track(int track_id)
 {
-    SUSHI_LOG_DEBUG("create_track called with id {}", track_id);
+    SUSHI_LOG_DEBUG("delete_track called with id {}", track_id);
     auto lambda = [=] () -> int
     {
         auto track = _processors->track(track_id);
