@@ -885,12 +885,17 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
     {
         if (engine_channel >= _audio_outputs || track_channel >= track->output_channels())
         {
-            if (track_channel > track->max_output_channels())
+            if (track_channel == 1 &&
+                track->max_output_channels() == 2 &&
+                track->output_channels() <= 1)
+            {
+                // Corner case when connecting a mono track to a stereo output bus, this is allowed
+                track->set_output_channels(2);
+            }
+            else
             {
                 return EngineReturnStatus::INVALID_CHANNEL;
             }
-            // Corner case when connecting a mono track to a stereo output bus
-            track->set_output_channels(track_channel + 1);
         }
     }
 
