@@ -19,6 +19,7 @@ Fixes:
   * Controller class refactor and split into sub-controllers
   * Logging library built statically - faster compile time
   * Fix for timing sensitive unit tests
+  * Audio routing bug for mono tracks
 
 ## 0.10.3
 
