@@ -49,11 +49,12 @@ inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* proces
     for (const auto& param : params)
     {
         ext::ParameterInfo info;
+        info.id = param->id();
+        info.type = ext::ParameterType::FLOAT;
         info.label = param->label();
         info.name = param->name();
         info.unit = param->unit();
-        info.id = param->id();
-        info.type = ext::ParameterType::FLOAT;
+        info.automatable = param->automatable();
         info.min_domain_value = param->min_domain_value();
         info.max_domain_value = param->max_domain_value();
         infos.push_back(info);
