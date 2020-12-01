@@ -351,7 +351,7 @@ public:
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
-    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+    bool _handle_audio_graph_notification(const EngineNotificationEvent* typed_event);
 
     std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
     std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);

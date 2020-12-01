@@ -2,8 +2,6 @@
 
 #include "library/event.cpp"
 
-#undef private
-
 #include "engine/audio_engine.h"
 
 #include "control_frontends/base_control_frontend.h"
@@ -222,6 +220,43 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_EQ(9u, pc_event->processor_id());
     EXPECT_EQ(50u, pc_event->parameter_id());
     EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());
+    delete event;
+
+    auto tempo_event = RtEvent::make_tempo_event(10, 125);
+    event = Event::from_rt_event(tempo_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto tempo_not = static_cast<TempoNotificationEvent*>(event);
+    EXPECT_TRUE(tempo_not->is_tempo_notification());
+    EXPECT_FLOAT_EQ(125.0f, tempo_not->tempo());
+    delete event;
+
+    auto time_sig_event = RtEvent::make_time_signature_event(11, {.numerator = 6, .denominator = 4});
+    event = Event::from_rt_event(time_sig_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto time_sig_not = static_cast<TimeSignatureNotificationEvent*>(event);
+    EXPECT_TRUE(time_sig_not->is_time_sign_notification());
+    EXPECT_EQ(6, time_sig_not->time_signature().numerator);
+    EXPECT_EQ(4, time_sig_not->time_signature().denominator);
+    delete event;
+
+    auto play_mode_event = RtEvent::make_playing_mode_event(12, PlayingMode::RECORDING);
+    event = Event::from_rt_event(play_mode_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto play_mode_not = static_cast<PlayingModeNotificationEvent*>(event);
+    EXPECT_TRUE(play_mode_not->is_playing_mode_notification());
+    EXPECT_EQ(PlayingMode::RECORDING, play_mode_not->mode());
+    delete event;
+
+    auto sync_mode_event = RtEvent::make_sync_mode_event(13, SyncMode::MIDI);
+    event = Event::from_rt_event(sync_mode_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto sync_mode_not = static_cast<SyncModeNotificationEvent*>(event);
+    EXPECT_TRUE(sync_mode_not->is_sync_mode_notification());
+    EXPECT_EQ(SyncMode::MIDI, sync_mode_not->mode());
     delete event;
 
     auto async_work_event = RtEvent::make_async_work_event(dummy_processor_callback, 10, nullptr);

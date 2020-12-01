@@ -98,7 +98,7 @@ AudioEngine::AudioEngine(float sample_rate,
                                              _audio_graph(rt_cpu_cores, MAX_TRACKS),
                                              _audio_in_connections(MAX_AUDIO_CONNECTIONS),
                                              _audio_out_connections(MAX_AUDIO_CONNECTIONS),
-                                             _transport(sample_rate),
+                                             _transport(sample_rate, &_main_out_queue),
                                              _clip_detector(sample_rate)
 {
     if(event_dispatcher == nullptr)

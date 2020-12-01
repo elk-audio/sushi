@@ -16,8 +16,8 @@ public:
         _transport.set_sample_rate(sample_rate);
         return sushi::HostControl(&_dummy_dispatcher, &_transport);
     }
-
-    engine::Transport     _transport{DEFAULT_TEST_SAMPLERATE};
+    RtEventFifo<10>       _event_output;
+    engine::Transport     _transport{DEFAULT_TEST_SAMPLERATE, &_event_output};
     EventDispatcherMockup _dummy_dispatcher;
 };
 

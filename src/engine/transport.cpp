@@ -31,6 +31,9 @@
 namespace sushi {
 namespace engine {
 
+constexpr float MIN_TEMPO = 20.0;
+constexpr float MAX_TEMPO = 1000.0;
+
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
 
 void peer_callback([[maybe_unused]] size_t peers)
@@ -49,8 +52,10 @@ void start_stop_callback([[maybe_unused]] bool playing)
 }
 
 
-Transport::Transport(float sample_rate) : _samplerate(sample_rate),
-                                          _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
+Transport::Transport(float sample_rate,
+                     RtEventPipe* rt_event_pipe) : _samplerate(sample_rate),
+                                                   _rt_event_dispatcher(rt_event_pipe),
+                                                   _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
 {
     _link_controller->setNumPeersCallback(peer_callback);
     _link_controller->setTempoCallback(tempo_callback);
@@ -124,6 +129,8 @@ void Transport::set_time_signature(TimeSignature signature, bool update_via_even
     {
         _time_signature = signature;
     }
+    //auto state = _link_controller->captureAppSessionState();
+    //state.
 }
 
 void Transport::set_tempo(float tempo, bool update_via_event)
@@ -221,6 +228,8 @@ void Transport::_update_internal_sync(int64_t samples)
     {
         _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = _set_playmode;
+        // Notify new playing mode
+        _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
@@ -234,8 +243,12 @@ void Transport::_update_internal_sync(int64_t samples)
         }
         _beat_count += chunks_passed * _beats_per_chunk;
     }
-
-    _tempo = _set_tempo;
+    if (_tempo != _set_tempo)
+    {
+        // Notify tempo change
+        _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, _set_tempo));
+        _tempo = _set_tempo;
+    }
 }
 
 void Transport::_update_link_sync(Time timestamp)

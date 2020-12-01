@@ -23,6 +23,7 @@
 
 #include "logging.h"
 #include "control_notifications.h"
+#include "controller_common.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
 
@@ -84,6 +85,9 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::TRACK_UPDATE:
             _track_update_listeners.push_back(listener);
             break;
+        case ext::NotificationType::TRANSPORT_UPDATE:
+            _transport_update_listeners.push_back(listener);
+            break;
         default:
             break;
     }
@@ -101,12 +105,21 @@ int Controller::process(Event* event)
     if (event->is_parameter_change_notification())
     {
         _notify_parameter_listeners(event);
-        return EventStatus::HANDLED_OK;
     }
-    else if (event->is_audio_graph_notification())
+    else if (event->is_engine_notification())
     {
-        auto typed_event = static_cast<AudioGraphNotificationEvent*>(event);
-        switch(typed_event->action())
+        _handle_engine_notifications(static_cast<const EngineNotificationEvent*>(event));
+    }
+
+    return EventStatus::NOT_HANDLED;
+}
+
+void Controller::_handle_engine_notifications(const EngineNotificationEvent* event)
+{
+    if (event->is_audio_graph_notification())
+    {
+        auto typed_event = static_cast<const AudioGraphNotificationEvent*>(event);
+        switch (typed_event->action())
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK:
             {
@@ -133,11 +146,35 @@ int Controller::process(Event* event)
                 // External listeners are only notified once processors are added to a track
                 break;
         }
-
-        return EventStatus::HANDLED_OK;
     }
-
-    return EventStatus::NOT_HANDLED;
+    else if (event->is_tempo_notification())
+    {
+        auto typed_event = static_cast<const TempoNotificationEvent*>(event);
+        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::TEMPO_CHANGED,
+                                                               typed_event->tempo(),
+                                                               typed_event->time()));
+    }
+    else if (event->is_time_sign_notification())
+    {
+        auto typed_event = static_cast<const TimeSignatureNotificationEvent*>(event);
+        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::TIME_SIGNATURE_CHANGED,
+                                                               to_external(typed_event->time_signature()),
+                                                               typed_event->time()));
+    }
+    else if (event->is_playing_mode_notification())
+    {
+        auto typed_event = static_cast<const PlayingModeNotificationEvent*>(event);
+        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::PLAYING_MODE_CHANGED,
+                                                               to_external(typed_event->mode()),
+                                                               typed_event->time()));
+    }
+    else if (event->is_sync_mode_notification())
+    {
+        auto typed_event = static_cast<const SyncModeNotificationEvent*>(event);
+        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::SYNC_MODE_CHANGED,
+                                                               to_external(typed_event->mode()),
+                                                               typed_event->time()));
+    }
 }
 
 void Controller::_notify_parameter_listeners(Event* event) const
@@ -165,6 +202,14 @@ void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* type
     }
 }
 
+void Controller::_notify_transport_listeners(const ext::TransportNotification& notification) const
+{
+    for (auto& listener : _transport_update_listeners)
+    {
+        listener->notification(&notification);
+    }
+}
+
 void Controller::_notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
                                              ext::ProcessorAction action) const
 {
@@ -182,7 +227,7 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
 {
     if (status == EventStatus::HANDLED_OK)
     {
-        SUSHI_LOG_INFO("Event {}, handled OK", event->id());
+        SUSHI_LOG_DEBUG("Event {}, handled OK", event->id());
     }
     else
     {

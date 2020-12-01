@@ -98,14 +98,8 @@ public:
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() const {return false;}
 
-    /* Is either ClippingNotification or AudioGraphNotification */
+    /* Convertible to EngineNotificationEvent */
     virtual bool is_engine_notification() const {return false;}
-
-    /* Convertible to ClippingNotification */
-    virtual bool is_clipping_notification() const {return false;}
-
-    /* Convertible to AudioGraphNotification */
-    virtual bool is_audio_graph_notification() const {return false;}
 
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() const {return false;}
@@ -408,7 +402,34 @@ private:
     int                 _program_no;
 };
 
-class ClippingNotificationEvent : public Event
+class EngineNotificationEvent : public Event
+{
+public:
+    bool is_engine_notification() const override {return true;}
+
+    /* Convertible to ClippingNotification */
+    virtual bool is_clipping_notification() const {return false;}
+
+    /* Convertible to AudioGraphNotification */
+    virtual bool is_audio_graph_notification() const {return false;}
+
+    /* Convertible to TempoNotification */
+    virtual bool is_tempo_notification() const {return false;}
+
+    /* Convertible to TimeSignatureNotification */
+    virtual bool is_time_sign_notification() const {return false;}
+
+    /* Convertible to PlayingModeNotification */
+    virtual bool is_playing_mode_notification() const {return false;}
+
+    /* Convertible to SyncModeNotification */
+    virtual bool is_sync_mode_notification() const {return false;}
+
+protected:
+    EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
+};
+
+class ClippingNotificationEvent : public EngineNotificationEvent
 {
 public:
     enum class ClipChannelType
@@ -416,11 +437,12 @@ public:
         INPUT,
         OUTPUT,
     };
-    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : Event(timestamp),
+    ClippingNotificationEvent(int channel,
+                              ClipChannelType channel_type,
+                              Time timestamp) : EngineNotificationEvent(timestamp),
                                                                                            _channel(channel),
                                                                                            _channel_type(channel_type) {}
     bool            is_clipping_notification() const override {return true;}
-    bool            is_engine_notification() const override {return true;}
     int             channel() const {return _channel;}
     ClipChannelType channel_type() const {return _channel_type;}
 
@@ -429,7 +451,7 @@ private:
     ClipChannelType _channel_type;
 };
 
-class AudioGraphNotificationEvent : public Event
+class AudioGraphNotificationEvent : public EngineNotificationEvent
 {
 public:
     enum class Action
@@ -445,13 +467,12 @@ public:
     AudioGraphNotificationEvent(Action action,
                                 ObjectId processor_id,
                                 ObjectId track_id,
-                                Time timestamp) : Event(timestamp),
+                                Time timestamp) : EngineNotificationEvent(timestamp),
                                                   _action(action),
                                                   _processor(processor_id),
                                                   _track(track_id) {}
 
     bool     is_audio_graph_notification() const override {return true;}
-    bool     is_engine_notification() const override {return true;}
     Action   action() const {return _action;}
     ObjectId processor() const {return _processor;}
     ObjectId track() const {return _track;}
@@ -460,6 +481,55 @@ private:
     Action   _action;
     ObjectId _processor;
     ObjectId _track;
+};
+
+class TempoNotificationEvent : public EngineNotificationEvent
+{
+public: TempoNotificationEvent(float tempo, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                              _tempo(tempo) {}
+
+    bool is_tempo_notification() const override {return true;}
+    float tempo() const {return _tempo;}
+
+private:
+    float _tempo;
+};
+
+class TimeSignatureNotificationEvent : public EngineNotificationEvent
+{
+public: TimeSignatureNotificationEvent(TimeSignature signature,
+                                       Time timestamp) : EngineNotificationEvent(timestamp),
+                                                         _signature(signature) {}
+
+    bool is_time_sign_notification() const override {return true;}
+    TimeSignature time_signature() const {return _signature;}
+
+private:
+    TimeSignature _signature;
+};
+
+class PlayingModeNotificationEvent : public EngineNotificationEvent
+{
+public: PlayingModeNotificationEvent(PlayingMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                         _mode(mode) {}
+
+    bool is_playing_mode_notification() const override {return true;}
+    PlayingMode mode() const {return _mode;}
+
+private:
+    PlayingMode _mode;
+};
+
+class SyncModeNotificationEvent : public EngineNotificationEvent
+{
+public: SyncModeNotificationEvent(SyncMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                   _mode(mode) {}
+
+    bool is_sync_mode_notification() const override {return true;}
+    SyncMode mode() const {return _mode;}
+
+private:
+    SyncMode _mode;
 };
 
 class AsynchronousWorkEvent : public Event
@@ -577,6 +647,7 @@ public:
 private:
     SyncMode _mode;
 };
+
 } // end namespace sushi
 
 #endif //SUSHI_CONTROL_EVENT_H
