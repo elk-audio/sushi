@@ -706,15 +706,10 @@ int OSCFrontend::process(Event* event)
     {
         _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
     }
-    else if (event->is_clipping_notification())
+    else if (event->is_engine_notification())
     {
-        _handle_clipping_notification(static_cast<ClippingNotificationEvent*>(event));
+        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
     }
-    else if (event->is_audio_graph_notification())
-    {
-        _handle_audio_graph_notification(static_cast<AudioGraphNotificationEvent*>(event));
-    }
-
     // Return statuses for notifications are not handled, so just return ok.
     return EventStatus::HANDLED_OK;
 }
@@ -809,7 +804,19 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
     return count > 0;
 }
 
-bool OSCFrontend::_handle_param_change_notification(const ParameterChangeNotificationEvent* event)
+void OSCFrontend::_handle_engine_notification(const EngineNotificationEvent* event)
+{
+    if (event->is_clipping_notification())
+    {
+        _handle_clipping_notification(static_cast<const ClippingNotificationEvent*>(event));
+    }
+    else if (event->is_audio_graph_notification())
+    {
+        _handle_audio_graph_notification(static_cast<const AudioGraphNotificationEvent*>(event));
+    }
+}
+
+void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotificationEvent* event)
 {
     const auto& node = _outgoing_connections.find(event->processor_id());
     if (node != _outgoing_connections.end())
@@ -820,11 +827,10 @@ bool OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
             lo_send(_osc_out_address, param_node->second.c_str(), "f", event->float_value());
             SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}", event->processor_id(), event->parameter_id(), event->float_value());
         }
-    };
-    return EventStatus::HANDLED_OK;
+    }
 }
 
-bool OSCFrontend::_handle_clipping_notification(const ClippingNotificationEvent* event)
+void OSCFrontend::_handle_clipping_notification(const ClippingNotificationEvent* event)
 {
     if (event->channel_type() == ClippingNotificationEvent::ClipChannelType::INPUT)
     {
@@ -834,10 +840,9 @@ bool OSCFrontend::_handle_clipping_notification(const ClippingNotificationEvent*
     {
         lo_send(_osc_out_address, "/engine/output_clip_notification", "i", event->channel());
     }
-    return EventStatus::HANDLED_OK;
 }
 
-bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationEvent* event)
+void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationEvent* event)
 {
     switch(event->action())
     {
@@ -890,7 +895,6 @@ bool OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
         default:
             break;
     }
-    return EventStatus::HANDLED_OK;
 }
 
 } // namespace control_frontend

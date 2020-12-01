@@ -98,7 +98,6 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                      typed_ev->midi_data(),
                                      timestamp);
         }
-        // TODO: Fill for all events
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
             auto typed_ev = rt_event.parameter_change_event();
@@ -125,6 +124,26 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                                         typed_ev->param_id(),
                                                         typed_ev->value(),
                                                         timestamp);
+        }
+        case RtEventType::TEMPO:
+        {
+            auto typed_event = rt_event.tempo_event();
+            return new TempoNotificationEvent(typed_event->tempo(), timestamp);
+        }
+        case RtEventType::TIME_SIGNATURE:
+        {
+            auto typed_event = rt_event.time_signature_event();
+            return new TimeSignatureNotificationEvent(typed_event->time_signature(), timestamp);
+        }
+        case RtEventType::PLAYING_MODE:
+        {
+            auto typed_event = rt_event.playing_mode_event();
+            return new PlayingModeNotificationEvent(typed_event->mode(), timestamp);
+        }
+        case RtEventType::SYNC_MODE:
+        {
+            auto typed_event = rt_event.sync_mode_event();
+            return new SyncModeNotificationEvent(typed_event->mode(), timestamp);
         }
         case RtEventType::ASYNC_WORK:
         {

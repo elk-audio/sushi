@@ -30,6 +30,8 @@
 #include "library/time.h"
 #include "library/types.h"
 #include "library/rt_event.h"
+#include "library/rt_event_pipe.h"
+#include "engine/base_event_dispatcher.h"
 
 /* Forward declare Link, then we can include link.hpp from transport.cpp and
  * nowhere else, it pulls in a lot of dependencies that slow down compilation
@@ -52,7 +54,7 @@ constexpr float DEFAULT_TEMPO = 120;
 class Transport
 {
 public:
-    explicit Transport(float sample_rate);
+    explicit Transport(float sample_rate, RtEventPipe* rt_event_pipe);
     ~Transport();
 
     /**
@@ -83,7 +85,8 @@ public:
     /**
      * @brief Set the time signature used in the engine. Called from a non-realtime thread.
      * @param signature The new time signature to use
-     * @param update_via_event true true if the engine passes the update as an RtEvent
+     * @param update_via_event Set to true if the engine is running in realtime and will
+     *                         pass the update as an RtEvent
      */
     void set_time_signature(TimeSignature signature, bool update_via_event);
 
@@ -91,7 +94,8 @@ public:
      * @brief Set the tempo of the engine in beats (quarter notes) per minute. Called from
      *        a non-realtime thread.
      * @param tempo The new tempo in beats per minute
-     * @param update_via_event true if the engine passes the update as an RtEvent
+     * @param update_via_event Set to true if the engine is running in realtime and will
+     *                         pass the update as an RtEvent
      */
     void set_tempo(float tempo, bool update_via_event);
 
@@ -105,7 +109,8 @@ public:
      * @brief Set the playing mode, i.e. playing, stopped, recording etc.. Called from
      *        a non-realtime thread.
      * @param mode The new playing mode.
-     * @param update_via_event true if the engine passes the update as an RtEvent
+     * @param update_via_event Set to true if the engine is running in realtime and will
+     *                         pass the update as an RtEvent
      */
     void set_playing_mode(PlayingMode mode, bool update_via_event);
 
@@ -232,6 +237,9 @@ private:
     SyncMode        _syncmode{SyncMode::INTERNAL};
     TimeSignature   _time_signature{4, 4};
     PlayStateChange _state_change{PlayStateChange::STARTING};
+
+    RtEventPipe*    _rt_event_dispatcher;
+    //dispatcher::BaseEventDispatcher* _event_dispatcher;
 
     std::unique_ptr<ableton::Link>  _link_controller;
 };

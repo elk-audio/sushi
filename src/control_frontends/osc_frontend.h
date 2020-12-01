@@ -180,8 +180,6 @@ public:
     void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
 
 private:
-    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
-
     void _completion_callback(Event* event, int return_status) override;
 
     void _start_server();
@@ -198,9 +196,13 @@ private:
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
                                                                         const std::string& osc_path_prefix);
 
-    bool _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
+    void _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
 
-    bool _handle_clipping_notification(const ClippingNotificationEvent* event);
+    void _handle_engine_notification(const EngineNotificationEvent* event);
+
+    void _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+
+    void _handle_clipping_notification(const ClippingNotificationEvent* event);
 
     lo_server_thread _osc_server {nullptr};
     int _receive_port;

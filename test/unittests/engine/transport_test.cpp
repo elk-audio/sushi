@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "engine/transport.cpp"
+#include "library/rt_event_fifo.h"
 
 using namespace sushi;
 using namespace sushi::engine;
@@ -20,8 +21,8 @@ protected:
 
     void TearDown()
     { }
-
-    Transport _module_under_test{TEST_SAMPLERATE};
+    RtEventFifo<10> _rt_event_output;
+    Transport _module_under_test{TEST_SAMPLERATE, &_rt_event_output};
 };
 
 
