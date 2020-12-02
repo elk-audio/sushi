@@ -240,7 +240,6 @@ private:
     PlayStateChange _state_change{PlayStateChange::STARTING};
 
     RtEventPipe*    _rt_event_dispatcher;
-    //dispatcher::BaseEventDispatcher* _event_dispatcher;
 
     std::unique_ptr<ableton::Link>  _link_controller;
 };
