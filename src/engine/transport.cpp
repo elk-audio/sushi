@@ -279,8 +279,14 @@ void Transport::_update_internal_sync(int64_t samples)
 void Transport::_update_link_sync(Time timestamp)
 {
     auto session = _link_controller->captureAudioSessionState();
-    _tempo = static_cast<float>(session.tempo());
-    _set_tempo = _tempo;
+    auto tempo = static_cast<float>(session.tempo());
+    if (tempo != _set_tempo)
+    {
+        _set_tempo = tempo;
+        // Notify new tempo
+        _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, tempo));
+    }
+    _tempo = tempo;
 
     if (session.isPlaying() != this->playing())
     {
@@ -288,6 +294,8 @@ void Transport::_update_link_sync(Time timestamp)
         _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = new_playmode;
         _set_playmode = new_playmode;
+        // Notify new playing mode
+        _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
@@ -302,6 +310,7 @@ void Transport::_update_link_sync(Time timestamp)
      * the session here as that would cause a mode switch. Instead all changes need
      * to be made from the non rt thread */
 }
+
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 void Transport::_set_link_playing(bool playing)
 {
@@ -326,7 +335,7 @@ void Transport::_set_link_quantum(TimeSignature signature)
     auto session = _link_controller->captureAppSessionState();
     if (session.isPlaying())
     {
-        // TODO - Consider what to do for non-integer quantums. Multiply with gcd until we get an integer ratio?
+        // TODO - Consider what to do for non-integer quanta. Multiply with gcd until we get an integer ratio?
         int quantum = std::max(1, (4 * signature.denominator) / signature.numerator);
         session.requestBeatAtTime(_beat_count, _time, quantum);
         _link_controller->commitAppSessionState(session);
