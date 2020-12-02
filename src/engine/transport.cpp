@@ -20,6 +20,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 
 #include "link_include.h"
 
@@ -43,7 +44,7 @@ void peer_callback([[maybe_unused]] size_t peers)
 
 void tempo_callback([[maybe_unused]] double tempo)
 {
-    SUSHI_LOG_INFO("Ableton link reports tempo is now {} bpm ", tempo);
+    SUSHI_LOG_DEBUG("Ableton link reports tempo is now {} bpm ", tempo);
 }
 
 void start_stop_callback([[maybe_unused]] bool playing)
@@ -51,6 +52,10 @@ void start_stop_callback([[maybe_unused]] bool playing)
     SUSHI_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
 
+inline bool valid_time_signature(const TimeSignature& sig)
+{
+    return sig.numerator > 0 && sig.denominator > 0;
+}
 
 Transport::Transport(float sample_rate,
                      RtEventPipe* rt_event_pipe) : _samplerate(sample_rate),
@@ -79,8 +84,10 @@ void Transport::set_time(Time timestamp, int64_t samples)
         case SyncMode::MIDI:       // Midi and Gate not implemented, so treat like internal
         case SyncMode::GATE_INPUT:
         case SyncMode::INTERNAL:
+        {
             _update_internal_sync(samples - prev_samples);
             break;
+        }
 
         case SyncMode::ABLETON_LINK:
         {
@@ -95,26 +102,40 @@ void Transport::process_event(const RtEvent& event)
     switch (event.type())
     {
         case RtEventType::TEMPO:
-            _set_tempo = event.tempo_event()->tempo();
+            _set_tempo = std::clamp(event.tempo_event()->tempo(), MIN_TEMPO, MAX_TEMPO);
             break;
 
         case RtEventType::TIME_SIGNATURE:
-            _time_signature = event.time_signature_event()->time_signature();
+        {
+            auto time_signature = event.time_signature_event()->time_signature();
+            if (time_signature != _time_signature && valid_time_signature(time_signature))
+            {
+                _time_signature = time_signature;
+                _rt_event_dispatcher->send_event(RtEvent::make_time_signature_event(0, _time_signature));
+            }
             break;
+        }
 
         case RtEventType::PLAYING_MODE:
             _set_playmode = event.playing_mode_event()->mode();
             break;
 
         case RtEventType::SYNC_MODE:
-            _syncmode = event.sync_mode_event()->mode();
+        {
+            auto mode = event.sync_mode_event()->mode();
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
-            if (_syncmode == SyncMode::ABLETON_LINK)
+            if (mode == SyncMode::ABLETON_LINK)
             {
-                _syncmode = SyncMode::INTERNAL;
+                mode = SyncMode::INTERNAL;
             }
 #endif
+            if (mode != _syncmode)
+            {
+                _syncmode = mode;
+                _rt_event_dispatcher->send_event(RtEvent::make_sync_mode_event(0, _syncmode));
+            }
             break;
+        }
 
         default:
             break;
@@ -123,18 +144,22 @@ void Transport::process_event(const RtEvent& event)
 
 void Transport::set_time_signature(TimeSignature signature, bool update_via_event)
 {
-    assert(signature.numerator > 0);
-    assert(signature.denominator > 0);
-    if (update_via_event == false)
+    if (valid_time_signature(signature))
     {
-        _time_signature = signature;
+        if (update_via_event == false)
+        {
+            _time_signature = signature;
+        }
+        if (_link_controller->isEnabled())
+        {
+            _set_link_quantum(signature);
+        }
     }
-    //auto state = _link_controller->captureAppSessionState();
-    //state.
 }
 
 void Transport::set_tempo(float tempo, bool update_via_event)
 {
+    tempo = std::clamp(tempo, MIN_TEMPO, MAX_TEMPO);
     if (update_via_event == false)
     {
         _set_tempo = tempo;
@@ -285,8 +310,8 @@ void Transport::_set_link_playing(bool playing)
     if (playing)
     {
         session.requestBeatAtTime(_beat_count, _time, _beats_per_bar);
+        _link_controller->commitAppSessionState(session);
     }
-    _link_controller->commitAppSessionState(session);
 }
 
 void Transport::_set_link_tempo(float tempo)
@@ -295,9 +320,22 @@ void Transport::_set_link_tempo(float tempo)
     state.setTempo(tempo, this->current_process_time());
     _link_controller->commitAudioSessionState(state);
 }
+
+void Transport::_set_link_quantum(TimeSignature signature)
+{
+    auto session = _link_controller->captureAppSessionState();
+    if (session.isPlaying())
+    {
+        // TODO - Consider what to do for non-integer quantums. Multiply with gcd until we get an integer ratio?
+        int quantum = std::max(1, (4 * signature.denominator) / signature.numerator);
+        session.requestBeatAtTime(_beat_count, _time, quantum);
+        _link_controller->commitAppSessionState(session);
+    }
+}
 #else
 void Transport::_set_link_playing(bool /*playing*/) {}
 void Transport::_set_link_tempo(float /*tempo*/) {}
+void Transport::_set_link_quantum(TimeSignature /*signature*/) {}
 #endif
 
 
