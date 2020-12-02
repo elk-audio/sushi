@@ -219,6 +219,7 @@ private:
     void _update_link_sync(Time timestamp);
     void _set_link_playing(bool playing);
     void _set_link_tempo(float tempo);
+    void _set_link_quantum(TimeSignature signature);
 
     int64_t         _sample_count{0};
     Time            _time{0};
