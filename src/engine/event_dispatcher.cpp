@@ -25,18 +25,18 @@
 namespace sushi {
 namespace dispatcher {
 
-constexpr auto PRINT_TIMING_INTERVAL = std::chrono::seconds(5);
+constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
                                  RtSafeRtEventFifo* out_rt_queue) : _running{false},
-                                                              _engine{engine},
-                                                              _in_rt_queue{in_rt_queue},
-                                                              _out_rt_queue{out_rt_queue},
-                                                              _worker{engine, this},
-                                                              _event_timer{engine->sample_rate()}
+                                                                    _engine{engine},
+                                                                    _in_rt_queue{in_rt_queue},
+                                                                    _out_rt_queue{out_rt_queue},
+                                                                    _worker{engine, this},
+                                                                    _event_timer{engine->sample_rate()}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
@@ -348,7 +348,7 @@ int Worker::process(Event*event)
 
 void Worker::_worker()
 {
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> print_timing_counter;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> timing_update_counter;
     do
     {
         auto start_time = std::chrono::system_clock::now();
@@ -378,10 +378,10 @@ void Worker::_worker()
             }
             delete (event);
         }
-        if (start_time > print_timing_counter + PRINT_TIMING_INTERVAL)
+        if (start_time > timing_update_counter + TIMING_UPDATE_INTERVAL)
         {
-            print_timing_counter = start_time;
-            _engine->print_timings_to_log();
+            timing_update_counter = start_time;
+            _engine->update_timings();
         }
 
         std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);

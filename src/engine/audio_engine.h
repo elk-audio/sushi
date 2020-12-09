@@ -450,7 +450,7 @@ public:
     /**
      * @brief Print the current processor timings (in enabled) in the log
      */
-    void print_timings_to_log() override;
+    void update_timings() override;
 
 private:
     enum class Direction : bool
@@ -557,7 +557,7 @@ private:
     HostControl _host_control{nullptr, &_transport};
 
     performance::PerformanceTimer _process_timer;
-    bool _timings_enabled{false};
+    int  _log_timing_print_counter{0};
 
     bool _input_clip_detection_enabled{false};
     bool _output_clip_detection_enabled{false};

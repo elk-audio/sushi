@@ -30,7 +30,7 @@ namespace performance {
 
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
-constexpr float AVERAGEING_FACTOR = 0.3f;
+constexpr float AVERAGING_FACTOR = 0.5f;
 
 PerformanceTimer::~PerformanceTimer()
 {
@@ -136,7 +136,7 @@ ProcessTimings PerformanceTimer::_merge_timings(ProcessTimings prev_timings, Pro
     }
     else
     {
-        prev_timings.avg_case = (1.0f - AVERAGEING_FACTOR) * prev_timings.avg_case + AVERAGEING_FACTOR * new_timings.avg_case;
+        prev_timings.avg_case = (1.0f - AVERAGING_FACTOR) * prev_timings.avg_case + AVERAGING_FACTOR * new_timings.avg_case;
     }
     prev_timings.min_case = std::min(prev_timings.min_case, new_timings.min_case);
     prev_timings.max_case = std::max(prev_timings.max_case, new_timings.max_case);

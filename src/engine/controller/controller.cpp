@@ -88,6 +88,8 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::TRANSPORT_UPDATE:
             _transport_update_listeners.push_back(listener);
             break;
+        case ext::NotificationType::CPU_TIMING_UPDATE:
+            _cpu_timing_update_listeners.push_back(listener);
         default:
             break;
     }
@@ -118,34 +120,8 @@ void Controller::_handle_engine_notifications(const EngineNotificationEvent* eve
 {
     if (event->is_audio_graph_notification())
     {
-        auto typed_event = static_cast<const AudioGraphNotificationEvent*>(event);
-        switch (typed_event->action())
-        {
-            case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK:
-            {
-                _notify_processor_listeners(typed_event, ext::ProcessorAction::ADDED);
-                break;
-            }
-            case AudioGraphNotificationEvent::Action::PROCESSOR_REMOVED_FROM_TRACK:
-            {
-                _notify_processor_listeners(typed_event, ext::ProcessorAction::DELETED);
-                break;
-            }
-            case AudioGraphNotificationEvent::Action::TRACK_CREATED:
-            {
-                _notify_track_listeners(typed_event, ext::TrackAction::ADDED);
-                break;
-            }
-            case AudioGraphNotificationEvent::Action::TRACK_DELETED:
-            {
-                _notify_track_listeners(typed_event, ext::TrackAction::DELETED);
-                break;
-            }
-            case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
-            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
-                // External listeners are only notified once processors are added to a track
-                break;
-        }
+        _handle_audio_graph_notifications(static_cast<const AudioGraphNotificationEvent*>(event));
+
     }
     else if (event->is_tempo_notification())
     {
@@ -174,6 +150,42 @@ void Controller::_handle_engine_notifications(const EngineNotificationEvent* eve
         _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::SYNC_MODE_CHANGED,
                                                                to_external(typed_event->mode()),
                                                                typed_event->time()));
+    }
+    else if (event->is_timing_notification())
+    {
+        auto typed_event = static_cast<const EngineTimingNotificationEvent*>(event);
+        _notify_timing_listeners(typed_event);
+    }
+}
+
+void Controller::_handle_audio_graph_notifications(const AudioGraphNotificationEvent* event)
+{
+    switch (event->action())
+    {
+        case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK:
+        {
+            _notify_processor_listeners(event, ext::ProcessorAction::ADDED);
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::PROCESSOR_REMOVED_FROM_TRACK:
+        {
+            _notify_processor_listeners(event, ext::ProcessorAction::DELETED);
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::TRACK_CREATED:
+        {
+            _notify_track_listeners(event, ext::TrackAction::ADDED);
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::TRACK_DELETED:
+        {
+            _notify_track_listeners(event, ext::TrackAction::DELETED);
+            break;
+        }
+        case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
+        case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+            // External listeners are only notified once processors are added to a track
+            break;
     }
 }
 
@@ -239,6 +251,16 @@ void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 {
     _osc_controller_impl.set_osc_frontend(osc_frontend);
 }
+
+void Controller::_notify_timing_listeners(const EngineTimingNotificationEvent* event) const
+{
+    ext::CpuTimingNotification notification(to_external(event->timings()), event->time());
+    for (auto& listener : _cpu_timing_update_listeners)
+    {
+        listener->notification(&notification);
+    }
+}
+
 
 }// namespace engine
 }// namespace sushi
