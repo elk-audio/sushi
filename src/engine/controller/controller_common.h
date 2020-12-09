@@ -22,6 +22,7 @@
 #define SUSHI_CONTROLLER_COMMON_H
 
 #include "control_interface.h"
+#include "library/base_performance_timer.h"
 
 namespace sushi {
 namespace engine {
@@ -72,6 +73,13 @@ inline sushi::SyncMode to_internal(const ext::SyncMode mode)
         case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
         default:                      return sushi::SyncMode::INTERNAL;
     }
+}
+
+inline ext::CpuTimings to_external(const sushi::performance::ProcessTimings& timings)
+{
+    return {.avg = timings.avg_case,
+            .min = timings.min_case,
+            .max = timings.max_case};
 }
 
 inline ext::TimeSignature to_external(sushi::TimeSignature internal)

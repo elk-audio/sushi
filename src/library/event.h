@@ -23,13 +23,12 @@
 
 #include <string>
 
-#include <control_interface.h>
-
 #include "types.h"
 #include "id_generator.h"
 #include "library/rt_event.h"
 #include "library/time.h"
 #include "library/types.h"
+#include "base_performance_timer.h"
 
 namespace sushi {
 namespace dispatcher
@@ -425,6 +424,9 @@ public:
     /* Convertible to SyncModeNotification */
     virtual bool is_sync_mode_notification() const {return false;}
 
+    /* Convertible to TimingNotification */
+    virtual bool is_timing_notification() const {return false;}
+
 protected:
     EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
 };
@@ -532,6 +534,20 @@ private:
     SyncMode _mode;
 };
 
+class EngineTimingNotificationEvent : public EngineNotificationEvent
+{
+public:
+    EngineTimingNotificationEvent(const performance::ProcessTimings& timings,
+                                  Time timestamp) : EngineNotificationEvent(timestamp),
+                                                    _timings(timings){}
+
+    bool is_timing_notification() const override {return true;}
+    const performance::ProcessTimings& timings() const {return _timings;}
+
+private:
+    performance::ProcessTimings _timings;
+};
+
 class AsynchronousWorkEvent : public Event
 {
 public:
@@ -574,6 +590,7 @@ public:
     AsynchronousProcessorWorkCompletionEvent(int return_value,
                                              ObjectId processor,
                                              EventId rt_event_id,
+
                                              Time timestamp) : Event(timestamp),
                                                                _return_value(return_value),
                                                                _rt_processor(processor),
