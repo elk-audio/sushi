@@ -40,14 +40,16 @@ public:
 
     void configure(float sample_rate) override;
 
+    void process_event(const RtEvent& event) override;
+
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    void _process_peak_detection(const ChunkSampleBuffer& in, bool linked);
+    void _process_peak_detection(const ChunkSampleBuffer& in, bool linked, bool send_only_peaks);
 
     void _process_clip_detection(const ChunkSampleBuffer& in, bool linked);
 
-    void _update_refresh_interval(float sample_rate);
+    void _update_refresh_interval(float rate, float sample_rate);
 
     // Output parameters
     std::array<FloatParameterValue*, MAX_METERED_CHANNELS> _level_parameters;
@@ -55,6 +57,9 @@ private:
 
     // Input parameters
     BoolParameterValue*  _link_channels_parameter;
+    BoolParameterValue*  _send_peaks_only_parameter;
+    FloatParameterValue* _update_rate_parameter;
+    ObjectId             _update_rate_id;
 
     uint64_t _clip_hold_samples;
     std::array<uint64_t, MAX_METERED_CHANNELS> _clip_hold_count{ {0, 0}};
@@ -62,6 +67,9 @@ private:
 
     int _refresh_interval;
     int _sample_count{0};
+    bool _peak_hysteresis{true};
+
+    float _sample_rate;
 
     std::array<ValueSmootherFilter<float>, MAX_METERED_CHANNELS> _smoothers;
 

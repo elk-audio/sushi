@@ -26,15 +26,12 @@ namespace sushi {
 namespace peak_meter_plugin {
 
 constexpr int MAX_CHANNELS = 16;
-/* Number of updates per second */
-constexpr float REFRESH_RATE = 25;
-constexpr auto REFRESH_TIME = std::chrono::milliseconds(3 * 1000 / static_cast<int>(REFRESH_RATE));
+constexpr float DEFAULT_REFRESH_RATE = 25;
+constexpr auto REFRESH_TIME = std::chrono::milliseconds(3 * 1000 / static_cast<int>(DEFAULT_REFRESH_RATE));
 
 constexpr auto CLIP_HOLD_TIME = std::chrono::seconds(5);
-/* fc in Hz, Tweaked by eyeballing mostly */
-constexpr float SMOOTHING_CUTOFF = 2.3;
-/* Represents -120dB */
 
+// Full range of the output parameters is -120dB to +24dB
 constexpr float OUTPUT_MIN_DB = -120.0f;
 constexpr float OUTPUT_MAX_DB = 24.0f;
 constexpr float OUTPUT_MIN = 1.0e-6f; // -120dB
@@ -68,10 +65,17 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     _clip_parameters[RIGHT_CHANNEL_INDEX] = register_bool_parameter("left_clip", "Clip (right)", "", false);
 
     _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels", "", false);
+    _send_peaks_only_parameter = register_bool_parameter("peaks_only", "Peaks Only", "", false);
+    _update_rate_parameter = register_float_parameter("update_rate", "Update Rate", "/s", DEFAULT_REFRESH_RATE,
+                                                      0.1, 25, new FloatParameterPreProcessor(0.1, DEFAULT_REFRESH_RATE));
+
+    _update_rate_id = _update_rate_parameter->descriptor()->id();
 
     for ([[maybe_unused]] const auto& i : _level_parameters) { assert(i);}
     for ([[maybe_unused]] const auto& i : _clip_parameters) { assert(i);}
     assert(_link_channels_parameter);
+    assert(_send_peaks_only_parameter);
+    assert(_update_rate_parameter);
 }
 
 void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -79,24 +83,38 @@ void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     bypass_process(in_buffer, out_buffer);
 
     bool linked = _link_channels_parameter->processed_value();
-    _process_peak_detection(in_buffer, linked);
+    bool send_only_peaks = _send_peaks_only_parameter->processed_value();
+    _process_peak_detection(in_buffer, linked, send_only_peaks);
     _process_clip_detection(in_buffer, linked);
 }
 
 ProcessorReturnCode PeakMeterPlugin::init(float sample_rate)
 {
-    _update_refresh_interval(sample_rate);
+    _sample_rate = sample_rate;
+    _update_refresh_interval(DEFAULT_REFRESH_RATE, sample_rate);
     return ProcessorReturnCode::OK;
 }
 
 void PeakMeterPlugin::configure(float sample_rate)
 {
-    _update_refresh_interval(sample_rate);
+    _sample_rate = sample_rate;
+    _update_refresh_interval(_update_rate_parameter->processed_value(), sample_rate);
 }
 
-void PeakMeterPlugin::_update_refresh_interval(float sample_rate)
+void PeakMeterPlugin::process_event(const RtEvent& event)
 {
-    _refresh_interval = static_cast<int>(std::round(sample_rate / REFRESH_RATE));
+    InternalPlugin::process_event(event);
+
+    if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE &&
+        event.parameter_change_event()->param_id() == _update_rate_id)
+    {
+        _update_refresh_interval(_update_rate_parameter->processed_value(), _sample_rate);
+    }
+}
+
+void PeakMeterPlugin::_update_refresh_interval(float rate, float sample_rate)
+{
+    _refresh_interval = static_cast<int>(std::round(sample_rate / rate));
     _clip_hold_samples = sample_rate * CLIP_HOLD_TIME.count();
     for (auto& i :  _smoothers)
     {
@@ -104,7 +122,7 @@ void PeakMeterPlugin::_update_refresh_interval(float sample_rate)
     }
 }
 
-void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool linked)
+void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool linked, bool send_only_peaks)
 {
     float peak[MAX_METERED_CHANNELS] = {0,0};
     int channels = std::min(MAX_METERED_CHANNELS, in.channel_count());
@@ -127,6 +145,10 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
     {
         _sample_count -= _refresh_interval;
         update = true;
+        if (send_only_peaks)
+        {
+            update = update && _peak_hysteresis;
+        }
     }
 
     for (int ch = 0; ch < channels; ++ch)
@@ -136,6 +158,7 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
         if (value > filter.value())
         {
             filter.set_direct(value);
+            _peak_hysteresis = true;
         }
         else
         {
@@ -145,8 +168,9 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
         if (update)
         {
             set_parameter_and_notify(_level_parameters[ch], to_normalised_dB(filter.value()));
+            _peak_hysteresis = false;
         }
-        _smoothers[ch].next_value();
+        filter.next_value();
     }
 }
 
