@@ -150,6 +150,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/performance_timer.cpp
                       src/library/parameter_dump.cpp
                       src/library/processor.cpp
+                      src/library/plugin_registry.cpp
+                      src/library/internal_processor_factory.cpp
                       src/library/vst2x/vst2x_wrapper.cpp
                       src/library/vst3x/vst3x_wrapper.cpp
                       src/library/lv2/lv2_wrapper.cpp
@@ -195,6 +197,9 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/midi_encoder.h
                         src/library/rt_event.h
                         src/library/processor.h
+                        src/library/base_processor_factory.h
+                        src/library/plugin_registry.h
+                        src/library/internal_processor_factory.h
                         src/library/performance_timer.h
                         src/library/internal_plugin.h
                         src/library/rt_event_fifo.h
@@ -259,18 +264,22 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
 endif()
 
 if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.cpp
-                                src/library/vst2x/vst2x_host_callback.h
-                                src/library/vst2x/vst2x_plugin_loader.cpp
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.h
                                 src/library/vst2x/vst2x_plugin_loader.h
-                                src/library/vst2x/vst2x_midi_event_fifo.h)
+                                src/library/vst2x/vst2x_midi_event_fifo.h
+                                src/library/vst2x/vst2x_processor_factory.h
+                                src/library/vst2x/vst2x_host_callback.cpp
+                                src/library/vst2x/vst2x_plugin_loader.cpp
+                                src/library/vst2x/vst2x_processor_factory.cpp)
 endif()
 
 if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.cpp
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.h
+                                src/library/vst3x/vst3x_utils.h
+                                src/library/vst3x/vst3x_processor_factory.h
+                                src/library/vst3x/vst3x_host_app.cpp
                                 src/library/vst3x/vst3x_utils.cpp
-                                src/library/vst3x/vst3x_host_app.h
-                                src/library/vst3x/vst3x_utils.h)
+                                src/library/vst3x/vst3x_processor_factory.cpp)
 endif()
 
 if (${WITH_LV2})
@@ -280,12 +289,14 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_model.h
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
+                               src/library/lv2/lv2_processor_factory.h
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp
-                               src/library/lv2/lv2_control.cpp)
+                               src/library/lv2/lv2_control.cpp
+                               src/library/lv2/lv2_processor_factory.cpp)
 endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"

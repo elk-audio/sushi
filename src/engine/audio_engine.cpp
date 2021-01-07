@@ -26,22 +26,7 @@
 
 #include "audio_engine.h"
 #include "logging.h"
-#include "plugins/passthrough_plugin.h"
-#include "plugins/gain_plugin.h"
-#include "plugins/lfo_plugin.h"
-#include "plugins/equalizer_plugin.h"
-#include "plugins/arpeggiator_plugin.h"
-#include "plugins/sample_player_plugin.h"
-#include "plugins/peak_meter_plugin.h"
-#include "plugins/transposer_plugin.h"
-#include "plugins/step_sequencer_plugin.h"
-#include "plugins/cv_to_control_plugin.h"
-#include "plugins/control_to_cv_plugin.h"
-#include "plugins/wav_writer_plugin.h"
-#include "plugins/mono_summing_plugin.h"
-#include "library/vst2x/vst2x_wrapper.h"
-#include "library/vst3x/vst3x_wrapper.h"
-#include "library/lv2/lv2_wrapper.h"
+
 
 namespace sushi {
 namespace engine {
@@ -615,73 +600,47 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     return EngineReturnStatus::OK;
 }
 
-std::pair <EngineReturnStatus, ObjectId> AudioEngine::load_plugin(const std::string &plugin_uid,
-                                                                  const std::string &plugin_name,
-                                                                  const std::string &plugin_path,
-                                                                  PluginType plugin_type)
+std::pair<EngineReturnStatus, ObjectId>
+AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
 {
-    std::shared_ptr<Processor> plugin;
-    switch (plugin_type)
-    {
-        case PluginType::INTERNAL:
-            plugin = create_internal_plugin(plugin_uid, _host_control);
-            if(plugin == nullptr)
-            {
-                SUSHI_LOG_ERROR("Unrecognised internal plugin \"{}\"", plugin_uid);
-                return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
-            }
-            break;
+    auto [processor_status, processor] = _plugin_registry.new_instance(plugin_info, _host_control, _sample_rate);
 
-        case PluginType::VST2X:
-            plugin = std::make_shared<vst2::Vst2xWrapper>(_host_control, plugin_path);
-            break;
-
-        case PluginType::VST3X:
-            plugin = std::make_shared<vst3::Vst3xWrapper>(_host_control, plugin_path, plugin_uid);
-            break;
-
-        case PluginType::LV2:
-            plugin = std::make_shared<lv2::LV2_Wrapper>(_host_control, plugin_path);
-            break;
-    }
-
-    auto processor_status = plugin->init(_sample_rate);
     if (processor_status != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to initialize plugin {}", plugin_name);
+        SUSHI_LOG_ERROR("Failed to initialize processor {}", processor_name);
         return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
     }
-    EngineReturnStatus status = _register_processor(plugin, plugin_name);
+    EngineReturnStatus status = _register_processor(processor, processor_name);
     if(status != EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to register plugin {}", plugin_name);
+        SUSHI_LOG_ERROR("Failed to register processor {}", processor_name);
         return {status, ObjectId(0)};
     }
 
-    plugin->set_enabled(true);
+    processor->set_enabled(true);
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
-        auto insert_event = RtEvent::make_insert_processor_event(plugin.get());
+        auto insert_event = RtEvent::make_insert_processor_event(processor.get());
         _send_control_event(insert_event);
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted)
         {
-            SUSHI_LOG_ERROR("Failed to insert plugin {} to processing part", plugin_name);
-            _deregister_processor(plugin.get());
+            SUSHI_LOG_ERROR("Failed to insert processor {} to processing part", processor_name);
+            _deregister_processor(processor.get());
             return {EngineReturnStatus::INVALID_PROCESSOR, ObjectId(0)};
         }
     }
     else
     {
         // If the engine is not running in realtime mode we can add the processor directly
-        _insert_processor_in_realtime_part(plugin.get());
+        _insert_processor_in_realtime_part(processor.get());
     }
     _event_dispatcher->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
-                                                                  plugin->id(),
+                                                                  processor->id(),
                                                                   0,
                                                                   IMMEDIATE_PROCESS));
-    return {EngineReturnStatus::OK, plugin->id()};
+    return {EngineReturnStatus::OK, processor->id()};
 }
 
 EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
@@ -1255,63 +1214,6 @@ RealtimeState update_state(RealtimeState current_state)
         return RealtimeState::STOPPED;
     }
     return current_state;
-}
-
-std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control)
-{
-    if (uid == "sushi.testing.passthrough")
-    {
-        return std::make_shared<passthrough_plugin::PassthroughPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.gain")
-    {
-        return std::make_shared<gain_plugin::GainPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.lfo")
-    {
-        return std::make_shared<lfo_plugin::LfoPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.equalizer")
-    {
-        return std::make_shared<equalizer_plugin::EqualizerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.sampleplayer")
-    {
-        return std::make_shared<sample_player_plugin::SamplePlayerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        return std::make_shared<arpeggiator_plugin::ArpeggiatorPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.peakmeter")
-    {
-        return std::make_shared<peak_meter_plugin::PeakMeterPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.transposer")
-    {
-        return std::make_shared<transposer_plugin::TransposerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.step_sequencer")
-    {
-        return std::make_shared<step_sequencer_plugin::StepSequencerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.cv_to_control")
-    {
-        return std::make_shared<cv_to_control_plugin::CvToControlPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.control_to_cv")
-    {
-        return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.wav_writer")
-    {
-        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.mono_summing")
-    {
-        return std::make_shared<mono_summing_plugin::MonoSummingPlugin>(host_control);
-    }
-    return nullptr;
 }
 
 } // namespace engine

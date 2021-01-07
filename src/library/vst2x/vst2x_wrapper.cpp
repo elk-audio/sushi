@@ -332,7 +332,6 @@ void Vst2xWrapper::process_event(const RtEvent& event)
     {
         SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
-
 }
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -412,7 +411,6 @@ VstTimeInfo* Vst2xWrapper::time_info()
     }
     return &_time_info;
 }
-
 
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {

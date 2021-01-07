@@ -76,6 +76,24 @@ enum class PluginType
     LV2
 };
 
+/**
+ * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
+ */
+struct PluginInfo
+{
+    std::string uid;
+    std::string path;
+    PluginType type;
+
+    bool operator == (const PluginInfo& other) const
+    {
+        return (uid == other.uid) &&
+               (path == other.path) &&
+               (type == other.type);
+    }
+};
+
+
 enum class RealtimeState
 {
     STARTING,
@@ -276,10 +294,8 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string& /*uid*/,
-                                                                 const std::string& /*name*/,
-                                                                 const std::string& /*file*/,
-                                                                 PluginType /*plugin_type*/)
+    virtual std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& /*plugin_info*/,
+                                                                      const std::string& /*processor_name*/)
     {
         return {EngineReturnStatus::OK, ObjectId(0)};
     }
