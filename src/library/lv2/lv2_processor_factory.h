@@ -38,10 +38,13 @@ public:
                                                                             HostControl& host_control,
                                                                             float sample_rate) override
     {
-        auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path);
+        auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path, _world);
         auto processor_status = processor->init(sample_rate);
         return {processor_status, processor};
     }
+
+private:
+    LilvWorld* _world{nullptr};
 };
 
 

@@ -68,7 +68,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri);
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, LilvWorld* world);
 
     virtual ~LV2_Wrapper() = default;
 
@@ -204,6 +204,8 @@ private:
     static constexpr float _max_normalized{1.0f};
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
+
+    LilvWorld* _world{nullptr};
 };
 
 } // end namespace lv2

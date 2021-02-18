@@ -48,9 +48,11 @@ namespace lv2 {
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 LV2_Wrapper::LV2_Wrapper(HostControl host_control,
-                         const std::string& lv2_plugin_uri):
+                         const std::string& lv2_plugin_uri,
+                         LilvWorld* world):
                          Processor(host_control),
-                         _plugin_path(lv2_plugin_uri)
+                         _plugin_path(lv2_plugin_uri),
+                         _world(world)
 {
     _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
     _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
@@ -58,7 +60,7 @@ LV2_Wrapper::LV2_Wrapper(HostControl host_control,
 
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _model = std::make_unique<Model>(sample_rate, this);
+    _model = std::make_unique<Model>(sample_rate, this, _world);
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
