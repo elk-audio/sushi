@@ -51,10 +51,14 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    Vst3xWrapper(HostControl host_control, const std::string& vst_plugin_path, const std::string& plugin_name) :
+    Vst3xWrapper(HostControl host_control,
+                 const std::string& vst_plugin_path,
+                 const std::string& plugin_name,
+                 SushiHostApplication* host_app) :
             Processor(host_control),
             _plugin_load_name(plugin_name),
-            _plugin_load_path(vst_plugin_path)
+            _plugin_load_path(vst_plugin_path),
+            _instance(host_app)
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;

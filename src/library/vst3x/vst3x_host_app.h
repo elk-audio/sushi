@@ -74,7 +74,7 @@ class PluginInstance
 public:
     SUSHI_DECLARE_NON_COPYABLE(PluginInstance);
 
-    PluginInstance();
+    PluginInstance(SushiHostApplication* host_app);
     ~PluginInstance();
 
     bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
@@ -94,7 +94,9 @@ private:
 
     std::string _name;
     std::string _vendor;
-    SushiHostApplication _host_app;
+
+    SushiHostApplication* _host_app{nullptr};
+
     std::shared_ptr<VST3::Hosting::Module> _module;
 
     // Reference counted pointers to plugin objects

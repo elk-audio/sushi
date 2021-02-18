@@ -31,7 +31,8 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
-    PluginInstance module_under_test;
+    SushiHostApplication host_app;
+    PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
     ASSERT_TRUE(success);
     ASSERT_TRUE(module_under_test.processor());
@@ -45,7 +46,8 @@ TEST(TestVst3xPluginInstance, TestLoadPlugin)
 TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
     /* Non existing library */
-    PluginInstance module_under_test;
+    SushiHostApplication host_app;
+    PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     ASSERT_FALSE(success);
 
@@ -66,7 +68,11 @@ protected:
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
-        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path, plugin_name);
+        SushiHostApplication host_app;
+        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
+                                              full_plugin_path,
+                                              plugin_name,
+                                              &host_app);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);

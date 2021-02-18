@@ -21,6 +21,7 @@
 #define SUSHI_VST3X_PROCESSOR_FACTORY_H
 
 #include "library/base_processor_factory.h"
+#include "vst3x_host_app.h"
 #include "library/vst3x/vst3x_wrapper.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
@@ -40,10 +41,14 @@ public:
     {
         auto processor = std::make_shared<Vst3xWrapper>(host_control,
                                                         plugin_info.path,
-                                                        plugin_info.uid);
+                                                        plugin_info.uid,
+                                                        &_host_app);
         auto processor_status = processor->init(sample_rate);
         return {processor_status, processor};
     }
+
+private:
+    SushiHostApplication _host_app;
 };
 
 } // end namespace vst3
@@ -67,6 +72,10 @@ public:
     {
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
     }
+                                                                            float sample_rate) override;
+
+private:
+    SushiHostApplication _host_app;
 };
 
 } // end namespace vst3
