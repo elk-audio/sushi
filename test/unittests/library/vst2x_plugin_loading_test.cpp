@@ -11,10 +11,10 @@ using namespace sushi;
 
 // Empty fixture as PluginLoader has only static methods so far
 
-class TestVst2xPluginLoader : public ::testing::Test
+class TestVst2xPluginLoading : public ::testing::Test
 {
 protected:
-    TestVst2xPluginLoader():
+    TestVst2xPluginLoading():
             _host_control(_hc.make_host_control_mockup(SAMPLE_RATE))
     {
 
@@ -33,9 +33,7 @@ protected:
     PluginRegistry _plugin_registry;
 };
 
-// TODO Ilias: Should this still be called plugin_loader_test when AUD-294 is done?
-
-TEST_F(TestVst2xPluginLoader, TestPluginRegistryVst2xLoading)
+TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 {
     char* full_again_path = realpath("libvst2_test_plugin.so", NULL);
 
@@ -54,8 +52,7 @@ TEST_F(TestVst2xPluginLoader, TestPluginRegistryVst2xLoading)
     free(full_again_path);
 }
 
-
-TEST_F(TestVst2xPluginLoader, TestLoadPlugin)
+TEST_F(TestVst2xPluginLoading, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
     char* full_again_path = realpath("libvst2_test_plugin.so", NULL);
@@ -69,4 +66,3 @@ TEST_F(TestVst2xPluginLoader, TestLoadPlugin)
 
     vst2::PluginLoader::close_library_handle(library_handle);
 }
-
