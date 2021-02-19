@@ -31,11 +31,6 @@
 
 namespace sushi {
 
-InternalProcessorFactory::InternalProcessorFactory()
-{
-
-}
-
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
 InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
                                        HostControl &host_control,

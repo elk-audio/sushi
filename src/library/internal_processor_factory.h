@@ -27,7 +27,8 @@ namespace sushi {
 class InternalProcessorFactory : public BaseProcessorFactory
 {
 public:
-    InternalProcessorFactory(/*const std::string uid*/);
+    InternalProcessorFactory() = default;
+    virtual ~InternalProcessorFactory() = default;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
                                                                             HostControl& host_control,

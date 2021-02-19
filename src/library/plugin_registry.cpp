@@ -27,32 +27,32 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
                              sushi::HostControl& host_control,
                              float sample_rate)
 {
-    if (_factories.count(plugin_info) == 0)
+    if (_factories.count(plugin_info.type) == 0)
     {
         switch (plugin_info.type)
         {
             case engine::PluginType::INTERNAL:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<InternalProcessorFactory>();
-                _factories[plugin_info] = std::move(new_factory);
+                _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
             case engine::PluginType::VST2X:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<Vst2xProcessorFactory>();
-                _factories[plugin_info] = std::move(new_factory);
+                _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
             case engine::PluginType::VST3X:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<vst3::Vst3xProcessorFactory>();
-                _factories[plugin_info] = std::move(new_factory);
+                _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
             case engine::PluginType::LV2:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<lv2::Lv2ProcessorFactory>();
-                _factories[plugin_info] = std::move(new_factory);
+                _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
             default:
@@ -60,7 +60,7 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
         }
     }
 
-    return _factories[plugin_info]->new_instance(plugin_info, host_control, sample_rate);
+    return _factories[plugin_info.type]->new_instance(plugin_info, host_control, sample_rate);
 }
 
 }; // end namespace sushi

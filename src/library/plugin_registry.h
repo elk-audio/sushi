@@ -30,25 +30,23 @@
 
 namespace sushi {
 
-struct Hash {
-    size_t operator() (const engine::PluginInfo &pi) const
+struct Hash
+{
+    size_t operator() (const engine::PluginType &type) const
     {
-        return std::hash<std::string>{}(pi.uid) +
-               std::hash<std::string>{}(pi.path) +
-               std::hash<int>{}(static_cast<int>(pi.type));
+        return std::hash<int>{}(static_cast<int>(type));
     }
 };
 
 class PluginRegistry
 {
-
 public:
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const engine::PluginInfo& plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate);
 
 private:
-    std::unordered_map<engine::PluginInfo, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
+    std::unordered_map<engine::PluginType, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
 };
 
 }; // end namespace sushi
