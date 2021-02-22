@@ -23,20 +23,56 @@
 #include "library/base_processor_factory.h"
 #include "library/vst3x/vst3x_wrapper.h"
 
+#ifdef SUSHI_BUILD_WITH_VST3
+
 namespace sushi {
 namespace vst3 {
 
 class Vst3xProcessorFactory : public BaseProcessorFactory
 {
 public:
-    Vst3xProcessorFactory(/*const std::string plugin_path*/);
+    Vst3xProcessorFactory() = default;
+    virtual ~Vst3xProcessorFactory() = default;
 
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo& plugin_info,
                                                                             HostControl& host_control,
-                                                                            float sample_rate) override;
+                                                                            float sample_rate) override
+    {
+        auto processor = std::make_shared<Vst3xWrapper>(host_control,
+                                                        plugin_info.path,
+                                                        plugin_info.uid);
+        auto processor_status = processor->init(sample_rate);
+        return {processor_status, processor};
+    }
 };
 
 } // end namespace vst3
 } // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_VST3
+#ifndef SUSHI_BUILD_WITH_VST3
+
+namespace sushi {
+namespace vst3 {
+
+class Vst3xProcessorFactory : public BaseProcessorFactory
+{
+public:
+    Vst3xProcessorFactory() = default;
+    virtual ~Vst3xProcessorFactory() = default;
+
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
+                                                                            HostControl&,
+                                                                            float) override
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
+    }
+};
+
+} // end namespace vst3
+} // end namespace sushi
+
+
+#endif //SUSHI_BUILD_WITH_VST3
 
 #endif //SUSHI_VST3X_PROCESSOR_FACTORY_H

@@ -18,16 +18,13 @@
 #include "internal_processor_factory.h"
 #include "vst2x/vst2x_processor_factory.h"
 #include "vst3x/vst3x_processor_factory.h"
-
-#ifdef SUSHI_BUILD_WITH_LV2
 #include "lv2/lv2_processor_factory.h"
-#endif
 
 namespace sushi {
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-PluginRegistry::new_instance(const sushi::engine::PluginInfo &plugin_info,
-                             sushi::HostControl &host_control,
+PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
+                             sushi::HostControl& host_control,
                              float sample_rate)
 {
     if (_factories.count(plugin_info) == 0)
@@ -52,14 +49,12 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo &plugin_info,
                 _factories[plugin_info] = std::move(new_factory);
                 break;
             }
-#ifdef SUSHI_BUILD_WITH_LV2
             case engine::PluginType::LV2:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<lv2::Lv2ProcessorFactory>();
                 _factories[plugin_info] = std::move(new_factory);
                 break;
             }
-#endif
             default:
                 return {ProcessorReturnCode::PLUGIN_LOAD_ERROR, nullptr};
         }

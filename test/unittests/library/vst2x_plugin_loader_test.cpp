@@ -1,11 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "test_utils/host_control_mockup.h"
-#include "library/plugin_registry.cpp"
-#include "library/vst2x/vst2x_processor_factory.cpp"
-#include "library/vst3x/vst3x_processor_factory.cpp"
-#include "library/lv2/lv2_processor_factory.cpp"
-#include "library/internal_processor_factory.cpp"
+#include "library/plugin_registry.h"
 
 #include "library/vst2x/vst2x_plugin_loader.cpp"
 

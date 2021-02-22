@@ -269,8 +269,7 @@ if (${WITH_VST2})
                                 src/library/vst2x/vst2x_midi_event_fifo.h
                                 src/library/vst2x/vst2x_processor_factory.h
                                 src/library/vst2x/vst2x_host_callback.cpp
-                                src/library/vst2x/vst2x_plugin_loader.cpp
-                                src/library/vst2x/vst2x_processor_factory.cpp)
+                                src/library/vst2x/vst2x_plugin_loader.cpp)
 endif()
 
 if (${WITH_VST3})
@@ -278,8 +277,8 @@ if (${WITH_VST3})
                                 src/library/vst3x/vst3x_utils.h
                                 src/library/vst3x/vst3x_processor_factory.h
                                 src/library/vst3x/vst3x_host_app.cpp
-                                src/library/vst3x/vst3x_utils.cpp
-                                src/library/vst3x/vst3x_processor_factory.cpp)
+                                src/library/vst3x/vst3x_utils.cpp)
+
 endif()
 
 if (${WITH_LV2})
@@ -295,8 +294,7 @@ if (${WITH_LV2})
                                src/library/lv2/lv2_features.cpp
                                src/library/lv2/lv2_model.cpp
                                src/library/lv2/lv2_port.cpp
-                               src/library/lv2/lv2_control.cpp
-                               src/library/lv2/lv2_processor_factory.cpp)
+                               src/library/lv2/lv2_control.cpp)
 endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"

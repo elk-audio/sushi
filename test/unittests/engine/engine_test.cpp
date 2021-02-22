@@ -11,6 +11,8 @@
 
 #include "plugins/equalizer_plugin.h"
 #include "engine/audio_engine.cpp"
+#include "library/internal_processor_factory.cpp"
+#include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
 #include "test_utils/host_control_mockup.h"
 

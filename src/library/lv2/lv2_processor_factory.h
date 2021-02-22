@@ -21,8 +21,9 @@
 #define SUSHI_LV2_PROCESSOR_FACTORY_H
 
 #include "library/base_processor_factory.h"
-#include "lv2_model.h"
-#include "library/lv2/lv2_wrapper.h"
+#include "lv2_wrapper.h"
+
+#ifdef SUSHI_BUILD_WITH_LV2
 
 namespace sushi {
 namespace lv2 {
@@ -30,15 +31,46 @@ namespace lv2 {
 class Lv2ProcessorFactory : public BaseProcessorFactory
 {
 public:
-    Lv2ProcessorFactory(/*const std::string plugin_path*/);
+    Lv2ProcessorFactory() = default;
+    virtual ~Lv2ProcessorFactory() = default;
 
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo& plugin_info,
                                                                             HostControl& host_control,
-                                                                            float sample_rate) override;
-
+                                                                            float sample_rate) override
+    {
+        auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path);
+        auto processor_status = processor->init(sample_rate);
+        return {processor_status, processor};
+    }
 };
+
 
 } // end namespace lv2
 } // end namespace sushi
+
+#endif //SUSHI_BUILD_WITH_LV2
+#ifndef SUSHI_BUILD_WITH_LV2
+
+namespace sushi {
+namespace lv2 {
+
+class Lv2ProcessorFactory : public BaseProcessorFactory {
+public:
+    Lv2ProcessorFactory() = default;
+
+    virtual ~Lv2ProcessorFactory() = default;
+
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
+                                                                            HostControl&,
+                                                                            float) override
+    {
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
+    }
+};
+
+}}
+
+#endif //SUSHI_BUILD_WITH_LV2
+
 
 #endif //SUSHI_LV2_PROCESSOR_FACTORY_H
