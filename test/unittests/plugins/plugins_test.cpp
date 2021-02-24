@@ -226,8 +226,9 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
 
     /* Process enough samples to catch some event outputs */
+    int no_of_process_calls = TEST_SAMPLERATE / (peak_meter_plugin::DEFAULT_REFRESH_RATE * AUDIO_CHUNK_SIZE);
     ASSERT_TRUE(_fifo.empty());
-    for (int i = 0; i <= TEST_SAMPLERATE / (peak_meter_plugin::REFRESH_RATE * AUDIO_CHUNK_SIZE) ; ++i)
+    for (int i = 0; i <= no_of_process_calls ; ++i)
     {
         _module_under_test->process_audio(in_buffer, out_buffer);
     }
@@ -240,6 +241,18 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
     /*  The rms and dB calculations are tested separately, just test that it a reasonable value */
     EXPECT_GT(event.parameter_change_event()->value(), 0.5f);
+
+    /* Set the rate parameter to minimum */
+    auto rate_id = _module_under_test->parameter_from_name("update_rate")->id();
+    _module_under_test->process_event(RtEvent::make_parameter_change_event(_module_under_test->id(),
+                                                                           0, rate_id, 0.0f));
+    while (_fifo.pop(event)) {};
+    ASSERT_TRUE(_fifo.empty());
+    for (int i = 0; i <= no_of_process_calls * 5 ; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+    }
+    ASSERT_TRUE(_fifo.empty());
 }
 
 TEST_F(TestPeakMeterPlugin, TestClipDetection)
