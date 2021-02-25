@@ -30,6 +30,9 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
 
 WavWriterPlugin::~WavWriterPlugin()
 {
+    // Delay writing to file by 1 000 000 samples to give time for stop recording
+    _post_write_timer = -1'000'000;
+    _stop_recording();
     delete _destination_file_property;
 }
 
