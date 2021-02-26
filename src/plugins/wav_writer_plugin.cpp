@@ -30,6 +30,7 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
 
 WavWriterPlugin::~WavWriterPlugin()
 {
+    _stop_recording();
     delete _destination_file_property;
 }
 
