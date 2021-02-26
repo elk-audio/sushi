@@ -783,7 +783,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     }
     if (json_event["type"] == "property_change")
     {
-        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        auto parameter = processor->parameter_from_name(data["property_name"].GetString());
         if (parameter == nullptr)        {
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
