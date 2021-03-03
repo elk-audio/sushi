@@ -79,6 +79,8 @@ private:
 
     void _handle_engine_notifications(const EngineNotificationEvent* event);
 
+    void _handle_audio_graph_notifications(const AudioGraphNotificationEvent* event);
+
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
                                      ext::ProcessorAction action) const;
 
@@ -89,10 +91,13 @@ private:
 
     void _notify_parameter_listeners(Event* event) const;
 
+    void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
+
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
     std::vector<ext::ControlListener*>      _processor_update_listeners;
     std::vector<ext::ControlListener*>      _track_update_listeners;
     std::vector<ext::ControlListener*>      _transport_update_listeners;
+    std::vector<ext::ControlListener*>      _cpu_timing_update_listeners;
 
     engine::BaseEngine*                     _engine;
     const engine::BaseProcessorContainer*   _processors;
