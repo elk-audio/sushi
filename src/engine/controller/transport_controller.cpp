@@ -19,6 +19,7 @@
  */
 
 #include "transport_controller.h"
+#include "controller_common.h"
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
@@ -26,64 +27,6 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 namespace sushi {
 namespace engine {
 namespace controller_impl {
-
-/* Convenience conversion functions between external and internal
- * enums and data structs */
-inline ext::PlayingMode to_external(const sushi::PlayingMode mode)
-{
-    switch (mode)
-    {
-        case PlayingMode::STOPPED:      return ext::PlayingMode::STOPPED;
-        case PlayingMode::PLAYING:      return ext::PlayingMode::PLAYING;
-        case PlayingMode::RECORDING:    return ext::PlayingMode::RECORDING;
-        default:                        return ext::PlayingMode::PLAYING;
-    }
-}
-
-inline sushi::PlayingMode to_internal(const ext::PlayingMode mode)
-{
-    switch (mode)
-    {
-        case ext::PlayingMode::STOPPED:   return sushi::PlayingMode::STOPPED;
-        case ext::PlayingMode::PLAYING:   return sushi::PlayingMode::PLAYING;
-        case ext::PlayingMode::RECORDING: return sushi::PlayingMode::RECORDING;
-        default:                          return sushi::PlayingMode::PLAYING;
-    }
-}
-
-inline ext::SyncMode to_external(const sushi::SyncMode mode)
-{
-    switch (mode)
-    {
-        case SyncMode::INTERNAL:     return ext::SyncMode::INTERNAL;
-        case SyncMode::MIDI:         return ext::SyncMode::MIDI;
-        case SyncMode::GATE_INPUT:   return ext::SyncMode::GATE;
-        case SyncMode::ABLETON_LINK: return ext::SyncMode::LINK;
-        default:                     return ext::SyncMode::INTERNAL;
-    }
-}
-
-inline sushi::SyncMode to_internal(const ext::SyncMode mode)
-{
-    switch (mode)
-    {
-        case ext::SyncMode::INTERNAL: return sushi::SyncMode::INTERNAL;
-        case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI;
-        case ext::SyncMode::GATE:     return sushi::SyncMode::GATE_INPUT;
-        case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
-        default:                      return sushi::SyncMode::INTERNAL;
-    }
-}
-
-inline ext::TimeSignature to_external(sushi::TimeSignature internal)
-{
-    return {internal.numerator, internal.denominator};
-}
-
-inline sushi::TimeSignature to_internal(ext::TimeSignature ext)
-{
-    return {ext.numerator, ext.denominator};
-}
 
 TransportController::TransportController(sushi::engine::BaseEngine* engine) : _engine(engine),
                                                                               _transport(engine->transport()),

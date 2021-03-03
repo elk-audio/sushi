@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "engine/transport.cpp"
+#include "library/rt_event_fifo.h"
 
 using namespace sushi;
 using namespace sushi::engine;
@@ -20,8 +21,8 @@ protected:
 
     void TearDown()
     { }
-
-    Transport _module_under_test{TEST_SAMPLERATE};
+    RtEventFifo<10> _rt_event_output;
+    Transport _module_under_test{TEST_SAMPLERATE, &_rt_event_output};
 };
 
 
@@ -36,7 +37,26 @@ TEST_F(TestTransport, TestBasicQuerying)
     _module_under_test.set_time(std::chrono::seconds(0), 0);
     EXPECT_FLOAT_EQ(130, _module_under_test.current_tempo());
 
+    // Test with too high/negative tempos
+    _module_under_test.set_tempo(130000, false);
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
+    EXPECT_FLOAT_EQ(MAX_TEMPO, _module_under_test.current_tempo());
+
+    _module_under_test.set_tempo(-100, false);
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
+    EXPECT_FLOAT_EQ(MIN_TEMPO, _module_under_test.current_tempo());
+
+    // Test time signatures
     _module_under_test.set_time_signature({5, 8}, false);
+    EXPECT_EQ(5, _module_under_test.time_signature().numerator);
+    EXPECT_EQ(8, _module_under_test.time_signature().denominator);
+
+    // Test a few invalid time signatures
+    _module_under_test.set_time_signature({-1, 100}, false);
+    EXPECT_EQ(5, _module_under_test.time_signature().numerator);
+    EXPECT_EQ(8, _module_under_test.time_signature().denominator);
+
+    _module_under_test.set_time_signature({1, 0}, false);
     EXPECT_EQ(5, _module_under_test.time_signature().numerator);
     EXPECT_EQ(8, _module_under_test.time_signature().denominator);
 }
@@ -132,4 +152,48 @@ TEST_F(TestTransport, TestPlayStateChange)
     _module_under_test.set_time(std::chrono::seconds(3), 132000);
     EXPECT_TRUE(_module_under_test.playing());
     EXPECT_EQ(PlayStateChange::UNCHANGED, _module_under_test.current_state_change());
+}
+
+TEST_F(TestTransport, TestNotifications)
+{
+    /* Notifications are only sent if the engine is running audio processing, during which,
+     * changes are passed as RtEvents so they can be applied at the start of an audio chunk */
+    _module_under_test.set_time_signature({4, 4}, false);
+    _module_under_test.set_playing_mode(PlayingMode::STOPPED, false);
+
+    _module_under_test.set_tempo(123, true);
+    _module_under_test.process_event(RtEvent::make_tempo_event(0, 123));
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
+    ASSERT_FALSE(_rt_event_output.empty());
+    auto event =_rt_event_output.pop();
+    EXPECT_EQ(RtEventType::TEMPO, event.type());
+    EXPECT_FLOAT_EQ(123.0f, event.tempo_event()->tempo());
+    EXPECT_FLOAT_EQ(123.0f, _module_under_test.current_tempo());
+
+    _module_under_test.set_time_signature({6, 8}, true);
+    _module_under_test.process_event(RtEvent::make_time_signature_event(0, {6, 8}));
+    _module_under_test.set_time(std::chrono::milliseconds(1), AUDIO_CHUNK_SIZE);
+    ASSERT_FALSE(_rt_event_output.empty());
+    event =_rt_event_output.pop();
+    EXPECT_EQ(RtEventType::TIME_SIGNATURE, event.type());
+    EXPECT_EQ(TimeSignature({6, 8}), event.time_signature_event()->time_signature());
+    EXPECT_EQ(TimeSignature({6, 8}), _module_under_test.time_signature());
+
+    _module_under_test.set_sync_mode(SyncMode::MIDI, true);
+    _module_under_test.process_event(RtEvent::make_sync_mode_event(0, SyncMode::MIDI));
+    _module_under_test.set_time(std::chrono::milliseconds(2), 2 * AUDIO_CHUNK_SIZE);
+    ASSERT_FALSE(_rt_event_output.empty());
+    event =_rt_event_output.pop();
+    EXPECT_EQ(RtEventType::SYNC_MODE, event.type());
+    EXPECT_EQ(SyncMode::MIDI, event.sync_mode_event()->mode());
+    EXPECT_EQ(SyncMode::MIDI, _module_under_test.sync_mode());
+
+    _module_under_test.set_playing_mode(PlayingMode::PLAYING, true);
+    _module_under_test.process_event(RtEvent::make_playing_mode_event(0, PlayingMode::PLAYING));
+    _module_under_test.set_time(std::chrono::milliseconds(3), 3 * AUDIO_CHUNK_SIZE);
+    ASSERT_FALSE(_rt_event_output.empty());
+    event =_rt_event_output.pop();
+    EXPECT_EQ(RtEventType::PLAYING_MODE, event.type());
+    EXPECT_EQ(PlayingMode::PLAYING, event.playing_mode_event()->mode());
+    EXPECT_EQ(PlayingMode::PLAYING, _module_under_test.playing_mode());
 }

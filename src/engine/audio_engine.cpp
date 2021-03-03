@@ -50,6 +50,7 @@ constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
 constexpr auto RT_EVENT_TIMEOUT = std::chrono::milliseconds(200);
 constexpr char TIMING_FILE_NAME[] = "timings.txt";
+constexpr int  TIMING_LOG_PRINT_INTERVAL = 15;
 
 constexpr int  MAX_TRACKS = 32;
 constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
@@ -98,7 +99,7 @@ AudioEngine::AudioEngine(float sample_rate,
                                              _audio_graph(rt_cpu_cores, MAX_TRACKS),
                                              _audio_in_connections(MAX_AUDIO_CONNECTIONS),
                                              _audio_out_connections(MAX_AUDIO_CONNECTIONS),
-                                             _transport(sample_rate),
+                                             _transport(sample_rate, &_main_out_queue),
                                              _clip_detector(sample_rate)
 {
     if(event_dispatcher == nullptr)
@@ -1144,29 +1145,35 @@ void AudioEngine::_copy_audio_from_tracks(ChunkSampleBuffer* output)
     }
 }
 
-void AudioEngine::print_timings_to_log()
+void AudioEngine::update_timings()
 {
     if (_process_timer.enabled())
     {
-        for (const auto& processor : _processors.all_processors())
+        auto engine_timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
+        _event_dispatcher->post_event(new EngineTimingNotificationEvent(*engine_timings, IMMEDIATE_PROCESS));
+
+        _log_timing_print_counter += 1;
+        if (_log_timing_print_counter > TIMING_LOG_PRINT_INTERVAL)
         {
-            auto id = processor->id();
-            auto timings = _process_timer.timings_for_node(id);
-            if (timings.has_value())
+            for (const auto& processor : _processors.all_processors())
             {
-                SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
-                              timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+                auto id = processor->id();
+                auto timings = _process_timer.timings_for_node(id);
+                if (timings.has_value())
+                {
+                    SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
+                                   timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+                }
             }
-        }
-        auto timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
-        if (timings.has_value())
-        {
-            SUSHI_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
-                          timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+            if (engine_timings.has_value())
+            {
+                SUSHI_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
+                               engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
+            }
+            _log_timing_print_counter = 0;
         }
     }
 }
-
 
 void print_single_timings_for_node(std::fstream& f, performance::PerformanceTimer& timer, int id)
 {

@@ -764,9 +764,9 @@ int MidiDispatcher::process(Event* event)
         }
         return EventStatus::HANDLED_OK;
     }
-    else if (event->is_audio_graph_notification())
+    else if (event->is_engine_notification())
     {
-        _handle_audio_graph_notification(static_cast<AudioGraphNotificationEvent*>(event));
+        _handle_audio_graph_notification(static_cast<EngineNotificationEvent*>(event));
     }
 
     return EventStatus::NOT_HANDLED;
@@ -836,70 +836,75 @@ std::vector<PCInputConnection> MidiDispatcher::_get_pc_input_connections(std::op
     return returns;
 }
 
-bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificationEvent* event)
+bool MidiDispatcher::_handle_audio_graph_notification(const EngineNotificationEvent* event)
 {
-    switch (event->action())
+    if (event->is_audio_graph_notification())
     {
-        case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+        auto typed_event = static_cast<const AudioGraphNotificationEvent*>(event);
+        switch (typed_event->action())
         {
-            auto processor_id = event->processor();
-
-            disconnect_all_cc_from_processor(processor_id);
-
-            disconnect_all_pc_from_processor(processor_id);
-
-            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}", event->processor());
-            break;
-        }
-        case AudioGraphNotificationEvent::Action::TRACK_DELETED:
-        {
-            auto track_id = event->track();
-
-            disconnect_all_cc_from_processor(track_id);
-            disconnect_all_pc_from_processor(track_id);
-
-            auto input_connections = get_all_kb_input_connections();
-            auto inputs_found = std::find_if(input_connections.begin(),
-                                             input_connections.end(),
-                                             [&](const auto& connection)
-                                             {
-                                                 return connection.input_connection.target == track_id;
-                                             });
-
-            while(inputs_found != input_connections.end())
+            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
             {
-                disconnect_kb_from_track(inputs_found->port,
-                                         track_id,
-                                         inputs_found->channel);
+                auto processor_id = typed_event->processor();
 
-                disconnect_raw_midi_from_track(inputs_found->port,
-                                               track_id,
-                                               inputs_found->channel);
+                disconnect_all_cc_from_processor(processor_id);
 
-                inputs_found++;
+                disconnect_all_pc_from_processor(processor_id);
+
+                SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}",
+                                typed_event->processor());
+                break;
             }
-
-            auto output_connections = get_all_kb_output_connections();
-            auto outputs_found = std::find_if(output_connections.begin(),
-                                              output_connections.end(),
-                                             [&](const auto& connection)
-                                             {
-                                                 return connection.track_id == track_id;
-                                             });
-
-            while(outputs_found != output_connections.end())
+            case AudioGraphNotificationEvent::Action::TRACK_DELETED:
             {
-                disconnect_track_from_output(outputs_found->port,
+                auto track_id = typed_event->track();
+
+                disconnect_all_cc_from_processor(track_id);
+                disconnect_all_pc_from_processor(track_id);
+
+                auto input_connections = get_all_kb_input_connections();
+                auto inputs_found = std::find_if(input_connections.begin(),
+                                                 input_connections.end(),
+                                                 [&](const auto& connection)
+                                                 {
+                                                     return connection.input_connection.target == track_id;
+                                                 });
+
+                while (inputs_found != input_connections.end())
+                {
+                    disconnect_kb_from_track(inputs_found->port,
                                              track_id,
-                                             outputs_found->channel);
-                outputs_found++;
-            }
+                                             inputs_found->channel);
 
-            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
-            break;
+                    disconnect_raw_midi_from_track(inputs_found->port,
+                                                   track_id,
+                                                   inputs_found->channel);
+
+                    inputs_found++;
+                }
+
+                auto output_connections = get_all_kb_output_connections();
+                auto outputs_found = std::find_if(output_connections.begin(),
+                                                  output_connections.end(),
+                                                  [&](const auto& connection)
+                                                  {
+                                                      return connection.track_id == track_id;
+                                                  });
+
+                while (outputs_found != output_connections.end())
+                {
+                    disconnect_track_from_output(outputs_found->port,
+                                                 track_id,
+                                                 outputs_found->channel);
+                    outputs_found++;
+                }
+
+                SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", typed_event->track());
+                break;
+            }
+            default:
+                break;
         }
-        default:
-            break;
     }
 
     return EventStatus::HANDLED_OK;

@@ -50,6 +50,16 @@ struct TimeSignature
     int denominator;
 };
 
+inline bool operator==(const TimeSignature& rhs, const TimeSignature& lhs)
+{
+    return (rhs.denominator == lhs.denominator && rhs.numerator == lhs.numerator);
+}
+
+inline bool operator!=(const TimeSignature& rhs, const TimeSignature& lhs)
+{
+    return ! (rhs == lhs);
+}
+
 } // namespace sushi
 
 #endif //SUSHI_TYPES_H

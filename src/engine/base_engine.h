@@ -326,7 +326,7 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
-    virtual void print_timings_to_log() {}
+    virtual void update_timings() {}
 
 protected:
     float _sample_rate;

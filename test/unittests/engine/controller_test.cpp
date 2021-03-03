@@ -26,8 +26,7 @@ const std::string TEST_FILE = "config.json";
 class ControllerTest : public ::testing::Test
 {
 protected:
-    ControllerTest()
-    {}
+    ControllerTest() {}
 
     void SetUp()
     {

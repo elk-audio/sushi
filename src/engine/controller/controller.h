@@ -18,6 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <control_notifications.h>
 #include "control_interface.h"
 #include "engine/base_event_dispatcher.h"
 #include "engine/transport.h"
@@ -65,9 +66,10 @@ public:
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
-    int poster_id() override {return EventPosterId::CONTROLLER;}
 
-    static void completion_callback(void *arg, Event* event, int status);
+    int poster_id() override { return EventPosterId::CONTROLLER; }
+
+    static void completion_callback(void* arg, Event* event, int status);
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
@@ -75,17 +77,27 @@ private:
 
     void _completion_callback(Event* event, int status);
 
+    void _handle_engine_notifications(const EngineNotificationEvent* event);
+
+    void _handle_audio_graph_notifications(const AudioGraphNotificationEvent* event);
+
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
                                      ext::ProcessorAction action) const;
 
     void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
                                  ext::TrackAction action) const;
 
+    void _notify_transport_listeners(const ext::TransportNotification& notification) const;
+
     void _notify_parameter_listeners(Event* event) const;
+
+    void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
 
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
     std::vector<ext::ControlListener*>      _processor_update_listeners;
     std::vector<ext::ControlListener*>      _track_update_listeners;
+    std::vector<ext::ControlListener*>      _transport_update_listeners;
+    std::vector<ext::ControlListener*>      _cpu_timing_update_listeners;
 
     engine::BaseEngine*                     _engine;
     const engine::BaseProcessorContainer*   _processors;
@@ -102,7 +114,7 @@ private:
     controller_impl::CvGateController       _cv_gate_controller_impl;
     controller_impl::OscController          _osc_controller_impl;
 
-    dispatcher::BaseEventDispatcher* _event_dispatcher;
+    dispatcher::BaseEventDispatcher*        _event_dispatcher;
 };
 
 } //namespace engine
