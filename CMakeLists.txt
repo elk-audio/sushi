@@ -48,8 +48,8 @@ option(WITH_LV2 "Enable LV 2 support" ON)
 option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(WITH_LINK "Enable Ableton Link support" ON)
-option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
+option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
@@ -321,11 +321,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
 
-# /usr/local doesn't get added by default in Mac OS X
-if (APPLE)
-    set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
-endif()
-
 ################################
 #  Subdirectory configuration  #
 ################################
@@ -427,12 +422,6 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        target_compile_options(sushi PRIVATE -faligned-new)
-    endif()
-endif()
-
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 
 if (${WITH_XENOMAI})

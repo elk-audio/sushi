@@ -116,11 +116,6 @@ target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
                                               -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        target_compile_options(unit_tests PRIVATE -faligned-new)
-    endif()
-endif()
 
 if (${WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
