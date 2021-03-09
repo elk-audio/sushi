@@ -53,7 +53,7 @@ bool                    exit_flag = false;
 bool                    exit_condition() {return exit_flag;}
 std::condition_variable exit_notifier;
 
-void sigint_handler([[maybe_unused]] int sig)
+void signal_handler([[maybe_unused]] int sig)
 {
     exit_flag = true;
     exit_notifier.notify_one();
@@ -101,7 +101,8 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    signal(SIGINT, sigint_handler);
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
 
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
