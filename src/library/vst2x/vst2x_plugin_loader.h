@@ -76,7 +76,6 @@ public:
     static AEffect* load_plugin(LibraryHandle library_handle);
 
     static void close_library_handle(LibraryHandle library_handle);
-
 };
 
 } // namespace vst2

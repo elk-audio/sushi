@@ -717,7 +717,12 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_path = def["uri"].GetString();
         }
 
-        auto [status, plugin_id] = _engine->load_plugin(plugin_uid, plugin_name, plugin_path, plugin_type);
+        PluginInfo plugin_info;
+        plugin_info.uid = plugin_uid;
+        plugin_info.path = plugin_path;
+        plugin_info.type = plugin_type;
+
+        auto [status, plugin_id] = _engine->create_processor(plugin_info, plugin_name);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)

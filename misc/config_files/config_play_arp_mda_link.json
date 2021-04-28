@@ -54,7 +54,7 @@
            "data" : {
                "plugin_name" : "main",
                "parameter_name" : "gain",
-               "value" : -6
+               "value" : 0.75
            }
        }
     ]

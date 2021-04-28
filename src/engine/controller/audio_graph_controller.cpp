@@ -282,7 +282,12 @@ ext::ControlStatus AudioGraphController::create_processor_on_track(const std::st
                                                                     name, uid, file, track_id);
     auto lambda = [=] () -> int
     {
-        auto [status, plugin_id] = _engine->load_plugin(uid, name, file, to_internal(type));
+        PluginInfo plugin_info;
+        plugin_info.uid = uid;
+        plugin_info.path = file;
+        plugin_info.type = to_internal(type);
+
+        auto [status, plugin_id] = _engine->create_processor(plugin_info, name);
         if (status != EngineReturnStatus::OK)
         {
             return EventStatus::ERROR;

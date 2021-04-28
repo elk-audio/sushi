@@ -74,7 +74,9 @@ protected:
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
-        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI);
+        _world = lilv_world_new();
+        lilv_world_load_all(_world);
+        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI, _world);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
 
@@ -93,13 +95,15 @@ protected:
 
     void TearDown()
     {
-
+        _module_under_test = nullptr;
+        lilv_world_free(_world);
     }
 
     RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    std::unique_ptr<LV2_Wrapper> _module_under_test {nullptr};
+    LilvWorld* _world{nullptr};
+    std::unique_ptr<LV2_Wrapper> _module_under_test{nullptr};
 };
 
 TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
@@ -118,7 +122,7 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
     ASSERT_EQ(_module_under_test, nullptr);
 }
 
-TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
+TEST_F(TestLv2Wrapper, TestLV2PluginInteraction)
 {
     auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);

@@ -9,7 +9,10 @@
 #define private public
 #define protected public
 
+#include "plugins/equalizer_plugin.h"
 #include "engine/audio_engine.cpp"
+#include "library/internal_processor_factory.cpp"
+#include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
 #include "test_utils/host_control_mockup.h"
 
@@ -123,7 +126,12 @@ TEST_F(TestEngine, TestProcess)
     test_utils::assert_buffer_value(0.0f, second_bus, test_utils::DECIBEL_ERROR);
 
     /* Add a plugin to the track and do the same thing */
-    auto [load_status, plugin_id]  = _module_under_test->load_plugin("sushi.testing.gain", "gain", "", PluginType::INTERNAL);
+    PluginInfo plugin_info;
+    plugin_info.uid = "sushi.testing.gain";
+    plugin_info.path = "";
+    plugin_info.type = PluginType::INTERNAL;
+
+    auto [load_status, plugin_id] = _module_under_test->create_processor(plugin_info, "gain");
     ASSERT_EQ(EngineReturnStatus::OK, load_status);
     res = _module_under_test->add_plugin_to_track(plugin_id, track->id());
     ASSERT_EQ(EngineReturnStatus::OK, res);
@@ -190,15 +198,21 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Test adding Internal plugins */
     auto [left_track_status, left_track_id] = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, left_track_status);
-    auto [gain_status, gain_id] = _module_under_test->load_plugin("sushi.testing.gain",
-                                                                  "gain",
-                                                                  "   ",
-                                                                  PluginType::INTERNAL);
+
+    PluginInfo gain_plugin_info;
+    gain_plugin_info.uid = "sushi.testing.gain";
+    gain_plugin_info.path = "";
+    gain_plugin_info.type = PluginType::INTERNAL;
+
+    auto [gain_status, gain_id] = _module_under_test->create_processor(gain_plugin_info, "gain");
     ASSERT_EQ(gain_status, EngineReturnStatus::OK);
-    auto [synth_status, synth_id] = _module_under_test->load_plugin("sushi.testing.sampleplayer",
-                                                                    "synth",
-                                                                    "",
-                                                                    PluginType::INTERNAL);
+
+    PluginInfo synth_plugin_info;
+    synth_plugin_info.uid = "sushi.testing.sampleplayer";
+    synth_plugin_info.path = "";
+    synth_plugin_info.type = PluginType::INTERNAL;
+
+    auto [synth_status, synth_id] = _module_under_test->create_processor(synth_plugin_info, "synth");
     ASSERT_EQ(synth_status, EngineReturnStatus::OK);
 
     auto status = _module_under_test->add_plugin_to_track(gain_id, left_track_id);
@@ -249,29 +263,32 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
 
     /* Negative tests */
     ObjectId id;
-    std::tie(status, id) = _module_under_test->load_plugin("sushi.testing.passthrough",
-                                                           "dummyname",
-                                                           "",
-                                                           PluginType::INTERNAL);
+
+    PluginInfo plugin_info;
+    plugin_info.uid = "sushi.testing.passthrough";
+    plugin_info.path = "";
+    plugin_info.type = PluginType::INTERNAL;
+
+    std::tie(status, id) = _module_under_test->create_processor(plugin_info, "dummyname");
+
     status = _module_under_test->add_plugin_to_track(ObjectId(123), ObjectId(456));
     ASSERT_EQ(EngineReturnStatus::INVALID_TRACK, status);
 
-    std::tie(status, id) = _module_under_test->load_plugin("sushi.testing.passthrough",
-                                                           "",
-                                                           "",
-                                                           PluginType::INTERNAL);
+    std::tie(status, id) = _module_under_test->create_processor(plugin_info, "");
+
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN, status);
 
-    std::tie(status, id) = _module_under_test->load_plugin("not_found",
-                                                           "dummyname",
-                                                           "",
-                                                           PluginType::INTERNAL);
+    plugin_info.uid = "not_found";
+    plugin_info.path = "";
+    plugin_info.type = PluginType::INTERNAL;
+
+    std::tie(status, id) = _module_under_test->create_processor(plugin_info, "");
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
-    std::tie(status, id) = _module_under_test->load_plugin("",
-                                                           "dummyname",
-                                                           "not_found",
-                                                           PluginType::VST2X);
+    plugin_info.uid = "not_found";
+    plugin_info.path = "";
+    plugin_info.type = PluginType::VST2X;
+    std::tie(status, id) = _module_under_test->create_processor(plugin_info, "dummyname");
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
 
     status = _module_under_test->remove_plugin_from_track(ObjectId(345), left_track_id);
@@ -282,10 +299,14 @@ TEST_F(TestEngine, TestSetSamplerate)
 {
     auto [track_status, track_id] = _module_under_test->create_track("left", 2);
     ASSERT_EQ(EngineReturnStatus::OK, track_status);
-    auto [load_status, id] = _module_under_test->load_plugin("sushi.testing.equalizer",
-                                                             "eq",
-                                                             "",
-                                                             PluginType::INTERNAL);
+
+    PluginInfo plugin_info;
+    plugin_info.uid = "sushi.testing.equalizer";
+    plugin_info.path = "";
+    plugin_info.type = PluginType::INTERNAL;
+
+    auto [load_status, id] = _module_under_test->create_processor(plugin_info, "eq");
+
     ASSERT_EQ(EngineReturnStatus::OK, load_status);
     auto status = _module_under_test->add_plugin_to_track(id, _processors->track("left")->id());
     ASSERT_GE(EngineReturnStatus::OK, status);
@@ -316,10 +337,13 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     ASSERT_EQ(EngineReturnStatus::OK, track_status);
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
-    auto [load_status, plugin_id] = _module_under_test->load_plugin("sushi.testing.gain",
-                                                                    "gain_0_r",
-                                                                    "   ",
-                                                                    PluginType::INTERNAL);
+
+    PluginInfo gain_plugin_info;
+    gain_plugin_info.uid = "sushi.testing.gain";
+    gain_plugin_info.path = "";
+    gain_plugin_info.type = PluginType::INTERNAL;
+
+    auto [load_status, plugin_id] = _module_under_test->create_processor(gain_plugin_info, "gain_0_r");
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, load_status);
 
@@ -440,10 +464,13 @@ TEST_F(TestEngine, TestCvRouting)
 {
     /* Add a control plugin track and connect cv to its parameters */
     auto [track_status, track_id] = _module_under_test->create_track("lfo_track", 0);
-    auto [status, id] = _module_under_test->load_plugin("sushi.testing.lfo",
-                                                        "lfo",
-                                                        "   ",
-                                                        PluginType::INTERNAL);
+
+    PluginInfo lfo_plugin_info;
+    lfo_plugin_info.uid = "sushi.testing.lfo";
+    lfo_plugin_info.path = "";
+    lfo_plugin_info.type = PluginType::INTERNAL;
+
+    auto [status, id] = _module_under_test->create_processor(lfo_plugin_info, "lfo");
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     status = _module_under_test->add_plugin_to_track(id, track_id);
@@ -478,18 +505,23 @@ TEST_F(TestEngine, TestGateRouting)
 {
     /* Build a cv/gate to midi to cv/gate chain and verify gate changes travel through it*/
     _module_under_test->create_track("cv", 0);
-    auto [cv_ctrl_status, cv_ctrl_id] = _module_under_test->load_plugin("sushi.testing.cv_to_control",
-                                                                        "cv_ctrl",
-                                                                        "   ",
-                                                                        PluginType::INTERNAL);
+
+    PluginInfo cv_to_control_plugin_info;
+    cv_to_control_plugin_info.uid = "sushi.testing.cv_to_control";
+    cv_to_control_plugin_info.path = "";
+    cv_to_control_plugin_info.type = PluginType::INTERNAL;
+    auto [cv_ctrl_status, cv_ctrl_id] = _module_under_test->create_processor(cv_to_control_plugin_info, "cv_ctrl");
+
     ASSERT_EQ(EngineReturnStatus::OK, cv_ctrl_status);
     auto status = _module_under_test->add_plugin_to_track(cv_ctrl_id, _processors->track("cv")->id());
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    auto [ctrl_cv_id_status, ctrl_cv_id] = _module_under_test->load_plugin("sushi.testing.control_to_cv",
-                                                                           "ctrl_cv",
-                                                                           "   ",
-                                                                           PluginType::INTERNAL);
+    PluginInfo control_to_cv_plugin_info;
+    control_to_cv_plugin_info.uid = "sushi.testing.control_to_cv";
+    control_to_cv_plugin_info.path = "";
+    control_to_cv_plugin_info.type = PluginType::INTERNAL;
+    auto [ctrl_cv_id_status, ctrl_cv_id] = _module_under_test->create_processor(control_to_cv_plugin_info, "ctrl_cv");
+
     ASSERT_EQ(EngineReturnStatus::OK, ctrl_cv_id_status);
     status = _module_under_test->add_plugin_to_track(ctrl_cv_id, _processors->track("cv")->id());
     ASSERT_EQ(EngineReturnStatus::OK, status);

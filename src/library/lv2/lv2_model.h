@@ -136,7 +136,7 @@ class Model
 public:
     SUSHI_DECLARE_NON_COPYABLE(Model);
 
-    Model(float sample_rate, LV2_Wrapper* wrapper);
+    Model(float sample_rate, LV2_Wrapper* wrapper, LilvWorld* world);
     ~Model();
 
     ProcessorReturnCode load_plugin(const LilvPlugin* plugin_handle,
@@ -269,12 +269,16 @@ private:
 
     LV2_URIDs _urids;
 
+    float _sample_rate;
+
+    LV2_Wrapper* _wrapper{nullptr};
+
+    // This is owned in the Lv2ProcessorFactory
     LilvWorld* _world{nullptr};
     std::unique_ptr<HostNodes> _nodes{nullptr};
 
     std::vector<Port> _ports;
 
-    float _sample_rate;
     const int _buffer_size{AUDIO_CHUNK_SIZE};
     int _midi_buffer_size{4096};
 
@@ -300,8 +304,6 @@ private:
 
     std::unique_ptr<Worker> _state_worker;
     std::unique_ptr<Worker> _worker;
-
-    LV2_Wrapper* _wrapper{nullptr};
 };
 
 } // end namespace lv2

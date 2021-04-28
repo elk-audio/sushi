@@ -107,7 +107,6 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
     plugin_entry_proc mainEntryPoint = entryPoint.entryPointFuncPtr;
     AEffect *plugin = mainEntryPoint(host_callback);
     return plugin;
-
 }
 
 void PluginLoader::close_library_handle(LibraryHandle library_handle)

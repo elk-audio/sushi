@@ -86,7 +86,7 @@ endif()
 
 if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
-                                 unittests/library/vst2x_plugin_loader_test.cpp
+                                 unittests/library/vst2x_plugin_loading_test.cpp
                                  unittests/library/vst2x_midi_event_fifo_test.cpp
                                  ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_host_callback.cpp)
 else()

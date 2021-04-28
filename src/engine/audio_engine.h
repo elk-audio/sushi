@@ -45,6 +45,7 @@
 #include "library/rt_event_fifo.h"
 #include "library/types.h"
 #include "library/performance_timer.h"
+#include "library/plugin_registry.h"
 
 namespace sushi {
 namespace engine {
@@ -359,7 +360,9 @@ public:
      * @param output_busses The number of output stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name,
+                                                                  int input_busses,
+                                                                  int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_id The unique name of the track to delete
@@ -368,18 +371,14 @@ public:
     EngineReturnStatus delete_track(ObjectId track_id) override;
 
     /**
-     * @brief Create a plugin instance, either from internal plugins or loaded from file.
+     * @brief Create a processor instance, either from internal plugins or loaded from file.
      *        The created plugin can then be added to tracks.
-     * @param plugin_uid The unique id of the plugin
-     * @param plugin_name The name to give the plugin after loading, must be unique.
-     * @param plugin_path The file to load the plugin from, only valid for external plugins
-     * @param plugin_type The type of plugin, i.e. internal or external
-     * @return the unique id of the plugin created, only valid if status is EngineReturnStatus::OK
+     * @param plugin_info
+     * @param processor_name
+     * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string &plugin_uid,
-                                                         const std::string &plugin_name,
-                                                         const std::string &plugin_path,
-                                                         PluginType plugin_type) override;
+    std::pair <EngineReturnStatus, ObjectId> create_processor(const engine::PluginInfo& plugin_info,
+                                                              const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -563,6 +562,8 @@ private:
     bool _input_clip_detection_enabled{false};
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
+
+    PluginRegistry _plugin_registry;
 };
 
 /**
@@ -571,13 +572,6 @@ private:
  * @return A new, non-transient state
  */
 RealtimeState update_state(RealtimeState current_state);
-
-/**
- * @brief Instantiate a plugin instance of a given type
- * @param uid String unique id
- * @return Pointer to plugin instance if uid is valid, nullptr otherwise
- */
-std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control);
 
 } // namespace engine
 } // namespace sushi
