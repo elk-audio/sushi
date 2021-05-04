@@ -16,7 +16,8 @@
 /**
  * @brief Wrapper for VST 3.x plugins.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
- */#ifdef SUSHI_BUILD_WITH_VST3
+ */
+ #ifdef SUSHI_BUILD_WITH_VST3
 
 #include <fstream>
 #include <string>

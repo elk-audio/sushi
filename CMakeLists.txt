@@ -163,10 +163,13 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/peak_meter_plugin.cpp
-                      src/plugins/transposer_plugin.cpp
+                      src/plugins/return_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
+                      src/plugins/send_plugin.cpp
+                      src/plugins/send_return_factory.cpp
                       src/plugins/step_sequencer_plugin.cpp
+                      src/plugins/transposer_plugin.cpp
                       src/plugins/wav_writer_plugin.cpp
                       src/plugins/mono_summing_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
