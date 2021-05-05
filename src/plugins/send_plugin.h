@@ -21,6 +21,8 @@
 #ifndef SUSHI_SEND_PLUGIN_H
 #define SUSHI_SEND_PLUGIN_H
 
+#include <atomic>
+
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
 

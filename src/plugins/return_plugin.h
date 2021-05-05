@@ -21,6 +21,8 @@
 #ifndef SUSHI_RETURN_PLUGIN_H
 #define SUSHI_RETURN_PLUGIN_H
 
+#include <atomic>
+
 #include "library/spinlock.h"
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
@@ -62,7 +64,11 @@ public:
     void set_bypassed(bool bypassed) override;
 
 private:
-    void  _swap_buffers();
+    void inline _swap_buffers();
+
+    void inline _maybe_swap_buffers(Time current_time);
+
+    ChunkSampleBuffer* _get_buffer(bool for_sending, Time current_time);
 
     float                                 _sample_rate;
     int                                   _return_id;
@@ -78,6 +84,10 @@ private:
     std::vector<send_plugin::SendPlugin*> _senders;
 
     BypassManager                         _bypass_manager;
+
+    std::atomic<Time>                     _last_process_time{Time(0)};
+
+    static_assert(decltype(_last_process_time)::is_always_lock_free);
 };
 
 }// namespace return_plugin

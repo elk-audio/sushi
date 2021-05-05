@@ -47,6 +47,9 @@ ReturnPlugin::~ReturnPlugin()
 void ReturnPlugin::send_audio(const ChunkSampleBuffer& send_buffer, float gain)
 {
     std::scoped_lock<SpinLock> lock(_buffer_lock);
+
+    _maybe_swap_buffers(_host_control.transport()->current_process_time());
+
     if (send_buffer.channel_count() == 1)
     {
         _active_in->add_with_gain(send_buffer, gain);
@@ -102,8 +105,12 @@ void ReturnPlugin::process_event(const RtEvent& event)
     }
 }
 
-void ReturnPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+void ReturnPlugin::process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& out_buffer)
 {
+    _buffer_lock.lock();
+    _maybe_swap_buffers(_host_control.transport()->current_process_time());
+    _buffer_lock.unlock();
+
     if (_bypass_manager.should_process())
     {
         out_buffer.replace(*_active_out);
@@ -124,10 +131,20 @@ void ReturnPlugin::set_bypassed(bool bypassed)
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
-void ReturnPlugin::_swap_buffers()
+void inline ReturnPlugin::_swap_buffers()
 {
     std::swap(_active_in, _active_out);
     _active_in->clear();
+}
+
+void inline ReturnPlugin::_maybe_swap_buffers(Time current_time)
+{
+    Time last_time = _last_process_time.load(std::memory_order_acquire);
+    if (last_time != current_time)
+    {
+        _last_process_time.store(current_time, std::memory_order_release);
+        _swap_buffers();
+    }
 }
 
 
