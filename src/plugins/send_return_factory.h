@@ -21,6 +21,8 @@
 #ifndef SUSHI_SEND_RETURN_FACTORY_H
 #define SUSHI_SEND_RETURN_FACTORY_H
 
+#include <mutex>
+
 #include "library/base_processor_factory.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
@@ -47,6 +49,7 @@ public:
 
 private:
     std::vector<return_plugin::ReturnPlugin*> _return_instances;
+    std::mutex _return_inst_lock;
 };
 
 }// namespace sushi

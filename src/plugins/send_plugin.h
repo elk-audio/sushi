@@ -57,11 +57,25 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
+    static int non_rt_callback(void* data, EventId id)
+    {
+        return reinterpret_cast<SendPlugin*>(data)->_non_rt_callback(id);
+    }
+
 private:
+    int _non_rt_callback(EventId id);
+
     float                         _sample_rate;
     return_plugin::ReturnPlugin*  _destination{nullptr};
 
+    return_plugin::ReturnPlugin*  _new_destination{nullptr};
+
+
     FloatParameterValue* _gain_parameter;
+
+    std::string*         _return_name_property{nullptr};
+    int                  _pending_event_id{0};
+
 
     SendReturnFactory* _manager;
     BypassManager _bypass_manager;

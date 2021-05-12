@@ -18,6 +18,8 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include "logging.h"
+
 #include "send_return_factory.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
@@ -25,6 +27,8 @@
 namespace sushi {
 
 SendReturnFactory::SendReturnFactory() = default;
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_ret_factory");
 
 send_plugin::SendPlugin* SendReturnFactory::get_send()
 {
@@ -34,6 +38,7 @@ send_plugin::SendPlugin* SendReturnFactory::get_send()
 return_plugin::ReturnPlugin* SendReturnFactory::lookup_return_plugin(const std::string& name)
 {
     return_plugin::ReturnPlugin* instance = nullptr;
+    std::scoped_lock<std::mutex> lock(_return_inst_lock);
     for (const auto i : _return_instances)
     {
         if (i->name() == name)
@@ -42,11 +47,13 @@ return_plugin::ReturnPlugin* SendReturnFactory::lookup_return_plugin(const std::
             break;
         }
     }
+    SUSHI_LOG_INFO("Looked up return plugin {}, {}", name, instance? "found" : "not found");
     return instance;
 }
 
 void SendReturnFactory::on_return_destruction(return_plugin::ReturnPlugin* instance)
 {
+    std::scoped_lock<std::mutex> lock(_return_inst_lock);
     _return_instances.erase(std::remove(_return_instances.begin(), _return_instances.end(), instance), _return_instances.end());
 }
 

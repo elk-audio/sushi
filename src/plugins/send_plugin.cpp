@@ -18,8 +18,13 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <string>
+#include "logging.h"
+
 #include "send_plugin.h"
 #include "return_plugin.h"
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
 namespace sushi {
 namespace send_plugin {
@@ -78,6 +83,33 @@ void SendPlugin::process_event(const RtEvent& event)
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }
+
+        case RtEventType::STRING_PROPERTY_CHANGE:
+        {
+            auto typed_event = event.string_parameter_change_event();
+            _return_name_property = typed_event->value();
+            /* Schedule a non-rt callback to handle destination switching */
+            auto e = RtEvent::make_async_work_event(&SendPlugin::non_rt_callback, this->id(), this);
+            _pending_event_id = e.async_work_event()->event_id();
+            output_event(e);
+            break;
+        }
+
+        case RtEventType::ASYNC_WORK_NOTIFICATION:
+        {
+            auto typed_event = event.async_work_completion_event();
+            if (typed_event->sending_event_id() == _pending_event_id &&
+                typed_event->return_status() == EventStatus::HANDLED_OK)
+            {
+                if (_new_destination)
+                {
+                    set_destination(_new_destination);
+                    _new_destination = nullptr;
+                }
+            }
+            break;
+        }
+
         default:
             InternalPlugin::process_event(event);
             break;
@@ -104,6 +136,24 @@ bool SendPlugin::bypassed() const
 void SendPlugin::set_bypassed(bool bypassed)
 {
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+int SendPlugin::_non_rt_callback(EventId id)
+{
+    if (id == _pending_event_id && _return_name_property)
+    {
+        std::unique_ptr<std::string> return_plugin_name(_return_name_property);
+        _return_name_property = nullptr;
+
+        return_plugin::ReturnPlugin* return_plugin = _manager->lookup_return_plugin(*return_plugin_name);
+        if (return_plugin)
+        {
+            _new_destination = return_plugin;
+            return EventStatus::HANDLED_OK;
+        }
+        SUSHI_LOG_WARNING("Return plugin {} not found", *return_plugin_name);
+    }
+    return EventStatus::ERROR;
 }
 
 }// namespace send_plugin
