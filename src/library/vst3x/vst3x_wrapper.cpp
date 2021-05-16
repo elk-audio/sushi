@@ -301,8 +301,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     if (_process_data.inputParameterChanges->getParameterCount() > 0)
     {
-        auto e = RtEvent::make_async_work_event(&Vst3xWrapper::parameter_update_callback, this->id(), this);
-        output_event(e);
+        request_non_rt_task(parameter_update_callback);
     }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {

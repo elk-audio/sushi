@@ -121,7 +121,7 @@ public:
         return 1;
     }
 
-    void output_worker_event(const RtEvent& event);
+    void request_worker_callback(AsyncWorkCallback callback);
 
 private:
     const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);

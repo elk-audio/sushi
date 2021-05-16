@@ -89,9 +89,7 @@ void SendPlugin::process_event(const RtEvent& event)
             auto typed_event = event.string_parameter_change_event();
             _return_name_property = typed_event->value();
             /* Schedule a non-rt callback to handle destination switching */
-            auto e = RtEvent::make_async_work_event(&SendPlugin::non_rt_callback, this->id(), this);
-            _pending_event_id = e.async_work_event()->event_id();
-            output_event(e);
+            _pending_event_id = request_non_rt_task(&non_rt_callback);
             break;
         }
 

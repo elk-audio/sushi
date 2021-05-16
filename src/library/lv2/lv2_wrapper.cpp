@@ -422,8 +422,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
             {
                 _model->set_play_state(PlayState::PAUSED);
 
-                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
-                output_event(e);
+                request_non_rt_task(&restore_state_callback);
                 break;
             }
             case PlayState::PAUSED:
@@ -514,9 +513,9 @@ bool LV2_Wrapper::bypassed() const
     return _bypass_manager.bypassed();
 }
 
-void LV2_Wrapper::output_worker_event(const RtEvent& event)
+void LV2_Wrapper::request_worker_callback(AsyncWorkCallback callback)
 {
-    output_event(event);
+    request_non_rt_task(callback);
 }
 
 void LV2_Wrapper::_deliver_inputs_to_plugin()
