@@ -21,49 +21,53 @@
 #define SUSHI_VST2X_PROCESSOR_FACTORY_H
 
 #include "library/base_processor_factory.h"
-#include "library/vst2x/vst2x_wrapper.h"
 
 #ifdef SUSHI_BUILD_WITH_VST2
+#include "library/vst2x/vst2x_wrapper.h"
 
 namespace sushi {
+namespace vst2 {
 
 class Vst2xProcessorFactory : public BaseProcessorFactory
 {
 public:
     Vst2xProcessorFactory() = default;
 
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
-                                                                            HostControl& host_control,
-                                                                            float sample_rate) override
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
+    new_instance(const sushi::engine::PluginInfo& plugin_info,
+                 HostControl& host_control,
+                 float sample_rate) override
     {
-        auto processor = std::make_shared<vst2::Vst2xWrapper>(host_control, plugin_info.path);
+        auto processor = std::make_shared<Vst2xWrapper>(host_control, plugin_info.path);
         auto processor_status = processor->init(sample_rate);
         return {processor_status, processor};
     }
 };
 
+} // end namespace vst2
 } // end namespace sushi
 
-#endif //SUSHI_BUILD_WITH_VST2
-#ifndef SUSHI_BUILD_WITH_VST2
+#else //SUSHI_BUILD_WITH_VST2
 
 namespace sushi {
+namespace vst2 {
 
-    class Vst2xProcessorFactory : public BaseProcessorFactory
+class Vst2xProcessorFactory : public BaseProcessorFactory
+{
+public:
+    Vst2xProcessorFactory() = default;
+
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
+                                                                            HostControl&,
+                                                                            float) override
     {
-    public:
-        Vst2xProcessorFactory() = default;
+        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
+    }
+};
 
-        std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
-                                                                                HostControl&,
-                                                                                float) override
-        {
-            return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
-        }
-    };
-
+} // end namespace vst2
 } // end namespace sushi
 
-#endif
+#endif // SUSHI_BUILD_WITH_VST2
 
 #endif //SUSHI_VST2X_PROCESSOR_FACTORY_H

@@ -21,10 +21,10 @@
 #define SUSHI_VST3X_PROCESSOR_FACTORY_H
 
 #include "library/base_processor_factory.h"
-#include "vst3x_host_app.h"
-#include "library/vst3x/vst3x_wrapper.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
+#include "vst3x_host_app.h"
+#include "library/vst3x/vst3x_wrapper.h"
 
 namespace sushi {
 namespace vst3 {
@@ -54,8 +54,7 @@ private:
 } // end namespace vst3
 } // end namespace sushi
 
-#endif //SUSHI_BUILD_WITH_VST3
-#ifndef SUSHI_BUILD_WITH_VST3
+#else // SUSHI_BUILD_WITH_VST3
 
 namespace sushi {
 namespace vst3 {
@@ -72,16 +71,10 @@ public:
     {
         return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
     }
-                                                                            float sample_rate) override;
-
-private:
-    SushiHostApplication _host_app;
 };
 
 } // end namespace vst3
 } // end namespace sushi
 
-
 #endif //SUSHI_BUILD_WITH_VST3
-
 #endif //SUSHI_VST3X_PROCESSOR_FACTORY_H
