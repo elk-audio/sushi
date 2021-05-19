@@ -104,11 +104,6 @@ bool AudioGraph::remove(Track* track)
 
 void AudioGraph::render()
 {
-    for (auto& i : _event_outputs)
-    {
-        i.clear();
-    }
-
     if (_cores == 1)
     {
         for (auto& track : _audio_graph[0])
