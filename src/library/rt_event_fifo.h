@@ -28,7 +28,7 @@
 
 namespace sushi {
 
-constexpr int MAX_EVENTS_IN_QUEUE = 100;
+constexpr int MAX_EVENTS_IN_QUEUE = 500;
 
 /**
  * @brief Wait free fifo queue for communication between rt and non-rt code

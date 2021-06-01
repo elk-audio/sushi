@@ -20,12 +20,13 @@
 
 #include <cassert>
 
+#include "spdlog/fmt/bundled/format.h"
+
 #include "peak_meter_plugin.h"
 
 namespace sushi {
 namespace peak_meter_plugin {
 
-constexpr int MAX_CHANNELS = 16;
 constexpr float DEFAULT_REFRESH_RATE = 25;
 constexpr auto REFRESH_TIME = std::chrono::milliseconds(3 * 1000 / static_cast<int>(DEFAULT_REFRESH_RATE));
 
@@ -49,33 +50,37 @@ inline float to_normalised_dB(float gain)
 
 PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS;
-    _max_output_channels = MAX_CHANNELS;
+    _clip_hold_count.fill(0.0);
+    _clipped.fill(false);
+    _max_input_channels = MAX_METERED_CHANNELS;
+    _max_output_channels = MAX_METERED_CHANNELS;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _level_parameters[LEFT_CHANNEL_INDEX] = register_float_parameter("left_level", "Level (left)", "dB",
-                                                                     OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
-                                                                     new dBToLinPreProcessor(OUTPUT_MIN, 24.0f));
 
-    _level_parameters[RIGHT_CHANNEL_INDEX] = register_float_parameter("right_level", "Level (right)", "dB",
-                                                                      OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
-                                                                      new dBToLinPreProcessor(OUTPUT_MIN, 24.0f));
-
-    _clip_parameters[LEFT_CHANNEL_INDEX] = register_bool_parameter("right_clip", "Clip (left)", "", false);
-    _clip_parameters[RIGHT_CHANNEL_INDEX] = register_bool_parameter("left_clip", "Clip (right)", "", false);
-
-    _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels", "", false);
+    _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels 1 & 2", "", false);
     _send_peaks_only_parameter = register_bool_parameter("peaks_only", "Peaks Only", "", false);
     _update_rate_parameter = register_float_parameter("update_rate", "Update Rate", "/s", DEFAULT_REFRESH_RATE,
                                                       0.1, 25, new FloatParameterPreProcessor(0.1, DEFAULT_REFRESH_RATE));
-
     _update_rate_id = _update_rate_parameter->descriptor()->id();
 
-    for ([[maybe_unused]] const auto& i : _level_parameters) { assert(i);}
-    for ([[maybe_unused]] const auto& i : _clip_parameters) { assert(i);}
-    assert(_link_channels_parameter);
-    assert(_send_peaks_only_parameter);
-    assert(_update_rate_parameter);
+    std::string param_name = "level_{})";
+    std::string param_label = "Level (ch {})";
+    for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
+    {
+        _level_parameters[i] = register_float_parameter(fmt::format(param_name, i), fmt::format(param_label, i), "dB",
+                                                        OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
+                                                        new dBToLinPreProcessor(OUTPUT_MIN, 24.0f));
+        assert (_level_parameters[i]);
+    }
+
+    param_name = "clip_{}";
+    param_label = "Clip ch: {})";
+    for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
+    {
+        _clip_parameters[i] = register_bool_parameter(fmt::format(param_name, i), fmt::format(param_label, i), "", false);
+    }
+
+    assert(_link_channels_parameter && _send_peaks_only_parameter && _update_rate_parameter);
 }
 
 void PeakMeterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -124,7 +129,9 @@ void PeakMeterPlugin::_update_refresh_interval(float rate, float sample_rate)
 
 void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool linked, bool send_only_peaks)
 {
-    float peak[MAX_METERED_CHANNELS] = {0,0};
+    std::array<float, MAX_METERED_CHANNELS> peak;
+    peak.fill(0.0f);
+
     int channels = std::min(MAX_METERED_CHANNELS, in.channel_count());
 
     for (int ch = 0; ch < channels; ++ch)
@@ -176,7 +183,9 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
 
 void PeakMeterPlugin::_process_clip_detection(const ChunkSampleBuffer& in, bool linked)
 {
-    bool clipped_ch[MAX_METERED_CHANNELS] = {false, false};
+    std::array<bool, MAX_METERED_CHANNELS> clipped_ch;
+    clipped_ch.fill(false);
+
     int channels = std::min(MAX_METERED_CHANNELS, in.channel_count());
 
     for (int ch = 0; ch < channels; ++ch)
