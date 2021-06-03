@@ -46,6 +46,8 @@ public:
 
     void send_audio(const ChunkSampleBuffer&, float gain);
 
+    void send_audio_with_ramp(const ChunkSampleBuffer&, float start_gain, float end_gain);
+
     void add_sender(send_plugin::SendPlugin* sender);
 
     void remove_sender(send_plugin::SendPlugin* sender);

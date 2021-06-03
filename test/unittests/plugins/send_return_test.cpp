@@ -134,3 +134,32 @@ TEST_F(TestSendReturnPlugins, TestMonoToStereoSend)
     _return_instance.process_audio(buffer_1, buffer_2);
     test_utils::assert_buffer_value(1.0f, buffer_2);
 }
+
+TEST_F(TestSendReturnPlugins, TestRampedProcessing)
+{
+    ChunkSampleBuffer buffer_1(2);
+    ChunkSampleBuffer buffer_2(2);
+    test_utils::fill_sample_buffer(buffer_1, 1.0f);
+
+    // Test only ramping
+    _return_instance.send_audio_with_ramp(buffer_1, 2.0f, 0.0f);
+    _return_instance._swap_buffers();
+    _return_instance.process_audio(buffer_1, buffer_2);
+    EXPECT_NEAR(2.0f, buffer_2.channel(0)[0], 0.02);
+    EXPECT_NEAR(1.0f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.02);
+    EXPECT_NEAR(0.0f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.02);
+    _return_instance._swap_buffers();
+
+    // Test parameter smoothing
+    _send_instance.set_destination(&_return_instance);
+    auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+    _send_instance.process_event(event);
+    _send_instance.process_audio(buffer_1, buffer_2);
+    _return_instance._swap_buffers();
+    _return_instance.process_audio(buffer_1, buffer_2);
+
+    // Audio should now begin to ramp down
+    EXPECT_FLOAT_EQ(1.0f, buffer_2.channel(0)[0]);
+    EXPECT_LT(buffer_2.channel(0)[AUDIO_CHUNK_SIZE -1], 1.0f);
+    EXPECT_GT(buffer_2.channel(0)[AUDIO_CHUNK_SIZE / 2], buffer_2.channel(0)[AUDIO_CHUNK_SIZE - 1]);
+ }

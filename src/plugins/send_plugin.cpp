@@ -19,10 +19,11 @@
  */
 
 #include <string>
-#include "logging.h"
 
+#include "logging.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
+#include "library/constants.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
@@ -41,6 +42,8 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
                                                 0.0f, -120.0f, 24.0f,
                                                 new dBToLinPreProcessor(-120.0f, 24.0f));
 
+    _gain_smoother.set_direct(_gain_parameter->processed_value());
+
     [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name", "");
     assert(_gain_parameter && str_pr_ok);
 }
@@ -55,7 +58,7 @@ SendPlugin::~SendPlugin()
 
 void SendPlugin::set_destination(return_plugin::ReturnPlugin* destination)
 {
-    _destination = destination; // TODO - When nulling this - make sure that it is not used afterwards
+    _destination = destination;
     if (destination)
     {
         destination->add_sender(this);
@@ -71,6 +74,7 @@ ProcessorReturnCode SendPlugin::init(float sample_rate)
 void SendPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
+    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate);
 }
 
 void SendPlugin::process_event(const RtEvent& event)
@@ -117,11 +121,28 @@ void SendPlugin::process_event(const RtEvent& event)
 void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
-    if (_bypass_manager.should_process())
+
+    if (_bypass_manager.should_process() && _destination)
     {
-        if (_destination)
+        float gain = _gain_parameter->processed_value();
+        _gain_smoother.set(gain);
+
+        if (_bypass_manager.should_ramp())
         {
-            _destination->send_audio(in_buffer, _gain_parameter->processed_value());
+            auto [start, end] = _bypass_manager.get_ramp();
+            start *= _gain_smoother.value();
+            end *= _gain_smoother.next_value();
+            _destination->send_audio_with_ramp(in_buffer, start, end);
+        }
+        else if (_gain_smoother.stationary())
+        {
+            _destination->send_audio(in_buffer, gain);
+        }
+        else
+        {
+            float start = _gain_smoother.value();
+            float end = _gain_smoother.next_value();
+            _destination->send_audio_with_ramp(in_buffer, start, end);
         }
     }
 }

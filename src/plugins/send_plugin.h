@@ -71,7 +71,8 @@ private:
     return_plugin::ReturnPlugin*  _new_destination{nullptr};
 
 
-    FloatParameterValue* _gain_parameter;
+    FloatParameterValue*          _gain_parameter;
+    ValueSmootherFilter<float>    _gain_smoother;
 
     std::string*         _return_name_property{nullptr};
     int                  _pending_event_id{0};

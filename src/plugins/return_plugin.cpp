@@ -64,6 +64,26 @@ void ReturnPlugin::send_audio(const ChunkSampleBuffer& send_buffer, float gain)
     }
 }
 
+void ReturnPlugin::send_audio_with_ramp(const ChunkSampleBuffer& send_buffer, float start_gain, float end_gain)
+{
+    std::scoped_lock<SpinLock> lock(_buffer_lock);
+
+    _maybe_swap_buffers(_host_control.transport()->current_process_time());
+
+    if (send_buffer.channel_count() == 1)
+    {
+        _active_in->add_with_ramp(send_buffer, start_gain, end_gain);
+    }
+    else
+    {
+        int channels = std::min(send_buffer.channel_count(), _current_output_channels);
+        for (int c = 0; c < channels; ++c)
+        {
+            _active_in->add_with_ramp(c, c, send_buffer, start_gain, end_gain);
+        }
+    }
+}
+
 void ReturnPlugin::add_sender(send_plugin::SendPlugin* sender)
 {
     _senders.push_back(sender);
@@ -107,13 +127,19 @@ void ReturnPlugin::process_event(const RtEvent& event)
 
 void ReturnPlugin::process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& out_buffer)
 {
-    _buffer_lock.lock();
-    _maybe_swap_buffers(_host_control.transport()->current_process_time());
-    _buffer_lock.unlock();
+    {
+        std::scoped_lock<SpinLock> lock(_buffer_lock);
+        _maybe_swap_buffers(_host_control.transport()->current_process_time());
+    }
 
     if (_bypass_manager.should_process())
     {
         out_buffer.replace(*_active_out);
+
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.ramp_output(out_buffer);
+        }
     }
     else
     {
