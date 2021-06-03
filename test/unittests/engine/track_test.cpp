@@ -177,17 +177,6 @@ TEST_F(TrackTest, TestEventProcessing)
     ASSERT_FALSE(event_queue.empty());
     RtEvent e;
     event_queue.pop(e);
-
-    /* Test with internal event buffering */
-    _module_under_test.set_event_output_internal();
-    auto& output_event_buffer = _module_under_test.output_event_buffer();
-    ASSERT_TRUE(output_event_buffer.empty());
-
-    _module_under_test.process_event(event);
-    _module_under_test.render();
-    ASSERT_FALSE(output_event_buffer.empty());
-    ASSERT_TRUE(event_queue.empty());
-
 }
 
 TEST_F(TrackTest, TestEventForwarding)

@@ -152,9 +152,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
-                      src/library/vst2x/vst2x_wrapper.cpp
-                      src/library/vst3x/vst3x_wrapper.cpp
-                      src/library/lv2/lv2_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -211,9 +208,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
-                        src/library/vst2x/vst2x_wrapper.h
-                        src/library/vst3x/vst3x_wrapper.h
-                        src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
@@ -267,31 +261,37 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
 endif()
 
 if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.h
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
+                                src/library/vst2x/vst2x_host_callback.h
                                 src/library/vst2x/vst2x_plugin_loader.h
                                 src/library/vst2x/vst2x_midi_event_fifo.h
                                 src/library/vst2x/vst2x_processor_factory.h
+                                src/library/vst2x/vst2x_wrapper.cpp
                                 src/library/vst2x/vst2x_host_callback.cpp
                                 src/library/vst2x/vst2x_plugin_loader.cpp)
 endif()
 
 if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.h
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_wrapper.h
+                                src/library/vst3x/vst3x_host_app.h
                                 src/library/vst3x/vst3x_utils.h
                                 src/library/vst3x/vst3x_processor_factory.h
+                                src/library/vst3x/vst3x_wrapper.cpp
                                 src/library/vst3x/vst3x_host_app.cpp
                                 src/library/vst3x/vst3x_utils.cpp)
 
 endif()
 
 if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_control.h
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
+                               src/library/lv2/lv2_control.h
                                src/library/lv2/lv2_features.h
                                src/library/lv2/lv2_host_nodes.h
                                src/library/lv2/lv2_model.h
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_processor_factory.h
+                               src/library/lv2/lv2_wrapper.cpp
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp

@@ -39,7 +39,7 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
             }
             case engine::PluginType::VST2X:
             {
-                std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<Vst2xProcessorFactory>();
+                std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<vst2::Vst2xProcessorFactory>();
                 _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
