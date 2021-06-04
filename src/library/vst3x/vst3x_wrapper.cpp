@@ -17,7 +17,6 @@
  * @brief Wrapper for VST 3.x plugins.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
- #ifdef SUSHI_BUILD_WITH_VST3
 
 #include <fstream>
 #include <string>
@@ -301,8 +300,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
 {
     if (_process_data.inputParameterChanges->getParameterCount() > 0)
     {
-        auto e = RtEvent::make_async_work_event(&Vst3xWrapper::parameter_update_callback, this->id(), this);
-        output_event(e);
+        request_non_rt_task(parameter_update_callback);
     }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
@@ -971,18 +969,3 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
 }
 } // end namespace vst3
 } // end namespace sushi
-
-#endif //SUSHI_BUILD_WITH_VST3
-#ifndef SUSHI_BUILD_WITH_VST3
-#include "vst3x_wrapper.h"
-#include "logging.h"
-namespace sushi {
-namespace vst3 {
-SUSHI_GET_LOGGER;
-ProcessorReturnCode Vst3xWrapper::init(float /*sample_rate*/)
-{
-    /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with Vst 3 support!");
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
-}}}
-#endif

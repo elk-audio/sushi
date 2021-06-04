@@ -174,6 +174,13 @@ void Processor::output_midi_event_as_internal(MidiDataByte midi_data, int sample
     }
 }
 
+EventId Processor::request_non_rt_task(AsyncWorkCallback callback)
+{
+    auto event = RtEvent::make_async_work_event(callback, this->id(), this);
+    output_event(event);
+    return event.async_work_event()->event_id();
+}
+
 std::string Processor::_make_unique_parameter_name(std::string name) const
 {
     auto unique_name = name.empty() ? "parameter" : name;
