@@ -127,6 +127,7 @@ void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBu
         float gain = _gain_parameter->processed_value();
         _gain_smoother.set(gain);
 
+        // Ramp if bypass was recently toggled
         if (_bypass_manager.should_ramp())
         {
             auto [start, end] = _bypass_manager.get_ramp();
@@ -134,10 +135,14 @@ void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBu
             end *= _gain_smoother.next_value();
             _destination->send_audio_with_ramp(in_buffer, start, end);
         }
+
+        // Don't ramp, nominal case
         else if (_gain_smoother.stationary())
         {
             _destination->send_audio(in_buffer, gain);
         }
+
+        // Ramp because send gain was recently changed
         else
         {
             float start = _gain_smoother.value();

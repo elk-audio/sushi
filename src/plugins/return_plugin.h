@@ -70,8 +70,6 @@ private:
 
     void inline _maybe_swap_buffers(Time current_time);
 
-    ChunkSampleBuffer* _get_buffer(bool for_sending, Time current_time);
-
     float                                 _sample_rate;
     int                                   _return_id;
     SendReturnFactory*                    _manager;

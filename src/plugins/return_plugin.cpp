@@ -134,7 +134,8 @@ void ReturnPlugin::process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSa
 
     if (_bypass_manager.should_process())
     {
-        out_buffer.replace(*_active_out);
+        auto buffer = ChunkSampleBuffer::create_non_owning_buffer(*_active_out, 0, out_buffer.channel_count());
+        out_buffer.replace(buffer);
 
         if (_bypass_manager.should_ramp())
         {
