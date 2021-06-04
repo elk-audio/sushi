@@ -63,15 +63,14 @@ void SendPlugin::clear_destination()
 
 void SendPlugin::_set_destination(return_plugin::ReturnPlugin* destination)
 {
+    assert(destination);
+
     if (_destination)
     {
         _destination->remove_sender(this);
     }
     _destination = destination;
-    if (destination)
-    {
-        destination->add_sender(this);
-    }
+    destination->add_sender(this);
 }
 
 ProcessorReturnCode SendPlugin::init(float sample_rate)
