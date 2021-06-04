@@ -42,7 +42,7 @@ public:
 
     virtual ~SendPlugin();
 
-    void set_destination(return_plugin::ReturnPlugin* destination);
+    void clear_destination();
 
     // From Processor
     ProcessorReturnCode init(float sample_rate) override;
@@ -63,6 +63,8 @@ public:
     }
 
 private:
+    void _set_destination(return_plugin::ReturnPlugin* destination);
+
     int _non_rt_callback(EventId id);
 
     float                         _sample_rate;

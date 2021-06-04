@@ -40,7 +40,7 @@ ReturnPlugin::~ReturnPlugin()
     _manager->on_return_destruction(this);
     for (auto& sender : _senders)
     {
-        sender->set_destination(nullptr);
+        sender->clear_destination();
     }
 }
 

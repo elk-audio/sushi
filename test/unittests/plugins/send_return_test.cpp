@@ -80,7 +80,7 @@ TEST_F(TestSendReturnPlugins, TestProcessing)
     _send_instance.process_audio(buffer_1, buffer_2);
     test_utils::assert_buffer_value(1.0f, buffer_2);
 
-    _send_instance.set_destination(&_return_instance);
+    _send_instance._set_destination(&_return_instance);
     _send_instance.process_audio(buffer_1, buffer_2);
     buffer_2.clear();
 
@@ -98,11 +98,11 @@ TEST_F(TestSendReturnPlugins, TestMultipleSends)
 
     _host_control_mockup._transport.set_time(Time(0), 0);
 
-    _send_instance.set_destination(&_return_instance);
+    _send_instance._set_destination(&_return_instance);
     _send_instance.process_audio(buffer_1, buffer_2);
 
     SendPlugin send_instance_2(_host_ctrl, &_factory);
-    send_instance_2.set_destination(&_return_instance);
+    send_instance_2._set_destination(&_return_instance);
     send_instance_2.process_audio(buffer_1, buffer_2);
     buffer_2.clear();
 
@@ -126,7 +126,7 @@ TEST_F(TestSendReturnPlugins, TestMonoToStereoSend)
 
     _send_instance.set_input_channels(1);
     _send_instance.set_output_channels(1);
-    _send_instance.set_destination(&_return_instance);
+    _send_instance._set_destination(&_return_instance);
     _send_instance.process_audio(buffer_mono, buffer_mono);
 
     // Swap manually and verify that signal is returned
@@ -151,7 +151,7 @@ TEST_F(TestSendReturnPlugins, TestRampedProcessing)
     _return_instance._swap_buffers();
 
     // Test parameter smoothing
-    _send_instance.set_destination(&_return_instance);
+    _send_instance._set_destination(&_return_instance);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_2);

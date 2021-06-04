@@ -56,8 +56,17 @@ SendPlugin::~SendPlugin()
     }
 }
 
-void SendPlugin::set_destination(return_plugin::ReturnPlugin* destination)
+void SendPlugin::clear_destination()
 {
+    _destination = nullptr;
+}
+
+void SendPlugin::_set_destination(return_plugin::ReturnPlugin* destination)
+{
+    if (_destination)
+    {
+        _destination->remove_sender(this);
+    }
     _destination = destination;
     if (destination)
     {
@@ -94,21 +103,6 @@ void SendPlugin::process_event(const RtEvent& event)
             _return_name_property = typed_event->value();
             /* Schedule a non-rt callback to handle destination switching */
             _pending_event_id = request_non_rt_task(&non_rt_callback);
-            break;
-        }
-
-        case RtEventType::ASYNC_WORK_NOTIFICATION:
-        {
-            auto typed_event = event.async_work_completion_event();
-            if (typed_event->sending_event_id() == _pending_event_id &&
-                typed_event->return_status() == EventStatus::HANDLED_OK)
-            {
-                if (_new_destination)
-                {
-                    set_destination(_new_destination);
-                    _new_destination = nullptr;
-                }
-            }
             break;
         }
 
@@ -172,7 +166,7 @@ int SendPlugin::_non_rt_callback(EventId id)
         return_plugin::ReturnPlugin* return_plugin = _manager->lookup_return_plugin(*return_plugin_name);
         if (return_plugin)
         {
-            _new_destination = return_plugin;
+            _set_destination(return_plugin);
             return EventStatus::HANDLED_OK;
         }
         SUSHI_LOG_WARNING("Return plugin {} not found", *return_plugin_name);
