@@ -1,9 +1,17 @@
 #include <algorithm>
 
+#include "logging.h"
 #include "processor.h"
 #include "library/midi_decoder.h"
 
 namespace sushi {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("processor")
+
+Processor::~Processor()
+{
+    SUSHI_LOG_INFO("Destroyed processor {}({})", _id, _unique_name);
+}
 
 ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id)
 {

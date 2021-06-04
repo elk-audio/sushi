@@ -54,7 +54,7 @@ class Processor
 public:
     explicit Processor(HostControl host_control) : _host_control(host_control) {}
 
-    virtual ~Processor() = default;
+    virtual ~Processor();
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
