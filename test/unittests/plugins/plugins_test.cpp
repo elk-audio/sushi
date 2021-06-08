@@ -537,11 +537,11 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
 
     // Set up data
     int n_audio_channels = 2;
-    std::vector<int> delay_times = {1, 5, 20, 62, 15, 2};
+    std::vector<int> delay_times = {0, 1, 5, 20, 62, 15, 2};
     SampleBuffer<AUDIO_CHUNK_SIZE> zero_buffer(n_audio_channels);
     SampleBuffer<AUDIO_CHUNK_SIZE> result_buffer(n_audio_channels);
     SampleBuffer<AUDIO_CHUNK_SIZE> impulse_buffer(n_audio_channels);
-    for (int channel = 0; channel < 0; channel++)
+    for (int channel = 0; channel < n_audio_channels; channel++)
     {
         impulse_buffer.channel(channel)[0] = 1.0;
     }
@@ -550,7 +550,7 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
     for (auto delay_time : delay_times)
     {
         // Parameter change event
-        auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time));
+        auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time) / 48000.0f);
         _module_under_test->process_event(delay_time_event);
         
         // Process audio
@@ -564,11 +564,11 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
             {
                 if (sample_idx == delay_time)
                 {
-                    ASSERT_FLOAT_EQ(result_buffer.channel(channel)[sample_idx], 1.0f);
+                    EXPECT_FLOAT_EQ(1.0f, result_buffer.channel(channel)[sample_idx]);
                 }
                 else
                 {
-                    ASSERT_FLOAT_EQ(result_buffer.channel(channel)[sample_idx], 0.0f);
+                    EXPECT_FLOAT_EQ(0.0f, result_buffer.channel(channel)[sample_idx]);
                 }
             }
         }

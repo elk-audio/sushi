@@ -21,6 +21,10 @@
 #ifndef SUSHI_SAMPLE_DELAY_PLUGIN_H
 #define SUSHI_SAMPLE_DELAY_PLUGIN_H
 
+#include <array>
+#include <memory>
+#include <vector>
+
 #include "library/internal_plugin.h"
 
 namespace sushi {
@@ -28,6 +32,8 @@ namespace sample_delay_plugin {
 
 namespace 
 {
+    constexpr char DEFAULT_NAME[] = "sushi.testing.sample_delay";
+    constexpr char DEFAULT_LABEL[] = "Sample delay";
     constexpr int MAX_DELAY = 48000;
 } 
 
@@ -39,24 +45,16 @@ public:
 
     virtual ~SampleDelayPlugin() = default;
 
-    ProcessorReturnCode init(float sample_rate) override;
-
-    void configure(float sample_rate) override;
-
-    void process_event(const RtEvent& event) override;
-
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
-    int _wrapped_index(int index);
-
     // Input parameters
     IntParameterValue* _sample_delay;
     
     // Delayline data
     int _write_idx;
     int _read_idx;
-    std::vector<std::array<float, MAX_DELAY>> _delaylines;
+    std::vector<std::unique_ptr<std::array<float, MAX_DELAY>>> _delaylines;
 };
 
 } // namespace sample_delay_plugin

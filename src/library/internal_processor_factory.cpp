@@ -28,6 +28,7 @@
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
 #include "plugins/mono_summing_plugin.h"
+#include "plugins/sample_delay_plugin.h"
 
 namespace sushi {
 
@@ -102,6 +103,10 @@ sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
     else if (uid == "sushi.testing.mono_summing")
     {
         return std::make_shared<mono_summing_plugin::MonoSummingPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.sample_delay")
+    {
+        return std::make_shared<sample_delay_plugin::SampleDelayPlugin>(host_control);
     }
     return nullptr;
 }
