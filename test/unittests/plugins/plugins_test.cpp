@@ -14,6 +14,7 @@
 #include "plugins/peak_meter_plugin.cpp"
 #include "plugins/wav_writer_plugin.cpp"
 #include "plugins/mono_summing_plugin.cpp"
+#include "plugins/sample_delay_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
@@ -498,4 +499,78 @@ TEST_F(TestMonoSummingPlugin, TestProcess)
         ASSERT_FLOAT_EQ(0.0f, in_buffer.channel(1)[sample]);
     }
     test_utils::assert_buffer_value(1.0f, out_buffer);
+}
+
+class TestSampleDelayPlugin : public ::testing::Test
+{
+protected:
+    TestSampleDelayPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new sample_delay_plugin::SampleDelayPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    sample_delay_plugin::SampleDelayPlugin* _module_under_test;
+    RtSafeRtEventFifo _fifo;
+};
+
+TEST_F(TestSampleDelayPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Sample delay", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.sample_delay", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestSampleDelayPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up data
+    int n_audio_channels = 2;
+    std::vector<int> delay_times = {1, 5, 20, 62, 15, 2};
+    SampleBuffer<AUDIO_CHUNK_SIZE> zero_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> result_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> impulse_buffer(n_audio_channels);
+    for (int channel = 0; channel < 0; channel++)
+    {
+        impulse_buffer.channel(channel)[0] = 1.0;
+    }
+
+    // Test processing
+    for (auto delay_time : delay_times)
+    {
+        // Parameter change event
+        auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time));
+        _module_under_test->process_event(delay_time_event);
+        
+        // Process audio
+        _module_under_test->process_audio(zero_buffer, result_buffer);
+        _module_under_test->process_audio(impulse_buffer, result_buffer);
+
+        // Check the impulse has been delayed the correct number of samples
+        for (int sample_idx = 0; sample_idx < AUDIO_CHUNK_SIZE; sample_idx++)
+        {
+            for (int channel = 0; channel < n_audio_channels; channel++)
+            {
+                if (sample_idx == delay_time)
+                {
+                    ASSERT_FLOAT_EQ(result_buffer.channel(channel)[sample_idx], 1.0f);
+                }
+                else
+                {
+                    ASSERT_FLOAT_EQ(result_buffer.channel(channel)[sample_idx], 0.0f);
+                }
+            }
+        }
+    }
 }
