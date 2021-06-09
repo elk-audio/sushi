@@ -54,7 +54,7 @@ private:
     // Delayline data
     int _write_idx;
     int _read_idx;
-    std::vector<std::unique_ptr<std::array<float, MAX_DELAY>>> _delaylines;
+    std::vector<std::array<float, MAX_DELAY>> _delaylines;
 };
 
 } // namespace sample_delay_plugin
