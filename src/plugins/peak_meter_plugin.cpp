@@ -28,7 +28,8 @@ namespace sushi {
 namespace peak_meter_plugin {
 
 constexpr float DEFAULT_REFRESH_RATE = 25;
-constexpr auto REFRESH_TIME = std::chrono::milliseconds(3 * 1000 / static_cast<int>(DEFAULT_REFRESH_RATE));
+// The time for meters to drop ~10dB
+constexpr auto REFRESH_TIME = std::chrono::milliseconds(250);
 
 constexpr auto CLIP_HOLD_TIME = std::chrono::seconds(5);
 
@@ -123,7 +124,7 @@ void PeakMeterPlugin::_update_refresh_interval(float rate, float sample_rate)
     _clip_hold_samples = sample_rate * CLIP_HOLD_TIME.count();
     for (auto& i :  _smoothers)
     {
-        i.set_lag_time(REFRESH_TIME, sample_rate);
+        i.set_lag_time(REFRESH_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
 }
 
