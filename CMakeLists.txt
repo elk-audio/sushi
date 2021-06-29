@@ -166,6 +166,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/transposer_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
+                      src/plugins/sample_delay_plugin.cpp
                       src/plugins/step_sequencer_plugin.cpp
                       src/plugins/wav_writer_plugin.cpp
                       src/plugins/mono_summing_plugin.cpp
@@ -249,6 +250,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/transposer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
+                        src/plugins/sample_delay_plugin.h
                         src/plugins/step_sequencer_plugin.h
                         src/plugins/wav_writer_plugin.h
                         src/plugins/mono_summing_plugin.h
