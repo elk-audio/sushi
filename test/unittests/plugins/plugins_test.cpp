@@ -15,6 +15,7 @@
 #include "plugins/wav_writer_plugin.cpp"
 #include "plugins/mono_summing_plugin.cpp"
 #include "plugins/sample_delay_plugin.cpp"
+#include "plugins/stereo_mixer_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
@@ -573,4 +574,92 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
             }
         }
     }
+}
+
+class TestStereoMixerPlugin : public ::testing::Test
+{
+protected:
+    TestStereoMixerPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new stereo_mixer_plugin::StereoMixerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    stereo_mixer_plugin::StereoMixerPlugin* _module_under_test;
+    RtSafeRtEventFifo _fifo;
+};
+
+TEST_F(TestStereoMixerPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Stereo mixer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.stereo_mixer", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestStereoMixerPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up data
+    int n_audio_channels = 2;
+    SampleBuffer<AUDIO_CHUNK_SIZE> input_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> output_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> expected_buffer(n_audio_channels);
+
+    std::fill(input_buffer.channel(0), input_buffer.channel(0) + AUDIO_CHUNK_SIZE, 1.0f);
+    std::fill(input_buffer.channel(1), input_buffer.channel(1) + AUDIO_CHUNK_SIZE, -2.0f);
+
+    // Standard stereo throughput, right input channel inverted
+
+    _module_under_test->_left_pan->set(0.0f);
+    _module_under_test->_left_gain->set(0.5f);
+    _module_under_test->_left_invert_phase->set(0.0f);
+    _module_under_test->_right_pan->set(1.0f);
+    _module_under_test->_right_gain->set(0.1f);
+    _module_under_test->_right_invert_phase->set(1.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 0.5f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.2f);
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Inverted panning, left input channel inverted
+
+    _module_under_test->_left_pan->set(1.0f);
+    _module_under_test->_left_gain->set(0.7f);
+    _module_under_test->_left_invert_phase->set(1.0f);
+    _module_under_test->_right_pan->set(0.0f);
+    _module_under_test->_right_gain->set(0.3f);
+    _module_under_test->_right_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -0.6f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -0.7f);
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Mono summing
+    _module_under_test->_left_pan->set(0.5f);
+    _module_under_test->_left_gain->set(1.0f);
+    _module_under_test->_left_invert_phase->set(0.0f);
+    _module_under_test->_right_pan->set(0.5f);
+    _module_under_test->_right_gain->set(1.0f);
+    _module_under_test->_right_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -1.0f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -1.0f);
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
 }

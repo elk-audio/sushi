@@ -29,6 +29,7 @@
 #include "plugins/wav_writer_plugin.h"
 #include "plugins/mono_summing_plugin.h"
 #include "plugins/sample_delay_plugin.h"
+#include "plugins/stereo_mixer_plugin.h"
 
 namespace sushi {
 
@@ -107,6 +108,10 @@ sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
     else if (uid == "sushi.testing.sample_delay")
     {
         return std::make_shared<sample_delay_plugin::SampleDelayPlugin>(host_control);
+    }
+    else if (uid == "sushi.testing.stereo_mixer")
+    {
+        return std::make_shared<stereo_mixer_plugin::StereoMixerPlugin>(host_control);
     }
     return nullptr;
 }
