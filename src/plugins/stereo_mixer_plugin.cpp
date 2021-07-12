@@ -1,4 +1,22 @@
-#include <iostream>
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Stereo mixer
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
 
 #include "stereo_mixer_plugin.h"
 
@@ -8,6 +26,14 @@ namespace stereo_mixer_plugin {
 namespace {
     constexpr float PAN_GAIN_3_DB = 1.412537f;
 
+    /**
+     * @brief Panning calculation using the same law as for the tracks but scaled
+     * to keep the gain constant in the default "passthrough" behaviour.
+     *
+     * @param gain The gain to apply the pan to
+     * @param pan The pan amount
+     * @return std::pair<float, float> the gain for the <right, left> channel
+     */
     inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
     {
          float left_gain, right_gain;
