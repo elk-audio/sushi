@@ -6,6 +6,12 @@
 namespace sushi {
 namespace stereo_mixer_plugin {
 
+namespace {
+    constexpr int MAX_CHANNELS_SUPPORTED = 2;
+    constexpr char DEFAULT_NAME[] = "sushi.testing.stereo_mixer";
+    constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
+}
+
 class StereoMixerPlugin : public InternalPlugin
 {
 public:
