@@ -621,7 +621,7 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
 
     // Standard stereo throughput, right input channel inverted
 
-    _module_under_test->_left_pan->set(0.0f);
+    _module_under_test->_left_pan->set(-1.0f);
     _module_under_test->_left_gain->set(0.5f);
     _module_under_test->_left_invert_phase->set(0.0f);
     _module_under_test->_right_pan->set(1.0f);
@@ -639,7 +639,7 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
     _module_under_test->_left_pan->set(1.0f);
     _module_under_test->_left_gain->set(0.7f);
     _module_under_test->_left_invert_phase->set(1.0f);
-    _module_under_test->_right_pan->set(0.0f);
+    _module_under_test->_right_pan->set(-1.0f);
     _module_under_test->_right_gain->set(0.3f);
     _module_under_test->_right_invert_phase->set(0.0f);
 
@@ -650,15 +650,29 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
     test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
 
     // Mono summing
-    _module_under_test->_left_pan->set(0.5f);
+    _module_under_test->_left_pan->set(0.0f);
     _module_under_test->_left_gain->set(1.0f);
     _module_under_test->_left_invert_phase->set(0.0f);
-    _module_under_test->_right_pan->set(0.5f);
+    _module_under_test->_right_pan->set(0.0f);
     _module_under_test->_right_gain->set(1.0f);
     _module_under_test->_right_invert_phase->set(0.0f);
 
     std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -1.0f);
     std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -1.0f);
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Pan law test
+    _module_under_test->_left_pan->set(-0.3f);
+    _module_under_test->_left_gain->set(1.0f);
+    _module_under_test->_left_invert_phase->set(0.0f);
+    _module_under_test->_right_pan->set(0.8f);
+    _module_under_test->_right_gain->set(1.0f);
+    _module_under_test->_right_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 1.1237640937f + -3.6f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.7f + -5.8600751664f);
 
     _module_under_test->process_audio(input_buffer, output_buffer);
     test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
