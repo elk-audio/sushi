@@ -553,7 +553,7 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
         // Parameter change event
         auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time) / 48000.0f);
         _module_under_test->process_event(delay_time_event);
-        
+
         // Process audio
         _module_under_test->process_audio(zero_buffer, result_buffer);
         _module_under_test->process_audio(impulse_buffer, result_buffer);
