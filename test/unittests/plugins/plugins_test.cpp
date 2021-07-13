@@ -264,16 +264,16 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
     test_utils::fill_sample_buffer(first_channel, 1.5f);
 
-    auto clip_l_id = _module_under_test->parameter_from_name("right_clip")->id();
-    auto clip_r_id = _module_under_test->parameter_from_name("left_clip")->id();
+    auto clip_ch_0_id = _module_under_test->parameter_from_name("clip_0")->id();
+    auto clip_ch_1_id = _module_under_test->parameter_from_name("clip_1")->id();
 
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Run once and check that the parameter value has changed for the left channel*/
     _module_under_test->process_audio(in_buffer, out_buffer);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Lower volume and run until the hold time has passed */
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
@@ -282,14 +282,14 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
         _module_under_test->process_audio(in_buffer, out_buffer);
     }
 
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Pop the first event and verify it was a clip parameter change */
     RtEvent event;
     ASSERT_TRUE(_fifo.pop(event));
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
-    EXPECT_EQ(clip_l_id, event.parameter_change_event()->param_id());
+    EXPECT_EQ(clip_ch_0_id, event.parameter_change_event()->param_id());
 
     /* Test with linked channels */
     test_utils::fill_sample_buffer(first_channel, 1.5f);
@@ -297,8 +297,8 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
     _module_under_test->process_event(event);
     /* Run once and check that the parameter value has changed for both channels */
     _module_under_test->process_audio(in_buffer, out_buffer);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 }
 
 TEST(TestPeakMeterPluginInternal, TestTodBConversion)
