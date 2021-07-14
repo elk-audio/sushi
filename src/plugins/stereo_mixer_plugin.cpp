@@ -23,32 +23,35 @@
 namespace sushi {
 namespace stereo_mixer_plugin {
 
-namespace {
-    constexpr float PAN_GAIN_3_DB = 1.412537f;
+constexpr char DEFAULT_NAME[] = "sushi.testing.stereo_mixer";
+constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
 
-    /**
-     * @brief Panning calculation using the same law as for the tracks but scaled
-     * to keep the gain constant in the default "passthrough" behaviour.
-     *
-     * @param gain The gain to apply the pan to
-     * @param pan The pan amount
-     * @return std::pair<float, float> the gain for the <right, left> channel
-     */
-    inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
+constexpr int MAX_CHANNELS_SUPPORTED = 2;
+constexpr float PAN_GAIN_3_DB = 1.412537f;
+constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
+
+/**
+ * @brief Panning calculation using the same law as for the tracks but scaled
+ * to keep the gain constant in the default "passthrough" behaviour.
+ *
+ * @param gain The gain to apply the pan to
+ * @param pan The pan amount
+ * @return std::pair<float, float> the gain for the <right, left> channel
+ */
+inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
+{
+        float left_gain, right_gain;
+    if (pan < 0.0f) // Audio panned left
     {
-         float left_gain, right_gain;
-        if (pan < 0.0f) // Audio panned left
-        {
-            left_gain = gain * (1.0f + pan - PAN_GAIN_3_DB * pan);
-            right_gain = gain * (1.0f + pan);
-        }
-        else            // Audio panned right
-        {
-            left_gain = gain * (1.0f - pan);
-            right_gain = gain * (1.0f - pan + PAN_GAIN_3_DB * pan);
-        }
-        return {left_gain / PAN_GAIN_3_DB, right_gain / PAN_GAIN_3_DB};
+        left_gain = gain * (1.0f + pan - PAN_GAIN_3_DB * pan);
+        right_gain = gain * (1.0f + pan);
     }
+    else            // Audio panned right
+    {
+        left_gain = gain * (1.0f - pan);
+        right_gain = gain * (1.0f - pan + PAN_GAIN_3_DB * pan);
+    }
+    return {left_gain / PAN_GAIN_3_DB, right_gain / PAN_GAIN_3_DB};
 }
 
 StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(HostControl)
@@ -58,24 +61,45 @@ StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(Ho
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
 
-    _left_pan = register_float_parameter("left_pan", "Left Pan", "",
+    _ch1_pan = register_float_parameter("ch1_pan", "Channel 1 Pan", "",
                                          -1.0, -1.0, 1.0, nullptr);
-    _left_gain = register_float_parameter("left_gain", "Left Gain", "",
-                                          1.0f, 0.0f, 1.0f, nullptr);
-    _left_invert_phase = register_float_parameter("left_invert_phase", "Left Invert Phase", "",
+    _ch1_gain = register_float_parameter("ch1_gain", "Channel 1 Gain", "",
+                                          0.0f, -120.0f, 24.0f,
+                                          new dBToLinPreProcessor(-120.0f, 24.0));
+    _ch1_invert_phase = register_float_parameter("ch1_invert_phase", "Channel 1 Invert Phase", "",
                                                   0.0f, 0.0f, 1.0f, nullptr);
-    _right_pan = register_float_parameter("right_pan", "Right Pan", "",
+    _ch2_pan = register_float_parameter("ch2_pan", "Channel 2 Pan", "",
                                          -1.0, -1.0, 1.0, nullptr);
-    _right_gain = register_float_parameter("right_gain", "Right Gain", "",
-                                          1.0f, 0.0f, 1.0f, nullptr);
-    _right_invert_phase = register_float_parameter("right_invert_phase", "Right Invert Phase", "",
+    _ch2_gain = register_float_parameter("ch2_gain", "Channel 2 Gain", "",
+                                          0.0f, -120.0f, 24.0f,
+                                          new dBToLinPreProcessor(-120.0f, 24.0f));
+    _ch2_invert_phase = register_float_parameter("ch2_invert_phase", "Channel 2 Invert Phase", "",
                                                   0.0f, 0.0f, 1.0f, nullptr);
-    assert(_left_pan);
-    assert(_left_gain);
-    assert(_left_invert_phase);
-    assert(_right_pan);
-    assert(_right_gain);
-    assert(_right_invert_phase);
+    assert(_ch1_pan);
+    assert(_ch1_gain);
+    assert(_ch1_invert_phase);
+    assert(_ch2_pan);
+    assert(_ch2_gain);
+    assert(_ch2_invert_phase);
+
+    _ch1_left_gain_smoother.set_direct(1.0f);
+    _ch1_right_gain_smoother.set_direct(0.0f);
+    _ch2_left_gain_smoother.set_direct(0.0f);
+    _ch2_right_gain_smoother.set_direct(1.0f);
+}
+
+ProcessorReturnCode StereoMixerPlugin::init(float sample_rate)
+{
+    configure(sample_rate);
+    return ProcessorReturnCode::OK;
+}
+
+void StereoMixerPlugin::configure(float sample_rate)
+{
+    _ch1_left_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    _ch1_right_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    _ch2_left_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    _ch2_right_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
 }
 
 void StereoMixerPlugin::process_audio(const ChunkSampleBuffer& input_buffer,
@@ -84,18 +108,36 @@ void StereoMixerPlugin::process_audio(const ChunkSampleBuffer& input_buffer,
     output_buffer.clear();
 
     // Calculate parameters
-    float invert_ch1 = (_left_invert_phase->processed_value() > 0.5f) ? -1.0f : 1.0f;
-    auto [ch1_left_gain, ch1_right_gain] = calc_l_r_gain(_left_gain->processed_value() * invert_ch1,
-                                                         _left_pan->processed_value());
-    float invert_ch2 = (_right_invert_phase->processed_value() > 0.5f) ? -1.0f : 1.0f;
-    auto [ch2_left_gain, ch2_right_gain] = calc_l_r_gain(_right_gain->processed_value() * invert_ch2,
-                                                         _right_pan->processed_value());
+    float invert_ch1 = (_ch1_invert_phase->processed_value() > 0.5f) ? -1.0f : 1.0f;
+    auto [ch1_left_gain, ch1_right_gain] = calc_l_r_gain(_ch1_gain->processed_value() * invert_ch1,
+                                                         _ch1_pan->processed_value());
+    _ch1_left_gain_smoother.set(ch1_left_gain);
+    _ch1_right_gain_smoother.set(ch1_right_gain);
+
+    float invert_ch2 = (_ch2_invert_phase->processed_value() > 0.5f) ? -1.0f : 1.0f;
+    auto [ch2_left_gain, ch2_right_gain] = calc_l_r_gain(_ch2_gain->processed_value() * invert_ch2,
+                                                         _ch2_pan->processed_value());
+    _ch2_left_gain_smoother.set(ch2_left_gain);
+    _ch2_right_gain_smoother.set(ch2_right_gain);
 
     // Process gain
-    output_buffer.add_with_gain(0, 0, input_buffer, ch1_left_gain);
-    output_buffer.add_with_gain(1, 0, input_buffer, ch1_right_gain);
-    output_buffer.add_with_gain(0, 1, input_buffer, ch2_left_gain);
-    output_buffer.add_with_gain(1, 1, input_buffer, ch2_right_gain);
+    if (_ch1_left_gain_smoother.stationary() &&
+        _ch1_right_gain_smoother.stationary() &&
+        _ch2_left_gain_smoother.stationary() &&
+        _ch2_right_gain_smoother.stationary())
+    {
+        output_buffer.add_with_gain(0, 0, input_buffer, ch1_left_gain);
+        output_buffer.add_with_gain(1, 0, input_buffer, ch1_right_gain);
+        output_buffer.add_with_gain(0, 1, input_buffer, ch2_left_gain);
+        output_buffer.add_with_gain(1, 1, input_buffer, ch2_right_gain);
+    }
+    else // value needs smoothing
+    {
+        output_buffer.add_with_ramp(0, 0, input_buffer, _ch1_left_gain_smoother.value(), _ch1_left_gain_smoother.next_value());
+        output_buffer.add_with_ramp(1, 0, input_buffer, _ch1_right_gain_smoother.value(), _ch1_right_gain_smoother.next_value());
+        output_buffer.add_with_ramp(0, 1, input_buffer, _ch2_left_gain_smoother.value(), _ch2_left_gain_smoother.next_value());
+        output_buffer.add_with_ramp(1, 1, input_buffer, _ch2_right_gain_smoother.value(), _ch2_right_gain_smoother.next_value());
+    }
 }
 
 } // namespace stereo_mixer_plugin

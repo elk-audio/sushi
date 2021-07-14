@@ -22,31 +22,33 @@
 #define SUSHI_STEREO_MIXER_PLUGIN_H
 
 #include "library/internal_plugin.h"
+#include "dsp_library/value_smoother.h"
+
 
 namespace sushi {
 namespace stereo_mixer_plugin {
-
-namespace {
-    constexpr int MAX_CHANNELS_SUPPORTED = 2;
-    constexpr char DEFAULT_NAME[] = "sushi.testing.stereo_mixer";
-    constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
-}
 
 class StereoMixerPlugin : public InternalPlugin
 {
 public:
     StereoMixerPlugin(HostControl host_control);
 
+    ProcessorReturnCode init(float sample_rate) override;
+    void configure(float sample_rate) override;
     void process_audio(const ChunkSampleBuffer& in_buffer,ChunkSampleBuffer& out_buffer) override;
 
 private:
-    FloatParameterValue* _left_pan;
-    FloatParameterValue* _left_gain;
-    FloatParameterValue* _left_invert_phase;
+    FloatParameterValue* _ch1_pan;
+    FloatParameterValue* _ch1_gain;
+    FloatParameterValue* _ch1_invert_phase;
+    ValueSmootherFilter<float> _ch1_left_gain_smoother;
+    ValueSmootherFilter<float> _ch1_right_gain_smoother;
 
-    FloatParameterValue* _right_pan;
-    FloatParameterValue* _right_gain;
-    FloatParameterValue* _right_invert_phase;
+    FloatParameterValue* _ch2_pan;
+    FloatParameterValue* _ch2_gain;
+    FloatParameterValue* _ch2_invert_phase;
+    ValueSmootherFilter<float> _ch2_left_gain_smoother;
+    ValueSmootherFilter<float> _ch2_right_gain_smoother;
 };
 
 } // namespace stereo_mixer_plugin
