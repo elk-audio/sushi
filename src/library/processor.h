@@ -54,7 +54,7 @@ class Processor
 public:
     explicit Processor(HostControl host_control) : _host_control(host_control) {}
 
-    virtual ~Processor() = default;
+    virtual ~Processor();
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
@@ -546,6 +546,12 @@ public:
     void crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,
                           int input_channels, int output_channels);
 
+    /**
+     * @brief Calculate the ramp start and end value for the current chunk
+     * @return An std::pair with start and end gain levels
+     */
+    std::pair<float, float> get_ramp();
+
 private:
     enum class BypassState
     {
@@ -554,8 +560,6 @@ private:
         RAMPING_DOWN,
         RAMPING_UP
     };
-
-    std::pair<float, float> get_ramp();
 
     BypassState _state{BypassState::NOT_BYPASSED};
     int _ramp_chunks{0};

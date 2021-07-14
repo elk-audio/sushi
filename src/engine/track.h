@@ -108,18 +108,6 @@ public:
     }
 
     /**
-     * @brief Return a reference to an RtEventFifo containing RtEvents outputed from the
-     *        processors on the track. set_event_output_internal() must be called first
-     *        to direct outputed event to the internal buffer.
-     *
-     * @return A reference to an RtEventFifo containing buffered events
-     */
-    RtSafeRtEventFifo& output_event_buffer()
-    {
-        return _output_event_buffer;
-    }
-
-    /**
      * @brief Return a SampleBuffer to an input channel
      * @param bus The index of the channel, must not be greater than the number of channels configured
      * @return A non-owning SampleBuffer pointing to the given bus
@@ -218,7 +206,6 @@ private:
     performance::PerformanceTimer* _timer;
 
     RtSafeRtEventFifo _kb_event_buffer;
-    RtSafeRtEventFifo _output_event_buffer;
 };
 
 } // namespace engine

@@ -46,6 +46,8 @@ public:
 
     void send_audio(const ChunkSampleBuffer&, float gain);
 
+    void send_audio_with_ramp(const ChunkSampleBuffer&, float start_gain, float end_gain);
+
     void add_sender(send_plugin::SendPlugin* sender);
 
     void remove_sender(send_plugin::SendPlugin* sender);
@@ -67,8 +69,6 @@ private:
     void inline _swap_buffers();
 
     void inline _maybe_swap_buffers(Time current_time);
-
-    ChunkSampleBuffer* _get_buffer(bool for_sending, Time current_time);
 
     float                                 _sample_rate;
     int                                   _return_id;

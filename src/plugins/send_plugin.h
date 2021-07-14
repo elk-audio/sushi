@@ -42,7 +42,7 @@ public:
 
     virtual ~SendPlugin();
 
-    void set_destination(return_plugin::ReturnPlugin* destination);
+    void clear_destination();
 
     // From Processor
     ProcessorReturnCode init(float sample_rate) override;
@@ -63,6 +63,8 @@ public:
     }
 
 private:
+    void _set_destination(return_plugin::ReturnPlugin* destination);
+
     int _non_rt_callback(EventId id);
 
     float                         _sample_rate;
@@ -71,7 +73,8 @@ private:
     return_plugin::ReturnPlugin*  _new_destination{nullptr};
 
 
-    FloatParameterValue* _gain_parameter;
+    FloatParameterValue*          _gain_parameter;
+    ValueSmootherFilter<float>    _gain_smoother;
 
     std::string*         _return_name_property{nullptr};
     int                  _pending_event_id{0};

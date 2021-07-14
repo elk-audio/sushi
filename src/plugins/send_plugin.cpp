@@ -19,10 +19,11 @@
  */
 
 #include <string>
-#include "logging.h"
 
+#include "logging.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
+#include "library/constants.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
@@ -41,6 +42,8 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
                                                 0.0f, -120.0f, 24.0f,
                                                 new dBToLinPreProcessor(-120.0f, 24.0f));
 
+    _gain_smoother.set_direct(_gain_parameter->processed_value());
+
     [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name", "");
     assert(_gain_parameter && str_pr_ok);
 }
@@ -53,13 +56,21 @@ SendPlugin::~SendPlugin()
     }
 }
 
-void SendPlugin::set_destination(return_plugin::ReturnPlugin* destination)
+void SendPlugin::clear_destination()
 {
-    _destination = destination; // TODO - When nulling this - make sure that it is not used afterwards
-    if (destination)
+    _destination = nullptr;
+}
+
+void SendPlugin::_set_destination(return_plugin::ReturnPlugin* destination)
+{
+    assert(destination);
+
+    if (_destination)
     {
-        destination->add_sender(this);
+        _destination->remove_sender(this);
     }
+    _destination = destination;
+    destination->add_sender(this);
 }
 
 ProcessorReturnCode SendPlugin::init(float sample_rate)
@@ -71,6 +82,7 @@ ProcessorReturnCode SendPlugin::init(float sample_rate)
 void SendPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
+    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate);
 }
 
 void SendPlugin::process_event(const RtEvent& event)
@@ -93,21 +105,6 @@ void SendPlugin::process_event(const RtEvent& event)
             break;
         }
 
-        case RtEventType::ASYNC_WORK_NOTIFICATION:
-        {
-            auto typed_event = event.async_work_completion_event();
-            if (typed_event->sending_event_id() == _pending_event_id &&
-                typed_event->return_status() == EventStatus::HANDLED_OK)
-            {
-                if (_new_destination)
-                {
-                    set_destination(_new_destination);
-                    _new_destination = nullptr;
-                }
-            }
-            break;
-        }
-
         default:
             InternalPlugin::process_event(event);
             break;
@@ -117,11 +114,33 @@ void SendPlugin::process_event(const RtEvent& event)
 void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
-    if (_bypass_manager.should_process())
+
+    if (_bypass_manager.should_process() && _destination)
     {
-        if (_destination)
+        float gain = _gain_parameter->processed_value();
+        _gain_smoother.set(gain);
+
+        // Ramp if bypass was recently toggled
+        if (_bypass_manager.should_ramp())
         {
-            _destination->send_audio(in_buffer, _gain_parameter->processed_value());
+            auto [start, end] = _bypass_manager.get_ramp();
+            start *= _gain_smoother.value();
+            end *= _gain_smoother.next_value();
+            _destination->send_audio_with_ramp(in_buffer, start, end);
+        }
+
+        // Don't ramp, nominal case
+        else if (_gain_smoother.stationary())
+        {
+            _destination->send_audio(in_buffer, gain);
+        }
+
+        // Ramp because send gain was recently changed
+        else
+        {
+            float start = _gain_smoother.value();
+            float end = _gain_smoother.next_value();
+            _destination->send_audio_with_ramp(in_buffer, start, end);
         }
     }
 }
@@ -146,7 +165,7 @@ int SendPlugin::_non_rt_callback(EventId id)
         return_plugin::ReturnPlugin* return_plugin = _manager->lookup_return_plugin(*return_plugin_name);
         if (return_plugin)
         {
-            _new_destination = return_plugin;
+            _set_destination(return_plugin);
             return EventStatus::HANDLED_OK;
         }
         SUSHI_LOG_WARNING("Return plugin {} not found", *return_plugin_name);
