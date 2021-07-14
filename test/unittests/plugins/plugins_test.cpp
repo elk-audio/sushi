@@ -14,6 +14,7 @@
 #include "plugins/peak_meter_plugin.cpp"
 #include "plugins/wav_writer_plugin.cpp"
 #include "plugins/mono_summing_plugin.cpp"
+#include "plugins/sample_delay_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
@@ -263,16 +264,16 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
     test_utils::fill_sample_buffer(first_channel, 1.5f);
 
-    auto clip_l_id = _module_under_test->parameter_from_name("right_clip")->id();
-    auto clip_r_id = _module_under_test->parameter_from_name("left_clip")->id();
+    auto clip_ch_0_id = _module_under_test->parameter_from_name("clip_0")->id();
+    auto clip_ch_1_id = _module_under_test->parameter_from_name("clip_1")->id();
 
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Run once and check that the parameter value has changed for the left channel*/
     _module_under_test->process_audio(in_buffer, out_buffer);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Lower volume and run until the hold time has passed */
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
@@ -281,14 +282,14 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
         _module_under_test->process_audio(in_buffer, out_buffer);
     }
 
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(0.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 
     /* Pop the first event and verify it was a clip parameter change */
     RtEvent event;
     ASSERT_TRUE(_fifo.pop(event));
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
-    EXPECT_EQ(clip_l_id, event.parameter_change_event()->param_id());
+    EXPECT_EQ(clip_ch_0_id, event.parameter_change_event()->param_id());
 
     /* Test with linked channels */
     test_utils::fill_sample_buffer(first_channel, 1.5f);
@@ -296,8 +297,8 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
     _module_under_test->process_event(event);
     /* Run once and check that the parameter value has changed for both channels */
     _module_under_test->process_audio(in_buffer, out_buffer);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_l_id).second);
-    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_r_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_0_id).second);
+    EXPECT_FLOAT_EQ(1.0f,_module_under_test->parameter_value(clip_ch_1_id).second);
 }
 
 TEST(TestPeakMeterPluginInternal, TestTodBConversion)
@@ -498,4 +499,78 @@ TEST_F(TestMonoSummingPlugin, TestProcess)
         ASSERT_FLOAT_EQ(0.0f, in_buffer.channel(1)[sample]);
     }
     test_utils::assert_buffer_value(1.0f, out_buffer);
+}
+
+class TestSampleDelayPlugin : public ::testing::Test
+{
+protected:
+    TestSampleDelayPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new sample_delay_plugin::SampleDelayPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+    HostControlMockup _host_control;
+    sample_delay_plugin::SampleDelayPlugin* _module_under_test;
+    RtSafeRtEventFifo _fifo;
+};
+
+TEST_F(TestSampleDelayPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Sample delay", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.sample_delay", _module_under_test->name());
+}
+
+// Fill a buffer with ones and test that they are passed through unchanged
+TEST_F(TestSampleDelayPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up data
+    int n_audio_channels = 2;
+    std::vector<int> delay_times = {0, 1, 5, 20, 62, 15, 2};
+    SampleBuffer<AUDIO_CHUNK_SIZE> zero_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> result_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> impulse_buffer(n_audio_channels);
+    for (int channel = 0; channel < n_audio_channels; channel++)
+    {
+        impulse_buffer.channel(channel)[0] = 1.0;
+    }
+
+    // Test processing
+    for (auto delay_time : delay_times)
+    {
+        // Parameter change event
+        auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time) / 48000.0f);
+        _module_under_test->process_event(delay_time_event);
+        
+        // Process audio
+        _module_under_test->process_audio(zero_buffer, result_buffer);
+        _module_under_test->process_audio(impulse_buffer, result_buffer);
+
+        // Check the impulse has been delayed the correct number of samples
+        for (int sample_idx = 0; sample_idx < AUDIO_CHUNK_SIZE; sample_idx++)
+        {
+            for (int channel = 0; channel < n_audio_channels; channel++)
+            {
+                if (sample_idx == delay_time)
+                {
+                    EXPECT_FLOAT_EQ(1.0f, result_buffer.channel(channel)[sample_idx]);
+                }
+                else
+                {
+                    EXPECT_FLOAT_EQ(0.0f, result_buffer.channel(channel)[sample_idx]);
+                }
+            }
+        }
+    }
 }

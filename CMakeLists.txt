@@ -163,6 +163,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/return_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
+                      src/plugins/sample_delay_plugin.cpp
                       src/plugins/send_plugin.cpp
                       src/plugins/send_return_factory.cpp
                       src/plugins/step_sequencer_plugin.cpp
@@ -243,9 +244,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/peak_meter_plugin.h
+                        src/plugins/return_plugin.h
                         src/plugins/transposer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
+                        src/plugins/sample_delay_plugin.h
+                        src/plugins/send_plugin.h
+                        src/plugins/send_return_factory.h
                         src/plugins/step_sequencer_plugin.h
                         src/plugins/wav_writer_plugin.h
                         src/plugins/mono_summing_plugin.h

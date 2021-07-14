@@ -24,10 +24,12 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/value_smoother.h"
 
+#include "engine/track.h"
+
 namespace sushi {
 namespace peak_meter_plugin {
 
-constexpr int MAX_METERED_CHANNELS = 2;
+constexpr int MAX_METERED_CHANNELS = engine::TRACK_MAX_CHANNELS;
 
 class PeakMeterPlugin : public InternalPlugin
 {
@@ -62,8 +64,8 @@ private:
     ObjectId             _update_rate_id;
 
     uint64_t _clip_hold_samples;
-    std::array<uint64_t, MAX_METERED_CHANNELS> _clip_hold_count{ {0, 0}};
-    std::array<bool, MAX_METERED_CHANNELS> _clipped { {false, false}};
+    std::array<uint64_t, MAX_METERED_CHANNELS> _clip_hold_count;
+    std::array<bool, MAX_METERED_CHANNELS> _clipped;
 
     int _refresh_interval;
     int _sample_count{0};

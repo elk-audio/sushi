@@ -28,6 +28,8 @@
 
 namespace sushi {
 
+constexpr int DEFAULT_CHANNELS = 2;
+
 /**
  * @brief internal base class for processors that keeps track of all host-related
  * configuration and provides basic parameter and event handling.

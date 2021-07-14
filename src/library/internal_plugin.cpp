@@ -22,8 +22,6 @@
 
 namespace sushi {
 
-constexpr int DEFAULT_CHANNELS = 2;
-
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
     _max_input_channels = DEFAULT_CHANNELS;

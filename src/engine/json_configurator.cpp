@@ -857,6 +857,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
 
     rapidjson::Document schema;
     schema.Parse(schema_char_array);
+    assert(schema.HasParseError() == false);
     rapidjson::SchemaDocument schema_document(schema);
     rapidjson::SchemaValidator schema_validator(schema_document);
 
