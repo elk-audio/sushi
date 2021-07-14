@@ -121,22 +121,29 @@ void StereoMixerPlugin::process_audio(const ChunkSampleBuffer& input_buffer,
     _ch2_right_gain_smoother.set(ch2_right_gain);
 
     // Process gain
-    if (_ch1_left_gain_smoother.stationary() &&
-        _ch1_right_gain_smoother.stationary() &&
-        _ch2_left_gain_smoother.stationary() &&
-        _ch2_right_gain_smoother.stationary())
+    if (input_buffer.channel_count() == 2)
     {
-        output_buffer.add_with_gain(0, 0, input_buffer, ch1_left_gain);
-        output_buffer.add_with_gain(1, 0, input_buffer, ch1_right_gain);
-        output_buffer.add_with_gain(0, 1, input_buffer, ch2_left_gain);
-        output_buffer.add_with_gain(1, 1, input_buffer, ch2_right_gain);
+        if (_ch1_left_gain_smoother.stationary() &&
+            _ch1_right_gain_smoother.stationary() &&
+            _ch2_left_gain_smoother.stationary() &&
+            _ch2_right_gain_smoother.stationary())
+        {
+            output_buffer.add_with_gain(0, 0, input_buffer, ch1_left_gain);
+            output_buffer.add_with_gain(1, 0, input_buffer, ch1_right_gain);
+            output_buffer.add_with_gain(0, 1, input_buffer, ch2_left_gain);
+            output_buffer.add_with_gain(1, 1, input_buffer, ch2_right_gain);
+        }
+        else // value needs smoothing
+        {
+            output_buffer.add_with_ramp(0, 0, input_buffer, _ch1_left_gain_smoother.value(), _ch1_left_gain_smoother.next_value());
+            output_buffer.add_with_ramp(1, 0, input_buffer, _ch1_right_gain_smoother.value(), _ch1_right_gain_smoother.next_value());
+            output_buffer.add_with_ramp(0, 1, input_buffer, _ch2_left_gain_smoother.value(), _ch2_left_gain_smoother.next_value());
+            output_buffer.add_with_ramp(1, 1, input_buffer, _ch2_right_gain_smoother.value(), _ch2_right_gain_smoother.next_value());
+        }
     }
-    else // value needs smoothing
+    else // Input is mono
     {
-        output_buffer.add_with_ramp(0, 0, input_buffer, _ch1_left_gain_smoother.value(), _ch1_left_gain_smoother.next_value());
-        output_buffer.add_with_ramp(1, 0, input_buffer, _ch1_right_gain_smoother.value(), _ch1_right_gain_smoother.next_value());
-        output_buffer.add_with_ramp(0, 1, input_buffer, _ch2_left_gain_smoother.value(), _ch2_left_gain_smoother.next_value());
-        output_buffer.add_with_ramp(1, 1, input_buffer, _ch2_right_gain_smoother.value(), _ch2_right_gain_smoother.next_value());
+        output_buffer.add(input_buffer);
     }
 }
 
