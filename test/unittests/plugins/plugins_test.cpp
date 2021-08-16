@@ -15,6 +15,7 @@
 #include "plugins/wav_writer_plugin.cpp"
 #include "plugins/mono_summing_plugin.cpp"
 #include "plugins/sample_delay_plugin.cpp"
+#include "plugins/stereo_mixer_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
@@ -552,7 +553,7 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
         // Parameter change event
         auto delay_time_event = RtEvent::make_parameter_change_event(0, 0, 0, static_cast<float>(delay_time) / 48000.0f);
         _module_under_test->process_event(delay_time_event);
-        
+
         // Process audio
         _module_under_test->process_audio(zero_buffer, result_buffer);
         _module_under_test->process_audio(impulse_buffer, result_buffer);
@@ -573,4 +574,136 @@ TEST_F(TestSampleDelayPlugin, TestProcess)
             }
         }
     }
+}
+
+class TestStereoMixerPlugin : public ::testing::Test
+{
+protected:
+    TestStereoMixerPlugin()
+    {
+    }
+    void SetUp()
+    {
+        _module_under_test = new stereo_mixer_plugin::StereoMixerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test->set_event_output(&_fifo);
+    }
+
+    void TearDown()
+    {
+        delete _module_under_test;
+    }
+
+    void WaitForStableParameters()
+    {
+        // Run one empty process call to update the smoothers to the current parameter values
+        ChunkSampleBuffer temp_in_buffer(2);
+        ChunkSampleBuffer temp_out_buffer(2);
+        temp_in_buffer.clear();
+        temp_out_buffer.clear();
+        _module_under_test->process_audio(temp_in_buffer, temp_out_buffer);
+
+        // Update smoothers until they are stationary
+        while ((_module_under_test->_ch1_left_gain_smoother.stationary() &&
+                _module_under_test->_ch1_right_gain_smoother.stationary() &&
+                _module_under_test->_ch2_left_gain_smoother.stationary() &&
+                _module_under_test->_ch2_right_gain_smoother.stationary()) == false)
+        {
+            _module_under_test->_ch1_left_gain_smoother.next_value();
+            _module_under_test->_ch1_right_gain_smoother.next_value();
+            _module_under_test->_ch2_left_gain_smoother.next_value();
+            _module_under_test->_ch2_right_gain_smoother.next_value();
+        }
+    }
+
+    HostControlMockup _host_control;
+    stereo_mixer_plugin::StereoMixerPlugin* _module_under_test;
+    RtSafeRtEventFifo _fifo;
+};
+
+TEST_F(TestStereoMixerPlugin, TestInitialization)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+    ASSERT_TRUE(_module_under_test);
+    ASSERT_EQ("Stereo Mixer", _module_under_test->label());
+    ASSERT_EQ("sushi.testing.stereo_mixer", _module_under_test->name());
+}
+
+TEST_F(TestStereoMixerPlugin, TestProcess)
+{
+    _module_under_test->init(TEST_SAMPLERATE);
+
+    // Set up data
+    int n_audio_channels = 2;
+    SampleBuffer<AUDIO_CHUNK_SIZE> input_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> output_buffer(n_audio_channels);
+    SampleBuffer<AUDIO_CHUNK_SIZE> expected_buffer(n_audio_channels);
+
+    std::fill(input_buffer.channel(0), input_buffer.channel(0) + AUDIO_CHUNK_SIZE, 1.0f);
+    std::fill(input_buffer.channel(1), input_buffer.channel(1) + AUDIO_CHUNK_SIZE, -2.0f);
+
+    // Standard stereo throughput, right input channel inverted
+
+    _module_under_test->_ch1_pan->set(0.0f);
+    _module_under_test->_ch1_gain->set(0.791523611713336f);
+    _module_under_test->_ch1_invert_phase->set(0.0f);
+    _module_under_test->_ch2_pan->set(1.0f);
+    _module_under_test->_ch2_gain->set(0.6944444444444444f);
+    _module_under_test->_ch2_invert_phase->set(1.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 0.5f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.2f);
+
+    WaitForStableParameters();
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Inverted panning, left input channel inverted
+
+    _module_under_test->_ch1_pan->set(1.0f);
+    _module_under_test->_ch1_gain->set(0.8118191722242023f);
+    _module_under_test->_ch1_invert_phase->set(1.0f);
+    _module_under_test->_ch2_pan->set(0.0f);
+    _module_under_test->_ch2_gain->set(0.7607112853777309f);
+    _module_under_test->_ch2_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -0.6f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -0.7f);
+
+    WaitForStableParameters();
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Mono summing
+    _module_under_test->_ch1_pan->set(0.5f);
+    _module_under_test->_ch1_gain->set(0.8333333333333334f);
+    _module_under_test->_ch1_invert_phase->set(0.0f);
+    _module_under_test->_ch2_pan->set(0.5f);
+    _module_under_test->_ch2_gain->set(0.8333333333333334f);
+    _module_under_test->_ch2_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -0.707946f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -0.707946f);
+
+    WaitForStableParameters();
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
+    // Pan law test
+    _module_under_test->_ch1_pan->set(0.35f);
+    _module_under_test->_ch1_gain->set(0.8333333333333334f);
+    _module_under_test->_ch1_invert_phase->set(0.0f);
+    _module_under_test->_ch2_pan->set(0.9f);
+    _module_under_test->_ch2_gain->set(0.8333333333333334f);
+    _module_under_test->_ch2_invert_phase->set(0.0f);
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 0.7955587392184001f + -0.28317642241051433f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.49555873921840016f + -1.8831764224105143f);
+
+    WaitForStableParameters();
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
 }
