@@ -19,6 +19,7 @@
  */
 
 #include "stereo_mixer_plugin.h"
+#include "library/constants.h"
 
 namespace sushi {
 namespace stereo_mixer_plugin {
@@ -27,8 +28,6 @@ constexpr char DEFAULT_NAME[] = "sushi.testing.stereo_mixer";
 constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
-constexpr float PAN_GAIN_3_DB = 1.412537f;
-constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
 /**
  * @brief Panning calculation using the same law as for the tracks but scaled
@@ -40,7 +39,7 @@ constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
  */
 inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
 {
-        float left_gain, right_gain;
+    float left_gain, right_gain;
     if (pan < 0.0f) // Audio panned left
     {
         left_gain = gain * (1.0f + pan - PAN_GAIN_3_DB * pan);

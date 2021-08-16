@@ -628,7 +628,6 @@ TEST_F(TestStereoMixerPlugin, TestInitialization)
     ASSERT_EQ("sushi.testing.stereo_mixer", _module_under_test->name());
 }
 
-// Fill a buffer with ones and test that they are passed through unchanged
 TEST_F(TestStereoMixerPlugin, TestProcess)
 {
     _module_under_test->init(TEST_SAMPLERATE);
