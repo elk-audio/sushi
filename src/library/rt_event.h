@@ -44,6 +44,7 @@ namespace sushi {
  */
 enum class RtEventType
 {
+    /* Processor commands */
     NOTE_ON,
     NOTE_OFF,
     NOTE_AFTERTOUCH,
@@ -56,8 +57,6 @@ enum class RtEventType
     INT_PARAMETER_CHANGE,
     FLOAT_PARAMETER_CHANGE,
     BOOL_PARAMETER_CHANGE,
-    /* Complex parameters like those below should only be updated through events
-     * since a change should always be handled and could be expensive to handle */
     DATA_PROPERTY_CHANGE,
     STRING_PROPERTY_CHANGE,
     SET_BYPASS,

@@ -1,9 +1,17 @@
 #include <algorithm>
 
+#include "logging.h"
 #include "processor.h"
 #include "library/midi_decoder.h"
 
 namespace sushi {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("processor")
+
+Processor::~Processor()
+{
+    SUSHI_LOG_INFO("Destroyed processor {}({})", _id, _unique_name);
+}
 
 ProcessorReturnCode Processor::connect_cv_from_parameter(ObjectId parameter_id, int cv_output_id)
 {
@@ -172,6 +180,13 @@ void Processor::output_midi_event_as_internal(MidiDataByte midi_data, int sample
             break;
 
     }
+}
+
+EventId Processor::request_non_rt_task(AsyncWorkCallback callback)
+{
+    auto event = RtEvent::make_async_work_event(callback, this->id(), this);
+    output_event(event);
+    return event.async_work_event()->event_id();
 }
 
 std::string Processor::_make_unique_parameter_name(std::string name) const

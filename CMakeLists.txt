@@ -48,8 +48,8 @@ option(WITH_LV2 "Enable LV 2 support" ON)
 option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(WITH_LINK "Enable Ableton Link support" ON)
-option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
+option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
@@ -152,9 +152,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
-                      src/library/vst2x/vst2x_wrapper.cpp
-                      src/library/vst3x/vst3x_wrapper.cpp
-                      src/library/lv2/lv2_wrapper.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -163,11 +160,14 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/peak_meter_plugin.cpp
-                      src/plugins/transposer_plugin.cpp
+                      src/plugins/return_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
                       src/plugins/sample_delay_plugin.cpp
+                      src/plugins/send_plugin.cpp
+                      src/plugins/send_return_factory.cpp
                       src/plugins/step_sequencer_plugin.cpp
+                      src/plugins/transposer_plugin.cpp
                       src/plugins/wav_writer_plugin.cpp
                       src/plugins/mono_summing_plugin.cpp
                       src/plugins/stereo_mixer_plugin.cpp
@@ -210,9 +210,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
-                        src/library/vst2x/vst2x_wrapper.h
-                        src/library/vst3x/vst3x_wrapper.h
-                        src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
@@ -248,10 +245,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/peak_meter_plugin.h
+                        src/plugins/return_plugin.h
                         src/plugins/transposer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
                         src/plugins/sample_delay_plugin.h
+                        src/plugins/send_plugin.h
+                        src/plugins/send_return_factory.h
                         src/plugins/step_sequencer_plugin.h
                         src/plugins/wav_writer_plugin.h
                         src/plugins/mono_summing_plugin.h
@@ -267,31 +267,37 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
 endif()
 
 if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.h
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
+                                src/library/vst2x/vst2x_host_callback.h
                                 src/library/vst2x/vst2x_plugin_loader.h
                                 src/library/vst2x/vst2x_midi_event_fifo.h
                                 src/library/vst2x/vst2x_processor_factory.h
+                                src/library/vst2x/vst2x_wrapper.cpp
                                 src/library/vst2x/vst2x_host_callback.cpp
                                 src/library/vst2x/vst2x_plugin_loader.cpp)
 endif()
 
 if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.h
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_wrapper.h
+                                src/library/vst3x/vst3x_host_app.h
                                 src/library/vst3x/vst3x_utils.h
                                 src/library/vst3x/vst3x_processor_factory.h
+                                src/library/vst3x/vst3x_wrapper.cpp
                                 src/library/vst3x/vst3x_host_app.cpp
                                 src/library/vst3x/vst3x_utils.cpp)
 
 endif()
 
 if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_control.h
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
+                               src/library/lv2/lv2_control.h
                                src/library/lv2/lv2_features.h
                                src/library/lv2/lv2_host_nodes.h
                                src/library/lv2/lv2_model.h
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
                                src/library/lv2/lv2_processor_factory.h
+                               src/library/lv2/lv2_wrapper.cpp
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp
@@ -332,11 +338,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
-
-# /usr/local doesn't get added by default in Mac OS X
-if (APPLE)
-    set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
-endif()
 
 ################################
 #  Subdirectory configuration  #
@@ -439,12 +440,6 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        target_compile_options(sushi PRIVATE -faligned-new)
-    endif()
-endif()
-
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 
 if (${WITH_XENOMAI})

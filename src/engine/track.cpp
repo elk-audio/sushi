@@ -22,6 +22,7 @@
 
 #include "track.h"
 #include "logging.h"
+#include "library/constants.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("track");
 
@@ -31,8 +32,6 @@ namespace engine {
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr float DEFAULT_TRACK_GAIN = 1.0f;
-
-constexpr auto PAN_GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
 /* Map pan and gain to left and right gain with a 3 dB pan law */
 inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
@@ -94,11 +93,11 @@ void Track::configure(float sample_rate)
 {
     for (auto& i : _pan_gain_smoothers_right)
     {
-        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
     for (auto& i : _pan_gain_smoothers_left)
     {
-        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
 }
 

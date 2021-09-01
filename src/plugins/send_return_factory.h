@@ -7,47 +7,51 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. See the GNU Affero General Public License for more details.
+ * PURPOSE.  See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI. If not, see http://www.gnu.org/licenses/
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
 /**
- * @brief Factory for Internal processors.
+ * @brief Factory class to create send and return plugins and manage the shared resources
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_INTERNAL_PROCESSOR_FACTORY_H
-#define SUSHI_INTERNAL_PROCESSOR_FACTORY_H
+#ifndef SUSHI_SEND_RETURN_FACTORY_H
+#define SUSHI_SEND_RETURN_FACTORY_H
+
+#include <mutex>
 
 #include "library/base_processor_factory.h"
+#include "send_plugin.h"
+#include "return_plugin.h"
 
 namespace sushi {
 
-class BaseProcessorFactory;
-
-class InternalProcessorFactory : public BaseProcessorFactory
+class SendReturnFactory : public BaseProcessorFactory
 {
 public:
-    InternalProcessorFactory();
+    SendReturnFactory();
 
-    virtual ~InternalProcessorFactory() = default;
+    virtual ~SendReturnFactory() = default;
 
+    send_plugin::SendPlugin* get_send();
+
+    return_plugin::ReturnPlugin* lookup_return_plugin(const std::string& name);
+
+    void on_return_destruction(return_plugin::ReturnPlugin* instance);
+
+    // From BaseProcessorFactory
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate) override;
-private:
-    /**
-     * @brief Instantiate a plugin instance of a given type
-     * @param uid String unique id
-     * @param host_control
-     * @return Pointer to plugin instance if uid is valid, nullptr otherwise
-     */
-    std::shared_ptr<Processor> _create_internal_plugin(const std::string& uid, HostControl& host_control);
 
-    std::unique_ptr<BaseProcessorFactory> _send_return_factory;
+private:
+    std::vector<return_plugin::ReturnPlugin*> _return_instances;
+    std::mutex _return_inst_lock;
 };
 
-}; // end namespace sushi
+}// namespace sushi
 
-#endif //SUSHI_INTERNAL_PROCESSOR_FACTORY_H
+#endif //SUSHI_SEND_RETURN_FACTORY_H
