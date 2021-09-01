@@ -170,6 +170,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/transposer_plugin.cpp
                       src/plugins/wav_writer_plugin.cpp
                       src/plugins/mono_summing_plugin.cpp
+                      src/plugins/stereo_mixer_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
         )
 

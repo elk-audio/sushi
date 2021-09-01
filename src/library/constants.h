@@ -23,6 +23,8 @@
 #ifndef SUSHI_CONSTANTS_H
 #define SUSHI_CONSTANTS_H
 
+#include <chrono>
+
 /* The number of samples to process in one chunk. It is defined as a
 compile time constant to give more room for optimizations */
 #ifdef SUSHI_CUSTOM_AUDIO_CHUNK_SIZE
@@ -35,6 +37,7 @@ constexpr int MAX_ENGINE_CV_IO_PORTS = 4;
 constexpr int MAX_ENGINE_GATE_PORTS = 8;
 constexpr int MAX_ENGINE_GATE_NOTE_NO = 127;
 
+constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
 /* Use in class declaration to disallow copying of this class.
