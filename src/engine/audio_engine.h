@@ -428,6 +428,15 @@ public:
         _output_clip_detection_enabled = enabled;
     }
 
+    /**
+     * @brief Enable saftey limiter on outputs
+     * @param enabled Enabled if true, disable if false
+     */
+    void enable_saftey_limiter(bool enabled) override
+    {
+        _saftey_limter_enabled = enabled;
+    }
+
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
         return _event_dispatcher.get();
@@ -564,7 +573,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _saftey_limter_enabled{true};
+    bool _saftey_limter_enabled{false};
     std::vector<dsp::SafteyLimiter> _saftey_limiters;
 
     PluginRegistry _plugin_registry;

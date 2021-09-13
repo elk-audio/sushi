@@ -342,6 +342,8 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
+    virtual void enable_saftey_limiter(bool /*enabled*/) {}
+
     virtual void update_timings() {}
 
 protected:

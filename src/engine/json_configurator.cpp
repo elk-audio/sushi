@@ -150,6 +150,12 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         }
     }
 
+    if (host_config.HasMember("saftey_limiter"))
+    {
+        _engine->enable_saftey_limiter(host_config["saftey_limiter"].GetBool());
+        SUSHI_LOG_INFO("Enable saftey limiter set to {}", host_config["saftey_limiter"].GetBool());
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 
