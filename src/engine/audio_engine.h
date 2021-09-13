@@ -27,6 +27,7 @@
 
 #include "twine/twine.h"
 
+#include "dsp_library/saftey_limiter.h"
 #include "engine/event_dispatcher.h"
 #include "engine/base_engine.h"
 #include "engine/track.h"
@@ -562,6 +563,9 @@ private:
     bool _input_clip_detection_enabled{false};
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
+
+    bool _saftey_limter_enabled{true};
+    std::vector<dsp::SafteyLimiter> _saftey_limiters;
 
     PluginRegistry _plugin_registry;
 };
