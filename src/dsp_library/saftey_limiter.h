@@ -81,25 +81,23 @@ public:
         {
             std::array<float, 4> output = {0.0, 0.0, 0.0, 0.0};
             _delay_line[_write_idx] = sample; // Write sample into internal delayline
-            _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
             for (size_t i = 0; i < output.size(); i++)
             {
                 float upsampled_value = 0.0;
                 // Convolve the filter with the sample data
                 for (size_t j = 0; j < _delay_line.size(); j++)
                 {
-                    upsampled_value += filter_coeffs[i][j] * _delay_line[_read_idx];
-                    _read_idx = (_read_idx - 1) & 0b11;
+                    int read_idx = (_write_idx - j) & 0b11;
+                    upsampled_value += filter_coeffs[i][j] * _delay_line[read_idx];
                 }
                 output[i] = upsampled_value;
             }
-            _read_idx = (_read_idx + 1) & 0b11;
+            _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
             return output;
         }
     private:
         std::array<float, 4> _delay_line;
         int _write_idx{0};
-        int _read_idx{0};
     };
 
     SafteyLimiter(float release_time_ms = RELEASE_TIME_MS) : _release_time(release_time_ms) {}
