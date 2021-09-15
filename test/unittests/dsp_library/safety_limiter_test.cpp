@@ -36,10 +36,10 @@ TEST_F(TestUpSampler, UpSampling)
 constexpr float TEST_SAMPLERATE = 48000.0f;
 constexpr float TEST_RELEASE_TIME_MS = 100.0f;
 
-class TestSafteyLimiter : public ::testing::Test
+class TestSafetyLimiter : public ::testing::Test
 {
 protected:
-    TestSafteyLimiter() {}
+    TestSafetyLimiter() {}
     void SetUp()
     {
         _module_under_test.prepare_to_play(48000.0);
@@ -48,13 +48,13 @@ protected:
     SafetyLimiter _module_under_test{RELEASE_TIME_MS};
 };
 
-TEST_F(TestSafteyLimiter, Limit)
+TEST_F(TestSafetyLimiter, Limit)
 {
     float out[LIMITER_OUTPUT_DATA_SIZE];
     _module_under_test.process(LIMITER_INPUT_DATA, out, LIMITER_OUTPUT_DATA_SIZE);
     for (int i = 0; i < LIMITER_OUTPUT_DATA_SIZE; i++)
     {
         EXPECT_FLOAT_EQ(LIMITER_OUTPUT_DATA[i], out[i]);
-    }
+    };
 }
 

@@ -142,7 +142,7 @@ void AudioEngine::set_audio_output_channels(int channels)
     _saftey_limiters.clear();
     for (int c = 0; c < channels; c++)
     {
-        _saftey_limiters.push_back(dsp::SafteyLimiter());
+        _saftey_limiters.push_back(dsp::SafetyLimiter());
     }
 }
 

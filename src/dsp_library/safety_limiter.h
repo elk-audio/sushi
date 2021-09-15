@@ -18,8 +18,8 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_SAFTEY_LIMITER_H
-#define SUSHI_SAFTEY_LIMITER_H
+#ifndef SUSHI_SAFETY_LIMITER_H
+#define SUSHI_SAFETY_LIMITER_H
 
 #include <array>
 #include <cmath>
@@ -28,7 +28,7 @@ namespace dsp
 {
 
 /**
- * Calculated using windowed sinc method. Basic tests in python 
+ * Calculated using windowed sinc method. Basic tests in python
  * seemed to get good results with low latency. Might not be sufficient to
  * listen to but works for true peak detection
  */
@@ -44,69 +44,70 @@ constexpr float THRESHOLD_DB = 0.0;
 constexpr float RELEASE_TIME_MS = 100.0;
 
 /**
+ * @brief 4x polyphase interpolator.
+ *
+ */
+class UpSampler
+{
+public:
+    UpSampler() {}
+
+    /**
+     * @brief Reset the interpolator for when processing is about to start
+     *
+     */
+    void reset()
+    {
+        _delay_line.fill(0.0f);
+    }
+
+    /**
+     * @brief Interpolate one sample to 4x the original sample_rate
+     * using a polyphase implementation
+     *
+     * @param sample The sample to interpolate
+     * @return std::array<float, 4> Resulting samples
+     */
+    inline std::array<float, 4> process_sample(float sample)
+    {
+        std::array<float, 4> output = {0.0, 0.0, 0.0, 0.0};
+        _delay_line[_write_idx] = sample; // Write sample into internal delayline
+        for (size_t i = 0; i < output.size(); i++)
+        {
+            float upsampled_value = 0.0;
+            // Convolve the filter with the sample data
+            for (size_t j = 0; j < _delay_line.size(); j++)
+            {
+                int read_idx = (_write_idx - j) & 0b11;
+                upsampled_value += filter_coeffs[i][j] * _delay_line[read_idx];
+            }
+            output[i] = upsampled_value;
+        }
+        _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
+        return output;
+    }
+private:
+    std::array<float, 4> _delay_line;
+    int _write_idx{0};
+};
+
+/**
  * @brief Brick wall "ear-saving" limiter. Stops the signal from ever exceeding 0.0 dB.
  * Instant attack with true peak detection. Could cause distortion in the "attack" portion
  * of a signal.
- * 
+ *
  */
-class SafteyLimiter
+class SafetyLimiter
 {
 public:
-    /**
-     * @brief 4x polyphase interpolator.
-     * 
-     */
-    class UpSampler
-    {
-    public:
-        UpSampler() {}
 
-        /**
-         * @brief Reset the interpolator for when processing is about to start
-         * 
-         */
-        void reset()
-        {
-            _delay_line.fill(0.0f);
-        }
-
-        /**
-         * @brief Interpolate one sample to 4x the original sample_rate
-         * using a polyphase implementation
-         * 
-         * @param sample The sample to interpolate
-         * @return std::array<float, 4> Resulting samples
-         */
-        inline std::array<float, 4> process_sample(float sample)
-        {
-            std::array<float, 4> output = {0.0, 0.0, 0.0, 0.0};
-            _delay_line[_write_idx] = sample; // Write sample into internal delayline
-            for (size_t i = 0; i < output.size(); i++)
-            {
-                float upsampled_value = 0.0;
-                // Convolve the filter with the sample data
-                for (size_t j = 0; j < _delay_line.size(); j++)
-                {
-                    int read_idx = (_write_idx - j) & 0b11;
-                    upsampled_value += filter_coeffs[i][j] * _delay_line[read_idx];
-                }
-                output[i] = upsampled_value;
-            }
-            _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
-            return output;
-        }
-    private:
-        std::array<float, 4> _delay_line;
-        int _write_idx{0};
-    };
-
-    SafteyLimiter(float release_time_ms = RELEASE_TIME_MS) : _release_time(release_time_ms) {}
+    SafetyLimiter(float release_time_ms = RELEASE_TIME_MS) : _release_time(release_time_ms) {}
 
     /**
      * @brief Recalculate release time based on sample rate and reset gain reduction
      * and up sampler.
-     * 
-     * @param sample_rate 
+     *
+     * @param sample_rate
      */
     void prepare_to_play(float sample_rate)
     {
@@ -117,7 +118,7 @@ public:
 
     /**
      * @brief Process audio limiting to output to maxmimum 0.0 dB
-     * 
+     *
      * @param input array of input values
      * @param output array of output values
      * @param n_samples number of samples to process
@@ -133,7 +134,7 @@ public:
             {
                 true_peak = std::max(true_peak, std::abs(sample));
             }
-            
+
             // Calculate gain reduction
             float true_peak_db = 20.0 * std::log10(true_peak);
             if (true_peak_db > THRESHOLD_DB)
@@ -159,4 +160,4 @@ private:
 } // namespace dsp
 
 
-#endif // SUSHI_SAFTEY_LIMITER_H
+#endif // SUSHI_SAFETY_LIMITER_H
