@@ -125,7 +125,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
     _clip_detector.set_sample_rate(sample_rate);
     for (auto& limiter : _saftey_limiters)
     {
-        limiter.prepare_to_play(sample_rate);
+        limiter.init(sample_rate);
     }
 }
 

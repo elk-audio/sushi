@@ -109,7 +109,7 @@ public:
      *
      * @param sample_rate
      */
-    void prepare_to_play(float sample_rate)
+    void init(float sample_rate)
     {
         _release_coeff = std::exp(-1.0f / (0.001f * sample_rate * _release_time));
         _gain_reduction = 0.0f;

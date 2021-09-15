@@ -42,7 +42,7 @@ protected:
     TestSafteyLimiter() {}
     void SetUp()
     {
-        _module_under_test.prepare_to_play(48000.0);
+        _module_under_test.init(48000.0);
     }
 
     SafetyLimiter _module_under_test{RELEASE_TIME_MS};
