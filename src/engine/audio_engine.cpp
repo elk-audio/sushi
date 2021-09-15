@@ -142,7 +142,7 @@ void AudioEngine::set_audio_output_channels(int channels)
     _saftey_limiters.clear();
     for (int c = 0; c < channels; c++)
     {
-        _saftey_limiters.push_back(dsp::SafetyLimiter());
+        _saftey_limiters.push_back(dsp::SafetyLimiter<AUDIO_CHUNK_SIZE>());
     }
 }
 
@@ -467,7 +467,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
         auto temp_input_buffer = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, 0, out_buffer->channel_count());
         for (int c = 0; c < out_buffer->channel_count(); c++)
         {
-            _saftey_limiters[c].process(out_buffer->channel(c), out_buffer->channel(c), AUDIO_CHUNK_SIZE);
+            _saftey_limiters[c].process(out_buffer->channel(c), out_buffer->channel(c));
         }
         out_buffer->replace(temp_input_buffer);
     }

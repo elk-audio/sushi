@@ -97,6 +97,7 @@ private:
  * of a signal.
  *
  */
+template<int CHUNK_SIZE>
 class SafetyLimiter
 {
 public:
@@ -123,9 +124,9 @@ public:
      * @param output array of output values
      * @param n_samples number of samples to process
      */
-    void process(const float* input, float* output, int n_samples)
+    void process(const float* input, float* output)
     {
-        for (int sample_idx = 0; sample_idx < n_samples; sample_idx++)
+        for (int sample_idx = 0; sample_idx < CHUNK_SIZE; sample_idx++)
         {
             // Calculate the highest peak from true peak calculations and the current sample value
             float true_peak = std::abs(input[sample_idx]);

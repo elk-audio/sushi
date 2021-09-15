@@ -574,7 +574,7 @@ private:
     ClipDetector _clip_detector;
 
     bool _saftey_limter_enabled{false};
-    std::vector<dsp::SafetyLimiter> _saftey_limiters;
+    std::vector<dsp::SafetyLimiter<AUDIO_CHUNK_SIZE>> _saftey_limiters;
 
     PluginRegistry _plugin_registry;
 };

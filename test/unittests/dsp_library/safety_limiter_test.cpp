@@ -45,13 +45,13 @@ protected:
         _module_under_test.init(48000.0);
     }
 
-    SafetyLimiter _module_under_test{RELEASE_TIME_MS};
+    SafetyLimiter<LIMITER_INPUT_DATA_SIZE> _module_under_test{RELEASE_TIME_MS};
 };
 
 TEST_F(TestSafetyLimiter, Limit)
 {
     float out[LIMITER_OUTPUT_DATA_SIZE];
-    _module_under_test.process(LIMITER_INPUT_DATA, out, LIMITER_OUTPUT_DATA_SIZE);
+    _module_under_test.process(LIMITER_INPUT_DATA, out);
     for (int i = 0; i < LIMITER_OUTPUT_DATA_SIZE; i++)
     {
         EXPECT_FLOAT_EQ(LIMITER_OUTPUT_DATA[i], out[i]);
