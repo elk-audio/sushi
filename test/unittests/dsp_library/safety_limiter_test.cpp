@@ -18,18 +18,24 @@ protected:
         _module_under_test.reset();
     }
 
-    UpSampler _module_under_test;
+    UpSampler<UPSAMPLING_TEST_DATA_SIZE> _module_under_test;
 };
 
 TEST_F(TestUpSampler, UpSampling)
 {
-    for (size_t i = 0; i < UPSAMPLING_TEST_DATA_SIZE; i++)
+    // for (size_t i = 0; i < UPSAMPLING_TEST_DATA_SIZE; i++)
+    // {
+    //     auto out = _module_under_test.process_sample(UPSAMPLING_TEST_DATA[i]);
+    //     for (size_t j = 0; j < out.size(); j++)
+    //     {
+    //         EXPECT_FLOAT_EQ(UPSAMPLING_TEST_DATA4X[i * out.size() + j], out[j]);
+    //     }
+    // }
+    std::array<float, UPSAMPLING_TEST_DATA4X_SIZE> out;
+    _module_under_test.process(UPSAMPLING_TEST_DATA, out.data());
+    for (size_t i = 0; i < UPSAMPLING_TEST_DATA4X_SIZE; i++)
     {
-        auto out = _module_under_test.process_sample(UPSAMPLING_TEST_DATA[i]);
-        for (size_t j = 0; j < out.size(); j++)
-        {
-            EXPECT_FLOAT_EQ(UPSAMPLING_TEST_DATA4X[i * out.size() + j], out[j]);
-        }
+        EXPECT_FLOAT_EQ(UPSAMPLING_TEST_DATA4X[i], out[i]);
     }
 }
 

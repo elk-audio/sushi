@@ -42,11 +42,13 @@ constexpr float filter_coeffs[4][4] = {
 
 constexpr float THRESHOLD_DB = 0.0;
 constexpr float RELEASE_TIME_MS = 100.0;
+constexpr int UPSAMPLING_FACTOR = 4;
 
 /**
  * @brief 4x polyphase interpolator.
  *
  */
+template<int CHUNK_SIZE>
 class UpSampler
 {
 public:
@@ -68,23 +70,24 @@ public:
      * @param sample The sample to interpolate
      * @return std::array<float, 4> Resulting samples
      */
-    inline std::array<float, 4> process_sample(float sample)
+    inline void process(const float* input, float* output)
     {
-        std::array<float, 4> output = {0.0, 0.0, 0.0, 0.0};
-        _delay_line[_write_idx] = sample; // Write sample into internal delayline
-        for (size_t i = 0; i < output.size(); i++)
+        for (int sample_idx = 0; sample_idx < CHUNK_SIZE; sample_idx++)
         {
-            float upsampled_value = 0.0;
-            // Convolve the filter with the sample data
-            for (size_t j = 0; j < _delay_line.size(); j++)
+            _delay_line[_write_idx] = input[sample_idx]; // Write sample into internal delayline
+            for (size_t i = 0; i < UPSAMPLING_FACTOR; i++)
             {
-                int read_idx = (_write_idx - j) & 0b11;
-                upsampled_value += filter_coeffs[i][j] * _delay_line[read_idx];
+                float upsampled_value = 0.0;
+                // Convolve the filter with the sample data
+                for (size_t j = 0; j < _delay_line.size(); j++)
+                {
+                    int read_idx = (_write_idx - j) & 0b11;
+                    upsampled_value += filter_coeffs[i][j] * _delay_line[read_idx];
+                }
+                output[UPSAMPLING_FACTOR * sample_idx + i] = upsampled_value;
             }
-            output[i] = upsampled_value;
+            _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
         }
-        _write_idx = (_write_idx + 1) & 0b11; // Fast index wrapping for 2^n size circular buffers
-        return output;
     }
 private:
     std::array<float, 4> _delay_line;
@@ -126,14 +129,15 @@ public:
      */
     void process(const float* input, float* output)
     {
+        std::array<float, UPSAMPLING_FACTOR * CHUNK_SIZE> up_sampled_values;
+        _up_sampler.process(input, up_sampled_values.data());
         for (int sample_idx = 0; sample_idx < CHUNK_SIZE; sample_idx++)
         {
             // Calculate the highest peak from true peak calculations and the current sample value
             float true_peak = std::abs(input[sample_idx]);
-            auto up_sampled_values = _up_sampler.process_sample(input[sample_idx]);
-            for (auto sample : up_sampled_values)
+            for (int upsampled_idx = 0; upsampled_idx < UPSAMPLING_FACTOR; upsampled_idx++)
             {
-                true_peak = std::max(true_peak, std::abs(sample));
+                true_peak = std::max(true_peak, std::abs(up_sampled_values[UPSAMPLING_FACTOR * sample_idx + upsampled_idx]));
             }
 
             // Calculate gain reduction
@@ -155,7 +159,7 @@ private:
     float _release_time{0.0};
     float _release_coeff{0.0};
 
-    UpSampler _up_sampler;
+    UpSampler<CHUNK_SIZE> _up_sampler;
 };
 
 } // namespace dsp
