@@ -157,17 +157,21 @@ bool Track::remove(ObjectId processor)
 
 void Track::render()
 {
+    auto track_timestamp = _timer->start_timer();
+
     process_audio(_input_buffer, _output_buffer);
     for (int bus = 0; bus < _output_busses; ++bus)
     {
         auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
         _apply_pan_and_gain(buffer, bus);
     }
+    _input_buffer.clear();
+
+    _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
 void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& out)
 {
-    auto track_timestamp = _timer->start_timer();
     /* For Tracks, process function is called from render() and the input audio data
      * should be copied to _input_buffer prior to this call.
      * We alias the buffers so we can swap them cheaply, without copying the underlying
@@ -207,7 +211,6 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
-    _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
 void Track::process_event(const RtEvent& event)
