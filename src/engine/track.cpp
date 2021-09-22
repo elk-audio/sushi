@@ -202,11 +202,17 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
 
     if (output_channels > 0)
     {
-        aliased_out.replace(aliased_in);
+        /* aliased_out contains the output of the last processor
+         * If the number of processors is even, then aliased_out
+         * already points to out, otherwise we need to copy to it */
+        if (aliased_in.channel(0) == _input_buffer.channel(0))
+        {
+            out.replace(aliased_in);
+        }
     }
     else
     {
-        aliased_out.clear();
+        out.clear();
     }
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
