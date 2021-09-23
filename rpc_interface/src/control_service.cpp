@@ -1700,29 +1700,49 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
 
 void NotificationControlService::delete_all_subscribers()
 {
-    for (auto& subscriber : _transport_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_transport_subscriber_lock);
+        for (auto& subscriber : _transport_subscribers)
+        {
+            delete subscriber;
+        }
+        _transport_subscribers.clear();
     }
 
-    for (auto& subscriber : _timing_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_timing_subscriber_lock);
+        for (auto& subscriber : _timing_subscribers)
+        {
+            delete subscriber;
+        }
+        _timing_subscribers.clear();
     }
 
-    for (auto& subscriber : _track_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_track_subscriber_lock);
+        for (auto& subscriber : _track_subscribers)
+        {
+            delete subscriber;
+        }
+        _track_subscribers.clear();
     }
 
-    for (auto& subscriber : _parameter_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_parameter_subscriber_lock);
+        for (auto& subscriber : _parameter_subscribers)
+        {
+            delete subscriber;
+        }
+        _parameter_subscribers.clear();
     }
 
-    for (auto& subscriber : _processor_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_processor_subscriber_lock);
+        for (auto& subscriber : _processor_subscribers)
+        {
+            delete subscriber;
+        }
+        _processor_subscribers.clear();
     }
 }
 
