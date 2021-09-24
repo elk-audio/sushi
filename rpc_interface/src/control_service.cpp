@@ -1666,8 +1666,8 @@ void NotificationControlService::unsubscribe(SubscribeToTrackChangesCallData* su
 {
     std::scoped_lock lock(_track_subscriber_lock);
     _track_subscribers.erase(std::remove(_track_subscribers.begin(),
-                                                 _track_subscribers.end(),
-                                                 subscriber));
+                                         _track_subscribers.end(),
+                                         subscriber));
 }
 
 void NotificationControlService::subscribe(SubscribeToProcessorChangesCallData* subscriber)
@@ -1680,8 +1680,8 @@ void NotificationControlService::unsubscribe(SubscribeToProcessorChangesCallData
 {
     std::scoped_lock lock(_processor_subscriber_lock);
     _processor_subscribers.erase(std::remove(_processor_subscribers.begin(),
-                                                     _processor_subscribers.end(),
-                                                     subscriber));
+                                             _processor_subscribers.end(),
+                                             subscriber));
 }
 
 void NotificationControlService::subscribe(SubscribeToParameterUpdatesCallData* subscriber)
@@ -1694,8 +1694,8 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
-                                                     _parameter_subscribers.end(),
-                                                     subscriber));
+                                             _parameter_subscribers.end(),
+                                             subscriber));
 }
 
 void NotificationControlService::delete_all_subscribers()
