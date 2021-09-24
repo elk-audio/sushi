@@ -1700,6 +1700,9 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
 
 void NotificationControlService::delete_all_subscribers()
 {
+    /* Unsubscribe and delete CallData subscribers directly, without
+     * waiting for them to be asynchronously deleted when a worker
+     * thread pulls them of the completion queue. */
     {
         std::scoped_lock lock(_transport_subscriber_lock);
         for (auto& subscriber : _transport_subscribers)
