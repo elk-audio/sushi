@@ -29,6 +29,16 @@ namespace sample_player_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
+constexpr auto DEFAULT_NAME = "sushi.testing.sampleplayer";
+constexpr auto DEFAULT_LABEL = "Sample player";
+
+namespace SampleChangeStatus {
+enum SampleChange : int
+{
+    SUCCESS = 0,
+    FAILURE
+};}
+
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);

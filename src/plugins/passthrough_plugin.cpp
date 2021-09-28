@@ -26,6 +26,9 @@
 namespace sushi {
 namespace passthrough_plugin {
 
+constexpr auto DEFAULT_NAME = "sushi.testing.passthrough";
+constexpr auto DEFAULT_LABEL = "Passthrough";
+
 PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);

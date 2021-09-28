@@ -26,6 +26,9 @@
 namespace sushi {
 namespace mono_summing_plugin {
 
+constexpr auto DEFAULT_NAME = "sushi.testing.mono_summing";
+constexpr auto DEFAULT_LABEL = "Mono summing";
+
 MonoSummingPlugin::MonoSummingPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);

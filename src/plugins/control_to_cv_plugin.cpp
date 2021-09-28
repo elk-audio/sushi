@@ -27,8 +27,8 @@
 namespace sushi {
 namespace control_to_cv_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.control_to_cv";
-static const std::string DEFAULT_LABEL = "Keyboard control to CV adapter";
+constexpr auto DEFAULT_NAME = "sushi.testing.control_to_cv";
+constexpr auto DEFAULT_LABEL = "Keyboard control to CV adapter";
 constexpr int TUNE_RANGE = 24;
 constexpr float PITCH_BEND_RANGE = 12.0f;
 constexpr int SEND_CHANNEL = 0;

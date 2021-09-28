@@ -26,10 +26,6 @@
 namespace sushi {
 namespace gain_plugin {
 
-constexpr int MAX_CHANNELS = 16;
-static const std::string DEFAULT_NAME = "sushi.testing.gain";
-static const std::string DEFAULT_LABEL = "Gain";
-
 class GainPlugin : public InternalPlugin
 {
 public:

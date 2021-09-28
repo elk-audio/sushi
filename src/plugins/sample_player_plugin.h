@@ -31,16 +31,6 @@ namespace sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
 
-static const std::string DEFAULT_NAME = "sushi.testing.sampleplayer";
-static const std::string DEFAULT_LABEL = "Sample player";
-
-namespace SampleChangeStatus {
-enum SampleChange : int
-{
-    SUCCESS = 0,
-    FAILURE
-};}
-
 class SamplePlayerPlugin : public InternalPlugin
 {
 public:

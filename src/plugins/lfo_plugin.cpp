@@ -25,8 +25,8 @@
 namespace sushi {
 namespace lfo_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.lfo";
-static const std::string DEFAULT_LABEL = "Lfo";
+constexpr auto DEFAULT_NAME = "sushi.testing.lfo";
+constexpr auto DEFAULT_LABEL = "Lfo";
 
 LfoPlugin::LfoPlugin(HostControl host_control) : InternalPlugin(host_control)
 {

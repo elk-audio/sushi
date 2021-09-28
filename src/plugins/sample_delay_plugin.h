@@ -30,13 +30,7 @@
 namespace sushi {
 namespace sample_delay_plugin {
 
-namespace 
-{
-    constexpr char DEFAULT_NAME[] = "sushi.testing.sample_delay";
-    constexpr char DEFAULT_LABEL[] = "Sample delay";
-    constexpr int MAX_DELAY = 48000;
-} 
-
+constexpr int MAX_DELAY = 48000;
 
 class SampleDelayPlugin : public InternalPlugin
 {

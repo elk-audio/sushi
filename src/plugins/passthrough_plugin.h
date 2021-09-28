@@ -27,9 +27,6 @@
 namespace sushi {
 namespace passthrough_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.passthrough";
-static const std::string DEFAULT_LABEL = "Passthrough";
-
 class PassthroughPlugin : public InternalPlugin
 {
 public:

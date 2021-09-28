@@ -38,8 +38,8 @@ constexpr float OUTPUT_MIN_DB = -120.0f;
 constexpr float OUTPUT_MAX_DB = 24.0f;
 constexpr float OUTPUT_MIN = 1.0e-6f; // -120dB
 
-static const std::string DEFAULT_NAME = "sushi.testing.peakmeter";
-static const std::string DEFAULT_LABEL = "Peak Meter";
+constexpr auto DEFAULT_NAME = "sushi.testing.peakmeter";
+constexpr auto DEFAULT_LABEL = "Peak Meter";
 
 // Convert a gain value to a normalised gain value
 inline float to_normalised_dB(float gain)
@@ -219,7 +219,6 @@ void PeakMeterPlugin::_process_clip_detection(const ChunkSampleBuffer& in, bool 
         _clip_hold_count[ch] += AUDIO_CHUNK_SIZE;
     }
 }
-
 
 }// namespace gain_plugin
 }// namespace sushi

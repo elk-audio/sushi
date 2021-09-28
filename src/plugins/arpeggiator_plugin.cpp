@@ -28,6 +28,11 @@ namespace arpeggiator_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("arpeggiator");
 
+constexpr auto DEFAULT_NAME = "sushi.testing.arpeggiator";
+constexpr auto DEFAULT_LABEL = "Arpeggiator";
+
+constexpr int MAX_ARP_NOTES = 8;
+constexpr int START_NOTE = 48;
 constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float MULTIPLIER_8TH_NOTE = 2.0f;
 constexpr int   OCTAVE = 12;

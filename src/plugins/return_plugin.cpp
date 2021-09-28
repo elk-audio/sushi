@@ -26,9 +26,14 @@
 namespace sushi {
 namespace return_plugin {
 
+constexpr auto DEFAULT_NAME = "return";
+constexpr auto DEFAULT_LABEL = "Return";
+
 ReturnPlugin::ReturnPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                    _manager(manager)
 {
+    Processor::set_name(DEFAULT_NAME);
+    Processor::set_label(DEFAULT_LABEL);
     _buffers[0] = ChunkSampleBuffer(MAX_SEND_CHANNELS);
     _buffers[1] = ChunkSampleBuffer(MAX_SEND_CHANNELS);
     _max_input_channels = MAX_SEND_CHANNELS;
@@ -173,7 +178,6 @@ void inline ReturnPlugin::_maybe_swap_buffers(Time current_time)
         _swap_buffers();
     }
 }
-
 
 }// namespace return_plugin
 }// namespace sushi

@@ -24,12 +24,14 @@ TEST(TestSendReturnFactory, TestFactoryCreation)
 
     auto [send_status, send_plugin] = factory.new_instance(info, host_ctrl, TEST_SAMPLERATE);
     ASSERT_EQ(ProcessorReturnCode::OK, send_status);
+    ASSERT_EQ("Send", send_plugin->label());
     ASSERT_GT(send_plugin.use_count(), 0);
     ASSERT_GT(send_plugin->id(), 0u);
 
     info.uid = "sushi.testing.return";
     auto [ret_status, return_plugin] = factory.new_instance(info, host_ctrl, TEST_SAMPLERATE);
     ASSERT_EQ(ProcessorReturnCode::OK, ret_status);
+    ASSERT_EQ("Return", return_plugin->label());
     ASSERT_GT(return_plugin.use_count(), 0);
     ASSERT_GT(return_plugin->id(), 0u);
 

@@ -28,8 +28,6 @@ namespace sushi {
 namespace equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
-static const std::string DEFAULT_NAME = "sushi.testing.equalizer";
-static const std::string DEFAULT_LABEL = "Equalizer";
 
 class EqualizerPlugin : public InternalPlugin
 {
