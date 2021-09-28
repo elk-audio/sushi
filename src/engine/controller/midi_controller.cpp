@@ -502,8 +502,6 @@ ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processo
     return ext::ControlStatus::OK;
 }
 
-#pragma GCC diagnostic pop
-
 } // namespace controller_impl
 } // namespace engine
 } // namespace sushi
