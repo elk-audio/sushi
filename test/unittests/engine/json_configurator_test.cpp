@@ -245,9 +245,13 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
     rapidjson::Value example_track(rapidjson::kObjectType);
     rapidjson::Value mode("mono");
     rapidjson::Value name("track_name");
+    rapidjson::Value inputs(rapidjson::kArrayType);
+    rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     example_track.AddMember("mode", mode, test_cfg.GetAllocator());
     example_track.AddMember("name", name, test_cfg.GetAllocator());
+    example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
+    example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     test_cfg["tracks"].PushBack(example_track, test_cfg.GetAllocator());
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
     test_cfg["tracks"][0].AddMember("plugins", plugins, test_cfg.GetAllocator());

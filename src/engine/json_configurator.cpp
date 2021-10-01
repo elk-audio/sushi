@@ -459,7 +459,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                 {
                     SUSHI_LOG_ERROR("Failed to connect gate {} to processor {}",
                                    gate_in["gate"].GetInt(),
-                                   gate_in["processor"].GetInt());
+                                   gate_in["processor"].GetString());
                 }
             }
         }
@@ -488,7 +488,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                 {
                     SUSHI_LOG_ERROR("Failed to connect gate {} from processor {}",
                                    gate_out["gate"].GetInt(),
-                                   gate_out["processor"].GetInt());
+                                   gate_out["processor"].GetString());
                 }
             }
         }
