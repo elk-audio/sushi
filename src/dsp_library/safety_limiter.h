@@ -41,6 +41,7 @@ constexpr float filter_coeffs[4][4] = {
 };
 
 constexpr float THRESHOLD_DB = 0.0;
+constexpr float THRESHOLD_GAIN = 1.0;
 constexpr float RELEASE_TIME_MS = 100.0;
 constexpr int UPSAMPLING_FACTOR = 4;
 
@@ -141,8 +142,7 @@ public:
             }
 
             // Calculate gain reduction
-            float true_peak_db = 20.0 * std::log10(true_peak);
-            if (true_peak_db > THRESHOLD_DB)
+            if (true_peak > THRESHOLD_GAIN)
             {
                 _gain_reduction = std::max(_gain_reduction, 1.0f - 1.0f / true_peak);
             }
