@@ -23,6 +23,8 @@
 
 #include "library/constants.h"
 
+#undef RELEASE
+
 namespace dsp {
 
 /**
