@@ -23,6 +23,8 @@
 
 #include "library/constants.h"
 
+// VST3SDK defines RELEASE globally, which leaks into all including code
+// And conflict with the RELEASE phase of the Adsr enum.
 #undef RELEASE
 
 namespace dsp {
