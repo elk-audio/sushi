@@ -18,8 +18,8 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_SAFETY_LIMITER_H
-#define SUSHI_SAFETY_LIMITER_H
+#ifndef SUSHI_MASTER_LIMITER_H
+#define SUSHI_MASTER_LIMITER_H
 
 #include <array>
 #include <cmath>
@@ -111,11 +111,11 @@ private:
  *
  */
 template<int CHUNK_SIZE>
-class SafetyLimiter
+class MasterLimiter
 {
 public:
 
-    SafetyLimiter(float release_time_ms = RELEASE_TIME_MS,
+    MasterLimiter(float release_time_ms = RELEASE_TIME_MS,
                   float attack_time_ms = ATTACK_TIME_MS) : _release_time(release_time_ms),
                                                            _attack_time(attack_time_ms) {}
 
@@ -189,4 +189,4 @@ private:
 } // namespace dsp
 
 
-#endif // SUSHI_SAFETY_LIMITER_H
+#endif // SUSHI_MASTER_LIMITER_H

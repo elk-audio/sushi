@@ -57,7 +57,7 @@ R"(
             }
           }
         },
-        "saftey_limiter" :
+        "master_limiter" :
         {
           "type": "boolean"
         },

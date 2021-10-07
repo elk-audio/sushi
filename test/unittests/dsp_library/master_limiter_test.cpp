@@ -4,8 +4,8 @@
 
 #define private public
 
-#include "dsp_library/safety_limiter.h"
-#include "test/data/safety_limiter_test_data.h"
+#include "dsp_library/master_limiter.h"
+#include "test/data/master_limiter_test_data.h"
 
 using namespace dsp;
 
@@ -35,19 +35,19 @@ constexpr float TEST_SAMPLERATE = 48000.0f;
 constexpr float TEST_RELEASE_TIME_MS = 100.0f;
 constexpr float TEST_ATTACK_TIME_MS = 50.0f;
 
-class TestSafetyLimiter : public ::testing::Test
+class TestMasterLimiter : public ::testing::Test
 {
 protected:
-    TestSafetyLimiter() {}
+    TestMasterLimiter() {}
     void SetUp()
     {
         _module_under_test.init(48000.0);
     }
 
-    SafetyLimiter<LIMITER_INPUT_DATA_SIZE> _module_under_test{TEST_RELEASE_TIME_MS, TEST_ATTACK_TIME_MS};
+    MasterLimiter<LIMITER_INPUT_DATA_SIZE> _module_under_test{TEST_RELEASE_TIME_MS, TEST_ATTACK_TIME_MS};
 };
 
-TEST_F(TestSafetyLimiter, Limit)
+TEST_F(TestMasterLimiter, Limit)
 {
     float out[LIMITER_OUTPUT_DATA_SIZE];
     _module_under_test.process(LIMITER_INPUT_DATA, out);

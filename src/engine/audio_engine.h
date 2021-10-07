@@ -27,7 +27,7 @@
 
 #include "twine/twine.h"
 
-#include "dsp_library/safety_limiter.h"
+#include "dsp_library/master_limiter.h"
 #include "engine/event_dispatcher.h"
 #include "engine/base_engine.h"
 #include "engine/track.h"
@@ -432,7 +432,7 @@ public:
      * @brief Enable saftey limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
-    void enable_saftey_limiter(bool enabled) override
+    void enable_master_limiter(bool enabled) override
     {
         _saftey_limter_enabled = enabled;
     }
@@ -574,7 +574,7 @@ private:
     ClipDetector _clip_detector;
 
     bool _saftey_limter_enabled{false};
-    std::vector<dsp::SafetyLimiter<AUDIO_CHUNK_SIZE>> _saftey_limiters;
+    std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 
     PluginRegistry _plugin_registry;
 };

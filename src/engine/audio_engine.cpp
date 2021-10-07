@@ -123,7 +123,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
     _transport.set_sample_rate(sample_rate);
     _process_timer.set_timing_period(sample_rate, AUDIO_CHUNK_SIZE);
     _clip_detector.set_sample_rate(sample_rate);
-    for (auto& limiter : _saftey_limiters)
+    for (auto& limiter : _master_limiters)
     {
         limiter.init(sample_rate);
     }
@@ -139,10 +139,10 @@ void AudioEngine::set_audio_output_channels(int channels)
 {
     _clip_detector.set_output_channels(channels);
     BaseEngine::set_audio_output_channels(channels);
-    _saftey_limiters.clear();
+    _master_limiters.clear();
     for (int c = 0; c < channels; c++)
     {
-        _saftey_limiters.push_back(dsp::SafetyLimiter<AUDIO_CHUNK_SIZE>());
+        _master_limiters.push_back(dsp::MasterLimiter<AUDIO_CHUNK_SIZE>());
     }
 }
 
@@ -467,7 +467,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
         auto temp_input_buffer = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, 0, out_buffer->channel_count());
         for (int c = 0; c < out_buffer->channel_count(); c++)
         {
-            _saftey_limiters[c].process(out_buffer->channel(c), out_buffer->channel(c));
+            _master_limiters[c].process(out_buffer->channel(c), out_buffer->channel(c));
         }
         out_buffer->replace(temp_input_buffer);
     }
