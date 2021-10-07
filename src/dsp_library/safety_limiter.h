@@ -43,8 +43,17 @@ constexpr float filter_coeffs[4][4] = {
 constexpr float THRESHOLD_DB = 0.0;
 constexpr float THRESHOLD_GAIN = 1.0;
 constexpr float RELEASE_TIME_MS = 100.0;
+constexpr float ATTACK_TIME_MS = 0.0;
 constexpr int UPSAMPLING_FACTOR = 4;
-
+/**
+ * Since exponentials never reach their target this constant is used
+ * to set a higher target than the intended one. This is then reversed
+ * when checking if we reached the correct level
+ *
+ * Experiments in numpy showed 1.6 has good correlation with the attack time for a range of settings
+ *
+ */
+constexpr float ATTACK_RATIO = 1.6;
 /**
  * @brief 4x polyphase interpolator.
  *
@@ -106,7 +115,9 @@ class SafetyLimiter
 {
 public:
 
-    SafetyLimiter(float release_time_ms = RELEASE_TIME_MS) : _release_time(release_time_ms) {}
+    SafetyLimiter(float release_time_ms = RELEASE_TIME_MS,
+                  float attack_time_ms = ATTACK_TIME_MS) : _release_time(release_time_ms),
+                                                           _attack_time(attack_time_ms) {}
 
     /**
      * @brief Recalculate release time based on sample rate and reset gain reduction
@@ -116,7 +127,8 @@ public:
      */
     void init(float sample_rate)
     {
-        _release_coeff = std::exp(-1.0f / (0.001f * sample_rate * _release_time));
+        _release_coeff = _release_time > 0 ? std::exp(-1.0f / (0.001f * sample_rate * _release_time)) : 0.0;
+        _attack_coeff = _attack_time > 0 ? std::exp(-1.0f / (0.001f * sample_rate * _attack_time)) : 0.0;
         _gain_reduction = 0.0f;
         _up_sampler.reset();
     }
@@ -144,7 +156,16 @@ public:
             // Calculate gain reduction
             if (true_peak > THRESHOLD_GAIN)
             {
-                _gain_reduction = std::max(_gain_reduction, 1.0f - 1.0f / true_peak);
+                _gain_reduction_target = std::max(_gain_reduction_target, (1.0f - 1.0f / true_peak) * ATTACK_RATIO);
+            }
+
+            if (_gain_reduction_target > _gain_reduction)
+            {
+                _gain_reduction = (_gain_reduction - _gain_reduction_target) * _attack_coeff + _gain_reduction_target;
+                if (_gain_reduction >= _gain_reduction_target / ATTACK_RATIO)
+                {
+                    _gain_reduction_target = 0.0;
+                }
             }
             else
             {
@@ -156,8 +177,11 @@ public:
 
 private:
     float _gain_reduction{0.0};
+    float _gain_reduction_target{0.0};
     float _release_time{0.0};
     float _release_coeff{0.0};
+    float _attack_time{0.0};
+    float _attack_coeff{0.0};
 
     UpSampler<CHUNK_SIZE> _up_sampler;
 };
