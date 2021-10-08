@@ -68,7 +68,7 @@ StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(Ho
     _ch1_invert_phase = register_float_parameter("ch1_invert_phase", "Channel 1 Invert Phase", "",
                                                   0.0f, 0.0f, 1.0f, nullptr);
     _ch2_pan = register_float_parameter("ch2_pan", "Channel 2 Pan", "",
-                                         -1.0, -1.0, 1.0, nullptr);
+                                         1.0, -1.0, 1.0, nullptr);
     _ch2_gain = register_float_parameter("ch2_gain", "Channel 2 Gain", "",
                                           0.0f, -120.0f, 24.0f,
                                           new dBToLinPreProcessor(-120.0f, 24.0f));

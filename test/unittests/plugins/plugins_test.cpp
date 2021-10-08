@@ -641,6 +641,14 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
     std::fill(input_buffer.channel(0), input_buffer.channel(0) + AUDIO_CHUNK_SIZE, 1.0f);
     std::fill(input_buffer.channel(1), input_buffer.channel(1) + AUDIO_CHUNK_SIZE, -2.0f);
 
+    // Default configuration
+
+    std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 1.0f);
+    std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -2.0f);
+
+    _module_under_test->process_audio(input_buffer, output_buffer);
+    test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
+
     // Standard stereo throughput, right input channel inverted
 
     _module_under_test->_ch1_pan->set(0.0f);
