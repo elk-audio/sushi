@@ -23,6 +23,8 @@
 
 #include <atomic>
 
+#include "constants.h"
+
 // since std::hardware_destructive_interference_size is not yet supported in GCC 7
 constexpr int ASSUMED_CACHE_LINE_SIZE = 64;
 

@@ -21,9 +21,9 @@
 #define SUSHI_LV2_PROCESSOR_FACTORY_H
 
 #include "library/base_processor_factory.h"
-#include "lv2_wrapper.h"
 
 #ifdef SUSHI_BUILD_WITH_LV2
+#include "lv2_wrapper.h"
 
 namespace sushi {
 namespace lv2 {
@@ -51,8 +51,7 @@ private:
 } // end namespace lv2
 } // end namespace sushi
 
-#endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
+#else //SUSHI_BUILD_WITH_LV2
 
 namespace sushi {
 namespace lv2 {
@@ -60,7 +59,6 @@ namespace lv2 {
 class Lv2ProcessorFactory : public BaseProcessorFactory {
 public:
     Lv2ProcessorFactory() = default;
-
     virtual ~Lv2ProcessorFactory() = default;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
@@ -71,9 +69,9 @@ public:
     }
 };
 
-}}
+} // end namespace lv2
+} // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_LV2
-
 
 #endif //SUSHI_LV2_PROCESSOR_FACTORY_H

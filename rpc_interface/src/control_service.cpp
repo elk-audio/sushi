@@ -1666,8 +1666,8 @@ void NotificationControlService::unsubscribe(SubscribeToTrackChangesCallData* su
 {
     std::scoped_lock lock(_track_subscriber_lock);
     _track_subscribers.erase(std::remove(_track_subscribers.begin(),
-                                                 _track_subscribers.end(),
-                                                 subscriber));
+                                         _track_subscribers.end(),
+                                         subscriber));
 }
 
 void NotificationControlService::subscribe(SubscribeToProcessorChangesCallData* subscriber)
@@ -1680,8 +1680,8 @@ void NotificationControlService::unsubscribe(SubscribeToProcessorChangesCallData
 {
     std::scoped_lock lock(_processor_subscriber_lock);
     _processor_subscribers.erase(std::remove(_processor_subscribers.begin(),
-                                                     _processor_subscribers.end(),
-                                                     subscriber));
+                                             _processor_subscribers.end(),
+                                             subscriber));
 }
 
 void NotificationControlService::subscribe(SubscribeToParameterUpdatesCallData* subscriber)
@@ -1694,35 +1694,58 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
 {
     std::scoped_lock lock(_parameter_subscriber_lock);
     _parameter_subscribers.erase(std::remove(_parameter_subscribers.begin(),
-                                                     _parameter_subscribers.end(),
-                                                     subscriber));
+                                             _parameter_subscribers.end(),
+                                             subscriber));
 }
 
 void NotificationControlService::delete_all_subscribers()
 {
-    for (auto& subscriber : _transport_subscribers)
+    /* Unsubscribe and delete CallData subscribers directly, without
+     * waiting for them to be asynchronously deleted when a worker
+     * thread pulls them of the completion queue. */
     {
-        delete subscriber;
+        std::scoped_lock lock(_transport_subscriber_lock);
+        for (auto& subscriber : _transport_subscribers)
+        {
+            delete subscriber;
+        }
+        _transport_subscribers.clear();
     }
 
-    for (auto& subscriber : _timing_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_timing_subscriber_lock);
+        for (auto& subscriber : _timing_subscribers)
+        {
+            delete subscriber;
+        }
+        _timing_subscribers.clear();
     }
 
-    for (auto& subscriber : _track_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_track_subscriber_lock);
+        for (auto& subscriber : _track_subscribers)
+        {
+            delete subscriber;
+        }
+        _track_subscribers.clear();
     }
 
-    for (auto& subscriber : _parameter_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_parameter_subscriber_lock);
+        for (auto& subscriber : _parameter_subscribers)
+        {
+            delete subscriber;
+        }
+        _parameter_subscribers.clear();
     }
 
-    for (auto& subscriber : _processor_subscribers)
     {
-        delete subscriber;
+        std::scoped_lock lock(_processor_subscriber_lock);
+        for (auto& subscriber : _processor_subscribers)
+        {
+            delete subscriber;
+        }
+        _processor_subscribers.clear();
     }
 }
 

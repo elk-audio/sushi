@@ -208,8 +208,6 @@ ext::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int
     return ext::ControlStatus::OK;
 }
 
-#pragma GCC diagnostic pop
-
 } // namespace controller_impl
 } // namespace engine
 } // namespace sushi

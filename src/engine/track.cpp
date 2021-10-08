@@ -22,6 +22,7 @@
 
 #include "track.h"
 #include "logging.h"
+#include "library/constants.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("track");
 
@@ -31,8 +32,6 @@ namespace engine {
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr float DEFAULT_TRACK_GAIN = 1.0f;
-
-constexpr auto PAN_GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
 /* Map pan and gain to left and right gain with a 3 dB pan law */
 inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
@@ -94,11 +93,11 @@ void Track::configure(float sample_rate)
 {
     for (auto& i : _pan_gain_smoothers_right)
     {
-        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
     for (auto& i : _pan_gain_smoothers_left)
     {
-        i.set_lag_time(PAN_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
 }
 
@@ -158,17 +157,21 @@ bool Track::remove(ObjectId processor)
 
 void Track::render()
 {
+    auto track_timestamp = _timer->start_timer();
+
     process_audio(_input_buffer, _output_buffer);
     for (int bus = 0; bus < _output_busses; ++bus)
     {
         auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
         _apply_pan_and_gain(buffer, bus);
     }
+    _input_buffer.clear();
+
+    _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
 void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& out)
 {
-    auto track_timestamp = _timer->start_timer();
     /* For Tracks, process function is called from render() and the input audio data
      * should be copied to _input_buffer prior to this call.
      * We alias the buffers so we can swap them cheaply, without copying the underlying
@@ -199,16 +202,21 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
 
     if (output_channels > 0)
     {
-        aliased_out.replace(aliased_in);
+        /* aliased_out contains the output of the last processor
+         * If the number of processors is even, then aliased_out
+         * already points to out, otherwise we need to copy to it */
+        if (aliased_in.channel(0) == _input_buffer.channel(0))
+        {
+            out.replace(aliased_in);
+        }
     }
     else
     {
-        aliased_out.clear();
+        out.clear();
     }
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
-    _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
 void Track::process_event(const RtEvent& event)

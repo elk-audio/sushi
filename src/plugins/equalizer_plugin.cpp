@@ -25,6 +25,9 @@
 namespace sushi {
 namespace equalizer_plugin {
 
+constexpr auto DEFAULT_NAME = "sushi.testing.equalizer";
+constexpr auto DEFAULT_LABEL = "Equalizer";
+
 EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS_SUPPORTED;

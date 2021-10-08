@@ -15,8 +15,10 @@
 
 /**
  * @brief Compile time constants
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+
+#include <chrono>
 
 #ifndef SUSHI_CONSTANTS_H
 #define SUSHI_CONSTANTS_H

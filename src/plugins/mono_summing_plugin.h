@@ -27,9 +27,6 @@
 namespace sushi {
 namespace mono_summing_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.mono_summing";
-static const std::string DEFAULT_LABEL = "Mono summing";
-
 class MonoSummingPlugin : public InternalPlugin
 {
 public:

@@ -28,16 +28,25 @@
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
 #include "plugins/mono_summing_plugin.h"
+#include "plugins/send_return_factory.h"
 #include "plugins/sample_delay_plugin.h"
 #include "plugins/stereo_mixer_plugin.h"
 
 namespace sushi {
+
+InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std::make_unique<SendReturnFactory>())
+{}
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
 InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
                                        HostControl &host_control,
                                        float sample_rate)
 {
+    if (plugin_info.uid == "sushi.testing.send" || plugin_info.uid == "sushi.testing.return")
+    {
+        return _send_return_factory->new_instance(plugin_info, host_control, sample_rate);
+    }
+
     auto processor = _create_internal_plugin(plugin_info.uid, host_control);
     if (processor == nullptr)
     {
@@ -45,13 +54,13 @@ InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
     }
     else
     {
-        processor->init(sample_rate);
-        return {ProcessorReturnCode::OK, processor};
+        auto processor_status = processor->init(sample_rate);
+        return {processor_status, processor};
     }
 }
 
-std::shared_ptr<Processor>
-sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid, sushi::HostControl &host_control)
+std::shared_ptr<Processor> sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
+                                                                                    sushi::HostControl &host_control)
 {
     if (uid == "sushi.testing.passthrough")
     {

@@ -6,9 +6,9 @@ namespace wav_writer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
-static const std::string DEFAULT_NAME = "sushi.testing.wav_writer";
-static const std::string DEFAULT_LABEL = "Wav writer";
-static const std::string DEFAULT_PATH = "./";
+constexpr auto DEFAULT_NAME = "sushi.testing.wav_writer";
+constexpr auto DEFAULT_LABEL = "Wav writer";
+constexpr auto DEFAULT_PATH = "./";
 
 WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {

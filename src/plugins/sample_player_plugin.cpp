@@ -29,6 +29,16 @@ namespace sample_player_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
+constexpr auto DEFAULT_NAME = "sushi.testing.sampleplayer";
+constexpr auto DEFAULT_LABEL = "Sample player";
+
+namespace SampleChangeStatus {
+enum SampleChange : int
+{
+    SUCCESS = 0,
+    FAILURE
+};}
+
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);
@@ -163,10 +173,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
                 voice.note_off(1.0f, 0);
             }
             _sample_file_property = typed_event->value();
-            /* Schedule a non-rt callback to handle sample loading */
-            auto e = RtEvent::make_async_work_event(&SamplePlayerPlugin::non_rt_callback, this->id(), this);
-            _pending_event_id = e.async_work_event()->event_id();
-            output_event(e);
+            _pending_event_id = request_non_rt_task(&non_rt_callback);
             break;
         }
         case RtEventType::ASYNC_WORK_NOTIFICATION:

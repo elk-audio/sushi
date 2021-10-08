@@ -28,8 +28,8 @@ namespace step_sequencer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("step_seq");
 
-static const std::string DEFAULT_NAME = "sushi.testing.step_sequencer";
-static const std::string DEFAULT_LABEL = "Step Sequencer";
+constexpr auto DEFAULT_NAME = "sushi.testing.step_sequencer";
+constexpr auto DEFAULT_LABEL = "Step Sequencer";
 
 constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float MULTIPLIER_8TH_NOTE = 2.0f;

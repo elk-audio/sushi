@@ -25,6 +25,10 @@
 namespace sushi {
 namespace gain_plugin {
 
+constexpr int MAX_CHANNELS = 16;
+constexpr auto DEFAULT_NAME = "sushi.testing.gain";
+constexpr auto DEFAULT_LABEL = "Gain";
+
 GainPlugin::GainPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS;

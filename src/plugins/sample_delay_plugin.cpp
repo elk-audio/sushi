@@ -23,6 +23,9 @@
 namespace sushi {
 namespace sample_delay_plugin {
 
+constexpr auto DEFAULT_NAME = "sushi.testing.sample_delay";
+constexpr auto DEFAULT_LABEL = "Sample delay";
+
 SampleDelayPlugin::SampleDelayPlugin(HostControl host_control) : InternalPlugin(host_control),
                                                                  _write_idx(0),
                                                                  _read_idx(0)

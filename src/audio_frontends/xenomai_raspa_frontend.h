@@ -121,7 +121,7 @@ class XenomaiRaspaFrontend : public BaseAudioFrontend
 {
 public:
     XenomaiRaspaFrontend(engine::BaseEngine* engine);
-    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override {return AudioFrontendStatus::OK;}
+    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
 };

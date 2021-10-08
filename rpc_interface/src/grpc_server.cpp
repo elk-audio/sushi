@@ -105,7 +105,7 @@ void GrpcServer::stop()
     void* tag;
     bool ok;
 
-    //empty completion queue
+    // Empty completion queue
     while(_async_rpc_queue->Next(&tag, &ok));
     _notification_control_service->delete_all_subscribers();
 }

@@ -15,7 +15,7 @@
 
 /**
  * @brief Internal plugin manager.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_INTERNAL_PLUGIN_H
@@ -41,7 +41,7 @@ public:
 
     explicit InternalPlugin(HostControl host_control);
 
-    virtual ~InternalPlugin() {};
+    virtual ~InternalPlugin() = default;
 
     void process_event(const RtEvent& event) override;
 
