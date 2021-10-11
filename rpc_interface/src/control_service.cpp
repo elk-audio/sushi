@@ -1204,9 +1204,18 @@ grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::Serv
     return to_grpc_status(status);
 }
 
+// This function is deprecated and should be removed eventually.
 grpc::Status AudioRoutingControlService::DisconnectAllOutputFromTrack(grpc::ServerContext* /*context*/,
                                                                       const sushi_rpc::TrackIdentifier* request,
                                                                       sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->disconnect_all_outputs_from_track(request->id());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioRoutingControlService::DisconnectAllOutputsFromTrack(grpc::ServerContext* /*context*/,
+                                                                       const sushi_rpc::TrackIdentifier* request,
+                                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->disconnect_all_outputs_from_track(request->id());
     return to_grpc_status(status);
