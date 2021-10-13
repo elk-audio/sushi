@@ -253,26 +253,6 @@ protected:
     float               _value;
 };
 
-class StringPropertyChangeEvent : public ParameterChangeEvent
-{
-public:
-    StringPropertyChangeEvent(ObjectId processor_id,
-                              ObjectId property_id,
-                              const std::string& string_value,
-                              Time timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
-                                                                     processor_id,
-                                                                     property_id,
-                                                                     0.0f,
-                                                                     timestamp),
-                                                _string_value(string_value) {}
-
-    RtEvent to_rt_event(int sample_offset) const override;
-    ObjectId property_id() const {return _parameter_id;}
-
-private:
-    std::string _string_value;
-};
-
 class DataPropertyChangeEvent : public ParameterChangeEvent
 {
 public:
@@ -393,12 +373,34 @@ public:
 
     int execute(engine::BaseEngine* engine) const override;
 
-    ObjectId            processor_id() {return _processor_id;}
-    int                 program_no() {return _program_no;}
+    ObjectId            processor_id() const {return _processor_id;}
+    int                 program_no() const {return _program_no;}
 
 private:
     ObjectId            _processor_id;
     int                 _program_no;
+};
+
+class StringPropertyChangeEvent : public EngineEvent
+{
+public:
+    StringPropertyChangeEvent(ObjectId processor_id,
+                              ObjectId property_id,
+                              const std::string& string_value,
+                              Time timestamp) : EngineEvent(timestamp),
+                                                _processor_id(processor_id),
+                                                _property_id(property_id),
+                                                _string_value(string_value) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+    ObjectId processor_id() const {return _processor_id;}
+    ObjectId property_id() const {return _property_id;}
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _string_value;
 };
 
 class EngineNotificationEvent : public Event

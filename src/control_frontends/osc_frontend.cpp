@@ -57,12 +57,12 @@ static int osc_send_parameter_change_event(const char* /*path*/,
     return 0;
 }
 
-static int osc_send_string_parameter_change_event(const char* /*path*/,
-                                                  const char* /*types*/,
-                                                  lo_arg** argv,
-                                                  int /*argc*/,
-                                                  void* /*data*/,
-                                                  void* user_data)
+static int osc_send_string_property_change_event(const char* /*path*/,
+                                                 const char* /*types*/,
+                                                 lo_arg** argv,
+                                                 int /*argc*/,
+                                                 void* /*data*/,
+                                                 void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
@@ -438,8 +438,8 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     return true;
 }
 
-bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
-                                              const std::string& parameter_name)
+bool OSCFrontend::connect_to_string_property(const std::string& processor_name,
+                                             const std::string& property_name)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -447,7 +447,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
         return false;
     }
 
-    auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
+    auto [connection, osc_path] = _create_parameter_connection(processor_name, property_name);
     if (connection == nullptr)
     {
         return false;
@@ -455,7 +455,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
     auto cb = lo_server_thread_add_method(_osc_server,
                                           osc_path.c_str(),
                                           "s",
-                                          osc_send_string_parameter_change_event,
+                                          osc_send_string_property_change_event,
                                           connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
@@ -588,23 +588,28 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
 bool OSCFrontend::connect_to_processor_parameters(const std::string& processor_name, int processor_id)
 {
     auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
-    if (parameters_status != ext::ControlStatus::OK)
+    if (parameters_status == ext::ControlStatus::OK)
     {
-        return false;
-    }
-    for (auto& param : parameters)
-    {
-        if (param.type == ext::ParameterType::FLOAT ||
-            param.type == ext::ParameterType::INT ||
-            param.type == ext::ParameterType::BOOL)
+        for (auto& param : parameters)
         {
-            connect_to_parameter(processor_name, param.name);
-        }
-        if (param.type == ext::ParameterType::STRING_PROPERTY)
-        {
-            connect_to_string_parameter(processor_name, param.name);
+            if (param.type == ext::ParameterType::FLOAT ||
+                param.type == ext::ParameterType::INT ||
+                param.type == ext::ParameterType::BOOL)
+            {
+                connect_to_parameter(processor_name, param.name);
+            }
         }
     }
+
+    auto [properties_status, properties] = _param_controller->get_processor_string_properties(processor_id);
+    if (properties_status == ext::ControlStatus::OK)
+    {
+        for (auto& property : properties)
+        {
+            connect_to_string_property(processor_name, property.name);
+        }
+    }
+
     return true;
 }
 

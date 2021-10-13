@@ -251,6 +251,27 @@ public:
     };
 
     /**
+     * @brief Get the value of a string property. Should only be called from a non-rt thread
+     * @param property_id The id of the requested property
+     * @return The current string property value, if the return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, std::string> string_property_value(ObjectId /*property_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    }
+
+    /**
+     * @brief Set the value of a string property.  Should only be called from a non-rt thread
+     * @param property_id The id of the property to set
+     * @param value The new string value of the string property
+     * @return OK if the operation completed successfully
+     */
+    virtual ProcessorReturnCode set_string_property_value(ObjectId /*property_id*/, const std::string& /*value*/)
+    {
+        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
+    }
+
+    /**
      * @brief Whether or not the processor supports programs/presets
      * @return True if the processor supports programs, false otherwise
      */

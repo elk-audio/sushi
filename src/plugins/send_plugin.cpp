@@ -44,7 +44,7 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
 
     _gain_smoother.set_direct(_gain_parameter->processed_value());
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name", "");
+    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name");
     assert(_gain_parameter && str_pr_ok);
 }
 

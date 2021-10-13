@@ -290,13 +290,13 @@ protected:
 /**
  * @brief Class for string parameter changes
  */
-class StringParameterChangeRtEvent : public BaseRtEvent
+class StringPropertyChangeRtEvent : public BaseRtEvent
 {
 public:
-    StringParameterChangeRtEvent(ObjectId processor,
-                                 int offset,
-                                 ObjectId param_id,
-                                 std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
+    StringPropertyChangeRtEvent(ObjectId processor,
+                                int offset,
+                                ObjectId param_id,
+                                std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
                                                                    processor,
                                                                    offset),
                                                        _data(value),
@@ -631,7 +631,7 @@ public:
         assert(_keyboard_event.type() == RtEventType::FLOAT_PARAMETER_CHANGE);
         return &_parameter_change_event;
     }
-    const StringParameterChangeRtEvent* string_parameter_change_event() const
+    const StringPropertyChangeRtEvent* string_parameter_change_event() const
     {
         assert(_string_parameter_change_event.type() == RtEventType::STRING_PROPERTY_CHANGE);
         return &_string_parameter_change_event;
@@ -858,7 +858,7 @@ public:
 
     static RtEvent make_string_parameter_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
     {
-        StringParameterChangeRtEvent typed_event(target, offset, param_id, value);
+        StringPropertyChangeRtEvent typed_event(target, offset, param_id, value);
         return RtEvent(typed_event);
     }
 
@@ -1065,7 +1065,7 @@ private:
     RtEvent(const GateRtEvent& e)                       : _gate_event(e) {}
     RtEvent(const CvRtEvent& e)                         : _cv_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e)            : _parameter_change_event(e) {}
-    RtEvent(const StringParameterChangeRtEvent& e)      : _string_parameter_change_event(e) {}
+    RtEvent(const StringPropertyChangeRtEvent& e)      : _string_parameter_change_event(e) {}
     RtEvent(const DataParameterChangeRtEvent& e)        : _data_parameter_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e)           : _processor_command_event(e) {}
     RtEvent(const ReturnableRtEvent& e)                 : _returnable_event(e) {}
@@ -1093,7 +1093,7 @@ private:
         GateRtEvent                   _gate_event;
         CvRtEvent                     _cv_event;
         ParameterChangeRtEvent        _parameter_change_event;
-        StringParameterChangeRtEvent  _string_parameter_change_event;
+        StringPropertyChangeRtEvent  _string_parameter_change_event;
         DataParameterChangeRtEvent    _data_parameter_change_event;
         ProcessorCommandRtEvent       _processor_command_event;
         ReturnableRtEvent             _returnable_event;

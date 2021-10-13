@@ -63,7 +63,7 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
                                                   0.0f, 0.0f, 10.0f,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File", "");
+    [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File");
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
 }
 

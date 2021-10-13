@@ -65,8 +65,8 @@ public:
     bool connect_to_parameter(const std::string& processor_name,
                               const std::string& parameter_name);
 
-    bool connect_to_string_parameter(const std::string& processor_name,
-                                     const std::string& parameter_name);
+    bool connect_to_string_property(const std::string& processor_name,
+                                    const std::string& property_name);
 
     /**
      * @brief Connect osc to the bypass state of a given processor.

@@ -22,6 +22,8 @@
 #define SUSHI_INTERNAL_PLUGIN_H
 
 #include <deque>
+#include <unordered_map>
+#include <mutex>
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
@@ -50,6 +52,10 @@ public:
     std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, std::string> string_property_value(ObjectId property_id) const override;
+
+    ProcessorReturnCode set_string_property_value(ObjectId property_id, const std::string& value) override;
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
@@ -112,12 +118,12 @@ public:
      * @brief Register a string property that can be updated through events
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @param unit The unit of the parameters display value
+     * @param default_value The default value of the property
      * @return true if the property was registered successfully
      */
     bool register_string_property(const std::string& name,
                                   const std::string& label,
-                                  const std::string& unit);
+                                  const std::string& default_value = "");
 
     /**
      * @brief Register a data property that can be updated through events
@@ -155,11 +161,15 @@ protected:
      */
     void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
 
+
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property
      * that iterators are never invalidated by adding to the containers.
      * For arrays or std::vectors we need to know the maximum capacity for that to work. */
     std::deque<ParameterStorage> _parameter_values;
+
+    mutable std::mutex _string_property_lock;
+    std::unordered_map<ObjectId, std::string> _string_property_values;
 };
 
 } // end namespace sushi

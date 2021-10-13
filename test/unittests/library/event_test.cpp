@@ -5,10 +5,7 @@
 #include "engine/audio_engine.h"
 
 #include "control_frontends/base_control_frontend.h"
-#include "test_utils/engine_mockup.h"
-#include "test_utils/control_mockup.h"
 
-using namespace midi;
 using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::control_frontend;
@@ -84,16 +81,6 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(6u, rt_event.parameter_change_event()->processor_id());
     EXPECT_EQ(50u, rt_event.parameter_change_event()->param_id());
     EXPECT_FLOAT_EQ(1.0f, rt_event.parameter_change_event()->value());
-
-    auto string_pro_ch_event = StringPropertyChangeEvent(7, 51, "Hello", IMMEDIATE_PROCESS);
-    EXPECT_TRUE(string_pro_ch_event.is_parameter_change_event());
-    EXPECT_TRUE(string_pro_ch_event.maps_to_rt_event());
-    rt_event = string_pro_ch_event.to_rt_event(10);
-    EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, rt_event.type());
-    EXPECT_EQ(10, rt_event.sample_offset());
-    EXPECT_EQ(7u, rt_event.string_parameter_change_event()->processor_id());
-    EXPECT_EQ(51u, rt_event.string_parameter_change_event()->param_id());
-    EXPECT_STREQ("Hello", rt_event.string_parameter_change_event()->value()->c_str());
 
     BlobData testdata = {0, nullptr};
     auto data_pro_ch_event = DataPropertyChangeEvent(8, 52, testdata, IMMEDIATE_PROCESS);

@@ -445,11 +445,6 @@ class ParameterControllerMockup : public ParameterController, public TestableCon
         return {_return_status, std::to_string(DEFAULT_PARAMETER_VALUE)};
     }
 
-    std::pair<ControlStatus, std::string> get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const override
-    {
-        return {_return_status, DEFAULT_STRING_PROPERTY};
-    }
-
     ControlStatus set_parameter_value(int processor_id, int parameter_id, float value) override
     {
         _args_from_last_call.clear();
@@ -458,6 +453,34 @@ class ParameterControllerMockup : public ParameterController, public TestableCon
         _args_from_last_call["value"] = std::to_string(value);
         _recently_called = true;
         return _return_status;
+    }
+
+    std::pair<ControlStatus, std::vector<StringPropertyInfo>> get_processor_string_properties(int processor_id) const override
+    {
+        return {ControlStatus::OK, std::vector<StringPropertyInfo>()};
+    }
+
+    std::pair<ControlStatus, std::vector<StringPropertyInfo>> get_track_string_properties(int processor_id) const override
+    {
+        return {ControlStatus::OK, std::vector<StringPropertyInfo>()};
+    }
+
+    std::pair<ControlStatus, int> get_string_property_id(int processor_id, const std::string& parameter) const override
+    {
+        return {ControlStatus::OK, 0};
+    }
+    std::pair<ControlStatus, StringPropertyInfo> get_string_property_info(int processor_id, int parameter_id) const override
+    {
+        StringPropertyInfo info;
+        info.id = 0;
+        info.name = "1";
+        info.label = "one";
+        return {ControlStatus::OK, info};
+    }
+
+    std::pair<ControlStatus, std::string> get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const override
+    {
+        return {_return_status, DEFAULT_STRING_PROPERTY};
     }
 
     ControlStatus set_string_property_value(int /* processor_id */, int /* parameter_id */, const std::string& /* value */) override

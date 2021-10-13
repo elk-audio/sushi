@@ -22,8 +22,7 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
                                                       MIN_WRITE_INTERVAL,
                                                       MAX_WRITE_INTERVAL);
     [[maybe_unused]] bool str_pr_ok = register_string_property("destination_file",
-                                                               "Destination file",
-                                                               "");
+                                                               "Destination file");
 
     assert(_recording_parameter && _write_speed_parameter && str_pr_ok);
 }

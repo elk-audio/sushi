@@ -57,7 +57,7 @@ TEST_F(InternalPluginTest, TestInstanciation)
 TEST_F(InternalPluginTest, TestParameterRegistration)
 {
     EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
-    EXPECT_TRUE(_module_under_test->register_string_property("string", "String", ""));
+    EXPECT_TRUE(_module_under_test->register_string_property("string", "String"));
     EXPECT_TRUE(_module_under_test->register_data_property("data", "Data", ""));
     EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
                                                                     3, 0, 10,
@@ -164,4 +164,24 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
     DECLARE_UNUSED(unused_value);
+}
+
+TEST_F(InternalPluginTest, TestStringPropertyHandling)
+{
+    auto descriptor = _module_under_test->register_string_property("str_1", "Str_1", "test");
+    ASSERT_TRUE(descriptor);
+
+    // Access the property through its id, verify type and that you can set its value.
+    auto param = _module_under_test->parameter_from_name("str_1");
+    ASSERT_TRUE(param);
+    EXPECT_EQ(ParameterType::STRING, param->type());
+
+    // String properties are set directly in a non-rt thread.
+    EXPECT_EQ("test", _module_under_test->string_property_value(param->id()).second);
+    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->string_property_value(12345).first);
+
+    EXPECT_EQ(ProcessorReturnCode::OK, _module_under_test->set_string_property_value(param->id(), "updated"));
+    EXPECT_EQ("updated", _module_under_test->string_property_value(param->id()).second);
+
+    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->set_string_property_value(12345, "no_property"));
 }

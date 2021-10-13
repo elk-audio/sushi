@@ -107,20 +107,22 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
 }
 
 
-bool InternalPlugin::register_string_property(const std::string &id,
-                                              const std::string &label,
-                                              const std::string& unit)
+bool InternalPlugin::register_string_property(const std::string& name,
+                                              const std::string& label,
+                                              const std::string& default_value)
 {
-    auto param = new StringPropertyDescriptor(id, label, unit);
+    auto param = new StringPropertyDescriptor(name, label, "");
 
     if (this->register_parameter(param) == false)
     {
         return false;
     }
 
-    /* We don't provide a string value class but must push a dummy container here for ids to match */
+    // push a dummy container here for ids to match
     ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
     _parameter_values.push_back(value_storage);
+    // The property value is stored here
+    _string_property_values[param->id()] = default_value;
     return true;
 }
 
@@ -290,6 +292,29 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, ""};
+}
+
+std::pair<ProcessorReturnCode, std::string> InternalPlugin::string_property_value(ObjectId property_id) const
+{
+    std::scoped_lock<std::mutex> lock(_string_property_lock);
+    auto node = _string_property_values.find(property_id);
+    if (node == _string_property_values.end())
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    }
+    return {ProcessorReturnCode::OK, node->second};
+}
+
+ProcessorReturnCode InternalPlugin::set_string_property_value(ObjectId property_id, const std::string& value)
+{
+    std::scoped_lock<std::mutex> lock(_string_property_lock);
+    auto node = _string_property_values.find(property_id);
+    if (node == _string_property_values.end())
+    {
+        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
+    }
+    node->second = value;
+    return ProcessorReturnCode::OK;
 }
 
 } // end namespace sushi
