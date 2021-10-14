@@ -56,8 +56,6 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    void process_event(const RtEvent& event) override;
-
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
     static int non_rt_callback(void* data, EventId id)
@@ -81,12 +79,10 @@ private:
 
     BoolParameterValue* _recording_parameter;
     FloatParameterValue* _write_speed_parameter;
-    std::string* _destination_file_property{nullptr};
     std::string _actual_file_path;
 
     float _write_speed{0.0f};
 
-    EventId _pending_event_id{0};
     int _post_write_timer{0};
     unsigned int _samples_received{0};
     sf_count_t _samples_written{0};
