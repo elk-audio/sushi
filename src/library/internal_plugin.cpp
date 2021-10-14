@@ -317,4 +317,10 @@ ProcessorReturnCode InternalPlugin::set_string_property_value(ObjectId property_
     return ProcessorReturnCode::OK;
 }
 
+void InternalPlugin::send_data_to_rt_thread(BlobData data, int id)
+{
+    auto event = new DataPropertyChangeEvent(this->id(), id, data, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
+}
+
 } // end namespace sushi

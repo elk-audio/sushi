@@ -161,6 +161,14 @@ protected:
      */
     void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
 
+    /**
+     * @brief Pass opaque data to the realtime part of the plugin in a threadsafe manner
+     *        The data will be passed as an RtEvent with type DATA_PROPERTY_CHANGE.
+     * @param data The data to pass, memory management is the responsibility of the receiver.
+     * @param id An identifier that will be used to populate the property_id field_of the RtEvent.
+     */
+    void send_data_to_rt_thread(BlobData data, int id);
+
 
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property

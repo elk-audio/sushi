@@ -31,18 +31,14 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
 constexpr auto DEFAULT_NAME = "sushi.testing.sampleplayer";
 constexpr auto DEFAULT_LABEL = "Sample player";
-
-namespace SampleChangeStatus {
-enum SampleChange : int
-{
-    SUCCESS = 0,
-    FAILURE
-};}
+constexpr int SAMPLE_PROPERTY_ID = 0;
 
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
+    [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File", "");
+
     _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
                                                   0.0f, -120.0f, 36.0f,
                                                   new dBToLinPreProcessor(-120.0f, 36.0f));
@@ -63,7 +59,6 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
                                                   0.0f, 0.0f, 10.0f,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File");
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
 }
 
@@ -104,7 +99,6 @@ void SamplePlayerPlugin::set_bypassed(bool bypassed)
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
     delete _sample_buffer;
-    delete _sample_file_property;
 }
 
 void SamplePlayerPlugin::process_event(const RtEvent& event)
@@ -163,33 +157,25 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
             }
             break;
         }
-        case RtEventType::STRING_PROPERTY_CHANGE:
+
+        case RtEventType::DATA_PROPERTY_CHANGE:
         {
-            /* Currently there is only 1 string parameter and it's for changing the sample
-             * file, hence no need to check the parameter id */
-            auto typed_event = event.string_parameter_change_event();
+            // Kill all voices before swapping out the sample
             for (auto& voice : _voices)
             {
                 voice.note_off(1.0f, 0);
             }
-            _sample_file_property = typed_event->value();
-            _pending_event_id = request_non_rt_task(&non_rt_callback);
-            break;
-        }
-        case RtEventType::ASYNC_WORK_NOTIFICATION:
-        {
-            auto typed_event = event.async_work_completion_event();
-            if (typed_event->sending_event_id() == _pending_event_id &&
-                typed_event->return_status() == SampleChangeStatus::SUCCESS)
-            {
-                float* old_sample = _sample_buffer;
-                _sample_buffer = reinterpret_cast<float*>(_pending_sample.data);
-                _sample.set_sample(_sample_buffer, _pending_sample.size / sizeof(float));
-                /* Delete the old sample data outside the rt thread */
-                BlobData data{0, reinterpret_cast<uint8_t*>(old_sample)};
-                auto delete_event = RtEvent::make_delete_blob_event(data);
-                output_event(delete_event);
-            }
+
+            auto typed_event = event.data_parameter_change_event();
+            auto new_sample = typed_event->value();
+            float* old_sample = _sample_buffer;
+            _sample_buffer = reinterpret_cast<float*>(new_sample.data);
+            _sample.set_sample(_sample_buffer, new_sample.size / sizeof(float));
+
+            // Delete the old sample data outside the rt thread
+            BlobData data{0, reinterpret_cast<uint8_t*>(old_sample)};
+            auto delete_event = RtEvent::make_delete_blob_event(data);
+            output_event(delete_event);
             break;
         }
 
@@ -221,7 +207,20 @@ void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */,
     }
 }
 
-BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
+ProcessorReturnCode SamplePlayerPlugin::set_string_property_value(ObjectId property_id, const std::string& value)
+{
+    if (property_id == SAMPLE_PROPERTY_ID)
+    {
+        auto sample_data = _load_sample_file(value);
+        if (sample_data.size > 0)
+        {
+            send_data_to_rt_thread(sample_data, 0);
+        }
+    }
+    return InternalPlugin::set_string_property_value(property_id, value);
+}
+
+BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
 {
     SNDFILE*    sample_file;
     SF_INFO     soundfile_info = {};
@@ -238,31 +237,6 @@ BlobData SamplePlayerPlugin::load_sample_file(const std::string &file_name)
 
     return BlobData{static_cast<int>(samples * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
 }
-
-int SamplePlayerPlugin::_non_rt_callback(EventId id)
-{
-    if (id == _pending_event_id)
-    {
-        /* Note that this doesn't handle multiple requests at once, several outstanding work
-         * requests can leak the address string */
-        auto sample_data = load_sample_file(*_sample_file_property);
-        delete _sample_file_property;
-        _sample_file_property = nullptr;
-        if (sample_data.size > 0)
-        {
-            _pending_sample = sample_data;
-            SUSHI_LOG_INFO("SamplePlayer: Successfully loaded sample data");
-            return SampleChangeStatus::SUCCESS;
-        }
-        return SampleChangeStatus::FAILURE;
-    }
-    else
-    {
-        SUSHI_LOG_WARNING("Sampleplayer: EventId of non-rt callback didn't match, {} vs {}", id, _pending_event_id);
-        return SampleChangeStatus::FAILURE;
-    }
-}
-
 
 }// namespace sample_player_plugin
 }// namespace sushi
