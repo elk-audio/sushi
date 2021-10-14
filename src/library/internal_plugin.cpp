@@ -15,7 +15,7 @@
 
 /**
  * @brief Internal plugin manager.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "library/internal_plugin.h"

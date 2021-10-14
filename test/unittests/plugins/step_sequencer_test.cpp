@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-//#define private public
-
 #include "library/rt_event_fifo.h"
 #include "plugins/step_sequencer_plugin.cpp"
 #include "test_utils/host_control_mockup.h"

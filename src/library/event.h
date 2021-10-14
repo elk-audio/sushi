@@ -15,7 +15,7 @@
 
 /**
  * @brief Main event class used for communication across modules outside the rt part
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_CONTROL_EVENT_H

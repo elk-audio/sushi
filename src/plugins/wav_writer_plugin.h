@@ -15,7 +15,7 @@
 
 /**
  * @brief Simple plugin for writing wav files.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_WAVE_WRITER_PLUGIN_H

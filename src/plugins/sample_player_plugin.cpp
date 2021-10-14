@@ -15,7 +15,7 @@
 
 /**
  * @brief Sampler plugin example to test event and sample handling
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <cassert>

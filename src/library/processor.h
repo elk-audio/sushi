@@ -16,7 +16,7 @@
 /**
  * @brief Interface class for objects that process audio. Processor objects can be plugins,
  *        sends, faders, mixer/channel adaptors, or chains of processors.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_PROCESSOR_H
