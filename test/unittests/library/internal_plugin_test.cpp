@@ -201,7 +201,7 @@ TEST_F(InternalPluginTest, TestSendingStringPropertyToRealtime)
     // Pass the RtEvent to the plugin an verify that a delete event was generated in response
     _module_under_test->process_event(rt_event);
     RtEvent response_event;
-    EXPECT_TRUE(_host_control._event_output.pop(response_event));
+    ASSERT_TRUE(_host_control._event_output.pop(response_event));
     EXPECT_EQ(RtEventType::STRING_DELETE, response_event.type());
 
     // Delete the string manually, otherwise done by the dispatcher.
