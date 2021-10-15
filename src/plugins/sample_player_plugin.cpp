@@ -214,7 +214,7 @@ ProcessorReturnCode SamplePlayerPlugin::set_string_property_value(ObjectId prope
         auto sample_data = _load_sample_file(value);
         if (sample_data.size > 0)
         {
-            send_data_to_rt_thread(sample_data, 0);
+            send_data_to_realtime(sample_data, 0);
         }
     }
     return InternalPlugin::set_string_property_value(property_id, value);

@@ -27,7 +27,6 @@ protected:
     StepSequencerPlugin _module_under_test{_host_control.make_host_control_mockup(TEST_SAMPLERATE)};
 };
 
-
 TEST_F(TestStepSequencerPlugin, TestOutput)
 {
     ChunkSampleBuffer buffer;

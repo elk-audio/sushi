@@ -88,9 +88,6 @@ public:
     /* Convertible to KeyboardEvent */
     virtual bool is_keyboard_event() const {return false;}
 
-    /* Convertible to ParameterChangeEvent */
-    virtual bool is_parameter_change_event() const {return false;}
-
     /* Convertible to ParameterChangeNotification */
     virtual bool is_parameter_change_notification() const {return false;}
 
@@ -216,9 +213,7 @@ public:
     {
         BOOL_PARAMETER_CHANGE,
         INT_PARAMETER_CHANGE,
-        FLOAT_PARAMETER_CHANGE,
-        STRING_PROPERTY_CHANGE,
-        BLOB_PROPERTY_CHANGE
+        FLOAT_PARAMETER_CHANGE
     };
 
     ParameterChangeEvent(Subtype subtype,
@@ -230,8 +225,6 @@ public:
                                            _processor_id(processor_id),
                                            _parameter_id(parameter_id),
                                            _value(value) {}
-
-    virtual bool is_parameter_change_event() const override {return true;}
 
     virtual bool maps_to_rt_event() const override {return true;}
 
@@ -253,26 +246,46 @@ protected:
     float               _value;
 };
 
-class DataPropertyChangeEvent : public ParameterChangeEvent
+class DataPropertyEvent : public Event
 {
 public:
-    DataPropertyChangeEvent(ObjectId processor_id,
-                            ObjectId property_id,
-                            BlobData blob_value,
-                            Time timestamp) : ParameterChangeEvent(Subtype::BLOB_PROPERTY_CHANGE,
-                                                                   processor_id,
-                                                                   property_id,
-                                                                   0.0f,
-                                                                   timestamp),
-                                              _blob_value(blob_value) {}
+    DataPropertyEvent(ObjectId processor_id,
+                      int property_id,
+                      BlobData blob_value,
+                      Time timestamp) : Event(timestamp),
+                                        _processor_id(processor_id),
+                                        _property_id(property_id),
+                                        _blob_value(blob_value) {}
 
+    virtual bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
-    ObjectId property_id() const {return _parameter_id;}
-    BlobData blob_value() const {return _blob_value;}
 
 private:
+    ObjectId _processor_id;
+    int      _property_id;
     BlobData _blob_value;
+};
+
+class StringPropertyEvent : public Event
+{
+public:
+    StringPropertyEvent(ObjectId processor_id,
+                       int property_id,
+                       const std::string& string_value,
+                       Time timestamp) : Event(timestamp),
+                                        _processor_id(processor_id),
+                                        _property_id(property_id),
+                                        _string_value(string_value) {}
+
+    virtual bool maps_to_rt_event() const override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) const override;
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _string_value;
 };
 
 // Inheriting from ParameterChangeEvent because they share the same data members but have
@@ -298,8 +311,6 @@ public:
                                                        _subtype(subtype) {}
 
     bool is_parameter_change_notification() const override {return true;}
-
-    bool is_parameter_change_event() const override {return false;}
 
     bool maps_to_rt_event() const override {return false;}
 
@@ -328,8 +339,6 @@ private:
     ObjectId _processor_id;
     bool     _bypass_enabled;
 };
-
-// TODO how to handle strings and blobs here?
 
 namespace engine {class BaseEngine;}
 

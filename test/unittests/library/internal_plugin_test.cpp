@@ -5,8 +5,10 @@
 #include "engine/transport.h"
 
 #define private public
+#define protected public
 #include "library/internal_plugin.cpp"
 #undef private
+#undef protected
 
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"
@@ -38,6 +40,7 @@ protected:
     void SetUp()
     {
         _module_under_test = new TestPlugin(_host_control.make_host_control_mockup());
+        _module_under_test->set_event_output(&_host_control._event_output);
     }
 
     void TearDown()
@@ -57,23 +60,20 @@ TEST_F(InternalPluginTest, TestInstanciation)
 TEST_F(InternalPluginTest, TestParameterRegistration)
 {
     EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
-    EXPECT_TRUE(_module_under_test->register_string_property("string", "String"));
-    EXPECT_TRUE(_module_under_test->register_data_property("data", "Data", ""));
+    EXPECT_TRUE(_module_under_test->register_string_property("string", "String", "default"));
     EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
-                                                                    3, 0, 10,
-                                                                    new IntParameterPreProcessor(0, 10)));
+                                                           3, 0, 10, new IntParameterPreProcessor(0, 10)));
 
     EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", "fl",
-                                                                      5.0f, 0.0f, 10.0f,
-                                                                      new FloatParameterPreProcessor(0.0, 10.0)));
+                                                             5.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0, 10.0)));
 
     // Verify all parameter/properties were registered and their order match
     auto parameter_list = _module_under_test->all_parameters();
-    EXPECT_EQ(5u, parameter_list.size());
+    EXPECT_EQ(4u, parameter_list.size());
 
-    EXPECT_EQ(5u, _module_under_test->_parameter_values.size());
+    EXPECT_EQ(4u, _module_under_test->_parameter_values.size());
     IntParameterValue* value = nullptr;
-    ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[3].int_parameter_value());
+    ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[2].int_parameter_value());
     EXPECT_EQ(3, value->processed_value());
 }
 
@@ -184,4 +184,43 @@ TEST_F(InternalPluginTest, TestStringPropertyHandling)
     EXPECT_EQ("updated", _module_under_test->string_property_value(param->id()).second);
 
     EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->set_string_property_value(12345, "no_property"));
+}
+
+TEST_F(InternalPluginTest, TestSendingStringPropertyToRealtime)
+{
+    _module_under_test->register_string_property("property", "Property", "default");
+    _module_under_test->send_string_property_to_realtime(0, "test");
+
+    // Check that an event was generated and queued
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.operator bool());
+    EXPECT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, rt_event.type());
+
+    // Pass the RtEvent to the plugin an verify that a delete event was generated in response
+    _module_under_test->process_event(rt_event);
+    RtEvent response_event;
+    EXPECT_TRUE(_host_control._event_output.pop(response_event));
+    EXPECT_EQ(RtEventType::STRING_DELETE, response_event.type());
+
+    // Delete the string manually, otherwise done by the dispatcher.
+    delete reinterpret_cast<std::string*>(response_event.data_payload_event()->value().data);
+}
+
+
+TEST_F(InternalPluginTest, TestSendingDataToRealtime)
+{
+    int a = 123;
+    BlobData data{.size = sizeof(a), .data = (uint8_t*) &a};
+    _module_under_test->send_data_to_realtime(data, 15);
+
+    // Check that an event was generated and queued
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.operator bool());
+    EXPECT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    EXPECT_EQ(RtEventType::DATA_PROPERTY_CHANGE, rt_event.type());
+
+    EXPECT_EQ(123, *rt_event.data_parameter_change_event()->value().data);
 }

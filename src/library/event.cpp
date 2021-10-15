@@ -224,9 +224,19 @@ RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/) const
     return RtEvent::make_bypass_processor_event(this->processor_id(), this->bypass_enabled());
 }
 
-RtEvent DataPropertyChangeEvent::to_rt_event(int sample_offset) const
+RtEvent DataPropertyEvent::to_rt_event(int sample_offset) const
 {
-    return RtEvent::make_data_parameter_change_event(_processor_id, sample_offset, _parameter_id, _blob_value);
+    return RtEvent::make_data_property_change_event(_processor_id, sample_offset, _property_id, _blob_value);
+}
+
+RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
+{
+    /* std::string is a too large and complex type to be copied by value into an RtEvent.
+     * Hence copy the string to a heap allocation that will outlive the event.
+     * The string should be taken back to the non-rt domain and deleted there. This is handled
+     * automatically by InternalPlugins process_event() function */
+    auto heap_string = new std::string(_string_value);
+    return RtEvent::make_string_property_change_event(_processor_id, sample_offset, _property_id, heap_string);
 }
 
 Event* AsynchronousProcessorWorkEvent::execute()

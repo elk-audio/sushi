@@ -115,7 +115,10 @@ public:
                                                 bool default_value);
 
     /**
-     * @brief Register a string property that can be updated through events
+     * @brief Register a string property that can be updated through events. String
+     *        properties will be updated in the non-rt thread. For string parameters
+     *        to be received in an rt thread, call send_string_property_to_realtime()
+     *        when received.
      * @param name Unique name of the property
      * @param label Display name of the property
      * @param default_value The default value of the property
@@ -123,18 +126,7 @@ public:
      */
     bool register_string_property(const std::string& name,
                                   const std::string& label,
-                                  const std::string& default_value = "");
-
-    /**
-     * @brief Register a data property that can be updated through events
-     * @param name Unique name of the property
-     * @param label Display name of the property
-     * @param unit The unit of the parameters display value
-     * @return true if the property was registered successfully
-     */
-    bool register_data_property(const std::string& name,
-                                const std::string& label,
-                                const std::string& unit);
+                                  const std::string& default_value);
 
 protected:
     /**
@@ -167,7 +159,16 @@ protected:
      * @param data The data to pass, memory management is the responsibility of the receiver.
      * @param id An identifier that will be used to populate the property_id field_of the RtEvent.
      */
-    void send_data_to_rt_thread(BlobData data, int id);
+    void send_data_to_realtime(BlobData data, int id);
+
+    /**
+     * @brief Pass a string property value to the realtime part of the plugin in a thread-
+     *        safe manner and with managed lifetime. The string will be passed to the rt-
+     *        thread as an RtEvent with type STRING_PROPERTY_CHANGE.
+     * @param property_id The id of the string property whose value is changed.
+     * @param value The string value to pass. Lifetime will be handled automatically.
+     */
+    void send_string_property_to_realtime(ObjectId property_id, const std::string& value);
 
 
 private:

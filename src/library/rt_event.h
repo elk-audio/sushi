@@ -856,13 +856,13 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_string_parameter_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
+    static RtEvent make_string_property_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
     {
         StringPropertyChangeRtEvent typed_event(target, offset, param_id, value);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
+    static RtEvent make_data_property_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
     {
         DataParameterChangeRtEvent typed_event(target, offset, param_id, data);
         return RtEvent(typed_event);

@@ -18,6 +18,10 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <cassert>
+
+#include "twine/twine.h"
+
 #include "library/internal_plugin.h"
 
 namespace sushi {
@@ -126,24 +130,6 @@ bool InternalPlugin::register_string_property(const std::string& name,
     return true;
 }
 
-
-bool InternalPlugin::register_data_property(const std::string &id,
-                                            const std::string &label,
-                                            const std::string& unit)
-{
-    auto param = new DataPropertyDescriptor(id, label, unit);
-
-    if (this->register_parameter(param) == false)
-    {
-        return false;
-    }
-    /* We don't provide a data value class but must push a dummy container here for ids to match */
-    ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
-    _parameter_values.push_back(value_storage);
-    return true;
-}
-
-
 void InternalPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
@@ -183,6 +169,17 @@ void InternalPlugin::process_event(const RtEvent& event)
                 default:
                     break;
             }
+            break;
+        }
+
+        case RtEventType::STRING_PROPERTY_CHANGE:
+        {
+            /* In order to handle STRING_PROPERTY_CHANGE events in the rt_thread, override
+             * process_event() and handle it. Then call this base function which will automatically
+             * schedule a delete event that will be executed in the non-rt domain */
+            auto typed_event = event.string_parameter_change_event();
+            auto rt_event = RtEvent::make_delete_string_event(typed_event->value());
+            output_event(rt_event);
             break;
         }
 
@@ -317,9 +314,17 @@ ProcessorReturnCode InternalPlugin::set_string_property_value(ObjectId property_
     return ProcessorReturnCode::OK;
 }
 
-void InternalPlugin::send_data_to_rt_thread(BlobData data, int id)
+void InternalPlugin::send_data_to_realtime(BlobData data, int id)
 {
-    auto event = new DataPropertyChangeEvent(this->id(), id, data, IMMEDIATE_PROCESS);
+    assert(twine::is_current_thread_realtime() == false);
+    auto event = new DataPropertyEvent(this->id(), id, data, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
+}
+
+void InternalPlugin::send_string_property_to_realtime(ObjectId property_id, const std::string& value)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    auto event = new StringPropertyEvent(this->id(), property_id, value, IMMEDIATE_PROCESS);
     _host_control.post_event(event);
 }
 
