@@ -57,6 +57,10 @@ R"(
             }
           }
         },
+        "master_limiter" :
+        {
+          "type": "boolean"
+        },
         "cv_inputs":
         {
           "type": "integer",
