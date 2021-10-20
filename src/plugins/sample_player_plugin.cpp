@@ -224,18 +224,31 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
 {
     SNDFILE*    sample_file;
     SF_INFO     soundfile_info = {};
-    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)) )
+    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
     {
         SUSHI_LOG_ERROR("Failed to open sample file: {}", file_name);
         return {0, nullptr};
     }
-    assert(soundfile_info.channels == 1);
-    float* sample_buffer = new float[soundfile_info.frames];
-    int samples = sf_readf_float(sample_file, sample_buffer, soundfile_info.frames);
-    assert(samples == soundfile_info.frames);
-    sf_close(sample_file);
 
-    return BlobData{static_cast<int>(samples * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
+    float* sample_buffer = new float[soundfile_info.frames];
+    if (soundfile_info.channels == 1)
+    {
+        int samples = sf_readf_float(sample_file, sample_buffer, soundfile_info.frames);
+        assert(samples == soundfile_info.frames);
+    }
+    else // Decode interleaved stereo
+    {
+        float buffer[2];
+        for (int i = 0; i < soundfile_info.frames; ++i)
+        {
+            int a = sf_readf_float(sample_file, buffer, 1);
+            sample_buffer[i] = buffer[0];
+            assert(a==1);
+        }
+    }
+
+    sf_close(sample_file);
+    return BlobData{static_cast<int>(soundfile_info.frames * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
 }
 
 }// namespace sample_player_plugin
