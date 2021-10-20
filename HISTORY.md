@@ -1,3 +1,19 @@
+## 0.12.0
+
+New Features:
+  * Stereo mixer internal plugin
+  * Internal send and return plugins
+  * Sample delay internal plugin
+  * Multi channel support in peak meter plugin
+  * Timing and transport notifications
+  * Master limiter
+
+Fixes:
+  * gRPC segfault on exit
+  * Refactored plugin instantiation architecture
+  * Track noise for tracks with no audio input
+  * Bug where events outputted before the audio process callback were lost
+
 ## 0.11.0
 
 New Features:
