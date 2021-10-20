@@ -196,10 +196,19 @@ std::pair<ext::ControlStatus, std::string> ParameterController::get_parameter_va
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, std::string> ParameterController::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
+std::pair<ext::ControlStatus, std::string> ParameterController::get_string_property_value(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_string_property_value called");
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
+    SUSHI_LOG_DEBUG("get_string_property_value called with processor {} and property {}", processor_id, property_id);
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
+    if (processor != nullptr)
+    {
+        auto[status, value] = processor->string_property_value(static_cast<ObjectId>(property_id));
+        if (status == ProcessorReturnCode::OK)
+        {
+            return {ext::ControlStatus::OK, value};
+        }
+    }
+    return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
 ext::ControlStatus ParameterController::set_parameter_value(int processor_id, int parameter_id, float value)
