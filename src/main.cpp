@@ -290,6 +290,7 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
     auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default, rt_cpu_cores);
+    auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
                                                                               midi_dispatcher.get(),
@@ -450,7 +451,6 @@ int main(int argc, char* argv[])
         {
             error_exit("Failed to setup OSC frontend");
         }
-        osc_frontend->connect_to_all();
 
         status = configurator->load_osc();
         if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
@@ -486,6 +486,7 @@ int main(int argc, char* argv[])
     }
 
     audio_frontend->run();
+    event_dispatcher->run();
     midi_frontend->run();
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
@@ -509,6 +510,9 @@ int main(int argc, char* argv[])
     // Cleanup before exiting! //
     ////////////////////////////////////////////////////////////////////////////////
 
+    audio_frontend->cleanup();
+    event_dispatcher->stop();
+
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
         osc_frontend->stop();
@@ -519,7 +523,6 @@ int main(int argc, char* argv[])
     rpc_server->stop();
 #endif
 
-    audio_frontend->cleanup();
     SUSHI_LOG_INFO("Sushi exited normally.");
     return 0;
 }

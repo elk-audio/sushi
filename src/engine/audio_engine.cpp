@@ -100,7 +100,6 @@ AudioEngine::AudioEngine(float sample_rate,
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
     _gate_in_connections.reserve(MAX_GATE_CONNECTIONS);
-    _event_dispatcher->run();
 }
 
 AudioEngine::~AudioEngine()
@@ -620,8 +619,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     return EngineReturnStatus::OK;
 }
 
-std::pair<EngineReturnStatus, ObjectId>
-AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
 {
     auto [processor_status, processor] = _plugin_registry.new_instance(plugin_info, _host_control, _sample_rate);
 
