@@ -91,6 +91,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
 void XenomaiRaspaFrontend::cleanup()
 {
+    _engine->enable_realtime(false);
     if (_raspa_initialised)
     {
         SUSHI_LOG_INFO("Closing Raspa driver.");
@@ -101,6 +102,7 @@ void XenomaiRaspaFrontend::cleanup()
 
 void XenomaiRaspaFrontend::run()
 {
+    _engine->enable_realtime(true);
     raspa_start_realtime();
 }
 
