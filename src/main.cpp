@@ -523,6 +523,6 @@ int main(int argc, char* argv[])
     rpc_server->stop();
 #endif
 
-    SUSHI_LOG_INFO("Sushi exited normally.");
+    SUSHI_LOG_INFO("Sushi exiting normally!");
     return 0;
 }
