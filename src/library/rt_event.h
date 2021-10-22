@@ -1065,7 +1065,7 @@ private:
     RtEvent(const GateRtEvent& e)                       : _gate_event(e) {}
     RtEvent(const CvRtEvent& e)                         : _cv_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e)            : _parameter_change_event(e) {}
-    RtEvent(const StringPropertyChangeRtEvent& e)      : _string_parameter_change_event(e) {}
+    RtEvent(const StringPropertyChangeRtEvent& e)       : _string_parameter_change_event(e) {}
     RtEvent(const DataParameterChangeRtEvent& e)        : _data_parameter_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e)           : _processor_command_event(e) {}
     RtEvent(const ReturnableRtEvent& e)                 : _returnable_event(e) {}
@@ -1093,7 +1093,7 @@ private:
         GateRtEvent                   _gate_event;
         CvRtEvent                     _cv_event;
         ParameterChangeRtEvent        _parameter_change_event;
-        StringPropertyChangeRtEvent  _string_parameter_change_event;
+        StringPropertyChangeRtEvent   _string_parameter_change_event;
         DataParameterChangeRtEvent    _data_parameter_change_event;
         ProcessorCommandRtEvent       _processor_command_event;
         ReturnableRtEvent             _returnable_event;
