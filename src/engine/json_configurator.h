@@ -27,7 +27,9 @@
 
 #include <optional>
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/document.h"
+#pragma GCC diagnostic pop
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"

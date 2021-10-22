@@ -20,9 +20,11 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
+#pragma GCC diagnostic pop
 
 #include "logging.h"
 #include "json_configurator.h"

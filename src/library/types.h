@@ -22,6 +22,7 @@
 #define SUSHI_TYPES_H
 
 #include <array>
+#include <cstdint>
 
 namespace sushi {
 

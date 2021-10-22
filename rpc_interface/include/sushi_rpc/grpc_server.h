@@ -40,13 +40,6 @@ namespace grpc {
     class ServerCompletionQueue;
 }
 
-#if GOOGLE_PROTOBUF_VERSION > 3007001
-namespace grpc {
-    typedef grpc_impl::Server Server;
-    typedef grpc_impl::ServerBuilder ServerBuilder;
-    typedef grpc_impl::ServerCompletionQueue ServerCompletionQueue;
-}
-#endif
 
 namespace sushi_rpc {
 
