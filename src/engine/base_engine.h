@@ -249,7 +249,7 @@ public:
     {
         return EngineReturnStatus::OK;
     }
-    
+
     virtual bool realtime()
     {
         return true;
@@ -341,6 +341,8 @@ public:
     virtual void enable_input_clip_detection(bool /*enabled*/) {}
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
+
+    virtual void enable_master_limiter(bool /*enabled*/) {}
 
     virtual void update_timings() {}
 

@@ -29,12 +29,11 @@
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
-#define RELEASE = 1
 #include "public.sdk/source/vst/hosting/module.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
-#undef RELEASE
+
 namespace sushi {
 namespace vst3 {
 

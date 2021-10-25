@@ -20,9 +20,11 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
+#pragma GCC diagnostic pop
 
 #include "logging.h"
 #include "json_configurator.h"
@@ -148,6 +150,12 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
             _engine->enable_output_clip_detection(clip_det["outputs"].GetBool());
             SUSHI_LOG_INFO("Setting engine output clip detection {}", clip_det["outputs"].GetBool() ? "enabled" : "disabled");
         }
+    }
+
+    if (host_config.HasMember("master_limiter"))
+    {
+        _engine->enable_master_limiter(host_config["master_limiter"].GetBool());
+        SUSHI_LOG_INFO("Enable saftey limiter set to {}", host_config["master_limiter"].GetBool());
     }
 
     return JsonConfigReturnStatus::OK;
