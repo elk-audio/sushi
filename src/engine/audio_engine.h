@@ -429,12 +429,12 @@ public:
     }
 
     /**
-     * @brief Enable saftey limiter on outputs
+     * @brief Enable master limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
     void enable_master_limiter(bool enabled) override
     {
-        _saftey_limter_enabled = enabled;
+        _master_limter_enabled = enabled;
     }
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
@@ -573,7 +573,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _saftey_limter_enabled{false};
+    bool _master_limter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 
     PluginRegistry _plugin_registry;
