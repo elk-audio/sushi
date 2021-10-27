@@ -357,7 +357,7 @@ ControlFrontendStatus OSCFrontend::init()
     _osc_server = lo_server_thread_new(port_stream.str().c_str(), osc_error);
     if (_osc_server == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to set up OSC server, Port likely in use");
+        SUSHI_LOG_ERROR("Failed to set up OSC server, Port likely in use ({})", _receive_port);
         return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
     }
 
@@ -432,9 +432,10 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                           "f",
                                           osc_send_parameter_change_event,
                                           connection);
+
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
 }
 

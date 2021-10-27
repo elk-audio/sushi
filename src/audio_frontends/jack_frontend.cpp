@@ -62,6 +62,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 
 void JackFrontend::cleanup()
 {
+    _engine->enable_realtime(false);
     if (_client)
     {
         jack_client_close(_client);
