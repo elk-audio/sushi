@@ -933,7 +933,7 @@ grpc::Status ParameterControlService::GetStringPropertyValue(grpc::ServerContext
 
 grpc::Status ParameterControlService::SetStringPropertyValue(grpc::ServerContext* /*context*/,
                                                              const sushi_rpc::StringPropertyValue* request,
-                                                             sushi_rpc::GenericVoidValue* response)
+                                                             sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_string_property_value(request->property().processor_id(),
                                                          request->property().property_id(),
