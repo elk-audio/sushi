@@ -137,7 +137,8 @@ service AudioRoutingController
     rpc DisconnectInput (AudioConnection) returns (GenericVoidValue) {}
     rpc DisconnectOutput (AudioConnection) returns (GenericVoidValue) {}
     rpc DisconnectAllInputsFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
-    rpc DisconnectAllOutputFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
+    rpc DisconnectAllOutputFromTrack (TrackIdentifier) returns (GenericVoidValue) {option deprecated = true;}
+    rpc DisconnectAllOutputsFromTrack (TrackIdentifier) returns (GenericVoidValue) {}
 }
 
 service CvGateController

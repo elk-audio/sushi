@@ -207,6 +207,7 @@ public:
     grpc::Status DisconnectOutput(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectAllInputsFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectAllOutputFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status DisconnectAllOutputsFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
 
 private:
     sushi::ext::AudioRoutingController* _controller;
