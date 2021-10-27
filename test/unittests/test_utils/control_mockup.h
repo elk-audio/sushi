@@ -480,8 +480,13 @@ class ParameterControllerMockup : public ParameterController, public TestableCon
         return {_return_status, DEFAULT_STRING_PROPERTY};
     }
 
-    ControlStatus set_string_property_value(int /* processor_id */, int /* property_id */, const std::string& /* value */) override
+    ControlStatus set_string_property_value(int processor_id, int property_id, const std::string& value) override
     {
+        _args_from_last_call.clear();
+        _args_from_last_call["processor id"] = std::to_string(processor_id);
+        _args_from_last_call["property id"] = std::to_string(property_id);
+        _args_from_last_call["value"] = value;
+        _recently_called = true;
         return _return_status;
     }
 };

@@ -55,20 +55,6 @@ public:
     ~OSCFrontend();
 
     /**
-     * @brief Connect osc to a given parameter of a given processor.
-     *        The resulting osc path will be:
-     *        "/parameter/processor_name/parameter_name,f(value)"
-     * @param processor_name Name of the processor
-     * @param parameter_name Name of the parameter
-     * @return
-     */
-    bool connect_to_parameter(const std::string& processor_name,
-                              const std::string& parameter_name);
-
-    bool connect_to_string_property(const std::string& processor_name,
-                                    const std::string& property_name);
-
-    /**
      * @brief Connect osc to the bypass state of a given processor.
      *        The resulting osc path will be:
      *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
@@ -122,7 +108,7 @@ public:
      * @param processor_id The id of the processor to connect.
      * @return
      */
-    bool connect_to_processor_parameters(const std::string& processor_name, int processor_id);
+    bool connect_to_parameters_and_properties(const std::string& processor_name, int processor_id);
 
     /**
      * @brief Enable OSC broadcasting of all parameters from a given processor.
@@ -177,9 +163,20 @@ public:
     int send_port() const;
 
     bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
+
     void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
 
 private:
+    bool _connect_to_parameter(const std::string& processor_name,
+                               const std::string& parameter_name,
+                               ObjectId processor_id,
+                               ObjectId parameter_id);
+
+    bool _connect_to_string_property(const std::string& processor_name,
+                                     const std::string& property_name,
+                                     ObjectId processor_id,
+                                     ObjectId property_id);
+
     void _completion_callback(Event* event, int return_status) override;
 
     void _start_server();
@@ -189,9 +186,6 @@ private:
     void _setup_engine_control();
 
     bool _remove_processor_connections(ObjectId processor_id);
-
-    std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
-                                                                        const std::string& parameter_name);
 
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
                                                                         const std::string& osc_path_prefix);

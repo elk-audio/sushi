@@ -390,31 +390,10 @@ OSCFrontend::~OSCFrontend()
     }
 }
 
-std::pair<OscConnection*, std::string> OSCFrontend::_create_parameter_connection(const std::string& processor_name,
-                                                                                 const std::string& parameter_name)
-{
-    std::string osc_path = "/parameter/";
-    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
-    if (processor_status != ext::ControlStatus::OK)
-    {
-        return {nullptr, ""};
-    }
-    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
-    if (parameter_status != ext::ControlStatus::OK)
-    {
-        return {nullptr, ""};
-    }
-    osc_path = osc_path + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
-    auto connection = new OscConnection;
-    connection->processor = processor_id;
-    connection->parameter = parameter_id;
-    connection->instance = this;
-    connection->controller = _controller;
-    return {connection, osc_path};
-}
-
-bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
-                                       const std::string& parameter_name)
+bool OSCFrontend::_connect_to_parameter(const std::string& processor_name,
+                                        const std::string& parameter_name,
+                                        ObjectId processor_id,
+                                        ObjectId parameter_id)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -422,11 +401,13 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
         return false;
     }
 
-    auto [connection, osc_path] = _create_parameter_connection(processor_name, parameter_name);
-    if (connection == nullptr)
-    {
-        return false;
-    }
+    std::string osc_path = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
+    auto connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = parameter_id;
+    connection->instance = this;
+    connection->controller = _controller;
+
     auto cb = lo_server_thread_add_method(_osc_server,
                                           osc_path.c_str(),
                                           "f",
@@ -439,8 +420,10 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
     return true;
 }
 
-bool OSCFrontend::connect_to_string_property(const std::string& processor_name,
-                                             const std::string& property_name)
+bool OSCFrontend::_connect_to_string_property(const std::string& processor_name,
+                                              const std::string& property_name,
+                                              ObjectId processor_id,
+                                              ObjectId property_id)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -448,11 +431,13 @@ bool OSCFrontend::connect_to_string_property(const std::string& processor_name,
         return false;
     }
 
-    auto [connection, osc_path] = _create_parameter_connection(processor_name, property_name);
-    if (connection == nullptr)
-    {
-        return false;
-    }
+    std::string osc_path = "/string_property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
+    auto connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = property_id;
+    connection->instance = this;
+    connection->controller = _controller;
+
     auto cb = lo_server_thread_add_method(_osc_server,
                                           osc_path.c_str(),
                                           "s",
@@ -586,20 +571,20 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     return true;
 }
 
-bool OSCFrontend::connect_to_processor_parameters(const std::string& processor_name, int processor_id)
+bool OSCFrontend::connect_to_parameters_and_properties(const std::string& processor_name, int processor_id)
 {
     auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
     if (parameters_status == ext::ControlStatus::OK)
     {
         for (auto& param : parameters)
         {
-            if (param.type == ext::ParameterType::FLOAT ||
-                param.type == ext::ParameterType::INT ||
-                param.type == ext::ParameterType::BOOL)
-            {
-                connect_to_parameter(processor_name, param.name);
-            }
+            _connect_to_parameter(processor_name, param.name, processor_id, param.id);
         }
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Failed to get parameters for processor \"{}\"", processor_name);
+        return false;
     }
 
     auto [properties_status, properties] = _param_controller->get_processor_string_properties(processor_id);
@@ -607,7 +592,7 @@ bool OSCFrontend::connect_to_processor_parameters(const std::string& processor_n
     {
         for (auto& property : properties)
         {
-            connect_to_string_property(processor_name, property.name);
+            _connect_to_string_property(processor_name, property.name, processor_id, property.id);
         }
     }
 
@@ -650,7 +635,7 @@ void OSCFrontend::connect_to_all()
     auto tracks = _graph_controller->get_all_tracks();
     for (auto& track : tracks)
     {
-        connect_to_processor_parameters(track.name, track.id);
+        connect_to_parameters_and_properties(track.name, track.id);
         auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
         if (processors_status != ext::ControlStatus::OK)
         {
@@ -658,7 +643,7 @@ void OSCFrontend::connect_to_all()
         }
         for (auto& processor : processors)
         {
-            connect_to_processor_parameters(processor.name, processor.id);
+            connect_to_parameters_and_properties(processor.name, processor.id);
             if (processor.program_count > 0)
             {
                 connect_to_program_change(processor.name);
@@ -860,7 +845,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             {
                 connect_to_bypass_state(info.name);
                 connect_to_program_change(info.name);
-                connect_to_processor_parameters(info.name, event->processor());
+                connect_to_parameters_and_properties(info.name, event->processor());
                 if(_connect_from_all_parameters)
                 {
                     connect_from_processor_parameters(info.name, event->processor());
@@ -878,7 +863,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             {
                 connect_kb_to_track(info.name);
                 connect_to_bypass_state(info.name);
-                connect_to_processor_parameters(info.name, event->track());
+                connect_to_parameters_and_properties(info.name, event->track());
                 if(_connect_from_all_parameters)
                 {
                     connect_from_processor_parameters(info.name, event->processor());

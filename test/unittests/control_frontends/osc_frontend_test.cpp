@@ -100,7 +100,7 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)
 {
-    ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
+    ASSERT_TRUE(_module_under_test._connect_to_parameter("sampler", "volume", 0, 0));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
 
     ASSERT_TRUE(wait_for_event());
@@ -108,6 +108,23 @@ TEST_F(TestOSCFrontend, TestSendParameterChange)
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ(0, std::stoi(args["parameter id"]));
     EXPECT_FLOAT_EQ(5.0f, std::stof(args["value"]));
+
+    /* Test with a not registered path */
+    lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_FALSE(_controller.was_recently_called());
+}
+
+TEST_F(TestOSCFrontend, TestSendStringPropertyChange)
+{
+    ASSERT_TRUE(_module_under_test._connect_to_string_property("sampler", "sample_file", 0, 0));
+    lo_send(_address, "/string_property/sampler/sample_file", "s", "Sample file");
+
+    ASSERT_TRUE(wait_for_event());
+    auto args = _controller.parameter_controller_mockup()->get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor id"]));
+    EXPECT_EQ(0, std::stoi(args["property id"]));
+    EXPECT_EQ("Sample file", args["value"]);
 
     /* Test with a not registered path */
     lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
