@@ -44,7 +44,7 @@ struct OscConnection
     ObjectId           parameter;
     OSCFrontend*       instance;
     ext::SushiControl* controller;
-    void*              liblo_cb;
+    lo_method*         liblo_cb;
 };
 
 class OSCFrontend : public BaseControlFrontend
