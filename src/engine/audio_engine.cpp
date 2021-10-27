@@ -100,7 +100,6 @@ AudioEngine::AudioEngine(float sample_rate,
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
     _gate_in_connections.reserve(MAX_GATE_CONNECTIONS);
-    _event_dispatcher->run();
 }
 
 AudioEngine::~AudioEngine()
@@ -462,7 +461,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
-    if (_saftey_limter_enabled)
+    if (_master_limter_enabled)
     {
         auto temp_input_buffer = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, 0, out_buffer->channel_count());
         for (int c = 0; c < out_buffer->channel_count(); c++)
@@ -620,8 +619,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     return EngineReturnStatus::OK;
 }
 
-std::pair<EngineReturnStatus, ObjectId>
-AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
 {
     auto [processor_status, processor] = _plugin_registry.new_instance(plugin_info, _host_control, _sample_rate);
 
