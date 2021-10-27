@@ -46,7 +46,7 @@ static int osc_send_parameter_change_event(const char* /*path*/,
                                            const char* /*types*/,
                                            lo_arg** argv,
                                            int /*argc*/,
-                                           lo_message_* /*data*/,
+                                           lo_message /*data*/,
                                            void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -61,7 +61,7 @@ static int osc_send_string_parameter_change_event(const char* /*path*/,
                                                   const char* /*types*/,
                                                   lo_arg** argv,
                                                   int /*argc*/,
-                                                  lo_message_* /*data*/,
+                                                  lo_message /*data*/,
                                                   void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -76,7 +76,7 @@ static int osc_send_bypass_state_event(const char* /*path*/,
                                        const char* /*types*/,
                                        lo_arg** argv,
                                        int /*argc*/,
-                                       lo_message_* /*data*/,
+                                       lo_message /*data*/,
                                        void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -91,7 +91,7 @@ static int osc_send_keyboard_note_event(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
                                    int /*argc*/,
-                                    lo_message_* /*data*/,
+                                    lo_message /*data*/,
                                    void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -126,7 +126,7 @@ static int osc_send_keyboard_modulation_event(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
                                    int /*argc*/,
-                                   lo_message_* /*data*/,
+                                   lo_message /*data*/,
                                    void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -160,7 +160,7 @@ static int osc_send_program_change_event(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
                                    int /*argc*/,
-                                   lo_message_* /*data*/,
+                                   lo_message /*data*/,
                                    void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
@@ -174,7 +174,7 @@ static int osc_set_timing_statistics_enabled(const char* /*path*/,
                                              const char* /*types*/,
                                              lo_arg** argv,
                                              int /*argc*/,
-                                             lo_message_* /*data*/,
+                                             lo_message /*data*/,
                                              void* user_data)
 {
     auto controller = static_cast<ext::SushiControl*>(user_data)->timing_controller();
@@ -189,7 +189,7 @@ static int osc_reset_timing_statistics(const char* /*path*/,
                                        const char* /*types*/,
                                        lo_arg** argv,
                                        int /*argc*/,
-                                       lo_message_* /*data*/,
+                                       lo_message /*data*/,
                                        void* user_data)
 {
     auto ctrl = static_cast<ext::SushiControl*>(user_data);
@@ -251,7 +251,7 @@ static int osc_set_tempo(const char* /*path*/,
                                 const char* /*types*/,
                                 lo_arg** argv,
                                 int /*argc*/,
-                                lo_message_* /*data*/,
+                                lo_message /*data*/,
                                 void* user_data)
 {
     auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
@@ -265,7 +265,7 @@ static int osc_set_time_signature(const char* /*path*/,
                                   const char* /*types*/,
                                   lo_arg** argv,
                                   int /*argc*/,
-                                  lo_message_* /*data*/,
+                                  lo_message /*data*/,
                                   void* user_data)
 {
     auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
@@ -280,7 +280,7 @@ static int osc_set_playing_mode(const char* /*path*/,
                                 const char* /*types*/,
                                 lo_arg** argv,
                                 int /*argc*/,
-                                lo_message_* /*data*/,
+                                lo_message /*data*/,
                                 void* user_data)
 {
     auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
@@ -309,7 +309,7 @@ static int osc_set_tempo_sync_mode(const char* /*path*/,
                                    const char* /*types*/,
                                    lo_arg** argv,
                                    int /*argc*/,
-                                   lo_message_* /*data*/,
+                                   lo_message /*data*/,
                                    void* user_data)
 {
     auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
@@ -433,7 +433,7 @@ bool OSCFrontend::connect_to_parameter(const std::string& processor_name,
                                           osc_send_parameter_change_event,
                                           connection);
 
-    connection->liblo_cb = &cb;
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
@@ -458,7 +458,7 @@ bool OSCFrontend::connect_to_string_parameter(const std::string& processor_name,
                                           "s",
                                           osc_send_string_parameter_change_event,
                                           connection);
-    connection->liblo_cb = &cb;
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
@@ -535,7 +535,7 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
         return false;
     }
     auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_bypass_state_event, connection);
-    connection->liblo_cb = &cb;
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
@@ -555,12 +555,12 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
         return false;
     }
     auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "siif", osc_send_keyboard_note_event, connection);
-    connection->liblo_cb = &cb;
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
 
     auto dupl_conn = new OscConnection(*connection);
     cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_modulation_event, connection);
-    dupl_conn->liblo_cb = &cb;
+    dupl_conn->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
@@ -580,7 +580,7 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
         return false;
     }
     auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
-    connection->liblo_cb = &cb;
+    connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_INFO("Added osc callback {}", osc_path);
     return true;
@@ -790,7 +790,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
     {
         if (c->processor == processor_id)
         {
-            lo_server_thread_del_lo_method(_osc_server, *(c->liblo_cb));
+            lo_server_thread_del_lo_method(_osc_server, c->liblo_cb);
             count++;
         }
     }
