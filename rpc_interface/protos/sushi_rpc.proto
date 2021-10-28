@@ -460,7 +460,7 @@ message PropertyValue
 message PropertyIdRequest
 {
     ProcessorIdentifier processor  = 1;
-    string string_property_name = 2;
+    string property_name = 2;
 }
 
 message PluginType

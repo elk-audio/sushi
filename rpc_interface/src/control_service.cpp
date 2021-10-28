@@ -896,10 +896,10 @@ grpc::Status ParameterControlService::GetPropertyId(grpc::ServerContext* /*conte
                                                     const sushi_rpc::PropertyIdRequest* request,
                                                     sushi_rpc::PropertyIdentifier* response)
 {
-    auto [status, id] = _controller->get_property_id(request->processor().id(), request->string_property_name());
+    auto [status, id] = _controller->get_property_id(request->processor().id(), request->property_name());
     if (status != sushi::ext::ControlStatus::OK)
     {
-        return to_grpc_status(status,  "No string property with that name");
+        return to_grpc_status(status,  "No property with that name");
     }
     response->set_property_id(id);
     return grpc::Status::OK;
