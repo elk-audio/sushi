@@ -390,21 +390,18 @@ private:
     int                 _program_no;
 };
 
-class StringPropertyChangeEvent : public EngineEvent
+class PropertyChangeEvent : public EngineEvent
 {
 public:
-    StringPropertyChangeEvent(ObjectId processor_id,
-                              ObjectId property_id,
-                              const std::string& string_value,
-                              Time timestamp) : EngineEvent(timestamp),
-                                                _processor_id(processor_id),
-                                                _property_id(property_id),
-                                                _string_value(string_value) {}
+    PropertyChangeEvent(ObjectId processor_id,
+                        ObjectId property_id,
+                        const std::string& string_value,
+                        Time timestamp) : EngineEvent(timestamp),
+                                          _processor_id(processor_id),
+                                          _property_id(property_id),
+                                          _string_value(string_value) {}
 
     int execute(engine::BaseEngine* engine) const override;
-
-    ObjectId processor_id() const {return _processor_id;}
-    ObjectId property_id() const {return _property_id;}
 
 private:
     ObjectId    _processor_id;

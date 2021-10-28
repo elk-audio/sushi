@@ -111,9 +111,9 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
 }
 
 
-bool InternalPlugin::register_string_property(const std::string& name,
-                                              const std::string& label,
-                                              const std::string& default_value)
+bool InternalPlugin::register_property(const std::string& name,
+                                       const std::string& label,
+                                       const std::string& default_value)
 {
     auto param = new StringPropertyDescriptor(name, label, "");
 
@@ -126,7 +126,7 @@ bool InternalPlugin::register_string_property(const std::string& name,
     ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
     _parameter_values.push_back(value_storage);
     // The property value is stored here
-    _string_property_values[param->id()] = default_value;
+    _property_values[param->id()] = default_value;
     return true;
 }
 
@@ -177,7 +177,7 @@ void InternalPlugin::process_event(const RtEvent& event)
             /* In order to handle STRING_PROPERTY_CHANGE events in the rt_thread, override
              * process_event() and handle it. Then call this base function which will automatically
              * schedule a delete event that will be executed in the non-rt domain */
-            auto typed_event = event.string_parameter_change_event();
+            auto typed_event = event.property_change_event();
             auto rt_event = RtEvent::make_delete_string_event(typed_event->value());
             output_event(rt_event);
             break;
@@ -291,22 +291,22 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
     return {ProcessorReturnCode::PARAMETER_ERROR, ""};
 }
 
-std::pair<ProcessorReturnCode, std::string> InternalPlugin::string_property_value(ObjectId property_id) const
+std::pair<ProcessorReturnCode, std::string> InternalPlugin::property_value(ObjectId property_id) const
 {
-    std::scoped_lock<std::mutex> lock(_string_property_lock);
-    auto node = _string_property_values.find(property_id);
-    if (node == _string_property_values.end())
+    std::scoped_lock<std::mutex> lock(_property_lock);
+    auto node = _property_values.find(property_id);
+    if (node == _property_values.end())
     {
         return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
     }
     return {ProcessorReturnCode::OK, node->second};
 }
 
-ProcessorReturnCode InternalPlugin::set_string_property_value(ObjectId property_id, const std::string& value)
+ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, const std::string& value)
 {
-    std::scoped_lock<std::mutex> lock(_string_property_lock);
-    auto node = _string_property_values.find(property_id);
-    if (node == _string_property_values.end())
+    std::scoped_lock<std::mutex> lock(_property_lock);
+    auto node = _property_values.find(property_id);
+    if (node == _property_values.end())
     {
         return ProcessorReturnCode::PARAMETER_NOT_FOUND;
     }
@@ -321,7 +321,7 @@ void InternalPlugin::send_data_to_realtime(BlobData data, int id)
     _host_control.post_event(event);
 }
 
-void InternalPlugin::send_string_property_to_realtime(ObjectId property_id, const std::string& value)
+void InternalPlugin::send_property_to_realtime(ObjectId property_id, const std::string& value)
 {
     assert(twine::is_current_thread_realtime() == false);
     auto event = new StringPropertyEvent(this->id(), property_id, value, IMMEDIATE_PROCESS);

@@ -11,7 +11,7 @@ namespace ext {
 const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", false, 0, 0};
 const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", true, 1, 1};
 const ParameterInfo parameter_3{2, ParameterType::BOOL, "param 3", "param 3", "unit", false, -1, -1};
-const StringPropertyInfo property_1{1, "property_1", "Property 1"};
+const PropertyInfo property_1{1, "property_1", "Property 1"};
 const std::vector<ParameterInfo> parameters{parameter_1, parameter_2, parameter_3};
 
 const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};
@@ -456,31 +456,31 @@ class ParameterControllerMockup : public ParameterController, public TestableCon
         return _return_status;
     }
 
-    std::pair<ControlStatus, std::vector<StringPropertyInfo>> get_processor_string_properties(int /*processor_id*/) const override
+    std::pair<ControlStatus, std::vector<PropertyInfo>> get_processor_properties(int /*processor_id*/) const override
     {
-        return {ControlStatus::OK, std::vector<StringPropertyInfo>({property_1})};
+        return {ControlStatus::OK, std::vector<PropertyInfo>({property_1})};
     }
 
-    std::pair<ControlStatus, std::vector<StringPropertyInfo>> get_track_string_properties(int /*processor_id*/) const override
+    std::pair<ControlStatus, std::vector<PropertyInfo>> get_track_properties(int /*processor_id*/) const override
     {
-        return {ControlStatus::OK, std::vector<StringPropertyInfo>({property_1})};
+        return {ControlStatus::OK, std::vector<PropertyInfo>({property_1})};
     }
 
-    std::pair<ControlStatus, int> get_string_property_id(int /*processor_id*/, const std::string& /*property_id*/) const override
+    std::pair<ControlStatus, int> get_property_id(int /*processor_id*/, const std::string& /*property_id*/) const override
     {
         return {ControlStatus::OK, 0};
     }
-    std::pair<ControlStatus, StringPropertyInfo> get_string_property_info(int /*processor_id*/, int /*property_id*/) const override
+    std::pair<ControlStatus, PropertyInfo> get_property_info(int /*processor_id*/, int /*property_id*/) const override
     {
         return {ControlStatus::OK, property_1};
     }
 
-    std::pair<ControlStatus, std::string> get_string_property_value(int /*processor_id*/, int /*property_id*/) const override
+    std::pair<ControlStatus, std::string> get_property_value(int /*processor_id*/, int /*property_id*/) const override
     {
         return {_return_status, DEFAULT_STRING_PROPERTY};
     }
 
-    ControlStatus set_string_property_value(int processor_id, int property_id, const std::string& value) override
+    ControlStatus set_property_value(int processor_id, int property_id, const std::string& value) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);

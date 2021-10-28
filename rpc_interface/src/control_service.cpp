@@ -188,7 +188,7 @@ inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
     dest.set_max_domain_value(src.max_domain_value);
 }
 
-inline void to_grpc(StringPropertyInfo& dest, const sushi::ext::StringPropertyInfo& src)
+inline void to_grpc(PropertyInfo& dest, const sushi::ext::PropertyInfo& src)
 {
     dest.set_id(src.id);
     dest.set_name(src.name);
@@ -867,11 +867,11 @@ grpc::Status ParameterControlService::GetProcessorParameters(grpc::ServerContext
     return to_grpc_status(status);
 }
 
-grpc::Status ParameterControlService::GetTrackStringProperties(grpc::ServerContext* /*context*/,
-                                                               const sushi_rpc::TrackIdentifier* request,
-                                                               sushi_rpc::StringPropertyInfoList* response)
+grpc::Status ParameterControlService::GetTrackProperties(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::TrackIdentifier* request,
+                                                         sushi_rpc::PropertyInfoList* response)
 {
-    auto [status, properties] = _controller->get_track_string_properties(request->id());
+    auto [status, properties] = _controller->get_track_properties(request->id());
     for (const auto& property : properties)
     {
         auto info = response->add_properties();
@@ -880,11 +880,11 @@ grpc::Status ParameterControlService::GetTrackStringProperties(grpc::ServerConte
     return to_grpc_status(status);
 }
 
-grpc::Status ParameterControlService::GetProcessorStringProperties(grpc::ServerContext* /*context*/,
-                                                                   const sushi_rpc::ProcessorIdentifier* request,
-                                                                   sushi_rpc::StringPropertyInfoList* response)
+grpc::Status ParameterControlService::GetProcessorProperties(grpc::ServerContext* /*context*/,
+                                                             const sushi_rpc::ProcessorIdentifier* request,
+                                                             sushi_rpc::PropertyInfoList* response)
 {
-    auto [status, properties] = _controller->get_processor_string_properties(request->id());
+    auto [status, properties] = _controller->get_processor_properties(request->id());
     for (const auto& property : properties)
     {
         auto info = response->add_properties();
@@ -892,11 +892,11 @@ grpc::Status ParameterControlService::GetProcessorStringProperties(grpc::ServerC
     }
     return to_grpc_status(status);}
 
-grpc::Status ParameterControlService::GetStringPropertyId(grpc::ServerContext* /*context*/,
-                                                          const sushi_rpc::StringPropertyIdRequest* request,
-                                                          sushi_rpc::StringPropertyIdentifier* response)
+grpc::Status ParameterControlService::GetPropertyId(grpc::ServerContext* /*context*/,
+                                                    const sushi_rpc::PropertyIdRequest* request,
+                                                    sushi_rpc::PropertyIdentifier* response)
 {
-    auto [status, id] = _controller->get_string_property_id(request->processor().id(), request->string_property_name());
+    auto [status, id] = _controller->get_property_id(request->processor().id(), request->string_property_name());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status,  "No string property with that name");
@@ -905,11 +905,11 @@ grpc::Status ParameterControlService::GetStringPropertyId(grpc::ServerContext* /
     return grpc::Status::OK;
 }
 
-grpc::Status ParameterControlService::GetStringPropertyInfo(grpc::ServerContext* /*context*/,
-                                                            const sushi_rpc::StringPropertyIdentifier* request,
-                                                            sushi_rpc::StringPropertyInfo* response)
+grpc::Status ParameterControlService::GetPropertyInfo(grpc::ServerContext* /*context*/,
+                                                      const sushi_rpc::PropertyIdentifier* request,
+                                                      sushi_rpc::PropertyInfo* response)
 {
-    auto [status, property] = _controller->get_string_property_info(request->processor_id(), request->property_id());
+    auto [status, property] = _controller->get_property_info(request->processor_id(), request->property_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
@@ -918,11 +918,11 @@ grpc::Status ParameterControlService::GetStringPropertyInfo(grpc::ServerContext*
     return grpc::Status::OK;
 }
 
-grpc::Status ParameterControlService::GetStringPropertyValue(grpc::ServerContext* /*context*/,
-                                                             const sushi_rpc::StringPropertyIdentifier* request,
-                                                             sushi_rpc::GenericStringValue* response)
+grpc::Status ParameterControlService::GetPropertyValue(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::PropertyIdentifier* request,
+                                                       sushi_rpc::GenericStringValue* response)
 {
-    auto [status, value] = _controller->get_string_property_value(request->processor_id(), request->property_id());
+    auto [status, value] = _controller->get_property_value(request->processor_id(), request->property_id());
     if (status != sushi::ext::ControlStatus::OK)
     {
         return to_grpc_status(status);
@@ -931,13 +931,13 @@ grpc::Status ParameterControlService::GetStringPropertyValue(grpc::ServerContext
     return grpc::Status::OK;
 }
 
-grpc::Status ParameterControlService::SetStringPropertyValue(grpc::ServerContext* /*context*/,
-                                                             const sushi_rpc::StringPropertyValue* request,
-                                                             sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status ParameterControlService::SetPropertyValue(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::PropertyValue* request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->set_string_property_value(request->property().processor_id(),
-                                                         request->property().property_id(),
-                                                         request->value());
+    auto status = _controller->set_property_value(request->property().processor_id(),
+                                                  request->property().property_id(),
+                                                  request->value());
     return to_grpc_status(status);
 }
 

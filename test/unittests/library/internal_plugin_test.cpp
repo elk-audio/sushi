@@ -60,7 +60,7 @@ TEST_F(InternalPluginTest, TestInstanciation)
 TEST_F(InternalPluginTest, TestParameterRegistration)
 {
     EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
-    EXPECT_TRUE(_module_under_test->register_string_property("string", "String", "default"));
+    EXPECT_TRUE(_module_under_test->register_property("string", "String", "default"));
     EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
                                                            3, 0, 10, new IntParameterPreProcessor(0, 10)));
 
@@ -166,9 +166,9 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     DECLARE_UNUSED(unused_value);
 }
 
-TEST_F(InternalPluginTest, TestStringPropertyHandling)
+TEST_F(InternalPluginTest, TestPropertyHandling)
 {
-    auto descriptor = _module_under_test->register_string_property("str_1", "Str_1", "test");
+    auto descriptor = _module_under_test->register_property("str_1", "Str_1", "test");
     ASSERT_TRUE(descriptor);
 
     // Access the property through its id, verify type and that you can set its value.
@@ -177,19 +177,19 @@ TEST_F(InternalPluginTest, TestStringPropertyHandling)
     EXPECT_EQ(ParameterType::STRING, param->type());
 
     // String properties are set directly in a non-rt thread.
-    EXPECT_EQ("test", _module_under_test->string_property_value(param->id()).second);
-    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->string_property_value(12345).first);
+    EXPECT_EQ("test", _module_under_test->property_value(param->id()).second);
+    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->property_value(12345).first);
 
-    EXPECT_EQ(ProcessorReturnCode::OK, _module_under_test->set_string_property_value(param->id(), "updated"));
-    EXPECT_EQ("updated", _module_under_test->string_property_value(param->id()).second);
+    EXPECT_EQ(ProcessorReturnCode::OK, _module_under_test->set_property_value(param->id(), "updated"));
+    EXPECT_EQ("updated", _module_under_test->property_value(param->id()).second);
 
-    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->set_string_property_value(12345, "no_property"));
+    EXPECT_NE(ProcessorReturnCode::OK, _module_under_test->set_property_value(12345, "no_property"));
 }
 
-TEST_F(InternalPluginTest, TestSendingStringPropertyToRealtime)
+TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
 {
-    _module_under_test->register_string_property("property", "Property", "default");
-    _module_under_test->send_string_property_to_realtime(0, "test");
+    _module_under_test->register_property("property", "Property", "default");
+    _module_under_test->send_property_to_realtime(0, "test");
 
     // Check that an event was generated and queued
     auto event = _host_control._dummy_dispatcher.retrieve_event();

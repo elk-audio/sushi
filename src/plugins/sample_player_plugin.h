@@ -48,7 +48,7 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
-    ProcessorReturnCode set_string_property_value(ObjectId property_id, const std::string& value) override;
+    ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
 private:
     BlobData _load_sample_file(const std::string &file_name);

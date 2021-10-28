@@ -98,7 +98,7 @@ struct ParameterInfo
     float           max_domain_value;
 };
 
-struct StringPropertyInfo
+struct PropertyInfo
 {
     int         id;
     std::string name;
@@ -368,12 +368,12 @@ public:
     virtual std::pair<ControlStatus, std::string>                 get_parameter_value_as_string(int processor_id, int parameter_id) const = 0;
     virtual ControlStatus                                         set_parameter_value(int processor_id, int parameter_id, float value) = 0;
 
-    virtual std::pair<ControlStatus, std::vector<StringPropertyInfo>>  get_processor_string_properties(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<StringPropertyInfo>>  get_track_string_properties(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, int>                              get_string_property_id(int processor_id, const std::string& parameter) const = 0;
-    virtual std::pair<ControlStatus, StringPropertyInfo>               get_string_property_info(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>                      get_string_property_value(int processor_id, int parameter_id) const = 0;
-    virtual ControlStatus                                              set_string_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
+    virtual std::pair<ControlStatus, std::vector<PropertyInfo>>   get_processor_properties(int processor_id) const = 0;
+    virtual std::pair<ControlStatus, std::vector<PropertyInfo>>   get_track_properties(int processor_id) const = 0;
+    virtual std::pair<ControlStatus, int>                         get_property_id(int processor_id, const std::string& parameter) const = 0;
+    virtual std::pair<ControlStatus, PropertyInfo>                get_property_info(int processor_id, int parameter_id) const = 0;
+    virtual std::pair<ControlStatus, std::string>                 get_property_value(int processor_id, int parameter_id) const = 0;
+    virtual ControlStatus                                         set_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
 protected:
     ParameterController() = default;

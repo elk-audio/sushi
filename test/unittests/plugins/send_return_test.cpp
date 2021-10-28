@@ -82,16 +82,16 @@ TEST_F(TestSendReturnPlugins, TestDestinationSetting)
     _return_instance.set_name("return_1");
     return_instance_2->set_name("return_2");
 
-    EXPECT_EQ(DEFAULT_DEST, _send_instance.string_property_value(DEST_PROPERTY_ID).second);
-    status = _send_instance.set_string_property_value(DEST_PROPERTY_ID, "return_2");
+    EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
+    status = _send_instance.set_property_value(DEST_PROPERTY_ID, "return_2");
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_EQ(_send_instance._destination, return_instance_2.get());
-    EXPECT_EQ("return_2", _send_instance.string_property_value(DEST_PROPERTY_ID).second);
+    EXPECT_EQ("return_2", _send_instance.property_value(DEST_PROPERTY_ID).second);
 
     // Destroy the second return and it should be automatically unlinked.
     return_instance_2.reset();
     EXPECT_EQ(_send_instance._destination, nullptr);
-    EXPECT_EQ(DEFAULT_DEST, _send_instance.string_property_value(DEST_PROPERTY_ID).second);
+    EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
 }
 
 TEST_F(TestSendReturnPlugins, TestProcessing)

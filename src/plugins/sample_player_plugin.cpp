@@ -37,7 +37,7 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    [[maybe_unused]] bool str_pr_ok = register_string_property("sample_file", "Sample File", "");
+    [[maybe_unused]] bool str_pr_ok = register_property("sample_file", "Sample File", "");
 
     _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
                                                   0.0f, -120.0f, 36.0f,
@@ -207,7 +207,7 @@ void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */,
     }
 }
 
-ProcessorReturnCode SamplePlayerPlugin::set_string_property_value(ObjectId property_id, const std::string& value)
+ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id, const std::string& value)
 {
     if (property_id == SAMPLE_PROPERTY_ID)
     {
@@ -217,7 +217,7 @@ ProcessorReturnCode SamplePlayerPlugin::set_string_property_value(ObjectId prope
             send_data_to_realtime(sample_data, 0);
         }
     }
-    return InternalPlugin::set_string_property_value(property_id, value);
+    return InternalPlugin::set_property_value(property_id, value);
 }
 
 BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)

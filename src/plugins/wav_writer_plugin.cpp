@@ -38,7 +38,7 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_file", "Destination file", "");
+    [[maybe_unused]] bool str_pr_ok = register_property("destination_file", "Destination file", "");
     _recording_parameter = register_bool_parameter("recording", "Recording", "bool", false);
     _write_speed_parameter = register_float_parameter("write_speed", "Write Speed", "writes/s",
                                                       DEFAULT_WRITE_INTERVAL,
@@ -110,7 +110,7 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
 
 WavWriterStatus WavWriterPlugin::_start_recording()
 {
-    std::string destination_file_path = string_property_value(DEST_FILE_PROPERTY_ID).second;
+    std::string destination_file_path = property_value(DEST_FILE_PROPERTY_ID).second;
     if (destination_file_path.empty())
     {
         // If no file name was passed. Set it to the default;

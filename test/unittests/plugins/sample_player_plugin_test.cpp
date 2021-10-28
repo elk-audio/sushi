@@ -110,7 +110,7 @@ TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
     path.append(SAMPLE_FILE);
 
     ASSERT_EQ(nullptr, _module_under_test->_sample_buffer);
-    auto status = _module_under_test->set_string_property_value(SAMPLE_PROPERTY_ID, path);
+    auto status = _module_under_test->set_property_value(SAMPLE_PROPERTY_ID, path);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     // The plugin should have sent an event with the sample data to the dispatcher

@@ -88,7 +88,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     std::string str("Hej");
     event = RtEvent::make_string_property_change_event(129, 8, 65, &str);
     EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, event.type());
-    auto spc_event = event.string_parameter_change_event();
+    auto spc_event = event.property_change_event();
     EXPECT_EQ(ObjectId(129), spc_event->processor_id());
     EXPECT_EQ(8, spc_event->sample_offset());
     EXPECT_EQ(ObjectId(65), spc_event->param_id());

@@ -115,10 +115,10 @@ TEST_F(TestOSCFrontend, TestSendParameterChange)
     ASSERT_FALSE(_controller.was_recently_called());
 }
 
-TEST_F(TestOSCFrontend, TestSendStringPropertyChange)
+TEST_F(TestOSCFrontend, TestSendPropertyChange)
 {
-    ASSERT_TRUE(_module_under_test._connect_to_string_property("sampler", "sample_file", 0, 0));
-    lo_send(_address, "/string_property/sampler/sample_file", "s", "Sample file");
+    ASSERT_TRUE(_module_under_test._connect_to_property("sampler", "sample_file", 0, 0));
+    lo_send(_address, "/property/sampler/sample_file", "s", "Sample file");
 
     ASSERT_TRUE(wait_for_event());
     auto args = _controller.parameter_controller_mockup()->get_args_from_last_call();

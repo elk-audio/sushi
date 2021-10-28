@@ -243,7 +243,7 @@ public:
      * @brief Get the value of the parameter with parameter_id formatted as a string,
      *        safe to call from a non rt-thread
      * @param parameter_id The Id of the requested parameter
-     * @return The current value formatted as a string, if the return code is OK
+     * @return The current value formatted as a string, if return code is OK
      */
     virtual std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId /*parameter_id*/) const
     {
@@ -251,22 +251,22 @@ public:
     };
 
     /**
-     * @brief Get the value of a string property. Should only be called from a non-rt thread
+     * @brief Get the value of a property. Should only be called from a non-rt thread
      * @param property_id The id of the requested property
-     * @return The current string property value, if the return code is OK
+     * @return A string containing the current string property value if return code is OK
      */
-    virtual std::pair<ProcessorReturnCode, std::string> string_property_value(ObjectId /*property_id*/) const
+    virtual std::pair<ProcessorReturnCode, std::string> property_value(ObjectId /*property_id*/) const
     {
         return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
     }
 
     /**
-     * @brief Set the value of a string property.  Should only be called from a non-rt thread
+     * @brief Set the value of a property.  Should only be called from a non-rt thread
      * @param property_id The id of the property to set
      * @param value The new string value of the string property
      * @return OK if the operation completed successfully
      */
-    virtual ProcessorReturnCode set_string_property_value(ObjectId /*property_id*/, const std::string& /*value*/)
+    virtual ProcessorReturnCode set_property_value(ObjectId /*property_id*/, const std::string& /*value*/)
     {
         return ProcessorReturnCode::PARAMETER_NOT_FOUND;
     }

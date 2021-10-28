@@ -796,10 +796,10 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new StringPropertyChangeEvent(processor->id(),
-                                             parameter->id(),
-                                             data["value"].GetString(),
-                                             timestamp);
+        return new PropertyChangeEvent(processor->id(),
+                                       parameter->id(),
+                                       data["value"].GetString(),
+                                       timestamp);
     }
     if (json_event["type"] == "note_on")
     {

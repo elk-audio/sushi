@@ -57,7 +57,7 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    ProcessorReturnCode set_string_property_value(ObjectId property_id, const std::string& value) override;
+    ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
 private:
     void _set_destination(return_plugin::ReturnPlugin* destination);

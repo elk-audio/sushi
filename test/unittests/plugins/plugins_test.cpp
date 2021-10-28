@@ -411,7 +411,7 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, record_param_id, 0.0f);
 
     // Test setting path property
-    _module_under_test->set_string_property_value(file_property_id, path);
+    _module_under_test->set_property_value(file_property_id, path);
 
     // Test start recording and open file
     _module_under_test->process_event(start_recording_event);

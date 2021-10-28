@@ -270,12 +270,12 @@ int ProgramChangeEvent::execute(engine::BaseEngine* engine) const
     return EventStatus::NOT_HANDLED;
 }
 
-int StringPropertyChangeEvent::execute(engine::BaseEngine* engine) const
+int PropertyChangeEvent::execute(engine::BaseEngine* engine) const
 {
     auto processor = engine->processor_container()->mutable_processor(_processor_id);
     if (processor != nullptr)
     {
-        auto status = processor->set_string_property_value(_property_id, _string_value);
+        auto status = processor->set_property_value(_property_id, _string_value);
         if (status == ProcessorReturnCode::OK)
         {
             return EventStatus::HANDLED_OK;

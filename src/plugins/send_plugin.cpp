@@ -46,7 +46,7 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
 
     _gain_smoother.set_direct(_gain_parameter->processed_value());
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name", DEFAULT_DEST);
+    [[maybe_unused]] bool str_pr_ok = register_property("destination_name", "destination name", DEFAULT_DEST);
     assert(_gain_parameter && str_pr_ok);
 }
 
@@ -61,7 +61,7 @@ SendPlugin::~SendPlugin()
 void SendPlugin::clear_destination()
 {
     _destination = nullptr;
-    set_string_property_value(DEST_PROPERTY_ID, DEFAULT_DEST);
+    set_property_value(DEST_PROPERTY_ID, DEFAULT_DEST);
 }
 
 void SendPlugin::_set_destination(return_plugin::ReturnPlugin* destination)
@@ -149,13 +149,13 @@ void SendPlugin::set_bypassed(bool bypassed)
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
-ProcessorReturnCode SendPlugin::set_string_property_value(ObjectId property_id, const std::string& value)
+ProcessorReturnCode SendPlugin::set_property_value(ObjectId property_id, const std::string& value)
 {
     if (property_id == DEST_PROPERTY_ID)
     {
         _change_return_destination(value);
     }
-    return InternalPlugin::set_string_property_value(property_id, value);
+    return InternalPlugin::set_property_value(property_id, value);
 }
 
 void SendPlugin::_change_return_destination(const std::string& dest_name)

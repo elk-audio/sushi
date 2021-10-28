@@ -172,10 +172,10 @@ private:
                                ObjectId processor_id,
                                ObjectId parameter_id);
 
-    bool _connect_to_string_property(const std::string& processor_name,
-                                     const std::string& property_name,
-                                     ObjectId processor_id,
-                                     ObjectId property_id);
+    bool _connect_to_property(const std::string& processor_name,
+                              const std::string& property_name,
+                              ObjectId processor_id,
+                              ObjectId property_id);
 
     void _completion_callback(Event* event, int return_status) override;
 

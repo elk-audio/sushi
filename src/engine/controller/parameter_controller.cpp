@@ -63,16 +63,16 @@ inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* proces
     return infos;
 }
 
-inline std::vector<ext::StringPropertyInfo>  _read_properties(const Processor* processor)
+inline std::vector<ext::PropertyInfo>  _read_properties(const Processor* processor)
 {
     assert(processor != nullptr);
-    std::vector<ext::StringPropertyInfo> infos;
+    std::vector<ext::PropertyInfo> infos;
     const auto& params = processor->all_parameters();
     for (const auto& param : params)
     {
         if (param->type() == ParameterType::STRING)
         {
-            ext::StringPropertyInfo info;
+            ext::PropertyInfo info;
             info.id = param->id();
             info.label = param->label();
             info.name = param->name();
@@ -196,13 +196,13 @@ std::pair<ext::ControlStatus, std::string> ParameterController::get_parameter_va
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, std::string> ParameterController::get_string_property_value(int processor_id, int property_id) const
+std::pair<ext::ControlStatus, std::string> ParameterController::get_property_value(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_string_property_value called with processor {} and property {}", processor_id, property_id);
+    SUSHI_LOG_DEBUG("get_property_value called with processor {} and property {}", processor_id, property_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
-        auto[status, value] = processor->string_property_value(static_cast<ObjectId>(property_id));
+        auto[status, value] = processor->property_value(static_cast<ObjectId>(property_id));
         if (status == ProcessorReturnCode::OK)
         {
             return {ext::ControlStatus::OK, value};
@@ -225,43 +225,43 @@ ext::ControlStatus ParameterController::set_parameter_value(int processor_id, in
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus ParameterController::set_string_property_value(int processor_id, int property_id, const std::string& value)
+ext::ControlStatus ParameterController::set_property_value(int processor_id, int property_id, const std::string& value)
 {
-    SUSHI_LOG_DEBUG("set_string_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
-    auto event = new StringPropertyChangeEvent(static_cast<ObjectId>(processor_id),
-                                               static_cast<ObjectId>(property_id),
-                                               value,
-                                               IMMEDIATE_PROCESS);
+    SUSHI_LOG_DEBUG("set_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
+    auto event = new PropertyChangeEvent(static_cast<ObjectId>(processor_id),
+                                         static_cast<ObjectId>(property_id),
+                                         value,
+                                         IMMEDIATE_PROCESS);
 
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::StringPropertyInfo>> ParameterController::get_processor_string_properties(int processor_id) const
+std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>> ParameterController::get_processor_properties(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_string_properties called with processor {}", processor_id);
+    SUSHI_LOG_DEBUG("get_processor_properties called with processor {}", processor_id);
     const auto proc = _processors->processor(processor_id);
     if (proc)
     {
         return {ext::ControlStatus::OK, _read_properties(proc.get())};
     }
-    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::StringPropertyInfo>()};
+    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::PropertyInfo>()};
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::StringPropertyInfo>> ParameterController::get_track_string_properties(int track_id) const
+std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>> ParameterController::get_track_properties(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_string_properties called with processor {}", track_id);
+    SUSHI_LOG_DEBUG("get_track_properties called with processor {}", track_id);
     const auto track = _processors->track(track_id);
     if (track)
     {
         return {ext::ControlStatus::OK, _read_properties(track.get())};
     }
-    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::StringPropertyInfo>()};
+    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::PropertyInfo>()};
 }
 
-std::pair<ext::ControlStatus, int> ParameterController::get_string_property_id(int processor_id, const std::string& property_name) const
+std::pair<ext::ControlStatus, int> ParameterController::get_property_id(int processor_id, const std::string& property_name) const
 {
-    SUSHI_LOG_DEBUG("get_string_property_id called with processor {} and property {}", processor_id, property_name);
+    SUSHI_LOG_DEBUG("get_property_id called with processor {} and property {}", processor_id, property_name);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -275,10 +275,10 @@ std::pair<ext::ControlStatus, int> ParameterController::get_string_property_id(i
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, ext::StringPropertyInfo> ParameterController::get_string_property_info(int processor_id, int property_id) const
+std::pair<ext::ControlStatus, ext::PropertyInfo> ParameterController::get_property_info(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_string_property_info called with processor {} and parameter {}", processor_id, property_id);
-    ext::StringPropertyInfo info;
+    SUSHI_LOG_DEBUG("get_property_info called with processor {} and parameter {}", processor_id, property_id);
+    ext::PropertyInfo info;
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {

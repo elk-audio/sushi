@@ -57,18 +57,18 @@ static int osc_send_parameter_change_event(const char* /*path*/,
     return 0;
 }
 
-static int osc_send_string_property_change_event(const char* /*path*/,
-                                                 const char* /*types*/,
-                                                 lo_arg** argv,
-                                                 int /*argc*/,
-                                                 lo_message /*data*/,
-                                                 void* user_data)
+static int osc_send_property_change_event(const char* /*path*/,
+                                          const char* /*types*/,
+                                          lo_arg** argv,
+                                          int /*argc*/,
+                                          lo_message /*data*/,
+                                          void* user_data)
 {
     auto connection = static_cast<OscConnection*>(user_data);
     std::string value(&argv[0]->s);
     auto controller = connection->controller->parameter_controller();
-    controller->set_string_property_value(connection->processor, connection->parameter, value);
-    SUSHI_LOG_DEBUG("Sending string property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    controller->set_property_value(connection->processor, connection->parameter, value);
+    SUSHI_LOG_DEBUG("Sending property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
     return 0;
 }
 
@@ -420,10 +420,10 @@ bool OSCFrontend::_connect_to_parameter(const std::string& processor_name,
     return true;
 }
 
-bool OSCFrontend::_connect_to_string_property(const std::string& processor_name,
-                                              const std::string& property_name,
-                                              ObjectId processor_id,
-                                              ObjectId property_id)
+bool OSCFrontend::_connect_to_property(const std::string& processor_name,
+                                       const std::string& property_name,
+                                       ObjectId processor_id,
+                                       ObjectId property_id)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -431,7 +431,7 @@ bool OSCFrontend::_connect_to_string_property(const std::string& processor_name,
         return false;
     }
 
-    std::string osc_path = "/string_property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
+    std::string osc_path = "/property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
     auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = property_id;
@@ -441,7 +441,7 @@ bool OSCFrontend::_connect_to_string_property(const std::string& processor_name,
     auto cb = lo_server_thread_add_method(_osc_server,
                                           osc_path.c_str(),
                                           "s",
-                                          osc_send_string_property_change_event,
+                                          osc_send_property_change_event,
                                           connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
@@ -587,12 +587,12 @@ bool OSCFrontend::connect_to_parameters_and_properties(const std::string& proces
         return false;
     }
 
-    auto [properties_status, properties] = _param_controller->get_processor_string_properties(processor_id);
+    auto [properties_status, properties] = _param_controller->get_processor_properties(processor_id);
     if (properties_status == ext::ControlStatus::OK)
     {
         for (auto& property : properties)
         {
-            _connect_to_string_property(processor_name, property.name, processor_id, property.id);
+            _connect_to_property(processor_name, property.name, processor_id, property.id);
         }
     }
     return true;
