@@ -40,7 +40,6 @@
 #include "engine/connection_storage.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
-#include "library/elk_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"

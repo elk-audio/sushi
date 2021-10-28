@@ -1,8 +1,8 @@
 ## 0.12.0
 
 New Features:
-  * Stereo mixer internal plugin
   * Internal send and return plugins
+  * Stereo mixer internal plugin
   * Sample delay internal plugin
   * Multi channel support in peak meter plugin
   * Timing and transport notifications
