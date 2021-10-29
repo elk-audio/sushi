@@ -32,6 +32,8 @@ namespace send_plugin {
 
 constexpr auto DEFAULT_NAME = "send";
 constexpr auto DEFAULT_LABEL = "Send";
+constexpr auto DEFAULT_DEST = "No destination";
+constexpr auto DEST_PROPERTY_ID = 1;
 
 SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                _manager(manager)
@@ -44,7 +46,7 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
 
     _gain_smoother.set_direct(_gain_parameter->processed_value());
 
-    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_name", "destination name", "");
+    [[maybe_unused]] bool str_pr_ok = register_property("destination_name", "destination name", DEFAULT_DEST);
     assert(_gain_parameter && str_pr_ok);
 }
 
@@ -59,6 +61,7 @@ SendPlugin::~SendPlugin()
 void SendPlugin::clear_destination()
 {
     _destination = nullptr;
+    set_property_value(DEST_PROPERTY_ID, DEFAULT_DEST);
 }
 
 void SendPlugin::_set_destination(return_plugin::ReturnPlugin* destination)
@@ -93,15 +96,6 @@ void SendPlugin::process_event(const RtEvent& event)
         {
             bool bypassed = static_cast<bool>(event.processor_command_event()->value());
             _bypass_manager.set_bypass(bypassed, _sample_rate);
-            break;
-        }
-
-        case RtEventType::STRING_PROPERTY_CHANGE:
-        {
-            auto typed_event = event.string_parameter_change_event();
-            _return_name_property = typed_event->value();
-            /* Schedule a non-rt callback to handle destination switching */
-            _pending_event_id = request_non_rt_task(&non_rt_callback);
             break;
         }
 
@@ -155,22 +149,26 @@ void SendPlugin::set_bypassed(bool bypassed)
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
-int SendPlugin::_non_rt_callback(EventId id)
+ProcessorReturnCode SendPlugin::set_property_value(ObjectId property_id, const std::string& value)
 {
-    if (id == _pending_event_id && _return_name_property)
+    if (property_id == DEST_PROPERTY_ID)
     {
-        std::unique_ptr<std::string> return_plugin_name(_return_name_property);
-        _return_name_property = nullptr;
-
-        return_plugin::ReturnPlugin* return_plugin = _manager->lookup_return_plugin(*return_plugin_name);
-        if (return_plugin)
-        {
-            _set_destination(return_plugin);
-            return EventStatus::HANDLED_OK;
-        }
-        SUSHI_LOG_WARNING("Return plugin {} not found", *return_plugin_name);
+        _change_return_destination(value);
     }
-    return EventStatus::ERROR;
+    return InternalPlugin::set_property_value(property_id, value);
+}
+
+void SendPlugin::_change_return_destination(const std::string& dest_name)
+{
+    return_plugin::ReturnPlugin* return_plugin = _manager->lookup_return_plugin(dest_name);
+    if (return_plugin)
+    {
+        _set_destination(return_plugin);
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Return plugin {} not found", dest_name);
+    }
 }
 
 }// namespace send_plugin

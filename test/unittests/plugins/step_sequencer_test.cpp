@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-//#define private public
-
 #include "library/rt_event_fifo.h"
 #include "plugins/step_sequencer_plugin.cpp"
 #include "test_utils/host_control_mockup.h"
@@ -28,7 +26,6 @@ protected:
     HostControlMockup _host_control;
     StepSequencerPlugin _module_under_test{_host_control.make_host_control_mockup(TEST_SAMPLERATE)};
 };
-
 
 TEST_F(TestStepSequencerPlugin, TestOutput)
 {

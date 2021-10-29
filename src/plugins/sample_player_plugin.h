@@ -15,7 +15,7 @@
 
 /**
  * @brief Sampler plugin example to test event and sample handling
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_SAMPLER_PLUGIN_H
@@ -48,14 +48,10 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
-    static int non_rt_callback(void* data, EventId id)
-    {
-        return reinterpret_cast<SamplePlayerPlugin*>(data)->_non_rt_callback(id);
-    }
+    ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
 private:
-    BlobData load_sample_file(const std::string &file_name);
-    int _non_rt_callback(EventId id);
+    BlobData _load_sample_file(const std::string &file_name);
 
     float*  _sample_buffer{nullptr};
     float   _dummy_sample{0.0f};
@@ -67,10 +63,6 @@ private:
     FloatParameterValue* _decay_parameter;
     FloatParameterValue* _sustain_parameter;
     FloatParameterValue* _release_parameter;
-
-    std::string*         _sample_file_property{nullptr};
-    EventId              _pending_event_id{0};
-    BlobData             _pending_sample{0, 0};
 
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };

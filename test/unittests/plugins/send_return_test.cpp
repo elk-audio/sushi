@@ -72,6 +72,28 @@ protected:
     ReturnPlugin        _return_instance{_host_ctrl, &_factory};
 };
 
+TEST_F(TestSendReturnPlugins, TestDestinationSetting)
+{
+    PluginInfo info;
+    info.uid = "sushi.testing.return";
+    auto [status, return_instance_2] = _factory.new_instance(info, _host_ctrl, TEST_SAMPLERATE);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    _return_instance.set_name("return_1");
+    return_instance_2->set_name("return_2");
+
+    EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
+    status = _send_instance.set_property_value(DEST_PROPERTY_ID, "return_2");
+    EXPECT_EQ(ProcessorReturnCode::OK, status);
+    EXPECT_EQ(_send_instance._destination, return_instance_2.get());
+    EXPECT_EQ("return_2", _send_instance.property_value(DEST_PROPERTY_ID).second);
+
+    // Destroy the second return and it should be automatically unlinked.
+    return_instance_2.reset();
+    EXPECT_EQ(_send_instance._destination, nullptr);
+    EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
+}
+
 TEST_F(TestSendReturnPlugins, TestProcessing)
 {
     ChunkSampleBuffer buffer_1(2);

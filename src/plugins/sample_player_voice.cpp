@@ -40,8 +40,7 @@ void Voice::note_on(int note, float velocity, int offset)
 
     /* Completely ignore any currently playing note, it will be cut off abruptly */
     _state = SamplePlayMode::STARTING;
-    /* Quadratic velocity curve */
-    _velocity_gain = velocity * velocity;
+    _velocity_gain = velocity;
     _start_offset = offset;
     _stop_offset = AUDIO_CHUNK_SIZE;
     _playback_pos = 0.0;
