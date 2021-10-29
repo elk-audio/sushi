@@ -29,6 +29,8 @@ namespace sushi {
 class BaseProcessorFactory
 {
 public:
+    virtual ~BaseProcessorFactory() = default;
+
     /**
      * @brief Attempts to create a new Processor instance.
      * @param plugin_info

@@ -22,8 +22,8 @@
 
 #include "library/base_processor_factory.h"
 
-#ifdef SUSHI_BUILD_WITH_LV2
-#include "lv2_wrapper.h"
+class LilvWorldImpl;
+using LilvWorld = LilvWorldImpl;
 
 namespace sushi {
 namespace lv2 {
@@ -31,47 +31,17 @@ namespace lv2 {
 class Lv2ProcessorFactory : public BaseProcessorFactory
 {
 public:
-    Lv2ProcessorFactory() = default;
-    virtual ~Lv2ProcessorFactory() = default;
+    ~Lv2ProcessorFactory() override;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo& plugin_info,
                                                                             HostControl& host_control,
-                                                                            float sample_rate) override
-    {
-        auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path, _world);
-        auto processor_status = processor->init(sample_rate);
-        return {processor_status, processor};
-    }
+                                                                            float sample_rate) override;
 
 private:
     LilvWorld* _world{nullptr};
 };
 
-
 } // end namespace lv2
 } // end namespace sushi
-
-#else //SUSHI_BUILD_WITH_LV2
-
-namespace sushi {
-namespace lv2 {
-
-class Lv2ProcessorFactory : public BaseProcessorFactory {
-public:
-    Lv2ProcessorFactory() = default;
-    virtual ~Lv2ProcessorFactory() = default;
-
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo&,
-                                                                            HostControl&,
-                                                                            float) override
-    {
-        return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
-    }
-};
-
-} // end namespace lv2
-} // end namespace sushi
-
-#endif //SUSHI_BUILD_WITH_LV2
 
 #endif //SUSHI_LV2_PROCESSOR_FACTORY_H

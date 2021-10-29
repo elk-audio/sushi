@@ -33,7 +33,7 @@ class Vst3xProcessorFactory : public BaseProcessorFactory
 {
 public:
     Vst3xProcessorFactory();
-    virtual ~Vst3xProcessorFactory();
+    ~Vst3xProcessorFactory() override;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo& plugin_info,
                                                                             HostControl& host_control,
