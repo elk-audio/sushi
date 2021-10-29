@@ -192,13 +192,13 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     plugin["name"] = "invalid_internal_plugin";
     plugin["uid"] = "wrong_uid";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_PLUGIN_PATH);
+    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 
     track["name"] = "track_invalid_name";
     plugin["name"] = "internal_plugin";
     plugin["uid"] = "sushi.testing.gain";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_PLUGIN_NAME);
+    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 }
 
 TEST_F(TestJsonConfigurator, TestValidJsonSchema)

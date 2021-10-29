@@ -97,7 +97,9 @@ if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
-set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
+set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp)
 
 if (${WITH_LV2})
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)

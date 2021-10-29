@@ -44,6 +44,19 @@ constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
+EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
+{
+    switch (processor_status)
+    {
+        case ProcessorReturnCode::OK:                       return EngineReturnStatus::OK;
+        case ProcessorReturnCode::ERROR:                    return EngineReturnStatus::ERROR;
+        case ProcessorReturnCode::PARAMETER_ERROR:          return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::PARAMETER_NOT_FOUND:      return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::UNSUPPORTED_OPERATION:    return EngineReturnStatus::INVALID_PLUGIN_TYPE;
+        default:                                            return EngineReturnStatus::ERROR;
+    }
+}
+
 
 void ClipDetector::set_sample_rate(float samplerate)
 {
@@ -625,8 +638,8 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
 
     if (processor_status != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to initialize processor {}", processor_name);
-        return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
+        SUSHI_LOG_ERROR("Failed to initialize processor {} with error {}", processor_name, static_cast<int>(processor_status));
+        return {to_engine_status(processor_status), ObjectId(0)};
     }
     EngineReturnStatus status = _register_processor(processor, processor_name);
     if(status != EngineReturnStatus::OK)

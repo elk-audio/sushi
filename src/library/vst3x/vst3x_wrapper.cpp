@@ -859,7 +859,7 @@ void Vst3xWrapper::_fill_processing_context()
     *context = {};
     auto ts = transport->time_signature();
 
-    context->state = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0;
+    context->state = SUSHI_HOST_TIME_CAPABILITIES | (transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0);
     context->sampleRate             = _sample_rate;
     context->projectTimeSamples     = transport->current_samples();
     context->systemTime             = std::chrono::nanoseconds(transport->current_process_time()).count();
