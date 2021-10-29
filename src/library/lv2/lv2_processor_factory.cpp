@@ -70,7 +70,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
+#endif //SUSHI_BUILD_WITH_LV2
+
 } // end namespace lv2
 } // end namespace sushi
-
-#endif //SUSHI_BUILD_WITH_LV2
