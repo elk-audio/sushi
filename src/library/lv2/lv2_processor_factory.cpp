@@ -31,13 +31,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
-Lv2ProcessorFactory::~Lv2ProcessorFactory()
-{
-    if (_world)
-    {
-        lilv_world_free(_world);
-    }
-}
+Lv2ProcessorFactory::~Lv2ProcessorFactory() = default;
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::new_instance(const sushi::engine::PluginInfo& plugin_info,
                                                                                              HostControl& host_control,
@@ -45,8 +39,9 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
 {
     if (!_world)
     {
-        _world = lilv_world_new();
-        if (_world == nullptr)
+        _world = std::make_shared<LilvWorldWrapper>();
+        _world->create_world();
+        if (_world->world() == nullptr)
         {
             SUSHI_LOG_ERROR("Failed to initialize Lilv World");
             return {ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, nullptr};

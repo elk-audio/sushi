@@ -22,11 +22,10 @@
 
 #include "library/base_processor_factory.h"
 
-class LilvWorldImpl;
-using LilvWorld = LilvWorldImpl;
-
 namespace sushi {
 namespace lv2 {
+
+class LilvWorldWrapper;
 
 class Lv2ProcessorFactory : public BaseProcessorFactory
 {
@@ -38,7 +37,7 @@ public:
                                                                             float sample_rate) override;
 
 private:
-    LilvWorld* _world{nullptr};
+    std::shared_ptr<LilvWorldWrapper> _world{nullptr};
 };
 
 } // end namespace lv2

@@ -239,7 +239,7 @@ private:
 
     bool _check_for_required_features(const LilvPlugin* plugin);
 
-    /** Return true iff Sushi supports the given feature. */
+    /** Return true if Sushi supports the given feature. */
     bool _feature_is_supported(const std::string& uri);
 
     std::vector<ControlID> _controls;

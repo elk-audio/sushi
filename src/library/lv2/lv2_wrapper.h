@@ -56,6 +56,23 @@ namespace lv2 {
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
 
 /**
+ * @brief Wrapper around the global LilvWorld instance so that it can be used
+ *        with standard c++ smart pointers
+ */
+class LilvWorldWrapper
+{
+public:
+    ~LilvWorldWrapper();
+
+    bool create_world();
+
+    LilvWorld* world();
+
+private:
+    LilvWorld* _world{nullptr};
+};
+
+/**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
 
@@ -66,7 +83,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, LilvWorld* world);
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, std::shared_ptr<LilvWorldWrapper> world);
 
     virtual ~LV2_Wrapper() = default;
 
@@ -164,11 +181,13 @@ private:
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
 
     ChunkSampleBuffer _dummy_input{1};
-    ChunkSampleBuffer _dummy_output{1};
 
+    ChunkSampleBuffer _dummy_output{1};
     bool _double_mono_input{false};
 
     std::string _plugin_path;
+
+    std::shared_ptr<LilvWorldWrapper> _world;
 
     BypassManager _bypass_manager{_bypassed};
 
@@ -202,8 +221,6 @@ private:
     static constexpr float _max_normalized{1.0f};
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
-
-    LilvWorld* _world{nullptr};
 };
 
 } // end namespace lv2
