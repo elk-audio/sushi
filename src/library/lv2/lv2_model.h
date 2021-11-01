@@ -273,7 +273,6 @@ private:
 
     LV2_Wrapper* _wrapper{nullptr};
 
-    // This is owned in the Lv2ProcessorFactory
     LilvWorld* _world{nullptr};
     std::unique_ptr<HostNodes> _nodes{nullptr};
 
