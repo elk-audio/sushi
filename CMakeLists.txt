@@ -152,6 +152,9 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
+                      src/library/lv2/lv2_processor_factory.cpp
+                      src/library/vst2x/vst2x_processor_factory.cpp
+                      src/library/vst3x/vst3x_processor_factory.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp

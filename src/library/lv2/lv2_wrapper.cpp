@@ -45,9 +45,32 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
+LilvWorldWrapper::~LilvWorldWrapper()
+{
+    if(_world)
+    {
+        lilv_world_free(_world);
+    }
+}
+
+bool LilvWorldWrapper::create_world()
+{
+    _world = lilv_world_new();
+    if (_world)
+    {
+        lilv_world_load_all(_world);
+    }
+    return _world;
+}
+
+LilvWorld* LilvWorldWrapper::world()
+{
+    return _world;
+}
+
 LV2_Wrapper::LV2_Wrapper(HostControl host_control,
                          const std::string& lv2_plugin_uri,
-                         LilvWorld* world):
+                         std::shared_ptr<LilvWorldWrapper> world):
                          Processor(host_control),
                          _plugin_path(lv2_plugin_uri),
                          _world(world)
@@ -58,7 +81,7 @@ LV2_Wrapper::LV2_Wrapper(HostControl host_control,
 
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _model = std::make_unique<Model>(sample_rate, this, _world);
+    _model = std::make_unique<Model>(sample_rate, this, _world->world());
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 

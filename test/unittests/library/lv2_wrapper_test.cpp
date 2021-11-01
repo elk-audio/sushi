@@ -74,8 +74,9 @@ protected:
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
-        _world = lilv_world_new();
-        lilv_world_load_all(_world);
+        _world = std::make_shared<LilvWorldWrapper>();
+        bool world_created = _world->create_world();
+        EXPECT_TRUE(world_created);
         _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI, _world);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
@@ -96,13 +97,12 @@ protected:
     void TearDown()
     {
         _module_under_test = nullptr;
-        lilv_world_free(_world);
     }
 
     RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    LilvWorld* _world{nullptr};
+    std::shared_ptr<LilvWorldWrapper> _world{nullptr};
     std::unique_ptr<LV2_Wrapper> _module_under_test{nullptr};
 };
 
