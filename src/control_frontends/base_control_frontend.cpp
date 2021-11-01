@@ -48,7 +48,7 @@ void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
                                                              const std::string& value)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new StringPropertyChangeEvent(processor, parameter, value, timestamp);
+    auto e = new PropertyChangeEvent(processor, parameter, value, timestamp);
     _event_dispatcher->post_event(e);}
 
 
@@ -78,37 +78,6 @@ void BaseControlFrontend::send_program_change_event(ObjectId processor, int prog
     Time timestamp = IMMEDIATE_PROCESS;
     auto e = new ProgramChangeEvent(processor, program, timestamp);
     _event_dispatcher->post_event(e);
-}
-
-void BaseControlFrontend::send_add_track_event(const std::string &name, int channels)
-{
-    Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new AddTrackEvent(name, channels, 0, 0, timestamp);
-    send_with_callback(e);
-}
-
-void BaseControlFrontend::send_remove_track_event(const std::string& /*name*/)
-{
-    Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveTrackEvent(0, timestamp);
-    send_with_callback(e);
-}
-
-void BaseControlFrontend::send_add_processor_event(const std::string &/*track*/, const std::string &uid,
-                                                   const std::string &name, const std::string &file,
-                                                   AddProcessorToTrackEvent::ProcessorType type)
-{
-    Time timestamp = IMMEDIATE_PROCESS;
-    // TODO - deprecate This entire class
-    auto e = new AddProcessorToTrackEvent(name, uid, file, type, 0, 0, timestamp);
-    send_with_callback(e);
-}
-
-void BaseControlFrontend::send_remove_processor_event(const std::string& /*track*/, const std::string& /*name*/)
-{
-    Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new RemoveProcessorEvent(0, 0, timestamp);
-    send_with_callback(e);
 }
 
 void BaseControlFrontend::send_set_tempo_event(float tempo)

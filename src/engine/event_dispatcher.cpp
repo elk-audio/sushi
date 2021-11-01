@@ -25,18 +25,18 @@
 namespace sushi {
 namespace dispatcher {
 
-constexpr auto PRINT_TIMING_INTERVAL = std::chrono::seconds(5);
+constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
                                  RtSafeRtEventFifo* out_rt_queue) : _running{false},
-                                                              _engine{engine},
-                                                              _in_rt_queue{in_rt_queue},
-                                                              _out_rt_queue{out_rt_queue},
-                                                              _worker{engine, this},
-                                                              _event_timer{engine->sample_rate()}
+                                                                    _engine{engine},
+                                                                    _in_rt_queue{in_rt_queue},
+                                                                    _out_rt_queue{out_rt_queue},
+                                                                    _worker{engine, this},
+                                                                    _event_timer{engine->sample_rate()}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
@@ -60,9 +60,12 @@ EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
 
 void EventDispatcher::run()
 {
-    _running = true;
-    _event_thread = std::thread(&EventDispatcher::_event_loop, this);
-    _worker.run();
+    if (_running == false)
+    {
+        _running = true;
+        _event_thread = std::thread(&EventDispatcher::_event_loop, this);
+        _worker.run();
+    }
 }
 
 void EventDispatcher::stop()
@@ -77,6 +80,8 @@ void EventDispatcher::stop()
 
 EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto r : _keyboard_event_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -87,6 +92,8 @@ EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster*
 
 EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto r : _parameter_change_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -97,6 +104,8 @@ EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notificatio
 
 EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto r : _engine_notification_listeners)
     {
         if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
@@ -233,6 +242,8 @@ Event*EventDispatcher::_next_event()
 
 void EventDispatcher::_publish_keyboard_events(Event* event)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto& listener : _keyboard_event_listeners)
     {
         listener->process(event);
@@ -241,6 +252,8 @@ void EventDispatcher::_publish_keyboard_events(Event* event)
 
 void EventDispatcher::_publish_parameter_events(Event* event)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto& listener : _parameter_change_listeners)
     {
         listener->process(event);
@@ -249,6 +262,8 @@ void EventDispatcher::_publish_parameter_events(Event* event)
 
 void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto& listener : _engine_notification_listeners)
     {
         listener->process(event);
@@ -267,6 +282,8 @@ EventDispatcherStatus EventDispatcher::deregister_poster(EventPoster* poster)
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
+
     for (auto i = _keyboard_event_listeners.begin(); i != _keyboard_event_listeners.end(); ++i)
     {
         if (*i == receiver)
@@ -280,6 +297,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPos
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
 {
+    std::lock_guard<std::mutex> lock(_parameter_listener_lock);
+
     for (auto i = _parameter_change_listeners.begin(); i != _parameter_change_listeners.end(); ++i)
     {
         if (*i == receiver)
@@ -293,6 +312,8 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster*receiver)
 {
+    std::lock_guard<std::mutex> lock(_engine_listener_lock);
+
     for (auto i = _engine_notification_listeners.begin(); i != _engine_notification_listeners.end(); ++i)
     {
         if (*i == receiver)
@@ -327,7 +348,7 @@ int Worker::process(Event*event)
 
 void Worker::_worker()
 {
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> print_timing_counter;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> timing_update_counter;
     do
     {
         auto start_time = std::chrono::system_clock::now();
@@ -357,10 +378,10 @@ void Worker::_worker()
             }
             delete (event);
         }
-        if (start_time > print_timing_counter + PRINT_TIMING_INTERVAL)
+        if (start_time > timing_update_counter + TIMING_UPDATE_INTERVAL)
         {
-            print_timing_counter = start_time;
-            _engine->print_timings_to_log();
+            timing_update_counter = start_time;
+            _engine->update_timings();
         }
 
         std::this_thread::sleep_until(start_time + WORKER_THREAD_PERIODICITY);

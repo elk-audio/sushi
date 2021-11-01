@@ -44,29 +44,15 @@ struct OscConnection
     ObjectId           parameter;
     OSCFrontend*       instance;
     ext::SushiControl* controller;
-    void*              liblo_cb;
+    lo_method          liblo_cb;
 };
 
 class OSCFrontend : public BaseControlFrontend
 {
 public:
-    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int server_port, int send_port);
+    OSCFrontend(engine::BaseEngine* engine, ext::SushiControl* controller, int receive_port, int send_port);
 
     ~OSCFrontend();
-
-    /**
-     * @brief Connect osc to a given parameter of a given processor.
-     *        The resulting osc path will be:
-     *        "/parameter/processor_name/parameter_name,f(value)"
-     * @param processor_name Name of the processor
-     * @param parameter_name Name of the parameter
-     * @return
-     */
-    bool connect_to_parameter(const std::string &processor_name,
-                              const std::string &parameter_name);
-
-    bool connect_to_string_parameter(const std::string &processor_name,
-                                     const std::string &parameter_name);
 
     /**
      * @brief Connect osc to the bypass state of a given processor.
@@ -76,7 +62,7 @@ public:
      * @param processor_name
      * @return
      */
-    bool connect_to_bypass_state(const std::string &processor_name);
+    bool connect_to_bypass_state(const std::string& processor_name);
 
     /**
      * @brief Connect program change messages to a specific processor.
@@ -85,7 +71,7 @@ public:
      * @param processor_name Name of the processor
      * @return
      */
-    bool connect_to_program_change(const std::string & processor_name);
+    bool connect_to_program_change(const std::string& processor_name);
 
     /**
      * @brief Output changes from the given parameter of the given
@@ -95,8 +81,18 @@ public:
      * @param parameter_name
      * @return
      */
-    bool connect_from_parameter(const std::string &processor_name,
-                                const std::string &parameter_name);
+    bool connect_from_parameter(const std::string& processor_name,
+                                const std::string& parameter_name);
+
+    /**
+     * @brief Stops the broadcasting of OSC messages reflecting changes of a parameter.
+     * @param processor_name
+     * @param parameter_name
+     * @return
+     */
+    bool disconnect_from_parameter(const std::string& processor_name,
+                                   const std::string& parameter_name);
+
     /**
      * @brief Connect keyboard messages to a given track.
      *        The target osc path will be:
@@ -104,24 +100,52 @@ public:
      * @param track_name The track to send to
      * @return true
      */
-    bool connect_kb_to_track(const std::string &track_name);
+    bool connect_kb_to_track(const std::string& track_name);
 
     /**
-     * @brief Connect all parameters from a given processor.
-     *
+     * @brief Connect to control all parameters from a given processor.
      * @param processor_name The name of the processor to connect.
      * @param processor_id The id of the processor to connect.
      * @return
      */
-    bool connect_processor_parameters(const std::string& processor_name, int processor_id);
+    bool connect_to_parameters_and_properties(const std::string& processor_name, int processor_id);
 
     /**
-     * @brief Register OSC callbacks far all parameters of all plugins and
-     *        connect midi kb data to a track.
-     *        This should eventually be replaced by a more elaborate way of
-     *        registering parameters.
+     * @brief Enable OSC broadcasting of all parameters from a given processor.
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
      */
-    void connect_all();
+    bool connect_from_processor_parameters(const std::string& processor_name, int processor_id);
+
+    /**
+     * @brief Disable OSC broadcasting of all parameters from a given processor.
+     * @param processor_name The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return
+     */
+    bool disconnect_from_processor_parameters(const std::string& processor_name, int processor_id);
+
+    /**
+     * @brief Register OSC callbacks for all midi kb and pc data to tracks and processors.
+     */
+    void connect_to_all();
+
+    /**
+     * @brief Register OSC callbacks for all parameters of all plugins.
+     */
+    void connect_from_all_parameters();
+
+    /**
+     * @brief Deregister OSC callbacks for all parameters of all plugins.
+     */
+    void disconnect_from_all_parameters();
+
+    /**
+     * Returns all OSC Address Patterns that are currently enabled to output state changes.
+     * @return
+     */
+    std::vector<std::string> get_enabled_parameter_outputs();
 
     void run() override {_start_server();}
 
@@ -134,7 +158,25 @@ public:
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
+    int receive_port() const;
+
+    int send_port() const;
+
+    bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
+
+    void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
+
 private:
+    bool _connect_to_parameter(const std::string& processor_name,
+                               const std::string& parameter_name,
+                               ObjectId processor_id,
+                               ObjectId parameter_id);
+
+    bool _connect_to_property(const std::string& processor_name,
+                              const std::string& property_name,
+                              ObjectId processor_id,
+                              ObjectId property_id);
+
     void _completion_callback(Event* event, int return_status) override;
 
     void _start_server();
@@ -145,29 +187,35 @@ private:
 
     bool _remove_processor_connections(ObjectId processor_id);
 
-    std::pair<OscConnection*, std::string> _create_parameter_connection(const std::string& processor_name,
-                                                                        const std::string& parameter_name);
-
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
                                                                         const std::string& osc_path_prefix);
 
-    bool _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
+    void _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
 
-    bool _handle_clipping_notification(const ClippingNotificationEvent* event);
+    void _handle_engine_notification(const EngineNotificationEvent* event);
 
-    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+    void _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
 
-    lo_server_thread _osc_server;
-    int _server_port;
+    void _handle_clipping_notification(const ClippingNotificationEvent* event);
+
+    lo_server_thread _osc_server {nullptr};
+    int _receive_port;
     int _send_port;
-    lo_address _osc_out_address;
+    lo_address _osc_out_address {nullptr};
 
-    std::atomic_bool _running;
+    bool _connect_from_all_parameters {false};
 
-    sushi::ext::SushiControl* _controller;
+    std::atomic_bool _osc_initialized {false};
+
+    std::atomic_bool _running {false};
+
+    sushi::ext::SushiControl* _controller {nullptr};
+    sushi::ext::AudioGraphController* _graph_controller {nullptr};
+    sushi::ext::ParameterController*  _param_controller {nullptr};
 
     /* Currently only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
+
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
 };
 

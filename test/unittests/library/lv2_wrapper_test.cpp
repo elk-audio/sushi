@@ -74,7 +74,9 @@ protected:
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
-        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI);
+        _world = lilv_world_new();
+        lilv_world_load_all(_world);
+        _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI, _world);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
 
@@ -93,13 +95,15 @@ protected:
 
     void TearDown()
     {
-
+        _module_under_test = nullptr;
+        lilv_world_free(_world);
     }
 
     RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    std::unique_ptr<LV2_Wrapper> _module_under_test {nullptr};
+    LilvWorld* _world{nullptr};
+    std::unique_ptr<LV2_Wrapper> _module_under_test{nullptr};
 };
 
 TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
@@ -118,7 +122,7 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
     ASSERT_EQ(_module_under_test, nullptr);
 }
 
-TEST_F(TestLv2Wrapper, TestLV2PluginInterraction)
+TEST_F(TestLv2Wrapper, TestLV2PluginInteraction)
 {
     auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -285,7 +289,8 @@ TEST_F(TestLv2Wrapper, TestTimeInfo)
 // optional for eg-sampler, but required for its sample-loading feature.
 TEST_F(TestLv2Wrapper, TestSynchronousStateAndWorkerThreads)
 {
-    SetUp("http://lv2plug.in/plugins/eg-sampler");
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-sampler");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
     ChunkSampleBuffer in_buffer(1);
     ChunkSampleBuffer out_buffer(1);
@@ -444,12 +449,7 @@ TEST_F(TestLv2Wrapper, TestSynth)
 {
     SetUp("http://drobilla.net/plugins/mda/JX10");
 
-    if (_module_under_test == nullptr)
-    {
-        std::cout << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run."
-                  << std::endl;
-        return;
-    }
+    ASSERT_TRUE(_module_under_test != nullptr)  << "'http://drobilla.net/plugins/mda/JX10' plugin not installed - please install it to ensure full suite of unit tests has run.";
 
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
@@ -482,12 +482,8 @@ TEST_F(TestLv2Wrapper, TestSynth)
 
     if(AUDIO_CHUNK_SIZE == 64)
     {
+        // Buffer comparisons after NOTE_OFF events in LV2 tests require buffer size == 64
         test_utils::compare_buffers(LV2_JX10_EXPECTED_OUT_NOTE_OFF, out_buffer, 2, 0.0001f);
-    }
-    else
-    {
-        std::cout << "AUDIO_CHUNK_SIZE != 64 - audio buffer comparisons after NOTE_OFF events in LV2 tests cannot run"
-                  << std::endl;
     }
 
     // Setting program once first without checking audio output,

@@ -15,18 +15,22 @@
 
 /**
  * @brief Internal plugin manager.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_INTERNAL_PLUGIN_H
 #define SUSHI_INTERNAL_PLUGIN_H
 
 #include <deque>
+#include <unordered_map>
+#include <mutex>
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
 
 namespace sushi {
+
+constexpr int DEFAULT_CHANNELS = 2;
 
 /**
  * @brief internal base class for processors that keeps track of all host-related
@@ -39,7 +43,7 @@ public:
 
     explicit InternalPlugin(HostControl host_control);
 
-    virtual ~InternalPlugin() {};
+    virtual ~InternalPlugin() = default;
 
     void process_event(const RtEvent& event) override;
 
@@ -48,6 +52,10 @@ public:
     std::pair<ProcessorReturnCode, float> parameter_value_in_domain(ObjectId parameter_id) const override;
 
     std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId parameter_id) const override;
+
+    std::pair<ProcessorReturnCode, std::string> property_value(ObjectId property_id) const override;
+
+    ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
@@ -107,26 +115,18 @@ public:
                                                 bool default_value);
 
     /**
-     * @brief Register a string property that can be updated through events
+     * @brief Register a string property that can be updated through events. String
+     *        properties will be updated in the non-rt thread. For string parameters
+     *        to be received in an rt thread, call send_property_to_realtime()
+     *        when received.
      * @param name Unique name of the property
      * @param label Display name of the property
-     * @param unit The unit of the parameters display value
+     * @param default_value The default value of the property
      * @return true if the property was registered successfully
      */
-    bool register_string_property(const std::string& name,
-                                  const std::string& label,
-                                  const std::string& unit);
-
-    /**
-     * @brief Register a data property that can be updated through events
-     * @param name Unique name of the property
-     * @param label Display name of the property
-     * @param unit The unit of the parameters display value
-     * @return true if the property was registered successfully
-     */
-    bool register_data_property(const std::string& name,
-                                const std::string& label,
-                                const std::string& unit);
+    bool register_property(const std::string& name,
+                           const std::string& label,
+                           const std::string& default_value);
 
 protected:
     /**
@@ -153,11 +153,32 @@ protected:
      */
     void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
 
+    /**
+     * @brief Pass opaque data to the realtime part of the plugin in a threadsafe manner
+     *        The data will be passed as an RtEvent with type DATA_PROPERTY_CHANGE.
+     * @param data The data to pass, memory management is the responsibility of the receiver.
+     * @param id An identifier that will be used to populate the property_id field_of the RtEvent.
+     */
+    void send_data_to_realtime(BlobData data, int id);
+
+    /**
+     * @brief Pass a string property value to the realtime part of the plugin in a thread-
+     *        safe manner and with managed lifetime. The string will be passed to the rt-
+     *        thread as an RtEvent with type STRING_PROPERTY_CHANGE.
+     * @param property_id The id of the string property whose value is changed.
+     * @param value The string value to pass. Lifetime will be handled automatically.
+     */
+    void send_property_to_realtime(ObjectId property_id, const std::string& value);
+
+
 private:
     /* TODO - consider container type to use here. Deque has the very desirable property
      * that iterators are never invalidated by adding to the containers.
      * For arrays or std::vectors we need to know the maximum capacity for that to work. */
     std::deque<ParameterStorage> _parameter_values;
+
+    mutable std::mutex _property_lock;
+    std::unordered_map<ObjectId, std::string> _property_values;
 };
 
 } // end namespace sushi

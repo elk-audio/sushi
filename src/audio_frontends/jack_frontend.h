@@ -165,8 +165,7 @@ class JackFrontend : public BaseAudioFrontend
 {
 public:
     JackFrontend(engine::BaseEngine* engine);
-    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override
-    {return AudioFrontendStatus::OK;}
+    AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
 };

@@ -17,29 +17,43 @@
  * @brief gRPC Server
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+#include <unordered_map>
+#include <vector>
+#include <string>
 
-#include "sushi_rpc/grpc_server.h"
 #include "control_service.h"
+#include "sushi_rpc/grpc_server.h"
 #include "async_service_call_data.h"
-
 
 namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listen_address,
                        sushi::ext::SushiControl* controller) : _listen_address{listen_address},
-                                                _service{new SushiControlService(controller)},
-                                                _server_builder{new grpc::ServerBuilder()},
-                                                _controller{controller},
-                                                _running{false}
-{
-
-}
+                                                               _system_control_service{std::make_unique<SystemControlService>(controller)},
+                                                               _transport_control_service{std::make_unique<TransportControlService>(controller)},
+                                                               _timing_control_service{std::make_unique<TimingControlService>(controller)},
+                                                               _keyboard_control_service{std::make_unique<KeyboardControlService>(controller)},
+                                                               _audio_graph_control_service{std::make_unique<AudioGraphControlService>(controller)},
+                                                               _parameter_control_service{std::make_unique<ParameterControlService>(controller)},
+                                                               _program_control_service{std::make_unique<ProgramControlService>(controller)},
+                                                               _midi_control_service{std::make_unique<MidiControlService>(controller)},
+                                                               _audio_routing_control_service{std::make_unique<AudioRoutingControlService>(controller)},
+                                                               _osc_control_service{std::make_unique<OscControlService>(controller)},
+                                                               _notification_control_service{std::make_unique<NotificationControlService>(controller)},
+                                                               _server_builder{std::make_unique<grpc::ServerBuilder>()},
+                                                               _controller{controller},
+                                                               _running{false}
+{}
 
 GrpcServer::~GrpcServer() = default;
 
 void GrpcServer::AsyncRpcLoop()
 {
-    new SubscribeToParameterUpdatesCallData(_service.get(), _async_rpc_queue.get());
+    new SubscribeToTransportChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
+    new SubscribeToCpuTimingUpdatesCallData(_notification_control_service.get(), _async_rpc_queue.get());
+    new SubscribeToTrackChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
+    new SubscribeToProcessorChangesCallData(_notification_control_service.get(), _async_rpc_queue.get());
+    new SubscribeToParameterUpdatesCallData(_notification_control_service.get(), _async_rpc_queue.get());
 
     while (_running.load())
     {
@@ -47,7 +61,7 @@ void GrpcServer::AsyncRpcLoop()
         bool ok;
 
         _async_rpc_queue->Next(&tag, &ok);
-        if (ok != true)
+        if (ok == false)
         {
             static_cast<CallData*>(tag)->stop();
         }
@@ -58,7 +72,19 @@ void GrpcServer::AsyncRpcLoop()
 void GrpcServer::start()
 {
     _server_builder->AddListeningPort(_listen_address, grpc::InsecureServerCredentials());
-    _server_builder->RegisterService(_service.get());
+
+    _server_builder->RegisterService(_system_control_service.get());
+    _server_builder->RegisterService(_transport_control_service.get());
+    _server_builder->RegisterService(_timing_control_service.get());
+    _server_builder->RegisterService(_keyboard_control_service.get());
+    _server_builder->RegisterService(_audio_graph_control_service.get());
+    _server_builder->RegisterService(_parameter_control_service.get());
+    _server_builder->RegisterService(_program_control_service.get());
+    _server_builder->RegisterService(_midi_control_service.get());
+    _server_builder->RegisterService(_audio_routing_control_service.get());
+    _server_builder->RegisterService(_osc_control_service.get());
+    _server_builder->RegisterService(_notification_control_service.get());
+
     _async_rpc_queue = _server_builder->AddCompletionQueue();
     _server = _server_builder->BuildAndStart();
     _running.store(true);
@@ -71,19 +97,17 @@ void GrpcServer::stop()
     _running.store(false);
     _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
     _async_rpc_queue->Shutdown();
-
     if (_worker.joinable())
     {
         _worker.join();
     }
 
-    _service->stop_all_call_data();
-
     void* tag;
     bool ok;
 
-    //empty completion queue
+    // Empty completion queue
     while(_async_rpc_queue->Next(&tag, &ok));
+    _notification_control_service->delete_all_subscribers();
 }
 
 void GrpcServer::waitForCompletion()
@@ -91,4 +115,4 @@ void GrpcServer::waitForCompletion()
     _server->Wait();
 }
 
-}// sushi_rpc
+} // sushi_rpc

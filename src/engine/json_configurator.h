@@ -27,10 +27,13 @@
 
 #include <optional>
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/document.h"
+#pragma GCC diagnostic pop
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"
+#include "control_frontends/osc_frontend.h"
 
 namespace sushi {
 namespace jsonconfig {
@@ -46,6 +49,7 @@ enum class JsonConfigReturnStatus
     INVALID_MIDI_PORT,
     INVALID_FILE,
     NO_MIDI_DEFINITIONS,
+    NO_OSC_DEFINITIONS,
     NO_CV_GATE_DEFINITIONS,
     NO_EVENTS_DEFINITIONS
 };
@@ -55,6 +59,7 @@ enum class JsonSection
     HOST_CONFIG,
     TRACKS,
     MIDI,
+    OSC,
     CV_GATE,
     EVENTS
 };
@@ -72,62 +77,73 @@ class JsonConfigurator
 public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                     const engine::BaseProcessorContainer* processor_container,
                      const std::string& path) : _engine(engine),
                                                 _midi_dispatcher(midi_dispatcher),
-                                                _document_path(path){}
+                                                _processor_container(processor_container),
+                                                _document_path(path) {}
 
     ~JsonConfigurator() {}
 
     /**
-     * @brief Reads the json config  and returns all audio frontend configuration options
-     *        that are not set on the audio engine directly
+     * @brief Reads the json config, and returns all audio frontend configuration options
+     *        that are not set on the audio engine directly.
      * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
      *         JsonConfigReturnStatus::OK
      */
     std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config();
 
     /**
-     * @brief Reads the json config  and set the given host configuration options
+     * @brief Reads the json config, and set the given host configuration options
      * @param path_to_file String which denotes the path of the file.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_host_config();
 
     /**
-     * @brief Reads the json config , searches for valid tracks
+     * @brief Reads the json config, searches for valid tracks
      *        definitions and configures the engine with the specified tracks.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_tracks();
 
     /**
-     * @brief Reads the json config , searches for valid MIDI connections and
+     * @brief Reads the json config, searches for valid MIDI connections and
      *        MIDI CC Mapping definitions and configures the engine with the specified MIDI information.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_midi();
 
     /**
-     * @brief Reads the json config , searches for valid control voltage and gate
+     * @brief Reads the json config, searches for valid OSC echo definitions and
+     * configures the engine with the specified information.
+     * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
+     */
+    JsonConfigReturnStatus load_osc();
+
+    /**
+     * @brief Reads the json config, searches for valid control voltage and gate
      *        connection definitions and configures the engine with the specified routing.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_cv_gate();
 
     /**
-     * @brief Reads the json config , searches for a valid "events" definition and
+     * @brief Reads the json config, searches for a valid "events" definition and
      *        queues them to the engines internal queue.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     JsonConfigReturnStatus load_events();
 
     /**
-     * @brief Reads the json config , searches for a valid "events" definition and
-     *        returns all parsed events as a list
+     * @brief Reads the json config, searches for a valid "events" definition and
+     *        returns all parsed events as a list.
      * @return An std::vector with the parsed events which is only valid if the status
      *         returned is JsonConfigReturnStatus::OK
      */
     std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
+
+    void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
     /**
@@ -179,6 +195,8 @@ private:
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    control_frontend::OSCFrontend* _osc_frontend {nullptr};
+    const engine::BaseProcessorContainer* _processor_container;
 
     std::string _document_path;
     rapidjson::Document _json_data;

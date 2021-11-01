@@ -21,7 +21,8 @@
 #include <cstring>
 
 #include "pluginterfaces/base/ustring.h"
-#include "public.sdk/source/vst/hosting/stringconvert.h"
+#include "public.sdk/source/vst/utility/stringconvert.h"
+#include "base/source/fobject.h"
 
 #include "vst3x_host_app.h"
 #include "vst3x_wrapper.h"
@@ -144,7 +145,10 @@ bool ConnectionProxy::disconnect()
     return  status == Steinberg::kResultTrue;
 }
 
-PluginInstance::PluginInstance() = default;
+PluginInstance::PluginInstance(SushiHostApplication* host_app): _host_app(host_app)
+{
+
+}
 
 PluginInstance::~PluginInstance()
 {
@@ -186,7 +190,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     {
         return false;
     }
-    auto res = component->initialize(&_host_app);
+    auto res = component->initialize(_host_app);
     if (res != Steinberg::kResultOk)
     {
         SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);
@@ -207,7 +211,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
         return false;
     }
 
-    res = controller->initialize(&_host_app);
+    res = controller->initialize(_host_app);
     if (res != Steinberg::kResultOk)
     {
         SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);

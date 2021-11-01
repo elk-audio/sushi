@@ -16,7 +16,7 @@
 /**
  * @brief Interface class for objects that process audio. Processor objects can be plugins,
  *        sends, faders, mixer/channel adaptors, or chains of processors.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_PROCESSOR_H
@@ -54,7 +54,7 @@ class Processor
 public:
     explicit Processor(HostControl host_control) : _host_control(host_control) {}
 
-    virtual ~Processor() = default;
+    virtual ~Processor();
 
     /**
      * @brief Called by the host after instantiating the Processor, in a non-RT context. Most of the initialization, and
@@ -243,12 +243,33 @@ public:
      * @brief Get the value of the parameter with parameter_id formatted as a string,
      *        safe to call from a non rt-thread
      * @param parameter_id The Id of the requested parameter
-     * @return The current value formatted as a string, if the return code is OK
+     * @return The current value formatted as a string, if return code is OK
      */
     virtual std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId /*parameter_id*/) const
     {
         return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
     };
+
+    /**
+     * @brief Get the value of a property. Should only be called from a non-rt thread
+     * @param property_id The id of the requested property
+     * @return A string containing the current string property value if return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, std::string> property_value(ObjectId /*property_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    }
+
+    /**
+     * @brief Set the value of a property.  Should only be called from a non-rt thread
+     * @param property_id The id of the property to set
+     * @param value The new string value of the string property
+     * @return OK if the operation completed successfully
+     */
+    virtual ProcessorReturnCode set_property_value(ObjectId /*property_id*/, const std::string& /*value*/)
+    {
+        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
+    }
 
     /**
      * @brief Whether or not the processor supports programs/presets
@@ -402,6 +423,16 @@ protected:
     void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     /**
+     * @breif Called from the audio callback to request work to be done in another,
+     *        non-realtime thread.
+     * @param callback The callback to call in the non realtime thread. The return
+     *        value from the callback will be communicated back to the plugin in the
+     *        form of an AsyncWorkRtCompletionEvent RtEvent.
+     * @return An EventId that can be used to identify the particular request.
+     */
+    EventId request_non_rt_task(AsyncWorkCallback callback);
+
+    /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
      *        index will be added in case of duplicates
      * @param name The name of the parameter
@@ -536,6 +567,12 @@ public:
     void crossfade_output(const ChunkSampleBuffer& input_buffer, ChunkSampleBuffer& output_buffer,
                           int input_channels, int output_channels);
 
+    /**
+     * @brief Calculate the ramp start and end value for the current chunk
+     * @return An std::pair with start and end gain levels
+     */
+    std::pair<float, float> get_ramp();
+
 private:
     enum class BypassState
     {
@@ -544,8 +581,6 @@ private:
         RAMPING_DOWN,
         RAMPING_UP
     };
-
-    std::pair<float, float> get_ramp();
 
     BypassState _state{BypassState::NOT_BYPASSED};
     int _ramp_chunks{0};

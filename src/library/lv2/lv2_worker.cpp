@@ -58,14 +58,8 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
         }
 
         memcpy(request.block.data(), data, size);
-
         worker->requests().push(request);
-
-        auto e = RtEvent::make_async_work_event(&LV2_Wrapper::worker_callback,
-                                                wrapper->id(),
-                                                wrapper);
-
-        wrapper->output_worker_event(e);
+        wrapper->request_worker_callback(&LV2_Wrapper::worker_callback);
     }
     else
     {

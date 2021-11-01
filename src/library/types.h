@@ -22,6 +22,7 @@
 #define SUSHI_TYPES_H
 
 #include <array>
+#include <cstdint>
 
 namespace sushi {
 
@@ -50,6 +51,16 @@ struct TimeSignature
     int denominator;
 };
 
-} // end namespace sushi
+inline bool operator==(const TimeSignature& rhs, const TimeSignature& lhs)
+{
+    return (rhs.denominator == lhs.denominator && rhs.numerator == lhs.numerator);
+}
+
+inline bool operator!=(const TimeSignature& rhs, const TimeSignature& lhs)
+{
+    return ! (rhs == lhs);
+}
+
+} // namespace sushi
 
 #endif //SUSHI_TYPES_H

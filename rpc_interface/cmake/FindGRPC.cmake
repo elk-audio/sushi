@@ -114,7 +114,14 @@ set_target_properties(gRPC::grpc++_reflection PROPERTIES
 )
 
 # Find gRPC CPP generator
-find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
+if("$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    # Use system grpc cpp plugin if not cross compiling
+    find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
+else()
+    # Use CMAKE_PROGRAM_PATH/grpc_cpp_plugin if cross compiling
+    find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin NO_CMAKE_FIND_ROOT_PATH)
+endif()
+
 mark_as_advanced(GRPC_CPP_PLUGIN)
 add_executable(gRPC::grpc_cpp_plugin IMPORTED)
 set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES
@@ -122,5 +129,5 @@ set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES
 )
 
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(gRPC DEFAULT_MSG
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(GRPC DEFAULT_MSG
     GRPC_LIBRARY GRPC_INCLUDE_DIR GRPC_GRPC++_REFLECTION_LIBRARY GRPC_CPP_PLUGIN)

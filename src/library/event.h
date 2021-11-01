@@ -15,7 +15,7 @@
 
 /**
  * @brief Main event class used for communication across modules outside the rt part
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_CONTROL_EVENT_H
@@ -28,9 +28,14 @@
 #include "library/rt_event.h"
 #include "library/time.h"
 #include "library/types.h"
+#include "base_performance_timer.h"
 
 namespace sushi {
-namespace dispatcher {class EventDispatcher;};
+namespace dispatcher
+{
+    class EventDispatcher;
+    class Worker;
+}
 
 class Event;
 
@@ -57,8 +62,9 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
 class Event
 {
     friend class dispatcher::EventDispatcher;
-public:
+    friend class dispatcher::Worker;
 
+public:
     virtual ~Event() {}
 
     /**
@@ -82,23 +88,14 @@ public:
     /* Convertible to KeyboardEvent */
     virtual bool is_keyboard_event() const {return false;}
 
-    /* Convertible to ParameterChangeEvent */
-    virtual bool is_parameter_change_event() const {return false;}
-
     /* Convertible to ParameterChangeNotification */
     virtual bool is_parameter_change_notification() const {return false;}
 
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() const {return false;}
 
-    /* Is either ClippingNotification or AudioGraphNotification */
+    /* Convertible to EngineNotificationEvent */
     virtual bool is_engine_notification() const {return false;}
-
-    /* Convertible to ClippingNotification */
-    virtual bool is_clipping_notification() const {return false;}
-
-    /* Convertible to AudioGraphNotification */
-    virtual bool is_audio_graph_notification() const {return false;}
 
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() const {return false;}
@@ -119,23 +116,21 @@ public:
         _completion_cb = callback;
         _callback_arg = data;
     }
-    //int         sender() {return _sender;}
-
-    // TODO - put these under protected if possible
-    EventCompletionCallback completion_cb() {return _completion_cb;}
-    void*       callback_arg() {return _callback_arg;}
 
 protected:
     explicit Event(Time timestamp) : _timestamp(timestamp) {}
 
-    /* Only the dispatcher can set the receiver */
-    void set_receiver(int receiver) {_receiver = receiver;}
+    /* Only the dispatcher can set the receiver and call the completion callback */
+    void                    set_receiver(int receiver) {_receiver = receiver;}
+    EventCompletionCallback completion_cb() const {return _completion_cb;}
+    void*                   callback_arg() const {return _callback_arg;}
 
-    int         _receiver{0};
-    Time        _timestamp;
+private:
+    int                     _receiver{0};
+    Time                    _timestamp;
     EventCompletionCallback _completion_cb{nullptr};
-    void*       _callback_arg{nullptr};
-    EventId     _id{EventIdGenerator::new_id()};
+    void*                   _callback_arg{nullptr};
+    EventId                 _id{EventIdGenerator::new_id()};
 };
 
 class KeyboardEvent : public Event
@@ -202,7 +197,7 @@ public:
     float           value() {return _velocity;}
     MidiDataByte    midi_data() {return _midi_data;}
 
-protected:
+private:
     Subtype         _subtype;
     ObjectId        _processor_id;
     int             _channel;
@@ -218,9 +213,7 @@ public:
     {
         BOOL_PARAMETER_CHANGE,
         INT_PARAMETER_CHANGE,
-        FLOAT_PARAMETER_CHANGE,
-        STRING_PROPERTY_CHANGE,
-        BLOB_PROPERTY_CHANGE
+        FLOAT_PARAMETER_CHANGE
     };
 
     ParameterChangeEvent(Subtype subtype,
@@ -232,8 +225,6 @@ public:
                                            _processor_id(processor_id),
                                            _parameter_id(parameter_id),
                                            _value(value) {}
-
-    virtual bool is_parameter_change_event() const override {return true;}
 
     virtual bool maps_to_rt_event() const override {return true;}
 
@@ -255,46 +246,46 @@ protected:
     float               _value;
 };
 
-class StringPropertyChangeEvent : public ParameterChangeEvent
+class DataPropertyEvent : public Event
 {
 public:
-    StringPropertyChangeEvent(ObjectId processor_id,
-                              ObjectId property_id,
-                              const std::string& string_value,
-                              Time timestamp) : ParameterChangeEvent(Subtype::STRING_PROPERTY_CHANGE,
-                                                                     processor_id,
-                                                                     property_id,
-                                                                     0.0f,
-                                                                     timestamp),
-                                                _string_value(string_value) {}
+    DataPropertyEvent(ObjectId processor_id,
+                      int property_id,
+                      BlobData blob_value,
+                      Time timestamp) : Event(timestamp),
+                                        _processor_id(processor_id),
+                                        _property_id(property_id),
+                                        _blob_value(blob_value) {}
+
+    virtual bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
-    ObjectId property_id() const {return _parameter_id;}
 
-protected:
-    std::string _string_value;
+private:
+    ObjectId _processor_id;
+    int      _property_id;
+    BlobData _blob_value;
 };
 
-class DataPropertyChangeEvent : public ParameterChangeEvent
+class StringPropertyEvent : public Event
 {
 public:
-    DataPropertyChangeEvent(ObjectId processor_id,
-                            ObjectId property_id,
-                            BlobData blob_value,
-                            Time timestamp) : ParameterChangeEvent(Subtype::BLOB_PROPERTY_CHANGE,
-                                                                   processor_id,
-                                                                   property_id,
-                                                                   0.0f,
-                                                                   timestamp),
-                                              _blob_value(blob_value) {}
+    StringPropertyEvent(ObjectId processor_id,
+                       int property_id,
+                       const std::string& string_value,
+                       Time timestamp) : Event(timestamp),
+                                        _processor_id(processor_id),
+                                        _property_id(property_id),
+                                        _string_value(string_value) {}
 
+    virtual bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
-    ObjectId property_id() const {return _parameter_id;}
-    BlobData blob_value() const {return _blob_value;}
 
-protected:
-    BlobData _blob_value;
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _string_value;
 };
 
 // Inheriting from ParameterChangeEvent because they share the same data members but have
@@ -320,8 +311,6 @@ public:
                                                        _subtype(subtype) {}
 
     bool is_parameter_change_notification() const override {return true;}
-
-    bool is_parameter_change_event() const override {return false;}
 
     bool maps_to_rt_event() const override {return false;}
 
@@ -351,16 +340,14 @@ private:
     bool     _bypass_enabled;
 };
 
-// TODO how to handle strings and blobs here?
-
 namespace engine {class BaseEngine;}
 
 class EngineEvent : public Event
 {
 public:
-    virtual bool process_asynchronously() const override {return true;}
+    bool process_asynchronously() const override {return true;}
 
-    virtual bool is_engine_event() const override {return true;}
+    bool is_engine_event() const override {return true;}
 
     virtual int execute(engine::BaseEngine* engine) const = 0;
 
@@ -368,143 +355,25 @@ protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
 };
 
-class AddTrackEvent : public EngineEvent
+template <typename LambdaType>
+class LambdaEvent : public EngineEvent
 {
 public:
-    enum Status : int
-    {
-        INVALID_NAME = EventStatus::EVENT_SPECIFIC
-    };
+    LambdaEvent(LambdaType work_lambda,
+                Time timestamp) : EngineEvent(timestamp),
+                                  _work_lambda(work_lambda) {}
 
-    AddTrackEvent(const std::string& name,
-                  int channels,
-                  std::optional<int> input,
-                  int output,
-                  Time timestamp) : EngineEvent(timestamp),
-                                    _name(name),
-                                    _channels(channels),
-                                    _input_bus_channel(input),
-                                    _output_bus_channel(output) {}
+    int execute(engine::BaseEngine*) const override {
+        return _work_lambda();
+    }
 
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    std::string          _name;
-    int                  _channels;
-    std::optional<int>   _input_bus_channel;
-    int                  _output_bus_channel;
-};
-
-class RemoveTrackEvent : public EngineEvent
-{
-public:
-    enum Status : int
-    {
-        INVALID_TRACK = EventStatus::EVENT_SPECIFIC
-    };
-    RemoveTrackEvent(ObjectId track_id, Time timestamp) : EngineEvent(timestamp),
-                                                          _track_id(track_id) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    ObjectId _track_id;
-};
-
-class AddProcessorToTrackEvent : public EngineEvent
-{
-public:
-    enum Status : int
-    {
-        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
-        INVALID_TRACK,
-        INVALID_UID
-    };
-    enum class ProcessorType
-    {
-        INTERNAL,
-        VST2X,
-        VST3X,
-        LV2,
-    };
-
-    AddProcessorToTrackEvent(const std::string& name,
-                             const std::string& uid,
-                             const std::string& file,
-                             ProcessorType processor_type,
-                             ObjectId track,
-                             std::optional<ObjectId> before_processor,
-                             Time timestamp) : EngineEvent(timestamp) ,
-                                               _name(name),
-                                               _uid(uid),
-                                               _file(file),
-                                               _processor_type(processor_type),
-                                               _track(track),
-                                               _before_processor(before_processor) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    std::string     _name;
-    std::string     _uid;
-    std::string     _file;
-    ProcessorType   _processor_type;
-    ObjectId        _track;
-    std::optional<ObjectId>  _before_processor;
-};
-
-class MoveProcessorEvent : public EngineEvent
-{
-public:
-    enum Status : int
-    {
-        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
-        INVALID_SOURCE_TRACK,
-        INVALID_DEST_TRACK
-    };
-    MoveProcessorEvent(ObjectId processor,
-                       ObjectId source_track,
-                       ObjectId dest_track,
-                       std::optional<ObjectId> before_processor,
-                       Time timestamp) : EngineEvent(timestamp),
-                                         _processor(processor),
-                                         _source_track(source_track),
-                                         _dest_track(dest_track),
-                                         _before_processor(before_processor) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    ObjectId _processor;
-    ObjectId _source_track;
-    ObjectId _dest_track;
-    std::optional<ObjectId> _before_processor;
-};
-
-class RemoveProcessorEvent : public EngineEvent
-{
-public:
-    enum Status : int
-    {
-        INVALID_NAME = EventStatus::EVENT_SPECIFIC,
-        INVALID_TRACK,
-    };
-    RemoveProcessorEvent(ObjectId name, ObjectId track,
-                         Time timestamp) : EngineEvent(timestamp),
-                                           _name(name),
-                                           _track(track) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    ObjectId _name;
-    ObjectId _track;
+protected:
+    LambdaType _work_lambda;
 };
 
 class ProgramChangeEvent : public EngineEvent
 {
 public:
-
     ProgramChangeEvent(ObjectId processor_id,
                        int program_no,
                        Time timestamp) : EngineEvent(timestamp),
@@ -513,15 +382,64 @@ public:
 
     int execute(engine::BaseEngine* engine) const override;
 
-    ObjectId            processor_id() {return _processor_id;}
-    int                 program_no() {return _program_no;}
+    ObjectId            processor_id() const {return _processor_id;}
+    int                 program_no() const {return _program_no;}
 
-protected:
+private:
     ObjectId            _processor_id;
     int                 _program_no;
 };
 
-class ClippingNotificationEvent : public Event
+class PropertyChangeEvent : public EngineEvent
+{
+public:
+    PropertyChangeEvent(ObjectId processor_id,
+                        ObjectId property_id,
+                        const std::string& string_value,
+                        Time timestamp) : EngineEvent(timestamp),
+                                          _processor_id(processor_id),
+                                          _property_id(property_id),
+                                          _string_value(string_value) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _string_value;
+};
+
+class EngineNotificationEvent : public Event
+{
+public:
+    bool is_engine_notification() const override {return true;}
+
+    /* Convertible to ClippingNotification */
+    virtual bool is_clipping_notification() const {return false;}
+
+    /* Convertible to AudioGraphNotification */
+    virtual bool is_audio_graph_notification() const {return false;}
+
+    /* Convertible to TempoNotification */
+    virtual bool is_tempo_notification() const {return false;}
+
+    /* Convertible to TimeSignatureNotification */
+    virtual bool is_time_sign_notification() const {return false;}
+
+    /* Convertible to PlayingModeNotification */
+    virtual bool is_playing_mode_notification() const {return false;}
+
+    /* Convertible to SyncModeNotification */
+    virtual bool is_sync_mode_notification() const {return false;}
+
+    /* Convertible to TimingNotification */
+    virtual bool is_timing_notification() const {return false;}
+
+protected:
+    EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
+};
+
+class ClippingNotificationEvent : public EngineNotificationEvent
 {
 public:
     enum class ClipChannelType
@@ -529,41 +447,42 @@ public:
         INPUT,
         OUTPUT,
     };
-    ClippingNotificationEvent(int channel, ClipChannelType channel_type, Time timestamp) : Event(timestamp),
+    ClippingNotificationEvent(int channel,
+                              ClipChannelType channel_type,
+                              Time timestamp) : EngineNotificationEvent(timestamp),
                                                                                            _channel(channel),
                                                                                            _channel_type(channel_type) {}
     bool            is_clipping_notification() const override {return true;}
-    bool            is_engine_notification() const override {return true;}
     int             channel() const {return _channel;}
     ClipChannelType channel_type() const {return _channel_type;}
 
 private:
-    int _channel;
+    int             _channel;
     ClipChannelType _channel_type;
 };
 
-class AudioGraphNotificationEvent : public Event
+class AudioGraphNotificationEvent : public EngineNotificationEvent
 {
 public:
     enum class Action
     {
-        PROCESSOR_ADDED,
+        PROCESSOR_CREATED,
         PROCESSOR_DELETED,
-        PROCESSOR_MOVED,
-        TRACK_ADDED,
-        TRACK_DELETED,
+        PROCESSOR_ADDED_TO_TRACK,
+        PROCESSOR_REMOVED_FROM_TRACK,
+        TRACK_CREATED,
+        TRACK_DELETED
     };
 
     AudioGraphNotificationEvent(Action action,
                                 ObjectId processor_id,
                                 ObjectId track_id,
-                                Time timestamp) : Event(timestamp),
+                                Time timestamp) : EngineNotificationEvent(timestamp),
                                                   _action(action),
                                                   _processor(processor_id),
                                                   _track(track_id) {}
 
     bool     is_audio_graph_notification() const override {return true;}
-    bool     is_engine_notification() const override {return true;}
     Action   action() const {return _action;}
     ObjectId processor() const {return _processor;}
     ObjectId track() const {return _track;}
@@ -572,6 +491,69 @@ private:
     Action   _action;
     ObjectId _processor;
     ObjectId _track;
+};
+
+class TempoNotificationEvent : public EngineNotificationEvent
+{
+public: TempoNotificationEvent(float tempo, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                              _tempo(tempo) {}
+
+    bool is_tempo_notification() const override {return true;}
+    float tempo() const {return _tempo;}
+
+private:
+    float _tempo;
+};
+
+class TimeSignatureNotificationEvent : public EngineNotificationEvent
+{
+public: TimeSignatureNotificationEvent(TimeSignature signature,
+                                       Time timestamp) : EngineNotificationEvent(timestamp),
+                                                         _signature(signature) {}
+
+    bool is_time_sign_notification() const override {return true;}
+    TimeSignature time_signature() const {return _signature;}
+
+private:
+    TimeSignature _signature;
+};
+
+class PlayingModeNotificationEvent : public EngineNotificationEvent
+{
+public: PlayingModeNotificationEvent(PlayingMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                         _mode(mode) {}
+
+    bool is_playing_mode_notification() const override {return true;}
+    PlayingMode mode() const {return _mode;}
+
+private:
+    PlayingMode _mode;
+};
+
+class SyncModeNotificationEvent : public EngineNotificationEvent
+{
+public: SyncModeNotificationEvent(SyncMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                   _mode(mode) {}
+
+    bool is_sync_mode_notification() const override {return true;}
+    SyncMode mode() const {return _mode;}
+
+private:
+    SyncMode _mode;
+};
+
+class EngineTimingNotificationEvent : public EngineNotificationEvent
+{
+public:
+    EngineTimingNotificationEvent(const performance::ProcessTimings& timings,
+                                  Time timestamp) : EngineNotificationEvent(timestamp),
+                                                    _timings(timings){}
+
+    bool is_timing_notification() const override {return true;}
+    const performance::ProcessTimings& timings() const {return _timings;}
+
+private:
+    performance::ProcessTimings _timings;
 };
 
 class AsynchronousWorkEvent : public Event
@@ -603,7 +585,7 @@ public:
 
     virtual Event* execute() override;
 
-protected:
+private:
     AsynchronousWorkCallback _work_callback;
     void*                    _data;
     ObjectId                 _rt_processor;
@@ -616,6 +598,7 @@ public:
     AsynchronousProcessorWorkCompletionEvent(int return_value,
                                              ObjectId processor,
                                              EventId rt_event_id,
+
                                              Time timestamp) : Event(timestamp),
                                                                _return_value(return_value),
                                                                _rt_processor(processor),
@@ -689,6 +672,7 @@ public:
 private:
     SyncMode _mode;
 };
+
 } // end namespace sushi
 
 #endif //SUSHI_CONTROL_EVENT_H

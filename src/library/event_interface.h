@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Abstract classes for adding listening and notification functionality
+ * @brief Abstract interface for adding event and notification functionality
  *        to a class.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */

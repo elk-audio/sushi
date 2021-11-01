@@ -1,3 +1,46 @@
+## 0.12.0
+
+New Features:
+  * Internal send and return plugins
+  * Stereo mixer internal plugin
+  * Sample delay internal plugin
+  * Multi channel support in peak meter plugin
+  * Timing and transport notifications
+  * Master limiter
+  * Updated VST SDK to v3.7.3
+  * Updated Twine to v0.2.1
+  * Build support for GCC10
+
+Fixes:
+  * gRPC segfault on exit
+  * Refactored plugin instantiation architecture
+  * Track noise for tracks with no audio input
+  * Bug where events outputted before the audio process callback were lost
+  * Race condition in OSC path registration
+
+## 0.11.0
+
+New Features:
+  * Expanded gRPC control interface, including push-style notifications
+  * Bumped recommended gRPC version
+  * Dynamic loading and routing of tracks and plugins
+  * Configurable OSC parameter output
+  * Wav writer plugin
+  * Mono summing plugin
+  * Improved peak meter plugin
+
+Fixes:
+  * Aftertouch messages not forwarded in Alsa midi frontend
+  * Ensuring silence when track gain is 0
+  * Fix for generate script when python2.7 is missing
+  * Fix to accommodate v1.16 and v1.24 of gRPC libraries
+  * Raspa frontend initialisation order fix
+  * Internal event system refactor
+  * Controller class refactor and split into sub-controllers
+  * Logging library built statically - faster compile time
+  * Fix for timing sensitive unit tests
+  * Audio routing bug for mono tracks
+
 ## 0.10.3
 
 Fixes:

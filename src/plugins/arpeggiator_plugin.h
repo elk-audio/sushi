@@ -28,13 +28,6 @@
 namespace sushi {
 namespace arpeggiator_plugin {
 
-static const std::string DEFAULT_NAME = "sushi.testing.arpeggiator";
-static const std::string DEFAULT_LABEL = "Arpeggiator";
-
-constexpr int MAX_OCTAVE = 2;
-constexpr int MAX_ARP_NOTES = 8;
-constexpr int START_NOTE = 48;
-
 /**
  * @brief Simple arpeggiator module with only 1 mode (up)
  *        The last helt note will be remembered and played indefinitely

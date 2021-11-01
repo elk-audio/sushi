@@ -27,6 +27,7 @@
 
 #include "twine/twine.h"
 
+#include "dsp_library/master_limiter.h"
 #include "engine/event_dispatcher.h"
 #include "engine/base_engine.h"
 #include "engine/track.h"
@@ -34,16 +35,17 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
-#include "engine/controller.h"
+#include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
+#include "engine/connection_storage.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
-#include "library/elk_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"
 #include "library/types.h"
 #include "library/performance_timer.h"
+#include "library/plugin_registry.h"
 
 namespace sushi {
 namespace engine {
@@ -76,7 +78,7 @@ private:
     std::vector<unsigned int> _output_clip_count;
 };
 
-constexpr int MAX_RT_PROCESSOR_ID = 1000;
+constexpr int MAX_RT_PROCESSOR_ID = 100000;
 
 class AudioEngine : public BaseEngine
 {
@@ -90,8 +92,12 @@ public:
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
      *                     With values >1 tracks will be processed in parallel threads.
+     * @param evend_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
+     *                         If nullptr, a normal EventDispatcher is created and used.
      */
-    explicit AudioEngine(float sample_rate, int rt_cpu_cores = 1);
+    explicit AudioEngine(float sample_rate,
+                         int rt_cpu_cores = 1,
+                         dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
      ~AudioEngine();
 
@@ -154,6 +160,18 @@ public:
     EngineReturnStatus connect_audio_output_channel(int output_channel,
                                                     int track_channel,
                                                     ObjectId track_id) override;
+
+    EngineReturnStatus disconnect_audio_input_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
+
+    EngineReturnStatus disconnect_audio_output_channel(int engine_channel,
+                                                      int track_channel,
+                                                      ObjectId track_id) override;
+
+    std::vector<AudioConnection> audio_input_connections() override;
+
+    std::vector<AudioConnection> audio_output_connections() override;
 
     /**
      * @brief Connect a stereo pair (bus) from an engine input bus to an input bus of
@@ -342,7 +360,9 @@ public:
      * @param output_busses The number of output stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int input_busses, int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name,
+                                                                  int input_busses,
+                                                                  int output_busses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_id The unique name of the track to delete
@@ -351,18 +371,14 @@ public:
     EngineReturnStatus delete_track(ObjectId track_id) override;
 
     /**
-     * @brief Create a plugin instance, either from internal plugins or loaded from file.
+     * @brief Create a processor instance, either from internal plugins or loaded from file.
      *        The created plugin can then be added to tracks.
-     * @param plugin_uid The unique id of the plugin
-     * @param plugin_name The name to give the plugin after loading, must be unique.
-     * @param plugin_path The file to load the plugin from, only valid for external plugins
-     * @param plugin_type The type of plugin, i.e. internal or external
-     * @return the unique id of the plugin created, only valid if status is EngineReturnStatus::OK
+     * @param plugin_info
+     * @param processor_name
+     * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string &plugin_uid,
-                                                         const std::string &plugin_name,
-                                                         const std::string &plugin_path,
-                                                         PluginType plugin_type) override;
+    std::pair <EngineReturnStatus, ObjectId> create_processor(const engine::PluginInfo& plugin_info,
+                                                              const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -411,14 +427,18 @@ public:
         _output_clip_detection_enabled = enabled;
     }
 
-    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
+    /**
+     * @brief Enable master limiter on outputs
+     * @param enabled Enabled if true, disable if false
+     */
+    void enable_master_limiter(bool enabled) override
     {
-        return &_event_dispatcher;
+        _master_limter_enabled = enabled;
     }
 
-    sushi::ext::SushiControl* controller() override
+    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
-        return &_controller;
+        return _event_dispatcher.get();
     }
 
     sushi::engine::Transport* transport() override
@@ -439,9 +459,14 @@ public:
     /**
      * @brief Print the current processor timings (in enabled) in the log
      */
-    void print_timings_to_log() override;
+    void update_timings() override;
 
 private:
+    enum class Direction : bool
+    {
+        INPUT = true,
+        OUTPUT = false
+    };
     /**
      * @brief Register a newly created processor in all lookup containers
      *        and take ownership of it.
@@ -477,6 +502,7 @@ private:
      * @param track_id The id of the track to remove from
      */
     void _remove_connections_from_track(ObjectId track_id);
+
     /**
      * @brief Register a newly created track
      * @param track Pointer to the track
@@ -491,12 +517,10 @@ private:
     */
     EngineReturnStatus _send_control_event(RtEvent& event);
 
-    /**
-     * @brief Process events that are to be handled by the engine directly and
-     *        not by a particular processor.
-     * @param event The event to handle
-     * @return true if handled, false if not an engine event
-     */
+    EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
+
+    EngineReturnStatus _disconnect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
+
     void _process_internal_rt_events();
 
     void _send_rt_events_to_processors();
@@ -520,8 +544,8 @@ private:
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
 
-    std::vector<AudioConnection> _audio_in_connections;
-    std::vector<AudioConnection> _audio_out_connections;
+    ConnectionStorage<AudioConnection> _audio_in_connections;
+    ConnectionStorage<AudioConnection> _audio_out_connections;
     std::vector<CvConnection>    _cv_in_connections;
     std::vector<GateConnection>  _gate_in_connections;
 
@@ -538,16 +562,20 @@ private:
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
 
-    dispatcher::EventDispatcher _event_dispatcher{this, &_main_out_queue, &_main_in_queue};
-    Controller _controller{this};
+    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
+    HostControl _host_control{nullptr, &_transport};
 
-    HostControl _host_control{&_event_dispatcher, &_transport};
     performance::PerformanceTimer _process_timer;
-    bool _timings_enabled{false};
+    int  _log_timing_print_counter{0};
 
     bool _input_clip_detection_enabled{false};
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
+
+    bool _master_limter_enabled{false};
+    std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
+
+    PluginRegistry _plugin_registry;
 };
 
 /**
@@ -556,13 +584,6 @@ private:
  * @return A new, non-transient state
  */
 RealtimeState update_state(RealtimeState current_state);
-
-/**
- * @brief Instantiate a plugin instance of a given type
- * @param uid String unique id
- * @return Pointer to plugin instance if uid is valid, nullptr otherwise
- */
-std::shared_ptr<Processor> create_internal_plugin(const std::string& uid, HostControl& host_control);
 
 } // namespace engine
 } // namespace sushi

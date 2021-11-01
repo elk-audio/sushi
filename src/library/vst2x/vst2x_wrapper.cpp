@@ -18,8 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifdef SUSHI_BUILD_WITH_VST2
-
 #include "twine/twine.h"
 
 #include "vst2x_wrapper.h"
@@ -332,7 +330,6 @@ void Vst2xWrapper::process_event(const RtEvent& event)
     {
         SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
     }
-
 }
 
 void Vst2xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -413,7 +410,6 @@ VstTimeInfo* Vst2xWrapper::time_info()
     return &_time_info;
 }
 
-
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
@@ -493,19 +489,3 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
 
 } // namespace vst2
 } // namespace sushi
-
-#endif //SUSHI_BUILD_WITH_VST2
-#ifndef SUSHI_BUILD_WITH_VST2
-#include "vst2x_wrapper.h"
-#include "logging.h"
-namespace sushi {
-namespace vst2 {
-SUSHI_GET_LOGGER;
-ProcessorReturnCode Vst2xWrapper::init(float /*sample_rate*/)
-{
-    /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with Vst 2.4 support!");
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
-}}}
-#endif
-

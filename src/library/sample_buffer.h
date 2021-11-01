@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 #include "constants.h"
 
@@ -536,18 +537,16 @@ public:
     }
 
     /**
-     * @brief Count the number of samples outside of [-1.0, 1.0]
-     *        in a range of channels in the buffer
-     * @param start_channel The first channel to analyse
-     * @param number_of_channels The number of channels to analyse
+     * @brief Count the number of samples outside of [-1.0, 1.0] in one channel
+     * @param channel The channel to analyse, must not exceed the buffer's channelcount
      * @return The number of samples in the buffer whose absolute value is > 1.0
      */
-    int count_clipped_samples(int start_channel, int number_of_channels) const
+    int count_clipped_samples(int channel) const
     {
-        assert(number_of_channels + start_channel <= _channel_count);
+        assert(channel < _channel_count);
         int clipcount = 0;
-        const float* data = _buffer + size * start_channel;
-        for (int i = 0 ; i < size * number_of_channels; ++i)
+        const float* data = _buffer + size * channel;
+        for (int i = 0 ; i < size; ++i)
         {
             /* std::abs() is more efficient than testing for upper and lower bound separately
                And GCC can compile this to vectorised, branchless code */
@@ -557,12 +556,38 @@ public:
     }
 
     /**
-     * @brief Count the number of samples outside of [-1.0, 1.0] in the buffer
-     * @return The number of samples whose absolute value is > 1.0
+     * @brief Calculate the peak value / loudest sample for one channel
+     * @param channel The channel to analyse, must not exceed the buffer's channelcount
+     * @return The absolute value of the loudest sample
      */
-    int count_clipped_samples() const
+    float calc_peak_value(int channel) const
     {
-        return count_clipped_samples(0, _channel_count);
+        assert(channel < _channel_count);
+        float max = 0.0f;
+        const float* data = _buffer + size * channel;
+        for (int i = 0 ; i < size; ++i)
+        {
+            max = std::max(max, std::abs(data[i]));
+        }
+        return max;
+    }
+
+    /**
+     * @brief Calculate the root-mean-square average for one channel
+     * @param channel The channel to analyse, must not exceed the buffer's channelcount
+     * @return The RMS value of all the samples in the channel
+     */
+    float calc_rms_value(int channel) const
+    {
+        assert(channel < _channel_count);
+        float sum = 0.0f;
+        const float* data = _buffer + size * channel;
+        for (int i = 0 ; i < size; ++i)
+        {
+            float s = data[i];
+            sum += s * s;
+        }
+        return std::sqrt(sum / AUDIO_CHUNK_SIZE);
     }
 
 private:

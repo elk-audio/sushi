@@ -18,8 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifdef SUSHI_BUILD_WITH_LV2
-
 #include "lv2_wrapper.h"
 
 #include <exception>
@@ -47,9 +45,12 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-LV2_Wrapper::LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri) :
-Processor(host_control),
-_plugin_path {lv2_plugin_uri}
+LV2_Wrapper::LV2_Wrapper(HostControl host_control,
+                         const std::string& lv2_plugin_uri,
+                         LilvWorld* world):
+                         Processor(host_control),
+                         _plugin_path(lv2_plugin_uri),
+                         _world(world)
 {
     _max_input_channels = LV2_WRAPPER_MAX_N_CHANNELS;
     _max_output_channels = LV2_WRAPPER_MAX_N_CHANNELS;
@@ -57,7 +58,7 @@ _plugin_path {lv2_plugin_uri}
 
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
-    _model = std::make_unique<Model>(sample_rate, this);
+    _model = std::make_unique<Model>(sample_rate, this, _world);
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
@@ -419,8 +420,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
             {
                 _model->set_play_state(PlayState::PAUSED);
 
-                auto e = RtEvent::make_async_work_event(&LV2_Wrapper::restore_state_callback, this->id(), this);
-                output_event(e);
+                request_non_rt_task(&restore_state_callback);
                 break;
             }
             case PlayState::PAUSED:
@@ -511,9 +511,9 @@ bool LV2_Wrapper::bypassed() const
     return _bypass_manager.bypassed();
 }
 
-void LV2_Wrapper::output_worker_event(const RtEvent& event)
+void LV2_Wrapper::request_worker_callback(AsyncWorkCallback callback)
 {
-    output_event(event);
+    request_non_rt_task(callback);
 }
 
 void LV2_Wrapper::_deliver_inputs_to_plugin()
@@ -896,20 +896,3 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
 
 } // namespace lv2
 } // namespace sushi
-
-#endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-#include "library/lv2/lv2_wrapper.h"
-#include "logging.h"
-namespace sushi {
-namespace lv2 {
-
-SUSHI_GET_LOGGER;
-
-ProcessorReturnCode LV2_Wrapper::init(float /*sample_rate*/)
-{
-    /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with LV2 support!");
-    return ProcessorReturnCode::UNSUPPORTED_OPERATION;
-}}}
-#endif

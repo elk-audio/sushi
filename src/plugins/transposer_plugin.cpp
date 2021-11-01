@@ -30,8 +30,8 @@ namespace transposer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("transposer");
 
-static const std::string DEFAULT_NAME = "sushi.testing.transposer";
-static const std::string DEFAULT_LABEL = "Transposer";
+constexpr auto DEFAULT_NAME = "sushi.testing.transposer";
+constexpr auto DEFAULT_LABEL = "Transposer";
 
 constexpr int MAX_NOTE = 127;
 constexpr int MIN_NOTE = 0;

@@ -38,7 +38,7 @@ protected:
     }
 
     EngineMockup _engine{SAMPLE_RATE};
-    MidiDispatcher _midi_dispatcher{&_engine};
+    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
     OfflineFrontend* _module_under_test;
 };
 
@@ -124,7 +124,10 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
-    sushi::jsonconfig::JsonConfigurator configurator(&_engine, &_midi_dispatcher, test_config_file);
+    sushi::jsonconfig::JsonConfigurator configurator(&_engine,
+                                                     &_midi_dispatcher,
+                                                     _engine.processor_container(),
+                                                     test_config_file);
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);

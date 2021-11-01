@@ -67,7 +67,7 @@ protected:
 
 TEST_F(TestOSCFrontend, TestConnectAll)
 {
-    _module_under_test.connect_all();
+    _module_under_test.connect_to_all();
     lo_send(_address, "/parameter/track_1/param_1", "f", 0.5f);
     EXPECT_TRUE(wait_for_event());
     lo_send(_address, "/parameter/track_2/param_2", "f", 0.5f);
@@ -84,7 +84,7 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
 {
     // As this in only done in response to events, test the event handling at the same time
     ObjectId processor_id = 0;
-    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED,
+    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
                                              processor_id, 0, IMMEDIATE_PROCESS);
     _module_under_test.process(&event);
     lo_send(_address, "/parameter/proc_1/param_1", "f", 0.5f);
@@ -100,14 +100,31 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnections)
 
 TEST_F(TestOSCFrontend, TestSendParameterChange)
 {
-    ASSERT_TRUE(_module_under_test.connect_to_parameter("sampler", "volume"));
+    ASSERT_TRUE(_module_under_test._connect_to_parameter("sampler", "volume", 0, 0));
     lo_send(_address, "/parameter/sampler/volume", "f", 5.0f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.parameter_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ(0, std::stoi(args["parameter id"]));
     EXPECT_FLOAT_EQ(5.0f, std::stof(args["value"]));
+
+    /* Test with a not registered path */
+    lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    ASSERT_FALSE(_controller.was_recently_called());
+}
+
+TEST_F(TestOSCFrontend, TestSendPropertyChange)
+{
+    ASSERT_TRUE(_module_under_test._connect_to_property("sampler", "sample_file", 0, 0));
+    lo_send(_address, "/property/sampler/sample_file", "s", "Sample file");
+
+    ASSERT_TRUE(wait_for_event());
+    auto args = _controller.parameter_controller_mockup()->get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["processor id"]));
+    EXPECT_EQ(0, std::stoi(args["property id"]));
+    EXPECT_EQ("Sample file", args["value"]);
 
     /* Test with a not registered path */
     lo_send(_address, "/parameter/sampler/attack", "f", 5.0f);
@@ -121,7 +138,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOn)
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_on", 0, 46, 0.8f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(0, std::stoi(args["channel"]));
     EXPECT_EQ(46, std::stoi(args["note"]));
@@ -139,7 +156,7 @@ TEST_F(TestOSCFrontend, TestSendNoteOff)
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_off", 1, 52, 0.7f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(1, std::stoi(args["channel"]));
     EXPECT_EQ(52, std::stoi(args["note"]));
@@ -157,7 +174,7 @@ TEST_F(TestOSCFrontend, TestSendNoteAftertouch)
     lo_send(_address, "/keyboard_event/sampler", "siif", "note_aftertouch", 10, 36, 0.1f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(10, std::stoi(args["channel"]));
     EXPECT_EQ(36, std::stoi(args["note"]));
@@ -175,7 +192,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardModulation)
     lo_send(_address, "/keyboard_event/sampler", "sif", "modulation", 9, 0.5f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(9, std::stoi(args["channel"]));
     EXPECT_FLOAT_EQ(0.5f, std::stof(args["value"]));
@@ -192,7 +209,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardPitchBend)
     lo_send(_address, "/keyboard_event/sampler", "sif", "pitch_bend", 3, 0.3f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(3, std::stoi(args["channel"]));
     EXPECT_FLOAT_EQ(0.3f, std::stof(args["value"]));
@@ -209,7 +226,7 @@ TEST_F(TestOSCFrontend, TestSendKeyboardAftertouch)
     lo_send(_address, "/keyboard_event/sampler", "sif", "aftertouch", 11, 0.11f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.keyboard_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["track id"]));
     EXPECT_EQ(11, std::stoi(args["channel"]));
     EXPECT_FLOAT_EQ(0.11f, std::stof(args["value"]));
@@ -226,7 +243,7 @@ TEST_F(TestOSCFrontend, TestSendProgramChange)
     lo_send(_address, "/program/sampler", "i", 1);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.program_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ(1, std::stoi(args["program id"]));
 
@@ -241,7 +258,7 @@ TEST_F(TestOSCFrontend, TestSetBypassState)
     lo_send(_address, "/bypass/sampler", "i", 1);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.audio_graph_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor id"]));
     EXPECT_EQ("1", args["bypass enabled"]);
 
@@ -255,7 +272,7 @@ TEST_F(TestOSCFrontend, TestSetTempo)
     lo_send(_address, "/engine/set_tempo", "f", 136.0f);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.transport_controller_mockup()->get_args_from_last_call();
     EXPECT_FLOAT_EQ(136.0, std::stof(args["tempo"]));
 }
 
@@ -264,7 +281,7 @@ TEST_F(TestOSCFrontend, TestSetTimeSignature)
     lo_send(_address, "/engine/set_time_signature", "ii", 7, 8);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.transport_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(7, std::stoi(args["numerator"]));
     EXPECT_EQ(8, std::stoi(args["denominator"]));
 }
@@ -274,7 +291,7 @@ TEST_F(TestOSCFrontend, TestSetPlayingMode)
     lo_send(_address, "/engine/set_playing_mode", "s", "playing");
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.transport_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ("PLAYING", args["playing mode"]);
 }
 
@@ -283,7 +300,7 @@ TEST_F(TestOSCFrontend, TestSetSyncMode)
     lo_send(_address, "/engine/set_sync_mode", "s", "midi");
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.transport_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ("MIDI", args["sync mode"]);
 }
 
@@ -292,7 +309,7 @@ TEST_F(TestOSCFrontend, TestSetTimingStatisticsEnabled)
     lo_send(_address, "/engine/set_timing_statistics_enabled", "i", 1);
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.timing_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ("1", args["enabled"]);
 }
 
@@ -308,8 +325,8 @@ TEST_F(TestOSCFrontend, TestResetTrackTimings)
     lo_send(_address, "/engine/reset_timing_statistics", "ss", "track", "main");
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["track id"]));
+    auto args = _controller.timing_controller_mockup()->get_args_from_last_call();
+    EXPECT_EQ(0, std::stoi(args["track_id"]));
 }
 
 TEST_F(TestOSCFrontend, TestResetProcessorTimings)
@@ -317,64 +334,8 @@ TEST_F(TestOSCFrontend, TestResetProcessorTimings)
     lo_send(_address, "/engine/reset_timing_statistics", "ss", "processor", "sampler");
 
     ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor id"]));
-}
-
-TEST_F(TestOSCFrontend, TestAddProcessorToTrack)
-{
-    lo_send(_address, "/engine/add_processor_to_track", "sssss", "plugin", "", "lib.so", "vst2x", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
-    EXPECT_EQ("plugin", args["name"]);
-    EXPECT_EQ("", args["uid"]);
-    EXPECT_EQ("lib.so", args["file"]);
-    EXPECT_EQ(static_cast<int>(PluginType::VST2X), std::stoi(args["type"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
-    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
-
-    lo_send(_address, "/engine/add_processor_to_track", "ssssss", "plugin", "uid", "lib.so", "vst3x", "track", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    args = _controller.get_args_from_last_call();
-    EXPECT_EQ("plugin", args["name"]);
-    EXPECT_EQ("uid", args["uid"]);
-    EXPECT_EQ("lib.so", args["file"]);
-    EXPECT_EQ(static_cast<int>(PluginType::VST3X), std::stoi(args["type"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
-    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
-}
-
-TEST_F(TestOSCFrontend, TestMoveProcessorOnTrack)
-{
-    lo_send(_address, "/engine/move_processor_on_track", "sss", "plugin", "track", "track_1");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
+    auto args = _controller.timing_controller_mockup()->get_args_from_last_call();
     EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
-    EXPECT_EQ(-1, std::stoi(args["before_processor_id"]));
-
-    lo_send(_address, "/engine/move_processor_on_track", "ssss", "plugin", "track", "track_1", "track_2");
-
-    ASSERT_TRUE(wait_for_event());
-    args = _controller.get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["source_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["dest_track_id"]));
-    EXPECT_EQ(0, std::stoi(args["before_processor_id"]));
-}
-
-TEST_F(TestOSCFrontend, TestDeleteProcesorFromTrack)
-{
-    lo_send(_address, "/engine/delete_processor_from_track", "ss", "plugin", "track");
-
-    ASSERT_TRUE(wait_for_event());
-    auto args = _controller.get_args_from_last_call();
-    EXPECT_EQ(0, std::stoi(args["processor_id"]));
-    EXPECT_EQ(0, std::stoi(args["track_id"]));
 }
 
 TEST(TestOSCFrontendInternal, TestMakeSafePath)

@@ -15,14 +15,16 @@
 
 /**
  * @brief Internal plugin manager.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+
+#include <cassert>
+
+#include "twine/twine.h"
 
 #include "library/internal_plugin.h"
 
 namespace sushi {
-
-constexpr int DEFAULT_CHANNELS = 2;
 
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
@@ -109,40 +111,24 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
 }
 
 
-bool InternalPlugin::register_string_property(const std::string &id,
-                                              const std::string &label,
-                                              const std::string& unit)
+bool InternalPlugin::register_property(const std::string& name,
+                                       const std::string& label,
+                                       const std::string& default_value)
 {
-    auto param = new StringPropertyDescriptor(id, label, unit);
+    auto param = new StringPropertyDescriptor(name, label, "");
 
     if (this->register_parameter(param) == false)
     {
         return false;
     }
 
-    /* We don't provide a string value class but must push a dummy container here for ids to match */
+    // push a dummy container here for ids to match
     ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
     _parameter_values.push_back(value_storage);
+    // The property value is stored here
+    _property_values[param->id()] = default_value;
     return true;
 }
-
-
-bool InternalPlugin::register_data_property(const std::string &id,
-                                            const std::string &label,
-                                            const std::string& unit)
-{
-    auto param = new DataPropertyDescriptor(id, label, unit);
-
-    if (this->register_parameter(param) == false)
-    {
-        return false;
-    }
-    /* We don't provide a data value class but must push a dummy container here for ids to match */
-    ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
-    _parameter_values.push_back(value_storage);
-    return true;
-}
-
 
 void InternalPlugin::process_event(const RtEvent& event)
 {
@@ -186,6 +172,17 @@ void InternalPlugin::process_event(const RtEvent& event)
             break;
         }
 
+        case RtEventType::STRING_PROPERTY_CHANGE:
+        {
+            /* In order to handle STRING_PROPERTY_CHANGE events in the rt_thread, override
+             * process_event() and handle it. Then call this base function which will automatically
+             * schedule a delete event that will be executed in the non-rt domain */
+            auto typed_event = event.property_change_event();
+            auto rt_event = RtEvent::make_delete_string_event(typed_event->value());
+            output_event(rt_event);
+            break;
+        }
+
         default:
             break;
     }
@@ -198,7 +195,7 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
     if (maybe_output_cv_value(storage->descriptor()->id(), new_value) == false)
     {
         auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(),
-                                                      storage->processed_value());
+                                                      storage->normalized_value());
         output_event(e);
     }
 }
@@ -206,14 +203,14 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
 void InternalPlugin::set_parameter_and_notify(IntParameterValue* storage, int new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->processed_value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->normalized_value());
     output_event(e);
 }
 
 void InternalPlugin::set_parameter_and_notify(BoolParameterValue* storage, bool new_value)
 {
     storage->set(new_value);
-    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->processed_value());
+    auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->normalized_value());
     output_event(e);
 }
 
@@ -292,6 +289,43 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
     }
 
     return {ProcessorReturnCode::PARAMETER_ERROR, ""};
+}
+
+std::pair<ProcessorReturnCode, std::string> InternalPlugin::property_value(ObjectId property_id) const
+{
+    std::scoped_lock<std::mutex> lock(_property_lock);
+    auto node = _property_values.find(property_id);
+    if (node == _property_values.end())
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    }
+    return {ProcessorReturnCode::OK, node->second};
+}
+
+ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, const std::string& value)
+{
+    std::scoped_lock<std::mutex> lock(_property_lock);
+    auto node = _property_values.find(property_id);
+    if (node == _property_values.end())
+    {
+        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
+    }
+    node->second = value;
+    return ProcessorReturnCode::OK;
+}
+
+void InternalPlugin::send_data_to_realtime(BlobData data, int id)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    auto event = new DataPropertyEvent(this->id(), id, data, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
+}
+
+void InternalPlugin::send_property_to_realtime(ObjectId property_id, const std::string& value)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    auto event = new StringPropertyEvent(this->id(), property_id, value, IMMEDIATE_PROCESS);
+    _host_control.post_event(event);
 }
 
 } // end namespace sushi

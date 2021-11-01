@@ -20,9 +20,11 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
+#pragma GCC diagnostic pop
 
 #include "logging.h"
 #include "json_configurator.h"
@@ -150,6 +152,12 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         }
     }
 
+    if (host_config.HasMember("master_limiter"))
+    {
+        _engine->enable_master_limiter(host_config["master_limiter"].GetBool());
+        SUSHI_LOG_INFO("Enable master limiter set to {}", host_config["master_limiter"].GetBool());
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -185,17 +193,27 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
         for (const auto& con : midi["track_connections"].GetArray())
         {
             bool raw_midi = con["raw_midi"].GetBool();
+
+            auto track_name = con["track"].GetString();
+            const auto track = _processor_container->track(track_name);
+            if (track == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+
             MidiDispatcherStatus res;
             if (raw_midi)
             {
                 res = _midi_dispatcher->connect_raw_midi_to_track(con["port"].GetInt(),
-                                                                  con["track"].GetString(),
+                                                                  track->id(),
                                                                   _get_midi_channel(con["channel"]));
             }
             else
             {
                 res = _midi_dispatcher->connect_kb_to_track(con["port"].GetInt(),
-                                                            con["track"].GetString(),
+                                                            track->id(),
                                                             _get_midi_channel(con["channel"]));
             }
             if (res != MidiDispatcherStatus::OK)
@@ -206,9 +224,6 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
-                                       "track connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -217,20 +232,32 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& con : midi["track_out_connections"].GetArray())
         {
+            auto track_name = con["track"].GetString();
+            const auto track = _processor_container->track(track_name);
+            if (track == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                                "track connection in Json config file.", con["track"].GetString());
+                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+            }
+
             auto res = _midi_dispatcher->connect_track_to_output(con["port"].GetInt(),
-                                                                 con["track"].GetString(),
+                                                                 track->id(),
                                                                  _get_midi_channel(con["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
                 if(res == MidiDispatcherStatus::INVALID_MIDI_OUTPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
+                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified for midi "
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
-                                       "track connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
+                else if(res == MidiDispatcherStatus::INVAlID_CHANNEL)
+                {
+                    SUSHI_LOG_ERROR("Invalid channel \"{}\" specified for midi "
+                                    "channel connections in Json Config file.", con["channel"].GetInt());
+                    return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+                }
             }
         }
     }
@@ -239,8 +266,17 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& con : midi["program_change_connections"].GetArray())
         {
+            auto processor_name = con["plugin"].GetString();
+            const auto processor = _processor_container->processor(processor_name);
+            if (processor == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                                "connection in Json config file.", processor_name);
+                return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            }
+
             auto res = _midi_dispatcher->connect_pc_to_processor(con["port"].GetInt(),
-                                                                 con["plugin"].GetString(),
+                                                                 processor->id(),
                                                                  _get_midi_channel(con["channel"]));
             if (res != MidiDispatcherStatus::OK)
             {
@@ -250,9 +286,6 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                    "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
-                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
-                               "connection in Json config file.", con["track"].GetString());
-                return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
         }
     }
@@ -268,9 +301,26 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                 is_relative = (cc_mode.compare("relative") == 0);
             }
 
+            auto processor_name = cc_map["plugin_name"].GetString();
+
+            const auto processor = _processor_container->processor(processor_name);
+            if (processor == nullptr)
+            {
+                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                                "connection in Json config file.", processor_name);
+                return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            }
+
+            auto parameter_name = cc_map["parameter_name"].GetString();
+            const auto parameter = processor->parameter_from_name(parameter_name);
+            if (parameter == nullptr)
+            {
+                return JsonConfigReturnStatus::INVALID_PARAMETER;
+            }
+
             auto res = _midi_dispatcher->connect_cc_to_parameter(cc_map["port"].GetInt(),
-                                                                 cc_map["plugin_name"].GetString(),
-                                                                 cc_map["parameter_name"].GetString(),
+                                                                 processor->id(),
+                                                                 parameter->id(),
                                                                  cc_map["cc_number"].GetInt(),
                                                                  cc_map["min_range"].GetFloat(),
                                                                  cc_map["max_range"].GetFloat(),
@@ -301,6 +351,58 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     return JsonConfigReturnStatus::OK;
 }
 
+JsonConfigReturnStatus JsonConfigurator::load_osc()
+{
+    auto [status, osc_config] = _parse_section(JsonSection::OSC);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+
+    if (osc_config.HasMember("enable_all_processor_outputs"))
+    {
+        bool enabled = osc_config["enable_all_processor_outputs"].GetBool();
+        if(enabled)
+        {
+            _osc_frontend->connect_from_all_parameters();
+            _osc_frontend->set_connect_from_all_parameters(true);
+        }
+        else // While the current default is off, it may not always be, so why not have this wired up.
+        {
+            _osc_frontend->disconnect_from_all_parameters();
+            _osc_frontend->set_connect_from_all_parameters(false);
+        }
+        SUSHI_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
+    }
+
+    if (osc_config.HasMember("enabled_processor_outputs"))
+    {
+        for (const auto& osc_out : osc_config["enabled_processor_outputs"].GetArray())
+        {
+            auto processor_name = osc_out["processor"].GetString();
+            auto processor = _processor_container->processor(processor_name);
+            bool res = false;
+            if(processor != nullptr)
+            {
+                res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
+            }
+            if (res != true)
+            {
+                SUSHI_LOG_ERROR("Failed to enable osc parameter output on processor {}", processor_name);
+            }
+
+            if (osc_out.HasMember("parameter_blocklist"))
+            {
+                for (const auto& parameter : osc_out["parameter_blocklist"].GetArray())
+                {
+                    auto parameter_name = parameter["parameter"].GetString();
+                    _osc_frontend->disconnect_from_parameter(processor_name, parameter_name);
+                }
+            }
+        }
+    }
+    return JsonConfigReturnStatus::OK;
+}
 
 JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
 {
@@ -365,7 +467,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                 {
                     SUSHI_LOG_ERROR("Failed to connect gate {} to processor {}",
                                    gate_in["gate"].GetInt(),
-                                   gate_in["processor"].GetInt());
+                                   gate_in["processor"].GetString());
                 }
             }
         }
@@ -394,7 +496,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                 {
                     SUSHI_LOG_ERROR("Failed to connect gate {} from processor {}",
                                    gate_out["gate"].GetInt(),
-                                   gate_out["processor"].GetInt());
+                                   gate_out["processor"].GetString());
                 }
             }
         }
@@ -433,6 +535,11 @@ JsonConfigurator::load_event_list()
             events.push_back(e);
     }
     return std::make_pair(JsonConfigReturnStatus::OK, events);
+}
+
+void JsonConfigurator::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
+{
+    _osc_frontend = osc_frontend;
 }
 
 std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_parse_section(JsonSection section)
@@ -476,6 +583,14 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
                 return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
             }
             return {JsonConfigReturnStatus::OK, _json_data["midi"]};
+
+        case JsonSection::OSC:
+            if(_json_data.HasMember("osc") == false)
+            {
+                SUSHI_LOG_INFO("Config file does not have OSC mapping definitions");
+                return {JsonConfigReturnStatus::NO_OSC_DEFINITIONS, _json_data};
+            }
+            return {JsonConfigReturnStatus::OK, _json_data["osc"]};
 
         case JsonSection::CV_GATE:
             if(_json_data.HasMember("cv_control") == false)
@@ -610,7 +725,12 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
             plugin_path = def["uri"].GetString();
         }
 
-        auto [status, plugin_id] = _engine->load_plugin(plugin_uid, plugin_name, plugin_path, plugin_type);
+        PluginInfo plugin_info;
+        plugin_info.uid = plugin_uid;
+        plugin_info.path = plugin_path;
+        plugin_info.type = plugin_type;
+
+        auto [status, plugin_id] = _engine->create_processor(plugin_info, plugin_name);
         if(status != EngineReturnStatus::OK)
         {
             if(status == EngineReturnStatus::INVALID_PLUGIN_UID)
@@ -671,15 +791,15 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     }
     if (json_event["type"] == "property_change")
     {
-        auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
+        auto parameter = processor->parameter_from_name(data["property_name"].GetString());
         if (parameter == nullptr)        {
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new StringPropertyChangeEvent(processor->id(),
-                                             parameter->id(),
-                                             data["value"].GetString(),
-                                             timestamp);
+        return new PropertyChangeEvent(processor->id(),
+                                       parameter->id(),
+                                       data["value"].GetString(),
+                                       timestamp);
     }
     if (json_event["type"] == "note_on")
     {
@@ -725,6 +845,12 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
                                                        ;
             break;
 
+        case JsonSection::OSC:
+            schema_char_array =
+                #include "json_schemas/osc_schema.json"
+                                                      ;
+            break;
+
         case JsonSection::CV_GATE:
             schema_char_array =
                 #include "json_schemas/cv_gate_schema.json"
@@ -739,6 +865,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
 
     rapidjson::Document schema;
     schema.Parse(schema_char_array);
+    assert(schema.HasParseError() == false);
     rapidjson::SchemaDocument schema_document(schema);
     rapidjson::SchemaValidator schema_validator(schema_document);
 

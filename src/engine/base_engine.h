@@ -36,6 +36,7 @@
 #include "library/time.h"
 #include "library/sample_buffer.h"
 #include "library/types.h"
+#include "library/connection_types.h"
 #include "control_interface.h"
 
 namespace sushi {
@@ -74,6 +75,24 @@ enum class PluginType
     VST3X,
     LV2
 };
+
+/**
+ * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
+ */
+struct PluginInfo
+{
+    std::string uid;
+    std::string path;
+    PluginType type;
+
+    bool operator == (const PluginInfo& other) const
+    {
+        return (uid == other.uid) &&
+               (path == other.path) &&
+               (type == other.type);
+    }
+};
+
 
 enum class RealtimeState
 {
@@ -114,6 +133,16 @@ public:
         _audio_outputs = channels;
     }
 
+    int audio_input_channels()
+    {
+        return _audio_inputs;
+    }
+
+    int audio_output_channels()
+    {
+        return _audio_outputs;
+    }
+
     virtual EngineReturnStatus set_cv_input_channels(int channels)
     {
         _cv_inputs = channels;
@@ -129,28 +158,52 @@ public:
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
                                                            int /*track_channel*/,
-                                                           ObjectId /*track_name*/)
+                                                           ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_channel(int /*engine_channel*/,
                                                             int /*track_channel*/,
-                                                            ObjectId /*track_name*/)
+                                                            ObjectId /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
+    virtual EngineReturnStatus disconnect_audio_input_channel(int /*engine_channel*/,
+                                                              int /*track_channel*/,
+                                                              ObjectId /*track_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual EngineReturnStatus disconnect_audio_output_channel(int /*engine_channel*/,
+                                                               int /*track_channel*/,
+                                                               ObjectId /*track_id*/)
+    {
+        return EngineReturnStatus::OK;
+    }
+
+    virtual std::vector<AudioConnection> audio_input_connections()
+    {
+        return std::vector<AudioConnection>();
+    }
+
+    virtual std::vector<AudioConnection> audio_output_connections()
+    {
+        return std::vector<AudioConnection>();
+    }
+
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
                                                        int /*track_bus*/,
-                                                       ObjectId  /*track_name*/)
+                                                       ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
 
     virtual EngineReturnStatus connect_audio_output_bus(int /*output_bus*/,
                                                         int /*track_bus*/,
-                                                        ObjectId  /*track_name*/)
+                                                        ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
     }
@@ -196,7 +249,7 @@ public:
     {
         return EngineReturnStatus::OK;
     }
-    
+
     virtual bool realtime()
     {
         return true;
@@ -241,10 +294,8 @@ public:
         return EngineReturnStatus::OK;
     }
 
-    virtual std::pair <EngineReturnStatus, ObjectId> load_plugin(const std::string& /*uid*/,
-                                                                 const std::string& /*name*/,
-                                                                 const std::string& /*file*/,
-                                                                 PluginType /*plugin_type*/)
+    virtual std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& /*plugin_info*/,
+                                                                      const std::string& /*processor_name*/)
     {
         return {EngineReturnStatus::OK, ObjectId(0)};
     }
@@ -272,11 +323,6 @@ public:
         return nullptr;
     }
 
-    virtual ext::SushiControl* controller()
-    {
-        return nullptr;
-    }
-
     virtual engine::Transport* transport()
     {
         return nullptr;
@@ -296,7 +342,9 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
-    virtual void print_timings_to_log() {}
+    virtual void enable_master_limiter(bool /*enabled*/) {}
+
+    virtual void update_timings() {}
 
 protected:
     float _sample_rate;

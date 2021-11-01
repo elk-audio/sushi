@@ -22,7 +22,7 @@ if (${WITH_VST2})
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
     # Suppress VST SDK warnings
     set_target_properties(vst2_test_plugin PROPERTIES
-            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing"
+            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing -Wno-stringop-truncation"
         )
     target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
@@ -46,6 +46,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/plugins/cv_to_control_plugin_test.cpp
                unittests/plugins/plugins_test.cpp
                unittests/plugins/sample_player_plugin_test.cpp
+               unittests/plugins/send_return_test.cpp
                unittests/plugins/step_sequencer_test.cpp
                unittests/engine/audio_graph_test.cpp
                unittests/engine/track_test.cpp
@@ -58,9 +59,14 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/event_timer_test.cpp
                unittests/engine/transport_test.cpp
                unittests/engine/controller_test.cpp
+               unittests/engine/controllers/audio_graph_controller_test.cpp
+               unittests/engine/controllers/audio_routing_controller_test.cpp
+               unittests/engine/controllers/osc_controller_test.cpp
+               unittests/engine/controllers/midi_controller_test.cpp
                unittests/audio_frontends/offline_frontend_test.cpp
                unittests/control_frontends/osc_frontend_test.cpp
                unittests/dsp_library/envelope_test.cpp
+               unittests/dsp_library/master_limiter_test.cpp
                unittests/dsp_library/sample_wrapper_test.cpp
                unittests/dsp_library/value_smoother_test.cpp
                unittests/library/event_test.cpp
@@ -82,27 +88,19 @@ endif()
 
 if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
-                                 unittests/library/vst2x_plugin_loader_test.cpp
+                                 unittests/library/vst2x_plugin_loading_test.cpp
                                  unittests/library/vst2x_midi_event_fifo_test.cpp
                                  ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_host_callback.cpp)
-else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.cpp
-                                               ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_wrapper.h)
 endif()
 
 if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
-else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_wrapper.cpp)
 endif()
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
 
 if (${WITH_LV2})
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
-else()
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_wrapper.cpp)
-    set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_wrapper.h)
 endif()
 
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
@@ -112,11 +110,6 @@ target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
                                               -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        target_compile_options(unit_tests PRIVATE -faligned-new)
-    endif()
-endif()
 
 if (${WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)

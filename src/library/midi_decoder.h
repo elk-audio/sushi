@@ -66,8 +66,7 @@ inline MidiDataByte to_midi_data_byte(const uint8_t* data, int size)
  */
 enum MidiChannel
 {
-    CH_0 = 0,
-    CH_1,
+    CH_1 = 0,
     CH_2,
     CH_3,
     CH_4,
@@ -82,6 +81,7 @@ enum MidiChannel
     CH_13,
     CH_14,
     CH_15,
+    CH_16,
     OMNI
 };
 

@@ -21,12 +21,12 @@
 #ifndef SUSHI_PARAMETER_DUMP_H
 #define SUSHI_PARAMETER_DUMP_H
 
-#include "engine/controller.h"
+#include "engine/controller/controller.h"
 #include "rapidjson/document.h"
 
 namespace sushi {
 
-rapidjson::Document generate_processor_parameter_document(const sushi::ext::SushiControl* engine_controller);
+rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller);
 
 } // end namespace sushi
 

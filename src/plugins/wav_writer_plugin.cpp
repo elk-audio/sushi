@@ -1,3 +1,23 @@
+/*
+ * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI.  If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Simple plugin for writing wav files.
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ */
+
 #include "plugins/wav_writer_plugin.h"
 #include "logging.h"
 
@@ -6,9 +26,10 @@ namespace wav_writer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
-static const std::string DEFAULT_NAME = "sushi.testing.wav_writer";
-static const std::string DEFAULT_LABEL = "Wav writer";
-static const std::string DEFAULT_PATH = "./";
+constexpr auto DEFAULT_NAME = "sushi.testing.wav_writer";
+constexpr auto DEFAULT_LABEL = "Wav writer";
+constexpr auto DEFAULT_PATH = "./";
+constexpr int DEST_FILE_PROPERTY_ID = 0;
 
 WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -16,21 +37,20 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
+
+    [[maybe_unused]] bool str_pr_ok = register_property("destination_file", "Destination file", "");
     _recording_parameter = register_bool_parameter("recording", "Recording", "bool", false);
     _write_speed_parameter = register_float_parameter("write_speed", "Write Speed", "writes/s",
                                                       DEFAULT_WRITE_INTERVAL,
                                                       MIN_WRITE_INTERVAL,
                                                       MAX_WRITE_INTERVAL);
-    [[maybe_unused]] bool str_pr_ok = register_string_property("destination_file",
-                                                               "Destination file",
-                                                               "");
 
     assert(_recording_parameter && _write_speed_parameter && str_pr_ok);
 }
 
 WavWriterPlugin::~WavWriterPlugin()
 {
-    delete _destination_file_property;
+    _stop_recording();
 }
 
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
@@ -52,23 +72,6 @@ void WavWriterPlugin::configure(float sample_rate)
 void WavWriterPlugin::set_bypassed(bool bypassed)
 {
     Processor::set_bypassed(bypassed);
-}
-
-void WavWriterPlugin::process_event(const RtEvent& event)
-{
-    switch (event.type())
-    {
-    case RtEventType::STRING_PROPERTY_CHANGE:
-    {
-        auto typed_event = event.string_parameter_change_event();
-        _destination_file_property = typed_event->value();
-        break;
-    }
-
-    default:
-        InternalPlugin::process_event(event);
-        break;
-    }
 }
 
 void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
@@ -107,12 +110,14 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
 
 WavWriterStatus WavWriterPlugin::_start_recording()
 {
-    // If no file name was passed. Set it to the default;
-    if (_destination_file_property == nullptr)
+    std::string destination_file_path = property_value(DEST_FILE_PROPERTY_ID).second;
+    if (destination_file_path.empty())
     {
-        _destination_file_property = new std::string(DEFAULT_PATH + this->name() + "_output");
+        // If no file name was passed. Set it to the default;
+        destination_file_path = std::string(DEFAULT_PATH + this->name() + "_output");
     }
-    _actual_file_path = _available_path(*_destination_file_property);
+
+    _actual_file_path = _available_path(destination_file_path);
     _output_file = sf_open(_actual_file_path.c_str(), SFM_WRITE, &_soundfile_info);
     if (_output_file == nullptr)
     {
@@ -140,7 +145,6 @@ WavWriterStatus WavWriterPlugin::_stop_recording()
 void WavWriterPlugin::_post_write_event()
 {
     auto e = RtEvent::make_async_work_event(&WavWriterPlugin::non_rt_callback, this->id(), this);
-    _pending_event_id = e.async_work_event()->event_id();
     output_event(e);
 }
 

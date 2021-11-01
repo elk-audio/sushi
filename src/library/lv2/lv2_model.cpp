@@ -43,16 +43,14 @@ namespace lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
-Model::Model(float sample_rate, LV2_Wrapper* wrapper): _sample_rate(sample_rate), _wrapper(wrapper)
+Model::Model(float sample_rate, LV2_Wrapper* wrapper, LilvWorld* world): _sample_rate(sample_rate),
+                                                                         _wrapper(wrapper),
+                                                                         _world(world)
 {
-    _world = lilv_world_new();
     _nodes = std::make_unique<HostNodes>(_world);
 
-    // This allows loading plu-ins from their URI's, assuming they are installed in the correct paths
+    // This allows loading plug-ins from their URI's, assuming they are installed in the correct paths
     // on the local machine.
-
-    // Find all installed plugins.
-    lilv_world_load_all(_world);
 
     _initialize_map_feature();
     _initialize_unmap_feature();
@@ -98,7 +96,6 @@ Model::~Model()
     // Explicitly setting to nullptr, so that destructor is invoked before world is freed.
     _nodes = nullptr;
 
-    lilv_world_free(_world);
     symap_free(_symap);
 }
 
@@ -354,7 +351,7 @@ void Model::_create_controls(bool writable)
 
         if (record.value_type)
         {
-            _controls.emplace_back(std::move(record));
+            _controls.push_back(std::move(record));
         }
         else
         {

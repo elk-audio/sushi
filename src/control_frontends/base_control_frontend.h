@@ -76,15 +76,6 @@ public:
 
     void send_program_change_event(ObjectId processor, int program);
 
-    void send_add_track_event(const std::string &name, int channels);
-
-    void send_remove_track_event(const std::string &name);
-
-    void send_add_processor_event(const std::string &track, const std::string &uid, const std::string &name,
-                                  const std::string &file, AddProcessorToTrackEvent::ProcessorType type);
-
-    void send_remove_processor_event(const std::string &track, const std::string &name);
-
     void send_set_tempo_event(float tempo);
 
     void send_set_time_signature_event(TimeSignature signature);

@@ -2,11 +2,14 @@
 
 #include "library/event.cpp"
 
-#undef private
-
 #include "engine/audio_engine.h"
 
+#include "control_frontends/base_control_frontend.h"
+
 using namespace sushi;
+using namespace sushi::engine;
+using namespace sushi::control_frontend;
+using namespace sushi::midi_dispatcher;
 
 static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 {
@@ -70,7 +73,6 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(MidiDataByte({1,2,3,4}), rt_event.wrapped_midi_event()->midi_data());
 
     auto param_ch_event = ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, 6, 50, 1.0f, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(param_ch_event.is_parameter_change_event());
     EXPECT_TRUE(param_ch_event.maps_to_rt_event());
     rt_event = param_ch_event.to_rt_event(8);
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, rt_event.type());
@@ -79,19 +81,8 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_EQ(50u, rt_event.parameter_change_event()->param_id());
     EXPECT_FLOAT_EQ(1.0f, rt_event.parameter_change_event()->value());
 
-    auto string_pro_ch_event = StringPropertyChangeEvent(7, 51, "Hello", IMMEDIATE_PROCESS);
-    EXPECT_TRUE(string_pro_ch_event.is_parameter_change_event());
-    EXPECT_TRUE(string_pro_ch_event.maps_to_rt_event());
-    rt_event = string_pro_ch_event.to_rt_event(10);
-    EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, rt_event.type());
-    EXPECT_EQ(10, rt_event.sample_offset());
-    EXPECT_EQ(7u, rt_event.string_parameter_change_event()->processor_id());
-    EXPECT_EQ(51u, rt_event.string_parameter_change_event()->param_id());
-    EXPECT_STREQ("Hello", rt_event.string_parameter_change_event()->value()->c_str());
-
     BlobData testdata = {0, nullptr};
-    auto data_pro_ch_event = DataPropertyChangeEvent(8, 52, testdata, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(data_pro_ch_event.is_parameter_change_event());
+    auto data_pro_ch_event = DataPropertyEvent(8, 52, testdata, IMMEDIATE_PROCESS);
     EXPECT_TRUE(data_pro_ch_event.maps_to_rt_event());
     rt_event = data_pro_ch_event.to_rt_event(10);
     EXPECT_EQ(RtEventType::DATA_PROPERTY_CHANGE, rt_event.type());
@@ -208,12 +199,48 @@ TEST(EventTest, TestFromRtEvent)
     event = Event::from_rt_event(param_ch_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_parameter_change_notification());
-    EXPECT_FALSE(event->is_parameter_change_event());
     auto pc_event = static_cast<ParameterChangeNotificationEvent*>(event);
     EXPECT_EQ(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT, pc_event->subtype());
     EXPECT_EQ(9u, pc_event->processor_id());
     EXPECT_EQ(50u, pc_event->parameter_id());
     EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());
+    delete event;
+
+    auto tempo_event = RtEvent::make_tempo_event(10, 125);
+    event = Event::from_rt_event(tempo_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto tempo_not = static_cast<TempoNotificationEvent*>(event);
+    EXPECT_TRUE(tempo_not->is_tempo_notification());
+    EXPECT_FLOAT_EQ(125.0f, tempo_not->tempo());
+    delete event;
+
+    auto time_sig_event = RtEvent::make_time_signature_event(11, {.numerator = 6, .denominator = 4});
+    event = Event::from_rt_event(time_sig_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto time_sig_not = static_cast<TimeSignatureNotificationEvent*>(event);
+    EXPECT_TRUE(time_sig_not->is_time_sign_notification());
+    EXPECT_EQ(6, time_sig_not->time_signature().numerator);
+    EXPECT_EQ(4, time_sig_not->time_signature().denominator);
+    delete event;
+
+    auto play_mode_event = RtEvent::make_playing_mode_event(12, PlayingMode::RECORDING);
+    event = Event::from_rt_event(play_mode_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto play_mode_not = static_cast<PlayingModeNotificationEvent*>(event);
+    EXPECT_TRUE(play_mode_not->is_playing_mode_notification());
+    EXPECT_EQ(PlayingMode::RECORDING, play_mode_not->mode());
+    delete event;
+
+    auto sync_mode_event = RtEvent::make_sync_mode_event(13, SyncMode::MIDI);
+    event = Event::from_rt_event(sync_mode_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto sync_mode_not = static_cast<SyncModeNotificationEvent*>(event);
+    EXPECT_TRUE(sync_mode_not->is_sync_mode_notification());
+    EXPECT_EQ(SyncMode::MIDI, sync_mode_not->mode());
     delete event;
 
     auto async_work_event = RtEvent::make_async_work_event(dummy_processor_callback, 10, nullptr);
@@ -230,109 +257,4 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_TRUE(event->is_async_work_event());
     EXPECT_TRUE(event->process_asynchronously());
     delete event;
-}
-
-TEST(EventTest, TestAddProcessorToTrackEventExecution)
-{
-    // Prepare an engine instance with 1 track
-    auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
-    auto processor_container = engine.processor_container();
-    auto [status, track_id] = engine.create_track("main", 2);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-    auto main_track_id = engine.processor_container()->processor("main")->id();
-
-    auto event = AddProcessorToTrackEvent("gain",
-                                          "sushi.testing.gain",
-                                          "",
-                                          AddProcessorToTrackEvent::ProcessorType::INTERNAL,
-                                          main_track_id,
-                                          std::nullopt,
-                                          IMMEDIATE_PROCESS);
-
-    auto event_status = event.execute(&engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
-    auto processors = processor_container->processors_on_track(main_track_id);
-    ASSERT_EQ(1u, processors.size());
-    ASSERT_EQ("gain", processors.front()->name());
-}
-
-TEST(EventTest, TestMoveProcessorEventExecution)
-{
-    // Prepare an engine instance with 2 tracks and 1 processor on track_1
-    auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
-    auto processor_container = engine.processor_container();
-    engine.create_track("track_1", 2);
-    engine.create_track("track_2", 2);
-    auto track_1_id = engine.processor_container()->processor("track_1")->id();
-    auto track_2_id = engine.processor_container()->processor("track_2")->id();
-
-    auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
-    auto status = engine.add_plugin_to_track(proc_id, track_1_id);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-    ASSERT_EQ(1u, processor_container->processors_on_track(track_1_id).size());
-    ASSERT_EQ(0u, processor_container->processors_on_track(track_2_id).size());
-
-    // Move it from track_1 to track_2
-    auto event = MoveProcessorEvent(proc_id, track_1_id, track_2_id, std::nullopt, IMMEDIATE_PROCESS);
-    auto event_status = event.execute(&engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
-
-    ASSERT_EQ(0u, processor_container->processors_on_track(track_1_id).size());
-    ASSERT_EQ(1u, processor_container->processors_on_track(track_2_id).size());
-
-    // Test with an erroneous target track and see that nothing changed
-    auto err_event = MoveProcessorEvent(proc_id, track_2_id, ObjectId(123), std::nullopt, IMMEDIATE_PROCESS);
-    event_status = err_event.execute(&engine);
-    ASSERT_EQ(MoveProcessorEvent::Status::INVALID_DEST_TRACK, event_status);
-
-    ASSERT_EQ(0u, processor_container->processors_on_track(track_1_id).size());
-    ASSERT_EQ(1u, processor_container->processors_on_track(track_2_id).size());
-}
-
-TEST(EventTest, TestRemoveProcessorEventExecution)
-{
-    // Prepare an engine instance with 1 track and 1 processor
-    auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
-    auto processor_container = engine.processor_container();
-    engine.create_track("main", 2);
-    auto main_track_id = engine.processor_container()->processor("main")->id();
-    auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
-    auto status = engine.add_plugin_to_track(proc_id, main_track_id);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-
-    auto event = RemoveProcessorEvent(proc_id, main_track_id, IMMEDIATE_PROCESS);
-    auto event_status = event.execute(&engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
-
-    // Verify that it was deleted
-    auto processors = processor_container->processors_on_track(main_track_id);
-    ASSERT_EQ(0u, processors.size());
-    ASSERT_FALSE(processor_container->processor("gain"));
-    ASSERT_FALSE(processor_container->processor(proc_id));
-}
-
-TEST(EventTest, TestRemoveTrackEventExecution)
-{
-    // Prepare an engine instance with 1 track and 1 processor
-    auto engine = engine::AudioEngine(TEST_SAMPLE_RATE);
-    auto processor_container = engine.processor_container();
-    engine.create_track("main", 2);
-    auto main_track_id = engine.processor_container()->processor("main")->id();
-    auto [proc_status, proc_id] = engine.load_plugin("sushi.testing.gain", "gain", "", engine::PluginType::INTERNAL);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, proc_status);
-    auto status = engine.add_plugin_to_track(proc_id, main_track_id);
-    ASSERT_EQ(engine::EngineReturnStatus::OK, status);
-
-    auto event = RemoveTrackEvent(main_track_id, IMMEDIATE_PROCESS);
-    auto event_status = event.execute(&engine);
-    ASSERT_EQ(EventStatus::HANDLED_OK, event_status);
-
-    // Verify that the track was deleted together with the processor on it
-    ASSERT_EQ(0u, processor_container->all_tracks().size());
-    ASSERT_FALSE(processor_container->track("main"));
-    ASSERT_FALSE(processor_container->track(main_track_id));
-    ASSERT_FALSE(processor_container->processor("gain"));
-    ASSERT_FALSE(processor_container->processor(proc_id));
 }

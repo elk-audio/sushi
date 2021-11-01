@@ -62,6 +62,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 
 void JackFrontend::cleanup()
 {
+    _engine->enable_realtime(false);
     if (_client)
     {
         jack_client_close(_client);
@@ -363,16 +364,17 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
 }; // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_JACK
-#include <cassert>
 #include "audio_frontends/jack_frontend.h"
 #include "logging.h"
 namespace sushi {
 namespace audio_frontend {
 SUSHI_GET_LOGGER;
 JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+{}
+AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration*)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with Jack support!");
-    assert(false);
+    return AudioFrontendStatus::AUDIO_HW_ERROR;
 }}}
 #endif

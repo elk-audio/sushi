@@ -10,7 +10,8 @@ project(sushi)
 if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
     set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
     set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+    set(CMAKE_PROGRAM_PATH "$ENV{CMAKE_PROGRAM_PATH}")
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 endif()
@@ -47,8 +48,8 @@ option(WITH_LV2 "Enable LV 2 support" ON)
 option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
 option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
 option(WITH_LINK "Enable Ableton Link support" ON)
-option(BUILD_TWINE "Build included Twine library" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
+option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
@@ -93,7 +94,7 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
@@ -122,7 +123,6 @@ set(COMPILATION_UNITS src/main.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
                       src/engine/audio_graph.cpp
-                      src/engine/controller.cpp
                       src/engine/event_dispatcher.cpp
                       src/engine/track.cpp
                       src/engine/midi_dispatcher.cpp
@@ -131,6 +131,18 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/event_timer.cpp
                       src/engine/transport.cpp
                       src/engine/processor_container.cpp
+                      src/engine/controller/controller.cpp
+                      src/engine/controller/system_controller.cpp
+                      src/engine/controller/transport_controller.cpp
+                      src/engine/controller/timing_controller.cpp
+                      src/engine/controller/keyboard_controller.cpp
+                      src/engine/controller/audio_graph_controller.cpp
+                      src/engine/controller/parameter_controller.cpp
+                      src/engine/controller/program_controller.cpp
+                      src/engine/controller/midi_controller.cpp
+                      src/engine/controller/audio_routing_controller.cpp
+                      src/engine/controller/cv_gate_controller.cpp
+                      src/engine/controller/osc_controller.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
@@ -138,9 +150,8 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/performance_timer.cpp
                       src/library/parameter_dump.cpp
                       src/library/processor.cpp
-                      src/library/vst2x/vst2x_wrapper.cpp
-                      src/library/vst3x/vst3x_wrapper.cpp
-                      src/library/lv2/lv2_wrapper.cpp
+                      src/library/plugin_registry.cpp
+                      src/library/internal_processor_factory.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -149,18 +160,24 @@ set(COMPILATION_UNITS src/main.cpp
                       src/plugins/passthrough_plugin.cpp
                       src/plugins/equalizer_plugin.cpp
                       src/plugins/peak_meter_plugin.cpp
-                      src/plugins/transposer_plugin.cpp
+                      src/plugins/return_plugin.cpp
                       src/plugins/sample_player_plugin.cpp
                       src/plugins/sample_player_voice.cpp
+                      src/plugins/sample_delay_plugin.cpp
+                      src/plugins/send_plugin.cpp
+                      src/plugins/send_return_factory.cpp
                       src/plugins/step_sequencer_plugin.cpp
+                      src/plugins/transposer_plugin.cpp
                       src/plugins/wav_writer_plugin.cpp
                       src/plugins/mono_summing_plugin.cpp
+                      src/plugins/stereo_mixer_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
         )
 
 # Enumerate all the headers separately so that CLion can index them
 set(EXTRA_CLION_SOURCES src/logging.h
                         src/options.h
+                        src/compile_time_settings.h
                         src/audio_frontends/base_audio_frontend.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h
@@ -182,6 +199,9 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/midi_encoder.h
                         src/library/rt_event.h
                         src/library/processor.h
+                        src/library/base_processor_factory.h
+                        src/library/plugin_registry.h
+                        src/library/internal_processor_factory.h
                         src/library/performance_timer.h
                         src/library/internal_plugin.h
                         src/library/rt_event_fifo.h
@@ -190,14 +210,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/library/simple_fifo.h
                         src/library/synchronised_fifo.h
                         src/library/time.h
-                        src/library/vst2x/vst2x_wrapper.h
-                        src/library/vst3x/vst3x_wrapper.h
-                        src/library/lv2/lv2_wrapper.h
                         src/engine/base_engine.h
                         src/engine/base_processor_container.h
                         src/engine/audio_engine.h
                         src/engine/audio_graph.h
-                        src/engine/controller.h
                         src/engine/track.h
                         src/engine/receiver.h
                         src/engine/midi_dispatcher.h
@@ -209,6 +225,18 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/host_control.h
                         src/engine/transport.h
                         src/engine/processor_container.h
+                        src/engine/controller/controller.h
+                        src/engine/controller/system_controller.h
+                        src/engine/controller/transport_controller.h
+                        src/engine/controller/timing_controller.h
+                        src/engine/controller/keyboard_controller.h
+                        src/engine/controller/audio_graph_controller.h
+                        src/engine/controller/parameter_controller.h
+                        src/engine/controller/program_controller.h
+                        src/engine/controller/midi_controller.h
+                        src/engine/controller/audio_routing_controller.h
+                        src/engine/controller/cv_gate_controller.h
+                        src/engine/controller/osc_controller.h
                         src/plugins/arpeggiator_plugin.h
                         src/plugins/control_to_cv_plugin.h
                         src/plugins/cv_to_control_plugin.h
@@ -217,9 +245,13 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/plugins/passthrough_plugin.h
                         src/plugins/equalizer_plugin.h
                         src/plugins/peak_meter_plugin.h
+                        src/plugins/return_plugin.h
                         src/plugins/transposer_plugin.h
                         src/plugins/sample_player_plugin.h
                         src/plugins/sample_player_voice.h
+                        src/plugins/sample_delay_plugin.h
+                        src/plugins/send_plugin.h
+                        src/plugins/send_return_factory.h
                         src/plugins/step_sequencer_plugin.h
                         src/plugins/wav_writer_plugin.h
                         src/plugins/mono_summing_plugin.h
@@ -235,27 +267,37 @@ if (${WITH_XENOMAI} OR ${WITH_JACK})
 endif()
 
 if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_host_callback.cpp
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
                                 src/library/vst2x/vst2x_host_callback.h
-                                src/library/vst2x/vst2x_plugin_loader.cpp
                                 src/library/vst2x/vst2x_plugin_loader.h
-                                src/library/vst2x/vst2x_midi_event_fifo.h)
+                                src/library/vst2x/vst2x_midi_event_fifo.h
+                                src/library/vst2x/vst2x_processor_factory.h
+                                src/library/vst2x/vst2x_wrapper.cpp
+                                src/library/vst2x/vst2x_host_callback.cpp
+                                src/library/vst2x/vst2x_plugin_loader.cpp)
 endif()
 
 if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_host_app.cpp
-                                src/library/vst3x/vst3x_utils.cpp
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_wrapper.h
                                 src/library/vst3x/vst3x_host_app.h
-                                src/library/vst3x/vst3x_utils.h)
+                                src/library/vst3x/vst3x_utils.h
+                                src/library/vst3x/vst3x_processor_factory.h
+                                src/library/vst3x/vst3x_wrapper.cpp
+                                src/library/vst3x/vst3x_host_app.cpp
+                                src/library/vst3x/vst3x_utils.cpp)
+
 endif()
 
 if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_control.h
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
+                               src/library/lv2/lv2_control.h
                                src/library/lv2/lv2_features.h
                                src/library/lv2/lv2_host_nodes.h
                                src/library/lv2/lv2_model.h
                                src/library/lv2/lv2_port.h
                                src/library/lv2/lv2_state.h
+                               src/library/lv2/lv2_processor_factory.h
+                               src/library/lv2/lv2_wrapper.cpp
                                src/library/lv2/lv2_state.cpp
                                src/library/lv2/lv2_worker.cpp
                                src/library/lv2/lv2_features.cpp
@@ -294,14 +336,8 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/spdlog/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
-
-# /usr/local doesn't get added by default in Mac OS X
-if (APPLE)
-    set(INCLUDE_DIRS "${INCLUDE_DIRS}" /usr/local/include)
-endif()
 
 ################################
 #  Subdirectory configuration  #
@@ -367,6 +403,7 @@ set(COMMON_LIBRARIES
     pthread
     dl
     fifo
+    spdlog::spdlog
     ${TWINE_LIB}
 )
 
@@ -403,12 +440,6 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0"))
-        target_compile_options(sushi PRIVATE -faligned-new)
-    endif()
-endif()
-
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
 
 if (${WITH_XENOMAI})

@@ -39,8 +39,6 @@
 #ifndef SUSHI_LV2_PLUGIN_H
 #define SUSHI_LV2_PLUGIN_H
 
-#ifdef SUSHI_BUILD_WITH_LV2
-
 #include <map>
 
 #include "engine/base_event_dispatcher.h"
@@ -68,7 +66,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri);
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, LilvWorld* world);
 
     virtual ~LV2_Wrapper() = default;
 
@@ -121,7 +119,7 @@ public:
         return 1;
     }
 
-    void output_worker_event(const RtEvent& event);
+    void request_worker_callback(AsyncWorkCallback callback);
 
 private:
     const LilvPlugin* _plugin_handle_from_URI(const std::string& plugin_URI_string);
@@ -204,34 +202,11 @@ private:
     static constexpr float _max_normalized{1.0f};
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
+
+    LilvWorld* _world{nullptr};
 };
 
 } // end namespace lv2
 } // end namespace sushi
 
-
-#endif //SUSHI_BUILD_WITH_LV2
-#ifndef SUSHI_BUILD_WITH_LV2
-
-#include "library/processor.h"
-
-namespace sushi {
-namespace lv2 {
-/* If LV2 support is disabled in the build, the wrapper is replaced with this
-   minimal dummy processor whose purpose is to log an error message if a user
-   tries to load an LV2 plugin */
-class LV2_Wrapper : public Processor
-{
-public:
-    LV2_Wrapper(HostControl host_control, const std::string& /*lv2_plugin_uri*/) :
-            Processor(host_control) {}
-
-    ProcessorReturnCode init(float sample_rate) override;
-    void process_event(const RtEvent& /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer & /*in*/, ChunkSampleBuffer & /*out*/) override {}
-};
-
-}// end namespace lv2
-}// end namespace sushi
-#endif
 #endif //SUSHI_LV2_PLUGIN_H

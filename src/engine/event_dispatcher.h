@@ -100,7 +100,6 @@ public:
     int poster_id() override {return AUDIO_ENGINE_ID;}
 
 private:
-
     void _event_loop();
 
     int _process_rt_event(RtEvent& rt_event);
@@ -128,6 +127,10 @@ private:
     std::vector<EventPoster*> _keyboard_event_listeners;
     std::vector<EventPoster*> _parameter_change_listeners;
     std::vector<EventPoster*> _engine_notification_listeners;
+
+    std::mutex _keyboard_listener_lock;
+    std::mutex _parameter_listener_lock;
+    std::mutex _engine_listener_lock;
 };
 
 } // end namespace dispatcher

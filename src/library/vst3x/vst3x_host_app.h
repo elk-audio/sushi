@@ -29,12 +29,11 @@
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
-#define RELEASE = 1
 #include "public.sdk/source/vst/hosting/module.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
-#undef RELEASE
+
 namespace sushi {
 namespace vst3 {
 
@@ -74,7 +73,7 @@ class PluginInstance
 public:
     SUSHI_DECLARE_NON_COPYABLE(PluginInstance);
 
-    PluginInstance();
+    PluginInstance(SushiHostApplication* host_app);
     ~PluginInstance();
 
     bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
@@ -94,7 +93,9 @@ private:
 
     std::string _name;
     std::string _vendor;
-    SushiHostApplication _host_app;
+
+    SushiHostApplication* _host_app{nullptr};
+
     std::shared_ptr<VST3::Hosting::Module> _module;
 
     // Reference counted pointers to plugin objects

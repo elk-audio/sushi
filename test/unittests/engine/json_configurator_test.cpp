@@ -13,6 +13,7 @@
 #include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
 #include "test_utils/test_utils.h"
+#include "test_utils/control_mockup.h"
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
@@ -20,6 +21,7 @@ constexpr unsigned int ENGINE_CHANNELS = 8;
 using namespace sushi;
 using namespace sushi::engine;
 using namespace sushi::jsonconfig;
+using namespace sushi::control_frontend;
 
 class TestJsonConfigurator : public ::testing::Test
 {
@@ -28,40 +30,36 @@ protected:
 
     void SetUp()
     {
-        _engine = new AudioEngine(SAMPLE_RATE);
-        _engine->set_audio_input_channels(ENGINE_CHANNELS);
-        _engine->set_audio_output_channels(ENGINE_CHANNELS);
-        _midi_dispatcher = new MidiDispatcher(_engine);
+        _engine.set_audio_input_channels(ENGINE_CHANNELS);
+        _engine.set_audio_output_channels(ENGINE_CHANNELS);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
-        _module_under_test = new JsonConfigurator(_engine, _midi_dispatcher, _path);
+        _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
+                                                                &_midi_dispatcher,
+                                                                _engine.processor_container(),
+                                                                _path);
     }
 
     void TearDown()
     {
-        delete _module_under_test;
-        delete _midi_dispatcher;
-        delete _engine;
     }
 
     /* Helper functions */
     JsonConfigReturnStatus _make_track(const rapidjson::Value &track);
 
-    AudioEngine* _engine;
-    MidiDispatcher* _midi_dispatcher;
-    JsonConfigurator* _module_under_test;
+    AudioEngine _engine{SAMPLE_RATE};
+    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
+
+    sushi::ext::ControlMockup _controller;
+
+    std::unique_ptr<JsonConfigurator> _module_under_test;
+
     std::string _path;
 };
 
 JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track)
 {
     return _module_under_test->_make_track(track);
-}
-
-TEST_F(TestJsonConfigurator, TestInstantiation)
-{
-    EXPECT_TRUE(_engine);
-    EXPECT_TRUE(_module_under_test);
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -78,18 +76,18 @@ TEST_F(TestJsonConfigurator, TestLoadHostConfig)
 {
     auto status = _module_under_test->load_host_config();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_FLOAT_EQ(48000.0f, _engine->sample_rate());
+    ASSERT_FLOAT_EQ(48000.0f, _engine.sample_rate());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadTracks)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    auto tracks = _engine->processor_container()->all_tracks();
+    auto tracks = _engine.processor_container()->all_tracks();
 
     ASSERT_EQ(4u, tracks.size());
-    auto track_1_processors = _engine->processor_container()->processors_on_track(tracks[0]->id());
-    auto track_2_processors = _engine->processor_container()->processors_on_track(tracks[1]->id());
+    auto track_1_processors = _engine.processor_container()->processors_on_track(tracks[0]->id());
+    auto track_2_processors = _engine.processor_container()->processors_on_track(tracks[1]->id());
 
     ASSERT_EQ(3u, track_1_processors.size());
     ASSERT_EQ(3u, track_2_processors.size());
@@ -107,14 +105,42 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 {
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    _midi_dispatcher->set_midi_inputs(1);
+    _midi_dispatcher.set_midi_inputs(1);
 
     status = _module_under_test->load_midi();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_EQ(1u, _midi_dispatcher->_kb_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_cc_routes.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_raw_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher->_pc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher._kb_routes_in.size());
+    ASSERT_EQ(1u, _midi_dispatcher._cc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher._raw_routes_in.size());
+    ASSERT_EQ(1u, _midi_dispatcher._pc_routes.size());
+}
+
+TEST_F(TestJsonConfigurator, TestLoadOsc)
+{
+    // osc_frontend is only used in this test, so no need to keep in harness.
+    constexpr int OSC_TEST_SERVER_PORT = 24024;
+    constexpr int OSC_TEST_SEND_PORT = 24023;
+    OSCFrontend osc_frontend{&_engine,
+                              &_controller,
+                              OSC_TEST_SERVER_PORT,
+                              OSC_TEST_SEND_PORT};
+
+    _module_under_test->set_osc_frontend(&osc_frontend);
+    ASSERT_EQ(ControlFrontendStatus::OK, osc_frontend.init());
+
+    auto status = _module_under_test->load_tracks();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    auto outputs_before = osc_frontend.get_enabled_parameter_outputs();
+
+    ASSERT_EQ(0u, outputs_before.size());
+
+    status = _module_under_test->load_osc();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    auto outputs_after = osc_frontend.get_enabled_parameter_outputs();
+
+    ASSERT_EQ(1u, outputs_after.size());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadCvGateControl)
@@ -219,9 +245,13 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
     rapidjson::Value example_track(rapidjson::kObjectType);
     rapidjson::Value mode("mono");
     rapidjson::Value name("track_name");
+    rapidjson::Value inputs(rapidjson::kArrayType);
+    rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     example_track.AddMember("mode", mode, test_cfg.GetAllocator());
     example_track.AddMember("name", name, test_cfg.GetAllocator());
+    example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
+    example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     test_cfg["tracks"].PushBack(example_track, test_cfg.GetAllocator());
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
     test_cfg["tracks"][0].AddMember("plugins", plugins, test_cfg.GetAllocator());

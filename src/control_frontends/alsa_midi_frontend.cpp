@@ -15,7 +15,7 @@
 
 /**
  * @brief Alsa midi frontend
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <chrono>
@@ -71,6 +71,21 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     }
     SUSHI_LOG_INFO("Created Alsa Midi port {}", name);
     return port;
+}
+
+/**
+ * @brief Filters midi messages currently not handled by sushi
+ * @param type Alsa event type enumeration (see alsa/seq_event.h)
+ * @return true if the event type corresponds to a midi message that should be handled by sushi
+ *              false otherwise.
+ */
+bool is_midi_for_sushi(snd_seq_event_type_t type)
+{
+    if (type >= SND_SEQ_EVENT_NOTE && type <= SND_SEQ_EVENT_PITCHBEND)
+    {
+        return true;
+    }
+    return false;
 }
 
 AlsaMidiFrontend::AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
@@ -184,12 +199,7 @@ void AlsaMidiFrontend::_poll_function()
             uint8_t data_buffer[ALSA_EVENT_MAX_SIZE]{0};
             while (snd_seq_event_input(_seq_handle, &ev) > 0)
             {
-                // TODO - Consider if we should be filtering at all here or in the dispatcher instead
-                if ((ev->type == SND_SEQ_EVENT_NOTEON)
-                    || (ev->type == SND_SEQ_EVENT_NOTEOFF)
-                    || (ev->type == SND_SEQ_EVENT_CONTROLLER)
-                    || (ev->type == SND_SEQ_EVENT_PGMCHANGE)
-                    || (ev->type == SND_SEQ_EVENT_PITCHBEND))
+                if (is_midi_for_sushi(ev->type))
                 {
                     auto byte_count = snd_midi_event_decode(_input_parser, data_buffer, sizeof(data_buffer), ev);
                     if (byte_count > 0)
@@ -206,7 +216,7 @@ void AlsaMidiFrontend::_poll_function()
 
                         }
                     }
-                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", byte_count);
+                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count));
                 }
                 snd_seq_free_event(ev);
             }
@@ -218,21 +228,18 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);
-    auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
-    if (bytes <= 0 )
-    {
-        SUSHI_LOG_INFO("Failed to encode event: {} {}", strerror(-bytes), ev.type);
-    }
+    [[maybe_unused]] auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
+
+    SUSHI_LOG_INFO_IF(bytes <= 0, "Failed to encode event: {} {}", strerror(-bytes), ev.type);
+
     snd_seq_ev_set_source(&ev, _output_midi_ports[output]);
     snd_seq_ev_set_subs(&ev);
     snd_seq_real_time_t ev_time = _to_alsa_time(timestamp);
     snd_seq_ev_schedule_real(&ev, _queue, false, &ev_time);
     bytes = snd_seq_event_output(_seq_handle, &ev);
     snd_seq_drain_output(_seq_handle);
-    if (bytes <= 0)
-    {
-        SUSHI_LOG_WARNING("Event output returned: {}, type {}", strerror(-bytes), ev.type);
-    }
+
+    SUSHI_LOG_WARNING_IF(bytes <= 0, "Event output returned: {}, type {}", strerror(-bytes), ev.type);
 }
 
 bool AlsaMidiFrontend::_init_time()

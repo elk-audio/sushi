@@ -174,7 +174,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
 {
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_MOVED,
+    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
                                                  123, 234, IMMEDIATE_PROCESS);
     _module_under_test->post_event(event);
 
@@ -258,7 +258,7 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
 {
     completed = false;
     completion_status = 0;
-    auto event = new RemoveProcessorEvent(ObjectId(123), ObjectId(234), IMMEDIATE_PROCESS);
+    auto event = new SetEngineTempoEvent(120.0f, IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
     auto status = _module_under_test->process(event);
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);

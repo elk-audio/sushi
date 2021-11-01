@@ -1,8 +1,17 @@
-cmake_minimum_required(VERSION 3.8)
-
 add_subdirectory(fifo EXCLUDE_FROM_ALL)
 
 add_subdirectory(lv2_host)
+
+############################
+#  spdlog compile options  #
+############################
+# Build spdlog as a static library - improves compile times a lot
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+# Disable unused features
+set(SPDLOG_NO_THREAD_ID ON CACHE BOOL "" FORCE)
+set(SPDLOG_NO_ATOMIC_LEVELS ON CACHE BOOL "" FORCE)
+
+add_subdirectory(spdlog)
 
 ##########################
 #  VST3SDK and examples  #
@@ -20,7 +29,23 @@ set(SMTG_LINUX ON)
 
 add_subdirectory(vst3sdk)
 
-# Supress warnings to keep our build output clean
+# Since vstsdk overrides SMTG_ADD_VST3_PLUGINS_SAMPLES if the sdk included as a
+# submodule. We need to manually add adelay as it is used by sushi unit tests
+# We also need to redo some Steinberg initialisation.
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk/cmake/modules")
+include(SMTG_VST3_SDK)
+
+smtg_setup_platform_toolset()
+set(SDK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk)
+set(public_sdk_SOURCE_DIR ${SDK_ROOT}/public.sdk)
+set(pluginterfaces_SOURCE_DIR ${SDK_ROOT}/pluginterfaces)
+set(VST_SDK TRUE)
+set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
+
+add_subdirectory(vst3sdk/public.sdk/samples/vst)
+
+# Suppress warnings to keep our build output clean
 set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
 endif()
 
