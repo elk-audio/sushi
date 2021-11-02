@@ -3,17 +3,10 @@
 # You can specify a custom docker image from Docker Hub as your build environment.
 image: ubuntu:20.10
 
-options:
-  docker: true
-
 pipelines:
   default:
     - step:
-        name: Setup dependecies
-        caches:
-          - docker
-        artifacts:
-          - ./sushi/**
+        name: Build sushi + tests 
         script:
           # Print the Linux version.
           #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -45,48 +38,9 @@ pipelines:
           - mkdir build
           - cd build
           - cmake .. -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF
-    
-    - parallel:
-      - step:
-          name: Build sushi with otions enabled
-          caches:
-            - docker
-          script:
-            - cd build
-            - make sushi
-      - step:
-          name: Build unit tests
-          caches:
-            - docker
-          script:
-            - cd build
-            - make unit_tests
-            - cd test
-            # Run unit tests with some tests test disabled
-            - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads
-
-    - step:
-        name: Build with minimal options
-        script:
-          - cd build
-          - rm -rf ./*
-          - cmake .. -DWITH_XENOMAI=OFF -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_VST3=OFF -DWITH_LV2=OFF -DWITH_LV2_MDA_TESTS=OFF -DTWINE_WITH_XENOMAI=OFF
-
-    - parallel:
-          - step:
-              name: Build sushi 
-              script:
-                - cd build
-                - make sushi
-          - step:
-              name: Build unit tests
-              script:
-                - cd build
-                - make unit_tests
-                - cd test
-                # Run unit tests with some tests test disabled
-                - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads
-
-
-
+          - make sushi
+          - make unit_tests
+          - cd test
+          # Run unit tests with some tests test disabled
+          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads
 
