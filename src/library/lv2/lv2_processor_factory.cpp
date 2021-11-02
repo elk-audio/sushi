@@ -37,17 +37,19 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
                                                                                              HostControl& host_control,
                                                                                              float sample_rate)
 {
-    if (!_world)
+    auto world = _world.lock();
+    if (!world)
     {
-        _world = std::make_shared<LilvWorldWrapper>();
-        _world->create_world();
-        if (_world->world() == nullptr)
+        world = std::make_shared<LilvWorldWrapper>();
+        world->create_world();
+        if (world->world() == nullptr)
         {
             SUSHI_LOG_ERROR("Failed to initialize Lilv World");
             return {ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, nullptr};
         }
+        _world = world;
     }
-    auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path, _world);
+    auto processor = std::make_shared<lv2::LV2_Wrapper>(host_control, plugin_info.path, world);
     auto processor_status = processor->init(sample_rate);
     return {processor_status, processor};
 }

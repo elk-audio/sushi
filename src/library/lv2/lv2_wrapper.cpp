@@ -55,6 +55,8 @@ LilvWorldWrapper::~LilvWorldWrapper()
 
 bool LilvWorldWrapper::create_world()
 {
+    assert(_world == nullptr);
+
     _world = lilv_world_new();
     if (_world)
     {
