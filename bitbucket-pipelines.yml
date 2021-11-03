@@ -26,7 +26,7 @@ pipelines:
           - apt-get install -y software-properties-common
           - add-apt-repository -y ppa:ubuntu-toolchain-r/test
           - cmake --version
-          - gcc-10 --version
+          # Optimise a bit by only load sub-submodules when neccesary
           - git submodule update --init
           - cd third-party/link
           - git submodule update --init
@@ -42,5 +42,11 @@ pipelines:
           - make unit_tests
           - cd test
           # Run unit tests with some tests test disabled
-          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads
+          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
+          # Quick smoke test
+          - cd ..
+          - ./sushi -d -c ../../misc/config_files/config_play.json&
+          - sleep 6
+          - killall sushi
+
 
