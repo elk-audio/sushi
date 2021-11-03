@@ -17,6 +17,7 @@ Fixes:
   * Track noise for tracks with no audio input
   * Bug where events outputted before the audio process callback were lost
   * Race condition in OSC path registration
+  * LV2 plugin load crash
 
 ## 0.11.0
 

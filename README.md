@@ -26,7 +26,7 @@ Sushi uses CMake as its build system. A generate script is also provided for con
 
 Make sure that Sushi is cloned with the `--recursive` flag to fetch all required submodules for building. Alternatively run `git submodule update --init --recursive` after cloning.
 
-Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 9 or higher.
+Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 10 or higher.
 
 ### Building for native Linux
 As all options are on by default, to build Sushi for a regular, non Elk Powered Linux distribution, the Xenomai options need to be turned off. In addition the Vst 2.x SDK needs to be provided.
