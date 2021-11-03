@@ -47,7 +47,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 LilvWorldWrapper::~LilvWorldWrapper()
 {
-    if(_world)
+    if (_world)
     {
         lilv_world_free(_world);
     }
