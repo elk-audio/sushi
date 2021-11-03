@@ -6,6 +6,7 @@ New Features:
   * Sample delay internal plugin
   * Multi channel support in peak meter plugin
   * Timing and transport notifications
+  * Processor properties support
   * Master limiter
   * Updated VST SDK to v3.7.3
   * Updated Twine to v0.2.1
