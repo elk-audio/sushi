@@ -37,7 +37,7 @@ public:
                                                                             float sample_rate) override;
 
 private:
-    std::shared_ptr<LilvWorldWrapper> _world{nullptr};
+    std::weak_ptr<LilvWorldWrapper> _world;
 };
 
 } // end namespace lv2
