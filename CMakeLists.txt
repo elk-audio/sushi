@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
-project(sushi)
+
+#####################
+#  Project Version  #
+#####################
+
+# Don't change version anywhere else. Everything is generated from this.
+set(SUSHI_VERSION_MAJOR 0)
+set(SUSHI_VERSION_MINOR 12)
+set(SUSHI_VERSION_REVISION 0)
+
+project(sushi VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION})
 
 ##################################
 #  Perform Cross Compile setup   #
