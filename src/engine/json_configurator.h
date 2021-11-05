@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -48,6 +48,7 @@ enum class JsonConfigReturnStatus
     INVALID_PLUGIN_NAME,
     INVALID_MIDI_PORT,
     INVALID_FILE,
+    NOT_DEFINED,
     NO_MIDI_DEFINITIONS,
     NO_OSC_DEFINITIONS,
     NO_CV_GATE_DEFINITIONS,
@@ -61,7 +62,8 @@ enum class JsonSection
     MIDI,
     OSC,
     CV_GATE,
-    EVENTS
+    EVENTS,
+    STATE
 };
 
 struct AudioConfig
@@ -190,6 +192,8 @@ private:
      * @return true if json follows schema, false otherwise
      */
     bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
+
+    bool _load_section(JsonSection);
 
     JsonConfigReturnStatus _load_data();
 
