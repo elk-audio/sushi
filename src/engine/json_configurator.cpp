@@ -820,6 +820,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
 bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSection section)
 {
     const char* schema_char_array = section_schema(section);
+    assert(schema_char_array);
 
     rapidjson::Document schema;
     schema.Parse(schema_char_array);
