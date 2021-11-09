@@ -240,5 +240,24 @@
                 "channel" : 0
             }
         ]
-    }
+    },
+    "initial_state" :
+    [
+        {
+            "processor" : "main",
+            "program" : 24,
+            "bypassed" : false,
+            "parameters" : {
+                "pan" : 0.35,
+                "gain" : 0.60
+            }
+        },
+        {
+            "processor" : "gain_O_l",
+            "program" : 0,
+            "parameters" : {
+                "gain" : 0.60
+            }
+        }
+    ]
 }

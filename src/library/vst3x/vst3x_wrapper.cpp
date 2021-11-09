@@ -532,6 +532,46 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     return ProcessorReturnCode::ERROR;
 }
 
+ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+{
+    if (state->bypassed().has_value())
+    {
+        bool bypassed = state->bypassed().value();
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_bypass_parameter.supported)
+        {
+            float float_bypass = bypassed ? 1.0f : 0.0f;
+            _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
+            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
+        }
+    }
+
+    if (state->program().has_value())
+    {
+        int id = state->program().value();
+        if (_internal_programs && _program_change_parameter.supported)
+        {
+            float normalised_id = id / static_cast<float>(_program_count);
+            _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
+            _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
+        }
+        else // file based programs
+        {
+            this->set_program(id);
+        }
+    }
+
+    for (const auto& parameter : state->parameters())
+    {
+        int id = parameter.first;
+        float value = parameter.second;
+        _add_parameter_change(id, value, 0);
+        _instance.controller()->setParamNormalized(id, value);
+    }
+
+    return ProcessorReturnCode::OK;
+}
+
 bool Vst3xWrapper::_register_parameters()
 {
     int param_count = _instance.controller()->getParameterCount();

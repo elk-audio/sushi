@@ -314,6 +314,24 @@ ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, con
     return ProcessorReturnCode::OK;
 }
 
+ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool /*realtime_running*/)
+{
+    if (state->bypassed().has_value())
+    {
+        this->set_bypassed(state->bypassed().value());
+    }
+    for (const auto& parameter : state->parameters())
+    {
+        auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
+        this->process_event(event);
+    }
+    for (const auto& property : state->properties())
+    {
+        this->set_property_value(property.first, property.second);
+    }
+    return ProcessorReturnCode::OK;
+}
+
 void InternalPlugin::send_data_to_realtime(BlobData data, int id)
 {
     assert(twine::is_current_thread_realtime() == false);

@@ -462,6 +462,36 @@ void Vst2xWrapper::output_vst_event(const VstEvent* event)
     }
 }
 
+ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+{
+    if (state->bypassed().has_value())
+    {
+        bool bypassed = state->bypassed().value();
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_can_do_soft_bypass)
+        {
+            _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
+        }
+    }
+
+    if (state->program().has_value())
+    {
+        this->set_program(state->program().value());
+    }
+
+    for (const auto& parameter : state->parameters())
+    {
+        VstInt32 id = parameter.first;
+        float value = parameter.second;
+        if (id < _plugin_handle->numParams)
+        {
+            _plugin_handle->setParameter(_plugin_handle, id, value);
+        }
+    }
+
+    return ProcessorReturnCode::OK;
+}
+
 VstSpeakerArrangementType arrangement_from_channels(int channels)
 {
     switch (channels)

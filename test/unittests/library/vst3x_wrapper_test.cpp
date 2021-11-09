@@ -165,8 +165,6 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtSafeRtEventFifo queue;
-    _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;
     note_on_event.type = Steinberg::Vst::Event::EventTypes::kNoteOnEvent;
@@ -186,21 +184,21 @@ TEST_F(TestVst3xWrapper, TestEventForwarding)
     _module_under_test->_process_data.outputEvents->addEvent(note_off_event);
     _module_under_test->_forward_events(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::NOTE_ON, event.type());
     ASSERT_EQ(5, event.sample_offset());
     ASSERT_EQ(46, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
 
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::NOTE_OFF, event.type());
     ASSERT_EQ(6, event.sample_offset());
     ASSERT_EQ(48, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
 
-    ASSERT_FALSE(queue.pop(event));
+    ASSERT_FALSE(_event_queue.pop(event));
 }
 
 TEST_F(TestVst3xWrapper, TestConfigurationChange)
@@ -239,7 +237,6 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    _module_under_test->set_enabled(true);
 
     auto [status, value] = _module_under_test->parameter_value(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);
@@ -264,9 +261,6 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
 TEST_F(TestVst3xWrapper, TestGateOutput)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo<10> queue;
-    _module_under_test->set_enabled(true);
-    _module_under_test->set_event_output(&queue);
 
     auto status = _module_under_test->connect_gate_from_processor(2, 0, 46);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -280,23 +274,20 @@ TEST_F(TestVst3xWrapper, TestGateOutput)
     _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
     _module_under_test->_forward_events(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::GATE_EVENT, event.type());
     ASSERT_EQ(0, event.sample_offset());
     ASSERT_EQ(2, event.gate_event()->gate_no());
     ASSERT_TRUE(event.gate_event()->value());
 
-    ASSERT_TRUE(queue.empty());
+    ASSERT_TRUE(_event_queue.empty());
 }
 
 TEST_F(TestVst3xWrapper, TestCVOutput)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo<10> queue;
-    _module_under_test->set_enabled(true);
-    _module_under_test->set_event_output(&queue);
 
     auto status = _module_under_test->connect_cv_from_parameter(DELAY_PARAM_ID, 1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);;
@@ -308,16 +299,38 @@ TEST_F(TestVst3xWrapper, TestCVOutput)
 
     _module_under_test->_forward_params(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::CV_EVENT, event.type());
     ASSERT_EQ(0, event.sample_offset());
     ASSERT_EQ(1, event.cv_event()->cv_id());
     ASSERT_FLOAT_EQ(0.75f, event.cv_event()->value());
 
-    ASSERT_TRUE(queue.empty());
+    ASSERT_TRUE(_event_queue.empty());
 }
+
+TEST_F(TestVst3xWrapper, TestStateHandling)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.set_program(2);
+    state.add_parameter_change(desc->id(), 0.88);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.88f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+}
+
 
 class TestVst3xUtils : public ::testing::Test
 {

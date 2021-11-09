@@ -160,6 +160,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/performance_timer.cpp
                       src/library/parameter_dump.cpp
                       src/library/processor.cpp
+                      src/library/processor_state.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
                       src/library/lv2/lv2_processor_factory.cpp

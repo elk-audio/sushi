@@ -113,6 +113,8 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     static void program_change_callback(void* arg, Event* event, int status)
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);

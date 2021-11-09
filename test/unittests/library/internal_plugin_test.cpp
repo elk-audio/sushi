@@ -224,3 +224,27 @@ TEST_F(InternalPluginTest, TestSendingDataToRealtime)
 
     EXPECT_EQ(123, *rt_event.data_parameter_change_event()->value().data);
 }
+
+TEST_F(InternalPluginTest, TestStateHandling)
+{
+    auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
+                                                                  1.0f, 0.0f, 10.f,
+                                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+    ASSERT_TRUE(parameter);
+    auto property = _module_under_test->register_property("str_1", "Str_1", "test");
+    ASSERT_TRUE(property);
+    auto descriptor = _module_under_test->parameter_from_name("str_1");
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.add_parameter_change(parameter->descriptor()->id(), 0.25);
+    state.add_property_change(descriptor->id(), "new_value");
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
+    EXPECT_EQ("new_value", _module_under_test->property_value(descriptor->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+}

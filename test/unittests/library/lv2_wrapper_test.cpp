@@ -516,4 +516,26 @@ TEST_F(TestLv2Wrapper, TestSynth)
     _module_under_test->process_audio(in_buffer, out_buffer);
 }
 
+TEST_F(TestLv2Wrapper, TestStateHandling)
+{
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
+
+    auto desc = _module_under_test->parameter_from_name("Gain");
+    ASSERT_TRUE(desc);
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.set_program(2);
+    state.add_parameter_change(desc->id(), 0.25);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+}
+
+
 #endif //SUSHI_BUILD_WITH_LV2_MDA_TESTS

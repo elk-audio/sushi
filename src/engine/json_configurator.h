@@ -48,11 +48,7 @@ enum class JsonConfigReturnStatus
     INVALID_PLUGIN_NAME,
     INVALID_MIDI_PORT,
     INVALID_FILE,
-    NOT_DEFINED,
-    NO_MIDI_DEFINITIONS,
-    NO_OSC_DEFINITIONS,
-    NO_CV_GATE_DEFINITIONS,
-    NO_EVENTS_DEFINITIONS
+    NOT_DEFINED
 };
 
 enum class JsonSection
@@ -144,6 +140,13 @@ public:
      *         returned is JsonConfigReturnStatus::OK
      */
     std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
+
+    /**
+     * @brief Reads the json config, searches for a valid "initial_state" definition
+     *        and configures the processors with the values specified
+     * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
+     */
+    JsonConfigReturnStatus load_initial_state();
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 

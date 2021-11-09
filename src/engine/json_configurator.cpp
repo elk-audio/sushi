@@ -50,6 +50,7 @@ const char* section_name(JsonSection section)
         case JsonSection::CV_GATE:      return "cv_control";
         case JsonSection::EVENTS:       return "events";
         case JsonSection::STATE:        return "initial_state";
+        default:                        return nullptr;
     }
 }
 
@@ -76,8 +77,10 @@ const char* section_schema(JsonSection section)
             #include "json_schemas/events_schema.json"
             ;
         case JsonSection::STATE: return
-            #include "json_schemas/events_schema.json"
+            #include "json_schemas/state_schema.json"
             ;
+        default:
+            return nullptr;
     }
 }
 
@@ -579,6 +582,65 @@ JsonConfigurator::load_event_list()
     return std::make_pair(JsonConfigReturnStatus::OK, events);
 }
 
+JsonConfigReturnStatus JsonConfigurator::load_initial_state()
+{
+    SUSHI_LOG_DEBUG("Loading initial processor state");
+
+    auto [status, json_states] = _parse_section(JsonSection::STATE);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    for (auto& json_state : json_states.GetArray())
+    {
+        ProcessorState state;
+        auto processor = _processor_container->mutable_processor(json_state["processor"].GetString());
+        if (!processor)
+        {
+            SUSHI_LOG_WARNING("Invalid processor name: \"{}\"", json_state["processor"].GetString());
+            continue;
+        }
+
+        if (json_state.HasMember("bypassed"))
+        {
+            state.set_bypass(json_state["bypassed"].GetBool());
+        }
+        if (json_state.HasMember("program"))
+        {
+            state.set_program(json_state["program"].GetInt());
+        }
+        if (json_state.HasMember("parameters"))
+        {
+            for (const auto& parameter : json_state["parameters"].GetObject())
+            {
+                auto param = processor->parameter_from_name(parameter.name.GetString());
+                if (!param)
+                {
+                    SUSHI_LOG_WARNING("Invalid parameter name: \"{}\"", parameter.name.GetString());
+                    continue;
+                }
+                state.add_parameter_change(param->id(), parameter.value.GetFloat());
+            }
+        }
+        if (json_state.HasMember("properties"))
+        {
+            for (const auto& parameter : json_state["properties"].GetObject())
+            {
+                auto param = processor->parameter_from_name(parameter.name.GetString());
+                if (!param)
+                {
+                    SUSHI_LOG_WARNING("Invalid property name: \"{}\"", parameter.name.GetString());
+                    continue;
+                }
+                state.add_parameter_change(param->id(), parameter.value.GetFloat());
+            }
+        }
+
+        processor->set_state(&state, false);
+    }
+    return JsonConfigReturnStatus::OK;
+}
+
 void JsonConfigurator::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 {
     _osc_frontend = osc_frontend;
@@ -604,7 +666,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
     if(_json_data.HasMember(name) == false)
     {
         SUSHI_LOG_INFO("Config file does not have any \"{}\" definitions", name);
-        return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
+        return {JsonConfigReturnStatus::NOT_DEFINED, _json_data};
     }
     return {JsonConfigReturnStatus::OK, _json_data[name]};
 }
