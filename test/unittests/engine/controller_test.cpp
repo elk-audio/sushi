@@ -165,7 +165,7 @@ TEST_F(ControllerTest, TestTrackControls)
     auto [param_status, parameters] = parameter_controller->get_track_parameters(id);
     ASSERT_EQ(ext::ControlStatus::OK, param_status);
 
-    EXPECT_EQ(2u, parameters.size());
+    EXPECT_EQ(3u, parameters.size());
     EXPECT_EQ("gain", parameters[0].name);
     EXPECT_EQ("Gain", parameters[0].label);
     EXPECT_EQ("dB", parameters[0].unit);

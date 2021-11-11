@@ -71,7 +71,7 @@ TEST_F(TrackTest, TestMultibusSetup)
     Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
-    EXPECT_EQ(4, module_under_test.parameter_count());
+    EXPECT_EQ(5, module_under_test.parameter_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
 }
@@ -155,6 +155,32 @@ TEST_F(TrackTest, TestPanAndGain)
      * that it had an effect. Exact values will be tested by the pan function */
     EXPECT_LT(out.channel(LEFT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
     EXPECT_GT(out.channel(RIGHT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
+}
+
+TEST_F(TrackTest, TestMute)
+{
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    _module_under_test.add(&plugin);
+    auto mute_param = _module_under_test.parameter_from_name("mute");
+    ASSERT_FALSE(mute_param == nullptr);
+
+    // Mute should be off by default
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    _module_under_test.render();
+    test_utils::assert_buffer_value(1.0f, _module_under_test.output_bus(0));
+
+    // Enable mute and run
+    auto mute_event = RtEvent::make_parameter_change_event(0, 0, mute_param->id(), 1.0);
+    _module_under_test.process_event(mute_event);
+    for (int i = 0; i <= TEST_SAMPLE_RATE / AUDIO_CHUNK_SIZE / (1000 / GAIN_SMOOTHING_TIME.count()); ++i)
+    {
+        test_utils::fill_sample_buffer(in_bus, 1.0f);
+        _module_under_test.render();
+        EXPECT_LT(_module_under_test.output_bus(0).channel(0)[0], 1.0f);
+    }
+    EXPECT_LT(_module_under_test.output_bus(0).channel(0)[0], 0.1f);
 }
 
 TEST_F(TrackTest, TestEventProcessing)
