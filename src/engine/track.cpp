@@ -369,17 +369,17 @@ void Track::_process_output_events()
                     break;
                 case RtEventType::AFTERTOUCH:
                     output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
-                                                                event.keyboard_event()->channel(),
+                                                                event.keyboard_common_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::PITCH_BEND:
                     output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
-                                                                event.keyboard_event()->channel(),
+                                                                event.keyboard_common_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::MODULATION:
                     output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
-                                                                   event.keyboard_event()->channel(),
+                                                                   event.keyboard_common_event()->channel(),
                                                                    event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::WRAPPED_MIDI_EVENT:
