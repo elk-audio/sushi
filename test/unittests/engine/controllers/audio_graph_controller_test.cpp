@@ -68,7 +68,7 @@ TEST_F(AudioGraphControllerTest, TestGettingProcessors)
     ASSERT_EQ(ext::ControlStatus::OK, proc_status_2);
     EXPECT_EQ(_track_id, proc.id);
     EXPECT_EQ(0, proc.program_count);
-    EXPECT_EQ(2, proc.parameter_count);
+    EXPECT_EQ(3, proc.parameter_count);
     EXPECT_EQ("Track 1", proc.name);
 
     std::tie(status, id) = _module_under_test->get_track_id("Track 1");
