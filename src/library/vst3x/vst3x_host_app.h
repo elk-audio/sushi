@@ -24,12 +24,13 @@
 #include "library/id_generator.h"
 #include "library/constants.h"
 
-#include <pluginterfaces/vst/ivsteditcontroller.h>
-#include <pluginterfaces/vst/ivstunits.h>
+#include "pluginterfaces/vst/ivsteditcontroller.h"
+#include "pluginterfaces/vst/ivstunits.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "public.sdk/source/vst/hosting/module.h"
+#include "base/source/fobject.h"
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
@@ -47,7 +48,7 @@ public:
     Steinberg::tresult getName (Steinberg::Vst::String128 name) override;
 };
 
-class ComponentHandler : public Steinberg::Vst::IComponentHandler
+class ComponentHandler : public Steinberg::Vst::IComponentHandler, public Steinberg::FObject
 {
 public:
     SUSHI_DECLARE_NON_COPYABLE(ComponentHandler);
@@ -57,9 +58,10 @@ public:
     Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value);
     Steinberg::tresult PLUGIN_API endEdit (Steinberg::Vst::ParamID /*parameter_id*/) override {return Steinberg::kNotImplemented;}
     Steinberg::tresult PLUGIN_API restartComponent (Steinberg::int32 flags) override;
-    Steinberg::tresult PLUGIN_API queryInterface (const Steinberg::TUID /*_iid*/, void** /*obj*/) override {return Steinberg::kNoInterface;}
-    Steinberg::uint32 PLUGIN_API addRef () override { return 1000; }
-    Steinberg::uint32 PLUGIN_API release () override { return 1000; }
+
+    REFCOUNT_METHODS(Steinberg::FObject);
+    DEF_INTERFACES_1(Steinberg::Vst::IComponentHandler, Steinberg::FObject);
+
 private:
     Vst3xWrapper* _wrapper_instance;
 };

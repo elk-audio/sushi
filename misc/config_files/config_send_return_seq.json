@@ -121,6 +121,43 @@
                 "value": "return"
             }
         }
+    ],
+    "initial_state": [
+        {
+            "processor": "send_analog",
+            "properties": {
+                "destination_name": "return"
+            }
+        },
+        {
+            "processor": "send_fm",
+            "properties": {
+                "destination_name": "return"
+            }
+        },
+        {
+            "processor": "delay",
+            "parameters": {
+                "L Delay ": 0.7,
+                "FX Mix  ": 1.0
+            }
+        },
+        {
+            "processor": "fm_synth",
+            "program": 8,
+            "parameters": {
+                "Mod Init": 1.0,
+                "Mod Dec ": 0.0
+            }
+        },
+        {
+            "processor": "analog_synth",
+            "program": 8,
+            "parameters": {
+                "VCF Freq": 1.0,
+                "VCF Reso": 0.0
+            }
+        }
     ]
 }
 

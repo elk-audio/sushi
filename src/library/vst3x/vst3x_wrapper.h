@@ -164,8 +164,6 @@ private:
 
     inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);
 
-    bool _sync_controller_to_processor();
-
     bool _sync_processor_to_controller();
 
     void _program_change_callback(Event* event, int status);

@@ -253,7 +253,7 @@
             }
         },
         {
-            "processor" : "gain_O_l",
+            "processor" : "gain_0_l",
             "program" : 0,
             "parameters" : {
                 "gain" : 0.60

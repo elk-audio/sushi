@@ -554,6 +554,7 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
             float normalised_id = id / static_cast<float>(_program_count);
             _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
             _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
+            _current_program = id;
         }
         else // file based programs
         {
@@ -565,6 +566,7 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
     {
         int id = parameter.first;
         float value = parameter.second;
+        // Eventually these should be done without looping back parameter changes
         _add_parameter_change(id, value, 0);
         _instance.controller()->setParamNormalized(id, value);
     }
@@ -604,7 +606,7 @@ bool Vst3xWrapper::_register_parameters()
                     _program_change_parameter.supported == false)
             {
                 /* For now we only support 1 program change parameter and we're counting on the
-                 * first one to be the "major" one. Multitimbral instruments can have multiple
+                 * first one to be the global one. Multitimbral instruments can have multiple
                  * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
@@ -925,19 +927,6 @@ void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
 {
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, this->id(), param_id, value, IMMEDIATE_PROCESS);
     _host_control.post_event(event);
-}
-
-bool Vst3xWrapper::_sync_controller_to_processor()
-{
-    Steinberg::MemoryStream stream;
-    if (_instance.controller()->getState (&stream) == Steinberg::kResultTrue)
-    {
-        stream.seek(0, Steinberg::MemoryStream::kIBSeekCur, nullptr);
-        auto res = _instance.component()->setState (&stream);
-        return res == Steinberg::kResultTrue? true : false;
-    }
-    SUSHI_LOG_WARNING("Failed to get state from controller");
-    return false;
 }
 
 bool Vst3xWrapper::_sync_processor_to_controller()

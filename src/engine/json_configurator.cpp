@@ -598,7 +598,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
         if (!processor)
         {
             SUSHI_LOG_WARNING("Invalid processor name: \"{}\"", json_state["processor"].GetString());
-            continue;
+            return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
 
         if (json_state.HasMember("bypassed"))
@@ -617,22 +617,22 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
                 if (!param)
                 {
                     SUSHI_LOG_WARNING("Invalid parameter name: \"{}\"", parameter.name.GetString());
-                    continue;
+                    return JsonConfigReturnStatus::INVALID_PARAMETER;
                 }
                 state.add_parameter_change(param->id(), parameter.value.GetFloat());
             }
         }
         if (json_state.HasMember("properties"))
         {
-            for (const auto& parameter : json_state["properties"].GetObject())
+            for (const auto& property : json_state["properties"].GetObject())
             {
-                auto param = processor->parameter_from_name(parameter.name.GetString());
+                auto param = processor->parameter_from_name(property.name.GetString());
                 if (!param)
                 {
-                    SUSHI_LOG_WARNING("Invalid property name: \"{}\"", parameter.name.GetString());
-                    continue;
+                    SUSHI_LOG_WARNING("Invalid property name: \"{}\"", property.name.GetString());
+                    return JsonConfigReturnStatus::INVALID_CONFIGURATION;
                 }
-                state.add_parameter_change(param->id(), parameter.value.GetFloat());
+                state.add_property_change(param->id(), property.value.GetString());
             }
         }
 
