@@ -56,6 +56,7 @@ class NullMidiFrontend : public BaseMidiFrontend
 {
 public:
     explicit NullMidiFrontend(midi_receiver::MidiReceiver* receiver) : BaseMidiFrontend(receiver) {}
+    explicit NullMidiFrontend(int /* input */, int /* outputs */, midi_receiver::MidiReceiver* receiver) : BaseMidiFrontend(receiver) {}
 
     bool init() override {return true;};
 

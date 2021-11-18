@@ -42,6 +42,7 @@ configure_file(
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
+option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
@@ -58,6 +59,9 @@ if (${WITH_XENOMAI})
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
+endif()
+if (${WITH_ALSA_MIDI})
+    message("Building with alsa midi support.")
 endif()
 if (${WITH_VST2})
     message("Building with Vst2 support.")
@@ -448,6 +452,10 @@ endif()
 
 if (${WITH_JACK})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_ALSA_MIDI})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
 
 if (${WITH_VST3})

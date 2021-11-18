@@ -20,6 +20,7 @@
 
 #ifndef SUSHI_ALSA_MIDI_FRONTEND_H
 #define SUSHI_ALSA_MIDI_FRONTEND_H
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
 
 #include <thread>
 #include <atomic>
@@ -76,5 +77,6 @@ private:
 
 } // end namespace midi_frontend
 } // end namespace sushi
+#endif //SUSHI_BUILD_WITH_ALSA_MIDI
 
 #endif //SUSHI_ALSA_MIDI_FRONTEND_H_H
