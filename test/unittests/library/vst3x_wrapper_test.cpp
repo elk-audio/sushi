@@ -19,8 +19,9 @@ const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 #endif
 const char PLUGIN_NAME[] = "ADelay";
 
-const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
-const char SYNTH_PLUGIN_NAME[] = "mda JX10";
+// TODO: clang says unused
+// const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
+// const char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
@@ -61,6 +62,7 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 class TestVst3xWrapper : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestVst3xWrapper()
     {
     }

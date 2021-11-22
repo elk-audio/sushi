@@ -55,7 +55,7 @@ public:
 private:
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
-    BaseEngine*                         _engine;
+    //BaseEngine*                         _engine; TODO: clang says unused
     performance::BasePerformanceTimer*  _performance_timer;
 };
 

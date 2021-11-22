@@ -25,7 +25,7 @@
 #include "library/vst2x/vst2x_wrapper.h"
 #endif
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2"); TODO: clang says unused
 
 namespace sushi {
 namespace vst2 {

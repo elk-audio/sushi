@@ -31,7 +31,7 @@ namespace audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
-constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise
+const/*expr*/ float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise TODO: According to clang powf is not constexpr https://stackoverflow.com/questions/27708629/why-isnt-abs-constexpr
 constexpr int   NOISE_SEED = 5; // Using a constant seed makes potential errors reproducible
 
 template<class random_device, class random_dist>

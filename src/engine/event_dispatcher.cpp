@@ -27,12 +27,12 @@ namespace dispatcher {
 
 constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher"); TODO: No logging causes unused variable warning in clang
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
                                  RtSafeRtEventFifo* out_rt_queue) : _running{false},
-                                                                    _engine{engine},
+                                                                    /* _engine{engine}, TODO: Unused according to clang*/
                                                                     _in_rt_queue{in_rt_queue},
                                                                     _out_rt_queue{out_rt_queue},
                                                                     _worker{engine, this},

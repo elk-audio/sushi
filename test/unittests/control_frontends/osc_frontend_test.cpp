@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 #include "control_frontends/base_control_frontend.cpp"
+#pragma GCC diagnostic push // TODO: clang requires push matching pop
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define private public
 #include "control_frontends/osc_frontend.cpp"

@@ -22,9 +22,10 @@
 #include "engine/base_engine.h"
 #include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("event"); TODO: clang says unused
 
 /* GCC does not seem to get when a switch case handles all cases */
+#pragma GCC diagnostic push // TODO: clang requires push matching pop
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
 namespace sushi {

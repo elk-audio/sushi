@@ -23,7 +23,7 @@
 #include "performance_timer.h"
 #include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("processtimer");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("processtimer"); TODO: clang says unused
 
 namespace sushi {
 namespace performance {

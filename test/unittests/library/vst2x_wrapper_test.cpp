@@ -44,6 +44,7 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 class TestVst2xWrapper : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestVst2xWrapper()
     {
     }
@@ -249,7 +250,7 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
     SetUp("libvst2_test_plugin.so");
     EXPECT_FALSE(_host_control._dummy_dispatcher.got_event());
     _module_under_test->notify_parameter_change(0, 0.5f);
-    auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
+    auto event = _host_control._dummy_dispatcher.retrieve_event(); // TODO: moving temp object prevents copy elision
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
 }

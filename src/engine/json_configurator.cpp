@@ -20,6 +20,7 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic push // TODO: clang requires a push matching a pop
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"

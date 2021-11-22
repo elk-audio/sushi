@@ -108,7 +108,7 @@ AudioEngine::AudioEngine(float sample_rate,
     {
         _event_dispatcher.reset(event_dispatcher);
     }
-    _host_control = std::move(HostControl(_event_dispatcher.get(), &_transport));
+    _host_control = HostControl(_event_dispatcher.get(), &_transport); //TODO: clang says moving a temp object prevents copy elision
 
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);

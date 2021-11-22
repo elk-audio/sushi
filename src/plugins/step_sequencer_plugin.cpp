@@ -26,7 +26,7 @@
 namespace sushi {
 namespace step_sequencer_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("step_seq");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("step_seq"); TODO: Clang says unused
 
 constexpr auto DEFAULT_NAME = "sushi.testing.step_sequencer";
 constexpr auto DEFAULT_LABEL = "Step Sequencer";

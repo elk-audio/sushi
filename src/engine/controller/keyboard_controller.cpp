@@ -27,7 +27,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-KeyboardController::KeyboardController(BaseEngine* engine) : _engine(engine),
+KeyboardController::KeyboardController(BaseEngine* engine) : /* _engine(engine), TODO: clang says unused*/
                                                              _event_dispatcher(engine->event_dispatcher())
 {}
 

@@ -26,7 +26,7 @@
 #include "library/vst3x/vst3x_wrapper.h"
 #endif
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3"); TODO: clang says unused
 
 namespace sushi {
 namespace vst3 {

@@ -27,7 +27,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-TimingController::TimingController(sushi::engine::BaseEngine* engine) : _engine(engine),
+TimingController::TimingController(sushi::engine::BaseEngine* engine) : /*_engine(engine), TODO: clang says unused */
                                                                         _performance_timer(engine->performance_timer())
 {}
 

@@ -11,7 +11,7 @@
 #include "engine/processor_container.cpp"
 
 constexpr float SAMPLE_RATE = 44000;
-constexpr int TEST_CHANNEL_COUNT = 4;
+// constexpr int TEST_CHANNEL_COUNT = 4; TODO: clang says unused
 using namespace sushi;
 using namespace sushi::engine;
 

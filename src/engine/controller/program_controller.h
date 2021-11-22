@@ -48,7 +48,7 @@ public:
     ext::ControlStatus set_processor_program(int processor_id, int program_id) override;
 
 private:
-    BaseEngine*                         _engine;
+    //BaseEngine*                         _engine; TODO: clang says unused
     dispatcher::BaseEventDispatcher*    _event_dispatcher;
     const BaseProcessorContainer*       _processors;
 };

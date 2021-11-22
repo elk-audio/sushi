@@ -26,7 +26,7 @@
 namespace sushi {
 namespace arpeggiator_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("arpeggiator");
+// SUSHI_GET_LOGGER_WITH_MODULE_NAME("arpeggiator"); TODO: clang says unused
 
 constexpr auto DEFAULT_NAME = "sushi.testing.arpeggiator";
 constexpr auto DEFAULT_LABEL = "Arpeggiator";

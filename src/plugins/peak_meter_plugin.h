@@ -75,7 +75,7 @@ private:
 
     std::array<ValueSmootherFilter<float>, MAX_METERED_CHANNELS> _smoothers;
 
-    std::array<float, MAX_METERED_CHANNELS> _smoothed{ {0.0f} };
+    // std::array<float, MAX_METERED_CHANNELS> _smoothed{ {0.0f} }; TODO: clang says unused
 };
 
 }// namespace peak_meter_plugin

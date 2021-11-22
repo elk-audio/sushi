@@ -25,9 +25,10 @@ namespace engine {
 namespace controller_impl {
 
 // TODO - Remove when stubs have been properly implemented
+#pragma GCC diagnostic push // TODO: clang requires a push matching a pop
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-OscController::OscController(BaseEngine* engine) : _engine(engine),
+OscController::OscController(BaseEngine* engine) : /*_engine(engine), TODO: clang says unused*/
                                                    _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
 
@@ -145,7 +146,7 @@ ext::ControlStatus OscController::disable_all_output()
     return ext::ControlStatus::OK;
 }
 
-#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop TODO: no matching push. Can be deleted?
 
 } // namespace controller_impl
 } // namespace engine

@@ -25,7 +25,7 @@ public:
     }
 
     void process_event(const RtEvent& /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override
     {
         out_buffer = in_buffer;
     }

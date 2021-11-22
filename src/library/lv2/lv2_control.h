@@ -42,7 +42,7 @@ enum class ControlType
 };
 
 /** Plugin control. */
-class ControlID
+struct ControlID //TODO: clang says 'ControlID' defined as a class here but previously declared as a struct; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
 {
 public:
     ~ControlID() = default;

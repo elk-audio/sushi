@@ -120,6 +120,7 @@ class ParameterPreProcessor
 {
 public:
     ParameterPreProcessor(T min, T max): _min_domain_value(min), _max_domain_value(max) {}
+    virtual ~ParameterPreProcessor() = default; // TODO: clang complains about delete called on non final object with virtual functions but non-virtual destructor
 
     virtual T process_to_plugin(T value)
     {

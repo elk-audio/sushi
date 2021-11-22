@@ -16,7 +16,7 @@ static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
     return 0;
 }
 
-constexpr float TEST_SAMPLE_RATE = 44100;
+// constexpr float TEST_SAMPLE_RATE = 44100; TODO: clang says unused
 
 TEST(EventTest, TestToRtEvent)
 {

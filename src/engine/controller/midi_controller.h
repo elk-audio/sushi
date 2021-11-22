@@ -92,10 +92,10 @@ public:
     ext::ControlStatus disconnect_all_pc_from_processor(int processor_id) override;
 
 private:
-    BaseEngine* _engine;
+    // BaseEngine* _engine; TODO: clang says unused
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
-    ext::ParameterController* _parameter_controller;
+    // ext::ParameterController* _parameter_controller; TODO: clang says unused
 };
 
 } // namespace controller_impl

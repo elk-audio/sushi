@@ -6,7 +6,7 @@
 using namespace sushi;
 using namespace sushi::engine;
 
-constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0);
+// constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0); TODO: clang says unused
 constexpr float TEST_SAMPLERATE = 48000;
 
 class TestTransport : public ::testing::Test

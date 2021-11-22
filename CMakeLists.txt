@@ -414,6 +414,7 @@ set(COMMON_LIBRARIES
     sndfile
     lo
     pthread
+    atomic
     dl
     fifo
     spdlog::spdlog

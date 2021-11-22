@@ -27,6 +27,7 @@
 
 #include <optional>
 
+#pragma GCC diagnostic push // TODO: clang requires a push matching a pop
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/document.h"
 #pragma GCC diagnostic pop

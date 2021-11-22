@@ -36,7 +36,7 @@
 namespace
 {
 
-static constexpr int LV2_STRING_BUFFER_SIZE = 256;
+// static constexpr int LV2_STRING_BUFFER_SIZE = 256; TODO: clang says unused
 
 } // anonymous namespace
 

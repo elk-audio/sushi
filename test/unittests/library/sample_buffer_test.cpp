@@ -6,7 +6,7 @@
 
 using namespace sushi;
 
-constexpr unsigned int SAMPLE_RATE = 44000;
+// constexpr unsigned int SAMPLE_RATE = 44000; TODO: clang says unused
 
 TEST(TestSampleBuffer, TestCopying)
 {
