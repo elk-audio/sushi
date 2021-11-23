@@ -28,10 +28,7 @@
 namespace sushi {
 namespace control_frontend {
 
-// SUSHI_GET_LOGGER; TODO: unused according to clang
 
-// constexpr int STOP_RETRIES = 200; TODO: unused according to clang
-// constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(2); TODO: unused according to clang
 
 void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,

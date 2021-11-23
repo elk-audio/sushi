@@ -24,8 +24,6 @@
 #include "logging.h"
 #include "library/constants.h"
 
-// SUSHI_GET_LOGGER_WITH_MODULE_NAME("track"); TODO: No logging done in this file. Produces warning with clang
-
 namespace sushi {
 namespace engine {
 
@@ -56,7 +54,6 @@ Track::Track(HostControl host_control, int channels,
                                                      _output_buffer{std::max(channels, 2)},
                                                      _input_busses{1},
                                                      _output_busses{1},
-                                                     /*_multibus{false}, TODO: Never used according to clang */
                                                      _timer{timer}
     {
     _max_input_channels = channels;
@@ -72,7 +69,6 @@ Track::Track(HostControl host_control, int input_busses, int output_busses,
                                                       _output_buffer{std::max(input_busses, output_busses) * 2},
                                                       _input_busses{input_busses},
                                                       _output_busses{output_busses},
-                                                      /*_multibus{(input_busses > 1 || output_busses > 1)}, TODO: Never used according to clang */
                                                       _timer{timer}
 {
     int channels = std::max(input_busses, output_busses) * 2;

@@ -30,7 +30,6 @@
 namespace sushi {
 namespace lv2 {
 
-// SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2"); TODO: clang says unused
 
 Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model* model):
     _index(port_index)

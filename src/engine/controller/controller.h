@@ -99,7 +99,6 @@ private:
     std::vector<ext::ControlListener*>      _transport_update_listeners;
     std::vector<ext::ControlListener*>      _cpu_timing_update_listeners;
 
-    // engine::BaseEngine*                     _engine; TODO: clang says unused
     const engine::BaseProcessorContainer*   _processors;
 
     controller_impl::SystemController       _system_controller_impl;

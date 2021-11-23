@@ -250,7 +250,7 @@ TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
     SetUp("libvst2_test_plugin.so");
     EXPECT_FALSE(_host_control._dummy_dispatcher.got_event());
     _module_under_test->notify_parameter_change(0, 0.5f);
-    auto event = _host_control._dummy_dispatcher.retrieve_event(); // TODO: moving temp object prevents copy elision
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
 }

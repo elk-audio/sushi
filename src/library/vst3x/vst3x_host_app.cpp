@@ -53,9 +53,9 @@ Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID paramet
     return Steinberg::kResultOk;
 }
 
-Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 /* flags */)
+Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 {
-    // if (flags | Steinberg::Vst::kParamValuesChanged) TODO: clang says bitwise or woth non zero value always evaluates to true. Should this be an & instead?
+    if (flags & Steinberg::Vst::kParamValuesChanged)
     {
         if (_wrapper_instance->_sync_controller_to_processor() == true)
         {

@@ -21,7 +21,7 @@
 #include <iostream>
 #include <cstdio>
 
-#pragma GCC diagnostic push // TODO: clang requires a push to match a pop
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"

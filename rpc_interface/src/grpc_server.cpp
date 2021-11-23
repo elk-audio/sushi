@@ -41,7 +41,6 @@ GrpcServer::GrpcServer(const std::string& listen_address,
                                                                _osc_control_service{std::make_unique<OscControlService>(controller)},
                                                                _notification_control_service{std::make_unique<NotificationControlService>(controller)},
                                                                _server_builder{std::make_unique<grpc::ServerBuilder>()},
-                                                               /*_controller{controller}, TODO: Unused according to clang */
                                                                _running{false}
 {}
 

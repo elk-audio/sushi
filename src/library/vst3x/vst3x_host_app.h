@@ -30,7 +30,7 @@
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "public.sdk/source/vst/hosting/module.h"
-#pragma GCC diagnostic push // TODO: clang requires push matching pop
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop

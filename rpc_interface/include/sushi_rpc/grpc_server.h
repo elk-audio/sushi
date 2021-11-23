@@ -90,7 +90,6 @@ private:
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;
     std::unique_ptr<grpc::Server>                   _server;
     std::unique_ptr<grpc::ServerCompletionQueue>    _async_rpc_queue;
-    // sushi::ext::SushiControl*                       _controller; TODO: Not used according to clang
     std::thread                                     _worker;
     std::atomic<bool>                               _running;
 };

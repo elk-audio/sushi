@@ -28,7 +28,6 @@
 namespace sushi {
 namespace transposer_plugin {
 
-// SUSHI_GET_LOGGER_WITH_MODULE_NAME("transposer"); TODO: Clang says unused
 
 constexpr auto DEFAULT_NAME = "sushi.testing.transposer";
 constexpr auto DEFAULT_LABEL = "Transposer";

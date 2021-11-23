@@ -16,8 +16,6 @@ static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
     return 0;
 }
 
-// constexpr float TEST_SAMPLE_RATE = 44100; TODO: clang says unused
-
 TEST(EventTest, TestToRtEvent)
 {
     auto note_on_event = KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, 1, 0, 48, 1.0f, IMMEDIATE_PROCESS);

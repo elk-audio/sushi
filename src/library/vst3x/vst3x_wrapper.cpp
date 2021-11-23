@@ -118,7 +118,7 @@ void add_patches(const std::string& path, std::vector<std::string>& patches)
             if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
             {
                 SUSHI_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
-                patches.push_back(path + "/" + patch_name); // TODO: clang says moving a temp object prevents copy elision
+                patches.push_back(path + "/" + patch_name);
             }
         }
         else if (entry->d_type == DT_DIR && entry->d_name[0] != '.') /* Dirty way to ignore ./,../ and hidden files */

@@ -32,7 +32,7 @@ namespace controller_impl {
 class CvGateController : public ext::CvGateController
 {
 public:
-    CvGateController(BaseEngine* /* engine */) /* : _engine(engine) TODO: clang says unused */ {}
+    CvGateController([[maybe_unused]] engine::BaseEngine* engine) {}
 
     ~CvGateController() override = default;
 
@@ -85,7 +85,6 @@ public:
     ext::ControlStatus disconnect_all_gate_outputs_from_processor(int processor_id) override;
 
 private:
-    // BaseEngine* _engine; TODO: clang says unused
 };
 
 } // namespace controller_impl

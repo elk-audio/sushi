@@ -19,10 +19,6 @@ const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 #endif
 const char PLUGIN_NAME[] = "ADelay";
 
-// TODO: clang says unused
-// const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
-// const char SYNTH_PLUGIN_NAME[] = "mda JX10";
-
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 constexpr float TEST_SAMPLE_RATE = 48000;

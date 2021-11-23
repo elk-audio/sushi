@@ -40,7 +40,7 @@ protected:
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_test_engine.event_dispatcher()};
     sushi::ext::ControlMockup _controller; // TODO: Maybe just the ParameterControllerMockup?
-    MidiController _midi_controller{&_test_engine, &_midi_dispatcher, _controller.parameter_controller_mockup()};
+    MidiController _midi_controller{&_test_engine, &_midi_dispatcher};
     EventDispatcherMockup* _test_dispatcher;
     DummyMidiFrontend _test_frontend;
 };

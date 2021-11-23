@@ -113,8 +113,6 @@ private:
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
 
-    // engine::BaseEngine*         _engine; TODO: clang says it's not used
-
     SynchronizedQueue<Event*>   _in_queue;
     RtSafeRtEventFifo*          _in_rt_queue;
     RtSafeRtEventFifo*          _out_rt_queue;

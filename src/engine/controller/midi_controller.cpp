@@ -22,7 +22,6 @@
 
 #include "logging.h"
 
-// SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller"); TODO: clang says unused
 
 namespace sushi {
 
@@ -109,12 +108,8 @@ ext::MidiPCConnection populate_pc_connection(const midi_dispatcher::PCInputConne
 
 
 MidiController::MidiController(BaseEngine* engine,
-                               midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                               ext::ParameterController* /* parameter_controller */) : /* _engine(engine), TODO: clang says unused */ 
-                                                                                 _event_dispatcher(engine->event_dispatcher()),
-                                                                                 _midi_dispatcher(midi_dispatcher)/*,
-                                                                                 _parameter_controller(parameter_controller) TODO: clang says unused */
-{}
+                               midi_dispatcher::MidiDispatcher* midi_dispatcher) : _event_dispatcher(engine->event_dispatcher()),
+                                                                                   _midi_dispatcher(midi_dispatcher) {}
 
 int MidiController::get_input_ports() const
 {
