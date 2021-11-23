@@ -86,9 +86,9 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_FLOAT_EQ(0.5, cv_event->value());
 
     std::string str("Hej");
-    event = RtEvent::make_string_parameter_change_event(129, 8, 65, &str);
+    event = RtEvent::make_string_property_change_event(129, 8, 65, &str);
     EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, event.type());
-    auto spc_event = event.string_parameter_change_event();
+    auto spc_event = event.property_change_event();
     EXPECT_EQ(ObjectId(129), spc_event->processor_id());
     EXPECT_EQ(8, spc_event->sample_offset());
     EXPECT_EQ(ObjectId(65), spc_event->param_id());
@@ -96,7 +96,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
 
     uint8_t TEST_DATA[3] = {1,2,3};
     BlobData data{sizeof(TEST_DATA), TEST_DATA};
-    event = RtEvent::make_data_parameter_change_event(130, 9, 66, data);
+    event = RtEvent::make_data_property_change_event(130, 9, 66, data);
     EXPECT_EQ(RtEventType::DATA_PROPERTY_CHANGE, event.type());
     auto dpc_event = event.data_parameter_change_event();
     EXPECT_EQ(ObjectId(130), dpc_event->processor_id());

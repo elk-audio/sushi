@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
-project(sushi)
+
+#####################
+#  Project Version  #
+#####################
+
+# Don't change version anywhere else. Everything is generated from this.
+set(SUSHI_VERSION_MAJOR 0)
+set(SUSHI_VERSION_MINOR 12)
+set(SUSHI_VERSION_REVISION 0)
+
+project(sushi VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION})
 
 ##################################
 #  Perform Cross Compile setup   #
@@ -98,7 +108,7 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/stringconvert.cpp"
+        "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
@@ -156,6 +166,9 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/processor.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
+                      src/library/lv2/lv2_processor_factory.cpp
+                      src/library/vst2x/vst2x_processor_factory.cpp
+                      src/library/vst3x/vst3x_processor_factory.cpp
                       src/plugins/arpeggiator_plugin.cpp
                       src/plugins/control_to_cv_plugin.cpp
                       src/plugins/cv_to_control_plugin.cpp
@@ -405,6 +418,7 @@ set(COMMON_LIBRARIES
     sndfile
     lo
     pthread
+    atomic
     dl
     fifo
     spdlog::spdlog

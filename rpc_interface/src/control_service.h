@@ -145,6 +145,14 @@ public:
     grpc::Status GetParameterValueAsString(grpc::ServerContext* context, const sushi_rpc::ParameterIdentifier* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status SetParameterValue(grpc::ServerContext* context, const sushi_rpc::ParameterValue* request, sushi_rpc::GenericVoidValue* response) override;
 
+    grpc::Status GetTrackProperties(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::PropertyInfoList* response) override;
+    grpc::Status GetProcessorProperties(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::PropertyInfoList* response) override;
+    grpc::Status GetPropertyId(grpc::ServerContext* context, const sushi_rpc::PropertyIdRequest* request, sushi_rpc::PropertyIdentifier* response) override;
+    grpc::Status GetPropertyInfo(grpc::ServerContext* context, const sushi_rpc::PropertyIdentifier* request, sushi_rpc::PropertyInfo* response) override;
+    grpc::Status GetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyIdentifier* request, sushi_rpc::GenericStringValue* response) override;
+    grpc::Status SetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyValue* request, sushi_rpc::GenericVoidValue* response) override;
+
+
 private:
     sushi::ext::ParameterController* _controller;
 };
@@ -207,6 +215,7 @@ public:
     grpc::Status DisconnectOutput(grpc::ServerContext* context, const sushi_rpc::AudioConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectAllInputsFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DisconnectAllOutputFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status DisconnectAllOutputsFromTrack(grpc::ServerContext* context, const sushi_rpc::TrackIdentifier* request, sushi_rpc::GenericVoidValue* response) override;
 
 private:
     sushi::ext::AudioRoutingController* _controller;

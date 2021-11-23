@@ -55,7 +55,7 @@ public:
     void set_samplerate(float samplerate)
     {
         _playback_speed = _playback_speed * samplerate / _samplerate;
-        _envelope.set_samplerate(samplerate);
+        _envelope.set_samplerate(samplerate / AUDIO_CHUNK_SIZE);
         _samplerate = samplerate;
     }
 

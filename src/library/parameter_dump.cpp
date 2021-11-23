@@ -21,9 +21,12 @@
 #include <iostream>
 #include <cstdio>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
+#pragma GCC diagnostic pop
 #include "library/parameter_dump.h"
 #include "control_frontends/osc_utils.h"
 

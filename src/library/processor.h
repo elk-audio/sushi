@@ -16,7 +16,7 @@
 /**
  * @brief Interface class for objects that process audio. Processor objects can be plugins,
  *        sends, faders, mixer/channel adaptors, or chains of processors.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_PROCESSOR_H
@@ -243,12 +243,33 @@ public:
      * @brief Get the value of the parameter with parameter_id formatted as a string,
      *        safe to call from a non rt-thread
      * @param parameter_id The Id of the requested parameter
-     * @return The current value formatted as a string, if the return code is OK
+     * @return The current value formatted as a string, if return code is OK
      */
     virtual std::pair<ProcessorReturnCode, std::string> parameter_value_formatted(ObjectId /*parameter_id*/) const
     {
         return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
     };
+
+    /**
+     * @brief Get the value of a property. Should only be called from a non-rt thread
+     * @param property_id The id of the requested property
+     * @return A string containing the current string property value if return code is OK
+     */
+    virtual std::pair<ProcessorReturnCode, std::string> property_value(ObjectId /*property_id*/) const
+    {
+        return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
+    }
+
+    /**
+     * @brief Set the value of a property.  Should only be called from a non-rt thread
+     * @param property_id The id of the property to set
+     * @param value The new string value of the string property
+     * @return OK if the operation completed successfully
+     */
+    virtual ProcessorReturnCode set_property_value(ObjectId /*property_id*/, const std::string& /*value*/)
+    {
+        return ProcessorReturnCode::PARAMETER_NOT_FOUND;
+    }
 
     /**
      * @brief Whether or not the processor supports programs/presets

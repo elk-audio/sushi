@@ -24,9 +24,6 @@ static const std::string SAMPLE_FILE = "Kawai-K11-GrPiano-C4_mono.wav";
 class TestSamplerVoice : public ::testing::Test
 {
 protected:
-    TestSamplerVoice()
-    {
-    }
     void SetUp()
     {
         _module_under_test.set_sample(&_sample);
@@ -34,9 +31,6 @@ protected:
         _module_under_test.set_envelope(0,0,1,0);
     }
 
-    void TearDown()
-    {
-    }
     dsp::Sample _sample{SAMPLE_DATA, SAMPLE_DATA_LENGTH};
     Voice _module_under_test;
 };
@@ -112,28 +106,26 @@ TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
 {
     RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
-    std::string* path = new std::string(test_utils::get_data_dir_path());
-    path->append(SAMPLE_FILE);
-    auto sample_ev = RtEvent::make_string_parameter_change_event(0,0,5,path);
+    auto path = std::string(test_utils::get_data_dir_path());
+    path.append(SAMPLE_FILE);
+
     ASSERT_EQ(nullptr, _module_under_test->_sample_buffer);
-    _module_under_test->process_event(sample_ev);
+    auto status = _module_under_test->set_property_value(SAMPLE_PROPERTY_ID, path);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    /* Simulate an event dispatcher receieving the event and calling the non-rt callback */
-    RtEvent async_event;
-    bool got_event = queue.pop(async_event);
-    ASSERT_TRUE(got_event);
-    auto typed_event = async_event.async_work_event();
-    int status = typed_event->callback()(typed_event->callback_data(), typed_event->event_id());
-    ASSERT_EQ(SampleChangeStatus::SUCCESS, status);
-    RtEvent completion_event = RtEvent::make_async_work_completion_event(typed_event->processor_id(),
-                                                                         typed_event->event_id(),
-                                                                         status);
-    _module_under_test->process_event(completion_event);
+    // The plugin should have sent an event with the sample data to the dispatcher
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event->maps_to_rt_event());
+    auto rt_event = event->to_rt_event(0);
+    ASSERT_EQ(RtEventType::DATA_PROPERTY_CHANGE, rt_event.type());
 
-    /* Sample should now be changed */
+    // Pass the RtEvent to the plugin manually
+    _module_under_test->process_event(rt_event);
+
+    // Sample should now be changed
     ASSERT_NE(nullptr, _module_under_test->_sample_buffer);
 
-    /* Plugin should have put a delete event on the output queue, just check that it's there */
+    // Plugin should have put a delete event on the output queue, just check that it's there
     ASSERT_FALSE(queue.empty());
 }
 
@@ -151,7 +143,7 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    BlobData data = _module_under_test->load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
+    BlobData data = _module_under_test->_load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
     ASSERT_NE(0, data.size);
     _module_under_test->_sample.set_sample(reinterpret_cast<float*>(data.data), data.size * sizeof(float));
     out_buffer.clear();

@@ -118,7 +118,7 @@ void add_patches(const std::string& path, std::vector<std::string>& patches)
             if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
             {
                 SUSHI_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
-                patches.push_back(std::move(path + "/" + patch_name));
+                patches.push_back(path + "/" + patch_name);
             }
         }
         else if (entry->d_type == DT_DIR && entry->d_name[0] != '.') /* Dirty way to ignore ./,../ and hidden files */
@@ -859,7 +859,7 @@ void Vst3xWrapper::_fill_processing_context()
     *context = {};
     auto ts = transport->time_signature();
 
-    context->state = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0;
+    context->state = SUSHI_HOST_TIME_CAPABILITIES | (transport->playing()? Steinberg::Vst::ProcessContext::kPlaying : 0);
     context->sampleRate             = _sample_rate;
     context->projectTimeSamples     = transport->current_samples();
     context->systemTime             = std::chrono::nanoseconds(transport->current_process_time()).count();

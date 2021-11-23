@@ -57,28 +57,18 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    static int non_rt_callback(void* data, EventId id)
-    {
-        return reinterpret_cast<SendPlugin*>(data)->_non_rt_callback(id);
-    }
+    ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
 private:
     void _set_destination(return_plugin::ReturnPlugin* destination);
 
-    int _non_rt_callback(EventId id);
+    void _change_return_destination(const std::string& dest_name);
 
     float                         _sample_rate;
     return_plugin::ReturnPlugin*  _destination{nullptr};
 
-    return_plugin::ReturnPlugin*  _new_destination{nullptr};
-
-
     FloatParameterValue*          _gain_parameter;
     ValueSmootherFilter<float>    _gain_smoother;
-
-    std::string*         _return_name_property{nullptr};
-    int                  _pending_event_id{0};
-
 
     SendReturnFactory* _manager;
     BypassManager _bypass_manager;

@@ -22,7 +22,6 @@ using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
 static const std::string WRITE_FILE = "write_test";
-constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
 {
@@ -398,19 +397,20 @@ TEST_F(TestWavWriterPlugin, TestProcess)
 {
     _module_under_test->init(TEST_SAMPLERATE);
 
+    ObjectId record_param_id = _module_under_test->parameter_from_name("recording")->id();
+    ObjectId file_property_id = _module_under_test->parameter_from_name("destination_file")->id();
+
     // Set up buffers and events
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    std::string* path = new std::string("./");
-    path->append(WRITE_FILE);
-    RtEvent path_event = RtEvent::make_string_parameter_change_event(0, 0, 0, path);
-    RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 1.0f);
-    RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+    std::string path = "./";
+    path.append(WRITE_FILE);
+    RtEvent start_recording_event = RtEvent::make_parameter_change_event(0, 0, record_param_id, 1.0f);
+    RtEvent stop_recording_event = RtEvent::make_parameter_change_event(0, 0, record_param_id, 0.0f);
 
     // Test setting path property
-    _module_under_test->process_event(path_event);
-    ASSERT_EQ(*path, *_module_under_test->_destination_file_property);
+    _module_under_test->set_property_value(file_property_id, path);
 
     // Test start recording and open file
     _module_under_test->process_event(start_recording_event);
@@ -433,12 +433,12 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
 
     // Verify written samples
-    path->append(".wav");
+    path.append(".wav");
     SF_INFO soundfile_info;
-    SNDFILE* file = sf_open(path->c_str(), SFM_READ, &soundfile_info);
+    SNDFILE* file = sf_open(path.c_str(), SFM_READ, &soundfile_info);
     if (sf_error(file))
     {
-        FAIL() << "While opening file " << path->c_str() << " " << sf_strerror(file) << std::endl;
+        FAIL() << "While opening file " << path.c_str() << " " << sf_strerror(file) << std::endl;
     }
     int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
     float written_data[number_of_samples];
@@ -448,7 +448,7 @@ TEST_F(TestWavWriterPlugin, TestProcess)
         ASSERT_FLOAT_EQ(1.0f, written_data[sample]);
     }
     sf_close(file);
-    remove(path->c_str());
+    remove(path.c_str());
 }
 
 class TestMonoSummingPlugin : public ::testing::Test

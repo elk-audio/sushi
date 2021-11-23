@@ -20,9 +20,12 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
+#pragma GCC diagnostic pop
 
 #include "logging.h"
 #include "json_configurator.h"
@@ -153,7 +156,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
     if (host_config.HasMember("master_limiter"))
     {
         _engine->enable_master_limiter(host_config["master_limiter"].GetBool());
-        SUSHI_LOG_INFO("Enable saftey limiter set to {}", host_config["master_limiter"].GetBool());
+        SUSHI_LOG_INFO("Enable master limiter set to {}", host_config["master_limiter"].GetBool());
     }
 
     return JsonConfigReturnStatus::OK;
@@ -736,8 +739,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
                 SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
             }
-            SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
-            return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
         status = _engine->add_plugin_to_track(plugin_id, track_id);
         if (status != EngineReturnStatus::OK)
@@ -794,10 +796,10 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new StringPropertyChangeEvent(processor->id(),
-                                             parameter->id(),
-                                             data["value"].GetString(),
-                                             timestamp);
+        return new PropertyChangeEvent(processor->id(),
+                                       parameter->id(),
+                                       data["value"].GetString(),
+                                       timestamp);
     }
     if (json_event["type"] == "note_on")
     {

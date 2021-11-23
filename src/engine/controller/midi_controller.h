@@ -39,8 +39,7 @@ class MidiController : public ext::MidiController
 {
 public:
     MidiController(BaseEngine* engine,
-                   midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                   ext::ParameterController* parameter_controller);
+                   midi_dispatcher::MidiDispatcher* midi_dispatcher);
 
     ~MidiController() override = default;
 
@@ -92,10 +91,8 @@ public:
     ext::ControlStatus disconnect_all_pc_from_processor(int processor_id) override;
 
 private:
-    BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
-    ext::ParameterController* _parameter_controller;
 };
 
 } // namespace controller_impl

@@ -28,10 +28,7 @@
 namespace sushi {
 namespace control_frontend {
 
-SUSHI_GET_LOGGER;
 
-constexpr int STOP_RETRIES = 200;
-constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(2);
 
 void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
@@ -48,7 +45,7 @@ void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
                                                              const std::string& value)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new StringPropertyChangeEvent(processor, parameter, value, timestamp);
+    auto e = new PropertyChangeEvent(processor, parameter, value, timestamp);
     _event_dispatcher->post_event(e);}
 
 

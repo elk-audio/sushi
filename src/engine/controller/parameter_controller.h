@@ -49,14 +49,21 @@ public:
 
     std::pair<ext::ControlStatus, std::string> get_parameter_value_as_string(int processor_id, int parameter_id) const override;
 
-    std::pair<ext::ControlStatus, std::string> get_string_property_value(int processor_id, int parameter_id) const override;
-
     ext::ControlStatus set_parameter_value(int processor_id, int parameter_id, float value) override;
 
-    ext::ControlStatus set_string_property_value(int processor_id, int parameter_id, const std::string& value) override;
+    std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>>  get_processor_properties(int processor_id) const override;
+
+    std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>>  get_track_properties(int processor_id) const override;
+
+    std::pair<ext::ControlStatus, int> get_property_id(int processor_id, const std::string& property_name) const override;
+
+    std::pair<ext::ControlStatus, ext::PropertyInfo> get_property_info(int processor_id, int property_id) const override;
+
+    std::pair<ext::ControlStatus, std::string> get_property_value(int processor_id, int parameter_id) const override;
+
+    ext::ControlStatus set_property_value(int processor_id, int property_id, const std::string& value) override;
 
 private:
-    BaseEngine*                             _engine;
     dispatcher::BaseEventDispatcher*        _event_dispatcher;
     const engine::BaseProcessorContainer*   _processors;
 };

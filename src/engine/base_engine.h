@@ -110,8 +110,7 @@ public:
     BaseEngine(float sample_rate) : _sample_rate(sample_rate)
     {}
 
-    virtual ~BaseEngine()
-    {}
+    virtual ~BaseEngine() = default;
 
     float sample_rate()
     {

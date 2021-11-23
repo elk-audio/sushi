@@ -290,17 +290,17 @@ protected:
 /**
  * @brief Class for string parameter changes
  */
-class StringParameterChangeRtEvent : public BaseRtEvent
+class PropertyChangeRtEvent : public BaseRtEvent
 {
 public:
-    StringParameterChangeRtEvent(ObjectId processor,
-                                 int offset,
-                                 ObjectId param_id,
-                                 std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
+    PropertyChangeRtEvent(ObjectId processor,
+                          int offset,
+                          ObjectId param_id,
+                          std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
                                                                    processor,
                                                                    offset),
-                                                       _data(value),
-                                                       _param_id(param_id) {}
+                                                _data(value),
+                                                _param_id(param_id) {}
 
     ObjectId param_id() const {return _param_id;}
 
@@ -315,10 +315,10 @@ protected:
 /**
  * @brief Class for binarydata parameter changes
  */
-class DataParameterChangeRtEvent : public DataPayloadRtEvent
+class DataPropertyChangeRtEvent : public DataPayloadRtEvent
 {
 public:
-    DataParameterChangeRtEvent(ObjectId processor,
+    DataPropertyChangeRtEvent(ObjectId processor,
                                int offset,
                                ObjectId param_id,
                                BlobData value) : DataPayloadRtEvent(RtEventType::DATA_PROPERTY_CHANGE,
@@ -631,15 +631,15 @@ public:
         assert(_keyboard_event.type() == RtEventType::FLOAT_PARAMETER_CHANGE);
         return &_parameter_change_event;
     }
-    const StringParameterChangeRtEvent* string_parameter_change_event() const
+    const PropertyChangeRtEvent* property_change_event() const
     {
-        assert(_string_parameter_change_event.type() == RtEventType::STRING_PROPERTY_CHANGE);
-        return &_string_parameter_change_event;
+        assert(_property_change_event.type() == RtEventType::STRING_PROPERTY_CHANGE);
+        return &_property_change_event;
     }
-    const DataParameterChangeRtEvent* data_parameter_change_event() const
+    const DataPropertyChangeRtEvent* data_parameter_change_event() const
     {
-        assert(_data_parameter_change_event.type() == RtEventType::DATA_PROPERTY_CHANGE);
-        return &_data_parameter_change_event;
+        assert(_data_property_change_event.type() == RtEventType::DATA_PROPERTY_CHANGE);
+        return &_data_property_change_event;
     }
 
     const ProcessorCommandRtEvent* processor_command_event() const
@@ -856,15 +856,15 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_string_parameter_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
+    static RtEvent make_string_property_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
     {
-        StringParameterChangeRtEvent typed_event(target, offset, param_id, value);
+        PropertyChangeRtEvent typed_event(target, offset, param_id, value);
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_data_parameter_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
+    static RtEvent make_data_property_change_event(ObjectId target, int offset, ObjectId param_id, BlobData data)
     {
-        DataParameterChangeRtEvent typed_event(target, offset, param_id, data);
+        DataPropertyChangeRtEvent typed_event(target, offset, param_id, data);
         return RtEvent(typed_event);
     }
 
@@ -1065,8 +1065,8 @@ private:
     RtEvent(const GateRtEvent& e)                       : _gate_event(e) {}
     RtEvent(const CvRtEvent& e)                         : _cv_event(e) {}
     RtEvent(const ParameterChangeRtEvent& e)            : _parameter_change_event(e) {}
-    RtEvent(const StringParameterChangeRtEvent& e)      : _string_parameter_change_event(e) {}
-    RtEvent(const DataParameterChangeRtEvent& e)        : _data_parameter_change_event(e) {}
+    RtEvent(const PropertyChangeRtEvent& e)             : _property_change_event(e) {}
+    RtEvent(const DataPropertyChangeRtEvent& e)         : _data_property_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e)           : _processor_command_event(e) {}
     RtEvent(const ReturnableRtEvent& e)                 : _returnable_event(e) {}
     RtEvent(const ProcessorOperationRtEvent& e)         : _processor_operation_event(e) {}
@@ -1093,8 +1093,8 @@ private:
         GateRtEvent                   _gate_event;
         CvRtEvent                     _cv_event;
         ParameterChangeRtEvent        _parameter_change_event;
-        StringParameterChangeRtEvent  _string_parameter_change_event;
-        DataParameterChangeRtEvent    _data_parameter_change_event;
+        PropertyChangeRtEvent         _property_change_event;
+        DataPropertyChangeRtEvent     _data_property_change_event;
         ProcessorCommandRtEvent       _processor_command_event;
         ReturnableRtEvent             _returnable_event;
         ProcessorOperationRtEvent     _processor_operation_event;

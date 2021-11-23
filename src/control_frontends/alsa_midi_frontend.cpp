@@ -234,7 +234,7 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 
     snd_seq_ev_set_source(&ev, _output_midi_ports[output]);
     snd_seq_ev_set_subs(&ev);
-    snd_seq_real_time_t ev_time = _to_alsa_time(timestamp);
+    snd_seq_real_time_t ev_time = {0,0}; //_to_alsa_time(timestamp); TODO: Find a proper solution for the midi sync.
     snd_seq_ev_schedule_real(&ev, _queue, false, &ev_time);
     bytes = snd_seq_event_output(_seq_handle, &ev);
     snd_seq_drain_output(_seq_handle);

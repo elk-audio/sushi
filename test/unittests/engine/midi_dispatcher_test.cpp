@@ -89,7 +89,6 @@ TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
     InputConnection connection = {25, 26, 0, 1, false, 64};
     ControlChangeMessage message = {1, 50, 32};
     Event* event = make_param_change_event(connection, message, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(event->is_parameter_change_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
     auto typed_event = static_cast<ParameterChangeEvent*>(event);
     EXPECT_EQ(25u, typed_event->processor_id());

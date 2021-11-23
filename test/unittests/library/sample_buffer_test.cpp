@@ -6,8 +6,6 @@
 
 using namespace sushi;
 
-constexpr unsigned int SAMPLE_RATE = 44000;
-
 TEST(TestSampleBuffer, TestCopying)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> test_buffer(4);

@@ -40,13 +40,6 @@ namespace grpc {
     class ServerCompletionQueue;
 }
 
-#if GOOGLE_PROTOBUF_VERSION > 3007001
-namespace grpc {
-    typedef grpc_impl::Server Server;
-    typedef grpc_impl::ServerBuilder ServerBuilder;
-    typedef grpc_impl::ServerCompletionQueue ServerCompletionQueue;
-}
-#endif
 
 namespace sushi_rpc {
 
@@ -97,7 +90,6 @@ private:
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;
     std::unique_ptr<grpc::Server>                   _server;
     std::unique_ptr<grpc::ServerCompletionQueue>    _async_rpc_queue;
-    sushi::ext::SushiControl*                       _controller;
     std::thread                                     _worker;
     std::atomic<bool>                               _running;
 };

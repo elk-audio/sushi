@@ -35,8 +35,6 @@ inline ext::ParameterType to_external(const sushi::ParameterType type)
         case ParameterType::FLOAT:      return ext::ParameterType::FLOAT;
         case ParameterType::INT:        return ext::ParameterType::INT;
         case ParameterType::BOOL:       return ext::ParameterType::BOOL;
-        case ParameterType::STRING:     return ext::ParameterType::STRING_PROPERTY;
-        case ParameterType::DATA:       return ext::ParameterType::DATA_PROPERTY;
         default:                        return ext::ParameterType::FLOAT;
     }
 }
@@ -48,22 +46,43 @@ inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* proces
     const auto& params = processor->all_parameters();
     for (const auto& param : params)
     {
-        ext::ParameterInfo info;
-        info.id = param->id();
-        info.type = ext::ParameterType::FLOAT;
-        info.label = param->label();
-        info.name = param->name();
-        info.unit = param->unit();
-        info.automatable = param->automatable();
-        info.min_domain_value = param->min_domain_value();
-        info.max_domain_value = param->max_domain_value();
-        infos.push_back(info);
+        if (param->type() == ParameterType::FLOAT || param->type() == ParameterType::INT || param->type() == ParameterType::BOOL)
+        {
+            ext::ParameterInfo info;
+            info.id = param->id();
+            info.type = ext::ParameterType::FLOAT;
+            info.label = param->label();
+            info.name = param->name();
+            info.unit = param->unit();
+            info.automatable = param->automatable();
+            info.min_domain_value = param->min_domain_value();
+            info.max_domain_value = param->max_domain_value();
+            infos.push_back(info);
+        }
     }
     return infos;
 }
 
-ParameterController::ParameterController(BaseEngine* engine) : _engine(engine),
-                                                               _event_dispatcher(engine->event_dispatcher()),
+inline std::vector<ext::PropertyInfo>  _read_properties(const Processor* processor)
+{
+    assert(processor != nullptr);
+    std::vector<ext::PropertyInfo> infos;
+    const auto& params = processor->all_parameters();
+    for (const auto& param : params)
+    {
+        if (param->type() == ParameterType::STRING)
+        {
+            ext::PropertyInfo info;
+            info.id = param->id();
+            info.label = param->label();
+            info.name = param->name();
+            infos.push_back(info);
+        }
+    }
+    return infos;
+}
+
+ParameterController::ParameterController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                                _processors(engine->processor_container())
 {}
 
@@ -176,10 +195,19 @@ std::pair<ext::ControlStatus, std::string> ParameterController::get_parameter_va
     return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
-std::pair<ext::ControlStatus, std::string> ParameterController::get_string_property_value(int /*processor_id*/, int /*parameter_id*/) const
+std::pair<ext::ControlStatus, std::string> ParameterController::get_property_value(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_string_property_value called");
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
+    SUSHI_LOG_DEBUG("get_property_value called with processor {} and property {}", processor_id, property_id);
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
+    if (processor != nullptr)
+    {
+        auto[status, value] = processor->property_value(static_cast<ObjectId>(property_id));
+        if (status == ProcessorReturnCode::OK)
+        {
+            return {ext::ControlStatus::OK, value};
+        }
+    }
+    return {ext::ControlStatus::NOT_FOUND, 0};
 }
 
 ext::ControlStatus ParameterController::set_parameter_value(int processor_id, int parameter_id, float value)
@@ -196,10 +224,73 @@ ext::ControlStatus ParameterController::set_parameter_value(int processor_id, in
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus ParameterController::set_string_property_value(int /*processor_id*/, int /*parameter_id*/, const std::string& /*value*/)
+ext::ControlStatus ParameterController::set_property_value(int processor_id, int property_id, const std::string& value)
 {
-    SUSHI_LOG_DEBUG("set_string_property_value called");
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    SUSHI_LOG_DEBUG("set_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
+    auto event = new PropertyChangeEvent(static_cast<ObjectId>(processor_id),
+                                         static_cast<ObjectId>(property_id),
+                                         value,
+                                         IMMEDIATE_PROCESS);
+
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>> ParameterController::get_processor_properties(int processor_id) const
+{
+    SUSHI_LOG_DEBUG("get_processor_properties called with processor {}", processor_id);
+    const auto proc = _processors->processor(processor_id);
+    if (proc)
+    {
+        return {ext::ControlStatus::OK, _read_properties(proc.get())};
+    }
+    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::PropertyInfo>()};
+}
+
+std::pair<ext::ControlStatus, std::vector<ext::PropertyInfo>> ParameterController::get_track_properties(int track_id) const
+{
+    SUSHI_LOG_DEBUG("get_track_properties called with processor {}", track_id);
+    const auto track = _processors->track(track_id);
+    if (track)
+    {
+        return {ext::ControlStatus::OK, _read_properties(track.get())};
+    }
+    return {ext::ControlStatus::NOT_FOUND, std::vector<ext::PropertyInfo>()};
+}
+
+std::pair<ext::ControlStatus, int> ParameterController::get_property_id(int processor_id, const std::string& property_name) const
+{
+    SUSHI_LOG_DEBUG("get_property_id called with processor {} and property {}", processor_id, property_name);
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
+    if (processor == nullptr)
+    {
+        return {ext::ControlStatus::NOT_FOUND, 0};
+    }
+    auto descriptor = processor->parameter_from_name(property_name);
+    if (descriptor && descriptor->type() == ParameterType::STRING)
+    {
+        return {ext::ControlStatus::OK, descriptor->id()};
+    }
+    return {ext::ControlStatus::NOT_FOUND, 0};
+}
+
+std::pair<ext::ControlStatus, ext::PropertyInfo> ParameterController::get_property_info(int processor_id, int property_id) const
+{
+    SUSHI_LOG_DEBUG("get_property_info called with processor {} and parameter {}", processor_id, property_id);
+    ext::PropertyInfo info;
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
+    if (processor != nullptr)
+    {
+        auto descriptor = processor->parameter_from_id(static_cast<ObjectId>(property_id));
+        if (descriptor && descriptor->type() == ParameterType::STRING)
+        {
+            info.id = descriptor->id();
+            info.label = descriptor->label();
+            info.name = descriptor->name();
+            return {ext::ControlStatus::OK, info};
+        }
+    }
+    return {ext::ControlStatus::NOT_FOUND, info};
 }
 
 } // namespace controller_impl

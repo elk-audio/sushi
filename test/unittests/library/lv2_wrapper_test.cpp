@@ -22,51 +22,54 @@ using namespace sushi::lv2;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 
+// Tip: use 'test_utils::print_buffer<64>(out_buffer, 1)'
+// to generate static buffer content in text like the below.
 static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_ON[1][64] = {
     {
-        8.593750e-02f, 1.562500e-01f, 2.109375e-01f, 2.812500e-01f,
-        3.359375e-01f, 3.906250e-01f, 4.531250e-01f, 5.078125e-01f,
-        5.546875e-01f, 6.093750e-01f, 6.562500e-01f, 7.031250e-01f,
-        7.421875e-01f, 7.890625e-01f, 8.203125e-01f, 8.593750e-01f,
-        8.828125e-01f, 9.140625e-01f, 9.375000e-01f, 9.531250e-01f,
-        9.765625e-01f, 9.765625e-01f, 9.921875e-01f, 9.921875e-01f,
-        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.687500e-01f,
-        9.453125e-01f, 9.375000e-01f, 9.062500e-01f, 8.828125e-01f,
-        8.515625e-01f, 8.203125e-01f, 7.890625e-01f, 7.343750e-01f,
-        7.031250e-01f, 6.484375e-01f, 6.093750e-01f, 5.546875e-01f,
-        5.000000e-01f, 4.531250e-01f, 3.828125e-01f, 3.359375e-01f,
-        2.734375e-01f, 2.187500e-01f, 1.562500e-01f, 9.375000e-02f,
-        3.125000e-02f, -3.906250e-02f, -9.375000e-02f, -1.640625e-01f,
-        -2.187500e-01f, -2.890625e-01f, -3.437500e-01f, -4.062500e-01f,
-        -4.531250e-01f, -5.078125e-01f, -5.625000e-01f, -6.171875e-01f,
-        -6.640625e-01f, -7.187500e-01f, -7.500000e-01f, -7.890625e-01f
+        8.5811443627e-02f, 1.5257082880e-01f, 1.9981867075e-01f, 2.6550742984e-01f,
+        3.1894043088e-01f, 3.6774355173e-01f, 4.2173218727e-01f, 4.7939392924e-01f,
+        5.2299284935e-01f, 5.6986409426e-01f, 6.1811023951e-01f, 6.6184180975e-01f,
+        7.0369291306e-01f, 7.4014079571e-01f, 7.8293782473e-01f, 8.1396549940e-01f,
+        8.4733998775e-01f, 8.7596982718e-01f, 8.9703381062e-01f, 9.2847150564e-01f,
+        9.4153606892e-01f, 9.6092289686e-01f, 9.7848141193e-01f, 9.7645491362e-01f,
+        9.9383544922e-01f, 9.9207293987e-01f, 9.8401486874e-01f, 9.9248045683e-01f,
+        9.8064988852e-01f, 9.7262036800e-01f, 9.5535176992e-01f, 9.4097930193e-01f,
+        9.2831599712e-01f, 8.9614868164e-01f, 8.7789064646e-01f, 8.4527707100e-01f,
+        8.1868839264e-01f, 7.8956091404e-01f, 7.3800379038e-01f, 7.0913290977e-01f,
+        6.6314095259e-01f, 6.1984896660e-01f, 5.8228880167e-01f, 5.2198934555e-01f,
+        4.8422691226e-01f, 4.2829886079e-01f, 3.6879178882e-01f, 3.2674816251e-01f,
+        2.6642197371e-01f, 2.1852211654e-01f, 1.5994016826e-01f, 1.0220003873e-01f,
+        4.7169614583e-02f, -2.0063044503e-02f, -7.0752970874e-02f, -1.3219092786e-01f,
+        -1.8827511370e-01f, -2.4446520209e-01f, -3.0550417304e-01f, -3.5686719418e-01f,
+        -4.1207060218e-01f, -4.5643404126e-01f, -5.0429958105e-01f, -5.5731260777e-01f
     }
 };
 
 static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[1][64] = {
     {
-        -8.281250e-01f, -8.671875e-01f, -8.906250e-01f, -9.296875e-01f,
-        -9.531250e-01f, -9.609375e-01f, -9.843750e-01f, -9.921875e-01f,
-        -1.000000e+00f, -1.000000e+00f, -1.000000e+00f, -1.000000e+00f,
-        -1.000000e+00f, -9.843750e-01f, -9.687500e-01f, -9.531250e-01f,
-        -9.218750e-01f, -9.062500e-01f, -8.671875e-01f, -8.437500e-01f,
-        -7.968750e-01f, -7.578125e-01f, -7.265625e-01f, -6.718750e-01f,
-        -6.328125e-01f, -5.703125e-01f, -5.234375e-01f, -4.609375e-01f,
-        -4.062500e-01f, -3.515625e-01f, -2.890625e-01f, -2.343750e-01f,
-        -1.718750e-01f, -1.171875e-01f, -4.687500e-02f, 1.562500e-02f,
-        7.031250e-02f, 1.406250e-01f, 1.953125e-01f, 2.656250e-01f,
-        3.203125e-01f, 3.828125e-01f, 4.375000e-01f, 5.000000e-01f,
-        5.390625e-01f, 6.015625e-01f, 6.406250e-01f, 6.953125e-01f,
-        7.343750e-01f, 7.812500e-01f, 8.125000e-01f, 8.515625e-01f,
-        8.750000e-01f, 9.062500e-01f, 9.218750e-01f, 9.531250e-01f,
-        9.609375e-01f, 9.843750e-01f, 9.921875e-01f, 9.921875e-01f,
-        9.843750e-01f, 9.921875e-01f, 9.765625e-01f, 9.765625e-01f
+        -6.0585808754e-01f, -6.5102791786e-01f, -6.9954341650e-01f, -7.3845398426e-01f,
+        -7.6650136709e-01f, -8.0487918854e-01f, -8.4129923582e-01f, -8.7295645475e-01f,
+        -8.9587861300e-01f, -9.3141978979e-01f, -9.5426052809e-01f, -9.5808660984e-01f,
+        -9.8191249371e-01f, -9.9042803049e-01f, -9.9751955271e-01f, -1.0013926029e+00f,
+        -9.9870741367e-01f, -1.0012304783e+00f, -9.9909341335e-01f, -9.9926203489e-01f,
+        -9.7940754890e-01f, -9.6884649992e-01f, -9.5232754946e-01f, -9.2335337400e-01f,
+        -9.1003942490e-01f, -8.7584549189e-01f, -8.5085171461e-01f, -8.1899070740e-01f,
+        -7.7134633064e-01f, -7.4802970886e-01f, -7.0600986481e-01f, -6.6105115414e-01f,
+        -6.2150335312e-01f, -5.6417763233e-01f, -5.2068632841e-01f, -4.6517598629e-01f,
+        -4.1045567393e-01f, -3.6629143357e-01f, -3.0408981442e-01f, -2.5660526752e-01f,
+        -1.9908088446e-01f, -1.4596894383e-01f, -9.3292877078e-02f, -2.3014366627e-02f,
+        2.4260010570e-02f, 8.2992948592e-02f, 1.4165890217e-01f, 1.9666172564e-01f,
+        2.5683587790e-01f, 3.1207546592e-01f, 3.6573141813e-01f, 4.1807574034e-01f,
+        4.7608512640e-01f, 5.1777309179e-01f, 5.6559085846e-01f, 6.1442857981e-01f,
+        6.5522098541e-01f, 7.0046389103e-01f, 7.4100756645e-01f, 7.7862900496e-01f,
+        8.1257081032e-01f, 8.4414005280e-01f, 8.7060534954e-01f, 8.9672446251e-01f
     }
 };
 
 class TestLv2Wrapper : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestLv2Wrapper()
     {
     }
@@ -74,8 +77,9 @@ protected:
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
-        _world = lilv_world_new();
-        lilv_world_load_all(_world);
+        _world = std::make_shared<LilvWorldWrapper>();
+        bool world_created = _world->create_world();
+        EXPECT_TRUE(world_created);
         _module_under_test = std::make_unique<lv2::LV2_Wrapper>(mockup, plugin_URI, _world);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
@@ -96,13 +100,12 @@ protected:
     void TearDown()
     {
         _module_under_test = nullptr;
-        lilv_world_free(_world);
     }
 
     RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    LilvWorld* _world{nullptr};
+    std::shared_ptr<LilvWorldWrapper> _world{nullptr};
     std::unique_ptr<LV2_Wrapper> _module_under_test{nullptr};
 };
 
@@ -116,7 +119,7 @@ TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
     auto ret = SetUp("This URI surely does not exist.");
 
     // And re-opening the output:
-    [[maybe_unused]] auto unused = freopen("/dev/tty","w",stderr);
+    [[maybe_unused]] auto unused = freopen("/dev/tty", "w", stderr);
 
     ASSERT_EQ(ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, ret);
     ASSERT_EQ(_module_under_test, nullptr);
@@ -270,7 +273,7 @@ TEST_F(TestLv2Wrapper, TestTimeInfo)
     _host_control._transport.set_time_signature({4, 4}, false);
     _host_control._transport.set_time(std::chrono::seconds(1), static_cast<int64_t>(TEST_SAMPLE_RATE));
 
-    // Currently The Sushi LV2 hosting does not get time info from plugin - it only sets.
+    // Currently, The Sushi LV2 hosting does not get time info from plugin - it only sets.
     // So we cannot directly replicate the below.
     /*
     auto time_info = _module_under_test->time_info();

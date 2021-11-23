@@ -24,11 +24,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-// TODO - Remove when stubs have been properly implemented
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
-OscController::OscController(BaseEngine* engine) : _engine(engine),
-                                                   _event_dispatcher(engine->event_dispatcher()),
+OscController::OscController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
 
 int OscController::get_send_port() const
@@ -144,8 +140,6 @@ ext::ControlStatus OscController::disable_all_output()
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }
-
-#pragma GCC diagnostic pop
 
 } // namespace controller_impl
 } // namespace engine

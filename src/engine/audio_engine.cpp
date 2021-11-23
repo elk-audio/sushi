@@ -44,6 +44,19 @@ constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
+EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
+{
+    switch (processor_status)
+    {
+        case ProcessorReturnCode::OK:                       return EngineReturnStatus::OK;
+        case ProcessorReturnCode::ERROR:                    return EngineReturnStatus::ERROR;
+        case ProcessorReturnCode::PARAMETER_ERROR:          return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::PARAMETER_NOT_FOUND:      return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::UNSUPPORTED_OPERATION:    return EngineReturnStatus::INVALID_PLUGIN_TYPE;
+        default:                                            return EngineReturnStatus::ERROR;
+    }
+}
+
 
 void ClipDetector::set_sample_rate(float samplerate)
 {
@@ -95,12 +108,11 @@ AudioEngine::AudioEngine(float sample_rate,
     {
         _event_dispatcher.reset(event_dispatcher);
     }
-    _host_control = std::move(HostControl(_event_dispatcher.get(), &_transport));
+    _host_control = HostControl(_event_dispatcher.get(), &_transport);
 
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
     _gate_in_connections.reserve(MAX_GATE_CONNECTIONS);
-    _event_dispatcher->run();
 }
 
 AudioEngine::~AudioEngine()
@@ -462,7 +474,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
-    if (_saftey_limter_enabled)
+    if (_master_limter_enabled)
     {
         auto temp_input_buffer = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, 0, out_buffer->channel_count());
         for (int c = 0; c < out_buffer->channel_count(); c++)
@@ -620,15 +632,14 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     return EngineReturnStatus::OK;
 }
 
-std::pair<EngineReturnStatus, ObjectId>
-AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const PluginInfo& plugin_info, const std::string &processor_name)
 {
     auto [processor_status, processor] = _plugin_registry.new_instance(plugin_info, _host_control, _sample_rate);
 
     if (processor_status != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to initialize processor {}", processor_name);
-        return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
+        SUSHI_LOG_ERROR("Failed to initialize processor {} with error {}", processor_name, static_cast<int>(processor_status));
+        return {to_engine_status(processor_status), ObjectId(0)};
     }
     EngineReturnStatus status = _register_processor(processor, processor_name);
     if(status != EngineReturnStatus::OK)

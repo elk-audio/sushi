@@ -40,7 +40,6 @@
 #include "engine/connection_storage.h"
 #include "library/time.h"
 #include "library/sample_buffer.h"
-#include "library/elk_allocator.h"
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/rt_event_fifo.h"
@@ -429,12 +428,12 @@ public:
     }
 
     /**
-     * @brief Enable saftey limiter on outputs
+     * @brief Enable master limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
     void enable_master_limiter(bool enabled) override
     {
-        _saftey_limter_enabled = enabled;
+        _master_limter_enabled = enabled;
     }
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
@@ -573,7 +572,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _saftey_limter_enabled{false};
+    bool _master_limter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 
     PluginRegistry _plugin_registry;

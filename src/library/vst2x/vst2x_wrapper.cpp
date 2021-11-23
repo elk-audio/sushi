@@ -402,7 +402,7 @@ VstTimeInfo* Vst2xWrapper::time_info()
     _time_info.barStartPos        = transport->current_bar_start_beats();
     _time_info.timeSigNumerator   = ts.numerator;
     _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | transport->playing()? kVstTransportPlaying : 0;
+    _time_info.flags = (SUSHI_HOST_TIME_CAPABILITIES | transport->playing()) ? kVstTransportPlaying : 0;
     if (transport->current_state_change() != PlayStateChange::UNCHANGED)
     {
         _time_info.flags |= kVstTransportChanged;
@@ -457,7 +457,8 @@ void Vst2xWrapper::output_vst_event(const VstEvent* event)
     assert(event);
     if (event->type == kVstMidiType)
     {
-        MidiDataByte midi_data = midi::to_midi_data_byte(reinterpret_cast<const uint8_t*>(event->data), 3);
+        auto midi_event = reinterpret_cast<const VstMidiEvent*>(event);
+        MidiDataByte midi_data = midi::to_midi_data_byte(reinterpret_cast<const uint8_t*>(midi_event->midiData), 3);
         output_midi_event_as_internal(midi_data, event->deltaFrames);
     }
 }
