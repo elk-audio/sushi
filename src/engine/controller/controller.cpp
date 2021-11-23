@@ -41,7 +41,6 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                                        &_audio_routing_controller_impl,
                                                                        &_cv_gate_controller_impl,
                                                                        &_osc_controller_impl),
-                                                     _engine(engine),
                                                      _system_controller_impl(engine->audio_input_channels(),
                                                                              engine->audio_output_channels()),
                                                      _transport_controller_impl(engine),
@@ -51,8 +50,7 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                      _program_controller_impl(engine),
                                                      _parameter_controller_impl(engine),
                                                      _midi_controller_impl(engine,
-                                                                           midi_dispatcher,
-                                                                           &_parameter_controller_impl),
+                                                                           midi_dispatcher),
                                                      _audio_routing_controller_impl(engine),
                                                      _cv_gate_controller_impl(engine),
                                                      _osc_controller_impl(engine)

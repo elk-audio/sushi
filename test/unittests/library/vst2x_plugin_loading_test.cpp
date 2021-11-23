@@ -28,8 +28,8 @@ protected:
     {
     }
 
-    sushi::HostControl _host_control;
     HostControlMockup _hc;
+    sushi::HostControl _host_control;
     PluginRegistry _plugin_registry;
 };
 

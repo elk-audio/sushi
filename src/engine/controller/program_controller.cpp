@@ -27,7 +27,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-ProgramController::ProgramController(BaseEngine* engine) : _engine(engine),
+ProgramController::ProgramController(BaseEngine* engine) : /* _engine(engine), */
                                                            _event_dispatcher(engine->event_dispatcher()),
                                                            _processors(engine->processor_container())
 {}

@@ -196,7 +196,6 @@ private:
 
     int _input_busses;
     int _output_busses;
-    bool _multibus;
 
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;

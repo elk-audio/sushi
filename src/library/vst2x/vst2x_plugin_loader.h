@@ -50,6 +50,7 @@
 
 #include <string>
 
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"

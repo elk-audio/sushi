@@ -55,7 +55,7 @@ Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID paramet
 
 Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 {
-    if (flags | Steinberg::Vst::kParamValuesChanged)
+    if (flags & Steinberg::Vst::kParamValuesChanged)
     {
         if (_wrapper_instance->_sync_controller_to_processor() == true)
         {

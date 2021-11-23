@@ -95,8 +95,6 @@ private:
 
     lv2_host::LV2_Evbuf* _evbuf{nullptr}; // For MIDI ports, otherwise NULL
 
-    void* _widget; // Control widget, if applicable
-    int _buf_size{0}; // Custom buffer size, or 0
     int _index;
 
     // For ranges. Only used in control ports.

@@ -27,6 +27,7 @@
 
 #include <optional>
 
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/document.h"
 #pragma GCC diagnostic pop

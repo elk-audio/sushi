@@ -54,7 +54,6 @@ public:
     ext::ControlStatus disable_all_output() override;
 
 private:
-    BaseEngine* _engine {nullptr};
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     control_frontend::OSCFrontend* _osc_frontend {nullptr};
     const engine::BaseProcessorContainer* _processors;
