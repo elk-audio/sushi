@@ -18,7 +18,8 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
- #include <cmath>
+#include <algorithm>
+#include <cmath>
 #include <cassert>
 
 #include "event_timer.h"

@@ -26,7 +26,7 @@
 #include "library/vst3x/vst3x_wrapper.h"
 #endif
 
-
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst3");
 namespace sushi {
 namespace vst3 {
 

@@ -414,11 +414,28 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
+find_path(lo_dir NAMES "lo/lo.h")
+find_library(lo_lib NAMES lo)
+message("Found path: ${lo_dir} and lib: ${lo_lib}")
+
+find_path(sndfile_dir NAMES "sndfile.h")
+find_library(sndfile_lib NAMES sndfile)
+message("Found path: ${sndfile_dir} and lib: ${sndfile_lib}")
+
+find_library(atomic_lib NAMES atomic)
+# message("Found lib: ${atomic_lib}")
+
+set(INCLUDE_DIRS 
+    ${INCLUDE_DIRS}
+    ${lo_dir}
+    ${sndfile_dir}
+)
+
 set(COMMON_LIBRARIES
-    sndfile
-    lo
+    ${lo_lib}
+    ${sndfile_lib}
     pthread
-    atomic
+    # ${atomic_lib}
     dl
     fifo
     spdlog::spdlog
