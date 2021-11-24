@@ -25,7 +25,16 @@ set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
 
 # Don't install example plugins in ~/.vst3, keep them in the build directory
 set(SMTG_PLUGIN_TARGET_PATH ${CMAKE_CURRENT_BINARY_DIR}/vst3sdk/VST3 CACHE STRING "" FORCE)
-set(SMTG_LINUX ON)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    message("Vst3 Linux detected")
+    set(SMTG_LINUX ON)
+endif()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    message("Vst3 macOS detected")
+    set(SMTG_MAC ON)
+endif()
+
 
 add_subdirectory(vst3sdk)
 

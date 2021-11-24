@@ -106,19 +106,34 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
+        
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
+        set(audiohost_PLATFORM_LIBS)
+endif()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        set(VST3_HOST_SOURCES 
+            ${VST3_HOST_SOURCES} 
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
+        set(audiohost_PLATFORM_LIBS "-framework Cocoa")
+endif()
 
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+target_link_libraries(vst3_host PRIVATE ${audiohost_PLATFORM_LIBS})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE -Wno-unused-parameter -Wno-extra")
+    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE -Wno-unused-parameter -Wno-extra -fobjc-arc")
 else()
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
+    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra -fobjc-arc")
 endif()
+
+
+
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
 endif()

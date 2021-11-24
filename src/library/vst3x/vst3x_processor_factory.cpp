@@ -26,7 +26,10 @@
 #include "library/vst3x/vst3x_wrapper.h"
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst3");
+#pragma GCC diagnostic pop
 namespace sushi {
 namespace vst3 {
 

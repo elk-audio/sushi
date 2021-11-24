@@ -5,7 +5,7 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/rpc_interface/cmake)
 
 find_package(Protobuf REQUIRED)
-find_package(gRPC REQUIRED)
+find_package(GRPC REQUIRED)
 
 ################################
 #  gRPC / Protobuf generation  #
