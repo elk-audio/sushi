@@ -2,7 +2,9 @@
 
 #include "test_utils/engine_mockup.h"
 #include "test_utils/jack_mockup.cpp"
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
 #include "control_frontends/alsa_midi_frontend.cpp"
+#endif
 #include "engine/midi_dispatcher.h"
 
 #define private public

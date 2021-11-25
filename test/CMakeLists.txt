@@ -168,7 +168,7 @@ if (${WITH_VST3})
 endif()
 
 if (${WITH_JACK})
-    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES})# asound)
 endif()
 
 if (${WITH_LV2})

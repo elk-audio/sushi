@@ -294,8 +294,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 if (${WITH_XENOMAI} OR ${WITH_JACK})
-    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h
-                                src/control_frontends/alsa_midi_frontend.cpp)
+    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h)
+    if (${WITH_ASLA_MIDI})
+        set(ADDITIONAL_ALSA_SOURCES ${ADDITIONAL_ASLA_SOURCES} src/control_frontends/alsa_midi_frontend.cpp)
+    endif()
 endif()
 
 if (${WITH_VST2})
@@ -470,7 +472,10 @@ if (${WITH_LV2})
 endif()
 
 if (${WITH_JACK})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+    find_path(jack_dir NAMES "jack/jack.h")
+    find_library(jack_lib NAMES jack)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${jack_dir})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib}) #asound)
 endif()
 
 if (${WITH_LINK})
