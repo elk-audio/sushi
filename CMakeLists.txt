@@ -295,8 +295,8 @@ set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 if (${WITH_XENOMAI} OR ${WITH_JACK})
     set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h)
-    if (${WITH_ASLA_MIDI})
-        set(ADDITIONAL_ALSA_SOURCES ${ADDITIONAL_ASLA_SOURCES} src/control_frontends/alsa_midi_frontend.cpp)
+    if (${WITH_ALSA_MIDI})
+        set(ADDITIONAL_ALSA_SOURCES ${ADDITIONAL_ALSA_SOURCES} src/control_frontends/alsa_midi_frontend.cpp)
     endif()
 endif()
 
