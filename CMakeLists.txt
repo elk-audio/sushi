@@ -110,15 +110,15 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
-        
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
         set(audiohost_PLATFORM_LIBS)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        set(VST3_HOST_SOURCES 
-            ${VST3_HOST_SOURCES} 
+        set(VST3_HOST_SOURCES
+            ${VST3_HOST_SOURCES}
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
         set(audiohost_PLATFORM_LIBS "-framework Cocoa")
 endif()
@@ -431,33 +431,32 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
-find_path(lo_dir NAMES "lo/lo.h")
-find_library(lo_lib NAMES lo)
-message("Found path: ${lo_dir} and lib: ${lo_lib}")
+find_path(LO_DIR NAMES "lo/lo.h")
+find_library(LO_LIB NAMES lo)
+message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
 
-find_path(sndfile_dir NAMES "sndfile.h")
-find_library(sndfile_lib NAMES sndfile)
-message("Found path: ${sndfile_dir} and lib: ${sndfile_lib}")
+find_path(SNDFILE_DIR NAMES "sndfile.h")
+find_library(SNDFILE_LIB NAMES sndfile)
+message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
 
-find_library(atomic_lib NAMES atomic)
-# message("Found lib: ${atomic_lib}")
-
-set(INCLUDE_DIRS 
+set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
-    ${lo_dir}
-    ${sndfile_dir}
+    ${LO_DIR}
+    ${SNDFILE_DIR}
 )
 
 set(COMMON_LIBRARIES
-    ${lo_lib}
-    ${sndfile_lib}
+    ${LO_LIB}
+    ${SNDFILE_LIB}
     pthread
-    # ${atomic_lib}
     dl
     fifo
     spdlog::spdlog
     ${TWINE_LIB}
 )
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
+endif()
 
 if (${WITH_VST3})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
@@ -475,7 +474,14 @@ if (${WITH_JACK})
     find_path(jack_dir NAMES "jack/jack.h")
     find_library(jack_lib NAMES jack)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${jack_dir})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib}) #asound)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib})
+endif()
+
+if (${WITH_ALSA_MIDI})
+    find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
+    find_library(ALSA_LIB NAMES asound)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${ALSA_DIR})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${ALSA_LIB})
 endif()
 
 if (${WITH_LINK})

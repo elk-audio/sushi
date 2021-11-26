@@ -167,8 +167,9 @@ if (${WITH_VST3})
     add_dependencies(unit_tests adelay vst3_host)
 endif()
 
-if (${WITH_JACK})
-    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES})# asound)
+if (${WITH_ALSA_MIDI})
+    find_library(ALSA_LIB NAMES asound)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} ${ALSA_LIB})
 endif()
 
 if (${WITH_LV2})
