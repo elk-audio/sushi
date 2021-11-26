@@ -14,6 +14,14 @@ set(SPDLOG_NO_ATOMIC_LEVELS ON CACHE BOOL "" FORCE)
 add_subdirectory(spdlog)
 
 ##########################
+# RtMidi compile options #
+##########################
+
+set(BUILD_SHARED_LIBS OFF)
+
+add_subdirectory(rtmidi)
+
+##########################
 #  VST3SDK and examples  #
 ##########################
 if (${WITH_VST3})
