@@ -45,6 +45,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <cstdlib>
+#ifdef __APPLE__
+#include <Corefoundation/Corefoundation.h>
+#endif
 
 #include "vst2x_plugin_loader.h"
 #include "vst2x_host_callback.h"
@@ -58,6 +61,8 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 // TODO: this is POSIX specific and the Linux-way to do it.
 // Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
+
+#if defined(__linux__)
 
 LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
 {
@@ -116,6 +121,76 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
         SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
     }
 }
+
+#elif defined(__APPLE__)
+LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
+{
+    if (plugin_absolute_path.empty())
+    {
+        SUSHI_LOG_ERROR("Empty library path");
+        return nullptr; // Calling dlopen with an empty string returns a handle to the calling
+                        // program, which can cause an infinite loop.
+    }
+    CFURLRef bundleURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+                                                                  (const UInt8*) plugin_absolute_path.c_str(),
+                                                                  plugin_absolute_path.size(),
+                                                                  true );
+
+    CFBundleRef bundleHandle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
+
+    if (bundleHandle == nullptr)
+    {
+        SUSHI_LOG_ERROR("Could not open bundle");
+        return nullptr;
+    }
+
+    return (LibraryHandle)bundleHandle;
+}
+
+AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
+{
+    // Somewhat cheap hack to avoid a tricky compiler warning. Casting from void*
+    // to a proper function pointer will cause GCC to warn that "ISO C++ forbids
+    // casting between pointer-to-function and pointer-to-object". Here, we
+    // represent both types in a union and use the correct one in the given
+    // context, thus avoiding the need to cast anything.  See also:
+    // http://stackoverflow.com/a/2742234/14302
+    union
+    {
+        plugin_entry_proc entryPointFuncPtr;
+        void *entryPointVoidPtr;
+    } entryPoint;
+
+    entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName ((CFBundleRef)library_handle, CFSTR("main_macho"));
+
+    if (entryPoint.entryPointVoidPtr == nullptr)
+    {
+        entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName ((CFBundleRef)library_handle, CFSTR("VSTPluginMain"));
+        if (entryPoint.entryPointVoidPtr == nullptr)
+        {
+            entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName ((CFBundleRef)library_handle, CFSTR("main"));
+            if (entryPoint.entryPointVoidPtr == nullptr)
+            {
+              SUSHI_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+              return nullptr;
+            }
+        }
+    }
+
+    plugin_entry_proc mainEntryPoint = entryPoint.entryPointFuncPtr;
+    AEffect *plugin = mainEntryPoint(host_callback);
+    return plugin;
+}
+
+void PluginLoader::close_library_handle(LibraryHandle library_handle)
+{
+    CFRelease((CFBundleRef)library_handle);
+    if (library_handle != nullptr)
+    {
+        SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
+    }
+}
+#endif
 
 } // namespace vst2
 } // namespace sushi
