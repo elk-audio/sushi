@@ -125,26 +125,27 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 #elif defined(__APPLE__)
 LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
 {
+    CFURLRef bundle_url;
+    CFBundleRef bundle_handle;
     if (plugin_absolute_path.empty())
     {
         SUSHI_LOG_ERROR("Empty library path");
         return nullptr; // Calling dlopen with an empty string returns a handle to the calling
                         // program, which can cause an infinite loop.
     }
-    CFURLRef bundleURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
-                                                                  (const UInt8*) plugin_absolute_path.c_str(),
-                                                                  plugin_absolute_path.size(),
-                                                                  true );
+    bundle_url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+                                                        (const UInt8*) plugin_absolute_path.c_str(),
+                                                        plugin_absolute_path.size(),
+                                                        true );
+    bundle_handle = CFBundleCreate(kCFAllocatorDefault, bundle_url);
+    CFRelease(bundle_url);
 
-    CFBundleRef bundleHandle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
-
-    if (bundleHandle == nullptr)
+    if (bundle_handle == nullptr)
     {
         SUSHI_LOG_ERROR("Could not open bundle");
         return nullptr;
     }
-
-    return (LibraryHandle)bundleHandle;
+    return (LibraryHandle)bundle_handle;
 }
 
 AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
@@ -184,11 +185,23 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
 
 void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
-    CFRelease((CFBundleRef)library_handle);
-    if (library_handle != nullptr)
+    // Not sure if we should really need to unload the executable manually.
+    // Apples docs say that as long you match the number of "CFBundleCreate..." with
+    // "CFRelease" we should be fine. Also it apparentely only loads bundle once.
+    CFRelease(library_handle);
+    if (CFGetRetainCount(library_handle) == 1)
     {
-        SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
+        CFBundleUnloadExecutable((CFBundleRef)library_handle);
+        if (CFBundleIsExecutableLoaded((CFBundleRef)library_handle))
+        {
+            SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
+        }
     }
+    if (CFGetRetainCount(library_handle) > 0)
+    {
+        library_handle = 0;
+    }
+
 }
 #endif
 
