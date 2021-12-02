@@ -202,12 +202,11 @@ TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
     _module_under_test->process_event(rt_event);
     RtEvent response_event;
     ASSERT_TRUE(_host_control._event_output.pop(response_event));
-    EXPECT_EQ(RtEventType::STRING_DELETE, response_event.type());
+    EXPECT_EQ(RtEventType::DELETE, response_event.type());
 
     // Delete the string manually, otherwise done by the dispatcher.
-    delete reinterpret_cast<std::string*>(response_event.data_payload_event()->value().data);
+    delete response_event.delete_data_event()->data();
 }
-
 
 TEST_F(InternalPluginTest, TestSendingDataToRealtime)
 {

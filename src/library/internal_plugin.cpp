@@ -178,7 +178,7 @@ void InternalPlugin::process_event(const RtEvent& event)
              * process_event() and handle it. Then call this base function which will automatically
              * schedule a delete event that will be executed in the non-rt domain */
             auto typed_event = event.property_change_event();
-            auto rt_event = RtEvent::make_delete_string_event(typed_event->value());
+            auto rt_event = RtEvent::make_delete_data_event(typed_event->deletable_value());
             output_event(rt_event);
             break;
         }

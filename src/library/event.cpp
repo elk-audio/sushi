@@ -21,6 +21,7 @@
 #include "library/event.h"
 #include "engine/base_engine.h"
 #include "logging.h"
+#include "types.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
 
@@ -167,6 +168,12 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                                             ClippingNotificationEvent::ClipChannelType::OUTPUT;
             return new ClippingNotificationEvent(typed_ev->channel(), channel_type, timestamp);
         }
+        case RtEventType::DELETE:
+        {
+            auto typed_ev = rt_event.delete_data_event();
+            return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
+        }
+
         default:
             return nullptr;
 
@@ -235,7 +242,7 @@ RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
      * Hence copy the string to a heap allocation that will outlive the event.
      * The string should be taken back to the non-rt domain and deleted there. This is handled
      * automatically by InternalPlugins process_event() function */
-    auto heap_string = new std::string(_string_value);
+    auto heap_string = new RtDeletableWrapper<std::string>(_string_value);
     return RtEvent::make_string_property_change_event(_processor_id, sample_offset, _property_id, heap_string);
 }
 
@@ -253,6 +260,12 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
 Event* AsynchronousBlobDeleteEvent::execute()
 {
     delete(_data.data);
+    return nullptr;
+}
+
+Event* AsynchronousDeleteEvent::execute()
+{
+    delete _data;
     return nullptr;
 }
 
@@ -309,4 +322,5 @@ int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine) const
 }
 
 #pragma GCC diagnostic pop
+
 } // end namespace sushi

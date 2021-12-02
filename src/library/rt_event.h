@@ -83,9 +83,8 @@ enum class RtEventType
     ADD_GATE_CONNECTION,
     REMOVE_GATE_CONNECTION,
     /* Delete object event */
-    STRING_DELETE,
     BLOB_DELETE,
-    VOID_DELETE,
+    DELETE,
     /* Synchronisation events */
     SYNC,
     /* Engine notification events */
@@ -296,18 +295,19 @@ public:
     PropertyChangeRtEvent(ObjectId processor,
                           int offset,
                           ObjectId param_id,
-                          std::string* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
-                                                                   processor,
-                                                                   offset),
-                                                _data(value),
-                                                _param_id(param_id) {}
+                          RtDeletableWrapper<std::string>* value) : BaseRtEvent(RtEventType::STRING_PROPERTY_CHANGE,
+                                                                                processor,
+                                                                                offset),
+                                                                   _data(value),
+                                                                   _param_id(param_id) {}
 
     ObjectId param_id() const {return _param_id;}
 
-    std::string* value() const {return _data;}
+    std::string* value() const {return &_data->data();}
+    RtDeletable* deletable_value() const {return _data;}
 
 protected:
-    std::string* _data;
+    RtDeletableWrapper<std::string>* _data;
     ObjectId _param_id;
 };
 
@@ -575,6 +575,22 @@ private:
 };
 
 /**
+ * @brief Class for passing deletable data out from the rt domain
+ */
+class DeleteDataRtEvent : public BaseRtEvent
+{
+public:
+    DeleteDataRtEvent(RtDeletable* data) : BaseRtEvent(RtEventType::DELETE, 0, 0),
+                                           _data(data)
+    {}
+
+    RtDeletable* data() const {return _data;}
+
+private:
+    RtDeletable* _data;
+};
+
+/**
  * @brief Container class for rt events. Functionally this takes the role of a
  *        baseclass for events, from which you can access the derived event
  *        classes via function calls that essentially casts the event to the
@@ -745,9 +761,7 @@ public:
 
     const DataPayloadRtEvent* data_payload_event() const
     {
-        assert(_data_payload_event.type() == RtEventType::STRING_DELETE ||
-               _data_payload_event.type() == RtEventType::BLOB_DELETE ||
-               _data_payload_event.type() == RtEventType::VOID_DELETE );
+        assert(_data_payload_event.type() == RtEventType::BLOB_DELETE);
         return &_data_payload_event;
 
     }
@@ -786,6 +800,12 @@ public:
     {
         assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
         return &_clip_notification_event;
+    }
+
+    const DeleteDataRtEvent* delete_data_event() const
+    {
+        assert(_delete_data_event.type() == RtEventType::DELETE);
+        return &_delete_data_event;
     }
 
 
@@ -856,7 +876,7 @@ public:
         return RtEvent(typed_event);
     }
 
-    static RtEvent make_string_property_change_event(ObjectId target, int offset, ObjectId param_id, std::string* value)
+    static RtEvent make_string_property_change_event(ObjectId target, int offset, ObjectId param_id, RtDeletableWrapper<std::string>* value)
     {
         PropertyChangeRtEvent typed_event(target, offset, param_id, value);
         return RtEvent(typed_event);
@@ -1002,21 +1022,9 @@ public:
         return typed_event;
     }
 
-    static RtEvent make_delete_string_event(std::string* string)
-    {
-        DataPayloadRtEvent typed_event(RtEventType::STRING_DELETE, 0, 0, {0, reinterpret_cast<uint8_t*>(string)});
-        return typed_event;
-    }
-
     static RtEvent make_delete_blob_event(BlobData data)
     {
         DataPayloadRtEvent typed_event(RtEventType::BLOB_DELETE, 0, 0, data);
-        return typed_event;
-    }
-
-    static RtEvent make_delete_void_event(void* data)
-    {
-        DataPayloadRtEvent typed_event(RtEventType::VOID_DELETE, 0, 0, {0, reinterpret_cast<uint8_t*>(data)});
         return typed_event;
     }
 
@@ -1056,6 +1064,11 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_delete_data_event(RtDeletable* data)
+    {
+        DeleteDataRtEvent typed_event(data);
+        return typed_event;
+    }
 
 private:
     /* Private constructors that are invoked automatically when using the make_xxx_event functions */
@@ -1083,6 +1096,7 @@ private:
     RtEvent(const PlayingModeRtEvent& e)                : _playing_mode_event(e) {}
     RtEvent(const SyncModeRtEvent& e)                   : _sync_mode_event(e) {}
     RtEvent(const ClipNotificationRtEvent& e)           : _clip_notification_event(e) {}
+    RtEvent(const DeleteDataRtEvent& e)                 : _delete_data_event(e) {}
     /* Data storage */
     union
     {
@@ -1111,6 +1125,7 @@ private:
         PlayingModeRtEvent            _playing_mode_event;
         SyncModeRtEvent               _sync_mode_event;
         ClipNotificationRtEvent       _clip_notification_event;
+        DeleteDataRtEvent             _delete_data_event;
     };
 };
 

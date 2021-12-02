@@ -619,10 +619,22 @@ public:
     AsynchronousBlobDeleteEvent(BlobData data,
                                 Time timestamp) : AsynchronousWorkEvent(timestamp),
                                                      _data(data) {}
-    virtual Event* execute() override;
+    Event* execute() override;
 
 private:
     BlobData _data;
+};
+
+class AsynchronousDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousDeleteEvent(RtDeletable* data,
+                            Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                              _data(data) {}
+    virtual Event* execute() override;
+
+private:
+    RtDeletable* _data;
 };
 
 class SetEngineTempoEvent : public EngineEvent
