@@ -49,11 +49,18 @@ void midi_callback([[maybe_unused]] double deltatime, std::vector<unsigned char
     SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count));
 }
 
-RtMidiFrontend::RtMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
-        : BaseMidiFrontend(dispatcher),
-          _inputs(inputs),
-          _outputs(outputs)
-{}
+RtMidiFrontend::RtMidiFrontend(int inputs,
+                               int outputs,
+                               std::vector<std::pair<int, int>> input_mappings,
+                               std::vector<std::pair<int, int>> output_mappings,
+                               midi_receiver::MidiReceiver* dispatcher) : BaseMidiFrontend(dispatcher),
+                                                                          _inputs(inputs),
+                                                                          _outputs(outputs),
+                                                                          _input_mappings(input_mappings),
+                                                                          _output_mappings(output_mappings)
+{
+
+}
 
 RtMidiFrontend::~RtMidiFrontend()
 {
@@ -96,21 +103,19 @@ bool RtMidiFrontend::init()
 
 void RtMidiFrontend::run()
 {
-    for (auto& input : _input_midi_ports)
+    for (auto& input_mapping : _input_mappings)
     {
-        input.midi_input.openPort(0);
-        SUSHI_LOG_INFO("Midi input connected to {}", input.midi_input.getPortName(0));
+        auto& input = _input_midi_ports[input_mapping.second];
+        input.midi_input.openPort(input_mapping.first);
         input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
+        SUSHI_LOG_INFO("Midi input {} connected to {}", input_mapping.second, input.midi_input.getPortName(input_mapping.first));
     }
 
-    for (auto& output : _output_midi_ports)
+    for (auto& output_mapping : _output_mappings)
     {
-        for (int i = 0; i < output.getPortCount(); i++)
-        {
-            SUSHI_LOG_INFO("Port {} has name {}", i, output.getPortName(i));
-        }
-        output.openPort(1);
-        SUSHI_LOG_INFO("Midi output connected to {}", output.getPortName(1));
+        auto& output = _output_midi_ports[output_mapping.second];
+        output.openPort(output_mapping.first);
+        SUSHI_LOG_INFO("Midi output {} connected to {}", output_mapping.second, output.getPortName(output_mapping.first));
     }
 }
 

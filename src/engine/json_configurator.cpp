@@ -66,6 +66,22 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
         audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
     }
 
+    if (host_config.HasMember("rt_midi_input_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_input_mappings"].GetArray())
+        {
+            audio_config.rt_midi_input_mappings.emplace_back(mapping["rt_midi_device"].GetInt(), mapping["sushi_midi_port"].GetInt());
+        }
+    }
+
+    if (host_config.HasMember("rt_midi_output_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_output_mappings"].GetArray())
+        {
+            audio_config.rt_midi_output_mappings.emplace_back(mapping["rt_midi_device"].GetInt(), mapping["sushi_midi_port"].GetInt());
+        }
+    }
+
     return {JsonConfigReturnStatus::OK, audio_config};
 }
 

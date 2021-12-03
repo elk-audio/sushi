@@ -82,6 +82,44 @@ R"(
         {
           "type": "integer",
           "minimum": 0
+        },
+        "rt_midi_input_mappings":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "rt_midi_device":
+              {
+                "type": "integer"
+              },
+              "sushi_midi_port":
+              {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "rt_midi_output_mappings":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "rt_midi_device":
+              {
+                "type": "integer"
+              },
+              "sushi_midi_port":
+              {
+                "type": "integer"
+              }
+            }
+          }
         }
       },
       "required": ["samplerate"]
