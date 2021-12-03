@@ -31,6 +31,7 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #include "base/source/fobject.h"
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
@@ -55,7 +56,7 @@ public:
 
     explicit ComponentHandler(Vst3xWrapper* wrapper_instance);
     Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
-    Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value);
+    Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value) override;
     Steinberg::tresult PLUGIN_API endEdit (Steinberg::Vst::ParamID /*parameter_id*/) override {return Steinberg::kNotImplemented;}
     Steinberg::tresult PLUGIN_API restartComponent (Steinberg::int32 flags) override;
 

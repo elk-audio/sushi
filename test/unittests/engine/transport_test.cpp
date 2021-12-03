@@ -6,7 +6,6 @@
 using namespace sushi;
 using namespace sushi::engine;
 
-constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0);
 constexpr float TEST_SAMPLERATE = 48000;
 
 class TestTransport : public ::testing::Test

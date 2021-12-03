@@ -82,8 +82,7 @@ inline std::vector<ext::PropertyInfo>  _read_properties(const Processor* process
     return infos;
 }
 
-ParameterController::ParameterController(BaseEngine* engine) : _engine(engine),
-                                                               _event_dispatcher(engine->event_dispatcher()),
+ParameterController::ParameterController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                                _processors(engine->processor_container())
 {}
 

@@ -21,8 +21,12 @@ if (${WITH_VST2})
 
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
     # Suppress VST SDK warnings
+    set(VST2_COMPILE_FLAS -Wall -Wno-write-strings -Wno-narrowing)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(VST2_COMPILE_FLAS ${VST2_COMPILE_FLAGS} -Wno-stringop-truncation)
+    endif()
     set_target_properties(vst2_test_plugin PROPERTIES
-            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing -Wno-stringop-truncation"
+            COMPILE_FLAGS "${VST2_COMPILE_FLAGS}"
         )
     target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )

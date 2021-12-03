@@ -27,8 +27,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-KeyboardController::KeyboardController(BaseEngine* engine) : _engine(engine),
-                                                             _event_dispatcher(engine->event_dispatcher())
+KeyboardController::KeyboardController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher())
 {}
 
 ext::ControlStatus KeyboardController::send_note_on(int track_id, int channel, int note, float velocity)

@@ -21,13 +21,13 @@
 #include "cv_gate_controller.h"
 #include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi {
 namespace engine {
 namespace controller_impl {
 
 // TODO - Remove when stubs have been properly implemented
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 int CvGateController::get_cv_input_ports() const

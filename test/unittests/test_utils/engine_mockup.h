@@ -39,7 +39,7 @@ public:
 
     int poster_id() override {return EventPosterId::AUDIO_ENGINE;}
 
-    void post_event(Event* event)
+    void post_event(Event* event) override
     {
         _queue.push_front(event);
     }

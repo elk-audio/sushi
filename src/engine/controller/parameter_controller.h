@@ -64,7 +64,6 @@ public:
     ext::ControlStatus set_property_value(int processor_id, int property_id, const std::string& value) override;
 
 private:
-    BaseEngine*                             _engine;
     dispatcher::BaseEventDispatcher*        _event_dispatcher;
     const engine::BaseProcessorContainer*   _processors;
 };
