@@ -105,17 +105,32 @@ void RtMidiFrontend::run()
 {
     for (auto& input_mapping : _input_mappings)
     {
-        auto& input = _input_midi_ports[input_mapping.second];
-        input.midi_input.openPort(input_mapping.first);
-        input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
-        SUSHI_LOG_INFO("Midi input {} connected to {}", input_mapping.second, input.midi_input.getPortName(input_mapping.first));
+        try
+        {
+            auto& input = _input_midi_ports[input_mapping.second];
+            input.midi_input.openPort(input_mapping.first);
+            input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
+            SUSHI_LOG_INFO("Midi input {} connected to {}", input_mapping.second, input.midi_input.getPortName(input_mapping.first));
+        }
+        catch(RtMidiError& error)
+        {
+            SUSHI_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", input_mapping.second, input_mapping.first, error.getMessage());
+        }
+
     }
 
     for (auto& output_mapping : _output_mappings)
     {
-        auto& output = _output_midi_ports[output_mapping.second];
-        output.openPort(output_mapping.first);
-        SUSHI_LOG_INFO("Midi output {} connected to {}", output_mapping.second, output.getPortName(output_mapping.first));
+        try
+        {
+            auto& output = _output_midi_ports[output_mapping.second];
+            output.openPort(output_mapping.first);
+            SUSHI_LOG_INFO("Midi output {} connected to {}", output_mapping.second, output.getPortName(output_mapping.first));
+        }
+        catch(RtMidiError& error)
+        {
+            SUSHI_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", output_mapping.second, output_mapping.first, error.getMessage());
+        }
     }
 }
 
