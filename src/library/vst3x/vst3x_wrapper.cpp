@@ -291,6 +291,16 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }
+        case RtEventType::SET_STATE:
+        {
+            auto state = event.processor_state_event()->state();
+            for (const auto& parameter : state->parameters())
+            {
+                _add_parameter_change(parameter.first, parameter.second, 0);
+            }
+            async_delete(state);
+            break;
+        }
         default:
             break;
     }
@@ -532,43 +542,77 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     return ProcessorReturnCode::ERROR;
 }
 
-ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
+    if (realtime_running)
     {
-        bool bypassed = state->bypassed().value();
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_bypass_parameter.supported)
+        auto rt_state = std::make_unique<RtState>(*state);
+        if (state->program().has_value() && _internal_programs && _program_change_parameter.supported)
         {
-            float float_bypass = bypassed ? 1.0f : 0.0f;
-            _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
-            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
-        }
-    }
-
-    if (state->program().has_value())
-    {
-        int id = state->program().value();
-        if (_internal_programs && _program_change_parameter.supported)
-        {
+            int id = state->program().value();
             float normalised_id = id / static_cast<float>(_program_count);
-            _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
             _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
             _current_program = id;
+
+            rt_state->add_parameter_change(_program_change_parameter.id, state->program().value());
         }
-        else // file based programs
+        else if (state->program().has_value())// file based programs
         {
-            this->set_program(id);
+            this->set_program(state->program().value());
         }
+
+        if (state->bypassed().has_value() && _bypass_parameter.supported)
+        {
+            rt_state->add_parameter_change(_bypass_parameter.id, state->bypassed().value());
+        }
+
+        // Set the state for the controller
+        for (const auto& parameter : state->parameters())
+        {
+            _instance.controller()->setParamNormalized(parameter.first, parameter.second);
+        }
+
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
-    for (const auto& parameter : state->parameters())
+    else
     {
-        int id = parameter.first;
-        float value = parameter.second;
-        // Eventually these should be done without looping back parameter changes
-        _add_parameter_change(id, value, 0);
-        _instance.controller()->setParamNormalized(id, value);
+        if (state->program().has_value())
+        {
+            int id = state->program().value();
+            if (_internal_programs && _program_change_parameter.supported)
+            {
+                float normalised_id = id / static_cast<float>(_program_count);
+                _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
+                _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
+                _current_program = id;
+            }
+            else // file based programs
+            {
+                this->set_program(id);
+            }
+        }
+
+        if (state->bypassed().has_value())
+        {
+            bool bypassed = state->bypassed().value();
+            _bypass_manager.set_bypass(bypassed, _sample_rate);
+            if (_bypass_parameter.supported)
+            {
+                float float_bypass = bypassed ? 1.0f : 0.0f;
+                _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
+                _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
+            }
+        }
+
+        for (const auto& parameter : state->parameters())
+        {
+            int id = parameter.first;
+            float value = parameter.second;
+            _add_parameter_change(id, value, 0);
+            _instance.controller()->setParamNormalized(id, value);
+        }
     }
 
     return ProcessorReturnCode::OK;

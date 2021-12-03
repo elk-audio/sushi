@@ -298,11 +298,24 @@ public:
         return {_return_status, DEFAULT_BYPASS_STATE};
     }
 
+    std::pair<ControlStatus, ext::ProcessorState> get_processor_state(int /*processor_id*/) const override
+    {
+        return {_return_status, ext::ProcessorState()};
+    }
+
     ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _args_from_last_call["bypass enabled"] = std::to_string(bypass_enabled);
+        _recently_called = true;
+        return _return_status;
+    }
+
+    ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& state) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["processor id"] = std::to_string(processor_id);
         _recently_called = true;
         return _return_status;
     }

@@ -453,6 +453,12 @@ protected:
     EventId request_non_rt_task(AsyncWorkCallback callback);
 
     /**
+     * @brief Called from a realtime thread to asynchronously delete an object outside the rt tread
+     * @param object The object to delete.
+     */
+    void async_delete(RtDeletable* object);
+
+    /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
      *        index will be added in case of duplicates
      * @param name The name of the parameter

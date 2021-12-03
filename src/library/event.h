@@ -22,6 +22,7 @@
 #define SUSHI_CONTROL_EVENT_H
 
 #include <string>
+#include <memory>
 
 #include "types.h"
 #include "id_generator.h"
@@ -288,6 +289,24 @@ private:
     std::string _string_value;
 };
 
+class RtStateEvent : public Event
+{
+public:
+    RtStateEvent(ObjectId processor_id,
+                 std::unique_ptr<RtState> state,
+                 Time timestamp);
+
+    ~RtStateEvent();
+
+    virtual bool maps_to_rt_event() const override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) const override;
+
+private:
+    ObjectId _processor_id;
+    mutable std::unique_ptr<RtState> _state;
+};
+
 // Inheriting from ParameterChangeEvent because they share the same data members but have
 // different behaviour
 class ParameterChangeNotificationEvent : public ParameterChangeEvent
@@ -359,11 +378,16 @@ template <typename LambdaType>
 class LambdaEvent : public EngineEvent
 {
 public:
-    LambdaEvent(LambdaType work_lambda,
+    LambdaEvent(const LambdaType& work_lambda,
                 Time timestamp) : EngineEvent(timestamp),
                                   _work_lambda(work_lambda) {}
 
-    int execute(engine::BaseEngine*) const override {
+    LambdaEvent(LambdaType&& work_lambda,
+                Time timestamp) : EngineEvent(timestamp),
+                                  _work_lambda(std::move(work_lambda)) {}
+
+    int execute(engine::BaseEngine*) const override
+    {
         return _work_lambda();
     }
 

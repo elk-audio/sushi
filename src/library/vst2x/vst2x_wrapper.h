@@ -170,6 +170,8 @@ private:
 
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
+    void _set_bypass_rt(bool bypassed);
+
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];

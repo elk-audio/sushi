@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "library/constants.h"
+#include "library/types.h"
 #include "library/id_generator.h"
 #include "engine/host_control.h"
 
@@ -36,6 +37,7 @@ public:
     ~ProcessorState();
 
     virtual std::vector<std::byte> serialize() const;
+
     bool deserialize(std::vector<std::byte>);
 
     void set_program(int program_id);
@@ -46,31 +48,40 @@ public:
 
     void add_property_change(ObjectId property_id, const std::string& value);
 
-    std::optional<int> program() const
-    {
-        return _program;
-    }
+    std::optional<int> program() const;
 
-    std::optional<int> bypassed() const
-    {
-        return _bypassed;
-    }
+    std::optional<int> bypassed() const;
 
-    const std::vector<std::pair<ObjectId, float>>& parameters()
-    {
-        return _parameter_changes;
-    };
+    const std::vector<std::pair<ObjectId, float>>& parameters() const;
 
-    const std::vector<std::pair<ObjectId, std::string>>& properties()
-    {
-        return _property_changes;
-    };
+    const std::vector<std::pair<ObjectId, std::string>>& properties() const;
 
 protected:
     std::optional<int> _program;
     std::optional<int> _bypassed;
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
     std::vector<std::pair<ObjectId, std::string>> _property_changes;
+};
+
+class RtState : public RtDeletable
+{
+public:
+    RtState();
+    RtState(const ProcessorState& state);
+
+    virtual ~RtState();
+
+    void set_bypass(bool enabled);
+
+    void add_parameter_change(ObjectId parameter_id, float value);
+
+    std::optional<int> bypassed() const;
+
+    const std::vector<std::pair<ObjectId, float>>& parameters() const;
+
+protected:
+    std::optional<int> _bypassed;
+    std::vector<std::pair<ObjectId, float>> _parameter_changes;
 };
 
 }; // end namespace sushi

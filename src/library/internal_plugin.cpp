@@ -172,14 +172,21 @@ void InternalPlugin::process_event(const RtEvent& event)
             break;
         }
 
+        case RtEventType::SET_STATE:
+        {
+            auto state = event.processor_state_event()->state();
+            _set_rt_state(state);
+            async_delete(state);
+            break;
+        }
+
         case RtEventType::STRING_PROPERTY_CHANGE:
         {
             /* In order to handle STRING_PROPERTY_CHANGE events in the rt_thread, override
              * process_event() and handle it. Then call this base function which will automatically
              * schedule a delete event that will be executed in the non-rt domain */
             auto typed_event = event.property_change_event();
-            auto rt_event = RtEvent::make_delete_data_event(typed_event->deletable_value());
-            output_event(rt_event);
+            async_delete(typed_event->deletable_value());
             break;
         }
 
@@ -314,20 +321,30 @@ ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, con
     return ProcessorReturnCode::OK;
 }
 
-ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
-    {
-        this->set_bypassed(state->bypassed().value());
-    }
-    for (const auto& parameter : state->parameters())
-    {
-        auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
-        this->process_event(event);
-    }
     for (const auto& property : state->properties())
     {
         this->set_property_value(property.first, property.second);
+    }
+
+    if (realtime_running)
+    {
+        auto rt_state = std::make_unique<RtState>(*state);
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
+    }
+    else
+    {
+        if (state->bypassed().has_value())
+        {
+            this->set_bypassed(state->bypassed().value());
+        }
+        for (const auto& parameter : state->parameters())
+        {
+            auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
+            this->process_event(event);
+        }
     }
     return ProcessorReturnCode::OK;
 }
@@ -344,6 +361,19 @@ void InternalPlugin::send_property_to_realtime(ObjectId property_id, const std::
     assert(twine::is_current_thread_realtime() == false);
     auto event = new StringPropertyEvent(this->id(), property_id, value, IMMEDIATE_PROCESS);
     _host_control.post_event(event);
+}
+
+void InternalPlugin::_set_rt_state(const RtState* state)
+{
+    if (state->bypassed().has_value())
+    {
+        this->set_bypassed(state->bypassed().value());
+    }
+    for (const auto& parameter : state->parameters())
+    {
+        auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
+        this->process_event(event);
+    }
 }
 
 } // end namespace sushi

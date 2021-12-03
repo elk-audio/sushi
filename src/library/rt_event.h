@@ -60,6 +60,7 @@ enum class RtEventType
     DATA_PROPERTY_CHANGE,
     STRING_PROPERTY_CHANGE,
     SET_BYPASS,
+    SET_STATE,
     /* Engine commands */
     STOP_ENGINE,
     TEMPO,
@@ -351,6 +352,24 @@ public:
 private:
     int _value;
 };
+
+class RtState;
+/**
+ * @brief Class for binarydata parameter changes
+ */
+class ProcessorStateRtEvent : public BaseRtEvent
+{
+public:
+    ProcessorStateRtEvent(ObjectId processor,
+                          RtState* state) : BaseRtEvent(RtEventType::SET_STATE, processor, 0),
+                                            _state(state) {}
+
+    RtState* state() const {return _state;}
+
+protected:
+    RtState* _state;
+};
+
 /**
  * @brief Baseclass for events that can be returned with a status code.
  */
@@ -664,6 +683,12 @@ public:
         return &_processor_command_event;
     }
 
+    const ProcessorStateRtEvent* processor_state_event() const
+    {
+        assert(_processor_state_event.type() == RtEventType::SET_STATE);
+        return &_processor_state_event;
+    }
+
     // ReturnableEvent and every event type that inherits from it
     // needs a non-const accessor function as well
 
@@ -763,7 +788,6 @@ public:
     {
         assert(_data_payload_event.type() == RtEventType::BLOB_DELETE);
         return &_data_payload_event;
-
     }
 
     const SynchronisationRtEvent* syncronisation_event() const
@@ -891,6 +915,12 @@ public:
     static RtEvent make_bypass_processor_event(ObjectId target, bool value)
     {
         ProcessorCommandRtEvent typed_event(RtEventType::SET_BYPASS, target, value);
+        return RtEvent(typed_event);
+    }
+
+    static RtEvent make_set_rt_state_event(ObjectId target, RtState* state)
+    {
+        ProcessorStateRtEvent typed_event(target, state);
         return RtEvent(typed_event);
     }
 
@@ -1081,6 +1111,7 @@ private:
     RtEvent(const PropertyChangeRtEvent& e)             : _property_change_event(e) {}
     RtEvent(const DataPropertyChangeRtEvent& e)         : _data_property_change_event(e) {}
     RtEvent(const ProcessorCommandRtEvent& e)           : _processor_command_event(e) {}
+    RtEvent(const ProcessorStateRtEvent& e)             : _processor_state_event(e) {}
     RtEvent(const ReturnableRtEvent& e)                 : _returnable_event(e) {}
     RtEvent(const ProcessorOperationRtEvent& e)         : _processor_operation_event(e) {}
     RtEvent(const ProcessorReorderRtEvent& e)           : _processor_reorder_event(e) {}
@@ -1110,6 +1141,7 @@ private:
         PropertyChangeRtEvent         _property_change_event;
         DataPropertyChangeRtEvent     _data_property_change_event;
         ProcessorCommandRtEvent       _processor_command_event;
+        ProcessorStateRtEvent         _processor_state_event;
         ReturnableRtEvent             _returnable_event;
         ProcessorOperationRtEvent     _processor_operation_event;
         ProcessorReorderRtEvent       _processor_reorder_event;

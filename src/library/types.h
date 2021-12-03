@@ -67,9 +67,12 @@ inline bool operator!=(const TimeSignature& rhs, const TimeSignature& lhs)
 class RtDeletable
 {
 public:
-    virtual ~RtDeletable() = default;
+    virtual ~RtDeletable();
 };
 
+/**
+ * @brief Wrapper for using  native and standard library types with RtDeletable
+ */
 template <typename T>
 struct RtDeletableWrapper : public RtDeletable
 {
