@@ -71,8 +71,8 @@ struct AudioConfig
     std::optional<int> cv_outputs;
     std::optional<int> midi_inputs;
     std::optional<int> midi_outputs;
-    std::vector<std::pair<int, int>> rt_midi_input_mappings;
-    std::vector<std::pair<int, int>> rt_midi_output_mappings;
+    std::vector<std::tuple<int, int, bool>> rt_midi_input_mappings;
+    std::vector<std::tuple<int, int, bool>> rt_midi_output_mappings;
 };
 
 class JsonConfigurator

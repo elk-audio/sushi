@@ -44,8 +44,8 @@ class RtMidiFrontend : public BaseMidiFrontend
 public:
     explicit RtMidiFrontend(int inputs,
                             int outputs,
-                            std::vector<std::pair<int, int>> input_mappings,
-                            std::vector<std::pair<int, int>> otuput_mappings,
+                            std::vector<std::tuple<int, int, bool>> input_mappings,
+                            std::vector<std::tuple<int, int, bool>> otuput_mappings,
                             midi_receiver::MidiReceiver* receiver);
 
     ~RtMidiFrontend();
@@ -62,8 +62,8 @@ private:
 
     int _inputs;
     int _outputs;
-    std::vector<std::pair<int, int>> _input_mappings;
-    std::vector<std::pair<int, int>> _output_mappings;
+    std::vector<std::tuple<int, int, bool>> _input_mappings;
+    std::vector<std::tuple<int, int, bool>> _output_mappings;
     std::vector<RtMidiCallbackData> _input_midi_ports;
     std::vector<RtMidiOut> _output_midi_ports;
 };

@@ -98,9 +98,14 @@ R"(
               "sushi_midi_port":
               {
                 "type": "integer"
+              },
+              "virtual_port":
+              {
+                "type": "boolean"
               }
             }
-          }
+          },
+          "required": ["rt_midi_device", "sushi_midi_port"]
         },
         "rt_midi_output_mappings":
         {
@@ -117,9 +122,14 @@ R"(
               "sushi_midi_port":
               {
                 "type": "integer"
+              },
+              "virtual_port":
+              {
+                "type": "boolean"
               }
             }
-          }
+          },
+          "required": ["rt_midi_device", "sushi_midi_port"]
         }
       },
       "required": ["samplerate"]

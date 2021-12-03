@@ -33,7 +33,7 @@ constexpr int RTMIDI_MESSAGE_SIZE = 3;
 namespace sushi {
 namespace midi_frontend {
 
-void midi_callback([[maybe_unused]] double deltatime, std::vector<unsigned char>* message, void* user_data)
+void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>* message, void* user_data)
 {
     auto* callback_data = static_cast<RtMidiCallbackData*>(user_data);
     auto byte_count = message->size();
@@ -51,8 +51,8 @@ void midi_callback([[maybe_unused]] double deltatime, std::vector<unsigned char
 
 RtMidiFrontend::RtMidiFrontend(int inputs,
                                int outputs,
-                               std::vector<std::pair<int, int>> input_mappings,
-                               std::vector<std::pair<int, int>> output_mappings,
+                               std::vector<std::tuple<int, int, bool>> input_mappings,
+                               std::vector<std::tuple<int, int, bool>> output_mappings,
                                midi_receiver::MidiReceiver* dispatcher) : BaseMidiFrontend(dispatcher),
                                                                           _inputs(inputs),
                                                                           _outputs(outputs),
@@ -105,31 +105,54 @@ void RtMidiFrontend::run()
 {
     for (auto& input_mapping : _input_mappings)
     {
+        int rt_midi_device = std::get<0>(input_mapping);
+        int sushi_midi_port = std::get<1>(input_mapping);
+        bool virtual_port = std::get<2>(input_mapping);
         try
         {
-            auto& input = _input_midi_ports[input_mapping.second];
-            input.midi_input.openPort(input_mapping.first);
-            input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
-            SUSHI_LOG_INFO("Midi input {} connected to {}", input_mapping.second, input.midi_input.getPortName(input_mapping.first));
+            auto& input = _input_midi_ports[sushi_midi_port];
+            if (virtual_port)
+            {
+                input.midi_input.openVirtualPort("Sushi virtual port " + std::to_string(rt_midi_device));
+                input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
+                SUSHI_LOG_INFO("Midi input {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
+            }
+            else
+            {
+                input.midi_input.openPort(rt_midi_device);
+                input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
+                SUSHI_LOG_INFO("Midi input {} connected to {}", sushi_midi_port, input.midi_input.getPortName(rt_midi_device));
+            }
         }
         catch(RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", input_mapping.second, input_mapping.first, error.getMessage());
+            SUSHI_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
         }
 
     }
 
     for (auto& output_mapping : _output_mappings)
     {
+        int rt_midi_device = std::get<0>(output_mapping);
+        int sushi_midi_port = std::get<1>(output_mapping);
+        bool virtual_port = std::get<2>(output_mapping);
         try
         {
-            auto& output = _output_midi_ports[output_mapping.second];
-            output.openPort(output_mapping.first);
-            SUSHI_LOG_INFO("Midi output {} connected to {}", output_mapping.second, output.getPortName(output_mapping.first));
+            auto& output = _output_midi_ports[sushi_midi_port];
+            if (virtual_port)
+            {
+                output.openVirtualPort("Sushi virtual port " + std::to_string(rt_midi_device));
+                SUSHI_LOG_INFO("Midi output {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
+            }
+            else
+            {
+                output.openPort(rt_midi_device);
+                SUSHI_LOG_INFO("Midi output {} connected to {}", sushi_midi_port, output.getPortName(rt_midi_device));
+            }
         }
         catch(RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", output_mapping.second, output_mapping.first, error.getMessage());
+            SUSHI_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
         }
     }
 }
