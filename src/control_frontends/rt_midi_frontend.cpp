@@ -29,6 +29,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("rtmidi");
 
 using RtMidiFunction = std::function<void(double deltatime, std::vector<unsigned char> message, void* user_data)>;
 
+constexpr int RTMIDI_MESSAGE_SIZE = 3;
 namespace sushi {
 namespace midi_frontend {
 
@@ -98,12 +99,18 @@ void RtMidiFrontend::run()
     for (auto& input : _input_midi_ports)
     {
         input.midi_input.openPort(0);
+        SUSHI_LOG_INFO("Midi input connected to {}", input.midi_input.getPortName(0));
         input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
     }
 
     for (auto& output : _output_midi_ports)
     {
-        output.openPort(0);
+        for (int i = 0; i < output.getPortCount(); i++)
+        {
+            SUSHI_LOG_INFO("Port {} has name {}", i, output.getPortName(i));
+        }
+        output.openPort(1);
+        SUSHI_LOG_INFO("Midi output connected to {}", output.getPortName(1));
     }
 }
 
@@ -122,7 +129,9 @@ void RtMidiFrontend::stop()
 
 void RtMidiFrontend::send_midi(int input, MidiDataByte data, Time timestamp)
 {
-    SUSHI_LOG_INFO("Send midi is not implemented from RtMidi yet");
+    // Ignoring sysex for now
+    std::vector<unsigned char> message(data.data(), data.data() + RTMIDI_MESSAGE_SIZE);
+    _output_midi_ports[input].sendMessage(&message);
 }
 
 } // midi_frontend
