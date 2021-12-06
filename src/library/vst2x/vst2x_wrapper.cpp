@@ -355,6 +355,7 @@ void Vst2xWrapper::process_event(const RtEvent& event)
                     _plugin_handle->setParameter(_plugin_handle, id, value);
                 }
             }
+            async_delete(state);
         }
 
         default:
