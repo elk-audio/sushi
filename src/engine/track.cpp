@@ -15,7 +15,7 @@
 
 /**
  * @brief Class to represent a mixer track with a chain of processors
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <cassert>
@@ -156,10 +156,13 @@ void Track::render()
     auto track_timestamp = _timer->start_timer();
 
     process_audio(_input_buffer, _output_buffer);
+
+    bool muted = _mute_parameter->processed_value();
+
     for (int bus = 0; bus < _output_busses; ++bus)
     {
         auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
-        _apply_pan_and_gain(buffer, bus);
+        _apply_pan_and_gain(buffer, bus, muted);
     }
     _input_buffer.clear();
 
@@ -262,6 +265,8 @@ void Track::_common_init()
     _pan_parameters.at(0) = register_float_parameter("pan", "Pan", "",
                                                         0.0f, -1.0f, 1.0f,
                                                         nullptr);
+
+    _mute_parameter = register_bool_parameter("mute", "Mute", "", false);
 
     for (int bus = 1 ; bus < _output_busses; ++bus)
     {
@@ -390,9 +395,9 @@ void Track::_process_output_events()
     }
 }
 
-void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus)
+void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted)
 {
-    float gain = _gain_parameters[bus]->processed_value();
+    float gain = muted? 0.0f : _gain_parameters[bus]->processed_value();
     float pan = _pan_parameters[bus]->processed_value();
     auto [left_gain, right_gain] = calc_l_r_gain(gain, pan);
     _pan_gain_smoothers_left[bus].set(left_gain);

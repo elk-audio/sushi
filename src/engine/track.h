@@ -15,7 +15,7 @@
 
 /**
  * @brief Class to represent a mixer track with a chain of processors
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_TRACK_H
@@ -188,7 +188,7 @@ private:
     void _common_init();
     void _update_channel_config();
     void _process_output_events();
-    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus);
+    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted);
 
     std::vector<Processor*> _processors;
     ChunkSampleBuffer _input_buffer;
@@ -197,6 +197,7 @@ private:
     int _input_busses;
     int _output_busses;
 
+    BoolParameterValue*                                _mute_parameter;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
     std::array<ValueSmootherFilter<float>, TRACK_MAX_BUSSES> _pan_gain_smoothers_right;
