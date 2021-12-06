@@ -64,82 +64,242 @@ option(BUILD_TWINE "Build included Twine library" ON)
 
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
+#################
+# Xenomai setup #
+#################
+
 if (${WITH_XENOMAI})
     message("Building with Xenomai support")
+
+    # External libraries:
+    # explicitly link with cobalt lib
+    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+
+    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+    endif()
+    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
+        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+    endif()
+
+    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+
+    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+    find_library(RASPA_LIB
+                 NAMES raspa
+                 PATHS /usr/lib /usr/local/lib
+                 )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_XENOMAI)
+else()
+    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
+
+##############
+# Jack setup #
+##############
+
 if (${WITH_JACK})
     message("Building with Jack support.")
+
+    # Linked libraries
+    find_path(jack_dir NAMES "jack/jack.h")
+    find_library(jack_lib NAMES jack)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${jack_dir})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib})
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_JACK)
 endif()
+
+###################
+# Alsa midi setup #
+###################
+
 if (${WITH_ALSA_MIDI})
     message("Building with alsa midi support.")
+
+    # Additional sources
+    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h src/control_frontends/alsa_midi_frontend.cpp)
+
+    # linked libraries
+    find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
+    find_library(ALSA_LIB NAMES asound)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${ALSA_DIR})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${ALSA_LIB})
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
+
+###############
+# VST 2 setup #
+###############
+
 if (${WITH_VST2})
     message("Building with Vst2 support.")
+
+    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
+                                src/library/vst2x/vst2x_host_callback.h
+                                src/library/vst2x/vst2x_plugin_loader.h
+                                src/library/vst2x/vst2x_midi_event_fifo.h
+                                src/library/vst2x/vst2x_processor_factory.h
+                                src/library/vst2x/vst2x_wrapper.cpp
+                                src/library/vst2x/vst2x_host_callback.cpp
+                                src/library/vst2x/vst2x_plugin_loader.cpp)
+
+    # Include dirs
+    if (VST_2_SDK_BASE_DIR)
+        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
+    else()
+        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
+                                                                $ENV{HOME}/workspace/VST_SDK
+                                                                $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
+    endif()
+    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
+        message("Warning! Could not find Steinberg SDK for VST 2.4")
+    endif()
+
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
 endif()
+
+###############
+# VST 3 setup #
+###############
+
 if (${WITH_VST3})
     message("Building with Vst3 support.")
+
+    # Vst 3 host:
+    # Build the given Vst3 host implementation into a separate library to avoid
+    # Vst specific defines leaking into our code.
+
+    set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
+    set(VST3_HOST_SOURCES
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
+            "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
+
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra")
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+            set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
+            set(AUDIOHOST_PLATFORM_LIBS)
+    endif()
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            set(VST3_HOST_SOURCES
+                ${VST3_HOST_SOURCES}
+                "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
+            set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
+            set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+    endif()
+
+    add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+    target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
+    set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
+    else()
+        set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT ${VST3_COMPILE_FLAGS}")
+    endif()
+
+
+
+    target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
+    add_dependencies(vst3_host sdk)
+
+    # Set sources
+    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_wrapper.h
+                                src/library/vst3x/vst3x_host_app.h
+                                src/library/vst3x/vst3x_utils.h
+                                src/library/vst3x/vst3x_processor_factory.h
+                                src/library/vst3x/vst3x_wrapper.cpp
+                                src/library/vst3x/vst3x_host_app.cpp
+                                src/library/vst3x/vst3x_utils.cpp)
+
+    # Linked libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
+
+    # Compiler definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 endif()
+
+#############
+# LV2 setup #
+#############
+
 if (${WITH_LV2})
     message("Building with LV2 support.")
+
+    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
+                               src/library/lv2/lv2_control.h
+                               src/library/lv2/lv2_features.h
+                               src/library/lv2/lv2_host_nodes.h
+                               src/library/lv2/lv2_model.h
+                               src/library/lv2/lv2_port.h
+                               src/library/lv2/lv2_state.h
+                               src/library/lv2/lv2_processor_factory.h
+                               src/library/lv2/lv2_wrapper.cpp
+                               src/library/lv2/lv2_state.cpp
+                               src/library/lv2/lv2_worker.cpp
+                               src/library/lv2/lv2_features.cpp
+                               src/library/lv2/lv2_model.cpp
+                               src/library/lv2/lv2_port.cpp
+                               src/library/lv2/lv2_control.cpp)
+
+    # Linked libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} lilv-0 lv2_host)
+
+    # Compiler definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_LV2)
 endif()
+
+##############
+# gRPC setup #
+##############
+
 if (${WITH_RPC_INTERFACE})
     message("Building with RPC support.")
+
+    add_subdirectory(rpc_interface)
+
+    # Linked libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sushi_rpc)
+
+    # Compiler definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RPC_INTERFACE)
 endif()
+
+######################
+# Ableton link setup #
+######################
+
 if (${WITH_LINK})
     message("Building with Ableton Link support.")
+
+    include(third-party/link/AbletonLinkConfig.cmake)
+
+    # Linked libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} Ableton::Link)
+
+    # Compiler definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ABLETON_LINK)
 endif()
 
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 
-
-#############
-# Vst3 Host #
-#############
-
-if (${WITH_VST3})
-
-# Build the given Vst3 host implementation into a separate library to avoid
-# Vst specific defines leaking into our code.
-
-set(VST3_SDK_PATH "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
-set(VST3_HOST_SOURCES
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
-
-set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra")
-
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
-        set(AUDIOHOST_PLATFORM_LIBS)
-endif()
-
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        set(VST3_HOST_SOURCES
-            ${VST3_HOST_SOURCES}
-            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
-        set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
-        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
-endif()
-
-add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
-target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
-set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
-else()
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT ${VST3_COMPILE_FLAGS}")
-endif()
-
-
-
-target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
-add_dependencies(vst3_host sdk)
-endif()
 
 ####################
 #  Main Target     #
@@ -296,52 +456,6 @@ set(EXTRA_CLION_SOURCES src/logging.h
 
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
-if (${WITH_XENOMAI} OR ${WITH_JACK})
-    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h)
-    if (${WITH_ALSA_MIDI})
-        set(ADDITIONAL_ALSA_SOURCES ${ADDITIONAL_ALSA_SOURCES} src/control_frontends/alsa_midi_frontend.cpp)
-    endif()
-endif()
-
-if (${WITH_VST2})
-    set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
-                                src/library/vst2x/vst2x_host_callback.h
-                                src/library/vst2x/vst2x_plugin_loader.h
-                                src/library/vst2x/vst2x_midi_event_fifo.h
-                                src/library/vst2x/vst2x_processor_factory.h
-                                src/library/vst2x/vst2x_wrapper.cpp
-                                src/library/vst2x/vst2x_host_callback.cpp
-                                src/library/vst2x/vst2x_plugin_loader.cpp)
-endif()
-
-if (${WITH_VST3})
-    set(ADDITIONAL_VST3_SOURCES src/library/vst3x/vst3x_wrapper.h
-                                src/library/vst3x/vst3x_host_app.h
-                                src/library/vst3x/vst3x_utils.h
-                                src/library/vst3x/vst3x_processor_factory.h
-                                src/library/vst3x/vst3x_wrapper.cpp
-                                src/library/vst3x/vst3x_host_app.cpp
-                                src/library/vst3x/vst3x_utils.cpp)
-
-endif()
-
-if (${WITH_LV2})
-    set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
-                               src/library/lv2/lv2_control.h
-                               src/library/lv2/lv2_features.h
-                               src/library/lv2/lv2_host_nodes.h
-                               src/library/lv2/lv2_model.h
-                               src/library/lv2/lv2_port.h
-                               src/library/lv2/lv2_state.h
-                               src/library/lv2/lv2_processor_factory.h
-                               src/library/lv2/lv2_wrapper.cpp
-                               src/library/lv2/lv2_state.cpp
-                               src/library/lv2/lv2_worker.cpp
-                               src/library/lv2/lv2_features.cpp
-                               src/library/lv2/lv2_model.cpp
-                               src/library/lv2/lv2_port.cpp
-                               src/library/lv2/lv2_control.cpp)
-endif()
 
 add_executable(sushi "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
@@ -354,20 +468,9 @@ add_executable(sushi "${COMPILATION_UNITS}"
 #  Include Directories  #
 #########################
 
-if (${WITH_VST2})
-    if (VST_2_SDK_BASE_DIR)
-        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
-    else()
-        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
-                                                               $ENV{HOME}/workspace/VST_SDK
-                                                               $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
-    endif()
-    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
-        message("Warning! Could not find Steinberg SDK for VST 2.4")
-    endif()
-endif()
 
-set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
+set(INCLUDE_DIRS ${INCLUDE_DIRS}
+                 "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}/include"
                  "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}"
@@ -380,32 +483,6 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src"
 #  Subdirectory configuration  #
 ################################
 
-
-if (${WITH_XENOMAI})
-    # explicitly link with cobalt lib
-    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
-
-    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
-    endif()
-    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
-        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
-        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
-    endif()
-
-    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
-
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    find_library(RASPA_LIB
-                 NAMES raspa
-                 PATHS /usr/lib /usr/local/lib
-                 )
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
-else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
-endif()
-
 if (${BUILD_TWINE})
     set(TWINE_WITH_TESTS OFF CACHE BOOL "")
     add_subdirectory(twine)
@@ -417,14 +494,6 @@ else()
             PATHS /usr/lib /usr/local/lib
     )
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
-endif()
-
-if (${WITH_LINK})
-    include(third-party/link/AbletonLinkConfig.cmake)
-endif()
-
-if (${WITH_RPC_INTERFACE})
-    add_subdirectory(rpc_interface)
 endif()
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
@@ -461,40 +530,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL 
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
 
-if (${WITH_VST3})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
-endif()
-
-if (WITH_VST2)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
-endif()
-
-if (${WITH_LV2})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} lilv-0 lv2_host)
-endif()
-
-if (${WITH_JACK})
-    find_path(jack_dir NAMES "jack/jack.h")
-    find_library(jack_lib NAMES jack)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${jack_dir})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib})
-endif()
-
-if (${WITH_ALSA_MIDI})
-    find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
-    find_library(ALSA_LIB NAMES asound)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${ALSA_DIR})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${ALSA_LIB})
-endif()
-
-if (${WITH_LINK})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} Ableton::Link)
-endif()
-
-if (${WITH_RPC_INTERFACE})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sushi_rpc)
-endif()
-
 target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
@@ -504,39 +539,7 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
-
-if (${WITH_XENOMAI})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_XENOMAI)
-endif()
-
-if (${WITH_JACK})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_JACK)
-endif()
-
-if (${WITH_ALSA_MIDI})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ALSA_MIDI)
-endif()
-
-if (${WITH_VST3})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST3)
-endif()
-
-if (${WITH_LV2})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_LV2)
-endif()
-
-if (${WITH_LINK})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ABLETON_LINK)
-endif()
-
-if (${WITH_VST2})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
-endif()
-
-if (${WITH_RPC_INTERFACE})
-    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_RPC_INTERFACE)
-endif()
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 
 ######################
 #  Tests subproject  #
