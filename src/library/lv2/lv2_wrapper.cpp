@@ -280,16 +280,29 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
-ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
+    std::unique_ptr<RtState> rt_state;
+    if (realtime_running)
     {
-        _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+        rt_state = std::make_unique<RtState>();
     }
 
     if (state->program().has_value())
     {
         this->set_program(state->program().value());
+    }
+
+    if (state->bypassed().has_value())
+    {
+        if (realtime_running)
+        {
+            rt_state->set_bypass(state->bypassed().value());
+        }
+        else
+        {
+            _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+        }
     }
 
     for (const auto& param : state->parameters())
@@ -305,10 +318,26 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool /*realtim
 
             float min = parameter->min_domain_value();
             float max = parameter->max_domain_value();
-
             auto value_in_domain = _to_domain(value, min, max);
-            port->set_control_value(value_in_domain);
+
+            // We can save some time for the audio thread if we do this pre-scaling here
+            // for the realtime case too, even though the values are applied during the
+            // next audio process call and not here.
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(parameter->id(), value_in_domain);
+            }
+            else
+            {
+                port->set_control_value(value_in_domain);
+            }
         }
+    }
+
+    if (realtime_running)
+    {
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
     return ProcessorReturnCode::OK;
@@ -334,12 +363,12 @@ bool LV2_Wrapper::_register_parameters()
             const std::string param_unit = "";
 
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
-                    name_as_string, // label
-                    param_unit, // PARAMETER UNIT
-                    currentPort->min(), // range min
-                    currentPort->max(), // range max
-                    nullptr), // ParameterPreProcessor
-                    static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
+                                                                                name_as_string, // label
+                                                                                param_unit, // PARAMETER UNIT
+                                                                                currentPort->min(), // range min
+                                                                                currentPort->max(), // range max
+                                                                                nullptr), // ParameterPreProcessor
+                                                   static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
 
             if (param_inserted_ok)
             {
@@ -401,6 +430,21 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
         _bypass_manager.set_bypass(bypassed, _model->sample_rate());
+    }
+    else if (event.type() == RtEventType::SET_STATE)
+    {
+        auto state = event.processor_state_event()->state();
+        if (state->bypassed().has_value())
+        {
+            _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+        }
+
+        for (const auto& parameter : state->parameters())
+        {
+            // These parameter values are pre-scaled and dont need to be converted to domain values
+            auto port = _model->get_port(parameter.first);
+            port->set_control_value(parameter.second);
+        }
     }
 }
 
