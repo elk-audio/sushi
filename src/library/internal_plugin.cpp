@@ -367,7 +367,7 @@ void InternalPlugin::_set_rt_state(const RtState* state)
 {
     if (state->bypassed().has_value())
     {
-        this->set_bypassed(state->bypassed().value());
+        this->set_bypassed(*state->bypassed());
     }
     for (const auto& parameter : state->parameters())
     {

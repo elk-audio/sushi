@@ -572,8 +572,6 @@ private:
     AudioRoutingController*     _audio_routing_controller;
     CvGateController*           _cv_gate_controller;
     OscController*              _osc_controller;
-    //std::unique_ptr<NotificationController>    _notification_controller;
-
 };
 
 } // ext

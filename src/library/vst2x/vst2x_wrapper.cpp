@@ -343,7 +343,7 @@ void Vst2xWrapper::process_event(const RtEvent& event)
 
             if (state->bypassed().has_value())
             {
-                _set_bypass_rt(state->bypassed().value());
+                _set_bypass_rt(*state->bypassed());
             }
 
             for (const auto& parameter : state->parameters())

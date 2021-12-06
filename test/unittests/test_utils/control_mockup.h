@@ -312,7 +312,7 @@ public:
         return _return_status;
     }
 
-    ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& state) override
+    ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& /*state*/) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);

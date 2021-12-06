@@ -436,7 +436,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
         auto state = event.processor_state_event()->state();
         if (state->bypassed().has_value())
         {
-            _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+            _bypass_manager.set_bypass(*state->bypassed(), _model->sample_rate());
         }
 
         for (const auto& parameter : state->parameters())
@@ -445,6 +445,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
             auto port = _model->get_port(parameter.first);
             port->set_control_value(parameter.second);
         }
+        async_delete(state);
     }
 }
 
