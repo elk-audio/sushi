@@ -170,7 +170,7 @@ void RtMidiFrontend::stop()
     }
 }
 
-void RtMidiFrontend::send_midi(int input, MidiDataByte data, Time timestamp)
+void RtMidiFrontend::send_midi(int input, MidiDataByte data, [[maybe_unused]]Time timestamp)
 {
     // Ignoring sysex for now
     std::vector<unsigned char> message(data.data(), data.data() + RTMIDI_MESSAGE_SIZE);
