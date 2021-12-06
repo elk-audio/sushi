@@ -92,7 +92,7 @@ void GrpcServer::start()
 
 void GrpcServer::stop()
 {
-    auto now = std::chrono::high_resolution_clock::now();
+    auto now = std::chrono::system_clock::now();
     _running.store(false);
     _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
     _async_rpc_queue->Shutdown();

@@ -1,7 +1,9 @@
 #ifndef SUSHI_CONTROL_MOCKUP_H
 #define SUSHI_CONTROL_MOCKUP_H
 
+#ifndef __clang__
 #include <bits/stdc++.h>
+#endif
 
 #include "control_interface.h"
 

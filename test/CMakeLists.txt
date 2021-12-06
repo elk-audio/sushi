@@ -30,6 +30,18 @@ if (${WITH_VST2})
         )
     target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        set_target_properties(vst2_test_plugin PROPERTIES
+            BUNDLE true
+            BUNDLE_EXTENSION "vst"
+            XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
+            MACOSX_BUNDLE_BUNDLE_NAME "TestPlugin"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.ELK.TestPlugin"
+            MACOSX_BUNDLE_ICON_FILE ""
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+            MACOSX_BUNDLE_COPYRIGHT "ELK © 2016"
+        )
+    endif()
 endif()
 
 #####################################
@@ -167,8 +179,9 @@ if (${WITH_VST3})
     add_dependencies(unit_tests adelay vst3_host)
 endif()
 
-if (${WITH_JACK})
-    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
+if (${WITH_ALSA_MIDI})
+    find_library(ALSA_LIB NAMES asound)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} ${ALSA_LIB})
 endif()
 
 if (${WITH_LV2})

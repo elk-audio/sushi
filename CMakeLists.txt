@@ -52,6 +52,7 @@ configure_file(
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
+option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
@@ -68,6 +69,9 @@ if (${WITH_XENOMAI})
 endif()
 if (${WITH_JACK})
     message("Building with Jack support.")
+endif()
+if (${WITH_ALSA_MIDI})
+    message("Building with alsa midi support.")
 endif()
 if (${WITH_VST2})
     message("Building with Vst2 support.")
@@ -102,19 +106,37 @@ set(VST3_HOST_SOURCES
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp"
-        "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/utility/stringconvert.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
+set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra")
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
+        set(AUDIOHOST_PLATFORM_LIBS)
+endif()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        set(VST3_HOST_SOURCES
+            ${VST3_HOST_SOURCES}
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
+        set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
+        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+endif()
+
 add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
+target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
 set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE -Wno-unused-parameter -Wno-extra")
+    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
 else()
-    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT -Wno-unused-parameter -Wno-extra")
+    set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT ${VST3_COMPILE_FLAGS}")
 endif()
+
+
+
 target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
 add_dependencies(vst3_host sdk)
 endif()
@@ -275,8 +297,10 @@ set(EXTRA_CLION_SOURCES src/logging.h
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 if (${WITH_XENOMAI} OR ${WITH_JACK})
-    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h
-                                src/control_frontends/alsa_midi_frontend.cpp)
+    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h)
+    if (${WITH_ALSA_MIDI})
+        set(ADDITIONAL_ALSA_SOURCES ${ADDITIONAL_ALSA_SOURCES} src/control_frontends/alsa_midi_frontend.cpp)
+    endif()
 endif()
 
 if (${WITH_VST2})
@@ -410,16 +434,32 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
+find_path(LO_DIR NAMES "lo/lo.h")
+find_library(LO_LIB NAMES lo)
+message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
+
+find_path(SNDFILE_DIR NAMES "sndfile.h")
+find_library(SNDFILE_LIB NAMES sndfile)
+message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
+
+set(INCLUDE_DIRS
+    ${INCLUDE_DIRS}
+    ${LO_DIR}
+    ${SNDFILE_DIR}
+)
+
 set(COMMON_LIBRARIES
-    sndfile
-    lo
+    ${LO_LIB}
+    ${SNDFILE_LIB}
     pthread
-    atomic
     dl
     fifo
     spdlog::spdlog
     ${TWINE_LIB}
 )
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
+endif()
 
 if (${WITH_VST3})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
@@ -434,7 +474,17 @@ if (${WITH_LV2})
 endif()
 
 if (${WITH_JACK})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} jack asound)
+    find_path(jack_dir NAMES "jack/jack.h")
+    find_library(jack_lib NAMES jack)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${jack_dir})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${jack_lib})
+endif()
+
+if (${WITH_ALSA_MIDI})
+    find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
+    find_library(ALSA_LIB NAMES asound)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${ALSA_DIR})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${ALSA_LIB})
 endif()
 
 if (${WITH_LINK})
@@ -462,6 +512,10 @@ endif()
 
 if (${WITH_JACK})
     target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_ALSA_MIDI})
+    target_compile_definitions(sushi PRIVATE -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
 
 if (${WITH_VST3})
