@@ -327,6 +327,18 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.88f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Test setting state with realtime running
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(desc->id(), 0.44);
+
+    status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.44f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
 }
 
 

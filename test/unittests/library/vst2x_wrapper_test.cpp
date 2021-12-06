@@ -307,4 +307,21 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_TRUE(_module_under_test->bypassed());
     EXPECT_EQ(2, _module_under_test->current_program());
     EXPECT_EQ("Program 3", _module_under_test->current_program_name());
+
+    // Test with realtime set to true
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(1, 0.5);
+
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.5f, _module_under_test->parameter_value(1).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+    EXPECT_EQ(1, _module_under_test->current_program());
+    EXPECT_EQ("Program 2", _module_under_test->current_program_name());
 }

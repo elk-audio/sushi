@@ -569,7 +569,7 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
             rt_state->add_parameter_change(_bypass_parameter.id, state->bypassed().value());
         }
 
-        // Set the state for the controller
+        // Update the controller with new parameter values
         for (const auto& parameter : state->parameters())
         {
             _instance.controller()->setParamNormalized(parameter.first, parameter.second);
