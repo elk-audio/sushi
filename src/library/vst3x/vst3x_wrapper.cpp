@@ -237,6 +237,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             auto typed_event = event.parameter_change_event();
             _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
             _parameter_update_queue.push({typed_event->param_id(), typed_event->value()});
+            _notify_parameter_change = true;
             break;
         }
         case RtEventType::NOTE_ON:
@@ -308,10 +309,6 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_process_data.inputParameterChanges->getParameterCount() > 0)
-    {
-        request_non_rt_task(parameter_update_callback);
-    }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
@@ -327,6 +324,12 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         }
         _forward_events(_process_data);
         _forward_params(_process_data);
+    }
+
+    if (_notify_parameter_change)
+    {
+        request_non_rt_task(parameter_update_callback);
+        _notify_parameter_change = false;
     }
     _process_data.clear();
 }
@@ -930,8 +933,11 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
             {
                 if (maybe_output_cv_value(id, value) == false)
                 {
-                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, static_cast<float>(value));
+                    float float_value = static_cast<float>(value);
+                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
+                    _parameter_update_queue.push({id, float_value});
+                    _notify_parameter_change = true;
                 }
             }
         }
