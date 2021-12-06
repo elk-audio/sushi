@@ -25,7 +25,6 @@
 #include "library/vst2x/vst2x_wrapper.h"
 #endif
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 namespace sushi {
 namespace vst2 {

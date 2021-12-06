@@ -42,7 +42,7 @@ enum class ControlType
 };
 
 /** Plugin control. */
-class ControlID
+struct ControlID
 {
 public:
     ~ControlID() = default;

@@ -27,8 +27,7 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-TimingController::TimingController(sushi::engine::BaseEngine* engine) : _engine(engine),
-                                                                        _performance_timer(engine->performance_timer())
+TimingController::TimingController(sushi::engine::BaseEngine* engine) : _performance_timer(engine->performance_timer())
 {}
 
 inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)

@@ -41,7 +41,6 @@ GrpcServer::GrpcServer(const std::string& listen_address,
                                                                _osc_control_service{std::make_unique<OscControlService>(controller)},
                                                                _notification_control_service{std::make_unique<NotificationControlService>(controller)},
                                                                _server_builder{std::make_unique<grpc::ServerBuilder>()},
-                                                               _controller{controller},
                                                                _running{false}
 {}
 
@@ -93,7 +92,7 @@ void GrpcServer::start()
 
 void GrpcServer::stop()
 {
-    auto now = std::chrono::high_resolution_clock::now();
+    auto now = std::chrono::system_clock::now();
     _running.store(false);
     _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
     _async_rpc_queue->Shutdown();

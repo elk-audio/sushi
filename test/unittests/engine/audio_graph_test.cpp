@@ -22,6 +22,7 @@ using namespace sushi::engine;
 class TestAudioGraph : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestAudioGraph() {}
 
     void SetUp(int cores)

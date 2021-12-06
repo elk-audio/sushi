@@ -443,7 +443,11 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
     {
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+#else
+        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+#endif
         osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
                                                                               controller.get(),
                                                                               osc_server_port,

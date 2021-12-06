@@ -10,6 +10,12 @@
 using namespace sushi;
 using namespace sushi::vst2;
 
+#ifdef __APPLE__
+constexpr char plugin_name[] = "vst2_test_plugin.vst";
+#else
+constexpr char plugin_name[] = "libvst2_test_plugin.so";
+#endif
+
 // Reference output signal from TestPlugin
 // in response to NoteON C4 (60), vel=127, default parameters
 static constexpr float TEST_SYNTH_EXPECTED_OUT[2][64] = {
@@ -44,6 +50,7 @@ constexpr float TEST_SAMPLE_RATE = 48000;
 class TestVst2xWrapper : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestVst2xWrapper()
     {
     }
@@ -70,14 +77,14 @@ protected:
 
 TEST_F(TestVst2xWrapper, TestSetName)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     EXPECT_EQ("Test Plugin", _module_under_test->name());
     EXPECT_EQ("Test Plugin", _module_under_test->label());
 }
 
 TEST_F(TestVst2xWrapper, TestSetChannels)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     EXPECT_EQ(2, _module_under_test->input_channels());
     EXPECT_EQ(2, _module_under_test->output_channels());
 
@@ -90,7 +97,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 
 TEST_F(TestVst2xWrapper, TestParameterInitialization)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     auto gain_param = _module_under_test->parameter_from_name("Gain");
     EXPECT_TRUE(gain_param);
     EXPECT_EQ(0u, gain_param->id());
@@ -101,13 +108,13 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 
 TEST_F(TestVst2xWrapper, TestPluginCanDos)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
 }
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
     auto handle = _module_under_test->_plugin_handle;
@@ -116,7 +123,7 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
 
 TEST_F(TestVst2xWrapper, TestProcess)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
@@ -127,7 +134,7 @@ TEST_F(TestVst2xWrapper, TestProcess)
 
 TEST_F(TestVst2xWrapper, TestMonoProcess)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ChunkSampleBuffer mono_buffer(1);
     ChunkSampleBuffer stereo_buffer(2);
 
@@ -146,7 +153,7 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
 
 TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
@@ -168,7 +175,7 @@ TEST_F(TestVst2xWrapper, TestProcessingWithParameterChanges)
 
 TEST_F(TestVst2xWrapper, TestBypassProcessing)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     // Set the gain to 0.5
@@ -197,7 +204,7 @@ TEST_F(TestVst2xWrapper, TestBypassProcessing)
 
 TEST_F(TestVst2xWrapper, TestTimeInfo)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(60, false);
     _host_control._transport.set_time_signature({4, 4}, false);
@@ -217,7 +224,7 @@ TEST_F(TestVst2xWrapper, TestTimeInfo)
 
 TEST_F(TestVst2xWrapper, TestMidiEvents)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
@@ -239,24 +246,24 @@ TEST_F(TestVst2xWrapper, TestMidiEvents)
 
 TEST_F(TestVst2xWrapper, TestConfigurationChange)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     _module_under_test->configure(44100.0f);
     ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
 }
 
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     EXPECT_FALSE(_host_control._dummy_dispatcher.got_event());
     _module_under_test->notify_parameter_change(0, 0.5f);
-    auto event = std::move(_host_control._dummy_dispatcher.retrieve_event());
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
 }
 
 TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
@@ -269,7 +276,7 @@ TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
 
 TEST_F(TestVst2xWrapper, TestProgramManagement)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
     ASSERT_TRUE(_module_under_test->supports_programs());
     ASSERT_EQ(3, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());

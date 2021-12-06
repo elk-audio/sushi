@@ -55,7 +55,6 @@ public:
 private:
     std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
 
-    BaseEngine*                         _engine;
     performance::BasePerformanceTimer*  _performance_timer;
 };
 

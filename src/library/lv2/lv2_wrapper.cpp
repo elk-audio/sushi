@@ -33,13 +33,6 @@
 
 #include "lv2_worker.h"
 
-namespace
-{
-
-static constexpr int LV2_STRING_BUFFER_SIZE = 256;
-
-} // anonymous namespace
-
 namespace sushi {
 namespace lv2 {
 

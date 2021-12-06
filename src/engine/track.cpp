@@ -24,8 +24,6 @@
 #include "logging.h"
 #include "library/constants.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("track");
-
 namespace sushi {
 namespace engine {
 
@@ -56,7 +54,6 @@ Track::Track(HostControl host_control, int channels,
                                                      _output_buffer{std::max(channels, 2)},
                                                      _input_busses{1},
                                                      _output_busses{1},
-                                                     _multibus{false},
                                                      _timer{timer}
     {
     _max_input_channels = channels;
@@ -72,7 +69,6 @@ Track::Track(HostControl host_control, int input_busses, int output_busses,
                                                       _output_buffer{std::max(input_busses, output_busses) * 2},
                                                       _input_busses{input_busses},
                                                       _output_busses{output_busses},
-                                                      _multibus{(input_busses > 1 || output_busses > 1)},
                                                       _timer{timer}
 {
     int channels = std::max(input_busses, output_busses) * 2;
@@ -374,17 +370,17 @@ void Track::_process_output_events()
                     break;
                 case RtEventType::AFTERTOUCH:
                     output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
-                                                                event.keyboard_event()->channel(),
+                                                                event.keyboard_common_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::PITCH_BEND:
                     output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
-                                                                event.keyboard_event()->channel(),
+                                                                event.keyboard_common_event()->channel(),
                                                                 event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::MODULATION:
                     output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
-                                                                   event.keyboard_event()->channel(),
+                                                                   event.keyboard_common_event()->channel(),
                                                                    event.keyboard_common_event()->value()));
                     break;
                 case RtEventType::WRAPPED_MIDI_EVENT:

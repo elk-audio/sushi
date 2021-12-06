@@ -69,6 +69,7 @@ static const float LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF[1][64] = {
 class TestLv2Wrapper : public ::testing::Test
 {
 protected:
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestLv2Wrapper()
     {
     }

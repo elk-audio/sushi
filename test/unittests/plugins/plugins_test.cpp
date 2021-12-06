@@ -22,7 +22,6 @@ using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;
 static const std::string WRITE_FILE = "write_test";
-constexpr int WRITE_NUMBER_OF_SAMPLES = 16384;
 
 class TestPassthroughPlugin : public ::testing::Test
 {

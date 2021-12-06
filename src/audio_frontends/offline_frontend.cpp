@@ -31,7 +31,12 @@ namespace audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
-constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f)); // -24 dB input noise
+#if defined(__clang__)
+constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933; // pow(10, (-24.0f/20.0f)) pre-computed
+#elif defined(__GNUC__) || defined(__GNUG__)
+constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f));
+#endif
+
 constexpr int   NOISE_SEED = 5; // Using a constant seed makes potential errors reproducible
 
 template<class random_device, class random_dist>

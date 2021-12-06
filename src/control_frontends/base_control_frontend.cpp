@@ -28,10 +28,7 @@
 namespace sushi {
 namespace control_frontend {
 
-SUSHI_GET_LOGGER;
 
-constexpr int STOP_RETRIES = 200;
-constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(2);
 
 void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
