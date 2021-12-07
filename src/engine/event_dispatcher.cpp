@@ -199,7 +199,6 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
                 return EventStatus::HANDLED_OK;
             }
             default:
-                delete event;
                 return EventStatus::UNRECOGNIZED_EVENT;
         }
     }
