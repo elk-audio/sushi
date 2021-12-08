@@ -215,8 +215,6 @@ if (${WITH_VST3})
         set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DDEVELOPMENT ${VST3_COMPILE_FLAGS}")
     endif()
 
-
-
     target_include_directories(vst3_host PRIVATE "${PROJECT_SOURCE_DIR}/third-party/vst3sdk")
     add_dependencies(vst3_host sdk)
 
@@ -299,7 +297,6 @@ if (${WITH_LINK})
 endif()
 
 message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
-
 
 ####################
 #  Main Target     #
