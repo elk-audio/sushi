@@ -18,6 +18,11 @@ R"(
           "minimum": 1000,
           "maximum": 192000
         },
+        "tempo":
+        {
+          "type" : "number",
+          "minimum": 1
+        },
         "time_signature" :
         {
           "type": "object",
@@ -84,7 +89,8 @@ R"(
           "minimum": 0
         }
       },
-      "required": ["samplerate"]
+      "required": ["samplerate"],
+      "additionalProperties": false
     }
   },
   "required": ["host_config"]

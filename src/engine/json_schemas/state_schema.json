@@ -38,7 +38,8 @@ R"(
             }
           }
         },
-        "required": ["processor"]
+        "required": ["processor"],
+        "additionalProperties": false
       }
     }
   }

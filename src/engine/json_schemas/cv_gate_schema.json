@@ -196,7 +196,8 @@ R"(
             ]
           }
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
