@@ -71,6 +71,7 @@ struct AudioConfig
     std::optional<int> cv_outputs;
     std::optional<int> midi_inputs;
     std::optional<int> midi_outputs;
+    std::optional<int> port_audio_device_id;
     std::vector<std::tuple<int, int, bool>> rt_midi_input_mappings;
     std::vector<std::tuple<int, int, bool>> rt_midi_output_mappings;
 };

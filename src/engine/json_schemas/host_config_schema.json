@@ -83,6 +83,11 @@ R"(
           "type": "integer",
           "minimum": 0
         },
+        "port_audio_device_id":
+        {
+          "type": "integer",
+          "minimum": 0
+        },
         "rt_midi_input_mappings":
         {
           "type": "array",

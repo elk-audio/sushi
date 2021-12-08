@@ -26,10 +26,10 @@
 #include <memory>
 
 // TODO: Keep an eye on these deprecated declarations and update when they are fixed.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <portaudio.h>
-#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
 
 #include "base_audio_frontend.h"
 
@@ -38,7 +38,7 @@ namespace audio_frontend {
 
 struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioConfiguration(int device_id,
+    PortAudioConfiguration(std::optional<int> device_id,
                            int cv_inputs,
                            int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
@@ -47,7 +47,7 @@ struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
 
     virtual ~PortAudioConfiguration() = default;
 
-    int device_id;
+    std::optional<int> device_id;
 };
 
 class PortAudioFrontend : public BaseAudioFrontend

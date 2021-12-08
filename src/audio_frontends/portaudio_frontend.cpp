@@ -31,6 +31,8 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("PortAudio");
 
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
+    auto portaudio_config = static_cast<PortAudioConfiguration*>(config);
+    SUSHI_LOG_INFO("Initializing port audio with device id {}", portaudio_config->device_id.value_or(-1));
     return AudioFrontendStatus::OK;
 }
 
