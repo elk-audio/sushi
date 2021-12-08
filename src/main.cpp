@@ -30,6 +30,7 @@
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
+#include "audio_frontends/portaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "library/parameter_dump.h"
@@ -52,6 +53,7 @@ enum class FrontendType
     OFFLINE,
     DUMMY,
     JACK,
+    PORTAUDIO,
     XENOMAI_RASPA,
     NONE
 };
@@ -217,6 +219,10 @@ int main(int argc, char* argv[])
             frontend_type = FrontendType::JACK;
             break;
 
+        case OPT_IDX_USE_PORTAUDIO:
+            frontend_type = FrontendType::PORTAUDIO;
+            break;
+
         case OPT_IDX_CONNECT_PORTS:
             connect_ports = true;
             break;
@@ -349,6 +355,16 @@ int main(int argc, char* argv[])
             break;
         }
 
+        case FrontendType::PORTAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up PortAudio frontend");
+            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioConfiguration>(0,
+                                                                                              cv_inputs,
+                                                                                              cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
+            break;
+        }
+
         case FrontendType::XENOMAI_RASPA:
         {
             SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
@@ -448,7 +464,9 @@ int main(int argc, char* argv[])
         error_exit("");
     }
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
@@ -511,7 +529,9 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
         osc_frontend->run();
     }
@@ -535,7 +555,9 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
         osc_frontend->stop();
         midi_frontend->stop();

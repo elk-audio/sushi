@@ -21,6 +21,12 @@ set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(rtmidi)
 
+#############################
+# portaudio compile options #
+#############################
+
+add_subdirectory(portaudio)
+
 ##########################
 #  VST3SDK and examples  #
 ##########################

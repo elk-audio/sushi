@@ -98,7 +98,7 @@ struct SushiArg : public optionparser::Arg
 
 // List here the different command line options
 enum OptionIndex
-{ 
+{
     OPT_IDX_UNKNOWN,
     OPT_IDX_HELP,
     OPT_IDX_VERSION,
@@ -112,6 +112,7 @@ enum OptionIndex
     OPT_IDX_OUTPUT_FILE,
     OPT_IDX_USE_DUMMY,
     OPT_IDX_USE_JACK,
+    OPT_IDX_USE_PORTAUDIO,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER,
@@ -238,6 +239,14 @@ const optionparser::Descriptor usage[] =
         "jack",
         SushiArg::Optional,
         "\t\t-j --jack \tUse Jack realtime audio frontend."
+    },
+    {
+        OPT_IDX_USE_PORTAUDIO,
+        OPT_TYPE_DISABLED,
+        "p",
+        "portaudio",
+        SushiArg::Optional,
+        "\t\t-p --portaudio \tUse PortAudio realtime audio frontend."
     },
     {
         OPT_IDX_CONNECT_PORTS,

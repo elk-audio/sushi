@@ -52,6 +52,7 @@ configure_file(
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
+option(WITH_PORTAUDIO "Enable PortAudio support" ON)
 option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
 option(WITH_RT_MIDI "Enable RtMidi support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
@@ -138,6 +139,20 @@ if (${WITH_JACK})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+###################
+# PortAudio setup #
+###################
+
+if (${WITH_PORTAUDIO})
+    message("Building with PortAudio support.")
+
+    # Linked libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
 ###################
@@ -347,6 +362,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
+                      src/audio_frontends/portaudio_frontend.cpp
                       src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
@@ -415,6 +431,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h
                         src/audio_frontends/jack_frontend.h
+                        src/audio_frontends/portaudio_frontend.h
                         src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h

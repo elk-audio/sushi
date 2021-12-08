@@ -20,3 +20,6 @@
 [submodule "third-party/rtmidi"]
 	path = third-party/rtmidi
 	url = https://github.com/thestk/rtmidi.git
+[submodule "third-party/portaudio"]
+	path = third-party/portaudio
+	url = https://github.com/PortAudio/portaudio.git
