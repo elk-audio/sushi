@@ -10,52 +10,57 @@ R"(
     "osc":
     {
       "type": "object",
-      "properties":
+      "properties" :
       {
-        "oneOf":
-        [
+        "enable_all_processor_outputs":
+        {
+          "type": "boolean"
+        },
+        "enabled_processor_outputs":
+        {
+          "type": "array",
+          "items":
           {
-            "enable_all_processor_outputs":
+            "type": "object",
+            "properties":
             {
-              "type": "boolean"
-            },
-            "enabled_processor_outputs":
-            {
-              "type": "array",
-              "items":
+              "processor":
               {
-                "type": "object",
-                "properties":
+                "type": "string",
+                "minLength": 1
+              },
+              "parameter_blocklist":
+              {
+                "type": "array",
+                "items":
                 {
-                  "processor":
+                  "type": "object",
+                  "properties":
                   {
-                    "type": "string",
-                    "minLength": 1,
-                    "parameter_blocklist":
+                    "parameter":
                     {
-                      "type": "array",
-                      "items":
-                      {
-                        "type": "object",
-                        "properties":
-                        {
-                          "parameter":
-                          {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "required": ["parameter"]
-                        }
-                      }
+                      "type": "string",
+                      "minLength": 1
                     }
-                  }
-                },
-                "required": ["processor"]
+                  },
+                  "required": ["parameter"]
+                }
               }
-            }
+            },
+            "required": ["processor"]
           }
-        ]
-      }
+        }
+      },
+      "oneOf":
+      [
+        {
+          "required": ["enable_all_processor_outputs"]
+        },
+        {
+          "required" : ["enabled_processor_outputs"]
+        }
+      ],
+      "additionalProperties": false
     }
   }
 }

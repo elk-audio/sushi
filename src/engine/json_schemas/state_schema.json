@@ -28,7 +28,6 @@ R"(
                 "minimum": 0.0
               }
             }
-
           },
           "properties": {
             "type": "object",
@@ -37,9 +36,9 @@ R"(
                 "type": "string"
               }
             }
-          },
-          "required": ["processor_name"]
-        }
+          }
+        },
+        "required": ["processor"]
       }
     }
   }
