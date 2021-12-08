@@ -98,11 +98,8 @@ bool RtMidiFrontend::init()
             return false;
         }
     }
-    return true;
-}
 
-void RtMidiFrontend::run()
-{
+    // Create input ports
     for (auto& [rt_midi_device, sushi_midi_port, virtual_port] : _input_mappings)
     {
         try
@@ -124,10 +121,11 @@ void RtMidiFrontend::run()
         catch(RtMidiError& error)
         {
             SUSHI_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
+            return false;
         }
-
     }
 
+    // Create output ports
     for (auto& output_mapping : _output_mappings)
     {
         int rt_midi_device = std::get<0>(output_mapping);
@@ -150,8 +148,16 @@ void RtMidiFrontend::run()
         catch(RtMidiError& error)
         {
             SUSHI_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
+            return false;
         }
     }
+
+    return true;
+}
+
+void RtMidiFrontend::run()
+{
+
 }
 
 void RtMidiFrontend::stop()
