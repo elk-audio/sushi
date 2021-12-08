@@ -64,7 +64,7 @@ RtMidiFrontend::RtMidiFrontend(int inputs,
 
 RtMidiFrontend::~RtMidiFrontend()
 {
-
+    stop();
 }
 
 bool RtMidiFrontend::init()
@@ -103,11 +103,8 @@ bool RtMidiFrontend::init()
 
 void RtMidiFrontend::run()
 {
-    for (auto& input_mapping : _input_mappings)
+    for (auto& [rt_midi_device, sushi_midi_port, virtual_port] : _input_mappings)
     {
-        int rt_midi_device = std::get<0>(input_mapping);
-        int sushi_midi_port = std::get<1>(input_mapping);
-        bool virtual_port = std::get<2>(input_mapping);
         try
         {
             auto& input = _input_midi_ports[sushi_midi_port];

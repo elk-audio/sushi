@@ -45,7 +45,7 @@ public:
     explicit RtMidiFrontend(int inputs,
                             int outputs,
                             std::vector<std::tuple<int, int, bool>> input_mappings,
-                            std::vector<std::tuple<int, int, bool>> otuput_mappings,
+                            std::vector<std::tuple<int, int, bool>> output_mappings,
                             midi_receiver::MidiReceiver* receiver);
 
     ~RtMidiFrontend();
