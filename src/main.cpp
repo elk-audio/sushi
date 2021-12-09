@@ -394,14 +394,19 @@ int main(int argc, char* argv[])
         error_exit("Failed to load tracks from Json config file");
     }
     status = configurator->load_midi();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         error_exit("Failed to load MIDI mapping from Json config file");
     }
     status = configurator->load_cv_gate();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         error_exit("Failed to load CV and Gate configuration");
+    }
+    status = configurator->load_initial_state();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        error_exit("Failed to load initial processor states");
     }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
@@ -411,7 +416,7 @@ int main(int argc, char* argv[])
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
         }
-        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load Event list from Json config file");
         }
@@ -419,7 +424,7 @@ int main(int argc, char* argv[])
     else
     {
         status = configurator->load_events();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load Events from Json config file");
         }
@@ -457,7 +462,7 @@ int main(int argc, char* argv[])
         }
 
         status = configurator->load_osc();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load OSC echo specification from Json config file");
         }

@@ -102,6 +102,8 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     /**
      * @brief Get the vst time information
      * @return A populated VstTimeInfo struct

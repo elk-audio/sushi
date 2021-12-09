@@ -152,6 +152,21 @@ TEST_F(TestJsonConfigurator, TestLoadCvGateControl)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 }
 
+TEST_F(TestJsonConfigurator, TestLoadInitialState)
+{
+    auto status = _module_under_test->load_tracks();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    status = _module_under_test->load_initial_state();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    auto main_instance = _engine.processor_container()->mutable_processor("main");
+    ASSERT_TRUE(main_instance.get());
+    auto pan_info = main_instance->parameter_from_name("pan");
+    ASSERT_TRUE(pan_info);
+    ASSERT_FLOAT_EQ(0.35, main_instance->parameter_value(pan_info->id()).second);
+}
+
 TEST_F(TestJsonConfigurator, TestMakeChain)
 {
     /* Create plugin track without processors */
@@ -212,6 +227,7 @@ TEST_F(TestJsonConfigurator, TestValidJsonSchema)
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::EVENTS));
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::STATE));
 }
 
 TEST_F(TestJsonConfigurator, TestHostConfigSchema)
@@ -371,6 +387,35 @@ TEST_F(TestJsonConfigurator, TestCvGateSchema)
     gate_out["channel"] = 1234;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::CV_GATE));
 }
+
+TEST_F(TestJsonConfigurator, TestInititalStateSchema)
+{
+    auto [status, test_cfg] =_module_under_test->_parse_section(JsonSection::STATE);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    rapidjson::Document mutable_cfg;
+    mutable_cfg.SetObject();
+    rapidjson::Value val(rapidjson::kObjectType);
+
+    mutable_cfg.AddMember("initial_state", val, mutable_cfg.GetAllocator());
+    mutable_cfg["initial_state"].CopyFrom(test_cfg, mutable_cfg.GetAllocator());
+
+    auto& state_1 = mutable_cfg["initial_state"].GetArray()[0];
+    //ASSERT_FALSE(state_1.Empty());
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = 1.5;
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = "0.37";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = 0.37;
+    state_1["program"] = "string";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["program"] = 5;
+    state_1["bypassed"] = "off";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["bypassed"] = true;
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::STATE));
+ }
 
 TEST_F(TestJsonConfigurator, TestLoadEventList)
 {

@@ -397,7 +397,7 @@ void Track::_process_output_events()
 
 void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted)
 {
-    float gain = muted? 0.0f : _gain_parameters[bus]->processed_value();
+    float gain = muted ? 0.0f : _gain_parameters[bus]->processed_value();
     float pan = _pan_parameters[bus]->processed_value();
     auto [left_gain, right_gain] = calc_l_r_gain(gain, pan);
     _pan_gain_smoothers_left[bus].set(left_gain);

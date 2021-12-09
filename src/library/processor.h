@@ -31,6 +31,7 @@
 #include "library/rt_event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
+#include "processor_state.h"
 #include "engine/host_control.h"
 
 namespace sushi {
@@ -361,6 +362,25 @@ public:
     {
         return _on_track;
     }
+
+    /**
+     * @brief  Set the complete state of the Processor (bypass state, program, parameters)
+     *         according to the supplied state object.
+     * @param state The state object to apply to the Processor
+     * @param realtime_running If true the Processor needs to take realtime data access
+     *        concerns into account when applying the state.
+     * @return
+     */
+    virtual ProcessorReturnCode set_state(ProcessorState* /*state*/, bool /*realtime_running*/)
+    {
+        return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    }
+
+    virtual ProcessorState save_state(bool /*realtime_running*/) const
+    {
+        return ProcessorState();
+    }
+
 
 protected:
 
