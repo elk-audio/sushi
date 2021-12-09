@@ -67,12 +67,12 @@ std::optional<int> ProcessorState::bypassed() const
 const std::vector<std::pair<ObjectId, float>>& ProcessorState::parameters() const
 {
     return _parameter_changes;
-};
+}
 
 const std::vector<std::pair<ObjectId, std::string>>& ProcessorState::properties() const
 {
     return _property_changes;
-};
+}
 
 RtState::RtState() = default;
 
