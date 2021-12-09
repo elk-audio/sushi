@@ -83,7 +83,12 @@ R"(
           "type": "integer",
           "minimum": 0
         },
-        "port_audio_device_id":
+        "portaudio_input_device_id":
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        "portaudio_output_device_id":
         {
           "type": "integer",
           "minimum": 0

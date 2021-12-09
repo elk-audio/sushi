@@ -38,16 +38,19 @@ namespace audio_frontend {
 
 struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioConfiguration(std::optional<int> device_id,
+    PortAudioConfiguration(std::optional<int> input_device_id,
+                           std::optional<int> output_device_id,
                            int cv_inputs,
                            int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
-            device_id(device_id)
+            input_device_id(input_device_id),
+            output_device_id(output_device_id)
     {}
 
     virtual ~PortAudioConfiguration() = default;
 
-    std::optional<int> device_id;
+    std::optional<int> input_device_id;
+    std::optional<int> output_device_id;
 };
 
 class PortAudioFrontend : public BaseAudioFrontend
@@ -58,6 +61,32 @@ public:
     virtual ~PortAudioFrontend()
     {
         cleanup();
+    }
+
+    /**
+     * @brief The realtime process callback given to Port Audio which will be
+     *        called for every processing chunk.
+     *
+     * @param input pointer to the interleaved input data. Needs to be cast to the correct sample format
+     * @param output pointer to the interleaved output data. Needs to be cast to the correct sample format
+     * @param frameCount number of frames to process
+     * @param timeInfo timing information for the buffers passed to the stream callback
+     * @param statusFlags is set if under or overflow has occured
+     * @param userData  pointer to the PortAudioFrontend instance
+     * @return int
+     */
+    static int rt_process_callback(const void* input,
+                                   void* output,
+                                   unsigned long frameCount,
+                                   const PaStreamCallbackTimeInfo* timeInfo,
+                                   PaStreamCallbackFlags statusFlags,
+                                   void* userData)
+    {
+        return static_cast<PortAudioFrontend*>(userData)->_internal_process_callback(input,
+                                                                                     output,
+                                                                                     frameCount,
+                                                                                     timeInfo,
+                                                                                     statusFlags);
     }
 
     /**
@@ -78,8 +107,35 @@ public:
     void run() override;
 
 private:
-    SampleBuffer<AUDIO_CHUNK_SIZE> _in_buffer{MAX_FRONTEND_CHANNELS};
-    SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
+    /**
+     * @brief Configure the samplerate to use. First tests if the value of the given
+     * samplerate is compatible with the input and output parameters. If not it will test
+     * the default samplerate of the input and output device respectively. The value of
+     * the samplerate parameter will be set to the samplerate that was found to work.
+     *
+     * @param input_parameters input configuration to test against the samplerate
+     * @param output_parameters output configuration to test against the samplerate
+     * @param samplerate pointer to a float containing the first samplerate to test
+     * @return true if a samplerate was found
+     * @return false if no samplerate was found
+     */
+    bool _configure_samplerate(const PaStreamParameters& input_parameters,
+                               const PaStreamParameters& output_parameters,
+                               double* samplerate);
+
+    int _internal_process_callback(const void* input,
+                                   void* output,
+                                   unsigned long frameCount,
+                                   const PaStreamCallbackTimeInfo* timeInfo,
+                                   PaStreamCallbackFlags statusFlags);
+
+    PaStream* _stream;
+    const PaDeviceInfo* _input_device_info;
+    const PaDeviceInfo* _output_device_info;
+
+    Time _start_time;
+    PaTime _time_offset;
+
     engine::ControlBuffer          _in_controls;
     engine::ControlBuffer          _out_controls;
 };
