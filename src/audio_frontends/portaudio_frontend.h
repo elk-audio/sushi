@@ -36,9 +36,9 @@
 namespace sushi {
 namespace audio_frontend {
 
-struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
+struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioConfiguration(std::optional<int> input_device_id,
+    PortAudioFrontendConfiguration(std::optional<int> input_device_id,
                            std::optional<int> output_device_id,
                            int cv_inputs,
                            int cv_outputs) :
@@ -47,7 +47,7 @@ struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
             output_device_id(output_device_id)
     {}
 
-    virtual ~PortAudioConfiguration() = default;
+    virtual ~PortAudioFrontendConfiguration() = default;
 
     std::optional<int> input_device_id;
     std::optional<int> output_device_id;
@@ -107,6 +107,8 @@ public:
     void run() override;
 
 private:
+    AudioFrontendStatus _configure_audio_channels(const PortAudioFrontendConfiguration* config);
+
     /**
      * @brief Configure the samplerate to use. First tests if the value of the given
      * samplerate is compatible with the input and output parameters. If not it will test
@@ -129,6 +131,14 @@ private:
                                    const PaStreamCallbackTimeInfo* timeInfo,
                                    PaStreamCallbackFlags statusFlags);
 
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_his{0};
+    int _num_total_input_channels{0};
+    int _num_total_output_channels{0};
+    int _audio_input_channels{0};
+    int _audio_output_channels{0};
+    int _cv_input_channels{0};
+    int _cv_output_channels{0};
+
     PaStream* _stream;
     const PaDeviceInfo* _input_device_info;
     const PaDeviceInfo* _output_device_info;
@@ -136,8 +146,8 @@ private:
     Time _start_time;
     PaTime _time_offset;
 
-    engine::ControlBuffer          _in_controls;
-    engine::ControlBuffer          _out_controls;
+    engine::ControlBuffer _in_controls;
+    engine::ControlBuffer _out_controls;
 };
 
 }; // end namespace jack_frontend
@@ -152,9 +162,9 @@ private:
 #include "engine/midi_dispatcher.h"
 namespace sushi {
 namespace audio_frontend {
-struct PortAudioConfiguration : public BaseAudioFrontendConfiguration
+struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioConfiguration(int, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
+    PortAudioFrontendConfiguration(int, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class PortAudioFrontend : public BaseAudioFrontend

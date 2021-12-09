@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioConfiguration>(audio_config.portaudio_input_device_id,
+            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(audio_config.portaudio_input_device_id,
                                                                                               audio_config.portaudio_output_device_id,
                                                                                               cv_inputs,
                                                                                               cv_outputs);
