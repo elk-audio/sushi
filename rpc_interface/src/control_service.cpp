@@ -294,7 +294,7 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, const sushi::ext::Processor
         target->set_value(p.second);
     }
     dest.mutable_parameters()->Reserve(src.parameters.size());
-    for (const auto& p: src.parameters)
+    for (const auto& p : src.parameters)
     {
         auto target = dest.mutable_parameters()->Add();
         target->mutable_parameter()->set_parameter_id(p.first);
