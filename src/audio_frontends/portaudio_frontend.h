@@ -145,6 +145,7 @@ private:
 
     Time _start_time;
     PaTime _time_offset;
+    int64_t _processed_sample_count{0};
 
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;

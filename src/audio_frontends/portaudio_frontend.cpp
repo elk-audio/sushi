@@ -109,6 +109,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    Time latency = std::chrono::microseconds(static_cast<int>(output_parameters.suggestedLatency * 1'000'000));
+    _engine->set_output_latency(latency);
 
     _time_offset = Pa_GetStreamTime(_stream);
     _start_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch());
@@ -219,6 +221,7 @@ bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters& input_pa
             return false;
         }
     }
+    _engine->set_sample_rate(*samplerate);
     return true;
 }
 
@@ -255,7 +258,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         }
     }
     out_buffer.clear();
-    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, frameCount);
+    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
 
     // Interleave audio channels and update cv values
     for (int c = 0; c < _num_total_output_channels; c++)
@@ -275,6 +278,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _cv_output_his[cc] = ramp_cv_output(out_dst, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
         }
     }
+    _processed_sample_count += frameCount;
     return 0;
 }
 
