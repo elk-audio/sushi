@@ -148,7 +148,7 @@ if (${WITH_ALSA_MIDI})
     message("Building with alsa midi support.")
 
     # Additional sources
-    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h src/control_frontends/alsa_midi_frontend.cpp)
+    set(MIDI_SOURCES src/control_frontends/alsa_midi_frontend.h src/control_frontends/alsa_midi_frontend.cpp)
 
     # linked libraries
     find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
