@@ -32,12 +32,19 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
-#include "control_frontends/alsa_midi_frontend.h"
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
+#endif
+
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
+#include "control_frontends/alsa_midi_frontend.h"
+#endif
+
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+#include "control_frontends/rt_midi_frontend.h"
 #endif
 
 enum class FrontendType
@@ -316,6 +323,11 @@ int main(int argc, char* argv[])
     int midi_inputs = audio_config.midi_inputs.value_or(1);
     int midi_outputs = audio_config.midi_outputs.value_or(1);
 
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+    auto rt_midi_input_mappings = audio_config.rt_midi_input_mappings;
+    auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
+#endif
+
     midi_dispatcher->set_midi_inputs(midi_inputs);
     midi_dispatcher->set_midi_outputs(midi_outputs);
 
@@ -445,6 +457,12 @@ int main(int argc, char* argv[])
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+#elif SUSHI_BUILD_WITH_RT_MIDI
+        midi_frontend = std::make_unique<sushi::midi_frontend::RtMidiFrontend>(midi_inputs,
+                                                                               midi_outputs,
+                                                                               std::move(rt_midi_input_mappings),
+                                                                               std::move(rt_midi_output_mappings),
+                                                                               midi_dispatcher.get());
 #else
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 #endif

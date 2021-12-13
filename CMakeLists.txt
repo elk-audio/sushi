@@ -53,6 +53,7 @@ configure_file(
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
+option(WITH_RT_MIDI "Enable RtMidi support" ON)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
@@ -62,7 +63,30 @@ option(WITH_LINK "Enable Ableton Link support" ON)
 option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
 option(BUILD_TWINE "Build included Twine library" ON)
 
+if (WITH_ALSA_MIDI AND WITH_RT_MIDI)
+    message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
+endif()
+
 set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
+
+###############################
+# Sub-directory configuration #
+###############################
+
+if (${BUILD_TWINE})
+    set(TWINE_WITH_TESTS OFF CACHE BOOL "")
+    add_subdirectory(twine)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
+    set(TWINE_LIB twine)
+else()
+    find_library(TWINE_LIB
+            NAMES twine
+            PATHS /usr/lib /usr/local/lib
+    )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
+endif()
+
+add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
 #################
 # Xenomai setup #
@@ -134,6 +158,23 @@ if (${WITH_ALSA_MIDI})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ALSA_MIDI)
+endif()
+
+#################
+# RtMidi ssetup #
+#################
+
+if (${WITH_RT_MIDI})
+    message("Building with RtMidi support.")
+
+    # Additional sources
+    set(MIDI_SOURCES ${MIDI_SOURCES} src/control_frontends/rt_midi_frontend.cpp src/control_frontends/rt_midi_frontend.h)
+
+    # Linked Libraries
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} rtmidi)
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RT_MIDI)
 endif()
 
 ###############
@@ -460,12 +501,11 @@ add_executable(sushi "${COMPILATION_UNITS}"
                      "${ADDITIONAL_VST2_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
                      "${ADDITIONAL_LV2_SOURCES}"
-                     "${ADDITIONAL_ALSA_SOURCES}")
+                     "${MIDI_SOURCES}")
 
 #########################
 #  Include Directories  #
 #########################
-
 
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/src"
@@ -476,25 +516,6 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
-
-################################
-#  Subdirectory configuration  #
-################################
-
-if (${BUILD_TWINE})
-    set(TWINE_WITH_TESTS OFF CACHE BOOL "")
-    add_subdirectory(twine)
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
-    set(TWINE_LIB twine)
-else()
-    find_library(TWINE_LIB
-            NAMES twine
-            PATHS /usr/lib /usr/local/lib
-    )
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
-endif()
-
-add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
 #################################
 #  Linked libraries             #

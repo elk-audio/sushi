@@ -111,6 +111,36 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
         audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
     }
 
+    if (host_config.HasMember("rt_midi_input_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_input_mappings"].GetArray())
+        {
+            auto rt_midi_device = mapping["rt_midi_device"].GetInt();
+            auto sushi_midi_port = mapping["sushi_midi_port"].GetInt();
+            bool virtual_port = false;
+            if (mapping.HasMember("virtual_port"))
+            {
+                virtual_port = mapping["virtual_port"].GetBool();
+            }
+            audio_config.rt_midi_input_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+        }
+    }
+
+    if (host_config.HasMember("rt_midi_output_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_output_mappings"].GetArray())
+        {
+            auto rt_midi_device = mapping["rt_midi_device"].GetInt();
+            auto sushi_midi_port = mapping["sushi_midi_port"].GetInt();
+            bool virtual_port = false;
+            if (mapping.HasMember("virtual_port"))
+            {
+                virtual_port = mapping["virtual_port"].GetBool();
+            }
+            audio_config.rt_midi_output_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+        }
+    }
+
     return {JsonConfigReturnStatus::OK, audio_config};
 }
 
