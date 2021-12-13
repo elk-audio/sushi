@@ -25,6 +25,7 @@ add_subdirectory(rtmidi)
 # portaudio compile options #
 #############################
 
+set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
 add_subdirectory(portaudio)
 
 ##########################
