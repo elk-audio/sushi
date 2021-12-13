@@ -50,13 +50,13 @@ public:
 
     ~RtMidiFrontend();
 
-    virtual bool init() override;
+    bool init() override;
 
-    virtual void run() override;
+    void run() override;
 
-    virtual void stop() override;
+    void stop() override;
 
-    virtual void send_midi(int input, MidiDataByte data, Time timestamp) override;
+    void send_midi(int input, MidiDataByte data, Time timestamp) override;
 
 private:
 
