@@ -18,6 +18,11 @@ R"(
           "minimum": 1000,
           "maximum": 192000
         },
+        "tempo":
+        {
+          "type" : "number",
+          "minimum": 1
+        },
         "time_signature" :
         {
           "type": "object",
@@ -132,7 +137,8 @@ R"(
           "required": ["rt_midi_device", "sushi_midi_port"]
         }
       },
-      "required": ["samplerate"]
+      "required": ["samplerate"],
+      "additionalProperties": false
     }
   },
   "required": ["host_config"]

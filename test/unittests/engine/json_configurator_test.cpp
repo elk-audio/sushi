@@ -426,3 +426,49 @@ TEST_F(TestJsonConfigurator, TestLoadEventList)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_EQ(4u, events.size());
 }
+
+TEST(TestSchemaValidation, TestSchemaMetaValidation)
+{
+    // RapidJson only validates the schemas to be valid json, not that they
+    // actually follow a valid schema.
+
+    const char* meta_schema_char =
+        #include "test_utils/meta_schema_v4.json"
+        ;;
+
+    rapidjson::Document meta_schema;
+    meta_schema.Parse(meta_schema_char);
+    ASSERT_FALSE(meta_schema.HasParseError());
+    rapidjson::SchemaDocument schema_document(meta_schema);
+    rapidjson::SchemaValidator validator(schema_document);
+
+    rapidjson::Document schema;
+    schema.Parse(section_schema(JsonSection::HOST_CONFIG));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::TRACKS));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::MIDI));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::OSC));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::CV_GATE));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::EVENTS));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::STATE));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+}

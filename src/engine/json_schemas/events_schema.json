@@ -85,7 +85,8 @@ R"(
             ]
           }
         },
-        "required": ["time", "type", "data"]
+        "required": ["time", "type", "data"],
+        "additionalProperties": false
       }
     }
   }
