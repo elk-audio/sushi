@@ -47,7 +47,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Input device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    else if (input_device_id < 0)
+    else if (input_device_id < 0) // If there is no available input device the default device will return negative which will cause issues later
     {
         input_device_id = 0;
     }
@@ -58,7 +58,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Output device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    else if (output_device_id < 0)
+    else if (output_device_id < 0) // If there is no available output device the default device will return negative which will cause issues later
     {
         output_device_id = 0;
     }
@@ -162,10 +162,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     if (_input_device_info == nullptr)
     {
         SUSHI_LOG_ERROR("Configure audio channels called before input device info was collected");
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_output_device_info == nullptr)
     {
         SUSHI_LOG_ERROR("Configure audio channels called before output device info was collected");
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _num_total_input_channels = _input_device_info->maxInputChannels;
     _num_total_output_channels = _output_device_info->maxOutputChannels;
@@ -231,7 +233,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   const PaStreamCallbackTimeInfo* timeInfo,
                                                   [[maybe_unused]]PaStreamCallbackFlags statusFlags)
 {
-    // TODO: Print warning in case of under/overflow when we have rt-safe logging
+    // TODO: Print warning in case of under/overflow using the statusFlags when we have rt-safe logging
     assert(frameCount == AUDIO_CHUNK_SIZE);
     auto pa_time_elapsed = std::chrono::duration<double>(timeInfo->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);

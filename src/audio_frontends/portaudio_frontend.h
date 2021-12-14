@@ -26,6 +26,7 @@
 #include <memory>
 
 // TODO: Keep an eye on these deprecated declarations and update when they are fixed.
+// There is an open issue on github at the time of writing about C11 which would fix this.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <portaudio.h>
