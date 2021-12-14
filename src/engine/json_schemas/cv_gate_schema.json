@@ -71,73 +71,6 @@ R"(
           "type":"array",
           "items":
           {
-            "type" : "object",
-            "oneOf":
-            [
-              {
-              "type": "object",
-              "properties":
-              {
-                "gate":
-                {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "mode":
-                {
-                  "enum": ["note_event"]
-                },
-                "note_no" :
-                {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 127
-                },
-                "channel" :
-                {
-                  "type" : "integer",
-                  "minimum": 0,
-                  "maximum": 15
-                },
-                "processor" :
-                {
-                  "type": "string",
-                  "minLength" : 1
-                },
-                "required": ["gate", "mode", "processor", "note_no", "channel"]
-              }
-            },
-              {
-                "type": "object",
-                "properties":
-                {
-                  "gate":
-                  {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "mode":
-                  {
-                    "enum": ["sync"]
-                  },
-                  "ppq_ticks" :
-                  {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 48
-                  },
-                  "required": ["gate", "mode", "ppq_ticks"]
-                }
-              }
-            ]
-          }
-        },
-        "gate_outputs":
-        {
-          "type":"array",
-          "items":
-          {
-            "type" : "object",
             "oneOf":
             [
               {
@@ -169,9 +102,9 @@ R"(
                   {
                     "type": "string",
                     "minLength" : 1
-                  },
-                  "required": ["gate", "mode", "processor", "note_no", "channel"]
-                }
+                  }
+                },
+                "required": ["gate", "mode", "processor", "note_no", "channel"]
               },
               {
                 "type": "object",
@@ -191,14 +124,80 @@ R"(
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 48
+                  }
+                },
+                "required": ["gate", "mode", "ppq_ticks"]
+              }
+            ]
+          }
+        },
+        "gate_outputs":
+        {
+          "type":"array",
+          "items":
+          {
+            "oneOf":
+            [
+              {
+                "type": "object",
+                "properties":
+                {
+                  "gate":
+                  {
+                    "type": "integer",
+                    "minimum": 0
                   },
-                  "required": ["gate", "mode", "ppq_ticks"]
-                }
+                  "mode":
+                  {
+                    "enum": ["note_event"]
+                  },
+                  "note_no" :
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 127
+                  },
+                  "channel" :
+                  {
+                    "type" : "integer",
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "processor" :
+                  {
+                    "type": "string",
+                    "minLength" : 1
+                  }
+                },
+                "required": ["gate", "mode", "processor", "note_no", "channel"]
+              },
+              {
+                "type": "object",
+                "properties":
+                {
+                  "gate":
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "mode":
+                  {
+                    "enum": ["sync"]
+                  },
+                  "ppq_ticks" :
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  }
+                },
+                "required": ["gate", "mode", "ppq_ticks"]
               }
             ]
           }
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }

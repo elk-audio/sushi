@@ -280,6 +280,40 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
+ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+{
+    if (state->bypassed().has_value())
+    {
+        _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+    }
+
+    if (state->program().has_value())
+    {
+        this->set_program(state->program().value());
+    }
+
+    for (const auto& param : state->parameters())
+    {
+        int id = param.first;
+        float value = param.second;
+
+        auto parameter = parameter_from_id(id);
+
+        if (parameter)
+        {
+            auto port = _model->get_port(parameter->id());
+
+            float min = parameter->min_domain_value();
+            float max = parameter->max_domain_value();
+
+            auto value_in_domain = _to_domain(value, min, max);
+            port->set_control_value(value_in_domain);
+        }
+    }
+
+    return ProcessorReturnCode::OK;
+}
+
 bool LV2_Wrapper::_register_parameters()
 {
     bool param_inserted_ok = true;

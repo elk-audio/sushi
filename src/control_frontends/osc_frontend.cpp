@@ -445,7 +445,7 @@ bool OSCFrontend::_connect_to_property(const std::string& processor_name,
                                           connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -466,7 +466,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
 
     _outgoing_connections[processor_id][parameter_id] = id_string;
 
-    SUSHI_LOG_INFO("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
     return true;
 }
 
@@ -522,7 +522,7 @@ bool OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
     auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_bypass_state_event, connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -547,7 +547,7 @@ bool OSCFrontend::connect_kb_to_track(const std::string& track_name)
     cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "sif", osc_send_keyboard_modulation_event, connection);
     dupl_conn->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
-    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -567,7 +567,7 @@ bool OSCFrontend::connect_to_program_change(const std::string& processor_name)
     auto cb = lo_server_thread_add_method(_osc_server, osc_path.c_str(), "i", osc_send_program_change_event, connection);
     connection->liblo_cb = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_INFO("Added osc callback {}", osc_path);
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
     return true;
 }
 
@@ -849,6 +849,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 {
                     connect_from_processor_parameters(info.name, event->processor());
                 }
+                SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", info.name);
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
             break;
@@ -867,6 +868,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 {
                     connect_from_processor_parameters(info.name, event->processor());
                 }
+                SUSHI_LOG_INFO("Connected OSC callbacks to track {}", info.name);
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
             break;

@@ -124,6 +124,8 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     static int worker_callback(void* data, EventId id)
     {
         reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);

@@ -49,21 +49,22 @@ ComponentHandler::ComponentHandler(Vst3xWrapper* wrapper_instance) : _wrapper_in
 Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID parameter_id,
                                                  Steinberg::Vst::ParamValue normalized_value)
 {
+    SUSHI_LOG_DEBUG("performEdit called, param: {} value: {}", parameter_id, normalized_value);
     _wrapper_instance->set_parameter_change(ObjectId(parameter_id), static_cast<float>(normalized_value));
     return Steinberg::kResultOk;
 }
 
 Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 {
-    if (flags & Steinberg::Vst::kParamValuesChanged)
+    SUSHI_LOG_DEBUG("restartComponent called");
+    if (flags | (Steinberg::Vst::kParamValuesChanged & Steinberg::Vst::kReloadComponent))
     {
-        if (_wrapper_instance->_sync_controller_to_processor() == true)
-        {
-            return Steinberg::kResultOk;
-        }
+        // This is the place to signal parameter changes to listeners (gRPC, OSC, etc)
+        return Steinberg::kResultOk;
     }
     return Steinberg::kResultFalse;
 }
+
 
 /* ConnectionProxy is more or less ripped straight out of Steinberg example code.
  * But edited to follow Elk coding style. See plugprovider.cpp. */
@@ -146,9 +147,7 @@ bool ConnectionProxy::disconnect()
 }
 
 PluginInstance::PluginInstance(SushiHostApplication* host_app): _host_app(host_app)
-{
-
-}
+{}
 
 PluginInstance::~PluginInstance()
 {

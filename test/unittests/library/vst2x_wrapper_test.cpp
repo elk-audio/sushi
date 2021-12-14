@@ -280,7 +280,9 @@ TEST_F(TestVst2xWrapper, TestProgramManagement)
     ASSERT_TRUE(_module_under_test->supports_programs());
     ASSERT_EQ(3, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
-    ASSERT_EQ("Program 1", _module_under_test->current_program_name());
+    _module_under_test->set_program(1);
+    ASSERT_EQ(1, _module_under_test->current_program());
+    ASSERT_EQ("Program 2", _module_under_test->current_program_name());
     auto [status, program_name] = _module_under_test->program_name(2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     ASSERT_EQ("Program 3", program_name);
@@ -292,4 +294,23 @@ TEST_F(TestVst2xWrapper, TestProgramManagement)
     ASSERT_EQ(ProcessorReturnCode::OK, res);
     ASSERT_EQ("Program 2", programs[1]);
     ASSERT_EQ(3u, programs.size());
+}
+
+TEST_F(TestVst2xWrapper, TestStateHandling)
+{
+    SetUp("libvst2_test_plugin.so");
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.set_program(2);
+    state.add_parameter_change(1, 0.33);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.33f, _module_under_test->parameter_value(1).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+    EXPECT_EQ(2, _module_under_test->current_program());
+    EXPECT_EQ("Program 3", _module_under_test->current_program_name());
 }

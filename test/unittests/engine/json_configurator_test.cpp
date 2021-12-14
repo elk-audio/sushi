@@ -152,6 +152,21 @@ TEST_F(TestJsonConfigurator, TestLoadCvGateControl)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 }
 
+TEST_F(TestJsonConfigurator, TestLoadInitialState)
+{
+    auto status = _module_under_test->load_tracks();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    status = _module_under_test->load_initial_state();
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    auto main_instance = _engine.processor_container()->mutable_processor("main");
+    ASSERT_TRUE(main_instance.get());
+    auto pan_info = main_instance->parameter_from_name("pan");
+    ASSERT_TRUE(pan_info);
+    ASSERT_FLOAT_EQ(0.35, main_instance->parameter_value(pan_info->id()).second);
+}
+
 TEST_F(TestJsonConfigurator, TestMakeChain)
 {
     /* Create plugin track without processors */
@@ -212,6 +227,7 @@ TEST_F(TestJsonConfigurator, TestValidJsonSchema)
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::EVENTS));
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::STATE));
 }
 
 TEST_F(TestJsonConfigurator, TestHostConfigSchema)
@@ -372,6 +388,35 @@ TEST_F(TestJsonConfigurator, TestCvGateSchema)
     ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::CV_GATE));
 }
 
+TEST_F(TestJsonConfigurator, TestInititalStateSchema)
+{
+    auto [status, test_cfg] =_module_under_test->_parse_section(JsonSection::STATE);
+    ASSERT_EQ(JsonConfigReturnStatus::OK, status);
+
+    rapidjson::Document mutable_cfg;
+    mutable_cfg.SetObject();
+    rapidjson::Value val(rapidjson::kObjectType);
+
+    mutable_cfg.AddMember("initial_state", val, mutable_cfg.GetAllocator());
+    mutable_cfg["initial_state"].CopyFrom(test_cfg, mutable_cfg.GetAllocator());
+
+    auto& state_1 = mutable_cfg["initial_state"].GetArray()[0];
+    //ASSERT_FALSE(state_1.Empty());
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = 1.5;
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = "0.37";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["parameters"]["pan"] = 0.37;
+    state_1["program"] = "string";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["program"] = 5;
+    state_1["bypassed"] = "off";
+    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    state_1["bypassed"] = true;
+    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::STATE));
+ }
+
 TEST_F(TestJsonConfigurator, TestLoadEventList)
 {
     // Load the tracks first so we can find the processors
@@ -380,4 +425,50 @@ TEST_F(TestJsonConfigurator, TestLoadEventList)
     auto [status, events] = _module_under_test->load_event_list();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     ASSERT_EQ(4u, events.size());
+}
+
+TEST(TestSchemaValidation, TestSchemaMetaValidation)
+{
+    // RapidJson only validates the schemas to be valid json, not that they
+    // actually follow a valid schema.
+
+    const char* meta_schema_char =
+        #include "test_utils/meta_schema_v4.json"
+        ;;
+
+    rapidjson::Document meta_schema;
+    meta_schema.Parse(meta_schema_char);
+    ASSERT_FALSE(meta_schema.HasParseError());
+    rapidjson::SchemaDocument schema_document(meta_schema);
+    rapidjson::SchemaValidator validator(schema_document);
+
+    rapidjson::Document schema;
+    schema.Parse(section_schema(JsonSection::HOST_CONFIG));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::TRACKS));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::MIDI));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::OSC));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::CV_GATE));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::EVENTS));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
+    schema.Parse(section_schema(JsonSection::STATE));
+    ASSERT_FALSE(schema.HasParseError());
+    ASSERT_TRUE(schema.Accept(validator));
+
 }

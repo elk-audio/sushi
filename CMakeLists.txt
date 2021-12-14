@@ -163,7 +163,7 @@ if (${WITH_ALSA_MIDI})
     message("Building with alsa midi support.")
 
     # Additional sources
-    set(ADDITIONAL_ALSA_SOURCES src/control_frontends/alsa_midi_frontend.h src/control_frontends/alsa_midi_frontend.cpp)
+    set(MIDI_SOURCES src/control_frontends/alsa_midi_frontend.h src/control_frontends/alsa_midi_frontend.cpp)
 
     # linked libraries
     find_path(ALSA_DIR NAMES "alsa/asoundlib.h")
@@ -396,6 +396,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/library/performance_timer.cpp
                       src/library/parameter_dump.cpp
                       src/library/processor.cpp
+                      src/library/processor_state.cpp
                       src/library/plugin_registry.cpp
                       src/library/internal_processor_factory.cpp
                       src/library/lv2/lv2_processor_factory.cpp
