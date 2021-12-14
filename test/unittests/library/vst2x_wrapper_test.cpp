@@ -298,7 +298,7 @@ TEST_F(TestVst2xWrapper, TestProgramManagement)
 
 TEST_F(TestVst2xWrapper, TestStateHandling)
 {
-    SetUp("libvst2_test_plugin.so");
+    SetUp(plugin_name);
 
     ProcessorState state;
     state.set_bypass(true);
