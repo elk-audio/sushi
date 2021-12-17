@@ -27,10 +27,10 @@
 
 // TODO: Keep an eye on these deprecated declarations and update when they are fixed.
 // There is an open issue on github at the time of writing about C11 which would fix this.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <portaudio.h>
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 #include "base_audio_frontend.h"
 
@@ -70,28 +70,28 @@ public:
      *
      * @param input pointer to the interleaved input data. Needs to be cast to the correct sample format
      * @param output pointer to the interleaved output data. Needs to be cast to the correct sample format
-     * @param frameCount number of frames to process
-     * @param timeInfo timing information for the buffers passed to the stream callback
-     * @param statusFlags is set if under or overflow has occured
-     * @param userData  pointer to the PortAudioFrontend instance
+     * @param frame_count number of frames to process
+     * @param time_info timing information for the buffers passed to the stream callback
+     * @param status_flags is set if under or overflow has occurred
+     * @param user_data  pointer to the PortAudioFrontend instance
      * @return int
      */
     static int rt_process_callback(const void* input,
                                    void* output,
-                                   unsigned long frameCount,
-                                   const PaStreamCallbackTimeInfo* timeInfo,
-                                   PaStreamCallbackFlags statusFlags,
-                                   void* userData)
+                                   unsigned long frame_count,
+                                   const PaStreamCallbackTimeInfo* time_info,
+                                   PaStreamCallbackFlags status_flags,
+                                   void* user_data)
     {
-        return static_cast<PortAudioFrontend*>(userData)->_internal_process_callback(input,
+        return static_cast<PortAudioFrontend*>(user_data)->_internal_process_callback(input,
                                                                                      output,
-                                                                                     frameCount,
-                                                                                     timeInfo,
-                                                                                     statusFlags);
+                                                                                     frame_count,
+                                                                                     time_info,
+                                                                                     status_flags);
     }
 
     /**
-     * @brief Initialize the frontend and setup Jack client.
+     * @brief Initialize the frontend and setup PortAudio client.
      * @param config Configuration struct
      * @return OK on successful initialization, error otherwise.
      */
@@ -128,9 +128,9 @@ private:
 
     int _internal_process_callback(const void* input,
                                    void* output,
-                                   unsigned long frameCount,
-                                   const PaStreamCallbackTimeInfo* timeInfo,
-                                   PaStreamCallbackFlags statusFlags);
+                                   unsigned long frame_count,
+                                   const PaStreamCallbackTimeInfo* time_info,
+                                   PaStreamCallbackFlags status_flags);
 
     std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_his{0};
     int _num_total_input_channels{0};
@@ -152,12 +152,12 @@ private:
     engine::ControlBuffer _out_controls;
 };
 
-}; // end namespace jack_frontend
+}; // end namespace audio_frontend
 }; // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_PORTAUDIO
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
-/* If Jack is disabled in the build config, the jack frontend is replaced with
+/* If PortAudio is disabled in the build config, the PortAudio frontend is replaced with
    this dummy frontend whose only purpose is to assert if you try to use it */
 #include <string>
 #include "base_audio_frontend.h"
@@ -177,7 +177,7 @@ public:
     void cleanup() override {}
     void run() override {}
 };
-}; // end namespace jack_frontend
+}; // end namespace audio_frontend
 }; // end namespace sushi
 #endif
 

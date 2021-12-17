@@ -27,7 +27,7 @@
 namespace sushi {
 namespace audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("PortAudio");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -40,6 +40,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
+    // Setup devices
     int device_count = Pa_GetDeviceCount();
     int input_device_id = portaudio_config->input_device_id.value_or(Pa_GetDefaultInputDevice());
     if (input_device_id >= device_count)
@@ -47,7 +48,9 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Input device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    else if (input_device_id < 0) // If there is no available input device the default device will return negative which will cause issues later
+    // If there is no available input device the default device will
+    // return negative which will cause issues later
+    else if (input_device_id < 0)
     {
         input_device_id = 0;
     }
@@ -58,7 +61,9 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Output device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    else if (output_device_id < 0) // If there is no available output device the default device will return negative which will cause issues later
+    // If there is no available output device the default device will
+    // return negative which will cause issues later
+    else if (output_device_id < 0)
     {
         output_device_id = 0;
     }
@@ -66,13 +71,16 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     _input_device_info = Pa_GetDeviceInfo(input_device_id);
     _output_device_info = Pa_GetDeviceInfo(output_device_id);
 
+    // Setup audio and CV channels
     auto channel_conf_result = _configure_audio_channels(portaudio_config);
     if (channel_conf_result != AudioFrontendStatus::OK)
     {
         SUSHI_LOG_ERROR("Failed to configure audio channels");
         return channel_conf_result;
     }
+    SUSHI_LOG_DEBUG("Setting up port audio with {} inputs {} outputs", _num_total_input_channels, _num_total_output_channels);
 
+    // Setup device parameters
     PaStreamParameters input_parameters;
     bzero(&input_parameters, sizeof(input_parameters));
     input_parameters.device = input_device_id;
@@ -87,6 +95,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     output_parameters.sampleFormat = paFloat32;
     output_parameters.suggestedLatency = _output_device_info->defaultLowOutputLatency;
 
+    // Setup samplerate
     double samplerate = _engine->sample_rate();
     if (_configure_samplerate(input_parameters, output_parameters, &samplerate) == false)
     {
@@ -94,9 +103,9 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
+    // Open the stream
     // In case there is no input device available we only want to use output
     auto input_param_ptr = (_audio_input_channels + _cv_input_channels) > 0 ? &input_parameters : NULL;
-    SUSHI_LOG_INFO("Setting up port audio with {} inputs {} outputs", _num_total_input_channels, _num_total_output_channels);
     err = Pa_OpenStream(&_stream,
                         input_param_ptr,
                         &output_parameters,
@@ -141,7 +150,7 @@ void PortAudioFrontend::cleanup()
 {
     _engine->enable_realtime(false);
     PaError result = Pa_IsStreamActive(_stream);
-    if(result == 1)
+    if (result == 1)
     {
         SUSHI_LOG_INFO("Closing PortAudio stream");
         Pa_StopStream(_stream);
@@ -231,13 +240,13 @@ bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters& input_pa
 
 int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   void* output,
-                                                  unsigned long frameCount,
-                                                  const PaStreamCallbackTimeInfo* timeInfo,
-                                                  [[maybe_unused]]PaStreamCallbackFlags statusFlags)
+                                                  unsigned long frame_count,
+                                                  const PaStreamCallbackTimeInfo* time_info,
+                                                  [[maybe_unused]]PaStreamCallbackFlags status_flags)
 {
-    // TODO: Print warning in case of under/overflow using the statusFlags when we have rt-safe logging
-    assert(frameCount == AUDIO_CHUNK_SIZE);
-    auto pa_time_elapsed = std::chrono::duration<double>(timeInfo->currentTime - _time_offset);
+    // TODO: Print warning in case of under/overflow using the status_flags when we have rt-safe logging
+    assert(frame_count == AUDIO_CHUNK_SIZE);
+    auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
     ChunkSampleBuffer in_buffer(_audio_input_channels);
@@ -282,7 +291,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _cv_output_his[cc] = ramp_cv_output(out_dst, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
         }
     }
-    _processed_sample_count += frameCount;
+    _processed_sample_count += frame_count;
     return 0;
 }
 
