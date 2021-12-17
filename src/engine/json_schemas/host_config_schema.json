@@ -88,16 +88,6 @@ R"(
           "type": "integer",
           "minimum": 0
         },
-        "portaudio_input_device_id":
-        {
-          "type": "integer",
-          "minimum": 0
-        },
-        "portaudio_output_device_id":
-        {
-          "type": "integer",
-          "minimum": 0
-        },
         "rt_midi_input_mappings":
         {
           "type": "array",

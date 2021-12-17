@@ -111,8 +111,10 @@ enum OptionIndex
     OPT_IDX_INPUT_FILE,
     OPT_IDX_OUTPUT_FILE,
     OPT_IDX_USE_DUMMY,
-    OPT_IDX_USE_JACK,
     OPT_IDX_USE_PORTAUDIO,
+    OPT_IDX_AUDIO_INPUT_DEVICE,
+    OPT_IDX_AUDIO_OUTPUT_DEVICE,
+    OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
     OPT_IDX_JACK_SERVER,
@@ -233,20 +235,36 @@ const optionparser::Descriptor usage[] =
         "\t\t-d --dummy \tUse dummy audio frontend. Useful for debugging."
     },
     {
-        OPT_IDX_USE_JACK,
-        OPT_TYPE_DISABLED,
-        "j",
-        "jack",
-        SushiArg::Optional,
-        "\t\t-j --jack \tUse Jack realtime audio frontend."
-    },
-    {
         OPT_IDX_USE_PORTAUDIO,
         OPT_TYPE_DISABLED,
         "p",
         "portaudio",
         SushiArg::Optional,
         "\t\t-p --portaudio \tUse PortAudio realtime audio frontend."
+    },
+    {
+        OPT_IDX_AUDIO_INPUT_DEVICE,
+        OPT_TYPE_UNUSED,
+        "",
+        "audio-input-device",
+        SushiArg::Optional,
+        "\t\t--audio-input-device \tIndex of the device to use for audio input with portaudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_AUDIO_OUTPUT_DEVICE,
+        OPT_TYPE_UNUSED,
+        "",
+        "audio-output-device",
+        SushiArg::Optional,
+        "\t\t--audio-output-device \tIndex of the device to use for audio output with portaudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_USE_JACK,
+        OPT_TYPE_DISABLED,
+        "j",
+        "jack",
+        SushiArg::Optional,
+        "\t\t-j --jack \tUse Jack realtime audio frontend."
     },
     {
         OPT_IDX_CONNECT_PORTS,

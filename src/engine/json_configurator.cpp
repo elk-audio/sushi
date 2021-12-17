@@ -111,16 +111,6 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
         audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
     }
 
-    if (host_config.HasMember("portaudio_input_device_id"))
-    {
-        audio_config.portaudio_input_device_id = host_config["portaudio_input_device_id"].GetInt();
-    }
-
-    if (host_config.HasMember("portaudio_output_device_id"))
-    {
-        audio_config.portaudio_output_device_id = host_config["portaudio_output_device_id"].GetInt();
-    }
-
     if (host_config.HasMember("rt_midi_input_mappings"))
     {
         for (auto& mapping : host_config["rt_midi_input_mappings"].GetArray())

@@ -21,6 +21,7 @@
 #include <vector>
 #include <iostream>
 #include <csignal>
+#include <optional>
 #include <condition_variable>
 
 #include "twine/src/twine_internal.h"
@@ -150,6 +151,8 @@ int main(int argc, char* argv[])
     std::string jack_server_name = std::string("");
     int osc_server_port = CompileTimeSettings::osc_server_port;
     int osc_send_port = CompileTimeSettings::osc_send_port;
+    std::optional<int> portaudio_input_device_id = std::nullopt;
+    std::optional<int> portaudio_output_device_id = std::nullopt;
     std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -215,12 +218,20 @@ int main(int argc, char* argv[])
             frontend_type = FrontendType::DUMMY;
             break;
 
-        case OPT_IDX_USE_JACK:
-            frontend_type = FrontendType::JACK;
-            break;
-
         case OPT_IDX_USE_PORTAUDIO:
             frontend_type = FrontendType::PORTAUDIO;
+            break;
+
+        case OPT_IDX_AUDIO_INPUT_DEVICE:
+            portaudio_input_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_AUDIO_OUTPUT_DEVICE:
+            portaudio_output_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_USE_JACK:
+            frontend_type = FrontendType::JACK;
             break;
 
         case OPT_IDX_CONNECT_PORTS:
@@ -358,10 +369,10 @@ int main(int argc, char* argv[])
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(audio_config.portaudio_input_device_id,
-                                                                                              audio_config.portaudio_output_device_id,
-                                                                                              cv_inputs,
-                                                                                              cv_outputs);
+            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(portaudio_input_device_id,
+                                                                                                      portaudio_output_device_id,
+                                                                                                      cv_inputs,
+                                                                                                      cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
             break;
         }
