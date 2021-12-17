@@ -96,6 +96,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     // In case there is no input device available we only want to use output
     auto input_param_ptr = (_audio_input_channels + _cv_input_channels) > 0 ? &input_parameters : NULL;
+    SUSHI_LOG_INFO("Setting up port audio with {} inputs {} outputs", _num_total_input_channels, _num_total_output_channels);
     err = Pa_OpenStream(&_stream,
                         input_param_ptr,
                         &output_parameters,
@@ -210,6 +211,7 @@ bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters& input_pa
 {
     if (Pa_IsFormatSupported(&input_parameters, &output_parameters, *samplerate) == false)
     {
+        SUSHI_LOG_WARNING("Samplerate {} not compatible trying {} and {}", *samplerate, _input_device_info->defaultSampleRate, _output_device_info->defaultSampleRate);
         if (Pa_IsFormatSupported(&input_parameters, &output_parameters, _input_device_info->defaultSampleRate))
         {
             *samplerate = _input_device_info->defaultSampleRate;
