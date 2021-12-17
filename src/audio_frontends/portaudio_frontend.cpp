@@ -97,11 +97,12 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     // Setup samplerate
     double samplerate = _engine->sample_rate();
-    if (_configure_samplerate(input_parameters, output_parameters, &samplerate) == false)
+    if (_configure_samplerate(&input_parameters, &output_parameters, &samplerate) == false)
     {
         SUSHI_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    _engine->set_sample_rate(samplerate);
 
     // Open the stream
     // In case there is no input device available we only want to use output
@@ -214,28 +215,30 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     return AudioFrontendStatus::OK;
 }
 
-bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters& input_parameters,
-                                              const PaStreamParameters& output_parameters,
+bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters* input_parameters,
+                                              const PaStreamParameters* output_parameters,
                                               double* samplerate)
 {
-    if (Pa_IsFormatSupported(&input_parameters, &output_parameters, *samplerate) == false)
+    std::array<double, 3> samplerates = {
+        *samplerate,
+        _input_device_info->defaultSampleRate,
+        _output_device_info->defaultSampleRate
+    };
+    PaError result;
+    for (auto sr : samplerates)
     {
-        SUSHI_LOG_WARNING("Samplerate {} not compatible trying {} and {}", *samplerate, _input_device_info->defaultSampleRate, _output_device_info->defaultSampleRate);
-        if (Pa_IsFormatSupported(&input_parameters, &output_parameters, _input_device_info->defaultSampleRate))
+        result = Pa_IsFormatSupported(input_parameters, output_parameters, sr);
+        if (result != 0)
         {
-            *samplerate = _input_device_info->defaultSampleRate;
-        }
-        else if (Pa_IsFormatSupported(&input_parameters, &output_parameters, _output_device_info->defaultSampleRate))
-        {
-            *samplerate = _output_device_info->defaultSampleRate;
+            SUSHI_LOG_WARNING("Error configuring samplerate {}: {}", sr, Pa_GetErrorText(result));
         }
         else
         {
-            return false;
+            *samplerate = sr;
+            return true;
         }
     }
-    _engine->set_sample_rate(*samplerate);
-    return true;
+    return false;
 }
 
 int PortAudioFrontend::_internal_process_callback(const void* input,

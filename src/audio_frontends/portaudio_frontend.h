@@ -122,8 +122,8 @@ private:
      * @return true if a samplerate was found
      * @return false if no samplerate was found
      */
-    bool _configure_samplerate(const PaStreamParameters& input_parameters,
-                               const PaStreamParameters& output_parameters,
+    bool _configure_samplerate(const PaStreamParameters* input_parameters,
+                               const PaStreamParameters* output_parameters,
                                double* samplerate);
 
     int _internal_process_callback(const void* input,
