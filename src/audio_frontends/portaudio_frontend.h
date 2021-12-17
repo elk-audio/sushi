@@ -166,7 +166,7 @@ namespace sushi {
 namespace audio_frontend {
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioFrontendConfiguration(int, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
+    PortAudioFrontendConfiguration(int, int, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class PortAudioFrontend : public BaseAudioFrontend

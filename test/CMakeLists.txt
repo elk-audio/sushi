@@ -102,6 +102,10 @@ if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
 
+if (${WITH_PORTAUDIO})
+    set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
+endif()
+
 if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loading_test.cpp
@@ -133,6 +137,10 @@ target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ff
 
 if (${WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_PORTAUDIO})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
 if (${WITH_VST2})
