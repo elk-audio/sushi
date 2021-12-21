@@ -25,9 +25,10 @@
 #include "library/vst2x/vst2x_wrapper.h"
 #endif
 
-
 namespace sushi {
 namespace vst2 {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst2");
 
 #ifdef SUSHI_BUILD_WITH_VST2
 
