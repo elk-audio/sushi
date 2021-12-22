@@ -53,7 +53,7 @@ configure_file(
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
-option(WITH_RT_MIDI "Enable RtMidi support" ON)
+option(WITH_RT_MIDI "Enable RtMidi support" OFF)
 option(WITH_VST2 "Enable Vst 2 support" ON)
 option(WITH_VST3 "Enable Vst 3 support" ON)
 option(WITH_LV2 "Enable LV 2 support" ON)
