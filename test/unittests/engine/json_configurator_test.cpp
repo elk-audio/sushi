@@ -401,7 +401,6 @@ TEST_F(TestJsonConfigurator, TestInititalStateSchema)
     mutable_cfg["initial_state"].CopyFrom(test_cfg, mutable_cfg.GetAllocator());
 
     auto& state_1 = mutable_cfg["initial_state"].GetArray()[0];
-    //ASSERT_FALSE(state_1.Empty());
     ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["parameters"]["pan"] = 1.5;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));

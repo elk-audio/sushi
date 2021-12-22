@@ -536,6 +536,21 @@ TEST_F(TestLv2Wrapper, TestStateHandling)
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Test with realtime set to true
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(desc->id(), 0.50);
+
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.5f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
 }
 
 

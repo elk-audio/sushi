@@ -202,12 +202,11 @@ TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
     _module_under_test->process_event(rt_event);
     RtEvent response_event;
     ASSERT_TRUE(_host_control._event_output.pop(response_event));
-    EXPECT_EQ(RtEventType::STRING_DELETE, response_event.type());
+    EXPECT_EQ(RtEventType::DELETE, response_event.type());
 
     // Delete the string manually, otherwise done by the dispatcher.
-    delete reinterpret_cast<std::string*>(response_event.data_payload_event()->value().data);
+    delete response_event.delete_data_event()->data();
 }
-
 
 TEST_F(InternalPluginTest, TestSendingDataToRealtime)
 {
@@ -246,5 +245,34 @@ TEST_F(InternalPluginTest, TestStateHandling)
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_EQ("new_value", _module_under_test->property_value(descriptor->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+}
+
+TEST_F(InternalPluginTest, TestRtStateHandling)
+{
+    auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
+                                                                  10.0f, 0.0f, 10.f,
+                                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+    ASSERT_TRUE(parameter);
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.add_parameter_change(parameter->descriptor()->id(), 0.25);
+
+    auto status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Values should not be changed yet
+    EXPECT_FLOAT_EQ(1.0f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Plugin should generate a request to send an RtEvent to the plugin
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    auto rt_event = event->to_rt_event(0);
+    _module_under_test->process_event(rt_event);
+
+    // Now the values should have changed
+    EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
 }

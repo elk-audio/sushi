@@ -174,6 +174,8 @@ protected:
 
 
 private:
+    void _set_rt_state(const RtState* state);
+
     /* TODO - consider container type to use here. Deque has the very desirable property
      * that iterators are never invalidated by adding to the containers.
      * For arrays or std::vectors we need to know the maximum capacity for that to work. */

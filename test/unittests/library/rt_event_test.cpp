@@ -85,7 +85,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(2, cv_event->cv_id());
     EXPECT_FLOAT_EQ(0.5, cv_event->value());
 
-    std::string str("Hej");
+    RtDeletableWrapper<std::string> str("Hej");
     event = RtEvent::make_string_property_change_event(129, 8, 65, &str);
     EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, event.type());
     auto spc_event = event.property_change_event();

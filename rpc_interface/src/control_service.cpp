@@ -274,6 +274,56 @@ inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type typ
     }
 }
 
+inline void to_grpc(sushi_rpc::ProcessorState& dest, const sushi::ext::ProcessorState& src)
+{
+    if (src.program.has_value())
+    {
+        dest.mutable_program_id()->set_value(src.program.value());
+        dest.mutable_program_id()->set_has_value(true);
+    }
+    if (src.bypassed.has_value())
+    {
+        dest.mutable_bypassed()->set_value(src.bypassed.value());
+        dest.mutable_bypassed()->set_has_value(true);
+    }
+    dest.mutable_properties()->Reserve(src.properties.size());
+    for (const auto& p : src.properties)
+    {
+        auto target = dest.mutable_properties()->Add();
+        target->mutable_property()->set_property_id(p.first);
+        target->set_value(p.second);
+    }
+    dest.mutable_parameters()->Reserve(src.parameters.size());
+    for (const auto& p : src.parameters)
+    {
+        auto target = dest.mutable_parameters()->Add();
+        target->mutable_parameter()->set_parameter_id(p.first);
+        target->set_value(p.second);
+    }
+}
+
+inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::ProcessorState& src)
+{
+    if (src.program_id().has_value())
+    {
+        dest.program = src.program_id().value();
+    }
+    if (src.bypassed().has_value())
+    {
+        dest.bypassed = src.bypassed().value();
+    }
+    dest.properties.reserve(src.properties_size());
+    for (const auto& p : src.properties())
+    {
+        dest.properties.push_back({p.property().property_id(), p.value()});
+    }
+    dest.parameters.reserve(src.parameters_size());
+    for (const auto& p : src.parameters())
+    {
+        dest.parameters.push_back({p.parameter().parameter_id(), p.value()});
+    }
+}
+
 grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* /*context*/,
                                                    const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::GenericStringValue* response)
@@ -629,11 +679,34 @@ grpc::Status AudioGraphControlService::GetProcessorBypassState(grpc::ServerConte
     return grpc::Status::OK;
 }
 
+grpc::Status AudioGraphControlService::GetProcessorState(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::ProcessorIdentifier* request,
+                                                         sushi_rpc::ProcessorState* response)
+{
+    auto [status, state] = _controller->get_processor_state(request->id());
+    if (status != sushi::ext::ControlStatus::OK)
+    {
+        return to_grpc_status(status);
+    }
+    to_grpc(*response, state);
+    return grpc::Status::OK;
+}
+
 grpc::Status AudioGraphControlService::SetProcessorBypassState(grpc::ServerContext* /*context*/,
                                                                const sushi_rpc::ProcessorBypassStateSetRequest* request,
                                                                sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->set_processor_bypass_state(request->processor().id(), request->value());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::SetProcessorState(grpc::ServerContext* /*context*/,
+                                                         const sushi_rpc::ProcessorStateSetRequest* request,
+                                                         sushi_rpc::GenericVoidValue* /*response*/)
+{
+    sushi::ext::ProcessorState sushi_state;
+    to_sushi_ext(sushi_state, request->state());
+    auto status = _controller->set_processor_state(request->processor().id(), sushi_state);
     return to_grpc_status(status);
 }
 

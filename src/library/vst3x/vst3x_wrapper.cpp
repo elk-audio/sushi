@@ -237,6 +237,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             auto typed_event = event.parameter_change_event();
             _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
             _parameter_update_queue.push({typed_event->param_id(), typed_event->value()});
+            _notify_parameter_change = true;
             break;
         }
         case RtEventType::NOTE_ON:
@@ -291,6 +292,16 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }
+        case RtEventType::SET_STATE:
+        {
+            auto state = event.processor_state_event()->state();
+            for (const auto& parameter : state->parameters())
+            {
+                _add_parameter_change(parameter.first, parameter.second, 0);
+            }
+            async_delete(state);
+            break;
+        }
         default:
             break;
     }
@@ -298,10 +309,6 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_process_data.inputParameterChanges->getParameterCount() > 0)
-    {
-        request_non_rt_task(parameter_update_callback);
-    }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
@@ -317,6 +324,12 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         }
         _forward_events(_process_data);
         _forward_params(_process_data);
+    }
+
+    if (_notify_parameter_change)
+    {
+        request_non_rt_task(parameter_update_callback);
+        _notify_parameter_change = false;
     }
     _process_data.clear();
 }
@@ -532,18 +545,12 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     return ProcessorReturnCode::ERROR;
 }
 
-ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
+    std::unique_ptr<RtState> rt_state;
+    if (realtime_running)
     {
-        bool bypassed = state->bypassed().value();
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_bypass_parameter.supported)
-        {
-            float float_bypass = bypassed ? 1.0f : 0.0f;
-            _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
-            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
-        }
+        rt_state = std::make_unique<RtState>(*state);
     }
 
     if (state->program().has_value())
@@ -552,9 +559,16 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
         if (_internal_programs && _program_change_parameter.supported)
         {
             float normalised_id = id / static_cast<float>(_program_count);
-            _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
             _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
             _current_program = id;
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(_program_change_parameter.id, normalised_id);
+            }
+            else
+            {
+                _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
+            }
         }
         else // file based programs
         {
@@ -562,13 +576,40 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
         }
     }
 
+    if (state->bypassed().has_value())
+    {
+        bool bypassed = state->bypassed().value();
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_bypass_parameter.supported)
+        {
+            float float_bypass = bypassed ? 1.0f : 0.0f;
+            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(_bypass_parameter.id, float_bypass);
+            }
+            else
+            {
+                _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
+            }
+        }
+    }
+
     for (const auto& parameter : state->parameters())
     {
         int id = parameter.first;
         float value = parameter.second;
-        // Eventually these should be done without looping back parameter changes
-        _add_parameter_change(id, value, 0);
         _instance.controller()->setParamNormalized(id, value);
+        if (realtime_running == false)
+        {
+            _add_parameter_change(id, value, 0);
+        }
+    }
+
+    if (realtime_running)
+    {
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
     return ProcessorReturnCode::OK;
@@ -886,8 +927,11 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
             {
                 if (maybe_output_cv_value(id, value) == false)
                 {
-                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, static_cast<float>(value));
+                    float float_value = static_cast<float>(value);
+                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
+                    _parameter_update_queue.push({id, float_value});
+                    _notify_parameter_change = true;
                 }
             }
         }

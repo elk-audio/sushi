@@ -22,6 +22,7 @@
 #define SUSHI_CONTROL_EVENT_H
 
 #include <string>
+#include <memory>
 
 #include "types.h"
 #include "id_generator.h"
@@ -226,9 +227,9 @@ public:
                                            _parameter_id(parameter_id),
                                            _value(value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
-    virtual RtEvent to_rt_event(int sample_offset) const override;
+    RtEvent to_rt_event(int sample_offset) const override;
 
     Subtype             subtype() const {return _subtype;}
     ObjectId            processor_id() const {return _processor_id;}
@@ -257,7 +258,7 @@ public:
                                         _property_id(property_id),
                                         _blob_value(blob_value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
 
@@ -278,7 +279,7 @@ public:
                                         _property_id(property_id),
                                         _string_value(string_value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
 
@@ -286,6 +287,24 @@ private:
     ObjectId    _processor_id;
     ObjectId    _property_id;
     std::string _string_value;
+};
+
+class RtStateEvent : public Event
+{
+public:
+    RtStateEvent(ObjectId processor_id,
+                 std::unique_ptr<RtState> state,
+                 Time timestamp);
+
+    ~RtStateEvent();
+
+    bool maps_to_rt_event() const override {return true;}
+
+    RtEvent to_rt_event(int sample_offset) const override;
+
+private:
+    ObjectId _processor_id;
+    mutable std::unique_ptr<RtState> _state;
 };
 
 // Inheriting from ParameterChangeEvent because they share the same data members but have
@@ -359,11 +378,16 @@ template <typename LambdaType>
 class LambdaEvent : public EngineEvent
 {
 public:
-    LambdaEvent(LambdaType work_lambda,
+    LambdaEvent(const LambdaType& work_lambda,
                 Time timestamp) : EngineEvent(timestamp),
                                   _work_lambda(work_lambda) {}
 
-    int execute(engine::BaseEngine*) const override {
+    LambdaEvent(LambdaType&& work_lambda,
+                Time timestamp) : EngineEvent(timestamp),
+                                  _work_lambda(std::move(work_lambda)) {}
+
+    int execute(engine::BaseEngine*) const override
+    {
         return _work_lambda();
     }
 
@@ -583,7 +607,7 @@ public:
                                                       _rt_event_id(rt_event_id)
     {}
 
-    virtual Event* execute() override;
+    Event* execute() override;
 
 private:
     AsynchronousWorkCallback _work_callback;
@@ -619,10 +643,22 @@ public:
     AsynchronousBlobDeleteEvent(BlobData data,
                                 Time timestamp) : AsynchronousWorkEvent(timestamp),
                                                      _data(data) {}
-    virtual Event* execute() override;
+    Event* execute() override;
 
 private:
     BlobData _data;
+};
+
+class AsynchronousDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousDeleteEvent(RtDeletable* data,
+                            Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                              _data(data) {}
+    Event* execute() override;
+
+private:
+    RtDeletable* _data;
 };
 
 class SetEngineTempoEvent : public EngineEvent
