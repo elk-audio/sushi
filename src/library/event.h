@@ -227,9 +227,9 @@ public:
                                            _parameter_id(parameter_id),
                                            _value(value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
-    virtual RtEvent to_rt_event(int sample_offset) const override;
+    RtEvent to_rt_event(int sample_offset) const override;
 
     Subtype             subtype() const {return _subtype;}
     ObjectId            processor_id() const {return _processor_id;}
@@ -258,7 +258,7 @@ public:
                                         _property_id(property_id),
                                         _blob_value(blob_value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
 
@@ -279,7 +279,7 @@ public:
                                         _property_id(property_id),
                                         _string_value(string_value) {}
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
 
@@ -298,7 +298,7 @@ public:
 
     ~RtStateEvent();
 
-    virtual bool maps_to_rt_event() const override {return true;}
+    bool maps_to_rt_event() const override {return true;}
 
     RtEvent to_rt_event(int sample_offset) const override;
 
@@ -607,7 +607,7 @@ public:
                                                       _rt_event_id(rt_event_id)
     {}
 
-    virtual Event* execute() override;
+    Event* execute() override;
 
 private:
     AsynchronousWorkCallback _work_callback;
@@ -655,7 +655,7 @@ public:
     AsynchronousDeleteEvent(RtDeletable* data,
                             Time timestamp) : AsynchronousWorkEvent(timestamp),
                                               _data(data) {}
-    virtual Event* execute() override;
+    Event* execute() override;
 
 private:
     RtDeletable* _data;
