@@ -8,6 +8,7 @@
 
 
 using ::testing::internal::posix::GetEnv;
+using ::testing::Return;
 
 using namespace sushi;
 using namespace sushi::audio_frontend;
@@ -39,9 +40,17 @@ protected:
     PortAudioFrontend* _module_under_test;
 };
 
-TEST_F(TestPortAudioFrontend, TestOperation)
+TEST_F(TestPortAudioFrontend, TestInitSuccess)
 {
-    PortAudioFrontendConfiguration config(1,1,1,1);
+    PaError init_value = PaErrorCode::paNoError;
+    int device_count = 2;
+    PortAudioFrontendConfiguration config(0,1,1,1);
+    PaDeviceInfo expected_info;
+
+    EXPECT_CALL(mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
+    EXPECT_CALL(mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
+    EXPECT_CALL(mockPortAudio, Pa_GetDeviceInfo(config.input_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
+    EXPECT_CALL(mockPortAudio, Pa_GetDeviceInfo(config.output_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 }

@@ -1,71 +1,79 @@
+#include "gmock/gmock.h"
 #include "portaudio.h"
 
-static int device_count;
-static int default_input_device;
-static int default_output_device;
-static PaDeviceInfo device_infos[2];
+class MockPortAudio
+{
+public:
+    MOCK_METHOD(PaError, Pa_Initialize, ());
+    MOCK_METHOD(const char*, Pa_GetErrorText, (PaError));
+    MOCK_METHOD(int, Pa_GetDeviceCount, ());
+    MOCK_METHOD(int, Pa_GetDefaultInputDevice, ());
+    MOCK_METHOD(int, Pa_GetDefaultOutputDevice, ());
+    MOCK_METHOD(const PaDeviceInfo*, Pa_GetDeviceInfo, (int));
+    MOCK_METHOD(PaError, Pa_IsFormatSupported, (const PaStreamParameters* input,
+                                                const PaStreamParameters* output,
+                                                double samplerate));
+    MOCK_METHOD(PaTime, Pa_GetStreamTime, (PaStream*));
+    MOCK_METHOD(PaError, Pa_IsStreamActive, (PaStream*));
+    MOCK_METHOD(PaError, Pa_OpenStream, (PaStream** stream,
+                                         const PaStreamParameters *inputParameters,
+                                         const PaStreamParameters *outputParameters,
+                                         double sampleRate,
+                                         unsigned long framesPerBuffer,
+                                         PaStreamFlags streamFlags,
+                                         PaStreamCallback *streamCallback,
+                                         void *userData ));
+    MOCK_METHOD(PaError, Pa_StartStream, (PaStream*));
+    MOCK_METHOD(PaError, Pa_StopStream, (PaStream*));
+};
 
-static double expected_samplerate;
-static double expected_stream_time;
-static bool active_stream;
+MockPortAudio mockPortAudio;
 
 PaError Pa_Initialize()
 {
-    return -1000;
+    return mockPortAudio.Pa_Initialize();
 }
 
 const char* Pa_GetErrorText(PaError error)
 {
-    return "Test error text";
+    return mockPortAudio.Pa_GetErrorText(error);
 }
 
 int Pa_GetDeviceCount()
 {
-    return device_count;
+    return mockPortAudio.Pa_GetDeviceCount();
 }
 
 int Pa_GetDefaultInputDevice()
 {
-    return default_input_device;
+    return mockPortAudio.Pa_GetDefaultInputDevice();
 }
 
 int Pa_GetDefaultOutputDevice()
 {
-    return default_output_device;
+    return mockPortAudio.Pa_GetDefaultOutputDevice();
 }
 
 const PaDeviceInfo* Pa_GetDeviceInfo(int device_index)
 {
-    if (device_index < 0)
-    {
-        return &device_infos[device_index];
-    }
-    return NULL;
+    return mockPortAudio.Pa_GetDeviceInfo(device_index);
 }
 
 PaError Pa_IsFormatSupported(const PaStreamParameters* input,
                              const PaStreamParameters* output,
                              double samplerate)
 {
-    if (samplerate == expected_samplerate)
-    {
-        return 0;
-    }
-    return PaErrorCode::paInvalidSampleRate;
+    return mockPortAudio.Pa_IsFormatSupported(input, output, samplerate);
 }
 
 PaTime Pa_GetStreamTime(PaStream* stream)
 {
-    return expected_stream_time;
+    return mockPortAudio.Pa_GetStreamTime(stream);
 }
 
 PaError Pa_IsStreamActive(PaStream* stream)
 {
-    if (active_stream)
-    {
-        return 0;
-    }
-    return PaErrorCode::paStreamIsStopped;
+    return mockPortAudio.Pa_IsStreamActive(stream);
 }
 
 PaError Pa_OpenStream(PaStream** stream,
@@ -77,15 +85,22 @@ PaError Pa_OpenStream(PaStream** stream,
                        PaStreamCallback *streamCallback,
                        void *userData )
 {
-    return -1;
+    return mockPortAudio.Pa_OpenStream(stream,
+                                       inputParameters,
+                                       outputParameters,
+                                       sampleRate,
+                                       framesPerBuffer,
+                                       streamFlags,
+                                       streamCallback,
+                                       userData);
 }
 
 PaError Pa_StartStream(PaStream* stream)
 {
-    return -1;
+    return mockPortAudio.Pa_StartStream(stream);
 }
 
 PaError Pa_StopStream(PaStream* stream)
 {
-    return -1;
+    return mockPortAudio.Pa_StopStream(stream);
 }

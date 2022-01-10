@@ -177,6 +177,8 @@ set(TEST_LINK_LIBRARIES
     ${COMMON_LIBRARIES}
     gtest
     gtest_main
+    gmock
+    gmock_main
 )
 
 if (${WITH_VST2})
