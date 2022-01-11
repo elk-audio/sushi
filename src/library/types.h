@@ -51,14 +51,14 @@ struct TimeSignature
     int denominator;
 };
 
-inline bool operator==(const TimeSignature& rhs, const TimeSignature& lhs)
+inline bool operator==(const TimeSignature& lhs, const TimeSignature& rhs)
 {
-    return (rhs.denominator == lhs.denominator && rhs.numerator == lhs.numerator);
+    return (lhs.denominator == rhs.denominator && lhs.numerator == rhs.numerator);
 }
 
-inline bool operator!=(const TimeSignature& rhs, const TimeSignature& lhs)
+inline bool operator!=(const TimeSignature& lhs, const TimeSignature& rhs)
 {
-    return ! (rhs == lhs);
+    return ! (lhs == rhs);
 }
 
 /**
