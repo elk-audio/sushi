@@ -40,6 +40,8 @@ public:
 
     bool deserialize(std::vector<std::byte>);
 
+    bool has_binary_data() const;
+
     void set_program(int program_id);
 
     void set_bypass(bool enabled);
@@ -47,6 +49,10 @@ public:
     void add_parameter_change(ObjectId parameter_id, float value);
 
     void add_property_change(ObjectId property_id, const std::string& value);
+
+    void set_binary_data(const std::vector<std::byte>& data);
+
+    void set_binary_data(std::vector<std::byte>&& data);
 
     std::optional<int> program() const;
 
@@ -56,11 +62,14 @@ public:
 
     const std::vector<std::pair<ObjectId, std::string>>& properties() const;
 
+    const std::vector<std::byte>& binary_data() const;
+
 protected:
     std::optional<int> _program;
     std::optional<int> _bypassed;
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
     std::vector<std::pair<ObjectId, std::string>> _property_changes;
+    std::vector<std::byte> _binary_data;
 };
 
 class RtState : public RtDeletable

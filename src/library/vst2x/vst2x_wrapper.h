@@ -104,6 +104,8 @@ public:
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
 
+    ProcessorState save_state() const override;
+
     /**
      * @brief Get the vst time information
      * @return A populated VstTimeInfo struct
@@ -181,6 +183,7 @@ private:
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _double_mono_input;
+    bool _has_binary_programs{false};
     int _number_of_programs{0};
 
     BypassManager _bypass_manager{_bypassed};

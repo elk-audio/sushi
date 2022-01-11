@@ -26,8 +26,12 @@
 
 namespace {
 
-static constexpr int VST_STRING_BUFFER_SIZE = 256;
+constexpr int VST_STRING_BUFFER_SIZE = 256;
+constexpr int FULL_BANK = 0;
+constexpr int SINGLE_PROGRAM = 1;
+
 static char canDoBypass[] = "bypass";
+
 
 } // anonymous namespace
 
@@ -84,11 +88,12 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     set_label(std::string(&product_string[0]));
 
     // Get plugin can do:s
-    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
-    _can_do_soft_bypass = (bypass == 1);
+    int enabled = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
+    _can_do_soft_bypass = (enabled == 1);
     _number_of_programs = _plugin_handle->numPrograms;
+    SUSHI_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
 
-    SUSHI_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
+    _has_binary_programs = _plugin_handle->flags &= effFlagsProgramChunks;
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
@@ -263,7 +268,7 @@ void Vst2xWrapper::_cleanup()
     {
         // Tell plugin to stop and shutdown
         set_enabled(false);
-        _vst_dispatcher(effClose, 0, 0, 0, 0);
+        _vst_dispatcher(effClose, 0, 0, nullptr, 0);
         _plugin_handle = nullptr;
     }
     if (_library_handle != nullptr)
@@ -526,6 +531,34 @@ ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime
         }
     }
     return ProcessorReturnCode::OK;
+}
+
+ProcessorState Vst2xWrapper::save_state() const
+{
+    ProcessorState state;
+    if (_has_binary_programs)
+    {
+        std::byte* data = nullptr;
+        int size = _vst_dispatcher(effGetChunk, SINGLE_PROGRAM, reinterpret_cast<VstIntPtr>(&data), nullptr, 0);
+        if (size > 0)
+        {
+            state.set_binary_data(std::vector<std::byte>(data, data + size));
+        }
+        if (_can_do_soft_bypass == false)
+        {
+            state.set_bypass(bypassed());
+        }
+    }
+    else
+    {
+        for (int id = 0; id < _plugin_handle->numParams; ++id)
+        {
+            float value  = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(id));
+            state.add_parameter_change(id, value);
+        }
+        state.set_bypass(bypassed());
+    }
+    return state;
 }
 
 void Vst2xWrapper::_set_bypass_rt(bool bypassed)

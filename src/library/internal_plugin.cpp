@@ -349,6 +349,25 @@ ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realti
     return ProcessorReturnCode::OK;
 }
 
+ProcessorState InternalPlugin::save_state() const
+{
+    ProcessorState state;
+    state.set_bypass(this->bypassed());
+    if (this->supports_programs())
+    {
+        state.set_program(this->current_program());
+    }
+    for (const auto& property : this->_property_values)
+    {
+        state.add_property_change(property.first, property.second);
+    }
+    for (const auto& parameter : _parameter_values)
+    {
+        state.add_parameter_change(parameter.id(), parameter.float_parameter_value()->normalized_value());
+    }
+    return state;
+}
+
 void InternalPlugin::send_data_to_realtime(BlobData data, int id)
 {
     assert(twine::is_current_thread_realtime() == false);

@@ -59,6 +59,8 @@ public:
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
 
+    ProcessorState save_state() const override;
+
     /**
      * @brief Register a float typed parameter and return a pointer to a value
      *        storage object that will hold the value and set automatically when

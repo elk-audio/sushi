@@ -331,3 +331,17 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_EQ(1, _module_under_test->current_program());
     EXPECT_EQ("Program 2", _module_under_test->current_program_name());
 }
+
+TEST_F(TestVst2xWrapper, TestStateSaving)
+{
+    SetUp("libvst2_test_plugin.so");
+
+    float parameter_value = _module_under_test->parameter_value(1).second;
+
+    auto state = _module_under_test->save_state();
+    EXPECT_FALSE(state.has_binary_data());
+    ASSERT_FALSE(state.parameters().empty());
+    EXPECT_FLOAT_EQ(parameter_value, state.parameters()[1].second);
+    EXPECT_TRUE(state.bypassed().has_value());
+}
+

@@ -54,6 +54,16 @@ void ProcessorState::add_property_change(ObjectId property_id, const std::string
     _property_changes.emplace_back(property_id, value);
 }
 
+void ProcessorState::set_binary_data(const std::vector<std::byte>& data)
+{
+    _binary_data = data;
+}
+
+void ProcessorState::set_binary_data(std::vector<std::byte>&& data)
+{
+    _binary_data = data;
+}
+
 std::optional<int> ProcessorState::program() const
 {
     return _program;
@@ -72,6 +82,16 @@ const std::vector<std::pair<ObjectId, float>>& ProcessorState::parameters() cons
 const std::vector<std::pair<ObjectId, std::string>>& ProcessorState::properties() const
 {
     return _property_changes;
+}
+
+const std::vector<std::byte>& ProcessorState::binary_data() const
+{
+    return _binary_data;
+}
+
+bool ProcessorState::has_binary_data() const
+{
+    return !_binary_data.empty();
 }
 
 RtState::RtState() = default;

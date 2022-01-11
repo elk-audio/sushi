@@ -376,7 +376,7 @@ public:
         return ProcessorReturnCode::UNSUPPORTED_OPERATION;
     }
 
-    virtual ProcessorState save_state(bool /*realtime_running*/) const
+    virtual ProcessorState save_state() const
     {
         return ProcessorState();
     }
