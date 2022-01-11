@@ -27,53 +27,53 @@ public:
     MOCK_METHOD(PaError, Pa_StopStream, (PaStream*));
 };
 
-MockPortAudio mockPortAudio;
+MockPortAudio* mockPortAudio;
 
 PaError Pa_Initialize()
 {
-    return mockPortAudio.Pa_Initialize();
+    return mockPortAudio->Pa_Initialize();
 }
 
 const char* Pa_GetErrorText(PaError error)
 {
-    return mockPortAudio.Pa_GetErrorText(error);
+    return mockPortAudio->Pa_GetErrorText(error);
 }
 
 int Pa_GetDeviceCount()
 {
-    return mockPortAudio.Pa_GetDeviceCount();
+    return mockPortAudio->Pa_GetDeviceCount();
 }
 
 int Pa_GetDefaultInputDevice()
 {
-    return mockPortAudio.Pa_GetDefaultInputDevice();
+    return mockPortAudio->Pa_GetDefaultInputDevice();
 }
 
 int Pa_GetDefaultOutputDevice()
 {
-    return mockPortAudio.Pa_GetDefaultOutputDevice();
+    return mockPortAudio->Pa_GetDefaultOutputDevice();
 }
 
 const PaDeviceInfo* Pa_GetDeviceInfo(int device_index)
 {
-    return mockPortAudio.Pa_GetDeviceInfo(device_index);
+    return mockPortAudio->Pa_GetDeviceInfo(device_index);
 }
 
 PaError Pa_IsFormatSupported(const PaStreamParameters* input,
                              const PaStreamParameters* output,
                              double samplerate)
 {
-    return mockPortAudio.Pa_IsFormatSupported(input, output, samplerate);
+    return mockPortAudio->Pa_IsFormatSupported(input, output, samplerate);
 }
 
 PaTime Pa_GetStreamTime(PaStream* stream)
 {
-    return mockPortAudio.Pa_GetStreamTime(stream);
+    return mockPortAudio->Pa_GetStreamTime(stream);
 }
 
 PaError Pa_IsStreamActive(PaStream* stream)
 {
-    return mockPortAudio.Pa_IsStreamActive(stream);
+    return mockPortAudio->Pa_IsStreamActive(stream);
 }
 
 PaError Pa_OpenStream(PaStream** stream,
@@ -85,7 +85,7 @@ PaError Pa_OpenStream(PaStream** stream,
                        PaStreamCallback *streamCallback,
                        void *userData )
 {
-    return mockPortAudio.Pa_OpenStream(stream,
+    return mockPortAudio->Pa_OpenStream(stream,
                                        inputParameters,
                                        outputParameters,
                                        sampleRate,
@@ -97,10 +97,10 @@ PaError Pa_OpenStream(PaStream** stream,
 
 PaError Pa_StartStream(PaStream* stream)
 {
-    return mockPortAudio.Pa_StartStream(stream);
+    return mockPortAudio->Pa_StartStream(stream);
 }
 
 PaError Pa_StopStream(PaStream* stream)
 {
-    return mockPortAudio.Pa_StopStream(stream);
+    return mockPortAudio->Pa_StopStream(stream);
 }
