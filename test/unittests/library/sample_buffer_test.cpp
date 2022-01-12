@@ -123,6 +123,20 @@ TEST(TestSampleBuffer, TestAssigningNonOwningBuffer)
     EXPECT_FLOAT_EQ(2.0f, *test_buffer_2.channel(1));
 }
 
+TEST(TestSampleBuffer, TestSwap)
+{
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer_1(2);
+    SampleBuffer<AUDIO_CHUNK_SIZE> buffer_2(1);
+    std::fill(buffer_1.channel(0), buffer_1.channel(0) + AUDIO_CHUNK_SIZE, 2.0f);
+
+    swap(buffer_1, buffer_2);
+
+    EXPECT_EQ(1, buffer_1.channel_count());
+    EXPECT_EQ(2, buffer_2.channel_count());
+    EXPECT_FLOAT_EQ(0.0f, buffer_1.channel(0)[0]);
+    EXPECT_FLOAT_EQ(2.0f, buffer_2.channel(0)[0]);
+}
+
 TEST(TestSampleBuffer, TestInitialization)
 {
     SampleBuffer<2> buffer(42);
