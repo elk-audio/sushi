@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "spdlog/fmt/bundled/format.h"
+
 #include "twine/twine.h"
 
 #include "library/internal_plugin.h"
@@ -284,7 +286,7 @@ std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_form
 
     if (value_storage.type() == ParameterType::FLOAT)
     {
-        return {ProcessorReturnCode::OK, std::to_string(value_storage.float_parameter_value()->domain_value())};
+        return {ProcessorReturnCode::OK, fmt::format("{0:0.2f}", value_storage.float_parameter_value()->domain_value())};
     }
     else if (value_storage.type() == ParameterType::INT)
     {

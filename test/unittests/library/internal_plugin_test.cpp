@@ -101,6 +101,11 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(1.0f, ext_value);
+
+    auto [status_1, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_1);
+    EXPECT_EQ("True", str_value);
+
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
@@ -131,8 +136,14 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.6f, norm_value);
 
+    auto [status_2, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_2);
+    EXPECT_EQ("6", str_value);
+
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
+
+
 
     DECLARE_UNUSED(unused_value);
 }
@@ -159,6 +170,10 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.5f, norm_value);
+
+    auto [status_2, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_2);
+    EXPECT_EQ("5.00", str_value);
 
     [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
