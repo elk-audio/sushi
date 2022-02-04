@@ -16,7 +16,7 @@
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "twine/src/twine_internal.h"
@@ -26,6 +26,8 @@
 
 namespace sushi {
 namespace engine {
+
+constexpr bool DISABLE_DENORMALS = true;
 
 void external_render_callback(void* data)
 {
@@ -39,15 +41,17 @@ void external_render_callback(void* data)
     }
 }
 
-AudioGraph::AudioGraph(int cpu_cores, int max_no_tracks) : _audio_graph(cpu_cores),
-                                                           _event_outputs(cpu_cores),
-                                                           _cores(cpu_cores),
-                                                           _current_core(0)
+AudioGraph::AudioGraph(int cpu_cores,
+                       int max_no_tracks,
+                       bool debug_mode_switches) : _audio_graph(cpu_cores),
+                                                   _event_outputs(cpu_cores),
+                                                   _cores(cpu_cores),
+                                                   _current_core(0)
 {
     assert(cpu_cores > 0);
     if (_cores > 1)
     {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores);
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, DISABLE_DENORMALS, debug_mode_switches);
         for (auto& i : _audio_graph)
         {
             _worker_pool->add_worker(external_render_callback, &i);
