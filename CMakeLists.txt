@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.8)
 set(SUSHI_VERSION_MAJOR 0)
 set(SUSHI_VERSION_MINOR 12)
 set(SUSHI_VERSION_REVISION 0)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
 
 project(sushi VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION})
 
@@ -513,7 +514,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 
-add_executable(sushi "${COMPILATION_UNITS}"
+add_executable(sushi MACOSX_BUNDLE "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
                      "${ADDITIONAL_VST2_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
@@ -539,23 +540,25 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
-find_path(LO_DIR NAMES "lo/lo.h")
-find_library(LO_LIB NAMES lo)
-message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
+# find_path(LO_DIR NAMES "lo/lo.h")
+# find_library(LO_LIB NAMES lo)
+# message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
+find_package(liblo)
 
-find_path(SNDFILE_DIR NAMES "sndfile.h")
-find_library(SNDFILE_LIB NAMES sndfile)
-message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
+# find_path(SNDFILE_DIR NAMES "sndfile.h")
+# find_library(SNDFILE_LIB NAMES sndfile)
+# message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
+find_package(SndFile)
 
 set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
-    ${LO_DIR}
-    ${SNDFILE_DIR}
+    ${LIBLO_INCLUDE_DIRS}
+    ${SNDFILE_INCLUDE_DIR}
 )
 
 set(COMMON_LIBRARIES
-    ${LO_LIB}
-    ${SNDFILE_LIB}
+    ${LIBLO_LIBRARIES}
+    ${SNDFILE_LIBRARIES}
     pthread
     dl
     fifo
@@ -594,7 +597,14 @@ set(DOC_FILES_INSTALL
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )
 
-install(TARGETS sushi DESTINATION bin)
+if (APPLE)
+    install(CODE [[
+    include(BundleUtilities)
+    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi.app" "" "")
+    ]] COMPONENT Runtime)
+endif()
+
+install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
 foreach(ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
