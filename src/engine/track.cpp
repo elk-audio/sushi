@@ -193,7 +193,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
         ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
         ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
         processor->process_audio(proc_in, proc_out);
-        std::swap(aliased_in, aliased_out);
+        swap(aliased_in, aliased_out);
         _timer->stop_timer_rt_safe(processor_timestamp, processor->id());
     }
 

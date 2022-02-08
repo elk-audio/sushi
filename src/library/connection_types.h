@@ -56,26 +56,26 @@ struct GateConnection
     int      channel;
 };
 
-bool inline operator==(const AudioConnection& l, const AudioConnection& r)
+bool inline operator==(const AudioConnection& lhs, const AudioConnection& rhs)
 {
-    return l.engine_channel == r.engine_channel &&
-           l.track_channel  == r.track_channel &&
-           l.track          == r.track;
+    return lhs.engine_channel == rhs.engine_channel &&
+           lhs.track_channel  == rhs.track_channel &&
+           lhs.track          == rhs.track;
 }
 
-bool inline operator==(const CvConnection& l, const CvConnection& r)
+bool inline operator==(const CvConnection& lhs, const CvConnection& rhs)
 {
-    return l.processor_id == r.processor_id &&
-           l.parameter_id == r.parameter_id &&
-           l.cv_id        == r.cv_id;
+    return lhs.processor_id == rhs.processor_id &&
+           lhs.parameter_id == rhs.parameter_id &&
+           lhs.cv_id        == rhs.cv_id;
 }
 
-bool inline operator==(const GateConnection& l, const GateConnection& r)
+bool inline operator==(const GateConnection& lhs, const GateConnection& rhs)
 {
-    return l.processor_id == r.processor_id &&
-           l.gate_id      == r.gate_id &&
-           l.note_no      == r.note_no &&
-           l.channel      == r.channel;
+    return lhs.processor_id == rhs.processor_id &&
+           lhs.gate_id      == rhs.gate_id &&
+           lhs.note_no      == rhs.note_no &&
+           lhs.channel      == rhs.channel;
 }
 
 } // namespace sushi
