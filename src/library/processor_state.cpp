@@ -54,6 +54,11 @@ void ProcessorState::add_property_change(ObjectId property_id, const std::string
     _property_changes.emplace_back(property_id, value);
 }
 
+std::vector<std::byte>& ProcessorState::binary_data()
+{
+    return _binary_data;
+}
+
 void ProcessorState::set_binary_data(const std::vector<std::byte>& data)
 {
     _binary_data = data;

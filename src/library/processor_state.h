@@ -64,6 +64,8 @@ public:
 
     const std::vector<std::byte>& binary_data() const;
 
+    std::vector<std::byte>& binary_data();
+
 protected:
     std::optional<int> _program;
     std::optional<int> _bypassed;

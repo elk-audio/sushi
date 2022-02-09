@@ -115,6 +115,8 @@ public:
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
 
+    ProcessorState save_state() const override;
+
     static void program_change_callback(void* arg, Event* event, int status)
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);
@@ -169,6 +171,12 @@ private:
     void _program_change_callback(Event* event, int status);
 
     int _parameter_update_callback(EventId id);
+
+    void _set_program_state(int program_id, RtState* rt_state, bool realtime_running);
+
+    void _set_bypass_state(bool bypassed, RtState* rt_state, bool realtime_running);
+
+    void _set_binary_state(std::vector<std::byte>& state);
 
     struct SpecialParameter
     {

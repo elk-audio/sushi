@@ -82,9 +82,9 @@ public:
     bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);
     const std::string& name() const {return _name;}
     const std::string& vendor() const {return _vendor;}
-    Steinberg::Vst::IComponent* component() {return _component.get();}
-    Steinberg::Vst::IAudioProcessor* processor() {return _processor.get();}
-    Steinberg::Vst::IEditController* controller() {return _controller.get();}
+    Steinberg::Vst::IComponent* component() const {return _component.get();}
+    Steinberg::Vst::IAudioProcessor* processor() const {return _processor.get();}
+    Steinberg::Vst::IEditController* controller() const {return _controller.get();}
     Steinberg::Vst::IUnitInfo* unit_info() {return _unit_info;}
     Steinberg::Vst::IMidiMapping* midi_mapper() {return _midi_mapper;}
     bool notify_controller(Steinberg::Vst::IMessage* message);

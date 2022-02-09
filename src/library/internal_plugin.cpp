@@ -355,10 +355,6 @@ ProcessorState InternalPlugin::save_state() const
 {
     ProcessorState state;
     state.set_bypass(this->bypassed());
-    if (this->supports_programs())
-    {
-        state.set_program(this->current_program());
-    }
     for (const auto& property : this->_property_values)
     {
         state.add_property_change(property.first, property.second);
