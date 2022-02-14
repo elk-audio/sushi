@@ -341,6 +341,30 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     EXPECT_FALSE(_module_under_test->bypassed());
 }
 
+TEST_F(TestVst3xWrapper, TestBinaryStateSaving)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+    float prev_value = _module_under_test->parameter_value(desc->id()).second;
+
+    ProcessorState state = _module_under_test->save_state();
+    ASSERT_TRUE(state.has_binary_data());
+
+    // Set a parameter value, the re-apply the state
+    auto event = RtEvent::make_parameter_change_event(_module_under_test->id(), 0, desc->id(), 0.5f);
+    _module_under_test->process_event(event);
+    _module_under_test->process_audio(buffer, buffer);
+    _module_under_test->parameter_update_callback(_module_under_test, 0);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check the value has reverted to the previous value
+    EXPECT_FLOAT_EQ(prev_value, _module_under_test->parameter_value(desc->id()).second);
+}
 
 class TestVst3xUtils : public ::testing::Test
 {

@@ -808,7 +808,7 @@ void LV2_Wrapper::_process_midi_input(Port* port)
                         (const uint8_t *) LV2_ATOM_BODY(_lv2_pos));
     }
 
-    auto urids = _model->urids();
+    auto& urids = _model->urids();
 
     if (_model->update_requested())
     {
@@ -1014,11 +1014,12 @@ void LV2_Wrapper::_set_binary_state(ProcessorState* state)
 {
     auto lilv_state = lilv_state_new_from_string(_world->world(),
                                                  &_model->get_map(),
-                                                 reinterpret_cast<char*>(state->binary_data().data()));
+                                                 reinterpret_cast<const char*>(state->binary_data().data()));
+
     if (lilv_state)
     {
         auto state_handler = _model->state();
-        state_handler->apply_state(nullptr, true);
+        state_handler->apply_state(lilv_state, true);
     }
     SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }

@@ -102,10 +102,11 @@ std::vector<std::byte> State::save_binary_state()
             _model->plugin_class(), _model->plugin_instance(), &_model->get_map(),
             nullptr, nullptr, nullptr, nullptr,
             get_port_value, _model,
-            LV2_STATE_IS_POD|LV2_STATE_IS_PORTABLE, nullptr);
+            LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE, nullptr);
 
     auto serial_state = lilv_state_to_string(_model->lilv_world(), &_model->get_map(),
-                                             &_model->get_unmap(), state, nullptr, nullptr);
+                                             &_model->get_unmap(), state, LV2_STATE_URI, nullptr);
+
     if (serial_state)
     {
         // Investigate if it is safe to move data into the vector instead. It would save 1 copy but the data couldn't be de-allocated with lilv_free
@@ -296,7 +297,7 @@ void set_port_value(const char* port_symbol,
 
     float fvalue;
 
-    auto forge = model->forge();
+    const auto& forge = model->forge();
 
     if (type == forge.Float)
     {
