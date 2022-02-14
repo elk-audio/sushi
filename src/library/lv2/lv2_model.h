@@ -203,8 +203,8 @@ public:
     bool rolling();
     void set_rolling(bool rolling);
 
-    LilvState* state_to_set();
-    void set_state_to_set(LilvState* state_to_set);
+    std::pair<LilvState*, bool> state_to_set();
+    void set_state_to_set(LilvState* state_to_set, bool delete_after_use);
 
     int input_audio_channel_count();
     int output_audio_channel_count();
@@ -294,6 +294,7 @@ private:
     float _bpm;
     bool _rolling;
 
+    bool _delete_state_after_use{false};
     LilvState* _state_to_set{nullptr};
 
     int _input_audio_channel_count{0};

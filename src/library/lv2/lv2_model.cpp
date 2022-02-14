@@ -208,7 +208,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     if (state != nullptr) // Apply loaded state to plugin instance if necessary
     {
-        _lv2_state->apply_state(state);
+        _lv2_state->apply_state(state, false);
         lilv_state_free(state);
     }
 
@@ -683,14 +683,15 @@ void Model::set_rolling(bool rolling)
     _rolling = rolling;
 }
 
-LilvState* Model::state_to_set()
+std::pair<LilvState*, bool> Model::state_to_set()
 {
-    return _state_to_set;
+    return {_state_to_set, _delete_state_after_use};
 }
 
-void Model::set_state_to_set(LilvState* state_to_set)
+void Model::set_state_to_set(LilvState* state_to_set, bool delete_after_use)
 {
     _state_to_set = state_to_set;
+    _delete_state_after_use = delete_after_use;
 }
 
 int Model::input_audio_channel_count()
