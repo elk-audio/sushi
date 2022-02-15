@@ -67,7 +67,6 @@ private:
     Vst3xWrapper* _wrapper_instance;
 };
 
-
 /**
  * @brief Container to hold plugin modules and manage their lifetimes
  */
@@ -102,13 +101,13 @@ private:
     std::shared_ptr<VST3::Hosting::Module> _module;
 
     // Reference counted pointers to plugin objects
-    Steinberg::IPtr<Steinberg::Vst::IComponent>      _component;
-    Steinberg::IPtr<Steinberg::Vst::IAudioProcessor> _processor;
-    Steinberg::IPtr<Steinberg::Vst::IEditController> _controller;
+    Steinberg::OPtr<Steinberg::Vst::IComponent>      _component;
+    Steinberg::OPtr<Steinberg::Vst::IAudioProcessor> _processor;
+    Steinberg::OPtr<Steinberg::Vst::IEditController> _controller;
 
     // Abstract optional interfaces implemented by one of the objects above:
-    Steinberg::Vst::IMidiMapping*                    _midi_mapper{nullptr};
-    Steinberg::Vst::IUnitInfo*                       _unit_info{nullptr};
+    Steinberg::OPtr<Steinberg::Vst::IMidiMapping>    _midi_mapper{nullptr};
+    Steinberg::OPtr<Steinberg::Vst::IUnitInfo>       _unit_info{nullptr};
 
     Steinberg::OPtr<ConnectionProxy> _controller_connection;
     Steinberg::OPtr<ConnectionProxy> _component_connection;
