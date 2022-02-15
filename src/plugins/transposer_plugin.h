@@ -42,17 +42,14 @@ public:
     void process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
 
 private:
-
     int _transpose_note(int note);
 
     MidiDataByte _transpose_midi(MidiDataByte midi_msg);
 
-    FloatParameterValue*   _transpose_parameter;
+    FloatParameterValue* _transpose_parameter;
 
     RtSafeRtEventFifo _queue;
 };
-
-float samples_per_note(float note_fraction, float tempo, float samplerate);
 
 }// namespace transposer_plugin
 }// namespace sushi

@@ -449,6 +449,7 @@ message ParameterInfo
     bool   automatable = 6;
     float  min_domain_value = 7;
     float  max_domain_value = 8;
+    int32  step_count = 9;
 }
 
 message ParameterInfoList

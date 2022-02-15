@@ -57,7 +57,7 @@ public:
     /**
      * @brief Returns the enumerated type of the parameter
      */
-    ParameterType type() const {return _type;};
+    ParameterType type() const {return _type;}
 
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
@@ -94,13 +94,20 @@ public:
      * @brief Returns the maximum value of the parameter
      * @return A float with the maximum representation of the parameter
      */
-    virtual float min_domain_value() const {return 0;};
+    virtual float min_domain_value() const {return 0;}
 
     /**
      * @brief Returns the minimum value of the parameter
      * @return A float with the minimum representation of the parameter
      */
-    virtual float max_domain_value() const {return 1;};
+    virtual float max_domain_value() const {return 1;}
+
+    /**
+     * @brief Returns the step count for the parameter.
+     *        For example, 0 for continuous floating point, 1 for a bool parameter, or n steps.
+     * @return Step count integer
+     */
+    virtual int step_count() const {return 0;}
 
 protected:
     std::string _label;
@@ -195,23 +202,43 @@ public:
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
                              const std::string& unit,
-                             T min_domain_value,
-                             T max_domain_Value,
+                             const T min_domain_value,
+                             const T max_domain_Value,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
-                                        _max_domain_value(max_domain_Value) {}
+                                        _max_domain_value(max_domain_Value)
+    {
+        if constexpr (enumerated_type == ParameterType::INT)
+        {
+            assert(min_domain_value < max_domain_Value);
+            _step_count = _max_domain_value - _min_domain_value;
+        }
+        else if constexpr (enumerated_type == ParameterType::BOOL)
+        {
+            _step_count = 1;
+        }
+        else if constexpr (enumerated_type == ParameterType::FLOAT ||
+                           enumerated_type == ParameterType::STRING ||
+                           enumerated_type == ParameterType::DATA)
+        {
+            _step_count = 0;
+        }
+    }
 
     ~TypedParameterDescriptor() = default;
 
     float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
     float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
+    int step_count() const override {return _step_count;}
+
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
     T _min_domain_value;
     T _max_domain_value;
+    int _step_count {0};
 };
 
 /* Partial specialization for pointer type parameters */
@@ -225,7 +252,7 @@ public:
 
     ~TypedParameterDescriptor() = default;
 
-    virtual bool automatable() const override {return false;}
+    bool automatable() const override {return false;}
 };
 
 /* Partial specialization for pointer type parameters */
@@ -240,8 +267,7 @@ public:
 
     ~TypedParameterDescriptor() {}
 
-    virtual bool automatable() const override {return false;}
-
+    bool automatable() const override {return false;}
 };
 
 /*

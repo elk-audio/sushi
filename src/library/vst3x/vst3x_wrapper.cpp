@@ -18,9 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <fstream>
 #include <string>
-#include <climits>
 #include <cstdlib>
 #include <dirent.h>
 #include <unistd.h>
@@ -226,7 +224,6 @@ void Vst3xWrapper::configure(float sample_rate)
         set_enabled(true);
     }
 }
-
 
 void Vst3xWrapper::process_event(const RtEvent& event)
 {
@@ -650,21 +647,27 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
             auto param_unit = to_ascii_str(info.units);
-            if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
+            if (info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
                 SUSHI_LOG_INFO("Plugin supports soft bypass");
             }
-            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
-                    _program_change_parameter.supported == false)
+            else if (info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
+                     _program_change_parameter.supported == false)
             {
-                /* For now we only support 1 program change parameter and we're counting on the
+                /* For now, we only support 1 program change parameter, and we're counting on the
                  * first one to be the global one. Multitimbral instruments can have multiple
                  * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
                 SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
+            }
+            else if (info.stepCount > 0 &&
+                     register_parameter(new IntParameterDescriptor(_make_unique_parameter_name(param_name),
+                                                                   param_name, param_unit, 0, info.stepCount, nullptr), info.id))
+            {
+                SUSHI_LOG_INFO("Registered INT parameter {}, id {}", param_name, info.id);
             }
             else if (register_parameter(new FloatParameterDescriptor(_make_unique_parameter_name(param_name),
                                                                      param_name, param_unit, 0, 1, nullptr), info.id))
@@ -684,11 +687,11 @@ bool Vst3xWrapper::_register_parameters()
     }
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
-     * parameters and we can query the plugin for what 'default' midi cc:s these parameters
+     * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
      * would be mapped to if the plugin was able to handle native midi.
      * So we query the plugin for this and if that's the case, store the id:s of these
-     * 'special' parameters so we can map PB and Mod events to them.
-     * Currently we dont hide these parameters, unlike the bypass parameter, so they can
+     * 'special' parameters, so we can map PB and Mod events to them.
+     * Currently, we don't hide these parameters, unlike the bypass parameter, so they can
      * still be controlled via OSC or other controllers. */
     if (_instance.midi_mapper())
     {

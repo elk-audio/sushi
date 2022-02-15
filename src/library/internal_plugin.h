@@ -138,7 +138,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(FloatParameterValue*storage, float new_value);
+    void set_parameter_and_notify(FloatParameterValue* storage, float new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -146,7 +146,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(IntParameterValue*storage, int new_value);
+    void set_parameter_and_notify(IntParameterValue* storage, int new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -154,10 +154,10 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
+    void set_parameter_and_notify(BoolParameterValue* storage, bool new_value);
 
     /**
-     * @brief Pass opaque data to the realtime part of the plugin in a threadsafe manner
+     * @brief Pass opaque data to the realtime part of the plugin in a thread-safe manner
      *        The data will be passed as an RtEvent with type DATA_PROPERTY_CHANGE.
      * @param data The data to pass, memory management is the responsibility of the receiver.
      * @param id An identifier that will be used to populate the property_id field_of the RtEvent.
@@ -173,13 +173,12 @@ protected:
      */
     void send_property_to_realtime(ObjectId property_id, const std::string& value);
 
-
 private:
     void _set_rt_state(const RtState* state);
 
-    /* TODO - consider container type to use here. Deque has the very desirable property
-     * that iterators are never invalidated by adding to the containers.
-     * For arrays or std::vectors we need to know the maximum capacity for that to work. */
+    /* TODO: Consider container type to use here. Deque has the very desirable property
+     *  that iterators are never invalidated by adding to the containers.
+     *  For arrays or std::vectors we need to know the maximum capacity for that to work. */
     std::deque<ParameterStorage> _parameter_values;
 
     mutable std::mutex _property_lock;

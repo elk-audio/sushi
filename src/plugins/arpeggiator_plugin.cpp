@@ -39,9 +39,9 @@ ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _range_parameter  = register_int_parameter("range", "Range", "octaves",
-                                               2, 1, 5,
-                                               new IntParameterPreProcessor(1, 5));
+    _range_parameter = register_int_parameter("range", "Range", "octaves",
+                                              2, 1, 5,
+                                              new IntParameterPreProcessor(1, 5));
 
     assert(_range_parameter);
     _max_input_channels = 0;
@@ -99,7 +99,7 @@ void ArpeggiatorPlugin::process_event(const RtEvent& event)
     }
 }
 
-void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/)
+void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/)
 {
     if (_host_control.transport()->playing())
     {
@@ -140,11 +140,6 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer&/*in_buffer*/, Chu
         /* Don't leave notes hanging if transport is stopped */
         output_event(RtEvent::make_note_off_event(this->id(), 0, 0, _current_note, 1.0f));
     }
-}
-
-float samples_per_note(float note_fraction, float tempo, float samplerate)
-{
-    return 4.0f * note_fraction * samplerate / tempo * SECONDS_IN_MINUTE;
 }
 
 Arpeggiator::Arpeggiator()

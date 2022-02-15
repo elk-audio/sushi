@@ -85,7 +85,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
     }
 
     auto value = ParameterStorage::make_int_parameter_storage(param, default_value, pre_proc);
-    /* The parameter id must match the value storage index*/
+    /* The parameter id must match the value storage index */
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value);
 
@@ -105,7 +105,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
     }
 
     ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, default_value);
-    /* The parameter id must match the value storage index*/
+    /* The parameter id must match the value storage index */
     assert(param->id() == _parameter_values.size());
     _parameter_values.push_back(value_storage);
 
@@ -124,7 +124,7 @@ bool InternalPlugin::register_property(const std::string& name,
         return false;
     }
 
-    // push a dummy container here for ids to match
+    // Push a dummy container here for ids to match
     ParameterStorage value_storage = ParameterStorage::make_bool_parameter_storage(param, false);
     _parameter_values.push_back(value_storage);
     // The property value is stored here

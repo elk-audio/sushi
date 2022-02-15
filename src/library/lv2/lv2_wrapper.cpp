@@ -370,11 +370,11 @@ bool LV2_Wrapper::_register_parameters()
 
             if (param_inserted_ok)
             {
-                SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), name_as_string);
+                SUSHI_LOG_INFO("LV2 Plugin: {}, registered parameter: {}", name(), name_as_string);
             }
             else
             {
-                SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), name_as_string);
+                SUSHI_LOG_ERROR("Plugin: {}, Error while registering parameter: {}", name(), name_as_string);
             }
 
             lilv_node_free(nameNode);
@@ -439,7 +439,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
 
         for (const auto& parameter : state->parameters())
         {
-            // These parameter values are pre-scaled and dont need to be converted to domain values
+            // These parameter values are pre-scaled and don't need to be converted to domain values
             auto port = _model->get_port(parameter.first);
             port->set_control_value(parameter.second);
         }
