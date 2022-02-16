@@ -359,6 +359,8 @@ TEST_F(TestVst3xWrapper, TestBinaryStateSaving)
     _module_under_test->process_audio(buffer, buffer);
     _module_under_test->parameter_update_callback(_module_under_test, 0);
 
+    EXPECT_NE(prev_value, _module_under_test->parameter_value(desc->id()).second);
+
     auto status = _module_under_test->set_state(&state, false);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 

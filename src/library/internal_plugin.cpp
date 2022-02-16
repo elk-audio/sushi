@@ -361,7 +361,23 @@ ProcessorState InternalPlugin::save_state() const
     }
     for (const auto& parameter : _parameter_values)
     {
-        state.add_parameter_change(parameter.id(), parameter.float_parameter_value()->normalized_value());
+        switch (parameter.type())
+        {
+            case ParameterType::BOOL:
+                state.add_parameter_change(parameter.id(), parameter.bool_parameter_value()->normalized_value());
+                break;
+
+            case ParameterType::INT:
+                state.add_parameter_change(parameter.id(), parameter.int_parameter_value()->normalized_value());
+                break;
+
+            case ParameterType::FLOAT:
+                state.add_parameter_change(parameter.id(), parameter.float_parameter_value()->normalized_value());
+                break;
+
+            default:
+                break;
+        }
     }
     return state;
 }
