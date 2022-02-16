@@ -553,7 +553,7 @@ ProcessorState Vst2xWrapper::save_state() const
     {
         for (int id = 0; id < _plugin_handle->numParams; ++id)
         {
-            float value  = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(id));
+            float value = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(id));
             state.add_parameter_change(id, value);
         }
         state.set_bypass(bypassed());

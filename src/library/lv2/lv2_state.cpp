@@ -109,7 +109,7 @@ std::vector<std::byte> State::save_binary_state()
 
     if (serial_state)
     {
-        // Investigate if it is safe to move data into the vector instead. It would save 1 copy but the data couldn't be de-allocated with lilv_free
+        // TODO: Investigate if it is safe to move data into the vector instead. It would save 1 copy but the data couldn't be de-allocated with lilv_free
         int size = strlen(serial_state);
         if (size > 0)
         {

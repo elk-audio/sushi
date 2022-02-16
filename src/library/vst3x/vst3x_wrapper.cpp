@@ -594,7 +594,6 @@ ProcessorState Vst3xWrapper::save_state() const
 {
     ProcessorState state;
     Steinberg::MemoryStream stream;
-    //auto component = const_cast<Steinberg::Vst::IComponent*>(_instance.component());
     if (_instance.component()->getState (&stream) == Steinberg::kResultTrue)
     {
         // stream will give up ownership of the data that we can then wrap in a
