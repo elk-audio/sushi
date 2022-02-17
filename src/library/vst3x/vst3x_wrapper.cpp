@@ -349,11 +349,17 @@ void Vst3xWrapper::set_output_channels(int channels)
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
-    auto res = _instance.processor()->setProcessing(Steinberg::TBool(enabled));
-    if (res == Steinberg::kResultOk)
+    if (_enabled && !enabled)
     {
-        _enabled = enabled;
+        _instance.processor()->setProcessing(enabled);
+        _instance.component()->setActive(enabled);
     }
+    else
+    {
+        _instance.component()->setActive(enabled);
+        _instance.processor()->setProcessing(enabled);
+    }
+    Processor::set_enabled(enabled);
 }
 
 void Vst3xWrapper::set_bypassed(bool bypassed)
