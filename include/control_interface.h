@@ -96,7 +96,6 @@ struct ParameterInfo
     bool            automatable;
     float           min_domain_value;
     float           max_domain_value;
-    int             step_count;
 };
 
 struct PropertyInfo

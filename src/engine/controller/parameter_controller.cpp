@@ -50,14 +50,13 @@ inline std::vector<ext::ParameterInfo> _read_parameters(const Processor* process
         {
             ext::ParameterInfo info;
             info.id = param->id();
-            info.type = ext::ParameterType::FLOAT;
+            info.type = to_external(param->type());
             info.label = param->label();
             info.name = param->name();
             info.unit = param->unit();
             info.automatable = param->automatable();
             info.min_domain_value = param->min_domain_value();
             info.max_domain_value = param->max_domain_value();
-            info.step_count = param->step_count();
             infos.push_back(info);
         }
     }
@@ -142,7 +141,6 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> ParameterController::get_param
             info.type = to_external(descr->type());
             info.min_domain_value = descr->min_domain_value();
             info.max_domain_value = descr->max_domain_value();
-            info.step_count = descr->step_count();
             info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
                                 descr->type() == ParameterType::INT   ||
                                 descr->type() == ParameterType::BOOL;

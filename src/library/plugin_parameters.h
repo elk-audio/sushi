@@ -102,13 +102,6 @@ public:
      */
     virtual float max_domain_value() const {return 1;}
 
-    /**
-     * @brief Returns the step count for the parameter.
-     *        For example, 0 for continuous floating point, 1 for a bool parameter, or n steps.
-     * @return Step count integer
-     */
-    virtual int step_count() const {return 0;}
-
 protected:
     std::string _label;
     std::string _name;
@@ -209,36 +202,17 @@ public:
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
                                         _max_domain_value(max_domain_Value)
-    {
-        if constexpr (enumerated_type == ParameterType::INT)
-        {
-            assert(min_domain_value < max_domain_Value);
-            _step_count = _max_domain_value - _min_domain_value;
-        }
-        else if constexpr (enumerated_type == ParameterType::BOOL)
-        {
-            _step_count = 1;
-        }
-        else if constexpr (enumerated_type == ParameterType::FLOAT ||
-                           enumerated_type == ParameterType::STRING ||
-                           enumerated_type == ParameterType::DATA)
-        {
-            _step_count = 0;
-        }
-    }
+    {}
 
     ~TypedParameterDescriptor() = default;
 
     float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
     float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
-    int step_count() const override {return _step_count;}
-
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
     T _min_domain_value;
     T _max_domain_value;
-    int _step_count {0};
 };
 
 /* Partial specialization for pointer type parameters */

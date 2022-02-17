@@ -441,15 +441,14 @@ message ProcessorStateSetRequest
 
 message ParameterInfo
 {
-    int32  id = 1;
-    ParameterType  type = 2;
+    int32 id = 1;
+    ParameterType type = 2;
     string label = 3;
     string name = 4;
     string unit = 5;
-    bool   automatable = 6;
-    float  min_domain_value = 7;
-    float  max_domain_value = 8;
-    int32  step_count = 9;
+    bool automatable = 6;
+    float min_domain_value = 7;
+    float max_domain_value = 8;
 }
 
 message ParameterInfoList

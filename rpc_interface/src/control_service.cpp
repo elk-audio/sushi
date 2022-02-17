@@ -186,7 +186,6 @@ inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
     dest.set_automatable(src.automatable);
     dest.set_min_domain_value(src.min_domain_value);
     dest.set_max_domain_value(src.max_domain_value);
-    dest.set_step_count(src.step_count);
 }
 
 inline void to_grpc(PropertyInfo& dest, const sushi::ext::PropertyInfo& src)
