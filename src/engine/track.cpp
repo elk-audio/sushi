@@ -130,7 +130,6 @@ bool Track::add(Processor* processor, std::optional<ObjectId> before_position)
     {
         processor->set_event_output(this);
         processor->set_active_rt_processing(true);
-        _update_channel_config();
     }
     return added;
 }
@@ -144,7 +143,6 @@ bool Track::remove(ObjectId processor)
             (*i)->set_event_output(nullptr);
             (*i)->set_active_rt_processing(false);
             _processors.erase(i);
-            _update_channel_config();
             return true;
         }
     }
@@ -193,6 +191,14 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
         ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
         ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
         processor->process_audio(proc_in, proc_out);
+
+        int unused_channels = aliased_out.channel_count() - processor->output_channels();
+        if (unused_channels > 0)
+        {
+            auto unused = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, aliased_out.channel_count() - unused_channels, unused_channels);
+            unused.clear();
+        }
+
         swap(aliased_in, aliased_out);
         _timer->stop_timer_rt_safe(processor_timestamp, processor->id());
     }
@@ -287,57 +293,6 @@ void Track::_common_init()
     for (auto& i : _pan_gain_smoothers_left)
     {
         i.set_direct(DEFAULT_TRACK_GAIN);
-    }
-}
-
-void Track::_update_channel_config()
-{
-    int input_channels = _current_input_channels;
-    int output_channels;
-    int max_processed_output_channels = _max_output_channels;
-
-    if (_max_input_channels == 1)
-    {
-        max_processed_output_channels = 1;
-    }
-
-    for (unsigned int i = 0; i < _processors.size(); ++i)
-    {
-        input_channels = std::min(input_channels, _processors[i]->max_input_channels());
-
-        if (input_channels != _processors[i]->input_channels())
-        {
-            _processors[i]->set_input_channels(input_channels);
-        }
-
-        if (i < _processors.size() - 1)
-        {
-            output_channels = std::min(max_processed_output_channels, std::min(_processors[i]->max_output_channels(),
-                                                                      _processors[i+1]->max_input_channels()));
-        }
-        else
-        {
-            output_channels = std::min(max_processed_output_channels, std::min(_processors[i]->max_output_channels(),
-                                                                      _current_output_channels));
-        }
-
-        if (output_channels != _processors[i]->output_channels())
-        {
-            _processors[i]->set_output_channels(output_channels);
-        }
-
-        input_channels = output_channels;
-    }
-
-    if (!_processors.empty())
-    {
-        auto last = _processors.back();
-        int track_outputs = std::min(_current_output_channels, last->output_channels());
-
-        if (track_outputs != last->output_channels())
-        {
-            last->set_output_channels(track_outputs);
-        }
     }
 }
 

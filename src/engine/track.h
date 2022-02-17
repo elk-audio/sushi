@@ -169,24 +169,11 @@ public:
 
     void set_bypassed(bool bypassed) override;
 
-    void set_input_channels(int channels) override
-    {
-        Processor::set_input_channels(channels);
-        _update_channel_config();
-    }
-
-    void set_output_channels(int channels) override
-    {
-        Processor::set_output_channels(channels);
-        _update_channel_config();
-    }
-
     /* Inherited from RtEventPipe */
     void send_event(const RtEvent& event) override;
 
 private:
     void _common_init();
-    void _update_channel_config();
     void _process_output_events();
     void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted);
 

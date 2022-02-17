@@ -31,41 +31,6 @@ protected:
     Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
 };
 
-
-TEST_F(TrackTest, TestChannelManagement)
-{
-    DummyProcessor test_processor(_host_control.make_host_control_mockup());
-    test_processor.set_input_channels(2);
-    /* Add the test processor to a mono track and verify
-     * it is configured in mono config */
-    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1, &_timer);
-    _module_under_test_mono.set_input_channels(1);
-    _module_under_test_mono.add(&test_processor);
-    EXPECT_EQ(1, test_processor.input_channels());
-    EXPECT_EQ(1, test_processor.output_channels());
-
-    /* Put a stereo and then a mono-only plugin on a
-     * stereo track */
-    gain_plugin::GainPlugin gain_plugin(_host_control.make_host_control_mockup());
-    DummyMonoProcessor mono_processor(_host_control.make_host_control_mockup());
-    _module_under_test.set_output_channels(1);
-    _module_under_test.add(&gain_plugin);
-    _module_under_test.add(&mono_processor);
-
-    EXPECT_EQ(2, _module_under_test.input_channels());
-    EXPECT_EQ(1, _module_under_test.output_channels());
-    EXPECT_EQ(2, gain_plugin.input_channels());
-    EXPECT_EQ(1, gain_plugin.output_channels());
-    EXPECT_EQ(1, mono_processor.input_channels());
-    EXPECT_EQ(1, mono_processor.output_channels());
-
-    /* Set the input to mono and watch the plugins adapt */
-    _module_under_test.set_input_channels(1);
-    EXPECT_EQ(1, _module_under_test.input_channels());
-    EXPECT_EQ(1, gain_plugin.input_channels());
-    EXPECT_EQ(1, gain_plugin.output_channels());
-}
-
 TEST_F(TrackTest, TestMultibusSetup)
 {
     Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
@@ -230,6 +195,30 @@ TEST_F(TrackTest, TestEventForwarding)
     /* Assert that the processor id of the event is that of the track and
      * not the id set. */
     ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
+}
+
+TEST_F(TrackTest, TestSilenceUnusedChannels)
+{
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(1);
+    plugin.set_output_channels(1);
+
+    // Add a mono plugin to a stereo track.
+    _module_under_test.add(&plugin);
+
+    // Put some noise in the input buffer
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+
+    _module_under_test.render();
+    auto out = _module_under_test.output_bus(0);
+
+    auto left_channel = ChunkSampleBuffer::create_non_owning_buffer(out, LEFT_CHANNEL_INDEX, 1);
+    auto right_channel = ChunkSampleBuffer::create_non_owning_buffer(out, RIGHT_CHANNEL_INDEX, 1);
+    test_utils::assert_buffer_value(1.0f, left_channel);
+    test_utils::assert_buffer_value(0.0f, right_channel);
 }
 
 TEST(TestStandAloneFunctions, TesPanAndGainCalculation)
