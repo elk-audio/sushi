@@ -98,8 +98,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     // Channel setup derived from ports:
     _max_input_channels = _model->input_audio_channel_count();
     _max_output_channels = _model->output_audio_channel_count();
-    _current_input_channels = _max_input_channels;
-    _current_output_channels = _max_output_channels;
 
     _fetch_plugin_name_and_label();
 
@@ -900,22 +898,14 @@ void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSa
 {
     int i;
 
-    if (_double_mono_input)
+    for (i = 0; i < _current_input_channels; ++i)
     {
-        _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
-        _process_inputs[1] = const_cast<float*>(in_buffer.channel(0));
+        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
     }
-    else
-    {
-        for (i = 0; i < _current_input_channels; ++i)
-        {
-            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
-        }
 
-        for (; i <= _max_input_channels; ++i)
-        {
-            _process_inputs[i] = (_dummy_input.channel(0));
-        }
+    for (; i <= _max_input_channels; ++i)
+    {
+        _process_inputs[i] = (_dummy_input.channel(0));
     }
 
     for (i = 0; i < _current_output_channels; i++)
@@ -926,21 +916,6 @@ void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSa
     for (; i <= _max_output_channels; ++i)
     {
         _process_outputs[i] = _dummy_output.channel(0);
-    }
-}
-
-void LV2_Wrapper::_update_mono_mode(bool speaker_arr_status)
-{
-    _double_mono_input = false;
-
-    if (speaker_arr_status)
-    {
-        return;
-    }
-
-    if (_current_input_channels == 1 && _max_input_channels == 2)
-    {
-        _double_mono_input = true;
     }
 }
 
