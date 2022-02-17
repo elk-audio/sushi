@@ -53,8 +53,6 @@ StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlu
     {
         s = START_NOTE;
     }
-    _max_input_channels = 4;
-    _max_output_channels = 4;
 }
 
 ProcessorReturnCode StepSequencerPlugin::init(float sample_rate)

@@ -6,7 +6,6 @@
 
 #include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
-#include "plugins/gain_plugin.h"
 
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
@@ -16,6 +15,7 @@ using namespace sushi;
 using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
+constexpr int TEST_CHANNEL_COUNT = 2;
 
 class TrackTest : public ::testing::Test
 {
@@ -28,7 +28,7 @@ protected:
     }
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
-    Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
+    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer};
 };
 
 TEST_F(TrackTest, TestMultibusSetup)
@@ -45,6 +45,7 @@ TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor(_host_control.make_host_control_mockup());
     DummyProcessor test_processor_2(_host_control.make_host_control_mockup());
+
     // Add to back
     auto ok = _module_under_test.add(&test_processor);
     EXPECT_TRUE(ok);
@@ -85,6 +86,10 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     _module_under_test.add(&plugin);
 
     auto in_bus = _module_under_test.input_bus(0);
@@ -98,6 +103,10 @@ TEST_F(TrackTest, TestPanAndGain)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     _module_under_test.add(&plugin);
     auto gain_param = _module_under_test.parameter_from_name("gain");
     auto pan_param = _module_under_test.parameter_from_name("pan");
@@ -126,6 +135,10 @@ TEST_F(TrackTest, TestMute)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     _module_under_test.add(&plugin);
     auto mute_param = _module_under_test.parameter_from_name("mute");
     ASSERT_FALSE(mute_param == nullptr);
@@ -155,6 +168,10 @@ TEST_F(TrackTest, TestEventProcessing)
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     plugin.set_event_output(&event_queue);
     _module_under_test.set_input_channels(2);
     _module_under_test.set_output_channels(2);
@@ -177,6 +194,9 @@ TEST_F(TrackTest, TestEventForwarding)
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
     plugin.set_event_output(&event_queue);
 
     _module_under_test.set_event_output(&event_queue);

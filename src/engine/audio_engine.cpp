@@ -38,7 +38,7 @@ constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr int  TIMING_LOG_PRINT_INTERVAL = 15;
 
 constexpr int  MAX_TRACKS = 32;
-constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
+constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * MAX_TRACK_CHANNELS;
 constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
 constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
@@ -557,7 +557,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
                                                                            int input_busses,
                                                                            int output_busses)
 {
-    if(input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES)
+    if(input_busses > MAX_TRACK_BUSSES && output_busses > MAX_TRACK_BUSSES)
     {
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};

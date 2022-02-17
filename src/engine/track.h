@@ -38,8 +38,7 @@ namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
-constexpr int TRACK_MAX_CHANNELS = 10;
-constexpr int TRACK_MAX_BUSSES = TRACK_MAX_CHANNELS / 2;
+constexpr int MAX_TRACK_BUSSES = MAX_TRACK_CHANNELS / 2;
 
 class Track : public InternalPlugin, public RtEventPipe
 {
@@ -185,10 +184,10 @@ private:
     int _output_busses;
 
     BoolParameterValue*                                _mute_parameter;
-    std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _gain_parameters;
-    std::array<FloatParameterValue*, TRACK_MAX_BUSSES> _pan_parameters;
-    std::array<ValueSmootherFilter<float>, TRACK_MAX_BUSSES> _pan_gain_smoothers_right;
-    std::array<ValueSmootherFilter<float>, TRACK_MAX_BUSSES> _pan_gain_smoothers_left;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _gain_parameters;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _pan_parameters;
+    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_right;
+    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_left;
 
     performance::PerformanceTimer* _timer;
 
