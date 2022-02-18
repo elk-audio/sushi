@@ -70,6 +70,7 @@ public:
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to a FloatParameterValue object
      */
@@ -79,6 +80,7 @@ public:
                                                   float default_value,
                                                   float min_value,
                                                   float max_value,
+                                                  bool automatable,
                                                   FloatParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -91,6 +93,7 @@ public:
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to an IntParameterValue object
      */
@@ -100,6 +103,7 @@ public:
                                               int default_value,
                                               int min_value,
                                               int max_value,
+                                              bool automatable,
                                               IntParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -110,12 +114,14 @@ public:
      * @param label The display name of the parameter
      * @param unit The unit of the parameters display value
      * @param default_value The default value the parameter should have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @return Pointer to a BoolParameterValue object
      */
     BoolParameterValue* register_bool_parameter(const std::string& name,
                                                 const std::string& label,
                                                 const std::string& unit,
-                                                bool default_value);
+                                                bool default_value,
+                                                bool automatable);
 
     /**
      * @brief Register a string property that can be updated through events. String

@@ -197,11 +197,13 @@ public:
                              const std::string& unit,
                              const T min_domain_value,
                              const T max_domain_Value,
+                             bool automatable,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
-                                        _max_domain_value(max_domain_Value)
+                                        _max_domain_value(max_domain_Value),
+                                        _automatable(automatable)
     {}
 
     ~TypedParameterDescriptor() = default;
@@ -209,10 +211,14 @@ public:
     float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
     float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
+    bool automatable() const override {return _automatable;}
+
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
     T _min_domain_value;
     T _max_domain_value;
+
+    bool _automatable {true};
 };
 
 /* Partial specialization for pointer type parameters */

@@ -360,11 +360,15 @@ bool LV2_Wrapper::_register_parameters()
             const std::string name_as_string = lilv_node_as_string(nameNode);
             const std::string param_unit = "";
 
+            // TODO AUD-400: Fetch automatable flag!
+            bool automatable = true;
+
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
                                                                                 name_as_string, // label
                                                                                 param_unit, // PARAMETER UNIT
                                                                                 currentPort->min(), // range min
                                                                                 currentPort->max(), // range max
+                                                                                automatable,
                                                                                 nullptr), // ParameterPreProcessor
                                                    static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
 

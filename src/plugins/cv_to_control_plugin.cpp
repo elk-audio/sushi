@@ -36,19 +36,22 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", "", false);
-    _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false);
+    _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", "", false, true);
+    _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false, true);
 
     _channel_parameter  = register_int_parameter("channel", "Channel", "",
                                                  0, 0, 16,
+                                                 true,
                                                  new IntParameterPreProcessor(0, 16));
 
     _coarse_tune_parameter  = register_int_parameter("tune", "Tune", "semitones",
                                                      0, -TUNE_RANGE, TUNE_RANGE,
+                                                     true,
                                                      new IntParameterPreProcessor(-TUNE_RANGE, TUNE_RANGE));
 
     _polyphony_parameter  = register_int_parameter("polyphony", "Polyphony", "",
                                                    1, 1, MAX_CV_VOICES,
+                                                   true,
                                                    new IntParameterPreProcessor(1, MAX_CV_VOICES));
 
     assert(_pitch_bend_mode_parameter && _velocity_mode_parameter && _channel_parameter &&
@@ -59,10 +62,12 @@ CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(
         auto i_str = std::to_string(i);
         _pitch_parameters[i] = register_float_parameter("pitch_" + i_str, "Pitch " + i_str, "semitones",
                                                         0.0f, 0.0f, 1.0f,
+                                                        true,
                                                         new FloatParameterPreProcessor(0.0f, 1.0f));
 
         _velocity_parameters[i] = register_float_parameter("velocity_" + i_str, "Velocity " + i_str, "",
                                                            0.5f, 0.0f, 1.0f,
+                                                           true,
                                                            new FloatParameterPreProcessor(0.0f, 1.0f));
 
         assert(_pitch_parameters[i] && _velocity_parameters[i]);

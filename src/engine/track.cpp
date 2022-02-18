@@ -266,23 +266,27 @@ void Track::_common_init()
     _processors.reserve(TRACK_MAX_PROCESSORS);
 
     _gain_parameters.at(0) = register_float_parameter("gain", "Gain", "dB",
-                                                         0.0f, -120.0f, 24.0f,
-                                                         new dBToLinPreProcessor(-120.0f, 24.0f));
+                                                      0.0f, -120.0f, 24.0f,
+                                                      true,
+                                                      new dBToLinPreProcessor(-120.0f, 24.0f));
 
     _pan_parameters.at(0) = register_float_parameter("pan", "Pan", "",
-                                                        0.0f, -1.0f, 1.0f,
-                                                        nullptr);
+                                                     0.0f, -1.0f, 1.0f,
+                                                     true,
+                                                     nullptr);
 
-    _mute_parameter = register_bool_parameter("mute", "Mute", "", false);
+    _mute_parameter = register_bool_parameter("mute", "Mute", "", false, true);
 
     for (int bus = 1 ; bus < _output_busses; ++bus)
     {
         _gain_parameters.at(bus) = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB",
                                                             0.0f, -120.0f, 24.0f,
+                                                            true,
                                                             new dBToLinPreProcessor(-120.0f, 24.0f));
 
         _pan_parameters.at(bus) = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "",
                                                            0.0f, -1.0f, 1.0f,
+                                                           true,
                                                            new FloatParameterPreProcessor(-1.0f, 1.0f));
     }
 

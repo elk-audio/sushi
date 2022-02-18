@@ -517,7 +517,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
         _host_control.post_event(event);
         SUSHI_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
+
+        // TODO: Why is this commented out?
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
+
         return ProcessorReturnCode::OK;
     }
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
@@ -665,12 +668,24 @@ bool Vst3xWrapper::_register_parameters()
             }
             else if (info.stepCount > 0 &&
                      register_parameter(new IntParameterDescriptor(_make_unique_parameter_name(param_name),
-                                                                   param_name, param_unit, 0, info.stepCount, nullptr), info.id))
+                                                                   param_name,
+                                                                   param_unit,
+                                                                   0,
+                                                                   info.stepCount,
+                                                                   info.kCanAutomate,
+                                                                   nullptr),
+                                        info.id))
             {
                 SUSHI_LOG_INFO("Registered INT parameter {}, id {}", param_name, info.id);
             }
             else if (register_parameter(new FloatParameterDescriptor(_make_unique_parameter_name(param_name),
-                                                                     param_name, param_unit, 0, 1, nullptr), info.id))
+                                                                     param_name,
+                                                                     param_unit,
+                                                                     0,
+                                                                     1,
+                                                                     info.kCanAutomate,
+                                                                     nullptr),
+                                        info.id))
             {
                 SUSHI_LOG_INFO("Registered parameter {}, id {}", param_name, info.id);
             }
@@ -680,11 +695,13 @@ bool Vst3xWrapper::_register_parameters()
             }
         }
     }
+
     // Create a "backwards map" from Vst3 parameter ids to parameter indices
     for (auto param : this->all_parameters())
     {
         _parameters_by_vst3_id[param->id()] = param;
     }
+
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
      * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
@@ -714,6 +731,7 @@ bool Vst3xWrapper::_register_parameters()
             _aftertouch_parameter.supported = true;
         }
     }
+
     return true;
 }
 

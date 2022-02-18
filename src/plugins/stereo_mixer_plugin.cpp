@@ -61,19 +61,34 @@ StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(Ho
     Processor::set_label(DEFAULT_LABEL);
 
     _ch1_pan = register_float_parameter("ch1_pan", "Channel 1 Pan", "",
-                                         -1.0, -1.0, 1.0, nullptr);
+                                        -1.0, -1.0, 1.0,
+                                        true,
+                                        nullptr);
+
     _ch1_gain = register_float_parameter("ch1_gain", "Channel 1 Gain", "",
-                                          0.0f, -120.0f, 24.0f,
-                                          new dBToLinPreProcessor(-120.0f, 24.0));
+                                         0.0f, -120.0f, 24.0f,
+                                         true,
+                                         new dBToLinPreProcessor(-120.0f, 24.0));
+
     _ch1_invert_phase = register_float_parameter("ch1_invert_phase", "Channel 1 Invert Phase", "",
-                                                  0.0f, 0.0f, 1.0f, nullptr);
+                                                 0.0f, 0.0f, 1.0f,
+                                                 true,
+                                                 nullptr);
     _ch2_pan = register_float_parameter("ch2_pan", "Channel 2 Pan", "",
-                                         1.0, -1.0, 1.0, nullptr);
+                                        1.0, -1.0, 1.0,
+                                        true,
+                                        nullptr);
+
     _ch2_gain = register_float_parameter("ch2_gain", "Channel 2 Gain", "",
-                                          0.0f, -120.0f, 24.0f,
-                                          new dBToLinPreProcessor(-120.0f, 24.0f));
+                                         0.0f, -120.0f, 24.0f,
+                                         true,
+                                         new dBToLinPreProcessor(-120.0f, 24.0f));
+
     _ch2_invert_phase = register_float_parameter("ch2_invert_phase", "Channel 2 Invert Phase", "",
-                                                  0.0f, 0.0f, 1.0f, nullptr);
+                                                 0.0f, 0.0f, 1.0f,
+                                                 true,
+                                                 nullptr);
+
     assert(_ch1_pan);
     assert(_ch1_gain);
     assert(_ch1_invert_phase);

@@ -33,10 +33,10 @@ LfoPlugin::LfoPlugin(HostControl host_control) : InternalPlugin(host_control)
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _freq_parameter = register_float_parameter("freq", "Frequency", "Hz",
-                                               1.0f, 0.001f, 10.0f);
+                                               1.0f, 0.001f, 10.0f, true);
 
     _out_parameter = register_float_parameter("out", "Lfo Out", "",
-                                              0.5f, 0.0f, 1.0f);
+                                              0.5f, 0.0f, 1.0f, true);
 
     assert(_freq_parameter && _out_parameter);
 }

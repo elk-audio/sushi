@@ -41,6 +41,7 @@ ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(
     Processor::set_label(DEFAULT_LABEL);
     _range_parameter = register_int_parameter("range", "Range", "octaves",
                                               2, 1, 5,
+                                              true,
                                               new IntParameterPreProcessor(1, 5));
 
     assert(_range_parameter);
