@@ -195,6 +195,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
         int unused_channels = aliased_out.channel_count() - processor->output_channels();
         if (unused_channels > 0)
         {
+            // If processor has fewer channels than the track, zero the rest to avoid passing garbage to the next processor
             auto unused = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, aliased_out.channel_count() - unused_channels, unused_channels);
             unused.clear();
         }
