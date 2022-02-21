@@ -143,6 +143,12 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
         ASSERT_GE((*it)->time(), (*(it + 1))->time());
     }
 
+    // Clear events manually, as that would be done by the EventDispatcher otherwise
+    for (auto* event : events)
+    {
+        delete event;
+    }
+
 }
 
 TEST_F(TestOfflineFrontend, TestNoiseGeneration)
