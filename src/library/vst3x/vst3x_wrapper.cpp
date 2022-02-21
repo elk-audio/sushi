@@ -349,15 +349,22 @@ void Vst3xWrapper::set_output_channels(int channels)
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
-    if (_enabled && !enabled)
+    if (enabled == _enabled)
     {
-        _instance.processor()->setProcessing(enabled);
-        _instance.component()->setActive(enabled);
+        return;
+    }
+
+    // Activate component first, then enable processing, but deactivate in reverse order
+    // See: https://developer.steinberg.help/display/VST/Audio+Processor+Call+Sequence
+    if (enabled)
+    {
+        _instance.component()->setActive(true);
+        _instance.processor()->setProcessing(true);
     }
     else
     {
-        _instance.component()->setActive(enabled);
-        _instance.processor()->setProcessing(enabled);
+        _instance.processor()->setProcessing(false);
+        _instance.component()->setActive(false);
     }
     Processor::set_enabled(enabled);
 }
