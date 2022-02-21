@@ -74,7 +74,7 @@ private:
     memory_relaxed_aquire_release::CircularFifo<std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS>, RINGBUFFER_SIZE> _ring_buffer;
 
     std::vector<float> _file_buffer;
-    SNDFILE* _output_file;
+    SNDFILE* _output_file{nullptr};
     SF_INFO _soundfile_info;
 
     BoolParameterValue* _recording_parameter;

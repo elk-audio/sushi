@@ -66,6 +66,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
     // Read the generated file and verify the result
     SNDFILE*    output_file;
     SF_INFO     soundfile_info;
+    memset(&soundfile_info, 0, sizeof(soundfile_info));
 
     if (! (output_file = sf_open(output_file_name.c_str(), SFM_READ, &soundfile_info)) )
     {
