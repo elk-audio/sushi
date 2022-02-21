@@ -141,9 +141,8 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> ParameterController::get_param
             info.type = to_external(descr->type());
             info.min_domain_value = descr->min_domain_value();
             info.max_domain_value = descr->max_domain_value();
-            info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
-                                descr->type() == ParameterType::INT   ||
-                                descr->type() == ParameterType::BOOL;
+            info.automatable = descr->automatable();
+
             return {ext::ControlStatus::OK, info};
         }
     }
