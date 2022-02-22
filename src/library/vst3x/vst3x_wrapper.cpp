@@ -650,7 +650,9 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
             auto param_unit = to_ascii_str(info.units);
-            bool automatable = info.flags & Steinberg::Vst::ParameterInfo::kCanAutomate;
+            bool automatable_bool = info.flags & Steinberg::Vst::ParameterInfo::kCanAutomate;
+
+            Automatable automatable = automatable_bool ? Automatable::AUTOMATABLE : Automatable::OUTPUT;
 
             if (info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {

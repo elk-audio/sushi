@@ -285,10 +285,13 @@ bool Vst2xWrapper::_register_parameters()
         param_unit[VST_STRING_BUFFER_SIZE-1] = 0;
         auto unique_name = _make_unique_parameter_name(param_name);
 
-        // TODO AUD-400: FETCH AUTOMATABLE FLAG
-        bool automatable = true;
-
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name, param_name, param_unit, 0, 1, automatable, nullptr));
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name,
+                                                                            param_name,
+                                                                            param_unit,
+                                                                            0,
+                                                                            1,
+                                                                            Automatable::AUTOMATABLE,
+                                                                            nullptr));
         if (param_inserted_ok)
         {
             SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);

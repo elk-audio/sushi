@@ -80,7 +80,7 @@ public:
                                                   float default_value,
                                                   float min_value,
                                                   float max_value,
-                                                  bool automatable,
+                                                  Automatable automatable,
                                                   FloatParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -103,7 +103,7 @@ public:
                                               int default_value,
                                               int min_value,
                                               int max_value,
-                                              bool automatable,
+                                              Automatable automatable,
                                               IntParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -121,7 +121,7 @@ public:
                                                 const std::string& label,
                                                 const std::string& unit,
                                                 bool default_value,
-                                                bool automatable);
+                                                Automatable automatable);
 
     /**
      * @brief Register a string property that can be updated through events. String

@@ -360,11 +360,11 @@ bool LV2_Wrapper::_register_parameters()
             const std::string name_as_string = lilv_node_as_string(name_node);
             const std::string param_unit = "";
 
-            bool automatable = true;
+            Automatable automatable = Automatable::AUTOMATABLE;
 
             if (current_port->flow() == PortFlow::FLOW_OUTPUT)
             {
-                automatable = false;
+                automatable = Automatable::OUTPUT;
                 SUSHI_LOG_INFO("LV2 Plugin: {}, parameter: {} is output only, so not automatable.", name(), name_as_string);
             }
 

@@ -38,7 +38,7 @@ SampleDelayPlugin::SampleDelayPlugin(HostControl host_control) : InternalPlugin(
                                            0,
                                            0,
                                            MAX_DELAY - 1,
-                                           true);
+                                           Automatable::AUTOMATABLE);
     for (int i = 0; i < DEFAULT_CHANNELS; i++)
     {
         _delaylines.push_back(std::array<float, MAX_DELAY>());

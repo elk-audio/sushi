@@ -178,7 +178,7 @@ private:
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
-    AEffect *_plugin_handle;
+    AEffect* _plugin_handle;
 
     VstTimeInfo _time_info;
 };

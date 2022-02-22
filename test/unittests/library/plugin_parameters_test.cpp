@@ -53,7 +53,7 @@ protected:
                                                       "fl",
                                                       -10.0f,
                                                       10.0f,
-                                                      true,
+                                                      Automatable::AUTOMATABLE,
                                                       new ParameterPreProcessor<float>(-10, 10)};
 
     IntParameterDescriptor _module_under_test_int{"int_parameter",
@@ -61,7 +61,7 @@ protected:
                                                   "int",
                                                   -10,
                                                   10,
-                                                  true,
+                                                  Automatable::AUTOMATABLE,
                                                   new ParameterPreProcessor<int>(-10, 10)};
 
     BoolParameterDescriptor _module_under_test_bool{"bool_parameter",
@@ -69,7 +69,7 @@ protected:
                                                     "bool",
                                                     false,
                                                     true,
-                                                    true,
+                                                    Automatable::AUTOMATABLE,
                                                     new ParameterPreProcessor<bool>(0, 1)};
 
     StringPropertyDescriptor _module_under_test_string{"string_property", "String Property", ""};

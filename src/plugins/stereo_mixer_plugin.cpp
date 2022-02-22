@@ -62,31 +62,31 @@ StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(Ho
 
     _ch1_pan = register_float_parameter("ch1_pan", "Channel 1 Pan", "",
                                         -1.0, -1.0, 1.0,
-                                        true,
+                                        Automatable::AUTOMATABLE,
                                         nullptr);
 
     _ch1_gain = register_float_parameter("ch1_gain", "Channel 1 Gain", "",
                                          0.0f, -120.0f, 24.0f,
-                                         true,
+                                         Automatable::AUTOMATABLE,
                                          new dBToLinPreProcessor(-120.0f, 24.0));
 
     _ch1_invert_phase = register_float_parameter("ch1_invert_phase", "Channel 1 Invert Phase", "",
                                                  0.0f, 0.0f, 1.0f,
-                                                 true,
+                                                 Automatable::AUTOMATABLE,
                                                  nullptr);
     _ch2_pan = register_float_parameter("ch2_pan", "Channel 2 Pan", "",
                                         1.0, -1.0, 1.0,
-                                        true,
+                                        Automatable::AUTOMATABLE,
                                         nullptr);
 
     _ch2_gain = register_float_parameter("ch2_gain", "Channel 2 Gain", "",
                                          0.0f, -120.0f, 24.0f,
-                                         true,
+                                         Automatable::AUTOMATABLE,
                                          new dBToLinPreProcessor(-120.0f, 24.0f));
 
     _ch2_invert_phase = register_float_parameter("ch2_invert_phase", "Channel 2 Invert Phase", "",
                                                  0.0f, 0.0f, 1.0f,
-                                                 true,
+                                                 Automatable::AUTOMATABLE,
                                                  nullptr);
 
     assert(_ch1_pan);

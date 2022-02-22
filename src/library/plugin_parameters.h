@@ -41,6 +41,12 @@ enum class ParameterType
     DATA,
 };
 
+enum class Automatable
+{
+    AUTOMATABLE,
+    OUTPUT
+};
+
 /**
  * @brief Base class for describing plugin parameters
  */
@@ -197,14 +203,22 @@ public:
                              const std::string& unit,
                              const T min_domain_value,
                              const T max_domain_Value,
-                             bool automatable,
+                             Automatable automatable,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
-                                        _max_domain_value(max_domain_Value),
-                                        _automatable(automatable)
-    {}
+                                        _max_domain_value(max_domain_Value)
+    {
+        if (automatable == Automatable::AUTOMATABLE)
+        {
+            _automatable = true;
+        }
+        else
+        {
+            _automatable = false;
+        }
+    }
 
     ~TypedParameterDescriptor() = default;
 

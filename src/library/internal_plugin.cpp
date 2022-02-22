@@ -46,7 +46,7 @@ FloatParameterValue* InternalPlugin::register_float_parameter(const std::string&
                                                               float default_value,
                                                               float min_value,
                                                               float max_value,
-                                                              bool automatable,
+                                                              Automatable automatable,
                                                               FloatParameterPreProcessor* pre_proc)
 {
     if (pre_proc == nullptr)
@@ -75,7 +75,7 @@ IntParameterValue* InternalPlugin::register_int_parameter(const std::string& id,
                                                           int default_value,
                                                           int min_value,
                                                           int max_value,
-                                                          bool automatable,
+                                                          Automatable automatable,
                                                           IntParameterPreProcessor* pre_proc)
 {
     if (pre_proc == nullptr)
@@ -102,7 +102,7 @@ BoolParameterValue* InternalPlugin::register_bool_parameter(const std::string& i
                                                             const std::string& label,
                                                             const std::string& unit,
                                                             bool default_value,
-                                                            bool automatable)
+                                                            Automatable automatable)
 {
     auto param = new BoolParameterDescriptor(id, label, unit, true, false, automatable, nullptr);
 
