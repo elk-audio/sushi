@@ -44,6 +44,18 @@ SampleDelayPlugin::SampleDelayPlugin(HostControl host_control) : InternalPlugin(
     }
 }
 
+void SampleDelayPlugin::set_input_channels(int channels)
+{
+    Processor::set_input_channels(channels);
+    _channel_config(channels);
+}
+
+void SampleDelayPlugin::set_output_channels(int channels)
+{
+    Processor::set_output_channels(channels);
+    _channel_config(channels);
+}
+
 void SampleDelayPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     // update delay value
@@ -78,7 +90,34 @@ void SampleDelayPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
     }
 }
 
+void SampleDelayPlugin::_channel_config(int channels)
+{
+    int max_channels = std::max(std::max(channels, _current_input_channels), _current_output_channels);
+    if (_delaylines.size() != static_cast<size_t>(max_channels))
+    {
+        _delaylines.resize(max_channels);
+        _reset();
+    }
+}
 
-    
+void SampleDelayPlugin::set_enabled(bool enabled)
+{
+    if (enabled == false)
+    {
+        _reset();
+    }
+}
+
+void SampleDelayPlugin::_reset()
+{
+    for (auto& line : _delaylines)
+    {
+        line.fill(0.0f);
+    }
+    _read_idx = 0;
+    _write_idx = 0;
+}
+
+
 } // namespace sample_delay_plugin
 } // namespace sushi

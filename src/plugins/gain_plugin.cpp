@@ -25,14 +25,11 @@
 namespace sushi {
 namespace gain_plugin {
 
-constexpr int MAX_CHANNELS = 16;
 constexpr auto DEFAULT_NAME = "sushi.testing.gain";
 constexpr auto DEFAULT_LABEL = "Gain";
 
 GainPlugin::GainPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS;
-    _max_output_channels = MAX_CHANNELS;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _gain_parameter = register_float_parameter("gain", "Gain", "dB",
@@ -41,15 +38,7 @@ GainPlugin::GainPlugin(HostControl host_control) : InternalPlugin(host_control)
     assert(_gain_parameter);
 }
 
-GainPlugin::~GainPlugin()
-{}
-
-void GainPlugin::set_input_channels(int channels)
-{
-    Processor::set_input_channels(channels);
-    _current_output_channels = channels;
-    _max_output_channels = channels;
-}
+GainPlugin::~GainPlugin() = default;
 
 void GainPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {

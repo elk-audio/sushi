@@ -60,6 +60,7 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
+    _max_input_channels = 0;
 }
 
 ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
@@ -83,15 +84,21 @@ void SamplePlayerPlugin::configure(float sample_rate)
     return;
 }
 
+void SamplePlayerPlugin::set_enabled(bool enabled)
+{
+    Processor::set_enabled(enabled);
+    if (enabled == false)
+    {
+        _all_notes_off();
+    }
+}
+
 void SamplePlayerPlugin::set_bypassed(bool bypassed)
 {
     // Kill all voices in bypass so we dont have any hanging notes when turning back on
     if (bypassed)
     {
-        for (auto &voice : _voices)
-        {
-            voice.note_off(1.0f, 0);
-        }
+        _all_notes_off();
     }
     Processor::set_bypassed(bypassed);
 }
@@ -218,6 +225,14 @@ ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id,
         }
     }
     return InternalPlugin::set_property_value(property_id, value);
+}
+
+void SamplePlayerPlugin::_all_notes_off()
+{
+    for (auto &voice : _voices)
+    {
+        voice.note_off(1.0f, 0);
+    }
 }
 
 BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)

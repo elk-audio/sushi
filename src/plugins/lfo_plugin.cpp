@@ -30,8 +30,6 @@ constexpr auto DEFAULT_LABEL = "Lfo";
 
 LfoPlugin::LfoPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = 8;
-    _max_output_channels = 8;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
     _freq_parameter = register_float_parameter("freq", "Frequency", "Hz",

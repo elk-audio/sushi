@@ -38,7 +38,7 @@ constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr int  TIMING_LOG_PRINT_INTERVAL = 15;
 
 constexpr int  MAX_TRACKS = 32;
-constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
+constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * MAX_TRACK_CHANNELS;
 constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
 constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
@@ -557,7 +557,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
                                                                            int input_busses,
                                                                            int output_busses)
 {
-    if(input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES)
+    if(input_busses > MAX_TRACK_BUSSES && output_busses > MAX_TRACK_BUSSES)
     {
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
@@ -623,6 +623,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id);
     }
+    track->set_enabled(false);
     _processors.remove_track(track->id());
     _deregister_processor(track.get());
     _event_dispatcher->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED,
@@ -648,7 +649,6 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
         return {status, ObjectId(0)};
     }
 
-    processor->set_enabled(true);
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
@@ -698,6 +698,10 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
+    plugin->set_enabled(true);
+    plugin->set_input_channels(std::min(plugin->max_input_channels(), track->input_channels()));
+    plugin->set_output_channels(std::min(plugin->max_output_channels(), track->input_channels()));
+
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
@@ -731,7 +735,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
 
 EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id)
 {
-    auto plugin = _processors.processor(plugin_id);
+    auto plugin = _processors.mutable_processor(plugin_id);
     auto track = _processors.mutable_track(track_id);
     if (plugin == nullptr)
     {
@@ -758,6 +762,8 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
             return EngineReturnStatus::ERROR;
         }
     }
+
+    plugin->set_enabled(false);
 
     bool removed = _processors.remove_from_track(plugin_id, track_id);
     if (removed)
@@ -807,6 +813,8 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std::shared_ptr<Track> track)
 {
     track->init(_sample_rate);
+    track->set_enabled(true);
+
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {

@@ -27,10 +27,11 @@
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
+#include "library/constants.h"
 
 namespace sushi {
 
-constexpr int DEFAULT_CHANNELS = 2;
+constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
 /**
  * @brief internal base class for processors that keeps track of all host-related

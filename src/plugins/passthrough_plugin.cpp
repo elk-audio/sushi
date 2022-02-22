@@ -35,11 +35,9 @@ PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(
     Processor::set_label(DEFAULT_LABEL);
 }
 
-PassthroughPlugin::~PassthroughPlugin()
-{}
+PassthroughPlugin::~PassthroughPlugin() = default;
 
-void
-PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+void PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
 

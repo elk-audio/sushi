@@ -349,11 +349,24 @@ void Vst3xWrapper::set_output_channels(int channels)
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
-    auto res = _instance.processor()->setProcessing(Steinberg::TBool(enabled));
-    if (res == Steinberg::kResultOk)
+    if (enabled == _enabled)
     {
-        _enabled = enabled;
+        return;
     }
+
+    // Activate component first, then enable processing, but deactivate in reverse order
+    // See: https://developer.steinberg.help/display/VST/Audio+Processor+Call+Sequence
+    if (enabled)
+    {
+        _instance.component()->setActive(true);
+        _instance.processor()->setProcessing(true);
+    }
+    else
+    {
+        _instance.processor()->setProcessing(false);
+        _instance.component()->setActive(false);
+    }
+    Processor::set_enabled(enabled);
 }
 
 void Vst3xWrapper::set_bypassed(bool bypassed)
@@ -721,7 +734,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_input_channels = info.channelCount;
-            _current_input_channels = _max_input_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -739,7 +751,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_output_channels = info.channelCount;
-            _current_output_channels = _max_output_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kOutput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)

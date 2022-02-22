@@ -32,8 +32,6 @@ EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host
 {
     _max_input_channels = MAX_CHANNELS_SUPPORTED;
     _max_output_channels = MAX_CHANNELS_SUPPORTED;
-    _current_input_channels = 1;
-    _current_output_channels = 1;
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -56,29 +54,21 @@ EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host
 ProcessorReturnCode EqualizerPlugin::init(float sample_rate)
 {
     _sample_rate = sample_rate;
-
-    for (auto& f : _filters)
-    {
-        f.set_smoothing(AUDIO_CHUNK_SIZE);
-        f.reset();
-    }
-
+    _reset_filters();
     return ProcessorReturnCode::OK;
 }
 
 void EqualizerPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
+    _reset_filters();
     return;
 }
 
-void EqualizerPlugin::set_input_channels(int channels)
+void EqualizerPlugin::set_enabled(bool enabled)
 {
-    Processor::set_input_channels(channels);
-    {
-        _current_output_channels = channels;
-        _max_output_channels = channels;
-    }
+    Processor::set_enabled(enabled);
+    _reset_filters();
 }
 
 void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -103,6 +93,15 @@ void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     else
     {
         bypass_process(in_buffer, out_buffer);
+    }
+}
+
+void EqualizerPlugin::_reset_filters()
+{
+    for (auto& filter : _filters)
+    {
+        filter.set_smoothing(AUDIO_CHUNK_SIZE);
+        filter.reset();
     }
 }
 

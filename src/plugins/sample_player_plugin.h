@@ -42,6 +42,8 @@ public:
 
     void configure(float sample_rate) override;
 
+    void set_enabled(bool enabled) override;
+
     void set_bypassed(bool bypassed) override;
 
     void process_event(const RtEvent& event) override ;
@@ -51,6 +53,8 @@ public:
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
 private:
+    void _all_notes_off();
+
     BlobData _load_sample_file(const std::string &file_name);
 
     float*  _sample_buffer{nullptr};
