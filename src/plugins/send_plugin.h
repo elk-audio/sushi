@@ -25,13 +25,14 @@
 
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
+#include "library/constants.h"
 
 namespace sushi {
 
 class SendReturnFactory;
 namespace return_plugin { class ReturnPlugin; }
 
-constexpr int MAX_SEND_CHANNELS = 2;
+constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
 
 namespace send_plugin {
 

@@ -29,7 +29,7 @@
 namespace sushi {
 namespace peak_meter_plugin {
 
-constexpr int MAX_METERED_CHANNELS = engine::TRACK_MAX_CHANNELS;
+constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
 
 class PeakMeterPlugin : public InternalPlugin
 {

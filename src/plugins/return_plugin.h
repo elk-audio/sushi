@@ -57,6 +57,12 @@ public:
 
     void configure(float sample_rate) override;
 
+    void set_input_channels(int channels) override;
+
+    void set_output_channels(int channels) override;
+
+    void set_enabled(bool enabled) override;
+
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
@@ -66,6 +72,8 @@ public:
     void set_bypassed(bool bypassed) override;
 
 private:
+    void _channel_config(int channels);
+
     void inline _swap_buffers();
 
     void inline _maybe_swap_buffers(Time current_time);

@@ -22,7 +22,7 @@ const char PLUGIN_NAME[] = "ADelay";
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 constexpr float TEST_SAMPLE_RATE = 48000;
-
+constexpr int   TEST_CHANNEL_COUNT = 2;
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
@@ -77,6 +77,8 @@ protected:
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
         _module_under_test->set_event_output(&_event_queue);
+        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
     }
 
     void TearDown()

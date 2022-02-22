@@ -32,11 +32,12 @@
 
 #include "library/sample_buffer.h"
 #include "library/rt_event.h"
+#include "library/constants.h"
 
 namespace sushi {
 namespace vst3 {
 
-constexpr int VST_WRAPPER_MAX_N_CHANNELS = 8;
+constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 
 /**
  * @brief Wrapping the processdata in our own class for convenience
