@@ -34,7 +34,7 @@ endif()
 # Get the latest commit hash of the working branch
 execute_process(
     COMMAND git log -1 --format=%H
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -42,7 +42,7 @@ execute_process(
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M")
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/include/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in
     ${CMAKE_BINARY_DIR}/generated/version.h
 )
 
@@ -600,7 +600,7 @@ set(DOC_FILES_INSTALL
 if (APPLE)
     install(CODE [[
     include(BundleUtilities)
-    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi.app" "" "")
+    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi/sushi.app" "" "") # TODO: fix to work when not submodule
     ]] COMPONENT Runtime)
 endif()
 
