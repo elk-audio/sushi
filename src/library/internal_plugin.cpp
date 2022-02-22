@@ -26,7 +26,11 @@
 
 #include "library/internal_plugin.h"
 
+#include "logging.h"
+
 namespace sushi {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
@@ -158,17 +162,41 @@ void InternalPlugin::process_event(const RtEvent& event)
             {
                 case ParameterType::FLOAT:
                 {
-                    storage->float_parameter_value()->set(typed_event->value());
+                    auto parameter_value = storage->float_parameter_value();
+                    if (parameter_value->descriptor()->automatable())
+                    {
+                        parameter_value->set(typed_event->value());
+                    }
+                    else
+                    {
+                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
+                    }
                     break;
                 }
                 case ParameterType::INT:
                 {
-                    storage->int_parameter_value()->set(typed_event->value());
+                    auto parameter_value = storage->int_parameter_value();
+                    if (parameter_value->descriptor()->automatable())
+                    {
+                        parameter_value->set(typed_event->value());
+                    }
+                    else
+                    {
+                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
+                    }
                     break;
                 }
                 case ParameterType::BOOL:
                 {
-                    storage->bool_parameter_value()->set_values(typed_event->value(), typed_event->value());
+                    auto parameter_value = storage->bool_parameter_value();
+                    if (parameter_value->descriptor()->automatable())
+                    {
+                        parameter_value->set(typed_event->value());
+                    }
+                    else
+                    {
+                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
+                    }
                     break;
                 }
                 default:
