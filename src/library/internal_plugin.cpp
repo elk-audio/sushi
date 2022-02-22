@@ -26,11 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-#include "logging.h"
-
 namespace sushi {
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
@@ -167,10 +163,6 @@ void InternalPlugin::process_event(const RtEvent& event)
                     {
                         parameter_value->set(typed_event->value());
                     }
-                    else
-                    {
-                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
-                    }
                     break;
                 }
                 case ParameterType::INT:
@@ -180,10 +172,6 @@ void InternalPlugin::process_event(const RtEvent& event)
                     {
                         parameter_value->set(typed_event->value());
                     }
-                    else
-                    {
-                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
-                    }
                     break;
                 }
                 case ParameterType::BOOL:
@@ -192,10 +180,6 @@ void InternalPlugin::process_event(const RtEvent& event)
                     if (parameter_value->descriptor()->automatable())
                     {
                         parameter_value->set(typed_event->value());
-                    }
-                    else
-                    {
-                        SUSHI_LOG_WARNING("Attempt to set the value of output parameter named: {}", parameter_value->descriptor()->name());
                     }
                     break;
                 }
