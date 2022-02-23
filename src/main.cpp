@@ -34,6 +34,8 @@
 #include "audio_frontends/portaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
+#include "control_frontends/liblo_osc_messenger.h"
+
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
@@ -502,8 +504,8 @@ int main(int argc, char* argv[])
 #endif
         osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
                                                                               controller.get(),
-                                                                              osc_server_port,
-                                                                              osc_send_port);
+                                                                              new sushi::osc::LibloOscMessenger(osc_server_port,
+                                                                                                                osc_send_port));
         controller->set_osc_frontend(osc_frontend.get());
         configurator->set_osc_frontend(osc_frontend.get());
 

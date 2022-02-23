@@ -1,4 +1,5 @@
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gmock/gmock-actions.h>
 
 #undef private
 
@@ -8,6 +9,12 @@
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
 #include "engine/controller/osc_controller.cpp"
+
+#include "test_utils/mock_osc_interface.h"
+
+using ::testing::Return;
+using ::testing::NiceMock;
+using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
@@ -27,9 +34,16 @@ protected:
 
     void SetUp()
     {
+        auto mock_osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+
+        _osc_frontend = std::make_unique<OSCFrontend>(&_test_engine, &_controller, mock_osc_interface);
+
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
-        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend.init());
-        _osc_controller.set_osc_frontend(&_osc_frontend);
+
+        EXPECT_CALL(*mock_osc_interface, init()).Times(1).WillOnce(Return(true));
+
+        ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend->init());
+        _osc_controller.set_osc_frontend(_osc_frontend.get());
     }
 
     void TearDown() {}
@@ -38,7 +52,9 @@ protected:
 
     sushi::ext::ControlMockup _controller;
     OscController _osc_controller{&_test_engine};
-    OSCFrontend _osc_frontend{&_test_engine, &_controller, OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT};
+
+    std::unique_ptr<OSCFrontend> _osc_frontend;
+
     EventDispatcherMockup* _test_dispatcher;
 };
 

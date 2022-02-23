@@ -154,7 +154,6 @@ public:
     grpc::Status GetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyIdentifier* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status SetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyValue* request, sushi_rpc::GenericVoidValue* response) override;
 
-
 private:
     sushi::ext::ParameterController* _controller;
 };

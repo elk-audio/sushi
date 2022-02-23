@@ -366,6 +366,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/audio_frontends/portaudio_frontend.cpp
                       src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
+                      src/control_frontends/liblo_osc_messenger.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
@@ -438,6 +439,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
                         src/control_frontends/osc_utils.h
+                        src/control_frontends/liblo_osc_messenger.h
                         src/control_frontends/base_midi_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
