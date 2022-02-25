@@ -189,6 +189,12 @@ service OscController
     rpc DisableAllOutput (GenericVoidValue) returns (GenericVoidValue) {}
 }
 
+service SessionController
+{
+    rpc SaveSession (GenericVoidValue) returns (SessionState) {}
+    rpc RestoreSession (SessionState) returns ()GenericVoidValue) {}
+}
+
 service NotificationController
 {
     rpc SubscribeToTransportChanges (GenericVoidValue) returns (stream TransportUpdate) {}
@@ -431,6 +437,7 @@ message ProcessorState
     OptionalBoolValue       bypassed = 2;
     repeated PropertyValue  properties = 3;
     repeated ParameterValue parameters = 4;
+    bytes                   binary_data = 5;
 }
 
 message ProcessorStateSetRequest
@@ -695,4 +702,67 @@ message ProcessorUpdate
     Action              action = 1;
     ProcessorIdentifier processor = 2;
     TrackIdentifier     parent_track = 3;
+}
+
+message MidiState
+{
+    int32                       inputs = 1;
+    int32                       outputs = 2;
+    repeated MidiKbdConnection  kbd_input_connections = 3;
+    repeated MidiKbdConnection  kbd_output_connections = 4;
+    repeated MidiCCConnection   cc_connections = 5;
+    repeated MidiPCConnection   pc_connections = 6;
+}
+
+message OscState
+{
+    bool                            enable_all_processor_outputs = 1;
+    repeated ParameterIdentifier    enabled_processor_outputs = 2;
+}
+
+message EngineState
+{
+    float                       sample_rate = 1;
+    float                       tempo = 2;
+    PlayingMode                 playing_mode = 3;
+    SyncMode                    sync_mode = 4;
+    TimeSignature               time_signature = 5;
+    bool                        clip_detection_input = 6;
+    bool                        clip_detection_output = 7;
+    bool                        master_limiter = 8;
+    int32                       cv_inputs = 9;
+    int32                       cv_outputs = 10;
+    int32                       midi_inputs = 11;
+    int32                       midi_outputs = 12;
+    repeated AudioConnection    input_connections = 13;
+    repeated AudioConnection    output_connections = 14;
+}
+
+message PluginClass
+{
+    string          name = 1;
+    string          label = 2;
+    string          uid = 3;
+    string          path = 4;
+    PluginType      type = 5;
+    ProcessorState  state = 6;
+}
+
+message TrackState
+{
+    string                  label = 1;
+    string                  name = 2;
+    int32                   input_channels = 3;
+    int32                   input_busses = 4;
+    int32                   output_channels = 5;
+    int32                   output_busses = 6;
+    repeated PluginClass    processors = 7;
+}
+
+message SessionState
+{
+    OscState                osc_state = 1;
+    MidiState               midi_state = 2;
+    EngineState             engine_state = 3;
+    repeated TrackState     tracks = 4;
 }
