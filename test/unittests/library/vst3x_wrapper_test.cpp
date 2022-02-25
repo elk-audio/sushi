@@ -59,18 +59,15 @@ class TestVst3xWrapper : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestVst3xWrapper()
-    {
-    }
+    TestVst3xWrapper() {}
 
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
-        SushiHostApplication host_app;
-        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
-                                              full_plugin_path,
-                                              plugin_name,
-                                              &host_app);
+        _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
+                                                            full_plugin_path,
+                                                            plugin_name,
+                                                            &_host_app);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
@@ -81,19 +78,16 @@ protected:
         _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
     }
 
-    void TearDown()
-    {
-        delete _module_under_test;
-    }
+    SushiHostApplication _host_app;
     HostControlMockup _host_control;
-    Vst3xWrapper* _module_under_test;
+    std::unique_ptr<Vst3xWrapper> _module_under_test;
     RtSafeRtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    ASSERT_TRUE(_module_under_test);
+    ASSERT_TRUE(_module_under_test.get());
     EXPECT_EQ("ADelay", _module_under_test->name());
 
     auto parameters = _module_under_test->all_parameters();
@@ -155,7 +149,7 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 
     // Manually call the event callback to send the update back to the
     // controller, as eventloop is not running
-    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    _module_under_test->parameter_update_callback(_module_under_test.get(), 0);
     EXPECT_TRUE(_module_under_test->bypassed());
 
     // Don't test actual bypass processing because the ADelay example
@@ -246,7 +240,7 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     // Manually call the event callback to send the update back to the controller, as eventloop is not running
-    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    _module_under_test->parameter_update_callback(_module_under_test.get(), 0);
 
     std::tie(status, value) = _module_under_test->parameter_value(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);

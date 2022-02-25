@@ -537,6 +537,8 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
+    PluginRegistry _plugin_registry;
+
     ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
@@ -574,8 +576,6 @@ private:
 
     bool _master_limter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
-
-    PluginRegistry _plugin_registry;
 };
 
 /**
