@@ -192,7 +192,7 @@ service OscController
 service SessionController
 {
     rpc SaveSession (GenericVoidValue) returns (SessionState) {}
-    rpc RestoreSession (SessionState) returns ()GenericVoidValue) {}
+    rpc RestoreSession (SessionState) returns (GenericVoidValue) {}
 }
 
 service NotificationController
@@ -761,8 +761,10 @@ message TrackState
 
 message SessionState
 {
-    OscState                osc_state = 1;
-    MidiState               midi_state = 2;
-    EngineState             engine_state = 3;
-    repeated TrackState     tracks = 4;
+    SushiBuildInfo          sushi_info = 1;
+    string                  save_date = 2;
+    OscState                osc_state = 3;
+    MidiState               midi_state = 4;
+    EngineState             engine_state = 5;
+    repeated TrackState     tracks = 6;
 }
