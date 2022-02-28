@@ -10,8 +10,8 @@ TEST(TestParameterDump, TestParameterDocumentGeneration)
     rapidjson::Document expected_result;
     expected_result.Parse(expected_result_str.c_str());
     sushi::ext::ControlMockup controller;
-    
+
     rapidjson::Document result = sushi::generate_processor_parameter_document(&controller);
 
-    ASSERT_EQ(expected_result, result);
+    ASSERT_TRUE(expected_result == result);
 }
