@@ -46,6 +46,7 @@
 #include "library/rt_event_fifo.h"
 #include "library/midi_encoder.h"
 #include "library/midi_decoder.h"
+#include "library/constants.h"
 
 #include "lv2_model.h"
 
@@ -53,7 +54,7 @@ namespace sushi {
 namespace lv2 {
 
 /* Should match the maximum reasonable number of channels of a plugin */
-constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
+constexpr int LV2_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 
 /**
  * @brief Wrapper around the global LilvWorld instance so that it can be used
@@ -159,14 +160,6 @@ private:
      */
     bool _register_parameters();
 
-    /**
-     * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
-     *        we can provide the plugin with a dual mono input/output instead.
-     *        Calling this sets up possible dual mono mode.
-     * @param speaker_arr_status True if the plugin supports the given speaker arrangement.
-     */
-    void _update_mono_mode(bool speaker_arr_status);
-
     void _fetch_plugin_name_and_label();
 
     void _map_audio_buffers(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer);
@@ -185,7 +178,6 @@ private:
     ChunkSampleBuffer _dummy_input{1};
 
     ChunkSampleBuffer _dummy_output{1};
-    bool _double_mono_input{false};
 
     std::string _plugin_path;
 

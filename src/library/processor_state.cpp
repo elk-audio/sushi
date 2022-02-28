@@ -54,4 +54,53 @@ void ProcessorState::add_property_change(ObjectId property_id, const std::string
     _property_changes.emplace_back(property_id, value);
 }
 
+std::optional<int> ProcessorState::program() const
+{
+    return _program;
+}
+
+std::optional<int> ProcessorState::bypassed() const
+{
+    return _bypassed;
+}
+
+const std::vector<std::pair<ObjectId, float>>& ProcessorState::parameters() const
+{
+    return _parameter_changes;
+}
+
+const std::vector<std::pair<ObjectId, std::string>>& ProcessorState::properties() const
+{
+    return _property_changes;
+}
+
+RtState::RtState() = default;
+
+RtState::RtState(const ProcessorState& state)
+{
+    _bypassed = state.bypassed();
+    _parameter_changes = state.parameters();
+}
+
+RtState::~RtState() = default;
+
+void RtState::set_bypass(bool enabled)
+{
+    _bypassed = enabled;
+}
+
+void RtState::add_parameter_change(ObjectId parameter_id, float value)
+{
+    _parameter_changes.emplace_back(parameter_id, value);
+}
+
+std::optional<int> RtState::bypassed() const
+{
+    return _bypassed;
+}
+
+const std::vector<std::pair<ObjectId, float>>& RtState::parameters() const
+{
+    return _parameter_changes;
+}
 }; // end namespace sushi

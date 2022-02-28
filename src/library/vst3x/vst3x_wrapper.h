@@ -190,6 +190,8 @@ private:
     int _program_count{0};
     int _current_program{0};
 
+    bool _notify_parameter_change{false};
+
     BypassManager _bypass_manager{_bypassed};
 
     std::vector<std::string> _program_files;

@@ -24,6 +24,7 @@
 #include <map>
 
 #include "library/processor.h"
+#include "library/constants.h"
 #include "vst2x_plugin_loader.h"
 #include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"
@@ -32,7 +33,7 @@ namespace sushi {
 namespace vst2 {
 
 /* Should match the maximum reasonable number of channels of a vst */
-constexpr int VST_WRAPPER_MAX_N_CHANNELS = 8;
+constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
@@ -52,7 +53,6 @@ public:
             _process_inputs{},
             _process_outputs{},
             _can_do_soft_bypass{false},
-            _double_mono_input{false},
             _plugin_path{vst_plugin_path},
             _library_handle{nullptr},
             _plugin_handle{nullptr}
@@ -160,15 +160,9 @@ private:
 
     bool _update_speaker_arrangements(int inputs, int outputs);
 
-    /**
-     * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
-     *        we can provide the plugin with a dual mono input/output instead.
-     *        Calling this sets up possible dual mono mode.
-     * @param speaker_arr_status True if the plugin supports the given speaker arrangement.
-     */
-    void _update_mono_mode(bool speaker_arr_status);
-
     void _map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+
+    void _set_bypass_rt(bool bypassed);
 
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
@@ -178,14 +172,13 @@ private:
     ChunkSampleBuffer _dummy_output{1};
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
-    bool _double_mono_input;
     int _number_of_programs{0};
 
     BypassManager _bypass_manager{_bypassed};
 
     std::string _plugin_path;
     LibraryHandle _library_handle;
-    AEffect *_plugin_handle;
+    AEffect* _plugin_handle;
 
     VstTimeInfo _time_info;
 };

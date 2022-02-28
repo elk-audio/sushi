@@ -280,5 +280,5 @@ TEST_F(ControllerTest, TestParameterControls)
 
     auto [str_value_status, str_value] = parameter_controller->get_parameter_value_as_string(proc_id, id);
     ASSERT_EQ(ext::ControlStatus::OK, str_value_status);
-    EXPECT_EQ("1000.000000", str_value);
+    EXPECT_EQ("1000.00", str_value);
 }

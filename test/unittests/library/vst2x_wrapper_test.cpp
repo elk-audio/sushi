@@ -46,6 +46,7 @@ static constexpr float TEST_SYNTH_EXPECTED_OUT[2][64] = {
 };
 
 constexpr float TEST_SAMPLE_RATE = 48000;
+constexpr int   TEST_CHANNEL_COUNT = 2;
 
 class TestVst2xWrapper : public ::testing::Test
 {
@@ -57,21 +58,19 @@ protected:
 
     void SetUp(const std::string& plugin_path)
     {
-        char* full_plugin_path = realpath(plugin_path.c_str(), NULL);
-        _module_under_test = new Vst2xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
+        char* full_plugin_path = realpath(plugin_path.c_str(), nullptr);
+        _module_under_test = std::make_unique<Vst2xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
+        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
     }
 
-    void TearDown()
-    {
-        delete _module_under_test;
-    }
     HostControlMockup _host_control;
-    Vst2xWrapper* _module_under_test;
+    std::unique_ptr<Vst2xWrapper> _module_under_test;
 };
 
 
@@ -139,10 +138,13 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
     ChunkSampleBuffer stereo_buffer(2);
 
     _module_under_test->set_input_channels(1);
-    EXPECT_TRUE(_module_under_test->_double_mono_input);
     test_utils::fill_sample_buffer(mono_buffer, 1.0f);
     _module_under_test->process_audio(mono_buffer, stereo_buffer);
-    test_utils::assert_buffer_value(1.0f, stereo_buffer);
+
+    auto left = ChunkSampleBuffer::create_non_owning_buffer(stereo_buffer, 0, 1);
+    auto right = ChunkSampleBuffer::create_non_owning_buffer(stereo_buffer, 1, 1);
+    test_utils::assert_buffer_value(1.0f, left);
+    test_utils::assert_buffer_value(0.0f, right);
 
     _module_under_test->set_output_channels(1);
     _module_under_test->set_input_channels(2);
@@ -313,4 +315,21 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_TRUE(_module_under_test->bypassed());
     EXPECT_EQ(2, _module_under_test->current_program());
     EXPECT_EQ("Program 3", _module_under_test->current_program_name());
+
+    // Test with realtime set to true
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(1, 0.5);
+
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.5f, _module_under_test->parameter_value(1).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+    EXPECT_EQ(1, _module_under_test->current_program());
+    EXPECT_EQ("Program 2", _module_under_test->current_program_name());
 }

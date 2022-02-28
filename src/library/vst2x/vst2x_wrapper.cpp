@@ -92,9 +92,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
-    _current_input_channels = _max_input_channels;
     _max_output_channels = _plugin_handle->numOutputs;
-    _current_output_channels = _max_output_channels;
 
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, 0, 0);
@@ -132,15 +130,15 @@ void Vst2xWrapper::configure(float sample_rate)
 void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
+    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
+    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
 }
 
 
@@ -286,7 +284,14 @@ bool Vst2xWrapper::_register_parameters()
         param_name[VST_STRING_BUFFER_SIZE-1] = 0;
         param_unit[VST_STRING_BUFFER_SIZE-1] = 0;
         auto unique_name = _make_unique_parameter_name(param_name);
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name, param_name, param_unit, 0, 1, nullptr));
+
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name,
+                                                                            param_name,
+                                                                            param_unit,
+                                                                            0,
+                                                                            1,
+                                                                            Direction::AUTOMATABLE,
+                                                                            nullptr));
         if (param_inserted_ok)
         {
             SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
@@ -303,32 +308,63 @@ bool Vst2xWrapper::_register_parameters()
 
 void Vst2xWrapper::process_event(const RtEvent& event)
 {
-    if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
+
+    switch(event.type())
     {
-        auto typed_event = event.parameter_change_event();
-        auto id = typed_event->param_id();
-        assert(static_cast<VstInt32>(id) < _plugin_handle->numParams);
-        _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), typed_event->value());
-    }
-    else if (is_keyboard_event(event))
-    {
-        if (_vst_midi_events_fifo.push(event) == false)
+        case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
-            SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            auto typed_event = event.parameter_change_event();
+            auto id = typed_event->param_id();
+            assert(static_cast<VstInt32>(id) < _plugin_handle->numParams);
+            _plugin_handle->setParameter(_plugin_handle, static_cast<VstInt32>(id), typed_event->value());
+            break;
         }
-    }
-    else if(event.type() == RtEventType::SET_BYPASS)
-    {
-        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_can_do_soft_bypass)
+
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::MODULATION:
+        case RtEventType::WRAPPED_MIDI_EVENT:
         {
-            _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
+            if (_vst_midi_events_fifo.push(event) == false)
+            {
+                SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+            }
+            break;
         }
-    }
-    else
-    {
-        SUSHI_LOG_INFO("Plugin: {}, received unhandled event", name());
+
+        case RtEventType::SET_BYPASS:
+        {
+            bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+            _set_bypass_rt(bypassed);
+            break;
+        }
+
+        case RtEventType::SET_STATE:
+        {
+            auto state = event.processor_state_event()->state();
+
+            if (state->bypassed().has_value())
+            {
+                _set_bypass_rt(*state->bypassed());
+            }
+
+            for (const auto& parameter : state->parameters())
+            {
+                VstInt32 id = parameter.first;
+                float value = parameter.second;
+                if (id < _plugin_handle->numParams)
+                {
+                    _plugin_handle->setParameter(_plugin_handle, id, value);
+                }
+            }
+            async_delete(state);
+        }
+
+        default:
+            break;
     }
 }
 
@@ -413,22 +449,16 @@ VstTimeInfo* Vst2xWrapper::time_info()
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
-    if (_double_mono_input)
+
+    for (i = 0; i < _current_input_channels; ++i)
     {
-        _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
-        _process_inputs[1] = const_cast<float*>(in_buffer.channel(0));
+        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
     }
-    else
+    for (; i <= _max_input_channels; ++i)
     {
-        for (i = 0; i < _current_input_channels; ++i)
-        {
-            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
-        }
-        for (; i <= _max_input_channels; ++i)
-        {
-            _process_inputs[i] = (_dummy_input.channel(0));
-        }
+        _process_inputs[i] = (_dummy_input.channel(0));
     }
+
     for (i = 0; i < _current_output_channels; i++)
     {
         _process_outputs[i] = out_buffer.channel(i);
@@ -436,19 +466,6 @@ void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkS
     for (; i <= _max_output_channels; ++i)
     {
         _process_outputs[i] = _dummy_output.channel(0);
-    }
-}
-
-void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
-{
-    _double_mono_input = false;
-    if (speaker_arr_status)
-    {
-        return;
-    }
-    if (_current_input_channels == 1 && _max_input_channels == 2)
-    {
-        _double_mono_input = true;
     }
 }
 
@@ -463,34 +480,47 @@ void Vst2xWrapper::output_vst_event(const VstEvent* event)
     }
 }
 
-ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
-    {
-        bool bypassed = state->bypassed().value();
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_can_do_soft_bypass)
-        {
-            _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
-        }
-    }
-
     if (state->program().has_value())
     {
         this->set_program(state->program().value());
     }
 
-    for (const auto& parameter : state->parameters())
+    if (realtime_running)
     {
-        VstInt32 id = parameter.first;
-        float value = parameter.second;
-        if (id < _plugin_handle->numParams)
-        {
-            _plugin_handle->setParameter(_plugin_handle, id, value);
-        }
+        auto rt_state = std::make_unique<RtState>(*state);
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
+    else
+    {
+        if (state->bypassed().has_value())
+        {
+            _set_bypass_rt(state->bypassed().value());
+        }
+
+        for (const auto& parameter : state->parameters())
+        {
+            VstInt32 id = parameter.first;
+            float value = parameter.second;
+            if (id < _plugin_handle->numParams)
+            {
+                _plugin_handle->setParameter(_plugin_handle, id, value);
+            }
+        }
+    }
     return ProcessorReturnCode::OK;
+}
+
+void Vst2xWrapper::_set_bypass_rt(bool bypassed)
+{
+    _bypass_manager.set_bypass(bypassed, _sample_rate);
+    if (_can_do_soft_bypass)
+    {
+        _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
+    }
 }
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)

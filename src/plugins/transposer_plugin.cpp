@@ -45,6 +45,7 @@ TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(ho
                                                     0.0f,
                                                     -24.0f,
                                                     24.0f,
+                                                    Direction::AUTOMATABLE,
                                                     new FloatParameterPreProcessor(-24.0f, 24.0f) );
     assert(_transpose_parameter);
     _max_input_channels = 0;

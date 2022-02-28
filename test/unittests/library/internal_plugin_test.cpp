@@ -59,13 +59,17 @@ TEST_F(InternalPluginTest, TestInstanciation)
 
 TEST_F(InternalPluginTest, TestParameterRegistration)
 {
-    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
+    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false, Direction::AUTOMATABLE));
     EXPECT_TRUE(_module_under_test->register_property("string", "String", "default"));
     EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
-                                                           3, 0, 10, new IntParameterPreProcessor(0, 10)));
+                                                           3, 0, 10,
+                                                           Direction::AUTOMATABLE,
+                                                           new IntParameterPreProcessor(0, 10)));
 
     EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", "fl",
-                                                             5.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0, 10.0)));
+                                                             5.0f, 0.0f, 10.0f,
+                                                             Direction::AUTOMATABLE,
+                                                             new FloatParameterPreProcessor(0.0, 10.0)));
 
     // Verify all parameter/properties were registered and their order match
     auto parameter_list = _module_under_test->all_parameters();
@@ -79,17 +83,19 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
 
 TEST_F(InternalPluginTest, TestDuplicateParameterNames)
 {
-    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", "", 1, 0, 10,
+    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", "",
+                                                                 1, 0, 10,
+                                                                 Direction::AUTOMATABLE,
                                                                  new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(test_param);
     //  Register another parameter with the same name and assert that we get a null pointer back
-    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", "", false);
+    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", "", false, Direction::AUTOMATABLE);
     EXPECT_FALSE(test_param_2);
 }
 
 TEST_F(InternalPluginTest, TestBoolParameterHandling)
 {
-    BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", "", false);
+    BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", "", false, Direction::AUTOMATABLE);
     EXPECT_TRUE(value);
 
     // Access the parameter through its id, verify type and that you can set its value.
@@ -101,6 +107,11 @@ TEST_F(InternalPluginTest, TestBoolParameterHandling)
     auto [status, ext_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_FLOAT_EQ(1.0f, ext_value);
+
+    auto [status_1, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_1);
+    EXPECT_EQ("True", str_value);
+
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
 
@@ -111,6 +122,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
 {
     auto value = _module_under_test->register_int_parameter("param_1", "Param 1", "",
                                                             0, 0, 10,
+                                                            Direction::AUTOMATABLE,
                                                             new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(value);
 
@@ -131,8 +143,14 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.6f, norm_value);
 
+    auto [status_2, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_2);
+    EXPECT_EQ("6", str_value);
+
     auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
+
+
 
     DECLARE_UNUSED(unused_value);
 }
@@ -141,6 +159,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
 {
     auto value = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                               1.0f, 0.0f, 10.f,
+                                                              Direction::AUTOMATABLE,
                                                               new FloatParameterPreProcessor(0.0f, 10.0f));
     EXPECT_TRUE(value);
 
@@ -159,6 +178,10 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
     auto [status_1, norm_value] = _module_under_test->parameter_value(value->descriptor()->id());
     EXPECT_EQ(ProcessorReturnCode::OK, status_1);
     EXPECT_FLOAT_EQ(0.5f, norm_value);
+
+    auto [status_2, str_value] = _module_under_test->parameter_value_formatted(value->descriptor()->id());
+    EXPECT_EQ(ProcessorReturnCode::OK, status_2);
+    EXPECT_EQ("5.00", str_value);
 
     [[maybe_unused]] auto [err_status, unused_value] = _module_under_test->parameter_value(45);
     EXPECT_EQ(ProcessorReturnCode::PARAMETER_NOT_FOUND, err_status);
@@ -202,12 +225,11 @@ TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
     _module_under_test->process_event(rt_event);
     RtEvent response_event;
     ASSERT_TRUE(_host_control._event_output.pop(response_event));
-    EXPECT_EQ(RtEventType::STRING_DELETE, response_event.type());
+    EXPECT_EQ(RtEventType::DELETE, response_event.type());
 
     // Delete the string manually, otherwise done by the dispatcher.
-    delete reinterpret_cast<std::string*>(response_event.data_payload_event()->value().data);
+    delete response_event.delete_data_event()->data();
 }
-
 
 TEST_F(InternalPluginTest, TestSendingDataToRealtime)
 {
@@ -229,6 +251,7 @@ TEST_F(InternalPluginTest, TestStateHandling)
 {
     auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                                   1.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
                                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     ASSERT_TRUE(parameter);
     auto property = _module_under_test->register_property("str_1", "Str_1", "test");
@@ -246,5 +269,35 @@ TEST_F(InternalPluginTest, TestStateHandling)
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_EQ("new_value", _module_under_test->property_value(descriptor->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+}
+
+TEST_F(InternalPluginTest, TestRtStateHandling)
+{
+    auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
+                                                                  10.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
+                                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+    ASSERT_TRUE(parameter);
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.add_parameter_change(parameter->descriptor()->id(), 0.25);
+
+    auto status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Values should not be changed yet
+    EXPECT_FLOAT_EQ(1.0f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Plugin should generate a request to send an RtEvent to the plugin
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    auto rt_event = event->to_rt_event(0);
+    _module_under_test->process_event(rt_event);
+
+    // Now the values should have changed
+    EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
 }

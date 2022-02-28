@@ -21,6 +21,7 @@ using namespace sushi;
 using namespace sushi::lv2;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
+constexpr int   TEST_CHANNEL_COUNT = 2;
 
 // Tip: use 'test_utils::print_buffer<64>(out_buffer, 1)'
 // to generate static buffer content in text like the below.
@@ -92,6 +93,8 @@ protected:
         {
             _module_under_test->set_event_output(&_fifo);
             _module_under_test->set_enabled(true);
+            _module_under_test->set_input_channels(std::min(TEST_CHANNEL_COUNT, _module_under_test->max_input_channels()));
+            _module_under_test->set_output_channels(std::min(TEST_CHANNEL_COUNT, _module_under_test->max_output_channels()));
         }
 
         return ret;
@@ -105,8 +108,8 @@ protected:
     RtSafeRtEventFifo _fifo;
 
     HostControlMockup _host_control;
-    std::shared_ptr<LilvWorldWrapper> _world{nullptr};
-    std::unique_ptr<LV2_Wrapper> _module_under_test{nullptr};
+    std::shared_ptr<LilvWorldWrapper> _world;
+    std::unique_ptr<LV2_Wrapper> _module_under_test;
 };
 
 TEST_F(TestLv2Wrapper, TestLV2PluginInvalidURI)
@@ -536,6 +539,21 @@ TEST_F(TestLv2Wrapper, TestStateHandling)
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Test with realtime set to true
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(desc->id(), 0.50);
+
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.5f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
 }
 
 

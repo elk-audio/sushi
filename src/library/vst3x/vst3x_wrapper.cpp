@@ -18,9 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <fstream>
 #include <string>
-#include <climits>
 #include <cstdlib>
 #include <dirent.h>
 #include <unistd.h>
@@ -227,7 +225,6 @@ void Vst3xWrapper::configure(float sample_rate)
     }
 }
 
-
 void Vst3xWrapper::process_event(const RtEvent& event)
 {
     switch (event.type())
@@ -237,6 +234,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             auto typed_event = event.parameter_change_event();
             _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
             _parameter_update_queue.push({typed_event->param_id(), typed_event->value()});
+            _notify_parameter_change = true;
             break;
         }
         case RtEventType::NOTE_ON:
@@ -291,6 +289,16 @@ void Vst3xWrapper::process_event(const RtEvent& event)
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }
+        case RtEventType::SET_STATE:
+        {
+            auto state = event.processor_state_event()->state();
+            for (const auto& parameter : state->parameters())
+            {
+                _add_parameter_change(parameter.first, parameter.second, 0);
+            }
+            async_delete(state);
+            break;
+        }
         default:
             break;
     }
@@ -298,10 +306,6 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if (_process_data.inputParameterChanges->getParameterCount() > 0)
-    {
-        request_non_rt_task(parameter_update_callback);
-    }
     if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
@@ -317,6 +321,12 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         }
         _forward_events(_process_data);
         _forward_params(_process_data);
+    }
+
+    if (_notify_parameter_change)
+    {
+        request_non_rt_task(parameter_update_callback);
+        _notify_parameter_change = false;
     }
     _process_data.clear();
 }
@@ -336,11 +346,24 @@ void Vst3xWrapper::set_output_channels(int channels)
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
-    auto res = _instance.processor()->setProcessing(Steinberg::TBool(enabled));
-    if (res == Steinberg::kResultOk)
+    if (enabled == _enabled)
     {
-        _enabled = enabled;
+        return;
     }
+
+    // Activate component first, then enable processing, but deactivate in reverse order
+    // See: https://developer.steinberg.help/display/VST/Audio+Processor+Call+Sequence
+    if (enabled)
+    {
+        _instance.component()->setActive(true);
+        _instance.processor()->setProcessing(true);
+    }
+    else
+    {
+        _instance.processor()->setProcessing(false);
+        _instance.component()->setActive(false);
+    }
+    Processor::set_enabled(enabled);
 }
 
 void Vst3xWrapper::set_bypassed(bool bypassed)
@@ -494,7 +517,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
         _host_control.post_event(event);
         SUSHI_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
+
+        // TODO: Why is this commented out?
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
+
         return ProcessorReturnCode::OK;
     }
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
@@ -532,18 +558,12 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     return ProcessorReturnCode::ERROR;
 }
 
-ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
+    std::unique_ptr<RtState> rt_state;
+    if (realtime_running)
     {
-        bool bypassed = state->bypassed().value();
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_bypass_parameter.supported)
-        {
-            float float_bypass = bypassed ? 1.0f : 0.0f;
-            _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
-            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
-        }
+        rt_state = std::make_unique<RtState>(*state);
     }
 
     if (state->program().has_value())
@@ -552,9 +572,16 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
         if (_internal_programs && _program_change_parameter.supported)
         {
             float normalised_id = id / static_cast<float>(_program_count);
-            _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
             _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
             _current_program = id;
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(_program_change_parameter.id, normalised_id);
+            }
+            else
+            {
+                _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
+            }
         }
         else // file based programs
         {
@@ -562,13 +589,40 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool /*realti
         }
     }
 
+    if (state->bypassed().has_value())
+    {
+        bool bypassed = state->bypassed().value();
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        if (_bypass_parameter.supported)
+        {
+            float float_bypass = bypassed ? 1.0f : 0.0f;
+            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(_bypass_parameter.id, float_bypass);
+            }
+            else
+            {
+                _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
+            }
+        }
+    }
+
     for (const auto& parameter : state->parameters())
     {
         int id = parameter.first;
         float value = parameter.second;
-        // Eventually these should be done without looping back parameter changes
-        _add_parameter_change(id, value, 0);
         _instance.controller()->setParamNormalized(id, value);
+        if (realtime_running == false)
+        {
+            _add_parameter_change(id, value, 0);
+        }
+    }
+
+    if (realtime_running)
+    {
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
     return ProcessorReturnCode::OK;
@@ -596,24 +650,46 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
             auto param_unit = to_ascii_str(info.units);
-            if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
+            bool automatable_bool = info.flags & Steinberg::Vst::ParameterInfo::kCanAutomate;
+
+            auto direction = automatable_bool ? Direction::AUTOMATABLE : Direction::OUTPUT;
+
+            if (info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
                 SUSHI_LOG_INFO("Plugin supports soft bypass");
             }
-            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
-                    _program_change_parameter.supported == false)
+            else if (info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
+                     _program_change_parameter.supported == false)
             {
-                /* For now we only support 1 program change parameter and we're counting on the
+                /* For now, we only support 1 program change parameter, and we're counting on the
                  * first one to be the global one. Multitimbral instruments can have multiple
                  * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
                 SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
             }
+            else if (info.stepCount > 0 &&
+                     register_parameter(new IntParameterDescriptor(_make_unique_parameter_name(param_name),
+                                                                   param_name,
+                                                                   param_unit,
+                                                                   0,
+                                                                   info.stepCount,
+                                                                   direction,
+                                                                   nullptr),
+                                        info.id))
+            {
+                SUSHI_LOG_INFO("Registered INT parameter {}, id {}", param_name, info.id);
+            }
             else if (register_parameter(new FloatParameterDescriptor(_make_unique_parameter_name(param_name),
-                                                                     param_name, param_unit, 0, 1, nullptr), info.id))
+                                                                     param_name,
+                                                                     param_unit,
+                                                                     0,
+                                                                     1,
+                                                                     direction,
+                                                                     nullptr),
+                                        info.id))
             {
                 SUSHI_LOG_INFO("Registered parameter {}, id {}", param_name, info.id);
             }
@@ -623,18 +699,20 @@ bool Vst3xWrapper::_register_parameters()
             }
         }
     }
+
     // Create a "backwards map" from Vst3 parameter ids to parameter indices
     for (auto param : this->all_parameters())
     {
         _parameters_by_vst3_id[param->id()] = param;
     }
+
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
-     * parameters and we can query the plugin for what 'default' midi cc:s these parameters
+     * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
      * would be mapped to if the plugin was able to handle native midi.
      * So we query the plugin for this and if that's the case, store the id:s of these
-     * 'special' parameters so we can map PB and Mod events to them.
-     * Currently we dont hide these parameters, unlike the bypass parameter, so they can
+     * 'special' parameters, so we can map PB and Mod events to them.
+     * Currently, we don't hide these parameters, unlike the bypass parameter, so they can
      * still be controlled via OSC or other controllers. */
     if (_instance.midi_mapper())
     {
@@ -657,6 +735,7 @@ bool Vst3xWrapper::_register_parameters()
             _aftertouch_parameter.supported = true;
         }
     }
+
     return true;
 }
 
@@ -680,7 +759,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_input_channels = info.channelCount;
-            _current_input_channels = _max_input_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -698,7 +776,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_output_channels = info.channelCount;
-            _current_output_channels = _max_output_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kOutput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -886,8 +963,11 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
             {
                 if (maybe_output_cv_value(id, value) == false)
                 {
-                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, static_cast<float>(value));
+                    float float_value = static_cast<float>(value);
+                    auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
+                    _parameter_update_queue.push({id, float_value});
+                    _notify_parameter_change = true;
                 }
             }
         }

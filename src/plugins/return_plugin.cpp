@@ -34,8 +34,6 @@ ReturnPlugin::ReturnPlugin(HostControl host_control, SendReturnFactory* manager)
 {
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
-    _buffers[0] = ChunkSampleBuffer(MAX_SEND_CHANNELS);
-    _buffers[1] = ChunkSampleBuffer(MAX_SEND_CHANNELS);
     _max_input_channels = MAX_SEND_CHANNELS;
     _max_output_channels = MAX_SEND_CHANNELS;
 }
@@ -114,6 +112,29 @@ void ReturnPlugin::configure(float sample_rate)
     }
 }
 
+void ReturnPlugin::set_input_channels(int channels)
+{
+    Processor::set_input_channels(channels);
+    _channel_config(channels);
+}
+
+void ReturnPlugin::set_output_channels(int channels)
+{
+    Processor::set_output_channels(channels);
+    _channel_config(channels);
+}
+
+void ReturnPlugin::set_enabled(bool enabled)
+{
+    if (enabled == false)
+    {
+        for (auto& buffer : _buffers)
+        {
+            buffer.clear();
+        }
+    }
+}
+
 void ReturnPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
@@ -176,6 +197,15 @@ void inline ReturnPlugin::_maybe_swap_buffers(Time current_time)
     {
         _last_process_time.store(current_time, std::memory_order_release);
         _swap_buffers();
+    }
+}
+
+void ReturnPlugin::_channel_config(int channels)
+{
+    int max_channels = std::max(std::max(channels, _current_input_channels), _current_output_channels);
+    if (_buffers.front().channel_count() != max_channels)
+    {
+        _buffers.fill(ChunkSampleBuffer(max_channels));
     }
 }
 

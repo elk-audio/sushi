@@ -35,8 +35,7 @@ MonoSummingPlugin::MonoSummingPlugin(HostControl host_control) : InternalPlugin(
     Processor::set_label(DEFAULT_LABEL);
 }
 
-MonoSummingPlugin::~MonoSummingPlugin()
-{}
+MonoSummingPlugin::~MonoSummingPlugin() = default;
 
 void MonoSummingPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {

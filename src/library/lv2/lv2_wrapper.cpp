@@ -98,8 +98,6 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
     // Channel setup derived from ports:
     _max_input_channels = _model->input_audio_channel_count();
     _max_output_channels = _model->output_audio_channel_count();
-    _current_input_channels = _max_input_channels;
-    _current_output_channels = _max_output_channels;
 
     _fetch_plugin_name_and_label();
 
@@ -198,12 +196,12 @@ std::pair<ProcessorReturnCode, float> LV2_Wrapper::parameter_value_in_domain(Obj
 
 std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatted(ObjectId parameter_id) const
 {
-    auto valueTuple = parameter_value_in_domain(parameter_id);
+    auto value_tuple = parameter_value_in_domain(parameter_id);
 
-    if(valueTuple.first == ProcessorReturnCode::OK)
+    if(value_tuple.first == ProcessorReturnCode::OK)
     {
-        std::string parsedValue = std::to_string(valueTuple.second);
-        return {ProcessorReturnCode::OK, parsedValue};
+        std::string parsed_value = std::to_string(value_tuple.second);
+        return {ProcessorReturnCode::OK, parsed_value};
     }
 
     return {ProcessorReturnCode::PARAMETER_NOT_FOUND, ""};
@@ -280,16 +278,29 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
 }
 
-ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool /*realtime_running*/)
+ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_running)
 {
-    if (state->bypassed().has_value())
+    std::unique_ptr<RtState> rt_state;
+    if (realtime_running)
     {
-        _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+        rt_state = std::make_unique<RtState>();
     }
 
     if (state->program().has_value())
     {
         this->set_program(state->program().value());
+    }
+
+    if (state->bypassed().has_value())
+    {
+        if (realtime_running)
+        {
+            rt_state->set_bypass(state->bypassed().value());
+        }
+        else
+        {
+            _bypass_manager.set_bypass(state->bypassed().value(), _model->sample_rate());
+        }
     }
 
     for (const auto& param : state->parameters())
@@ -305,10 +316,26 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool /*realtim
 
             float min = parameter->min_domain_value();
             float max = parameter->max_domain_value();
-
             auto value_in_domain = _to_domain(value, min, max);
-            port->set_control_value(value_in_domain);
+
+            // We can save some time for the audio thread if we do this pre-scaling here
+            // for the realtime case too, even though the values are applied during the
+            // next audio process call and not here.
+            if (realtime_running)
+            {
+                rt_state->add_parameter_change(parameter->id(), value_in_domain);
+            }
+            else
+            {
+                port->set_control_value(value_in_domain);
+            }
         }
+    }
+
+    if (realtime_running)
+    {
+        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
+        _host_control.post_event(event);
     }
 
     return ProcessorReturnCode::OK;
@@ -320,37 +347,46 @@ bool LV2_Wrapper::_register_parameters()
 
     for (int _pi = 0; _pi < _model->port_count(); ++_pi)
     {
-        auto currentPort = _model->get_port(_pi);
+        auto current_port = _model->get_port(_pi);
 
-        if (currentPort->type() == PortType::TYPE_CONTROL)
+        if (current_port->type() == PortType::TYPE_CONTROL)
         {
             // Here I need to get the name of the port.
-            auto nameNode = lilv_port_get_name(_model->plugin_class(), currentPort->lilv_port());
-            int portIndex = lilv_port_get_index(_model->plugin_class(), currentPort->lilv_port());
+            auto name_node = lilv_port_get_name(_model->plugin_class(), current_port->lilv_port());
+            int port_index = lilv_port_get_index(_model->plugin_class(), current_port->lilv_port());
 
-            assert(portIndex == _pi); // This should only fail is the plugin's .ttl file is incorrect.
+            assert(port_index == _pi); // This should only fail is the plugin's .ttl file is incorrect.
 
-            const std::string name_as_string = lilv_node_as_string(nameNode);
+            const std::string name_as_string = lilv_node_as_string(name_node);
             const std::string param_unit = "";
 
+            auto direction = Direction::AUTOMATABLE;
+
+            if (current_port->flow() == PortFlow::FLOW_OUTPUT)
+            {
+                direction = Direction::OUTPUT;
+                SUSHI_LOG_INFO("LV2 Plugin: {}, parameter: {} is output only, so not automatable.", name(), name_as_string);
+            }
+
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
-                    name_as_string, // label
-                    param_unit, // PARAMETER UNIT
-                    currentPort->min(), // range min
-                    currentPort->max(), // range max
-                    nullptr), // ParameterPreProcessor
-                    static_cast<ObjectId>(portIndex)); // Registering the ObjectID as the LV2 Port index.
+                                                                                name_as_string, // label
+                                                                                param_unit, // PARAMETER UNIT
+                                                                                current_port->min(), // range min
+                                                                                current_port->max(), // range max
+                                                                                direction,
+                                                                                nullptr), // ParameterPreProcessor
+                                                   static_cast<ObjectId>(port_index)); // Registering the ObjectID as the LV2 Port index.
 
             if (param_inserted_ok)
             {
-                SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), name_as_string);
+                SUSHI_LOG_INFO("LV2 Plugin: {}, registered parameter: {}", name(), name_as_string);
             }
             else
             {
-                SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), name_as_string);
+                SUSHI_LOG_ERROR("Plugin: {}, Error while registering parameter: {}", name(), name_as_string);
             }
 
-            lilv_node_free(nameNode);
+            lilv_node_free(name_node);
         }
     }
 
@@ -377,10 +413,10 @@ void LV2_Wrapper::process_event(const RtEvent& event)
 
         auto parameter = parameter_from_id(parameter_id);
 
-        const int portIndex = static_cast<int>(parameter_id);
-        assert(portIndex < _model->port_count());
+        const int port_index = static_cast<int>(parameter_id);
+        assert(port_index < _model->port_count());
 
-        auto port = _model->get_port(portIndex);
+        auto port = _model->get_port(port_index);
 
         auto value = typed_event->value();
 
@@ -401,6 +437,22 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
         _bypass_manager.set_bypass(bypassed, _model->sample_rate());
+    }
+    else if (event.type() == RtEventType::SET_STATE)
+    {
+        auto state = event.processor_state_event()->state();
+        if (state->bypassed().has_value())
+        {
+            _bypass_manager.set_bypass(*state->bypassed(), _model->sample_rate());
+        }
+
+        for (const auto& parameter : state->parameters())
+        {
+            // These parameter values are pre-scaled and don't need to be converted to domain values
+            auto port = _model->get_port(parameter.first);
+            port->set_control_value(parameter.second);
+        }
+        async_delete(state);
     }
 }
 
@@ -855,22 +907,14 @@ void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSa
 {
     int i;
 
-    if (_double_mono_input)
+    for (i = 0; i < _current_input_channels; ++i)
     {
-        _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
-        _process_inputs[1] = const_cast<float*>(in_buffer.channel(0));
+        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
     }
-    else
-    {
-        for (i = 0; i < _current_input_channels; ++i)
-        {
-            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
-        }
 
-        for (; i <= _max_input_channels; ++i)
-        {
-            _process_inputs[i] = (_dummy_input.channel(0));
-        }
+    for (; i <= _max_input_channels; ++i)
+    {
+        _process_inputs[i] = (_dummy_input.channel(0));
     }
 
     for (i = 0; i < _current_output_channels; i++)
@@ -881,21 +925,6 @@ void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSa
     for (; i <= _max_output_channels; ++i)
     {
         _process_outputs[i] = _dummy_output.channel(0);
-    }
-}
-
-void LV2_Wrapper::_update_mono_mode(bool speaker_arr_status)
-{
-    _double_mono_input = false;
-
-    if (speaker_arr_status)
-    {
-        return;
-    }
-
-    if (_current_input_channels == 1 && _max_input_channels == 2)
-    {
-        _double_mono_input = true;
     }
 }
 
@@ -934,7 +963,7 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
 
     /* Find plugin */
     SUSHI_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
-    const auto plugin  = lilv_plugins_get_by_uri(plugins, plugin_uri);
+    const auto plugin = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
     if (plugin == nullptr)

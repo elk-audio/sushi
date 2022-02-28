@@ -79,12 +79,13 @@ public:
 
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
+     *        Called from an audio processing thread.
      * @param event Event to process.
      */
     virtual void process_event(const RtEvent& event) = 0;
 
     /**
-     * @brief Process a chunk of audio.
+     * @brief Process a chunk of audio. Called from an audio processing thread.
      * @param in_buffer Input SampleBuffer
      * @param out_buffer Output SampleBuffer
      */
@@ -443,7 +444,7 @@ protected:
     void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     /**
-     * @breif Called from the audio callback to request work to be done in another,
+     * @brief Called from the audio callback to request work to be done in another,
      *        non-realtime thread.
      * @param callback The callback to call in the non realtime thread. The return
      *        value from the callback will be communicated back to the plugin in the
@@ -451,6 +452,12 @@ protected:
      * @return An EventId that can be used to identify the particular request.
      */
     EventId request_non_rt_task(AsyncWorkCallback callback);
+
+    /**
+     * @brief Called from a realtime thread to asynchronously delete an object outside the rt tread
+     * @param object The object to delete.
+     */
+    void async_delete(RtDeletable* object);
 
     /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
