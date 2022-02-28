@@ -163,7 +163,7 @@ endif()
 #  Include directories relative to test  #
 ##########################################
 
-set(INCLUDE_DIRS "${INCLUDE_DIRS}"
+set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  ${PROJECT_SOURCE_DIR}/test/unittests
                  ${PROJECT_SOURCE_DIR}/test/gtest/include)
 
