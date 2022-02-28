@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 
 #include "test_utils/engine_mockup.h"
-#include "test_utils/portaudio_mockup.cpp"
+#include "test_utils/portaudio_mockup.h"
 
 #define private public
 #include "audio_frontends/portaudio_frontend.cpp"
@@ -50,6 +50,8 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
     PaError init_value = PaErrorCode::paNoError;
     int device_count = 2;
     PaDeviceInfo expected_info;
+    expected_info.maxInputChannels = 2;
+    expected_info.maxOutputChannels = 2;
     PortAudioFrontendConfiguration config(0,1,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
@@ -107,6 +109,8 @@ TEST_F(TestPortAudioFrontend, TestInitiFailOpenStream)
     PaError init_value = PaErrorCode::paNoError;
     int device_count = 2;
     PaDeviceInfo expected_info;
+    expected_info.maxInputChannels = 2;
+    expected_info.maxOutputChannels = 2;
     PortAudioFrontendConfiguration config(0,1,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
@@ -130,7 +134,6 @@ TEST_F(TestPortAudioFrontend, TestRun)
 TEST_F(TestPortAudioFrontend, TestProcess)
 {
     PortAudioFrontendConfiguration config(0,0,0,0);
-    PaError init_value = PaErrorCode::paNoError;
     int device_count = 1;
     PaDeviceInfo device_info;
     device_info.maxInputChannels = 1;
@@ -145,7 +148,7 @@ TEST_F(TestPortAudioFrontend, TestProcess)
     std::array<float, FRAME_SIZE> input_data{1.0f};
     std::array<float, FRAME_SIZE> output_data{0.0f};
     PaStreamCallbackTimeInfo time_info;
-    PaStreamCallbackFlags status_flags;
+    PaStreamCallbackFlags status_flags = 0;
     PortAudioFrontend::rt_process_callback(static_cast<void*>(input_data.data()),
                                            static_cast<void*>(output_data.data()),
                                            FRAME_SIZE,

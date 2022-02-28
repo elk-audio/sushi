@@ -150,6 +150,7 @@ if (${WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
     # Linked libraries
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/third-party/portaudio/include) # For working tests since we need the headers but don't want to link with the actual library.
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
 
     # Compile definitions
@@ -540,15 +541,13 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
-# find_path(LO_DIR NAMES "lo/lo.h")
-# find_library(LO_LIB NAMES lo)
-# message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
-find_package(liblo)
+find_path(LIBLO_INCLUDE_DIRS NAMES "lo/lo.h")
+find_library(LIBLO_LIBRARIES NAMES lo)
+message("Found path: ${LIBO_INCLUDE_DIRS} and lib: ${LIBLO_LIBRARIES}")
 
-# find_path(SNDFILE_DIR NAMES "sndfile.h")
-# find_library(SNDFILE_LIB NAMES sndfile)
-# message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
-find_package(SndFile)
+find_path(SNDFILE_INCLUDE_DIR NAMES "sndfile.h")
+find_library(SNDFILE_LIBRARIES NAMES sndfile)
+message("Found path: ${SNDFILE_INCLUDE_DIR} and lib: ${SNDFILE_LIBRARIES}")
 
 set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
