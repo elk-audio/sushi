@@ -27,7 +27,7 @@ add_subdirectory(rtmidi)
 
 set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
 add_subdirectory(portaudio)
-message("PORTAUDIO_PUBLIC_HEADERS set to ${PORTAUDIO_PUBLIC_HEADERS}")
+set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 ##########################
 #  VST3SDK and examples  #
