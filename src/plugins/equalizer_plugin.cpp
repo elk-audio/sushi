@@ -37,17 +37,17 @@ EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host
 
     _frequency = register_float_parameter("frequency", "Frequency", "Hz",
                                           1000.0f, 20.0f, 20000.0f,
-                                          Automatable::AUTOMATABLE,
+                                          Direction::AUTOMATABLE,
                                           new FloatParameterPreProcessor(20.0f, 20000.0f));
 
     _gain = register_float_parameter("gain", "Gain", "dB",
                                      0.0f, -24.0f, 24.0f,
-                                     Automatable::AUTOMATABLE,
+                                     Direction::AUTOMATABLE,
                                      new dBToLinPreProcessor(-24.0f, 24.0f));
 
     _q = register_float_parameter("q", "Q", "",
                                   1.0f, 0.0f, 10.0f,
-                                  Automatable::AUTOMATABLE,
+                                  Direction::AUTOMATABLE,
                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     assert(_frequency);
     assert(_gain);

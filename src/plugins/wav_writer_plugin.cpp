@@ -39,12 +39,12 @@ WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host
     _max_output_channels = N_AUDIO_CHANNELS;
 
     [[maybe_unused]] bool str_pr_ok = register_property("destination_file", "Destination file", "");
-    _recording_parameter = register_bool_parameter("recording", "Recording", "bool", false, Automatable::AUTOMATABLE);
+    _recording_parameter = register_bool_parameter("recording", "Recording", "bool", false, Direction::AUTOMATABLE);
     _write_speed_parameter = register_float_parameter("write_speed", "Write Speed", "writes/s",
                                                       DEFAULT_WRITE_INTERVAL,
                                                       MIN_WRITE_INTERVAL,
                                                       MAX_WRITE_INTERVAL,
-                                                      Automatable::AUTOMATABLE);
+                                                      Direction::AUTOMATABLE);
 
     assert(_recording_parameter && _write_speed_parameter && str_pr_ok);
 }

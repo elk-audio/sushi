@@ -41,7 +41,7 @@ enum class ParameterType
     DATA,
 };
 
-enum class Automatable
+enum class Direction
 {
     AUTOMATABLE,
     OUTPUT
@@ -203,14 +203,14 @@ public:
                              const std::string& unit,
                              const T min_domain_value,
                              const T max_domain_Value,
-                             Automatable automatable,
+                             Direction automatable,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
                                         _max_domain_value(max_domain_Value)
     {
-        if (automatable == Automatable::AUTOMATABLE)
+        if (automatable == Direction::AUTOMATABLE)
         {
             _automatable = true;
         }

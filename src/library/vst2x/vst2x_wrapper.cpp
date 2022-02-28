@@ -290,7 +290,7 @@ bool Vst2xWrapper::_register_parameters()
                                                                             param_unit,
                                                                             0,
                                                                             1,
-                                                                            Automatable::AUTOMATABLE,
+                                                                            Direction::AUTOMATABLE,
                                                                             nullptr));
         if (param_inserted_ok)
         {

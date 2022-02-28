@@ -41,27 +41,27 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
 
     _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
                                                   0.0f, -120.0f, 36.0f,
-                                                  Automatable::AUTOMATABLE,
+                                                  Direction::AUTOMATABLE,
                                                   new dBToLinPreProcessor(-120.0f, 36.0f));
 
     _attack_parameter  = register_float_parameter("attack", "Attack", "s",
                                                   0.0f, 0.0f, 10.0f,
-                                                  Automatable::AUTOMATABLE,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     _decay_parameter   = register_float_parameter("decay", "Decay", "s",
                                                   0.0f, 0.0f, 10.0f,
-                                                  Automatable::AUTOMATABLE,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     _sustain_parameter = register_float_parameter("sustain", "Sustain", "",
                                                   1.0f, 0.0f, 1.0f,
-                                                  Automatable::AUTOMATABLE,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 1.0f));
 
     _release_parameter = register_float_parameter("release", "Release", "s",
                                                   0.0f, 0.0f, 10.0f,
-                                                  Automatable::AUTOMATABLE,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);

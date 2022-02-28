@@ -652,7 +652,7 @@ bool Vst3xWrapper::_register_parameters()
             auto param_unit = to_ascii_str(info.units);
             bool automatable_bool = info.flags & Steinberg::Vst::ParameterInfo::kCanAutomate;
 
-            Automatable automatable = automatable_bool ? Automatable::AUTOMATABLE : Automatable::OUTPUT;
+            auto direction = automatable_bool ? Direction::AUTOMATABLE : Direction::OUTPUT;
 
             if (info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
@@ -676,7 +676,7 @@ bool Vst3xWrapper::_register_parameters()
                                                                    param_unit,
                                                                    0,
                                                                    info.stepCount,
-                                                                   automatable,
+                                                                   direction,
                                                                    nullptr),
                                         info.id))
             {
@@ -687,7 +687,7 @@ bool Vst3xWrapper::_register_parameters()
                                                                      param_unit,
                                                                      0,
                                                                      1,
-                                                                     automatable,
+                                                                     direction,
                                                                      nullptr),
                                         info.id))
             {

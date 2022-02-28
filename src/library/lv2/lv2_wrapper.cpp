@@ -360,11 +360,11 @@ bool LV2_Wrapper::_register_parameters()
             const std::string name_as_string = lilv_node_as_string(name_node);
             const std::string param_unit = "";
 
-            Automatable automatable = Automatable::AUTOMATABLE;
+            auto direction = Direction::AUTOMATABLE;
 
             if (current_port->flow() == PortFlow::FLOW_OUTPUT)
             {
-                automatable = Automatable::OUTPUT;
+                direction = Direction::OUTPUT;
                 SUSHI_LOG_INFO("LV2 Plugin: {}, parameter: {} is output only, so not automatable.", name(), name_as_string);
             }
 
@@ -373,7 +373,7 @@ bool LV2_Wrapper::_register_parameters()
                                                                                 param_unit, // PARAMETER UNIT
                                                                                 current_port->min(), // range min
                                                                                 current_port->max(), // range max
-                                                                                automatable,
+                                                                                direction,
                                                                                 nullptr), // ParameterPreProcessor
                                                    static_cast<ObjectId>(port_index)); // Registering the ObjectID as the LV2 Port index.
 

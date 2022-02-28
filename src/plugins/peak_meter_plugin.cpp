@@ -58,11 +58,11 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     Processor::set_name(DEFAULT_NAME);
     Processor::set_label(DEFAULT_LABEL);
 
-    _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels 1 & 2", "", false, Automatable::AUTOMATABLE);
-    _send_peaks_only_parameter = register_bool_parameter("peaks_only", "Peaks Only", "", false, Automatable::AUTOMATABLE);
+    _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels 1 & 2", "", false, Direction::AUTOMATABLE);
+    _send_peaks_only_parameter = register_bool_parameter("peaks_only", "Peaks Only", "", false, Direction::AUTOMATABLE);
     _update_rate_parameter = register_float_parameter("update_rate", "Update Rate", "/s", DEFAULT_REFRESH_RATE,
                                                       0.1, 25,
-                                                      Automatable::AUTOMATABLE,
+                                                      Direction::AUTOMATABLE,
                                                       new FloatParameterPreProcessor(0.1, DEFAULT_REFRESH_RATE));
     _update_rate_id = _update_rate_parameter->descriptor()->id();
 
@@ -72,7 +72,7 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     {
         _level_parameters[i] = register_float_parameter(fmt::format(param_name, i), fmt::format(param_label, i), "dB",
                                                         OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
-                                                        Automatable::OUTPUT,
+                                                        Direction::OUTPUT,
                                                         new dBToLinPreProcessor(OUTPUT_MIN, 24.0f));
         assert (_level_parameters[i]);
     }
@@ -85,7 +85,7 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
                                                       fmt::format(param_label, i),
                                                       "",
                                                       false,
-                                                      Automatable::OUTPUT);
+                                                      Direction::OUTPUT);
     }
 
     assert(_link_channels_parameter && _send_peaks_only_parameter && _update_rate_parameter);
