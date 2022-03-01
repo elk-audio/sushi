@@ -37,6 +37,8 @@ constexpr int MAX_ENGINE_CV_IO_PORTS = 4;
 constexpr int MAX_ENGINE_GATE_PORTS = 8;
 constexpr int MAX_ENGINE_GATE_NOTE_NO = 127;
 
+constexpr int MAX_TRACK_CHANNELS = 16;
+
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 

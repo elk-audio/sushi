@@ -59,13 +59,17 @@ TEST_F(InternalPluginTest, TestInstanciation)
 
 TEST_F(InternalPluginTest, TestParameterRegistration)
 {
-    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false));
+    EXPECT_TRUE(_module_under_test->register_bool_parameter("bool", "Bool", "bool", false, Direction::AUTOMATABLE));
     EXPECT_TRUE(_module_under_test->register_property("string", "String", "default"));
     EXPECT_TRUE(_module_under_test->register_int_parameter("int", "Int", "numbers",
-                                                           3, 0, 10, new IntParameterPreProcessor(0, 10)));
+                                                           3, 0, 10,
+                                                           Direction::AUTOMATABLE,
+                                                           new IntParameterPreProcessor(0, 10)));
 
     EXPECT_TRUE(_module_under_test->register_float_parameter("float", "Float", "fl",
-                                                             5.0f, 0.0f, 10.0f, new FloatParameterPreProcessor(0.0, 10.0)));
+                                                             5.0f, 0.0f, 10.0f,
+                                                             Direction::AUTOMATABLE,
+                                                             new FloatParameterPreProcessor(0.0, 10.0)));
 
     // Verify all parameter/properties were registered and their order match
     auto parameter_list = _module_under_test->all_parameters();
@@ -79,17 +83,19 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
 
 TEST_F(InternalPluginTest, TestDuplicateParameterNames)
 {
-    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", "", 1, 0, 10,
+    auto test_param = _module_under_test->register_int_parameter("param_2", "Param 2", "",
+                                                                 1, 0, 10,
+                                                                 Direction::AUTOMATABLE,
                                                                  new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(test_param);
     //  Register another parameter with the same name and assert that we get a null pointer back
-    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", "", false);
+    auto test_param_2 = _module_under_test->register_bool_parameter("param_2", "Param 2", "", false, Direction::AUTOMATABLE);
     EXPECT_FALSE(test_param_2);
 }
 
 TEST_F(InternalPluginTest, TestBoolParameterHandling)
 {
-    BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", "", false);
+    BoolParameterValue* value = _module_under_test->register_bool_parameter("param_1", "Param 1", "", false, Direction::AUTOMATABLE);
     EXPECT_TRUE(value);
 
     // Access the parameter through its id, verify type and that you can set its value.
@@ -116,6 +122,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
 {
     auto value = _module_under_test->register_int_parameter("param_1", "Param 1", "",
                                                             0, 0, 10,
+                                                            Direction::AUTOMATABLE,
                                                             new IntParameterPreProcessor(0, 10));
     EXPECT_TRUE(value);
 
@@ -152,6 +159,7 @@ TEST_F(InternalPluginTest, TestFloatParameterHandling)
 {
     auto value = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                               1.0f, 0.0f, 10.f,
+                                                              Direction::AUTOMATABLE,
                                                               new FloatParameterPreProcessor(0.0f, 10.0f));
     EXPECT_TRUE(value);
 
@@ -243,6 +251,7 @@ TEST_F(InternalPluginTest, TestStateHandling)
 {
     auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                                   1.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
                                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     ASSERT_TRUE(parameter);
     auto property = _module_under_test->register_property("str_1", "Str_1", "test");
@@ -267,6 +276,7 @@ TEST_F(InternalPluginTest, TestRtStateHandling)
 {
     auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                                   10.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
                                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     ASSERT_TRUE(parameter);
 
@@ -297,6 +307,7 @@ TEST_F(InternalPluginTest, TestStateSaving)
     ChunkSampleBuffer buffer;
     auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
                                                                   1.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
                                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
     ASSERT_TRUE(parameter);
     ObjectId param_id = parameter->descriptor()->id();

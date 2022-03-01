@@ -31,7 +31,7 @@ namespace sushi {
 namespace lv2 {
 
 
-Port::Port(const LilvPlugin *plugin, int port_index, float default_value, Model* model):
+Port::Port(const LilvPlugin* plugin, int port_index, float default_value, Model* model):
     _index(port_index)
 {
     _lilv_port = lilv_plugin_get_port_by_index(plugin, port_index);

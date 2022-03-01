@@ -41,6 +41,12 @@ enum class ParameterType
     DATA,
 };
 
+enum class Direction
+{
+    AUTOMATABLE,
+    OUTPUT
+};
+
 /**
  * @brief Base class for describing plugin parameters
  */
@@ -57,7 +63,7 @@ public:
     /**
      * @brief Returns the enumerated type of the parameter
      */
-    ParameterType type() const {return _type;};
+    ParameterType type() const {return _type;}
 
     /**
      * @brief Returns the display name of the parameter, i.e. "Oscillator pitch"
@@ -94,13 +100,13 @@ public:
      * @brief Returns the maximum value of the parameter
      * @return A float with the maximum representation of the parameter
      */
-    virtual float min_domain_value() const {return 0;};
+    virtual float min_domain_value() const {return 0;}
 
     /**
      * @brief Returns the minimum value of the parameter
      * @return A float with the minimum representation of the parameter
      */
-    virtual float max_domain_value() const {return 1;};
+    virtual float max_domain_value() const {return 1;}
 
 protected:
     std::string _label;
@@ -195,23 +201,38 @@ public:
     TypedParameterDescriptor(const std::string& name,
                              const std::string& label,
                              const std::string& unit,
-                             T min_domain_value,
-                             T max_domain_Value,
+                             const T min_domain_value,
+                             const T max_domain_Value,
+                             Direction automatable,
                              ParameterPreProcessor<T>* pre_processor) :
                                         ParameterDescriptor(name, label, unit, enumerated_type),
                                         _pre_processor(pre_processor),
                                         _min_domain_value(min_domain_value),
-                                        _max_domain_value(max_domain_Value) {}
+                                        _max_domain_value(max_domain_Value)
+    {
+        if (automatable == Direction::AUTOMATABLE)
+        {
+            _automatable = true;
+        }
+        else
+        {
+            _automatable = false;
+        }
+    }
 
     ~TypedParameterDescriptor() = default;
 
     float min_domain_value() const override {return static_cast<float>(_min_domain_value);}
     float max_domain_value() const override {return static_cast<float>(_max_domain_value);}
 
+    bool automatable() const override {return _automatable;}
+
 private:
     std::unique_ptr<ParameterPreProcessor<T>> _pre_processor;
     T _min_domain_value;
     T _max_domain_value;
+
+    bool _automatable {true};
 };
 
 /* Partial specialization for pointer type parameters */
@@ -225,7 +246,7 @@ public:
 
     ~TypedParameterDescriptor() = default;
 
-    virtual bool automatable() const override {return false;}
+    bool automatable() const override {return false;}
 };
 
 /* Partial specialization for pointer type parameters */
@@ -240,8 +261,7 @@ public:
 
     ~TypedParameterDescriptor() {}
 
-    virtual bool automatable() const override {return false;}
-
+    bool automatable() const override {return false;}
 };
 
 /*

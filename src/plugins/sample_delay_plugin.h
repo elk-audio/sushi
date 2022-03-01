@@ -39,9 +39,19 @@ public:
 
     virtual ~SampleDelayPlugin() = default;
 
+    void set_input_channels(int channels) override;
+
+    void set_output_channels(int channels) override;
+
+    void set_enabled(bool enabled) override;
+
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
 private:
+    void _channel_config(int channels);
+
+    void _reset();
+
     // Input parameters
     IntParameterValue* _sample_delay;
     

@@ -18,9 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <fstream>
 #include <string>
-#include <climits>
 #include <cstdlib>
 #include <dirent.h>
 #include <unistd.h>
@@ -189,10 +187,6 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
         SUSHI_LOG_WARNING("failed to sync controller");
     }
 
-    if (!_setup_channels())
-    {
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
     if (!_setup_processing())
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
@@ -226,7 +220,6 @@ void Vst3xWrapper::configure(float sample_rate)
         set_enabled(true);
     }
 }
-
 
 void Vst3xWrapper::process_event(const RtEvent& event)
 {
@@ -349,11 +342,24 @@ void Vst3xWrapper::set_output_channels(int channels)
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {
-    auto res = _instance.processor()->setProcessing(Steinberg::TBool(enabled));
-    if (res == Steinberg::kResultOk)
+    if (enabled == _enabled)
     {
-        _enabled = enabled;
+        return;
     }
+
+    // Activate component first, then enable processing, but deactivate in reverse order
+    // See: https://developer.steinberg.help/display/VST/Audio+Processor+Call+Sequence
+    if (enabled)
+    {
+        _instance.component()->setActive(true);
+        _instance.processor()->setProcessing(true);
+    }
+    else
+    {
+        _instance.processor()->setProcessing(false);
+        _instance.component()->setActive(false);
+    }
+    Processor::set_enabled(enabled);
 }
 
 void Vst3xWrapper::set_bypassed(bool bypassed)
@@ -507,7 +513,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
         _host_control.post_event(event);
         SUSHI_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
+
+        // TODO: Why is this commented out?
         //_instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_program_id);
+
         return ProcessorReturnCode::OK;
     }
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
@@ -632,24 +641,46 @@ bool Vst3xWrapper::_register_parameters()
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
             auto param_unit = to_ascii_str(info.units);
-            if(info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
+            bool automatable_bool = info.flags & Steinberg::Vst::ParameterInfo::kCanAutomate;
+
+            auto direction = automatable_bool ? Direction::AUTOMATABLE : Direction::OUTPUT;
+
+            if (info.flags & Steinberg::Vst::ParameterInfo::kIsBypass)
             {
                 _bypass_parameter.id = info.id;
                 _bypass_parameter.supported = true;
                 SUSHI_LOG_INFO("Plugin supports soft bypass");
             }
-            else if(info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
-                    _program_change_parameter.supported == false)
+            else if (info.flags & Steinberg::Vst::ParameterInfo::kIsProgramChange &&
+                     _program_change_parameter.supported == false)
             {
-                /* For now we only support 1 program change parameter and we're counting on the
+                /* For now, we only support 1 program change parameter, and we're counting on the
                  * first one to be the global one. Multitimbral instruments can have multiple
                  * program change parameters, but we'll have to look into how to support that. */
                 _program_change_parameter.id = info.id;
                 _program_change_parameter.supported = true;
                 SUSHI_LOG_INFO("We have a program change parameter at {}", info.id);
             }
+            else if (info.stepCount > 0 &&
+                     register_parameter(new IntParameterDescriptor(_make_unique_parameter_name(param_name),
+                                                                   param_name,
+                                                                   param_unit,
+                                                                   0,
+                                                                   info.stepCount,
+                                                                   direction,
+                                                                   nullptr),
+                                        info.id))
+            {
+                SUSHI_LOG_INFO("Registered INT parameter {}, id {}", param_name, info.id);
+            }
             else if (register_parameter(new FloatParameterDescriptor(_make_unique_parameter_name(param_name),
-                                                                     param_name, param_unit, 0, 1, nullptr), info.id))
+                                                                     param_name,
+                                                                     param_unit,
+                                                                     0,
+                                                                     1,
+                                                                     direction,
+                                                                     nullptr),
+                                        info.id))
             {
                 SUSHI_LOG_INFO("Registered parameter {}, id {}", param_name, info.id);
             }
@@ -659,18 +690,20 @@ bool Vst3xWrapper::_register_parameters()
             }
         }
     }
+
     // Create a "backwards map" from Vst3 parameter ids to parameter indices
     for (auto param : this->all_parameters())
     {
         _parameters_by_vst3_id[param->id()] = param;
     }
+
     /* Steinberg decided not support standard midi, nor provide special events for common
      * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
-     * parameters and we can query the plugin for what 'default' midi cc:s these parameters
+     * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
      * would be mapped to if the plugin was able to handle native midi.
      * So we query the plugin for this and if that's the case, store the id:s of these
-     * 'special' parameters so we can map PB and Mod events to them.
-     * Currently we dont hide these parameters, unlike the bypass parameter, so they can
+     * 'special' parameters, so we can map PB and Mod events to them.
+     * Currently, we don't hide these parameters, unlike the bypass parameter, so they can
      * still be controlled via OSC or other controllers. */
     if (_instance.midi_mapper())
     {
@@ -693,6 +726,7 @@ bool Vst3xWrapper::_register_parameters()
             _aftertouch_parameter.supported = true;
         }
     }
+
     return true;
 }
 
@@ -716,7 +750,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_input_channels = info.channelCount;
-            _current_input_channels = _max_input_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)
@@ -734,7 +767,6 @@ bool Vst3xWrapper::_setup_audio_busses()
         if (res == Steinberg::kResultOk && info.busType == Steinberg::Vst::BusTypes::kMain) // Then use this one
         {
             _max_output_channels = info.channelCount;
-            _current_output_channels = _max_output_channels;
             res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kOutput, i, Steinberg::TBool(true));
             if (res != Steinberg::kResultOk)

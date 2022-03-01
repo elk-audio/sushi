@@ -30,7 +30,7 @@ namespace arpeggiator_plugin {
 
 /**
  * @brief Simple arpeggiator module with only 1 mode (up)
- *        The last helt note will be remembered and played indefinitely
+ *        The last held note will be remembered and played indefinitely
  */
 class Arpeggiator
 {
@@ -42,23 +42,26 @@ public:
      * @param note The note number of the note to add
      */
     void add_note(int note);
+
     /**
      * @brief Remove this note from the list of notes playing
      * @param note The note number to remove
      */
     void remove_note(int note);
+
     /**
      * @brief Set the playing range of the arpeggiator
      * @param range The range in octaves
      */
     void set_range(int range);
+
     /**
      * @brief Call sequentially to get the full arpeggio sequence
      * @return The note number of the next note in the sequence
      */
-    int  next_note();
-private:
+    int next_note();
 
+private:
     std::vector<int> _notes;
     int              _range{2};
     int              _octave_idx{0};
@@ -72,7 +75,7 @@ class ArpeggiatorPlugin : public InternalPlugin
 public:
     ArpeggiatorPlugin(HostControl host_control);
 
-    ~ArpeggiatorPlugin() {}
+    ~ArpeggiatorPlugin() = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -82,10 +85,9 @@ public:
 
     void process_event(const RtEvent& event) override;
 
-    void process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
+    void process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
 
 private:
-
     float                _sample_rate;
     double               _last_note_beat{0};
     int                  _current_note{0};
@@ -93,8 +95,6 @@ private:
     IntParameterValue*   _range_parameter;
     Arpeggiator          _arp;
 };
-
-float samples_per_note(float note_fraction, float tempo, float samplerate);
 
 }// namespace sample_player_plugin
 }// namespace sushi
