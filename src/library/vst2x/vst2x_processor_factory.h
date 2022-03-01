@@ -29,7 +29,7 @@ namespace vst2 {
 class Vst2xProcessorFactory : public BaseProcessorFactory
 {
 public:
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo& plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo& plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate) override;
 };

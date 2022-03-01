@@ -38,7 +38,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
 {}
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
+InternalProcessorFactory::new_instance(const PluginInfo &plugin_info,
                                        HostControl &host_control,
                                        float sample_rate)
 {

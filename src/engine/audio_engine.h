@@ -377,7 +377,7 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const engine::PluginInfo& plugin_info,
+    std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
                                                               const std::string& processor_name) override;
 
     /**

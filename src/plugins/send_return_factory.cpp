@@ -58,7 +58,7 @@ void SendReturnFactory::on_return_destruction(return_plugin::ReturnPlugin* insta
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-SendReturnFactory::new_instance(const engine::PluginInfo& plugin_info, HostControl& host_control, float sample_rate)
+SendReturnFactory::new_instance(const PluginInfo& plugin_info, HostControl& host_control, float sample_rate)
 {
     std::shared_ptr<Processor> processor;
 

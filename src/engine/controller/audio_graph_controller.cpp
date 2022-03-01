@@ -28,15 +28,15 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-inline engine::PluginType to_internal(ext::PluginType type)
+inline PluginType to_internal(ext::PluginType type)
 {
     switch (type)
     {
-        case ext::PluginType::INTERNAL:   return engine::PluginType::INTERNAL;
-        case ext::PluginType::VST2X:      return engine::PluginType::VST2X;
-        case ext::PluginType::VST3X:      return engine::PluginType::VST3X;
-        case ext::PluginType::LV2:        return engine::PluginType::LV2;
-        default:                          return engine::PluginType::INTERNAL;
+        case ext::PluginType::INTERNAL:   return PluginType::INTERNAL;
+        case ext::PluginType::VST2X:      return PluginType::VST2X;
+        case ext::PluginType::VST3X:      return PluginType::VST3X;
+        case ext::PluginType::LV2:        return PluginType::LV2;
+        default:                          return PluginType::INTERNAL;
     }
 }
 
