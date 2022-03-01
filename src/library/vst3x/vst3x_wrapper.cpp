@@ -187,10 +187,6 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
         SUSHI_LOG_WARNING("failed to sync controller");
     }
 
-    if (!_setup_channels())
-    {
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
     if (!_setup_processing())
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
