@@ -11,6 +11,7 @@
 
 using ::testing::internal::posix::GetEnv;
 using ::testing::Return;
+using ::testing::NiceMock;
 
 using namespace sushi;
 using namespace sushi::audio_frontend;
@@ -28,8 +29,8 @@ protected:
 
     void SetUp()
     {
-        mockPortAudio = new MockPortAudio();
-        _module_under_test = new PortAudioFrontend(&_engine);
+        mockPortAudio = new NiceMock<MockPortAudio>();
+        _module_under_test = std::make_unique<PortAudioFrontend>(&_engine);
     }
 
     void TearDown()
@@ -37,12 +38,12 @@ protected:
         // Clean up
         EXPECT_CALL(*mockPortAudio, Pa_IsStreamActive).WillOnce(Return(1));
         EXPECT_CALL(*mockPortAudio, Pa_StopStream);
-        delete _module_under_test;
+        _module_under_test.reset();
         delete mockPortAudio;
     }
 
     EngineMockup _engine{SAMPLE_RATE};
-    PortAudioFrontend* _module_under_test;
+    std::unique_ptr<PortAudioFrontend> _module_under_test;
 };
 
 TEST_F(TestPortAudioFrontend, TestInitSuccess)
@@ -154,7 +155,7 @@ TEST_F(TestPortAudioFrontend, TestProcess)
                                            FRAME_SIZE,
                                            &time_info,
                                            status_flags,
-                                           static_cast<void*>(_module_under_test));
+                                           static_cast<void*>(_module_under_test.get()));
     ASSERT_EQ(input_data, output_data);
     ASSERT_TRUE(_engine.process_called);
 }
