@@ -12,9 +12,9 @@ using namespace sushi;
 // Empty fixture as PluginLoader has only static methods so far
 
 #ifdef __APPLE__
-constexpr char plugin_name[] = "vst2_test_plugin.vst";
+constexpr char PLUGIN_NAME[] = "vst2_test_plugin.vst";
 #else
-constexpr char plugin_name[] = "libvst2_test_plugin.so";
+constexpr char PLUGIN_NAME[] = "libvst2_test_plugin.so";
 #endif
 class TestVst2xPluginLoading : public ::testing::Test
 {
@@ -40,7 +40,7 @@ protected:
 
 TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 {
-    char* full_again_path = realpath(plugin_name, NULL);
+    char* full_again_path = realpath(PLUGIN_NAME, NULL);
 
     PluginInfo plugin_info;
     plugin_info.uid = "";
@@ -60,7 +60,7 @@ TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 TEST_F(TestVst2xPluginLoading, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
-    char* full_again_path = realpath(plugin_name, NULL);
+    char* full_again_path = realpath(PLUGIN_NAME, NULL);
     auto library_handle = vst2::PluginLoader::get_library_handle_for_plugin(full_again_path);
     ASSERT_NE(nullptr, library_handle);
     free(full_again_path);
