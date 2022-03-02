@@ -15,7 +15,7 @@
 
 /**
  * @brief Main entry point to Sushi
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
@@ -68,7 +68,7 @@ void signal_handler([[maybe_unused]] int sig)
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Copyright 2017-2020 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
@@ -296,7 +296,11 @@ int main(int argc, char* argv[])
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default, rt_cpu_cores);
+
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
+                                                               rt_cpu_cores,
+                                                               debug_mode_switches,
+                                                               nullptr);
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),

@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <fstream>
@@ -93,14 +93,15 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
+                         bool debug_mode_sw,
                          dispatcher::BaseEventDispatcher* event_dispatcher) : BaseEngine::BaseEngine(sample_rate),
-                                             _audio_graph(rt_cpu_cores, MAX_TRACKS),
-                                             _audio_in_connections(MAX_AUDIO_CONNECTIONS),
-                                             _audio_out_connections(MAX_AUDIO_CONNECTIONS),
-                                             _transport(sample_rate, &_main_out_queue),
-                                             _clip_detector(sample_rate)
+                                                          _audio_graph(rt_cpu_cores, MAX_TRACKS, debug_mode_sw),
+                                                          _audio_in_connections(MAX_AUDIO_CONNECTIONS),
+                                                          _audio_out_connections(MAX_AUDIO_CONNECTIONS),
+                                                          _transport(sample_rate, &_main_out_queue),
+                                                          _clip_detector(sample_rate)
 {
-    if(event_dispatcher == nullptr)
+    if (event_dispatcher == nullptr)
     {
         _event_dispatcher = std::make_unique<dispatcher::EventDispatcher>(this, &_main_out_queue, &_main_in_queue);
     }
