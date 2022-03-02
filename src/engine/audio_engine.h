@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_ENGINE_H
@@ -92,11 +92,14 @@ public:
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
      *                     With values >1 tracks will be processed in parallel threads.
-     * @param evend_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
+     * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
+     *                      multicore mode.
+     * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
      *                         If nullptr, a normal EventDispatcher is created and used.
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
+                         bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
      ~AudioEngine();
@@ -537,6 +540,8 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
+    PluginRegistry _plugin_registry;
+
     ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
@@ -574,8 +579,6 @@ private:
 
     bool _master_limter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
-
-    PluginRegistry _plugin_registry;
 };
 
 /**

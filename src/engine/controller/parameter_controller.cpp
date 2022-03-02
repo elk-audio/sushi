@@ -39,7 +39,7 @@ inline ext::ParameterType to_external(const sushi::ParameterType type)
     }
 }
 
-inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* processor)
+inline std::vector<ext::ParameterInfo> _read_parameters(const Processor* processor)
 {
     assert(processor != nullptr);
     std::vector<ext::ParameterInfo> infos;
@@ -50,7 +50,7 @@ inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* proces
         {
             ext::ParameterInfo info;
             info.id = param->id();
-            info.type = ext::ParameterType::FLOAT;
+            info.type = to_external(param->type());
             info.label = param->label();
             info.name = param->name();
             info.unit = param->unit();
@@ -63,7 +63,7 @@ inline std::vector<ext::ParameterInfo>  _read_parameters(const Processor* proces
     return infos;
 }
 
-inline std::vector<ext::PropertyInfo>  _read_properties(const Processor* processor)
+inline std::vector<ext::PropertyInfo> _read_properties(const Processor* processor)
 {
     assert(processor != nullptr);
     std::vector<ext::PropertyInfo> infos;
@@ -141,9 +141,8 @@ std::pair<ext::ControlStatus, ext::ParameterInfo> ParameterController::get_param
             info.type = to_external(descr->type());
             info.min_domain_value = descr->min_domain_value();
             info.max_domain_value = descr->max_domain_value();
-            info.automatable =  descr->type() == ParameterType::FLOAT || // TODO - this might not be the way we eventually want it
-                                descr->type() == ParameterType::INT   ||
-                                descr->type() == ParameterType::BOOL;
+            info.automatable = descr->automatable();
+
             return {ext::ControlStatus::OK, info};
         }
     }

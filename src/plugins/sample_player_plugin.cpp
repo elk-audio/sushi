@@ -41,25 +41,31 @@ SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugi
 
     _volume_parameter  = register_float_parameter("volume", "Volume", "dB",
                                                   0.0f, -120.0f, 36.0f,
+                                                  Direction::AUTOMATABLE,
                                                   new dBToLinPreProcessor(-120.0f, 36.0f));
 
     _attack_parameter  = register_float_parameter("attack", "Attack", "s",
                                                   0.0f, 0.0f, 10.0f,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     _decay_parameter   = register_float_parameter("decay", "Decay", "s",
                                                   0.0f, 0.0f, 10.0f,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     _sustain_parameter = register_float_parameter("sustain", "Sustain", "",
                                                   1.0f, 0.0f, 1.0f,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 1.0f));
 
     _release_parameter = register_float_parameter("release", "Release", "s",
                                                   0.0f, 0.0f, 10.0f,
+                                                  Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, 10.0f));
 
     assert(_volume_parameter && _attack_parameter && _decay_parameter && _sustain_parameter && _release_parameter && str_pr_ok);
+    _max_input_channels = 0;
 }
 
 ProcessorReturnCode SamplePlayerPlugin::init(float sample_rate)
@@ -83,15 +89,21 @@ void SamplePlayerPlugin::configure(float sample_rate)
     return;
 }
 
+void SamplePlayerPlugin::set_enabled(bool enabled)
+{
+    Processor::set_enabled(enabled);
+    if (enabled == false)
+    {
+        _all_notes_off();
+    }
+}
+
 void SamplePlayerPlugin::set_bypassed(bool bypassed)
 {
     // Kill all voices in bypass so we dont have any hanging notes when turning back on
     if (bypassed)
     {
-        for (auto &voice : _voices)
-        {
-            voice.note_off(1.0f, 0);
-        }
+        _all_notes_off();
     }
     Processor::set_bypassed(bypassed);
 }
@@ -218,6 +230,14 @@ ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id,
         }
     }
     return InternalPlugin::set_property_value(property_id, value);
+}
+
+void SamplePlayerPlugin::_all_notes_off()
+{
+    for (auto &voice : _voices)
+    {
+        voice.note_off(1.0f, 0);
+    }
 }
 
 BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)

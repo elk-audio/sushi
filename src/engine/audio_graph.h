@@ -19,7 +19,7 @@
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
@@ -41,8 +41,9 @@ public:
      * @param max_no_tracks The maximum number of tracks to reserve space for. As
      *                      add() and remove() could be called from an rt thread
      *                      they must not (de)allocate memory-
+     * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
-    AudioGraph(int cpu_cores, int max_no_tracks);
+    AudioGraph(int cpu_cores, int max_no_tracks, bool debug_mode_switches = false);
 
     /**
      * @brief Add a track to the graph. The track will be assigned to a cpu

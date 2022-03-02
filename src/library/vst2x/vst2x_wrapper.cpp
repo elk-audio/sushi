@@ -97,9 +97,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
-    _current_input_channels = _max_input_channels;
     _max_output_channels = _plugin_handle->numOutputs;
-    _current_output_channels = _max_output_channels;
 
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, 0, 0);
@@ -137,15 +135,15 @@ void Vst2xWrapper::configure(float sample_rate)
 void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
+    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
-    bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    _update_mono_mode(valid_arr);
+    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
 }
 
 
@@ -291,7 +289,14 @@ bool Vst2xWrapper::_register_parameters()
         param_name[VST_STRING_BUFFER_SIZE-1] = 0;
         param_unit[VST_STRING_BUFFER_SIZE-1] = 0;
         auto unique_name = _make_unique_parameter_name(param_name);
-        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name, param_name, param_unit, 0, 1, nullptr));
+
+        param_inserted_ok = register_parameter(new FloatParameterDescriptor(unique_name,
+                                                                            param_name,
+                                                                            param_unit,
+                                                                            0,
+                                                                            1,
+                                                                            Direction::AUTOMATABLE,
+                                                                            nullptr));
         if (param_inserted_ok)
         {
             SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
@@ -449,22 +454,16 @@ VstTimeInfo* Vst2xWrapper::time_info()
 void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     int i;
-    if (_double_mono_input)
+
+    for (i = 0; i < _current_input_channels; ++i)
     {
-        _process_inputs[0] = const_cast<float*>(in_buffer.channel(0));
-        _process_inputs[1] = const_cast<float*>(in_buffer.channel(0));
+        _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
     }
-    else
+    for (; i <= _max_input_channels; ++i)
     {
-        for (i = 0; i < _current_input_channels; ++i)
-        {
-            _process_inputs[i] = const_cast<float*>(in_buffer.channel(i));
-        }
-        for (; i <= _max_input_channels; ++i)
-        {
-            _process_inputs[i] = (_dummy_input.channel(0));
-        }
+        _process_inputs[i] = (_dummy_input.channel(0));
     }
+
     for (i = 0; i < _current_output_channels; i++)
     {
         _process_outputs[i] = out_buffer.channel(i);
@@ -472,19 +471,6 @@ void Vst2xWrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkS
     for (; i <= _max_output_channels; ++i)
     {
         _process_outputs[i] = _dummy_output.channel(0);
-    }
-}
-
-void Vst2xWrapper::_update_mono_mode(bool speaker_arr_status)
-{
-    _double_mono_input = false;
-    if (speaker_arr_status)
-    {
-        return;
-    }
-    if (_current_input_channels == 1 && _max_input_channels == 2)
-    {
-        _double_mono_input = true;
     }
 }
 
