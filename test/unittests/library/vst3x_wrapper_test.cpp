@@ -329,12 +329,25 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     state.set_program(1);
     state.add_parameter_change(desc->id(), 0.44);
 
-    status = _module_under_test->set_state(&state, false);
+    status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+    _module_under_test->process_audio(buffer, buffer);
 
     // Check that new values are set
     EXPECT_FLOAT_EQ(0.44f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Retrive the delete event and execute it to delete the RtState object
+    ASSERT_FALSE(_event_queue.empty());
+    RtEvent rt_event;
+    _event_queue.pop(rt_event);
+    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(delete_event);
+    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+    delete delete_event;
 }
 
 

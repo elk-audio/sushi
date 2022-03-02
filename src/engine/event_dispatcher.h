@@ -77,7 +77,7 @@ class EventDispatcher : public BaseEventDispatcher
 public:
     EventDispatcher(engine::BaseEngine* engine, RtSafeRtEventFifo* in_rt_queue,  RtSafeRtEventFifo* out_rt_queue);
 
-    virtual ~EventDispatcher() = default;
+    virtual ~EventDispatcher();
 
     void run() override;
     void stop() override;

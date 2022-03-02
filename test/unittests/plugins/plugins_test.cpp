@@ -425,6 +425,7 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     // Verify written samples
     path.append(".wav");
     SF_INFO soundfile_info;
+    memset(&soundfile_info, 0, sizeof(SF_INFO));
     SNDFILE* file = sf_open(path.c_str(), SFM_READ, &soundfile_info);
     if (sf_error(file))
     {
