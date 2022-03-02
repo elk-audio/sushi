@@ -117,8 +117,7 @@ void AudioGraph::render()
     }
     else
     {
-        _worker_pool->wakeup_workers();
-        _worker_pool->wait_for_workers_idle();
+        _worker_pool->wakeup_and_wait();
     }
 }
 
