@@ -117,6 +117,8 @@ public:
 
     ProcessorState save_state() const override;
 
+    PluginInfo info() const override;
+
     static void program_change_callback(void* arg, Event* event, int status)
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);

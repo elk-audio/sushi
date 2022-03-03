@@ -354,6 +354,14 @@ ProcessorState LV2_Wrapper::save_state() const
     return state;
 }
 
+PluginInfo LV2_Wrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::LV2;
+    info.path = _plugin_path;
+    return info;
+}
+
 bool LV2_Wrapper::_register_parameters()
 {
     bool param_inserted_ok = true;

@@ -619,6 +619,15 @@ ProcessorState Vst3xWrapper::save_state() const
     return state;
 }
 
+PluginInfo Vst3xWrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::VST3X;
+    info.uid  = _plugin_load_name;
+    info.path = _plugin_load_path;
+    return info;
+}
+
 bool Vst3xWrapper::_register_parameters()
 {
     int param_count = _instance.controller()->getParameterCount();

@@ -407,6 +407,11 @@ public:
         return ProcessorState();
     }
 
+    virtual PluginInfo info() const
+    {
+        return PluginInfo();
+    }
+
 
 protected:
 

@@ -547,6 +547,14 @@ ProcessorState Vst2xWrapper::save_state() const
     return state;
 }
 
+PluginInfo Vst2xWrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::VST2X;
+    info.path = _plugin_path;
+    return info;
+}
+
 void Vst2xWrapper::_set_bypass_rt(bool bypassed)
 {
     _bypass_manager.set_bypass(bypassed, _sample_rate);

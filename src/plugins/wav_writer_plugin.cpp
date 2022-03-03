@@ -26,14 +26,14 @@ namespace wav_writer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
-constexpr auto DEFAULT_NAME = "sushi.testing.wav_writer";
+constexpr auto PLUGIN_UID = "sushi.testing.wav_writer";
 constexpr auto DEFAULT_LABEL = "Wav writer";
 constexpr auto DEFAULT_PATH = "./";
 constexpr int DEST_FILE_PROPERTY_ID = 0;
 
 WavWriterPlugin::WavWriterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = N_AUDIO_CHANNELS;
     _max_output_channels = N_AUDIO_CHANNELS;
@@ -247,6 +247,11 @@ std::string WavWriterPlugin::_available_path(const std::string& requested_path)
         SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
     }
     return new_path;
+}
+
+std::string_view WavWriterPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 } // namespace wav_writer_plugin

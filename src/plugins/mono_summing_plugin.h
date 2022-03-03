@@ -27,7 +27,7 @@
 namespace sushi {
 namespace mono_summing_plugin {
 
-class MonoSummingPlugin : public InternalPlugin
+class MonoSummingPlugin : public InternalPlugin, public UidHelper<MonoSummingPlugin>
 {
 public:
     MonoSummingPlugin(HostControl host_control);
@@ -40,6 +40,8 @@ public:
     };
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 };
 
 }// namespace mono_summing_plugin

@@ -27,7 +27,7 @@
 namespace sushi {
 namespace passthrough_plugin {
 
-class PassthroughPlugin : public InternalPlugin
+class PassthroughPlugin : public InternalPlugin, public UidHelper<PassthroughPlugin>
 {
 public:
     PassthroughPlugin(HostControl host_control);
@@ -40,6 +40,8 @@ public:
     };
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     RtSafeRtEventFifo _event_queue;

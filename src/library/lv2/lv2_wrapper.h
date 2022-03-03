@@ -129,6 +129,8 @@ public:
 
     ProcessorState save_state() const override;
 
+    PluginInfo info() const override;
+
     static int worker_callback(void* data, EventId id)
     {
         reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);

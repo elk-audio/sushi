@@ -26,7 +26,7 @@
 namespace sushi {
 namespace lfo_plugin {
 
-class LfoPlugin : public InternalPlugin
+class LfoPlugin : public InternalPlugin, public UidHelper<LfoPlugin>
 {
 public:
     LfoPlugin(HostControl host_control);
@@ -38,6 +38,8 @@ public:
     void configure(float sample_rate) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     float _phase{0};

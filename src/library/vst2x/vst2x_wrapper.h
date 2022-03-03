@@ -106,6 +106,8 @@ public:
 
     ProcessorState save_state() const override;
 
+    PluginInfo info() const override;
+
     /**
      * @brief Get the vst time information
      * @return A populated VstTimeInfo struct

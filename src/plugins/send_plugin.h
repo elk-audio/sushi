@@ -36,7 +36,7 @@ constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
 
 namespace send_plugin {
 
-class SendPlugin : public InternalPlugin
+class SendPlugin : public InternalPlugin, public UidHelper<SendPlugin>
 {
 public:
     SendPlugin(HostControl host_control, SendReturnFactory* manager);
@@ -59,6 +59,8 @@ public:
     void set_bypassed(bool bypassed) override;
 
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
+
+    static std::string_view static_uid();
 
 private:
     void _set_destination(return_plugin::ReturnPlugin* destination);

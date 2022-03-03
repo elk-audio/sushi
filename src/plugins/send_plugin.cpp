@@ -30,7 +30,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 namespace sushi {
 namespace send_plugin {
 
-constexpr auto DEFAULT_NAME = "send";
+constexpr auto PLUGIN_UID = "sushi.testing.send";
 constexpr auto DEFAULT_LABEL = "Send";
 constexpr auto DEFAULT_DEST = "No destination";
 constexpr auto DEST_PROPERTY_ID = 1;
@@ -38,7 +38,7 @@ constexpr auto DEST_PROPERTY_ID = 1;
 SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                _manager(manager)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _gain_parameter  = register_float_parameter("gain", "Gain", "dB",
                                                 0.0f, -120.0f, 24.0f,
@@ -157,6 +157,11 @@ ProcessorReturnCode SendPlugin::set_property_value(ObjectId property_id, const s
         _change_return_destination(value);
     }
     return InternalPlugin::set_property_value(property_id, value);
+}
+
+std::string_view SendPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void SendPlugin::_change_return_destination(const std::string& dest_name)

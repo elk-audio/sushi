@@ -35,7 +35,7 @@ namespace send_plugin {class SendPlugin;}
 
 namespace return_plugin {
 
-class ReturnPlugin : public InternalPlugin
+class ReturnPlugin : public InternalPlugin, public UidHelper<ReturnPlugin>
 {
 public:
     ReturnPlugin(HostControl host_control, SendReturnFactory* manager);
@@ -70,6 +70,8 @@ public:
     bool bypassed() const override;
 
     void set_bypassed(bool bypassed) override;
+
+    static std::string_view static_uid();
 
 private:
     void _channel_config(int channels);

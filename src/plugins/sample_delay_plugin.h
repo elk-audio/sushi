@@ -32,7 +32,7 @@ namespace sample_delay_plugin {
 
 constexpr int MAX_DELAY = 48000;
 
-class SampleDelayPlugin : public InternalPlugin
+class SampleDelayPlugin : public InternalPlugin, public UidHelper<SampleDelayPlugin>
 {
 public:
     SampleDelayPlugin(HostControl host_control);
@@ -46,6 +46,8 @@ public:
     void set_enabled(bool enabled) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     void _channel_config(int channels);

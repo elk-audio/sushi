@@ -24,7 +24,7 @@
 namespace sushi {
 namespace stereo_mixer_plugin {
 
-constexpr char DEFAULT_NAME[] = "sushi.testing.stereo_mixer";
+constexpr char PLUGIN_UID[] = "sushi.testing.stereo_mixer";
 constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
@@ -57,7 +57,7 @@ StereoMixerPlugin::StereoMixerPlugin(HostControl HostControl): InternalPlugin(Ho
 {
     _max_input_channels = MAX_CHANNELS_SUPPORTED;
     _max_output_channels = MAX_CHANNELS_SUPPORTED;
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
     _ch1_pan = register_float_parameter("ch1_pan", "Channel 1 Pan", "",
@@ -166,6 +166,11 @@ void StereoMixerPlugin::process_audio(const ChunkSampleBuffer& input_buffer,
     {
         bypass_process(input_buffer, output_buffer);
     }
+}
+
+std::string_view StereoMixerPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 } // namespace stereo_mixer_plugin

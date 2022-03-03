@@ -26,13 +26,13 @@
 namespace sushi {
 namespace return_plugin {
 
-constexpr auto DEFAULT_NAME = "return";
+constexpr auto PLUGIN_UID = "sushi.testing.return";
 constexpr auto DEFAULT_LABEL = "Return";
 
 ReturnPlugin::ReturnPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                    _manager(manager)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = MAX_SEND_CHANNELS;
     _max_output_channels = MAX_SEND_CHANNELS;
@@ -182,6 +182,11 @@ bool ReturnPlugin::bypassed() const
 void ReturnPlugin::set_bypassed(bool bypassed)
 {
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+std::string_view ReturnPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void inline ReturnPlugin::_swap_buffers()

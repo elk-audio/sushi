@@ -29,13 +29,13 @@ namespace sample_player_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
-constexpr auto DEFAULT_NAME = "sushi.testing.sampleplayer";
+constexpr auto PLUGIN_UID = "sushi.testing.sampleplayer";
 constexpr auto DEFAULT_LABEL = "Sample player";
 constexpr int SAMPLE_PROPERTY_ID = 0;
 
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     [[maybe_unused]] bool str_pr_ok = register_property("sample_file", "Sample File", "");
 
@@ -230,6 +230,11 @@ ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id,
         }
     }
     return InternalPlugin::set_property_value(property_id, value);
+}
+
+std::string_view SamplePlayerPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void SamplePlayerPlugin::_all_notes_off()

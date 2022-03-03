@@ -397,6 +397,15 @@ ProcessorState InternalPlugin::save_state() const
     return state;
 }
 
+PluginInfo InternalPlugin::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::INTERNAL;
+    info.path = "";
+    info.uid = this->uid();
+    return info;
+}
+
 void InternalPlugin::send_data_to_realtime(BlobData data, int id)
 {
     assert(twine::is_current_thread_realtime() == false);

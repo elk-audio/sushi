@@ -26,7 +26,7 @@
 namespace sushi {
 namespace step_sequencer_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.step_sequencer";
+constexpr auto PLUGIN_UID = "sushi.testing.step_sequencer";
 constexpr auto DEFAULT_LABEL = "Step Sequencer";
 
 constexpr float SECONDS_IN_MINUTE = 60.0f;
@@ -36,7 +36,7 @@ constexpr std::array<int, 12> MINOR_SCALE = {0,0,2,3,3,5,5,7,8,8,10,10};
 
 StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     for (int i = 0; i < SEQUENCER_STEPS; ++i)
     {
@@ -169,6 +169,11 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
     _event_queue.clear();
 }
 
+std::string_view StepSequencerPlugin::static_uid()
+{
+    return PLUGIN_UID;
+}
+
 float samples_per_qn(float tempo, float samplerate)
 {
     return 8.0f * samplerate / tempo * SECONDS_IN_MINUTE;
@@ -179,6 +184,5 @@ int snap_to_scale(int note, const std::array<int, 12>& scale)
     int octave = note / OCTAVE;
     return scale[note % OCTAVE] + octave * OCTAVE;
 }
-
 }// namespace step_sequencer_plugin
 }// namespace sushi

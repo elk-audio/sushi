@@ -25,13 +25,14 @@
 namespace sushi {
 
 class BaseProcessorFactory;
+class BaseInternalPlugFactory;
 
 class InternalProcessorFactory : public BaseProcessorFactory
 {
 public:
     InternalProcessorFactory();
 
-    virtual ~InternalProcessorFactory() = default;
+    ~InternalProcessorFactory();
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo &plugin_info,
                                                                             HostControl& host_control,
@@ -45,7 +46,11 @@ private:
      */
     std::shared_ptr<Processor> _create_internal_plugin(const std::string& uid, HostControl& host_control);
 
+    void _add(std::unique_ptr<BaseInternalPlugFactory> factory);
+
     std::unique_ptr<BaseProcessorFactory> _send_return_factory;
+
+    std::unordered_map<std::string_view, std::unique_ptr<BaseInternalPlugFactory>> _internal_plugin_factories;
 };
 
 }; // end namespace sushi

@@ -38,7 +38,7 @@ constexpr float OUTPUT_MIN_DB = -120.0f;
 constexpr float OUTPUT_MAX_DB = 24.0f;
 constexpr float OUTPUT_MIN = 1.0e-6f; // -120dB
 
-constexpr auto DEFAULT_NAME = "sushi.testing.peakmeter";
+constexpr auto PLUGIN_UID = "sushi.testing.peakmeter";
 constexpr auto DEFAULT_LABEL = "Peak Meter";
 
 // Convert a gain value to a normalised gain value
@@ -55,7 +55,7 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     _clipped.fill(false);
     _max_input_channels = MAX_METERED_CHANNELS;
     _max_output_channels = MAX_METERED_CHANNELS;
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
     _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels 1 & 2", "", false, Direction::AUTOMATABLE);
@@ -225,6 +225,11 @@ void PeakMeterPlugin::_process_clip_detection(const ChunkSampleBuffer& in, bool 
         }
         _clip_hold_count[ch] += AUDIO_CHUNK_SIZE;
     }
+}
+
+std::string_view PeakMeterPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 }// namespace gain_plugin
