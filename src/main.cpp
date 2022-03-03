@@ -34,7 +34,7 @@
 #include "audio_frontends/portaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
-#include "control_frontends/liblo_osc_messenger.h"
+#include "control_frontends/oscpack_osc_messenger.h"
 
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
@@ -502,10 +502,9 @@ int main(int argc, char* argv[])
 #else
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 #endif
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
-                                                                              controller.get(),
-                                                                              new sushi::osc::LibloOscMessenger(osc_server_port,
-                                                                                                                osc_send_port));
+        auto oscpack = new sushi::open_sound_control::OscpackOscMessenger(osc_server_port, osc_send_port);
+
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), oscpack);
         controller->set_osc_frontend(osc_frontend.get());
         configurator->set_osc_frontend(osc_frontend.get());
 

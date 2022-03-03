@@ -32,7 +32,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          ext::SushiControl* controller,
-                         osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                         open_sound_control::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _controller(controller),
                                           _graph_controller(controller->audio_graph_controller()),
                                           _param_controller(controller->parameter_controller()),
@@ -90,14 +90,16 @@ OscConnection* OSCFrontend::_connect_to_parameter(const std::string& processor_n
         return nullptr;
     }
 
-    std::string osc_path = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
+    std::string osc_path = "/parameter/" + open_sound_control::make_safe_path(processor_name) + "/" +
+                           open_sound_control::make_safe_path(parameter_name);
     auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = parameter_id;
     connection->instance = this;
     connection->controller = _controller;
 
-    auto cb = _osc->add_method(osc_path.c_str(), "f", osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT, connection);
+    auto cb = _osc->add_method(osc_path.c_str(), "f",
+                               open_sound_control::OscMethodType::SEND_PARAMETER_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
@@ -116,14 +118,16 @@ OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_na
         return nullptr;
     }
 
-    std::string osc_path = "/property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
+    std::string osc_path = "/property/" + open_sound_control::make_safe_path(processor_name) + "/" +
+                           open_sound_control::make_safe_path(property_name);
     auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = property_id;
     connection->instance = this;
     connection->controller = _controller;
 
-    auto cb = _osc->add_method(osc_path.c_str(), "s", osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT, connection);
+    auto cb = _osc->add_method(osc_path.c_str(), "s",
+                               open_sound_control::OscMethodType::SEND_PROPERTY_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
@@ -143,8 +147,8 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     {
         return false;
     }
-    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" +
-                                            osc::make_safe_path(parameter_name);
+    std::string id_string = "/parameter/" + open_sound_control::make_safe_path(processor_name) + "/" +
+                            open_sound_control::make_safe_path(parameter_name);
 
     _outgoing_connections[processor_id][parameter_id] = id_string;
 
@@ -179,7 +183,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
     {
         return {nullptr, ""};
     }
-    osc_path = osc_path + osc::make_safe_path(processor_name);
+    osc_path = osc_path + open_sound_control::make_safe_path(processor_name);
     auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -202,7 +206,7 @@ OscConnection* OSCFrontend::connect_to_bypass_state(const std::string& processor
         return nullptr;
     }
 
-    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_BYPASS_STATE_EVENT, connection);
+    auto cb = _osc->add_method(osc_path.c_str(), "i", open_sound_control::OscMethodType::SEND_BYPASS_STATE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
@@ -223,12 +227,14 @@ OscConnection* OSCFrontend::connect_kb_to_track(const std::string& track_name)
         return nullptr;
     }
 
-    auto cb = _osc->add_method(osc_path.c_str(), "siif", osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT, connection);
+    auto cb = _osc->add_method(osc_path.c_str(), "siif",
+                               open_sound_control::OscMethodType::SEND_KEYBOARD_NOTE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
 
     auto dupl_conn = new OscConnection(*connection);
-    cb = _osc->add_method(osc_path.c_str(), "sif", osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, connection);
+    cb = _osc->add_method(osc_path.c_str(), "sif",
+                          open_sound_control::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, connection);
     dupl_conn->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
@@ -249,7 +255,8 @@ OscConnection* OSCFrontend::connect_to_program_change(const std::string& process
     {
         return nullptr;
     }
-    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT, connection);
+    auto cb = _osc->add_method(osc_path.c_str(), "i",
+                               open_sound_control::OscMethodType::SEND_PROGRAM_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
     SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
@@ -416,13 +423,19 @@ std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
 
 void OSCFrontend::_setup_engine_control()
 {
-    _set_tempo_cp = _osc->add_method("/engine/set_tempo", "f", osc::OscMethodType::SET_TEMPO, this->_controller);
-    _set_time_signature_cb = _osc->add_method("/engine/set_time_signature", "ii", osc::OscMethodType::SET_TIME_SIGNATURE, this->_controller);
-    _set_playing_mode_cb = _osc->add_method("/engine/set_playing_mode", "s", osc::OscMethodType::SET_PLAYING_MODE, this->_controller);
-    _set_sync_mode_cb = _osc->add_method("/engine/set_sync_mode", "s", osc::OscMethodType::SET_TEMPO_SYNC_MODE, this->_controller);
-    _set_timing_statistics_enabled_cb = _osc->add_method("/engine/set_timing_statistics_enabled", "i", osc::OscMethodType::SET_TIMING_STATISTICS_ENABLED, this->_controller);
-    _reset_timing_statistics_s_cb = _osc->add_method("/engine/reset_timing_statistics", "s", osc::OscMethodType::RESET_TIMING_STATISTICS, this->_controller);
-    _reset_timing_statistics_ss_cb = _osc->add_method("/engine/reset_timing_statistics", "ss", osc::OscMethodType::RESET_TIMING_STATISTICS, this->_controller);
+    _set_tempo_cp = _osc->add_method("/engine/set_tempo", "f", open_sound_control::OscMethodType::SET_TEMPO, this->_controller);
+    _set_time_signature_cb = _osc->add_method("/engine/set_time_signature", "ii",
+                                              open_sound_control::OscMethodType::SET_TIME_SIGNATURE, this->_controller);
+    _set_playing_mode_cb = _osc->add_method("/engine/set_playing_mode", "s",
+                                            open_sound_control::OscMethodType::SET_PLAYING_MODE, this->_controller);
+    _set_sync_mode_cb = _osc->add_method("/engine/set_sync_mode", "s",
+                                         open_sound_control::OscMethodType::SET_TEMPO_SYNC_MODE, this->_controller);
+    _set_timing_statistics_enabled_cb = _osc->add_method("/engine/set_timing_statistics_enabled", "i",
+                         open_sound_control::OscMethodType::SET_TIMING_STATISTICS_ENABLED, this->_controller);
+    _reset_timing_statistics_s_cb = _osc->add_method("/engine/reset_timing_statistics", "s",
+                                                     open_sound_control::OscMethodType::RESET_TIMING_STATISTICS, this->_controller);
+    _reset_timing_statistics_ss_cb = _osc->add_method("/engine/reset_timing_statistics", "ss",
+                                                      open_sound_control::OscMethodType::RESET_TIMING_STATISTICS, this->_controller);
 }
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
@@ -578,7 +591,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
 
 } // namespace control_frontend
 
-std::string osc::make_safe_path(std::string name)
+std::string open_sound_control::make_safe_path(std::string name)
 {
     // Based on which characters are invalid in the OSC Spec plus \ and "
     constexpr std::string_view INVALID_CHARS = "#*./?[]{}\"\\";

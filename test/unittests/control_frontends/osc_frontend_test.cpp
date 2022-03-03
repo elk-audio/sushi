@@ -1,22 +1,24 @@
 #include <thread>
-#include "gtest/gtest.h"
 
-#include "control_frontends/base_control_frontend.cpp"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#define private public
-
+#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <gmock/gmock-actions.h>
 
+#include "control_frontends/base_control_frontend.cpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+#define private public
+
 #include "test_utils/mock_osc_interface.h"
+#include "test_utils/engine_mockup.h"
+#include "test_utils/control_mockup.h"
 
 #include "control_frontends/osc_frontend.cpp"
 
 #undef private
 #pragma GCC diagnostic pop
-#include "test_utils/engine_mockup.h"
-#include "test_utils/control_mockup.h"
 
 using ::testing::Return;
 using ::testing::StrEq;
@@ -25,7 +27,7 @@ using ::testing::_;
 
 using namespace sushi;
 using namespace sushi::control_frontend;
-using namespace sushi::osc;
+using namespace sushi::open_sound_control;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;

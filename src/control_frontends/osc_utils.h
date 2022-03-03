@@ -25,7 +25,8 @@
 #include "logging.h"
 
 namespace sushi {
-namespace osc {
+namespace open_sound_control
+{
 
 enum class OscMethodType
 {
@@ -78,20 +79,22 @@ public:
      * @param type_tag_string  The Type Tag String to look for
      * @param type The OscMethodType enum - specifying what category the message is.
      *             Necessary if the OSC implementation uses a different callback for each type.
-     * @param connection A void* of "user_data", which can vary depending on the connection type.
-     *                   The actual payload need only be known in the corresponding callback passed.
-     * @return A pointer to the the added method.
+     * @param callback_data A void* of "user_data", which can vary depending on the callback_data type.
+     *                      The actual payload need only be known in the corresponding callback passed.
+     * @return A unique handle which identifies the added method.
      */
     virtual void* add_method(const char* address_pattern,
                              const char* type_tag_string,
                              OscMethodType type,
-                             const void* connection) = 0;
+                             const void* callback_data) = 0;
 
     /**
      * Deletes the connection to a specific callback, created with add_method.
-     * @param method Needs to be the void* returned from add_method.
+     * This method signature uses a void* handle, so that it can be compatible with many OSC libraries.
+     * But if we will only ever use oscpack, it can be changed to uint_64_t.
+     * @param handle Needs to be the void* returned from add_method.
      */
-    virtual void delete_method(void* method) = 0;
+    virtual void delete_method(void* handle) = 0;
 
     /**
      * Send a single OSC message. Currently only TTS: "i" or "f" are supported.
