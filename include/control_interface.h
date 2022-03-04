@@ -248,6 +248,11 @@ enum class TransportAction
     TEMPO_CHANGED
 };
 
+struct SessionState
+{
+
+};
+
 class SystemController
 {
 public:
@@ -495,6 +500,15 @@ protected:
     OscController() = default;
 };
 
+class SessionController
+{
+public:
+    virtual ~SessionController() = default;
+
+    virtual SessionState save_session() const = 0;
+    virtual ControlStatus restore_session(const SessionState& state) = 0;
+};
+
 class ControlNotification
 {
 public:
@@ -534,6 +548,7 @@ public:
     AudioRoutingController* audio_routing_controller() {return _audio_routing_controller;}
     CvGateController*       cv_gate_controller() {return _cv_gate_controller;}
     OscController*          osc_controller() {return _osc_controller;}
+    SessionController*      session_controller() {return _session_controller;}
 
     virtual ControlStatus   subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
@@ -548,17 +563,19 @@ protected:
                  MidiController*         midi_controller,
                  AudioRoutingController* audio_routing_controller,
                  CvGateController*       cv_gate_controller,
-                 OscController*          osc_controller) : _system_controller(system_controller),
-                                                           _transport_controller(transport_controller),
-                                                           _timing_controller(timing_controller),
-                                                           _keyboard_controller(keyboard_controller),
-                                                           _audio_graph_controller(audio_graph_controller),
-                                                           _program_controller(program_controller),
-                                                           _parameter_controller(parameter_controller),
-                                                           _midi_controller(midi_controller),
-                                                           _audio_routing_controller(audio_routing_controller),
-                                                           _cv_gate_controller(cv_gate_controller),
-                                                           _osc_controller(osc_controller) {}
+                 OscController*          osc_controller,
+                 SessionController*      session_controller) : _system_controller(system_controller),
+                                                               _transport_controller(transport_controller),
+                                                               _timing_controller(timing_controller),
+                                                               _keyboard_controller(keyboard_controller),
+                                                               _audio_graph_controller(audio_graph_controller),
+                                                               _program_controller(program_controller),
+                                                               _parameter_controller(parameter_controller),
+                                                               _midi_controller(midi_controller),
+                                                               _audio_routing_controller(audio_routing_controller),
+                                                               _cv_gate_controller(cv_gate_controller),
+                                                               _osc_controller(osc_controller),
+                                                               _session_controller(session_controller){}
 
 private:
     SystemController*           _system_controller;
@@ -572,6 +589,7 @@ private:
     AudioRoutingController*     _audio_routing_controller;
     CvGateController*           _cv_gate_controller;
     OscController*              _osc_controller;
+    SessionController*          _session_controller;
 };
 
 } // ext

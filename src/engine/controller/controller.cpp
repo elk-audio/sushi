@@ -40,7 +40,8 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                                        &_midi_controller_impl,
                                                                        &_audio_routing_controller_impl,
                                                                        &_cv_gate_controller_impl,
-                                                                       &_osc_controller_impl),
+                                                                       &_osc_controller_impl,
+                                                                       &_session_controller_impl),
                                                      _system_controller_impl(engine->audio_input_channels(),
                                                                              engine->audio_output_channels()),
                                                      _transport_controller_impl(engine),
@@ -49,12 +50,11 @@ Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatch
                                                      _audio_graph_controller_impl(engine),
                                                      _program_controller_impl(engine),
                                                      _parameter_controller_impl(engine),
-                                                     _midi_controller_impl(engine,
-                                                                           midi_dispatcher),
+                                                     _midi_controller_impl(engine, midi_dispatcher),
                                                      _audio_routing_controller_impl(engine),
                                                      _cv_gate_controller_impl(engine),
-                                                     _osc_controller_impl(engine)
-
+                                                     _osc_controller_impl(engine),
+                                                     _session_controller_impl(engine, midi_dispatcher)
 {
     _event_dispatcher = engine->event_dispatcher();
     _processors = engine->processor_container();

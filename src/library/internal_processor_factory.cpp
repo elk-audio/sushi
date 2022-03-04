@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -34,6 +34,9 @@
 
 namespace sushi {
 
+/**
+ * @brief Simplified factory only used internally in this file
+ */
 class BaseInternalPlugFactory
 {
 public:

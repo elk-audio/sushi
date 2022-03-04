@@ -15,7 +15,7 @@
 
 /**
  * @brief Internal plugin base class.
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_INTERNAL_PLUGIN_H
@@ -33,7 +33,7 @@ namespace sushi {
 
 constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
-class StringIdentifiable
+class StringUid
 {
 public:
     virtual std::string_view uid() const
@@ -42,11 +42,14 @@ public:
     }
 };
 
-/* CRTP helper to avoid having to implement both a static function and
- * a virtual one to access the plugin string uid
- * Usage: Implement static_uid() and inherit from UidHelper<ClassName> */
+/**
+ * @brief CRTP helper to avoid having to implement both a static function and
+ *        a virtual one to access the plugin string uid
+ *
+ *        Usage: Implement static_uid() and inherit from UidHelper<ClassName>
+ */
 template <typename T>
-class UidHelper : public StringIdentifiable
+class UidHelper : public StringUid
 {
 public:
     std::string_view uid() const override
@@ -59,7 +62,7 @@ public:
  * @brief internal base class for processors that keeps track of all host-related
  * configuration and provides basic parameter and event handling.
  */
-class InternalPlugin : public Processor, public StringIdentifiable
+class InternalPlugin : public Processor, public StringUid
 {
 public:
     SUSHI_DECLARE_NON_COPYABLE(InternalPlugin)
@@ -161,7 +164,7 @@ public:
                            const std::string& label,
                            const std::string& default_value);
 
-    virtual PluginInfo info() const;
+    virtual PluginInfo info() const override;
 
 protected:
     /**

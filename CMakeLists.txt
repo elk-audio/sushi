@@ -373,6 +373,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/controller/audio_routing_controller.cpp
                       src/engine/controller/cv_gate_controller.cpp
                       src/engine/controller/osc_controller.cpp
+                      src/engine/controller/session_controller.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
