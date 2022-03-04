@@ -198,6 +198,8 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
 
     _audio_input_channels = _num_total_input_channels - _cv_input_channels;
     _audio_output_channels = _num_total_output_channels - _cv_output_channels;
+    _in_buffer = ChunkSampleBuffer(_audio_input_channels);
+    _out_buffer = ChunkSampleBuffer(_audio_output_channels);
     _engine->set_audio_input_channels(_audio_input_channels);
     _engine->set_audio_output_channels(_audio_output_channels);
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
@@ -252,9 +254,6 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
-    ChunkSampleBuffer in_buffer(_audio_input_channels);
-    ChunkSampleBuffer out_buffer(_audio_output_channels);
-
     // Deinterleave audio channels and updated cv values
     for (int c = 0; c < _num_total_input_channels; c++)
     {
@@ -263,7 +262,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         {
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                float* in_dst = in_buffer.channel(c);
+                float* in_dst = _in_buffer.channel(c);
                 in_dst[s] = in_src[s * _num_total_input_channels + c];
             }
         }
@@ -273,8 +272,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _in_controls.cv_values[cc] = map_audio_to_cv(in_src[AUDIO_CHUNK_SIZE - 1]);
         }
     }
-    out_buffer.clear();
-    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+    _out_buffer.clear();
+    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
 
     // Interleave audio channels and update cv values
     for (int c = 0; c < _num_total_output_channels; c++)
@@ -284,7 +283,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         {
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                const float* out_src = out_buffer.channel(c);
+                const float* out_src = _out_buffer.channel(c);
                 out_dst[s * _num_total_output_channels + c] = out_src[s];
             }
         }

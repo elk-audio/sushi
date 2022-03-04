@@ -144,6 +144,9 @@ private:
     const PaDeviceInfo* _input_device_info;
     const PaDeviceInfo* _output_device_info;
 
+    ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
+
     Time _start_time;
     PaTime _time_offset;
     int64_t _processed_sample_count{0};
