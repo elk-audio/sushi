@@ -92,6 +92,8 @@ TEST_F(TestPortAudioFrontend, TestInitiFailSamplerate)
     PaError init_value = PaErrorCode::paNoError;
     int device_count = 2;
     PaDeviceInfo expected_info;
+    expected_info.maxInputChannels = 2;
+    expected_info.maxOutputChannels = 2;
     PortAudioFrontendConfiguration config(0,1,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
