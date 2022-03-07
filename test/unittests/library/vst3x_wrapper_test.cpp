@@ -12,11 +12,7 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-#ifdef NDEBUG
-const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
-#else
-const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
-#endif
+const char PLUGIN_FILE[] = "../third-party/vst3sdk/VST3/adelay.vst3";
 const char PLUGIN_NAME[] = "ADelay";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;

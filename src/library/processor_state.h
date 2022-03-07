@@ -34,7 +34,7 @@ namespace sushi {
 class ProcessorState
 {
 public:
-    ~ProcessorState();
+    virtual ~ProcessorState();
 
     virtual std::vector<std::byte> serialize() const;
 

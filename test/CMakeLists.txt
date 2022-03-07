@@ -102,6 +102,10 @@ if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
 
+if (${WITH_PORTAUDIO})
+    set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
+endif()
+
 if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loading_test.cpp
@@ -135,6 +139,10 @@ if (${WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
 endif()
 
+if (${WITH_PORTAUDIO})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
 if (${WITH_VST2})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2)
 endif()
@@ -155,7 +163,7 @@ endif()
 #  Include directories relative to test  #
 ##########################################
 
-set(INCLUDE_DIRS "${INCLUDE_DIRS}"
+set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  ${PROJECT_SOURCE_DIR}/test/unittests
                  ${PROJECT_SOURCE_DIR}/test/gtest/include)
 
@@ -169,6 +177,8 @@ set(TEST_LINK_LIBRARIES
     ${COMMON_LIBRARIES}
     gtest
     gtest_main
+    gmock
+    gmock_main
 )
 
 if (${WITH_VST2})

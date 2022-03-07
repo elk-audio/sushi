@@ -156,9 +156,9 @@ TEST_F(TrackTest, TestMute)
     {
         test_utils::fill_sample_buffer(in_bus, 1.0f);
         _module_under_test.render();
-        EXPECT_LT(_module_under_test.output_bus(0).channel(0)[0], 1.0f);
+        EXPECT_LT(_module_under_test.output_bus(0).channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0f);
     }
-    EXPECT_LT(_module_under_test.output_bus(0).channel(0)[0], 0.1f);
+    EXPECT_LT(_module_under_test.output_bus(0).channel(0)[AUDIO_CHUNK_SIZE - 1], 0.1f);
 }
 
 TEST_F(TrackTest, TestEventProcessing)
