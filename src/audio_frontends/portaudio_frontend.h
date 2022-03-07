@@ -169,10 +169,7 @@ namespace sushi {
 namespace audio_frontend {
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioFrontendConfiguration(std::optional<int> input_device_id,
-                                   std::optional<int> output_device_id,
-                                   int cv_inputs,
-                                   int cv_outputs) : BaseAudioFrontendConfiguration(0, 0) {}
+    PortAudioFrontendConfiguration(std::optional<int>, std::optional<int>, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class PortAudioFrontend : public BaseAudioFrontend
