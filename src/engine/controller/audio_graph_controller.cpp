@@ -28,32 +28,6 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-inline PluginType to_internal(ext::PluginType type)
-{
-    switch (type)
-    {
-        case ext::PluginType::INTERNAL:   return PluginType::INTERNAL;
-        case ext::PluginType::VST2X:      return PluginType::VST2X;
-        case ext::PluginType::VST3X:      return PluginType::VST3X;
-        case ext::PluginType::LV2:        return PluginType::LV2;
-        default:                          return PluginType::INTERNAL;
-    }
-}
-
-inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
-{
-    if (src->program.has_value()) dest->set_program(src->program.value());
-    if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
-    for (const auto& p : src->parameters)
-    {
-        dest->add_parameter_change(p.first, p.second);
-    }
-    for (const auto& p : src->properties)
-    {
-        dest->add_property_change(p.first, p.second);
-    }
-}
-
 inline ext::ProcessorInfo to_external(const Processor* proc)
 {
     return ext::ProcessorInfo{.id = static_cast<int>(proc->id()),

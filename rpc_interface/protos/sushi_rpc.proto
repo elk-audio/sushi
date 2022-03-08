@@ -704,38 +704,76 @@ message ProcessorUpdate
     TrackIdentifier     parent_track = 3;
 }
 
+message MidiKbdConnectionState
+{
+    string       track = 1;
+    MidiChannel  channel = 2;
+    int32        port = 3;
+    bool         raw_midi = 7;
+}
+
+message MidiCCConnectionState
+{
+    string              processor = 1;
+    ParameterIdentifier parameter = 2;
+    MidiChannel         channel = 3;
+    int32               port = 4;
+    int32               cc_number = 5;
+    float               min_range = 6;
+    float               max_range = 7;
+    bool                relative_mode = 8;
+}
+
+message MidiPCConnectionState
+{
+    string       processor = 1;
+    MidiChannel  channel = 2;
+    int32        port = 3;
+}
+
 message MidiState
 {
-    int32                       inputs = 1;
-    int32                       outputs = 2;
-    repeated MidiKbdConnection  kbd_input_connections = 3;
-    repeated MidiKbdConnection  kbd_output_connections = 4;
-    repeated MidiCCConnection   cc_connections = 5;
-    repeated MidiPCConnection   pc_connections = 6;
+    int32    inputs = 1;
+    int32    outputs = 2;
+    repeated MidiKbdConnectionState  kbd_input_connections = 3;
+    repeated MidiKbdConnectionState  kbd_output_connections = 4;
+    repeated MidiCCConnectionState   cc_connections = 5;
+    repeated MidiPCConnectionState   pc_connections = 6;
+}
+
+message OscParameterState
+{
+    string processor = 1;
+    repeated int32 parameter_ids = 2;
 }
 
 message OscState
 {
-    bool                            enable_all_processor_outputs = 1;
-    repeated ParameterIdentifier    enabled_processor_outputs = 2;
+    bool                        enable_all_processor_outputs = 1;
+    repeated OscParameterState  enabled_processor_outputs = 2;
+}
+
+message TrackAudioConnectionState
+{
+    string    track = 1;
+    int32     track_channel = 2;
+    int32     engine_channel = 3;
 }
 
 message EngineState
 {
-    float                       sample_rate = 1;
-    float                       tempo = 2;
-    PlayingMode                 playing_mode = 3;
-    SyncMode                    sync_mode = 4;
-    TimeSignature               time_signature = 5;
-    bool                        clip_detection_input = 6;
-    bool                        clip_detection_output = 7;
-    bool                        master_limiter = 8;
-    int32                       cv_inputs = 9;
-    int32                       cv_outputs = 10;
-    int32                       midi_inputs = 11;
-    int32                       midi_outputs = 12;
-    repeated AudioConnection    input_connections = 13;
-    repeated AudioConnection    output_connections = 14;
+    float          sample_rate = 1;
+    float          tempo = 2;
+    PlayingMode    playing_mode = 3;
+    SyncMode       sync_mode = 4;
+    TimeSignature  time_signature = 5;
+    bool           clip_detection_input = 6;
+    bool           clip_detection_output = 7;
+    bool           master_limiter = 8;
+    int32          cv_inputs = 9;
+    int32          cv_outputs = 10;
+    repeated TrackAudioConnectionState    input_connections = 13;
+    repeated TrackAudioConnectionState    output_connections = 14;
 }
 
 message PluginClass
@@ -750,8 +788,8 @@ message PluginClass
 
 message TrackState
 {
-    string                  label = 1;
-    string                  name = 2;
+    string                  name = 1;
+    string                  label = 2;
     int32                   input_channels = 3;
     int32                   input_busses = 4;
     int32                   output_channels = 5;

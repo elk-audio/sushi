@@ -30,6 +30,8 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
 namespace sushi {
 namespace engine {
 
+using namespace controller_impl;
+
 Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) : ext::SushiControl(&_system_controller_impl,
                                                                        &_transport_controller_impl,
                                                                        &_timing_controller_impl,
@@ -248,6 +250,7 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
 void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 {
     _osc_controller_impl.set_osc_frontend(osc_frontend);
+    _session_controller_impl.set_osc_frontend(osc_frontend);
 }
 
 void Controller::_notify_timing_listeners(const EngineTimingNotificationEvent* event) const

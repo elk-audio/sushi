@@ -95,9 +95,9 @@ public:
 
     /**
      * @brief Return the stored bypass state, if any.
-     * @return An std::optional<int> populated with the bypass state, if stored.
+     * @return An std::optional<bool> populated with the bypass state, if stored.
      */
-    std::optional<int> bypassed() const;
+    std::optional<bool> bypassed() const;
 
     /**
      * @brief Return stored parameter values.
@@ -121,7 +121,7 @@ public:
 
 protected:
     std::optional<int> _program;
-    std::optional<int> _bypassed;
+    std::optional<bool> _bypassed;
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
     std::vector<std::pair<ObjectId, std::string>> _property_changes;
     std::vector<std::byte> _binary_data;

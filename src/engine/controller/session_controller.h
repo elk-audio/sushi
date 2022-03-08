@@ -46,9 +46,17 @@ public:
     ext::ControlStatus restore_session(const ext::SessionState& state) override;
 
 private:
-    engine::BaseEngine*              _engine;
+    ext::SushiBuildInfo _save_build_info() const;
+    ext::OscState       _save_osc_state() const;
+    ext::MidiState      _save_midi_state() const;
+    ext::EngineState    _save_engine_state() const;
+    std::vector<ext::TrackState> _save_tracks() const;
+    ext::PluginClass    _save_plugin(const sushi::Processor* plugin) const;
+
     dispatcher::BaseEventDispatcher* _event_dispatcher;
+    engine::BaseEngine*              _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
+    const BaseProcessorContainer*    _processors;
     control_frontend::OSCFrontend*   _osc_frontend;
 };
 

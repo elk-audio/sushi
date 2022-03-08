@@ -115,7 +115,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
 
     ext::MidiChannel channel_3 = sushi::ext::MidiChannel::MIDI_CH_3;
 
-    int int_channel_3 = ext::int_from_midi_channel(channel_3);
+    int int_channel_3 = int_from_ext_midi_channel(channel_3);
 
     KeyboardEvent event_ch3(KeyboardEvent::Subtype::NOTE_ON,
                             track_id,

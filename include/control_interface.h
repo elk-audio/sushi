@@ -138,6 +138,7 @@ struct ProcessorState
     std::optional<int>  program;
     std::vector<std::pair<int, float>> parameters;
     std::vector<std::pair<int, std::string>> properties;
+    std::vector<std::byte> binary_data;
 };
 
 struct SushiBuildInfo
@@ -248,9 +249,108 @@ enum class TransportAction
     TEMPO_CHANGED
 };
 
+struct MidiKbdConnectionState
+{
+    std::string track;
+    MidiChannel channel;
+    int         port;
+    bool        raw_midi;
+};
+
+struct MidiCCConnectionState
+{
+    std::string processor;
+    int         parameter_id;
+    MidiChannel channel;
+    int         port;
+    int         cc_number;
+    float       min_range;
+    float       max_range;
+    bool        relative_mode;
+};
+
+struct MidiPCConnectionState
+{
+    std::string processor;
+    MidiChannel channel;
+    int         port;
+};
+
+struct MidiState
+{
+    int inputs;
+    int outputs;
+    std::vector<MidiKbdConnectionState> kbd_input_connections;
+    std::vector<MidiKbdConnectionState> kbd_output_connections;
+    std::vector<MidiCCConnectionState> cc_connections;
+    std::vector<MidiPCConnectionState> pc_connections;
+};
+
+struct OscParameterState
+{
+    std::string processor;
+    std::vector<int> parameter_ids;
+};
+
+struct OscState
+{
+    bool enable_all_processor_outputs;
+    std::vector<OscParameterState> enabled_processor_outputs;
+};
+
+struct TrackAudioConnectionState
+{
+    std::string  track;
+    int          track_channel;
+    int          engine_channel;
+};
+
+struct EngineState
+{
+    float           sample_rate;
+    float           tempo;
+    PlayingMode     playing_mode;
+    SyncMode        sync_mode;
+    TimeSignature   time_signature;
+    bool            input_clip_detection;
+    bool            output_clip_detection;
+    bool            master_limiter;
+    int             cv_inputs;
+    int             cv_outputs;
+    std::vector<TrackAudioConnectionState> input_connections;
+    std::vector<TrackAudioConnectionState> output_connections;
+};
+
+struct PluginClass
+{
+    std::string     name;
+    std::string     label;
+    std::string     uid;
+    std::string     path;
+    PluginType      type;
+    ProcessorState  state;
+};
+
+struct TrackState
+{
+    std::string     name;
+    std::string     label;
+    int             input_channels;
+    int             output_channels;
+    int             input_busses;
+    int             output_busses;
+    ProcessorState  track_state;
+    std::vector<PluginClass>    processors;
+};
+
 struct SessionState
 {
-
+    SushiBuildInfo      sushi_info;
+    std::string         save_date;
+    OscState            osc_state;
+    MidiState           midi_state;
+    EngineState         engine_state;
+    std::vector<TrackState> tracks;
 };
 
 class SystemController

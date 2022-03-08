@@ -74,7 +74,7 @@ std::optional<int> ProcessorState::program() const
     return _program;
 }
 
-std::optional<int> ProcessorState::bypassed() const
+std::optional<bool> ProcessorState::bypassed() const
 {
     return _bypassed;
 }
