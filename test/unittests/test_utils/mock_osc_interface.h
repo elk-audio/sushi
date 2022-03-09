@@ -27,7 +27,12 @@ using namespace sushi::open_sound_control;
 class MockOscInterface: public BaseOscMessenger
 {
 public:
-    MockOscInterface(int receive_port, int send_port) : BaseOscMessenger(receive_port, send_port) {}
+    MockOscInterface(int receive_port,
+                     int send_port,
+                     const std::string& send_ip) : BaseOscMessenger(receive_port,
+                                                                    send_port,
+                                                                    send_ip) {}
+
     ~MockOscInterface() override {}
 
     MOCK_METHOD(bool,

@@ -129,8 +129,11 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
     // osc_frontend is only used in this test, so no need to keep in harness.
     constexpr int OSC_TEST_SERVER_PORT = 24024;
     constexpr int OSC_TEST_SEND_PORT = 24023;
+    constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 
-    auto osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+    auto osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT,
+                                                        OSC_TEST_SEND_PORT,
+                                                        OSC_TEST_SEND_ADDRESS);
 
     OSCFrontend osc_frontend{&_engine, &_controller, osc_interface};
 

@@ -26,6 +26,7 @@ using namespace sushi::engine::controller_impl;
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
+constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 
 class OscControllerEventTestFrontend : public ::testing::Test
 {
@@ -34,7 +35,9 @@ protected:
 
     void SetUp()
     {
-        auto mock_osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+        auto mock_osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT,
+                                                                 OSC_TEST_SEND_PORT,
+                                                                 OSC_TEST_SEND_ADDRESS);
 
         _osc_frontend = std::make_unique<OSCFrontend>(&_test_engine, &_controller, mock_osc_interface);
 

@@ -48,6 +48,7 @@ using namespace sushi::open_sound_control;
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
+constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 
 class TestOscpackOscMessenger : public ::testing::Test
 {
@@ -60,7 +61,9 @@ protected:
         connection.parameter = 0;
         connection.controller = &_mock_controller;
 
-        _module_under_test = std::make_unique<OscpackOscMessenger>(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+        _module_under_test = std::make_unique<OscpackOscMessenger>(OSC_TEST_SERVER_PORT,
+                                                                   OSC_TEST_SEND_PORT,
+                                                                   OSC_TEST_SEND_ADDRESS);
 
         _module_under_test->init();
     }

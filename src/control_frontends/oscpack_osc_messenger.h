@@ -60,7 +60,7 @@ class OscpackOscMessenger : public BaseOscMessenger,
                             public osc::OscPacketListener
 {
 public:
-    OscpackOscMessenger(int receive_port, int send_port);
+    OscpackOscMessenger(int receive_port, int send_port, const std::string& send_ip);
 
     ~OscpackOscMessenger() override;
 

@@ -19,10 +19,6 @@
 #include "osc_utils.h"
 #include "oscpack_osc_messenger.h"
 
-// TODO: Expose this to make it settable from json / terminal (AUD-325).
-//  https://mindmusiclabs.atlassian.net/browse/AUD-325
-#define ADDRESS "127.0.0.1"
-
 namespace sushi {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
@@ -30,7 +26,11 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 namespace open_sound_control
 {
 
-OscpackOscMessenger::OscpackOscMessenger(int receive_port, int send_port) : BaseOscMessenger(receive_port, send_port)
+OscpackOscMessenger::OscpackOscMessenger(int receive_port,
+                                         int send_port,
+                                         const std::string& send_ip) : BaseOscMessenger(receive_port,
+                                                                                        send_port,
+                                                                                        send_ip)
 {}
 
 OscpackOscMessenger::~OscpackOscMessenger()
@@ -43,10 +43,21 @@ OscpackOscMessenger::~OscpackOscMessenger()
 
 bool OscpackOscMessenger::init()
 {
-    _transmit_socket = std::make_unique<UdpTransmitSocket>(IpEndpointName(ADDRESS, _send_port));
+    try
+    {
+        _transmit_socket = std::make_unique<UdpTransmitSocket>(IpEndpointName(_send_ip.c_str(), _send_port));
+    }
+    catch (osc::Exception& e)
+    {
+        SUSHI_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
+                        _send_ip.c_str(),
+                        _send_port,
+                        e.what());
+    }
 
     _receive_socket = std::make_unique<UdpListeningReceiveSocket>(IpEndpointName(IpEndpointName::ANY_ADDRESS,
-                                                                                 _receive_port), this);
+                                                                                 _receive_port),
+                                                                  this);
 
     return true;
 }

@@ -32,6 +32,7 @@ using namespace sushi::open_sound_control;
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
+constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 
 class TestOSCFrontend : public ::testing::Test
 {
@@ -40,7 +41,7 @@ protected:
 
     void SetUp()
     {
-        _mock_osc_interface = new MockOscInterface(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT);
+        _mock_osc_interface = new MockOscInterface(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT, OSC_TEST_SEND_ADDRESS);
 
         EXPECT_CALL(*_mock_osc_interface, init()).Times(1).WillOnce(Return(true));
 

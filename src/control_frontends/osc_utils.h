@@ -48,8 +48,10 @@ class BaseOscMessenger
 {
 public:
     BaseOscMessenger(int receive_port,
-                     int send_port) : _receive_port(receive_port),
-                                      _send_port(send_port)
+                     int send_port,
+                     const std::string& send_ip) : _receive_port(receive_port),
+                                                   _send_port(send_port),
+                                                   _send_ip(send_ip)
     {}
 
     virtual ~BaseOscMessenger() = default;
@@ -117,6 +119,7 @@ public:
 protected:
     int _receive_port;
     int _send_port;
+    std::string _send_ip;
 
     std::atomic_bool _osc_initialized {false};
 };
