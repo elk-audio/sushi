@@ -99,6 +99,7 @@ TEST_F(TestGainPlugin, TestInstantiation)
     ASSERT_TRUE(_module_under_test.get());
     ASSERT_EQ("Gain", _module_under_test->label());
     ASSERT_EQ("sushi.testing.gain", _module_under_test->name());
+    ASSERT_EQ(gain_plugin::GainPlugin::static_uid(), _module_under_test->uid());
 }
 
 TEST_F(TestGainPlugin, TestChannelSetup)

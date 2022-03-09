@@ -810,7 +810,7 @@ public:
         return SessionState();
     }
 
-    ext::ControlStatus restore_session(const ext::SessionState& state) override
+    ext::ControlStatus restore_session(const ext::SessionState& /*state*/) override
     {
         return ControlStatus::UNSUPPORTED_OPERATION;
     }

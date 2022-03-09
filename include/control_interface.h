@@ -315,6 +315,8 @@ struct EngineState
     bool            input_clip_detection;
     bool            output_clip_detection;
     bool            master_limiter;
+    int             audio_inputs;
+    int             audio_outputs;
     int             cv_inputs;
     int             cv_outputs;
     std::vector<TrackAudioConnectionState> input_connections;

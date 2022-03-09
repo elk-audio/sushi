@@ -168,7 +168,7 @@ ext::MidiState SessionController::_save_midi_state() const
     }
     for (const auto& con : _midi_dispatcher->get_all_cc_input_connections())
     {
-        auto processor = _processors->track(con.input_connection.target);
+        auto processor = _processors->processor(con.input_connection.target);
         if (processor)
         {
             state.cc_connections.push_back(to_external(con, processor->name()));
@@ -176,7 +176,7 @@ ext::MidiState SessionController::_save_midi_state() const
     }
     for (const auto& con : _midi_dispatcher->get_all_pc_input_connections())
     {
-        auto processor = _processors->track(con.processor_id);
+        auto processor = _processors->processor(con.processor_id);
         if (processor)
         {
             state.pc_connections.push_back(to_external(con, processor->name()));
@@ -198,6 +198,8 @@ ext::EngineState SessionController::_save_engine_state() const
     state.input_clip_detection = false; // Todo: enable functions to query this
     state.output_clip_detection = false; // Todo: enable functions to query this
     state.master_limiter = false; // Todo: enable functions to query this
+    state.audio_inputs = _engine->audio_input_channels();
+    state.audio_outputs = _engine->audio_output_channels();
     state.cv_inputs = 0;
     state.cv_outputs = 0;
     for (const auto& con : _engine->audio_input_connections())

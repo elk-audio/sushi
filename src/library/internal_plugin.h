@@ -49,10 +49,10 @@ public:
  *        Usage: Implement static_uid() and inherit from UidHelper<ClassName>
  */
 template <typename T>
-class UidHelper : public StringUid
+class UidHelper : public virtual StringUid
 {
 public:
-    std::string_view uid() const override
+    virtual std::string_view uid() const override
     {
         return T::static_uid();
     }
@@ -62,7 +62,7 @@ public:
  * @brief internal base class for processors that keeps track of all host-related
  * configuration and provides basic parameter and event handling.
  */
-class InternalPlugin : public Processor, public StringUid
+class InternalPlugin : public Processor, public virtual StringUid
 {
 public:
     SUSHI_DECLARE_NON_COPYABLE(InternalPlugin)
@@ -164,7 +164,7 @@ public:
                            const std::string& label,
                            const std::string& default_value);
 
-    virtual PluginInfo info() const override;
+    PluginInfo info() const override;
 
 protected:
     /**
