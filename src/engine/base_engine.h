@@ -106,12 +106,12 @@ public:
         _audio_outputs = channels;
     }
 
-    int audio_input_channels()
+    int audio_input_channels() const
     {
         return _audio_inputs;
     }
 
-    int audio_output_channels()
+    int audio_output_channels() const
     {
         return _audio_outputs;
     }
@@ -120,13 +120,22 @@ public:
     {
         _cv_inputs = channels;
         return EngineReturnStatus::OK;
-
     }
 
     virtual EngineReturnStatus set_cv_output_channels(int channels)
     {
         _cv_outputs = channels;
         return EngineReturnStatus::OK;
+    }
+
+    int cv_input_channels() const
+    {
+        return _cv_inputs;
+    }
+
+    int cv_output_channels() const
+    {
+        return _cv_outputs;
     }
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
@@ -315,7 +324,13 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
+    virtual bool input_clip_detection() const {return false;}
+
+    virtual bool output_clip_detection() const {return false;}
+
     virtual void enable_master_limiter(bool /*enabled*/) {}
+
+    virtual bool master_limiter() const {return false;}
 
     virtual void update_timings() {}
 

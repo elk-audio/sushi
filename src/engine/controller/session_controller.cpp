@@ -195,13 +195,13 @@ ext::EngineState SessionController::_save_engine_state() const
     state.playing_mode = to_external(transport->playing_mode());
     state.sync_mode = to_external(transport->sync_mode());
     state.time_signature = to_external(transport->time_signature());
-    state.input_clip_detection = false; // Todo: enable functions to query this
-    state.output_clip_detection = false; // Todo: enable functions to query this
-    state.master_limiter = false; // Todo: enable functions to query this
+    state.input_clip_detection = _engine->input_clip_detection();
+    state.output_clip_detection = _engine->output_clip_detection();
+    state.master_limiter = _engine->master_limiter();
     state.audio_inputs = _engine->audio_input_channels();
     state.audio_outputs = _engine->audio_output_channels();
-    state.cv_inputs = 0;
-    state.cv_outputs = 0;
+    state.cv_inputs = _engine->cv_input_channels();
+    state.cv_outputs = _engine->cv_output_channels();
     for (const auto& con : _engine->audio_input_connections())
     {
         auto track = _processors->track(con.track);

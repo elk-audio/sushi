@@ -422,6 +422,15 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on audio inputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool input_clip_detection() const override
+    {
+        return _input_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable audio clip detection on engine outputs
      * @param enabled Enable if true, disable if false
      */
@@ -431,13 +440,32 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on outputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool output_clip_detection() const override
+    {
+        return _output_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable master limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
     void enable_master_limiter(bool enabled) override
     {
-        _master_limter_enabled = enabled;
+        _master_limiter_enabled = enabled;
     }
+
+    /**
+     * @brief Return the state of master limiter on outputs
+     * @param true if master limiter is enabled, false if disabled.
+     */
+    bool master_limiter() const override
+    {
+        return _master_limiter_enabled;
+    }
+
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
@@ -577,7 +605,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _master_limter_enabled{false};
+    bool _master_limiter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 

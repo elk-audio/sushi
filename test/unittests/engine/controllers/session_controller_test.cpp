@@ -150,7 +150,7 @@ TEST_F(SessionControllerTest, TestSaveEngineState)
     EXPECT_EQ(2, engine_state.cv_outputs);
     EXPECT_EQ(TEST_SAMPLE_RATE, engine_state.sample_rate);
     EXPECT_EQ(125, engine_state.tempo);
-    EXPECT_EQ(ext::PlayingMode::PLAYING, engine_state.playing_mode);
+    EXPECT_EQ(ext::PlayingMode::STOPPED, engine_state.playing_mode);
     EXPECT_EQ(ext::SyncMode::MIDI, engine_state.sync_mode);
     EXPECT_EQ(6, engine_state.time_signature.numerator);
     EXPECT_EQ(8, engine_state.time_signature.denominator);

@@ -475,7 +475,7 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
 
-    if (_master_limter_enabled)
+    if (_master_limiter_enabled)
     {
         auto temp_input_buffer = ChunkSampleBuffer::create_non_owning_buffer(*out_buffer, 0, out_buffer->channel_count());
         for (int c = 0; c < out_buffer->channel_count(); c++)
