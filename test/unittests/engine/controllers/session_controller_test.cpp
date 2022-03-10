@@ -144,10 +144,9 @@ TEST_F(SessionControllerTest, TestSaveEngineState)
 
     auto engine_state = _module_under_test->_save_engine_state();
 
-    EXPECT_EQ(8, engine_state.audio_inputs);
-    EXPECT_EQ(6, engine_state.audio_outputs);
-    EXPECT_EQ(0, engine_state.cv_inputs);
-    EXPECT_EQ(2, engine_state.cv_outputs);
+    // used_audio_in/outputs should reflect the minimum channels needed to restore the session
+    EXPECT_EQ(1, engine_state.used_audio_inputs);
+    EXPECT_EQ(2, engine_state.used_audio_outputs);
     EXPECT_EQ(TEST_SAMPLE_RATE, engine_state.sample_rate);
     EXPECT_EQ(125, engine_state.tempo);
     EXPECT_EQ(ext::PlayingMode::STOPPED, engine_state.playing_mode);

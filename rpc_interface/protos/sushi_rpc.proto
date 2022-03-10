@@ -770,10 +770,10 @@ message EngineState
     bool           clip_detection_input = 6;
     bool           clip_detection_output = 7;
     bool           master_limiter = 8;
-    int32          cv_inputs = 9;
-    int32          cv_outputs = 10;
-    repeated TrackAudioConnectionState    input_connections = 13;
-    repeated TrackAudioConnectionState    output_connections = 14;
+    int32          used_audio_inputs = 9;
+    int32          used_audio_outputs = 10;
+    repeated TrackAudioConnectionState    input_connections = 11;
+    repeated TrackAudioConnectionState    output_connections = 12;
 }
 
 message PluginClass

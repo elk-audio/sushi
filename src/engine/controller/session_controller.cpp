@@ -198,26 +198,34 @@ ext::EngineState SessionController::_save_engine_state() const
     state.input_clip_detection = _engine->input_clip_detection();
     state.output_clip_detection = _engine->output_clip_detection();
     state.master_limiter = _engine->master_limiter();
-    state.audio_inputs = _engine->audio_input_channels();
-    state.audio_outputs = _engine->audio_output_channels();
-    state.cv_inputs = _engine->cv_input_channels();
-    state.cv_outputs = _engine->cv_output_channels();
+    state.used_audio_inputs = _engine->audio_input_channels();
+    state.used_audio_outputs = _engine->audio_output_channels();
+
+    int audio_inputs = 0;
     for (const auto& con : _engine->audio_input_connections())
     {
         auto track = _processors->track(con.track);
         if (track)
         {
             state.input_connections.push_back(to_external(con, track->name()));
+            audio_inputs = std::max(audio_inputs, con.engine_channel);
         }
     }
+    // Store the minimum number of audio channels required to restore the session
+    state.used_audio_inputs = audio_inputs;
+
+    int audio_outputs = 0;
     for (const auto& con : _engine->audio_output_connections())
     {
         auto track = _processors->track(con.track);
         if (track)
         {
             state.output_connections.push_back(to_external(con, track->name()));
+            audio_outputs = std::max(audio_outputs, con.engine_channel);
         }
     }
+    state.used_audio_outputs = audio_outputs;
+
     return state;
 }
 
