@@ -43,23 +43,35 @@ OscpackOscMessenger::~OscpackOscMessenger()
 
 bool OscpackOscMessenger::init()
 {
+    bool status = true;
+
     try
     {
         _transmit_socket = std::make_unique<UdpTransmitSocket>(IpEndpointName(_send_ip.c_str(), _send_port));
     }
     catch (osc::Exception& e)
     {
+        status = false;
         SUSHI_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
                         _send_ip.c_str(),
                         _send_port,
                         e.what());
     }
 
-    _receive_socket = std::make_unique<UdpListeningReceiveSocket>(IpEndpointName(IpEndpointName::ANY_ADDRESS,
-                                                                                 _receive_port),
-                                                                  this);
+    try
+    {
+        _receive_socket = std::make_unique<UdpListeningReceiveSocket>(IpEndpointName(IpEndpointName::ANY_ADDRESS, _receive_port),
+                                                                      this);
+    }
+    catch (osc::Exception& e)
+    {
+        status = false;
+        SUSHI_LOG_ERROR("OSC receiver failed instantiating for port {}, with message: ",
+                        _receive_port,
+                        e.what());
+    }
 
-    return true;
+    return status;
 }
 
 int OscpackOscMessenger::run()
