@@ -34,7 +34,9 @@
 #include "third-party/oscpack/ip/UdpSocket.h"
 #endif
 
-namespace sushi::open_sound_control
+namespace oscpack = ::osc;
+
+namespace sushi::osc
 {
 
 // TODO: This is the max buffer size hard-coded in the OscPack-sockets.
@@ -57,7 +59,7 @@ using OSC_CALLBACK_HANDLE = uint64_t;
 #endif
 
 class OscpackOscMessenger : public BaseOscMessenger,
-                            public osc::OscPacketListener
+                            public oscpack::OscPacketListener
 {
 public:
     OscpackOscMessenger(int receive_port, int send_port, const std::string& send_ip);
@@ -84,23 +86,23 @@ protected:
     /**
      * Defined in osc::OscPacketListener.
      */
-    void ProcessMessage(const osc::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/) override;
+    void ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/) override;
 
 private:
     void _osc_receiving_worker();
 
-    void _send_parameter_change_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _send_property_change_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _send_bypass_state_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _send_keyboard_note_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _send_keyboard_modulation_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _send_program_change_event(const osc::ReceivedMessage& m, void* user_data) const;
-    void _set_timing_statistics_enabled(const osc::ReceivedMessage& m, void* user_data) const;
-    void _reset_timing_statistics(const osc::ReceivedMessage& m, void* user_data) const;
-    void _set_tempo(const osc::ReceivedMessage& m, void* user_data) const;
-    void _set_time_signature(const osc::ReceivedMessage& m, void* user_data) const;
-    void _set_playing_mode(const osc::ReceivedMessage& m, void* user_data) const;
-    void _set_tempo_sync_mode(const osc::ReceivedMessage& m, void* user_data) const;
+    void _send_parameter_change_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _send_property_change_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _send_bypass_state_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _send_keyboard_note_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _send_keyboard_modulation_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _send_program_change_event(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _set_timing_statistics_enabled(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _reset_timing_statistics(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _set_tempo(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _set_time_signature(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _set_playing_mode(const oscpack::ReceivedMessage& m, void* user_data) const;
+    void _set_tempo_sync_mode(const oscpack::ReceivedMessage& m, void* user_data) const;
 
     std::thread _osc_receive_worker;
     std::unique_ptr<UdpTransmitSocket> _transmit_socket {nullptr};

@@ -33,7 +33,7 @@
 
 namespace sushi {
 
-namespace open_sound_control
+namespace osc
 {
 class BaseOscMessenger;
 }
@@ -56,8 +56,7 @@ class OSCFrontend : public BaseControlFrontend
 {
 public:
     OSCFrontend(engine::BaseEngine* engine,
-                ext::SushiControl* controller,
-                open_sound_control::BaseOscMessenger* osc_interface);
+                ext::SushiControl* controller, osc::BaseOscMessenger* osc_interface);
 
     ~OSCFrontend();
 
@@ -214,7 +213,7 @@ private:
     sushi::ext::AudioGraphController* _graph_controller {nullptr};
     sushi::ext::ParameterController*  _param_controller {nullptr};
 
-    std::unique_ptr<open_sound_control::BaseOscMessenger> _osc {nullptr};
+    std::unique_ptr<osc::BaseOscMessenger> _osc {nullptr};
 
     /* Currently, only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;

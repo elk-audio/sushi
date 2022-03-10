@@ -22,7 +22,7 @@
 #include "control_frontends/osc_utils.h"
 
 using namespace sushi;
-using namespace sushi::open_sound_control;
+using namespace sushi::osc;
 
 class MockOscInterface: public BaseOscMessenger
 {

@@ -33,6 +33,8 @@
 
 #include "control_frontends/oscpack_osc_messenger.cpp"
 
+namespace oscpack = ::osc;
+
 #undef private
 #undef protected
 
@@ -43,7 +45,7 @@ using ::testing::_;
 
 using namespace sushi;
 using namespace sushi::control_frontend;
-using namespace sushi::open_sound_control;
+using namespace sushi::osc;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
@@ -87,8 +89,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
     EXPECT_EQ(_module_under_test->_registered_messages.size(), 0);
 
     auto id_1 = _module_under_test->add_method("/engine/set_tempo",
-                                              "f",
-                                              open_sound_control::OscMethodType::SET_TEMPO,
+                                              "f", sushi::osc::OscMethodType::SET_TEMPO,
                                               &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 1);
@@ -97,8 +98,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
 
     // Attempting to register with an existing address_pattern and tts should fail:
     auto id_2 = _module_under_test->add_method("/engine/set_tempo",
-                                               "f",
-                                               open_sound_control::OscMethodType::SET_TEMPO,
+                                               "f", sushi::osc::OscMethodType::SET_TEMPO,
                                                &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 1);
@@ -107,8 +107,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
 
     // BUT the same AP with a different TTS, should be fine:
     auto id_3 = _module_under_test->add_method("/engine/set_tempo",
-                                               "ff",
-                                               open_sound_control::OscMethodType::SET_TEMPO,
+                                               "ff", sushi::osc::OscMethodType::SET_TEMPO,
                                                &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 2);
@@ -127,8 +126,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
     // Testing also the ID wrapping logic on overflow.
     _module_under_test->_last_generated_handle = std::numeric_limits<OSC_CALLBACK_HANDLE>::max();
     auto id_4 = _module_under_test->add_method("/engine/set_tempo",
-                                               "f",
-                                               open_sound_control::OscMethodType::SET_TEMPO,
+                                               "f", sushi::osc::OscMethodType::SET_TEMPO,
                                                &connection);
     EXPECT_EQ(reinterpret_cast<OSC_CALLBACK_HANDLE>(id_4), 0);
 }
@@ -138,13 +136,12 @@ TEST_F(TestOscpackOscMessenger, TestSendParameterChange)
     auto address_pattern = "/parameter/track_1/param_1";
 
     _module_under_test->add_method(address_pattern,
-                                   "f",
-                                   open_sound_control::OscMethodType::SEND_PARAMETER_CHANGE_EVENT,
+                                   "f", sushi::osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 0.5f  << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 0.5f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -155,9 +152,9 @@ TEST_F(TestOscpackOscMessenger, TestSendParameterChange)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/parameter/sampler/attack") << 5.0f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/parameter/sampler/attack") << 5.0f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -168,13 +165,12 @@ TEST_F(TestOscpackOscMessenger, TestSendPropertyChange)
     auto address_pattern = "/property/sampler/sample_file";
 
     _module_under_test->add_method(address_pattern,
-                                   "s",
-                                   open_sound_control::OscMethodType::SEND_PROPERTY_CHANGE_EVENT,
+                                   "s", sushi::osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "Sample file" << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "Sample file" << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -185,9 +181,9 @@ TEST_F(TestOscpackOscMessenger, TestSendPropertyChange)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/property/sampler/attack") << 4 << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/property/sampler/attack") << 4 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -198,13 +194,12 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOn)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "note_on" << 0 << 46 << 0.8f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "note_on" << 0 << 46 << 0.8f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -216,9 +211,9 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOn)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "note_on" << 4 << 20 << 0.2f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "note_on" << 4 << 20 << 0.2f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -229,13 +224,12 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOff)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "note_off" << 1 << 52 << 0.7f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "note_off" << 1 << 52 << 0.7f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -247,9 +241,9 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOff)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "note_off" << 4 << 20 << 0.2f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "note_off" << 4 << 20 << 0.2f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -260,13 +254,12 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteAftertouch)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "note_aftertouch" << 10 << 36 << 0.1f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "note_aftertouch" << 10 << 36 << 0.1f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -278,9 +271,9 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteAftertouch)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "note_aftertouch" << 4 << 20 << 0.2f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "note_aftertouch" << 4 << 20 << 0.2f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -292,12 +285,12 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardModulation)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                   sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "modulation" << 9 << 0.5f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "modulation" << 9 << 0.5f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
@@ -308,9 +301,9 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardModulation)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "modulation" << 4 << 0.2f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "modulation" << 4 << 0.2f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -322,12 +315,12 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardPitchBend)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                 sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "pitch_bend" << 3 << 0.3f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "pitch_bend" << 3 << 0.3f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.keyboard_controller_mockup()->get_args_from_last_call();
@@ -337,9 +330,9 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardPitchBend)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "pitch_bend" << 1 << 0.2f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "pitch_bend" << 1 << 0.2f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -351,12 +344,12 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardAftertouch)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                   open_sound_control::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                 sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "aftertouch" << 11 << 0.11f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "aftertouch" << 11 << 0.11f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.keyboard_controller_mockup()->get_args_from_last_call();
@@ -366,9 +359,9 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardAftertouch)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/keyboard_event/drums") << "aftertouch" << 12 << 0.52f << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/keyboard_event/drums") << "aftertouch" << 12 << 0.52f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -379,13 +372,12 @@ TEST_F(TestOscpackOscMessenger, TestSendProgramChange)
     auto address_pattern = "/program/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "i",
-                                   open_sound_control::OscMethodType::SEND_PROGRAM_CHANGE_EVENT,
+                                   "i", sushi::osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 1 << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 1 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.program_controller_mockup()->get_args_from_last_call();
@@ -394,10 +386,10 @@ TEST_F(TestOscpackOscMessenger, TestSendProgramChange)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/program/drums") << 10 << osc::EndMessage;
-    osc::ReceivedPacket received_packet2(p2.Data(), p2.Size());
-    osc::ReceivedMessage message2(received_packet2);
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/program/drums") << 10 << oscpack::EndMessage;
+    oscpack::ReceivedPacket received_packet2(p2.Data(), p2.Size());
+    oscpack::ReceivedMessage message2(received_packet2);
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -408,13 +400,12 @@ TEST_F(TestOscpackOscMessenger, TestSetBypassState)
     auto address_pattern = "/bypass/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "i",
-                                   open_sound_control::OscMethodType::SEND_BYPASS_STATE_EVENT,
+                                   "i", sushi::osc::OscMethodType::SEND_BYPASS_STATE_EVENT,
                                    &connection);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 1 << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 1 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.audio_graph_controller_mockup()->get_args_from_last_call();
@@ -423,9 +414,9 @@ TEST_F(TestOscpackOscMessenger, TestSetBypassState)
 
     // Test with a path not registered
     _mock_controller.clear_recent_call();
-    osc::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p2 << osc::BeginMessage("/bypass/drums") << 1 << osc::EndMessage;
-    osc::ReceivedMessage message2(osc::ReceivedPacket(p2.Data(), p2.Size()));
+    oscpack::OutboundPacketStream p2(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p2 << oscpack::BeginMessage("/bypass/drums") << 1 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message2(oscpack::ReceivedPacket(p2.Data(), p2.Size()));
     _module_under_test->ProcessMessage(message2, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_FALSE(_mock_controller.was_recently_called());
@@ -436,13 +427,12 @@ TEST_F(TestOscpackOscMessenger, TestSetTempo)
     auto address_pattern = "/engine/set_tempo";
 
     _module_under_test->add_method(address_pattern,
-                                   "f",
-                                   open_sound_control::OscMethodType::SET_TEMPO,
+                                   "f", sushi::osc::OscMethodType::SET_TEMPO,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 136.0f << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 136.0f << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.transport_controller_mockup()->get_args_from_last_call();
@@ -457,13 +447,12 @@ TEST_F(TestOscpackOscMessenger, TestSetTimeSignature)
     auto address_pattern = "/engine/set_time_signature";
 
     _module_under_test->add_method(address_pattern,
-                                   "ii",
-                                   open_sound_control::OscMethodType::SET_TIME_SIGNATURE,
+                                   "ii", sushi::osc::OscMethodType::SET_TIME_SIGNATURE,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 7 << 8 << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 7 << 8 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.transport_controller_mockup()->get_args_from_last_call();
@@ -479,13 +468,12 @@ TEST_F(TestOscpackOscMessenger, TestSetPlayingMode)
     auto address_pattern = "/engine/set_playing_mode";
 
     _module_under_test->add_method(address_pattern,
-                                   "s",
-                                   open_sound_control::OscMethodType::SET_PLAYING_MODE,
+                                   "s", sushi::osc::OscMethodType::SET_PLAYING_MODE,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "playing" << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "playing" << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.transport_controller_mockup()->get_args_from_last_call();
@@ -500,13 +488,12 @@ TEST_F(TestOscpackOscMessenger, TestSetSyncMode)
     auto address_pattern = "/engine/set_sync_mode";
 
     _module_under_test->add_method(address_pattern,
-                                   "s",
-                                   open_sound_control::OscMethodType::SET_TEMPO_SYNC_MODE,
+                                   "s", sushi::osc::OscMethodType::SET_TEMPO_SYNC_MODE,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "midi" << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "midi" << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.transport_controller_mockup()->get_args_from_last_call();
@@ -522,12 +509,12 @@ TEST_F(TestOscpackOscMessenger, TestSetTimingStatisticsEnabled)
 
     _module_under_test->add_method(address_pattern,
                                    "i",
-                                   open_sound_control::OscMethodType::SET_TIMING_STATISTICS_ENABLED,
+                                 sushi::osc::OscMethodType::SET_TIMING_STATISTICS_ENABLED,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << 1 << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << 1 << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     auto args = _mock_controller.timing_controller_mockup()->get_args_from_last_call();
@@ -543,12 +530,12 @@ TEST_F(TestOscpackOscMessenger, TestResetAllTimings)
 
     _module_under_test->add_method(address_pattern,
                                    "s",
-                                   open_sound_control::OscMethodType::RESET_TIMING_STATISTICS,
+                                 sushi::osc::OscMethodType::RESET_TIMING_STATISTICS,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "all" << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "all" << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 
     ASSERT_TRUE(_mock_controller.was_recently_called());
@@ -560,12 +547,12 @@ TEST_F(TestOscpackOscMessenger, TestResetProcessorTimings)
 
     _module_under_test->add_method(address_pattern,
                                    "ss",
-                                   open_sound_control::OscMethodType::RESET_TIMING_STATISTICS,
+                                 sushi::osc::OscMethodType::RESET_TIMING_STATISTICS,
                                    &_mock_controller);
 
-    osc::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << "processor" << "sampler" << osc::EndMessage;
-    osc::ReceivedMessage message(osc::ReceivedPacket(p.Data(), p.Size()));
+    oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << "processor" << "sampler" << oscpack::EndMessage;
+    oscpack::ReceivedMessage message(oscpack::ReceivedPacket(p.Data(), p.Size()));
 
     _module_under_test->ProcessMessage(message, reinterpret_cast<const IpEndpointName&>(_endpoint));
 

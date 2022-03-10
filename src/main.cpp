@@ -512,9 +512,9 @@ int main(int argc, char* argv[])
 
         SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
 
-        auto oscpack = new sushi::open_sound_control::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
+        auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
 
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), oscpack);
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), oscpack_messenger);
         controller->set_osc_frontend(osc_frontend.get());
         configurator->set_osc_frontend(osc_frontend.get());
 

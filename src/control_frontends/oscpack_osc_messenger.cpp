@@ -23,7 +23,7 @@ namespace sushi {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
-namespace open_sound_control
+namespace osc
 {
 
 OscpackOscMessenger::OscpackOscMessenger(int receive_port,
@@ -147,19 +147,19 @@ void OscpackOscMessenger::delete_method(void* handle)
 
 void OscpackOscMessenger::send(const char* address_pattern, float payload)
 {
-    osc::OutboundPacketStream p(_output_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << payload  << osc::EndMessage;
+    oscpack::OutboundPacketStream p(_output_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << payload  << oscpack::EndMessage;
     _transmit_socket->Send(p.Data(), p.Size());
 }
 
 void OscpackOscMessenger::send(const char* address_pattern, int payload)
 {
-    osc::OutboundPacketStream p(_output_buffer, OSC_OUTPUT_BUFFER_SIZE);
-    p << osc::BeginMessage(address_pattern) << payload  << osc::EndMessage;
+    oscpack::OutboundPacketStream p(_output_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << payload  << oscpack::EndMessage;
     _transmit_socket->Send(p.Data(), p.Size());
 }
 
-void OscpackOscMessenger::ProcessMessage(const osc::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/)
+void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/)
 {
     try
     {
@@ -238,7 +238,7 @@ void OscpackOscMessenger::ProcessMessage(const osc::ReceivedMessage& m, const Ip
             }
         }
     }
-    catch (osc::Exception& e)
+    catch (oscpack::Exception& e)
     {
         // Any parsing errors such as unexpected argument types, or missing arguments get thrown as exceptions.
         SUSHI_LOG_ERROR("Exception while parsing message: {}: {}", m.AddressPattern(), e.what());
@@ -250,9 +250,9 @@ void OscpackOscMessenger::_osc_receiving_worker()
     _receive_socket->Run();
 }
 
-void OscpackOscMessenger::_send_parameter_change_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_parameter_change_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     float value = (arg++)->AsFloat();
     auto connection = static_cast<control_frontend::OscConnection*>(user_data);
     auto controller = connection->controller->parameter_controller();
@@ -261,9 +261,9 @@ void OscpackOscMessenger::_send_parameter_change_event(const osc::ReceivedMessag
     SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
 }
 
-void OscpackOscMessenger::_send_property_change_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_property_change_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     auto value = (arg++)->AsString();
     auto connection = static_cast<control_frontend::OscConnection*>(user_data);
     auto controller = connection->controller->parameter_controller();
@@ -272,9 +272,9 @@ void OscpackOscMessenger::_send_property_change_event(const osc::ReceivedMessage
     SUSHI_LOG_DEBUG("Sending property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
 }
 
-void OscpackOscMessenger::_send_bypass_state_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_bypass_state_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     int value = (arg++)->AsInt32();
     bool isBypassed = (value) ? true : false;
 
@@ -285,9 +285,9 @@ void OscpackOscMessenger::_send_bypass_state_event(const osc::ReceivedMessage& m
     SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
 }
 
-void OscpackOscMessenger::_send_keyboard_note_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_keyboard_note_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string_view event = (arg++)->AsString();
     int channel = (arg++)->AsInt32();
     int note = (arg++)->AsInt32();
@@ -315,9 +315,9 @@ void OscpackOscMessenger::_send_keyboard_note_event(const osc::ReceivedMessage& 
     SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
 }
 
-void OscpackOscMessenger::_send_keyboard_modulation_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_keyboard_modulation_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string_view event = (arg++)->AsString();
     int channel = (arg++)->AsInt32();
     float value = (arg++)->AsFloat();
@@ -344,9 +344,9 @@ void OscpackOscMessenger::_send_keyboard_modulation_event(const osc::ReceivedMes
     SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
 }
 
-void OscpackOscMessenger::_send_program_change_event(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_send_program_change_event(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     int program_id = (arg++)->AsInt32();
 
     auto connection = static_cast<control_frontend::OscConnection*>(user_data);
@@ -356,9 +356,9 @@ void OscpackOscMessenger::_send_program_change_event(const osc::ReceivedMessage&
     SUSHI_LOG_DEBUG("Sending change to program {}, on processor {}", program_id, connection->processor);
 }
 
-void OscpackOscMessenger::_set_timing_statistics_enabled(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_set_timing_statistics_enabled(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     int value = (arg++)->AsInt32();
     bool is_enabled = (value) ? true : false;
 
@@ -368,9 +368,9 @@ void OscpackOscMessenger::_set_timing_statistics_enabled(const osc::ReceivedMess
     SUSHI_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
 }
 
-void OscpackOscMessenger::_reset_timing_statistics(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string output_text = (arg++)->AsString();
     std::string_view type = output_text;
 
@@ -423,9 +423,9 @@ void OscpackOscMessenger::_reset_timing_statistics(const osc::ReceivedMessage& m
     SUSHI_LOG_DEBUG("Resetting {} timing statistics", output_text);
 }
 
-void OscpackOscMessenger::_set_tempo(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_set_tempo(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     float tempo = (arg++)->AsFloat();
 
     auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
@@ -434,9 +434,9 @@ void OscpackOscMessenger::_set_tempo(const osc::ReceivedMessage& m, void* user_d
     SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
 }
 
-void OscpackOscMessenger::_set_time_signature(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_set_time_signature(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     int numerator = (arg++)->AsInt32();
     int denominator = (arg++)->AsInt32();
 
@@ -446,9 +446,9 @@ void OscpackOscMessenger::_set_time_signature(const osc::ReceivedMessage& m, voi
     SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
 }
 
-void OscpackOscMessenger::_set_playing_mode(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_set_playing_mode(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
     ext::PlayingMode mode;
 
@@ -471,9 +471,9 @@ void OscpackOscMessenger::_set_playing_mode(const osc::ReceivedMessage& m, void*
     SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
 }
 
-void OscpackOscMessenger::_set_tempo_sync_mode(const osc::ReceivedMessage& m, void* user_data) const
+void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m, void* user_data) const
 {
-    osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+    oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
     ext::SyncMode mode;
 

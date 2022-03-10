@@ -25,7 +25,7 @@
 #include "logging.h"
 
 namespace sushi {
-namespace open_sound_control
+namespace osc
 {
 
 enum class OscMethodType
