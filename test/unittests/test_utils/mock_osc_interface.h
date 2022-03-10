@@ -40,12 +40,12 @@ public:
                 (),
                 (override));
 
-    MOCK_METHOD(int,
+    MOCK_METHOD(void,
                 run,
                 (),
                 (override));
 
-    MOCK_METHOD(int,
+    MOCK_METHOD(void,
                 stop,
                 (),
                 (override));

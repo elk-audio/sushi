@@ -438,11 +438,7 @@ void OSCFrontend::_start_server()
 
     _running.store(true);
 
-    int ret = _osc->run();
-    if (ret < 0)
-    {
-        SUSHI_LOG_ERROR("Error {} while starting OSC server thread", ret);
-    }
+    _osc->run();
 }
 
 void OSCFrontend::_stop_server()
@@ -450,11 +446,7 @@ void OSCFrontend::_stop_server()
     assert(_osc_initialized);
 
     _running.store(false);
-    int ret = _osc->stop();
-    if (ret < 0)
-    {
-        SUSHI_LOG_ERROR("Error {} while stopping OSC server thread", ret);
-    }
+    _osc->stop();
 }
 
 bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)

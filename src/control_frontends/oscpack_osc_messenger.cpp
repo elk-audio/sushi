@@ -74,23 +74,22 @@ bool OscpackOscMessenger::init()
     return status;
 }
 
-int OscpackOscMessenger::run()
+void OscpackOscMessenger::run()
 {
     _osc_receive_worker = std::thread(&OscpackOscMessenger::_osc_receiving_worker, this);
-
-    return 0;
 }
 
-int OscpackOscMessenger::stop()
+void OscpackOscMessenger::stop()
 {
-    _receive_socket->AsynchronousBreak();
+    if (_receive_socket.get() != nullptr)
+    {
+        _receive_socket->AsynchronousBreak();
+    }
 
     if (_osc_receive_worker.joinable())
     {
         _osc_receive_worker.join();
     }
-
-    return 0;
 }
 
 void* OscpackOscMessenger::add_method(const char* address_pattern,

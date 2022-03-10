@@ -21,12 +21,9 @@
 #define private public
 #define protected public
 
-// This causes the real oscpack .h files to be excluded in oscpack_osc_messenger.h
+// This causes the real oscpack .h files for packet listener and socket,
+// to be excluded in oscpack_osc_messenger.h
 #define OSCPACK_UNIT_TESTS
-
-// There's no point mocking OscReceivedElements at the moment.
-#include "third-party/oscpack/osc/OscReceivedElements.h"
-#include "third-party/oscpack/osc/OscOutboundPacketStream.h"
 
 #include "test_utils/mock_oscpack.h"
 #include "test_utils/control_mockup.h"

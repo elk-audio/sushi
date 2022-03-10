@@ -66,7 +66,7 @@ protected:
         EXPECT_CALL(*_mock_osc_interface, add_method("/engine/reset_timing_statistics", "ss",
                                                      OscMethodType::RESET_TIMING_STATISTICS, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, run()).Times(1).WillOnce(Return(0));
+        EXPECT_CALL(*_mock_osc_interface, run()).Times(1);
 
         _module_under_test = std::make_unique<OSCFrontend>(&_mock_engine, &_mock_controller, _mock_osc_interface);
 
@@ -77,7 +77,7 @@ protected:
 
     void TearDown()
     {
-        EXPECT_CALL(*_mock_osc_interface, stop()).Times(1).WillOnce(Return(0));
+        EXPECT_CALL(*_mock_osc_interface, stop()).Times(1);
 
         EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(7);
 

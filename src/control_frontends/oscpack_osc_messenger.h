@@ -27,10 +27,11 @@
 #include "logging.h"
 #include "osc_utils.h"
 
-#ifndef OSCPACK_UNIT_TESTS
-#include "third-party/oscpack/osc/OscPacketListener.h"
 #include "third-party/oscpack/osc/OscReceivedElements.h"
 #include "third-party/oscpack/osc/OscOutboundPacketStream.h"
+
+#ifndef OSCPACK_UNIT_TESTS
+#include "third-party/oscpack/osc/OscPacketListener.h"
 #include "third-party/oscpack/ip/UdpSocket.h"
 #endif
 
@@ -66,8 +67,8 @@ public:
 
     bool init() override;
 
-    int run() override;
-    int stop() override;
+    void run() override;
+    void stop() override;
 
     void* add_method(const char* address_pattern,
                      const char* type_tag_string,

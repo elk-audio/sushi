@@ -64,15 +64,13 @@ public:
 
     /**
      * Starts the OSC messaging thread.
-     * @return Status of operation.
      */
-    virtual int run() = 0;
+    virtual void run() = 0;
 
     /**
      * Stops the OSC messaging thread.
-     * @return  Status of operation.
      */
-    virtual int stop() = 0;
+    virtual void stop() = 0;
 
     /**
      * Subscribes to callbacks, triggered when the specified OSC
