@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Sushi Control Service, gRPC service for external control of Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "control_service.h"
@@ -262,6 +262,18 @@ inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::ext::AudioCon
     dest.set_engine_channel(src.engine_channel);
 }
 
+inline sushi_rpc::PluginType::Type to_grpc(const sushi::ext::PluginType type)
+{
+    switch (type)
+    {
+        case sushi::ext::PluginType::INTERNAL:       return sushi_rpc::PluginType::INTERNAL;
+        case sushi::ext::PluginType::VST2X:          return sushi_rpc::PluginType::VST2X;
+        case sushi::ext::PluginType::VST3X:          return sushi_rpc::PluginType::VST3X;
+        case sushi::ext::PluginType::LV2:            return sushi_rpc::PluginType::LV2;
+        default:                                     return sushi_rpc::PluginType::INTERNAL;
+    }
+}
+
 inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
 {
     switch (type)
@@ -274,7 +286,7 @@ inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type typ
     }
 }
 
-inline void to_grpc(sushi_rpc::ProcessorState& dest, const sushi::ext::ProcessorState& src)
+inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::ext::ProcessorState& src)
 {
     if (src.program.has_value())
     {
@@ -286,13 +298,15 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, const sushi::ext::Processor
         dest.mutable_bypassed()->set_value(src.bypassed.value());
         dest.mutable_bypassed()->set_has_value(true);
     }
+
     dest.mutable_properties()->Reserve(src.properties.size());
-    for (const auto& p : src.properties)
+    for (auto& p : src.properties)
     {
         auto target = dest.mutable_properties()->Add();
         target->mutable_property()->set_property_id(p.first);
-        target->set_value(p.second);
+        target->set_value(std::move(p.second));
     }
+
     dest.mutable_parameters()->Reserve(src.parameters.size());
     for (const auto& p : src.parameters)
     {
@@ -300,6 +314,10 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, const sushi::ext::Processor
         target->mutable_parameter()->set_parameter_id(p.first);
         target->set_value(p.second);
     }
+
+    // Todo: investigate if this can be moved for efficiency
+    dest.mutable_binary_data()->append(reinterpret_cast<const char*>(src.binary_data.data()),
+                                       reinterpret_cast<const char*>(src.binary_data.data()) + src.binary_data.size());
 }
 
 inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::ProcessorState& src)
@@ -324,6 +342,181 @@ inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::Proc
     }
 }
 
+inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::ext::SushiBuildInfo& src)
+{
+    dest.set_version(std::move(src.version));
+
+    for (auto& option : src.build_options)
+    {
+        dest.add_build_options(std::move(option));
+    }
+
+    dest.set_audio_buffer_size(src.audio_buffer_size);
+    dest.set_commit_hash(std::move(src.commit_hash));
+    dest.set_build_date(std::move(src.build_date));
+}
+
+inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::ext::OscParameterState& src)
+{
+    dest.set_processor(std::move(src.processor));
+    dest.mutable_parameter_ids()->Reserve(src.parameter_ids.size());
+    for (const auto& id : src.parameter_ids)
+    {
+        dest.mutable_parameter_ids()->Add(id);
+    }
+}
+
+inline void to_grpc(sushi_rpc::OscState& dest, sushi::ext::OscState& src)
+{
+    dest.set_enable_all_processor_outputs(src.enable_all_processor_outputs);
+    dest.mutable_enabled_processor_outputs()->Reserve(src.enabled_processor_outputs.size());
+    for (auto& state : src.enabled_processor_outputs)
+    {
+        auto grpc_state = dest.mutable_enabled_processor_outputs()->Add();
+        to_grpc(*grpc_state, state);
+    }
+}
+
+inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::ext::MidiKbdConnectionState& src)
+{
+    dest.set_track(std::move(src.track));
+    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.set_port(src.port);
+    dest.set_raw_midi(src.raw_midi);
+}
+
+inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::ext::MidiCCConnectionState& src)
+{
+    dest.set_processor(std::move(src.processor));
+    dest.mutable_parameter()->set_parameter_id(src.parameter_id);
+    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.set_port(src.port);
+    dest.set_cc_number(src.cc_number);
+    dest.set_min_range(src.min_range);
+    dest.set_max_range(src.max_range);
+    dest.set_relative_mode(src.relative_mode);
+}
+
+inline void to_grpc(sushi_rpc::MidiPCConnectionState& dest, sushi::ext::MidiPCConnectionState& src)
+{
+    dest.set_processor(std::move(src.processor));
+    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.set_port(src.port);
+}
+
+inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
+{
+    dest.set_inputs(src.inputs);
+    dest.set_outputs(src.outputs);
+
+    dest.mutable_kbd_input_connections()->Reserve(src.kbd_input_connections.size());
+    for (auto& con : src.kbd_input_connections)
+    {
+        auto grpc_con = dest.mutable_kbd_input_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+
+    dest.mutable_kbd_output_connections()->Reserve(src.kbd_output_connections.size());
+    for (auto& con : src.kbd_output_connections)
+    {
+        auto grpc_con = dest.mutable_kbd_output_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+
+    dest.mutable_cc_connections()->Reserve(src.cc_connections.size());
+    for (auto& con : src.cc_connections)
+    {
+        auto grpc_con = dest.mutable_cc_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+
+    dest.mutable_pc_connections()->Reserve(src.pc_connections.size());
+    for (auto& con : src.pc_connections)
+    {
+        auto grpc_con = dest.mutable_pc_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+}
+
+inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::ext::TrackAudioConnectionState& src)
+{
+    dest.set_track(std::move(src.track));
+    dest.set_track_channel(src.track_channel);
+    dest.set_engine_channel(src.engine_channel);
+}
+
+inline void to_grpc(sushi_rpc::EngineState& dest, sushi::ext::EngineState& src)
+{
+    dest.set_sample_rate(src.sample_rate);
+    dest.set_tempo(src.tempo);
+    dest.mutable_playing_mode()->set_mode(to_grpc(src.playing_mode));
+    dest.mutable_sync_mode()->set_mode(to_grpc(src.sync_mode));
+    dest.mutable_time_signature()->set_denominator(src.time_signature.denominator);
+    dest.mutable_time_signature()->set_numerator(src.time_signature.numerator);
+    dest.set_clip_detection_input(src.input_clip_detection);
+    dest.set_clip_detection_output(src.output_clip_detection);
+    dest.set_master_limiter(src.master_limiter);
+    dest.set_used_audio_inputs(src.used_audio_inputs);
+    dest.set_used_audio_outputs(src.used_audio_outputs);
+
+    dest.mutable_input_connections()->Reserve(src.input_connections.size());
+    for (auto& con : src.input_connections)
+    {
+        auto grpc_con = dest.mutable_input_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+
+    dest.mutable_output_connections()->Reserve(src.output_connections.size());
+    for (auto& con : src.output_connections)
+    {
+        auto grpc_con = dest.mutable_output_connections()->Add();
+        to_grpc(*grpc_con, con);
+    }
+}
+
+inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::ext::PluginClass& src)
+{
+    dest.set_name(std::move(src.name));
+    dest.set_label(std::move(src.label));
+    dest.set_uid(std::move(src.uid));
+    dest.set_path(std::move(src.path));
+    dest.mutable_type()->set_type(to_grpc(src.type));
+    to_grpc(*dest.mutable_state(), src.state);
+}
+
+inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
+{
+    dest.set_name(std::move(src.name));
+    dest.set_label(std::move(src.label));
+    dest.set_input_channels(src.input_channels);
+    dest.set_output_channels(src.output_channels);
+    dest.set_input_busses(src.input_busses);
+    dest.set_output_busses(src.output_busses);
+
+    dest.mutable_processors()->Reserve(src.processors.size());
+    for (auto& proc : src.processors)
+    {
+        auto grpc_proc = dest.mutable_processors()->Add();
+        to_grpc(*grpc_proc, proc);
+    }
+}
+
+inline void to_grpc(sushi_rpc::SessionState& dest, sushi::ext::SessionState& src)
+{
+    to_grpc(*dest.mutable_sushi_info(), src.sushi_info);
+    dest.set_save_date(std::move(src.save_date));
+    to_grpc(*dest.mutable_osc_state(), src.osc_state);
+    to_grpc(*dest.mutable_midi_state(), src.midi_state);
+    to_grpc(*dest.mutable_engine_state(), src.engine_state);
+
+    dest.mutable_tracks()->Reserve(src.tracks.size());
+    for (auto& track : src.tracks)
+    {
+        auto grpc_track = dest.mutable_tracks()->Add();
+        to_grpc(*grpc_track, track);
+    }
+}
+
 grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* /*context*/,
                                                    const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::GenericStringValue* response)
@@ -337,18 +530,7 @@ grpc::Status SystemControlService::GetBuildInfo(grpc::ServerContext* /*context*/
                                                 sushi_rpc::SushiBuildInfo* response)
 {
     auto build_info = _controller->get_sushi_build_info();
-
-    response->set_version(build_info.version);
-
-    for (auto& option : build_info.build_options)
-    {
-        response->add_build_options(option);
-    }
-
-    response->set_audio_buffer_size(build_info.audio_buffer_size);
-    response->set_commit_hash(build_info.commit_hash);
-    response->set_build_date(build_info.build_date);
-
+    to_grpc(*response, build_info);
     return grpc::Status::OK;
 }
 
@@ -1596,6 +1778,22 @@ grpc::Status OscControlService::DisableAllOutput(grpc::ServerContext* /*context*
 {
     auto status = _controller->disable_all_output();
     return to_grpc_status(status);
+}
+
+grpc::Status SessionControlService::SaveSession(grpc::ServerContext* /*context*/,
+                                                const sushi_rpc::GenericVoidValue* /*request*/,
+                                                sushi_rpc::SessionState* response)
+{
+    auto session_state = _controller->save_session();
+    to_grpc(*response, session_state);
+    return grpc::Status::OK;
+}
+
+grpc::Status SessionControlService::RestoreSession(grpc::ServerContext* /*context*/,
+                                                   const sushi_rpc::SessionState* /*request*/,
+                                                   sushi_rpc::GenericVoidValue* /*response*/)
+{
+    return to_grpc_status(sushi::ext::ControlStatus::UNSUPPORTED_OPERATION);
 }
 
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
