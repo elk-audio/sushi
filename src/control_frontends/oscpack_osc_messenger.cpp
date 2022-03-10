@@ -167,7 +167,7 @@ void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, cons
 
         if (iterator != _registered_messages.end())
         {
-            MessageRegistration reg = _registered_messages[{m.AddressPattern(), m.TypeTags()}];
+            auto reg = iterator->second;
 
             switch (reg.type)
             {

@@ -43,16 +43,14 @@ namespace sushi::osc
 //   Weird that it's not 4096 - is it a typo?
 //   It's not exposed, or I'd have fetched it and used it directly.
 //   The max packet size of UDP/IPv4 is 65507 IIRC - we could eventually fork OscPack to support that.
-#define OSC_OUTPUT_BUFFER_SIZE 4098
+constexpr size_t OSC_OUTPUT_BUFFER_SIZE = 4098;
 
 // We need to be able to cast between OSC_CALLBACK_HANDLE, and void*, to keep the API in BaseOscMessenger consistent.
 // If we are OK with breaking the API compatibility with Liblo, we can just change the API to directly expose uint64_t.
 #include <cstdint>
 #if INTPTR_MAX == INT32_MAX
-#define ENV_32_BIT
 using OSC_CALLBACK_HANDLE = uint32_t;
 #elif INTPTR_MAX == INT64_MAX
-#define ENV_64_BIT
 using OSC_CALLBACK_HANDLE = uint64_t;
 #else
 #error "Environment not 32 or 64-bit."
