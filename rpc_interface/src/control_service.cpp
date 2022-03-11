@@ -330,16 +330,23 @@ inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::Proc
     {
         dest.bypassed = src.bypassed().value();
     }
+
     dest.properties.reserve(src.properties_size());
     for (const auto& p : src.properties())
     {
         dest.properties.push_back({p.property().property_id(), p.value()});
     }
+
     dest.parameters.reserve(src.parameters_size());
     for (const auto& p : src.parameters())
     {
         dest.parameters.push_back({p.parameter().parameter_id(), p.value()});
     }
+
+    dest.binary_data.reserve(src.binary_data().size());
+    dest.binary_data.insert(dest.binary_data.begin(),
+                            reinterpret_cast<const std::byte*>(src.binary_data().data()),
+                            reinterpret_cast<const std::byte*>(src.binary_data().data()) + src.binary_data().size());
 }
 
 inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::ext::SushiBuildInfo& src)
@@ -356,6 +363,20 @@ inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::ext::SushiBuildInfo&
     dest.set_build_date(std::move(src.build_date));
 }
 
+inline void to_sushi_ext(sushi::ext::SushiBuildInfo& dest, const sushi_rpc::SushiBuildInfo& src)
+{
+    dest.version = src.version();
+
+    for (auto& option : src.build_options())
+    {
+        dest.build_options.push_back(option);
+    }
+
+    dest.audio_buffer_size = src.audio_buffer_size();
+    dest.commit_hash = src.commit_hash();
+    dest.build_date = src.build_date();
+}
+
 inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::ext::OscParameterState& src)
 {
     dest.set_processor(std::move(src.processor));
@@ -364,6 +385,14 @@ inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::ext::OscParameter
     {
         dest.mutable_parameter_ids()->Add(id);
     }
+}
+
+inline sushi::ext::OscParameterState to_sushi_ext(const sushi_rpc::OscParameterState& src)
+{
+    sushi::ext::OscParameterState dest;
+    dest.processor = src.processor();
+    dest.parameter_ids.insert(dest.parameter_ids.begin(), src.parameter_ids().begin(), src.parameter_ids().end());
+    return dest;
 }
 
 inline void to_grpc(sushi_rpc::OscState& dest, sushi::ext::OscState& src)
@@ -377,12 +406,32 @@ inline void to_grpc(sushi_rpc::OscState& dest, sushi::ext::OscState& src)
     }
 }
 
+inline void to_sushi_ext(sushi::ext::OscState& dest, const sushi_rpc::OscState& src)
+{
+    dest.enable_all_processor_outputs = src.enable_all_processor_outputs();
+    dest.enabled_processor_outputs.reserve(src.enabled_processor_outputs_size());
+    for (auto& state : src.enabled_processor_outputs())
+    {
+        dest.enabled_processor_outputs.push_back(to_sushi_ext(state));
+    }
+}
+
 inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::ext::MidiKbdConnectionState& src)
 {
     dest.set_track(std::move(src.track));
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
     dest.set_port(src.port);
     dest.set_raw_midi(src.raw_midi);
+}
+
+inline sushi::ext::MidiKbdConnectionState to_sushi_ext(const sushi_rpc::MidiKbdConnectionState& src)
+{
+    sushi::ext::MidiKbdConnectionState dest;
+    dest.track = src.track();
+    dest.channel = to_sushi_ext(src.channel().channel());
+    dest.port = src.port();
+    dest.raw_midi = src.raw_midi();
+    return dest;
 }
 
 inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::ext::MidiCCConnectionState& src)
@@ -397,11 +446,33 @@ inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::ext::MidiCCCo
     dest.set_relative_mode(src.relative_mode);
 }
 
+inline sushi::ext::MidiCCConnectionState to_sushi_ext(const sushi_rpc::MidiCCConnectionState& src)
+{
+    sushi::ext::MidiCCConnectionState dest;
+    dest.processor = src.processor();
+    dest.channel = to_sushi_ext(src.channel().channel());
+    dest.port = src.port();
+    dest.cc_number = src.cc_number();
+    dest.min_range = src.min_range();
+    dest.max_range = src.max_range();
+    dest.relative_mode = src.relative_mode();
+    return dest;
+}
+
 inline void to_grpc(sushi_rpc::MidiPCConnectionState& dest, sushi::ext::MidiPCConnectionState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
     dest.set_port(src.port);
+}
+
+inline sushi::ext::MidiPCConnectionState to_sushi_ext(const sushi_rpc::MidiPCConnectionState& src)
+{
+    sushi::ext::MidiPCConnectionState dest;
+    dest.processor = src.processor();
+    dest.channel = to_sushi_ext(src.channel().channel());
+    dest.port = src.port();
+    return dest;
 }
 
 inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
@@ -438,11 +509,49 @@ inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
     }
 }
 
+inline void to_sushi_ext(sushi::ext::MidiState& dest, const sushi_rpc::MidiState& src)
+{
+    dest.inputs = src.inputs();
+    dest.outputs = src.outputs();
+
+    dest.kbd_input_connections.reserve(src.kbd_input_connections_size());
+    for (auto& con : src.kbd_input_connections())
+    {
+        dest.kbd_input_connections.push_back(to_sushi_ext(con));
+    }
+
+    dest.kbd_output_connections.reserve(src.kbd_output_connections_size());
+    for (auto& con : src.kbd_output_connections())
+    {
+        dest.kbd_output_connections.push_back(to_sushi_ext(con));
+    }
+
+    dest.cc_connections.reserve(src.cc_connections_size());
+    for (auto& con : src.cc_connections())
+    {
+        dest.cc_connections.push_back(to_sushi_ext(con));
+    }
+    dest.pc_connections.reserve(src.pc_connections_size());
+    for (auto& con : src.pc_connections())
+    {
+        dest.pc_connections.push_back(to_sushi_ext(con));
+    }
+}
+
 inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::ext::TrackAudioConnectionState& src)
 {
     dest.set_track(std::move(src.track));
     dest.set_track_channel(src.track_channel);
     dest.set_engine_channel(src.engine_channel);
+}
+
+inline sushi::ext::TrackAudioConnectionState to_sushi_ext(const sushi_rpc::TrackAudioConnectionState& src)
+{
+    sushi::ext::TrackAudioConnectionState dest;
+    dest.track = src.track();
+    dest.track_channel = src.track_channel();
+    dest.engine_channel = src.engine_channel();
+    return dest;
 }
 
 inline void to_grpc(sushi_rpc::EngineState& dest, sushi::ext::EngineState& src)
@@ -474,6 +583,32 @@ inline void to_grpc(sushi_rpc::EngineState& dest, sushi::ext::EngineState& src)
     }
 }
 
+inline void to_sushi_ext(sushi::ext::EngineState& dest, const sushi_rpc::EngineState& src)
+{
+    dest.sample_rate = src.sample_rate();
+    dest.tempo = src.tempo();
+    dest.playing_mode = to_sushi_ext(src.playing_mode().mode());
+    dest.sync_mode = to_sushi_ext(src.sync_mode().mode());
+    dest.time_signature = {src.time_signature().numerator(), src.time_signature().denominator()};
+    dest.input_clip_detection = src.clip_detection_input();
+    dest.output_clip_detection = src.clip_detection_output();
+    dest.master_limiter = src.master_limiter();
+    dest.used_audio_inputs = src.used_audio_inputs();
+    dest.used_audio_outputs = src.used_audio_outputs();
+
+    dest.input_connections.reserve(src.input_connections_size());
+    for (auto& con : src.input_connections())
+    {
+        dest.input_connections.push_back(to_sushi_ext(con));
+    }
+
+    dest.output_connections.reserve(src.output_connections_size());
+    for (auto& con : src.output_connections())
+    {
+        dest.output_connections.push_back(to_sushi_ext(con));
+    }
+}
+
 inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::ext::PluginClass& src)
 {
     dest.set_name(std::move(src.name));
@@ -482,6 +617,18 @@ inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::ext::PluginClass& src)
     dest.set_path(std::move(src.path));
     dest.mutable_type()->set_type(to_grpc(src.type));
     to_grpc(*dest.mutable_state(), src.state);
+}
+
+inline sushi::ext::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& src)
+{
+    sushi::ext::PluginClass dest;
+    dest.name = src.name();
+    dest.label = src.label();
+    dest.uid = src.uid();
+    dest.path = src.path();
+    dest.type = to_sushi_ext(src.type().type());
+    to_sushi_ext(dest.state, src.state());
+    return dest;
 }
 
 inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
@@ -501,6 +648,24 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
     }
 }
 
+inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
+{
+    sushi::ext::TrackState dest;
+    dest.name = src.name();
+    dest.label = src.label();
+    dest.input_channels = src.input_channels();
+    dest.output_channels = src.output_channels();
+    dest.input_busses = src.input_busses();
+    dest.output_busses = src.output_busses();
+
+    dest.processors.reserve(src.processors_size());
+    for (const auto& processor : src.processors())
+    {
+        dest.processors.push_back(to_sushi_ext(processor));
+    }
+    return dest;
+}
+
 inline void to_grpc(sushi_rpc::SessionState& dest, sushi::ext::SessionState& src)
 {
     to_grpc(*dest.mutable_sushi_info(), src.sushi_info);
@@ -514,6 +679,21 @@ inline void to_grpc(sushi_rpc::SessionState& dest, sushi::ext::SessionState& src
     {
         auto grpc_track = dest.mutable_tracks()->Add();
         to_grpc(*grpc_track, track);
+    }
+}
+
+inline void to_sushi_ext(sushi::ext::SessionState& dest, const sushi_rpc::SessionState& src)
+{
+    to_sushi_ext(dest.sushi_info, src.sushi_info());
+    dest.save_date = src.save_date();
+    to_sushi_ext(dest.osc_state, src.osc_state());
+    to_sushi_ext(dest.midi_state, src.midi_state());
+    to_sushi_ext(dest.engine_state, src.engine_state());
+
+    dest.tracks.reserve(src.tracks_size());
+    for (auto& track : src.tracks())
+    {
+        dest.tracks.push_back(to_sushi_ext(track));
     }
 }
 
@@ -1790,10 +1970,15 @@ grpc::Status SessionControlService::SaveSession(grpc::ServerContext* /*context*/
 }
 
 grpc::Status SessionControlService::RestoreSession(grpc::ServerContext* /*context*/,
-                                                   const sushi_rpc::SessionState* /*request*/,
+                                                   const sushi_rpc::SessionState* request,
                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
-    return to_grpc_status(sushi::ext::ControlStatus::UNSUPPORTED_OPERATION);
+    sushi::ext::SessionState sushi_state;
+    to_sushi_ext(sushi_state, *request);
+
+    auto status = _controller->restore_session(sushi_state);
+
+    return to_grpc_status(status);
 }
 
 NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
