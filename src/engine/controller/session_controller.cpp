@@ -18,7 +18,9 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "spdlog/fmt/bundled/format.h"
+#include <ctime>
+
+#include "spdlog/fmt/bundled/chrono.h"
 
 #include "library/constants.h"
 #include "compile_time_settings.h"
@@ -107,8 +109,8 @@ void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_fron
 ext::SessionState SessionController::save_session() const
 {
     ext::SessionState session;
-
-    //session.save_date = fmt::format("{}", std::chrono::system_clock::now().time_since_epoch());
+    auto date = time(nullptr);
+    session.save_date = fmt::format("{:%Y-%m-%d %H:%M}", fmt::localtime(date));
     session.sushi_info = _save_build_info();
     session.osc_state = _save_osc_state();
     session.midi_state = _save_midi_state();

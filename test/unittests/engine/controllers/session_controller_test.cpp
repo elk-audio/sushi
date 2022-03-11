@@ -44,6 +44,7 @@ protected:
 TEST_F(SessionControllerTest, TestEmptyEngineState)
 {
     auto state = _module_under_test->save_session();
+    EXPECT_FALSE(state.save_date.empty());
     EXPECT_EQ(0u, state.tracks.size());
 }
 
