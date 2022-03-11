@@ -40,6 +40,16 @@ namespace oscpack = ::osc;
 namespace sushi::osc
 {
 
+struct LightKey
+{
+    LightKey(const char* first_, const char* second_): first(first_), second(second_) {}
+    const char* first;
+    const char* second;
+};
+
+bool operator<(const std::pair<std::string, std::string>& fat, const LightKey& light);
+bool operator<(const LightKey& light, const std::pair<std::string, std::string>& fat);
+
 // TODO: This is the max buffer size hard-coded in the OscPack-sockets.
 //   Weird that it's not 4096 - is it a typo?
 //   It's not exposed, or I'd have fetched it and used it directly.
@@ -115,7 +125,7 @@ private:
         OSC_CALLBACK_HANDLE handle {0};
     };
 
-    std::map<std::pair<std::string, std::string>, MessageRegistration> _registered_messages;
+    std::map<std::pair<std::string, std::string>, MessageRegistration, std::less<>> _registered_messages;
 
     OSC_CALLBACK_HANDLE _last_generated_handle {0};
 

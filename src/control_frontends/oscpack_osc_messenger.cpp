@@ -26,6 +26,23 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 namespace osc
 {
 
+// The below are informed by this:
+// "According to the C++0x standard, section 20.3.3.26, std::pair has an operator< defined such that for two pairs x and y, it returns:"
+// x.first < y.first || (!(y.first < x.first) && x.second < y.second)
+
+// These two suffice - it doesn't require ==, or >, =>, etc.
+// If I didn't use LightKey, but std::pair, my overrides would not be hit.
+// Stepping through, I've ensured the below engage the string .compare(char*) overload.
+bool operator<(const std::pair<std::string, std::string>& fat, const LightKey& light)
+{
+    return fat.first < light.first || (!(light.first < fat.first) && fat.second < light.second);
+}
+
+bool operator<(const LightKey& light, const std::pair<std::string, std::string>& fat)
+{
+    return light.first < fat.first || (!(fat.first < light.first) && light.second < fat.second);
+}
+
 OscpackOscMessenger::OscpackOscMessenger(int receive_port,
                                          int send_port,
                                          const std::string& send_ip) : BaseOscMessenger(receive_port,
@@ -97,7 +114,9 @@ void* OscpackOscMessenger::add_method(const char* address_pattern,
                                       OscMethodType type,
                                       const void* callback_data)
 {
-    auto iterator = _registered_messages.find({address_pattern, type_tag_string});
+    LightKey key(address_pattern,  type_tag_string);
+    auto iterator = _registered_messages.find(key);
+
     if (iterator != _registered_messages.end())
     {
         return (void*)-1;
@@ -120,7 +139,7 @@ void* OscpackOscMessenger::add_method(const char* address_pattern,
 
     _last_generated_handle++;
 
-    auto to_return = (void*)_registered_messages[{address_pattern, type_tag_string}].handle;
+    auto to_return = (void*)reg.handle;
     assert(sizeof(void*) == sizeof(OSC_CALLBACK_HANDLE));
     return to_return;
 }
@@ -162,7 +181,8 @@ void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, cons
 {
     try
     {
-        auto iterator = _registered_messages.find({m.AddressPattern(), m.TypeTags()});
+        LightKey key(m.AddressPattern(),  m.TypeTags());
+        auto iterator = _registered_messages.find(key);
 
         if (iterator != _registered_messages.end())
         {
