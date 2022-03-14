@@ -40,18 +40,24 @@ namespace audio_frontend {
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     PortAudioFrontendConfiguration(std::optional<int> input_device_id,
-                           std::optional<int> output_device_id,
-                           int cv_inputs,
-                           int cv_outputs) :
+                                   std::optional<int> output_device_id,
+                                   float suggested_input_latency,
+                                   float suggested_output_latency,
+                                   int cv_inputs,
+                                   int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
             input_device_id(input_device_id),
-            output_device_id(output_device_id)
+            output_device_id(output_device_id),
+            suggested_input_latency(suggested_input_latency),
+            suggested_output_latency(suggested_output_latency)
     {}
 
     virtual ~PortAudioFrontendConfiguration() = default;
 
     std::optional<int> input_device_id;
     std::optional<int> output_device_id;
+    float suggested_input_latency{0.0f};
+    float suggested_output_latency{0.0f};
 };
 
 class PortAudioFrontend : public BaseAudioFrontend
@@ -169,7 +175,7 @@ namespace sushi {
 namespace audio_frontend {
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PortAudioFrontendConfiguration(std::optional<int>, std::optional<int>, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
+    PortAudioFrontendConfiguration(std::optional<int>, std::optional<int>, float, float, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class PortAudioFrontend : public BaseAudioFrontend

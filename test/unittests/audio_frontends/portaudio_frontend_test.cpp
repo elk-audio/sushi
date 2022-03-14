@@ -53,7 +53,7 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
     PaDeviceInfo expected_info;
     expected_info.maxInputChannels = 2;
     expected_info.maxOutputChannels = 2;
-    PortAudioFrontendConfiguration config(0,1,1,1);
+    PortAudioFrontendConfiguration config(0,1,0.0f,0.0f,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
@@ -68,7 +68,7 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
 TEST_F(TestPortAudioFrontend, TestInitFailOnPaInit)
 {
     PaError init_value = PaErrorCode::paNotInitialized;
-    PortAudioFrontendConfiguration config(0,1,1,1);
+    PortAudioFrontendConfiguration config(0,1,0.0f,0.0f,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
     auto ret_code = _module_under_test->init(&config);
@@ -79,7 +79,7 @@ TEST_F(TestPortAudioFrontend, TestInitFailGetDeviceCount)
 {
     PaError init_value = PaErrorCode::paNoError;
     int device_count = 0;
-    PortAudioFrontendConfiguration config(0,1,1,1);
+    PortAudioFrontendConfiguration config(0,1,0.0f,0.0f,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
@@ -94,7 +94,7 @@ TEST_F(TestPortAudioFrontend, TestInitiFailSamplerate)
     PaDeviceInfo expected_info;
     expected_info.maxInputChannels = 2;
     expected_info.maxOutputChannels = 2;
-    PortAudioFrontendConfiguration config(0,1,1,1);
+    PortAudioFrontendConfiguration config(0,1,0.0f,0.0f,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
@@ -114,7 +114,7 @@ TEST_F(TestPortAudioFrontend, TestInitiFailOpenStream)
     PaDeviceInfo expected_info;
     expected_info.maxInputChannels = 2;
     expected_info.maxOutputChannels = 2;
-    PortAudioFrontendConfiguration config(0,1,1,1);
+    PortAudioFrontendConfiguration config(0,1,0.0f,0.0f,1,1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
@@ -136,7 +136,7 @@ TEST_F(TestPortAudioFrontend, TestRun)
 
 TEST_F(TestPortAudioFrontend, TestProcess)
 {
-    PortAudioFrontendConfiguration config(0,0,0,0);
+    PortAudioFrontendConfiguration config(0,0,0.0f,0.0f,0,0);
     int device_count = 1;
     PaDeviceInfo device_info;
     device_info.maxInputChannels = 1;

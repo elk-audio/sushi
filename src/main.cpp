@@ -153,6 +153,8 @@ int main(int argc, char* argv[])
     int osc_send_port = CompileTimeSettings::osc_send_port;
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+    float portaudio_suggested_input_latency = 0.0f;
+    float portaudio_suggested_output_latency = 0.0f;
     std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -228,6 +230,14 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_AUDIO_OUTPUT_DEVICE:
             portaudio_output_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
+            portaudio_suggested_input_latency = atof(opt.arg);
+            break;
+
+        case OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY:
+            portaudio_suggested_output_latency = atof(opt.arg);
             break;
 
         case OPT_IDX_USE_JACK:
@@ -375,6 +385,8 @@ int main(int argc, char* argv[])
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
             frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(portaudio_input_device_id,
                                                                                                       portaudio_output_device_id,
+                                                                                                      portaudio_suggested_input_latency,
+                                                                                                      portaudio_suggested_output_latency,
                                                                                                       cv_inputs,
                                                                                                       cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());

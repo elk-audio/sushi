@@ -86,7 +86,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     input_parameters.device = input_device_id;
     input_parameters.channelCount = _audio_input_channels + _cv_input_channels;
     input_parameters.sampleFormat = paFloat32;
-    input_parameters.suggestedLatency = 0.0;
+    input_parameters.suggestedLatency = portaudio_config->suggested_input_latency;
     input_parameters.hostApiSpecificStreamInfo = nullptr;
 
     PaStreamParameters output_parameters;
@@ -94,7 +94,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     output_parameters.device = output_device_id;
     output_parameters.channelCount = _audio_output_channels + _cv_output_channels;
     output_parameters.sampleFormat = paFloat32;
-    output_parameters.suggestedLatency = 0.0;
+    output_parameters.suggestedLatency = portaudio_config->suggested_output_latency;
     output_parameters.hostApiSpecificStreamInfo = nullptr;
     // Setup samplerate
     double samplerate = _engine->sample_rate();
