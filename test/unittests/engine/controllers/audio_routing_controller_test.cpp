@@ -18,7 +18,8 @@ protected:
 
     void SetUp()
     {
-        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, new EventDispatcherMockup());
+        bool debug_mode_sw = false;
+        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, debug_mode_sw, new EventDispatcherMockup());
         _event_dispatcher_mockup = static_cast<EventDispatcherMockup*>(_audio_engine->event_dispatcher());
         _module_under_test = std::make_unique<AudioRoutingController>(_audio_engine.get());
 
