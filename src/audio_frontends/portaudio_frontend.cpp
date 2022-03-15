@@ -129,7 +129,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     if (_audio_input_channels + _cv_input_channels > 0)
     {
-        SUSHI_LOG_DEBUG("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Input device has {} available channels", _input_device_info->maxInputChannels);
     }
     else
     {
@@ -142,8 +143,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     }
     else
     {
-        SUSHI_LOG_DEBUG("No output channels found not connecting to output device");
+        SUSHI_LOG_INFO("No output channels found not connecting to output device");
+        SUSHI_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
+    SUSHI_LOG_INFO("Stream started using input latency {} and output latency {}", portaudio_config->suggested_input_latency, portaudio_config->suggested_output_latency);
 
     return AudioFrontendStatus::OK;
 }
