@@ -1,4 +1,15 @@
-cmake_minimum_required(VERSION 3.20)
+# .. range syntax from: https://cliutils.gitlab.io/modern-cmake/chapters/basics.html
+cmake_minimum_required(VERSION 3.20..3.25)
+
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+endif()
+
+# Require out-of-source builds
+file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
+if(EXISTS "${LOC_PATH}")
+    message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
+endif()
 
 #####################
 #  Project Version  #
@@ -16,6 +27,21 @@ project(sushi
     VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION}
 )
 
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+##################################
+#  Perform Cross Compile setup   #
+##################################
+
+# Procedure is performed only if cross compile is detected, i.e CMAKE_SYSROOT
+# has been explicitly defined
+if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+    set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
+    set(CMAKE_PROGRAM_PATH "$ENV{CMAKE_PROGRAM_PATH}")
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
@@ -436,7 +462,6 @@ endif()
 ####################
 
 set(SOURCE_FILES
-    src/main.cpp
     src/logging.cpp
     src/json_utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
@@ -517,6 +542,9 @@ add_executable(sushi MACOSX_BUNDLE
     "${MIDI_SOURCES}"
 )
 
+# TODO: Is this "modern"?
+set_target_properties(sushi_library PROPERTIES LINKER_LANGUAGE CXX)
+
 #########################
 #  Include Directories  #
 #########################
@@ -550,16 +578,24 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL 
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
 
-target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_include_directories(sushi_library PUBLIC ${INCLUDE_DIRS})
+target_link_libraries(sushi_library PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_features(sushi PRIVATE cxx_std_17)
-target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+# TODO: If it's a library, maybe make these PUBLIC?
+target_compile_features(sushi_library PUBLIC cxx_std_17)
+target_compile_options(sushi_library PUBLIC -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
+target_compile_definitions(sushi_library PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+
+#####################
+#  Sub projects     #
+#####################
+
+# TODO: Make this optional.
+add_subdirectory(apps)
 
 ######################
 #  Tests subproject  #
@@ -568,25 +604,3 @@ target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI
 if (${SUSHI_WITH_UNIT_TESTS})
     add_subdirectory(test)
 endif()
-
-####################
-#  Install         #
-####################
-set(DOC_FILES_INSTALL
-    "${PROJECT_SOURCE_DIR}/LICENSE.md"
-    "${PROJECT_SOURCE_DIR}/README.md"
-    "${PROJECT_SOURCE_DIR}/HISTORY.md"
-)
-
-if (APPLE)
-    install(CODE [[
-    include(BundleUtilities)
-    fixup_bundle($<TARGET_FILE:sushi> "" "") # TODO: fix to work when not submodule
-    ]] COMPONENT Runtime)
-endif()
-
-install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
-foreach (ITEM ${DOC_FILES_INSTALL})
-    install(FILES ${ITEM} DESTINATION share/sushi/doc)
-endforeach()
-
