@@ -29,6 +29,7 @@ Vst2TestPlugin::Vst2TestPlugin(audioMasterCallback audioMaster) : AudioEffectX(a
                                                                                PARAM_NAMES.size()),
                                                                   _parameters{{1.0f, 1.0f}},
                                                                   _program_no{0},
+                                                                  _frequency{0.01},
                                                                   _phase{0},
                                                                   _playing{false}
 {

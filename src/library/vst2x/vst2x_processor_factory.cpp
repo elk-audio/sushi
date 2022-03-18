@@ -28,7 +28,10 @@
 namespace sushi {
 namespace vst2 {
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst2");
+#pragma GCC diagnostic pop
 
 #ifdef SUSHI_BUILD_WITH_VST2
 

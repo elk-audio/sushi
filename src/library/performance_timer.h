@@ -161,8 +161,8 @@ protected:
     ProcessTimings _merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings);
 
     std::thread _process_thread;
-    float _period;
-    std::atomic_bool _enabled;
+    float _period{0};
+    std::atomic_bool _enabled{false};
 
     std::map<int, TimingNode>  _timings;
     std::mutex _timing_lock;

@@ -300,6 +300,14 @@ TEST_F(InternalPluginTest, TestRtStateHandling)
     // Now the values should have changed
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Retrive the delete event and execute it
+    ASSERT_FALSE(_host_control._event_output.empty());
+    auto rt_delete_event = _host_control._event_output.pop();
+    auto delete_event = Event::from_rt_event(rt_delete_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(delete_event);
+    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+    delete delete_event;
 }
 
 TEST_F(InternalPluginTest, TestStateSaving)

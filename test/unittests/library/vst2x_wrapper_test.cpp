@@ -67,6 +67,7 @@ protected:
         _module_under_test->set_enabled(true);
         _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
         _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_event_output(&_host_control._event_output);
     }
 
     HostControlMockup _host_control;
@@ -332,6 +333,14 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_FALSE(_module_under_test->bypassed());
     EXPECT_EQ(1, _module_under_test->current_program());
     EXPECT_EQ("Program 2", _module_under_test->current_program_name());
+
+    // Retrive the delete event and execute it
+    ASSERT_FALSE(_host_control._event_output.empty());
+    auto rt_event = _host_control._event_output.pop();
+    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(delete_event);
+    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+    delete delete_event;
 }
 
 TEST_F(TestVst2xWrapper, TestStateSaving)

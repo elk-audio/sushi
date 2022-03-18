@@ -33,7 +33,7 @@ endif()
 # Get the latest commit hash of the working branch
 execute_process(
     COMMAND git log -1 --format=%H
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -41,7 +41,7 @@ execute_process(
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M")
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/include/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in
     ${CMAKE_BINARY_DIR}/generated/version.h
 )
 
@@ -52,6 +52,7 @@ configure_file(
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
+option(WITH_PORTAUDIO "Enable PortAudio support" ON)
 option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
 option(WITH_RT_MIDI "Enable RtMidi support" OFF)
 option(WITH_VST2 "Enable Vst 2 support" ON)
@@ -138,6 +139,21 @@ if (${WITH_JACK})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+###################
+# PortAudio setup #
+###################
+
+if (${WITH_PORTAUDIO})
+    message("Building with PortAudio support.")
+
+    # Linked libraries
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/third-party/portaudio/include) # For working tests since we need the headers but don't want to link with the actual library.
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
 ###################
@@ -347,6 +363,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
+                      src/audio_frontends/portaudio_frontend.cpp
                       src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/osc_frontend.cpp
@@ -417,6 +434,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/audio_frontends/audio_frontend_internals.h
                         src/audio_frontends/offline_frontend.h
                         src/audio_frontends/jack_frontend.h
+                        src/audio_frontends/portaudio_frontend.h
                         src/audio_frontends/xenomai_raspa_frontend.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
@@ -497,7 +515,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
 set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
 
 
-add_executable(sushi "${COMPILATION_UNITS}"
+add_executable(sushi MACOSX_BUNDLE "${COMPILATION_UNITS}"
                      "${EXTRA_CLION_SOURCES}"
                      "${ADDITIONAL_VST2_SOURCES}"
                      "${ADDITIONAL_VST3_SOURCES}"
@@ -523,23 +541,23 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
-find_path(LO_DIR NAMES "lo/lo.h")
-find_library(LO_LIB NAMES lo)
-message("Found path: ${LO_DIR} and lib: ${LO_LIB}")
+find_path(LIBLO_INCLUDE_DIRS NAMES "lo/lo.h")
+find_library(LIBLO_LIBRARIES NAMES lo)
+message("Found path: ${LIBO_INCLUDE_DIRS} and lib: ${LIBLO_LIBRARIES}")
 
-find_path(SNDFILE_DIR NAMES "sndfile.h")
-find_library(SNDFILE_LIB NAMES sndfile)
-message("Found path: ${SNDFILE_DIR} and lib: ${SNDFILE_LIB}")
+find_path(SNDFILE_INCLUDE_DIR NAMES "sndfile.h")
+find_library(SNDFILE_LIBRARIES NAMES sndfile)
+message("Found path: ${SNDFILE_INCLUDE_DIR} and lib: ${SNDFILE_LIBRARIES}")
 
 set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
-    ${LO_DIR}
-    ${SNDFILE_DIR}
+    ${LIBLO_INCLUDE_DIRS}
+    ${SNDFILE_INCLUDE_DIR}
 )
 
 set(COMMON_LIBRARIES
-    ${LO_LIB}
-    ${SNDFILE_LIB}
+    ${LIBLO_LIBRARIES}
+    ${SNDFILE_LIBRARIES}
     pthread
     dl
     fifo
@@ -578,7 +596,14 @@ set(DOC_FILES_INSTALL
     "${PROJECT_SOURCE_DIR}/HISTORY.md"
 )
 
-install(TARGETS sushi DESTINATION bin)
+if (APPLE)
+    install(CODE [[
+    include(BundleUtilities)
+    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi/sushi.app" "" "") # TODO: fix to work when not submodule
+    ]] COMPONENT Runtime)
+endif()
+
+install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
 foreach(ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()

@@ -21,6 +21,14 @@ set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(rtmidi)
 
+#############################
+# portaudio compile options #
+#############################
+
+set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
+add_subdirectory(portaudio)
+set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+
 ##########################
 #  VST3SDK and examples  #
 ##########################
