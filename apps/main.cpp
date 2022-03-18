@@ -87,7 +87,7 @@ void error_exit(const std::string& message)
 
 void print_version_and_build_info()
 {
-    std::cout << "\nVersion "   << CompileTimeSettings::sushi_version << std::endl;
+    std::cout << "\nVersion " << CompileTimeSettings::sushi_version << std::endl;
 
     std::cout << "Build options enabled: ";
     for (const auto& o : CompileTimeSettings::enabled_build_options)
@@ -140,10 +140,35 @@ struct SushiOptions
     std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 };
 
-int parse_options(int argc, char* argv[], SushiOptions& options)
+class SushiModel
 {
-    int status = 0;
+    public:
+    std::unique_ptr<sushi::engine::AudioEngine> engine {nullptr};
 
+    std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend> midi_frontend {nullptr};
+    std::unique_ptr<sushi::control_frontend::OSCFrontend> osc_frontend {nullptr};
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend> audio_frontend {nullptr};
+    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration> frontend_config {nullptr};
+
+    std::unique_ptr<sushi::midi_dispatcher::MidiDispatcher> midi_dispatcher {nullptr};
+
+    std::unique_ptr<sushi::jsonconfig::JsonConfigurator> configurator {nullptr};
+
+    std::unique_ptr<sushi::engine::Controller> controller {nullptr};
+
+    std::unique_ptr<sushi_rpc::GrpcServer> rpc_server {nullptr};
+};
+
+enum class PARSE_STATUS
+{
+    OK,
+    ERROR,
+    MISSING_ARGUMENTS,
+    EXIT
+};
+
+PARSE_STATUS parse_options(int argc, char* argv[], SushiOptions& options)
+{
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present
     if (argc > 0)
@@ -159,12 +184,13 @@ int parse_options(int argc, char* argv[], SushiOptions& options)
 
     if (cl_parser.error())
     {
-        return 1;
+        return PARSE_STATUS::ERROR;
     }
+
     if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
     {
         optionparser::printUsage(fwrite, stdout, usage);
-        return 2;
+        return PARSE_STATUS::MISSING_ARGUMENTS;
     }
 
     for (int i = 0; i < cl_parser.optionsCount(); i++)
@@ -181,7 +207,10 @@ int parse_options(int argc, char* argv[], SushiOptions& options)
             case OPT_IDX_VERSION:
                 {
                     print_version_and_build_info();
-                    std::exit(1);
+
+                    // TODO: If this is a plugin it makes no sense to exit.
+                    //  Add a check / assertion that this doesn't happen when embedded?
+                    return PARSE_STATUS::EXIT;
                 }
                 break;
 
@@ -328,47 +357,11 @@ int parse_options(int argc, char* argv[], SushiOptions& options)
         options.output_filename = options.input_filename + "_proc.wav";
     }
 
-    return status;
+    return PARSE_STATUS::OK;
 }
 
-int main(int argc, char* argv[])
+void init_logger(SushiOptions& options)
 {
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
-    if (ret < 0)
-    {
-        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
-    }
-#endif
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Command Line arguments parsing
-    ////////////////////////////////////////////////////////////////////////////////
-
-    SushiOptions options;
-
-    // TODO: Make this status an enum!
-    int option_status = parse_options(argc, argv, options);
-    if (option_status == 1)
-    {
-        return 1;
-    }
-    else if (option_status == 2)
-    {
-        return 0;
-    }
-
-    if (options.enable_parameter_dump == false)
-    {
-        print_sushi_headline();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Logger configuration
-    ////////////////////////////////////////////////////////////////////////////////
     auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
                                             "Logger",
                                             options.log_level,
@@ -379,12 +372,91 @@ int main(int argc, char* argv[])
     {
         std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
+}
 
+enum class INIT_STATUS
+{
+    OK,
+    FAILED_LOAD_HOST_CONFIG, // "Failed to load host configuration from config file"
+    FAILED_LOAD_TRACKS, // "Failed to load tracks from Json config file"
+    FAILED_LOAD_MIDI_MAPPING, // "Failed to load MIDI mapping from Json config file"
+    FAILED_LOAD_CV_GATE, // "Failed to load CV and Gate configuration"
+    FAILED_LOAD_PROCESSOR_STATES, // "Failed to load initial processor states"
+    FAILED_LOAD_EVENT_LIST, // "Failed to load Event list from Json config file";
+    FAILED_LOAD_EVENTS      //  "Failed to load Events from Json config file"
+};
+
+INIT_STATUS load_configuration(SushiModel& model, SushiOptions& options)
+{
+    auto status = model.configurator->load_host_config();
+    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        return INIT_STATUS::FAILED_LOAD_HOST_CONFIG;
+    }
+
+    status = model.configurator->load_tracks();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        return INIT_STATUS::FAILED_LOAD_TRACKS;
+    }
+
+    status = model.configurator->load_midi();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        return INIT_STATUS::FAILED_LOAD_MIDI_MAPPING;
+    }
+
+    status = model.configurator->load_cv_gate();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        return INIT_STATUS::FAILED_LOAD_CV_GATE;
+    }
+
+    status = model.configurator->load_initial_state();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        return INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES;
+    }
+
+    if (options.frontend_type == FrontendType::DUMMY ||
+        options.frontend_type == FrontendType::OFFLINE)
+    {
+        auto [status, events] = model.configurator->load_event_list();
+        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        {
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(model.audio_frontend.get())->add_sequencer_events(events);
+        }
+        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+        {
+            return INIT_STATUS::FAILED_LOAD_EVENT_LIST;
+        }
+    }
+    else
+    {
+        status = model.configurator->load_events();
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+        {
+            return INIT_STATUS::FAILED_LOAD_EVENTS;
+        }
+    }
+
+    return INIT_STATUS::OK;
+}
+
+// TODO: Re-consider return type.
+std::tuple<SushiModel, INIT_STATUS> init(SushiOptions& options)
+{
     SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Main body //
-    ////////////////////////////////////////////////////////////////////////////////
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
+    if (ret < 0)
+    {
+        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
+    }
+#endif
+
+    SushiModel model;
 
     if (enable_portaudio_devs_dump)
     {
@@ -401,35 +473,33 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
-                                                               options.rt_cpu_cores,
-                                                               options.debug_mode_switches,
-                                                               nullptr);
+    model.engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+                                                                options.rt_cpu_cores,
+                                                                options.debug_mode_switches,
+                                                                nullptr);
     if (! base_plugin_path.empty())
     {
         engine->set_base_plugin_path(base_plugin_path);
     }
-    auto event_dispatcher = engine->event_dispatcher();
-    auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
-    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
-                                                                              midi_dispatcher.get(),
-                                                                              engine->processor_container(),
-                                                                              options.config_filename);
 
-    std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>                 midi_frontend;
-    std::unique_ptr<sushi::control_frontend::OSCFrontend>                   osc_frontend;
-    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontend>               audio_frontend;
-    std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration>  frontend_config;
+    model.midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(model.engine->event_dispatcher());
 
-    auto [audio_config_status, audio_config] = configurator->load_audio_config();
+    model.configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(model.engine.get(),
+                                                                               model.midi_dispatcher.get(),
+                                                                               model.engine->processor_container(),
+                                                                               options.config_filename);
+
+    auto [audio_config_status, audio_config] = model.configurator->load_audio_config();
 
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
+            // TODO: Return INIT_STATUS
             error_exit("Error reading config file, invalid file path: " + options.config_filename);
         }
 
+        // TODO: Return INIT_STATUS
         error_exit("Error reading host config, check logs for details.");
     }
 
@@ -449,8 +519,8 @@ int main(int argc, char* argv[])
     auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
 #endif
 
-    midi_dispatcher->set_midi_inputs(midi_inputs);
-    midi_dispatcher->set_midi_outputs(midi_outputs);
+    model.midi_dispatcher->set_midi_inputs(midi_inputs);
+    model.midi_dispatcher->set_midi_outputs(midi_outputs);
 
     ////////////////////////////////////////////////////////////////////////////////
     // Set up Audio Frontend //
@@ -461,35 +531,35 @@ int main(int argc, char* argv[])
         case FrontendType::JACK:
         {
             SUSHI_LOG_INFO("Setting up Jack audio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(options.jack_client_name,
-                                                                                                 options.jack_server_name,
-                                                                                                 options.connect_ports,
-                                                                                                 cv_inputs,
-                                                                                                 cv_outputs);
-            audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
+            model.frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(options.jack_client_name,
+                                                                                                       options.jack_server_name,
+                                                                                                       options.connect_ports,
+                                                                                                       cv_inputs,
+                                                                                                       cv_outputs);
+
+            model.audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(model.engine.get());
             break;
         }
 
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(options.portaudio_input_device_id,
-                                                                                                      options.portaudio_output_device_id,
-                                                                                                      portaudio_suggested_input_latency,
-                                                                                                      portaudio_suggested_output_latency,
-                                                                                                      cv_inputs,
-                                                                                                      cv_outputs);
-            audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
+            model.frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(options.portaudio_input_device_id,
+                                                                                                            options.portaudio_output_device_id,
+                                                                                                            portaudio_suggested_input_latency,
+                                                                                                      portaudio_suggested_output_latency,cv_inputs,
+                                                                                                            cv_outputs);
+            model.audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(model.engine.get());
             break;
         }
 
         case FrontendType::XENOMAI_RASPA:
         {
             SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(options.debug_mode_switches,
-                                                                                                         cv_inputs,
-                                                                                                         cv_outputs);
-            audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
+            model.frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(options.debug_mode_switches,
+                                                                                                               cv_inputs,
+                                                                                                               cv_outputs);
+            model.audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(model.engine.get());
             break;
         }
 
@@ -506,22 +576,26 @@ int main(int argc, char* argv[])
             {
                 SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
-            frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
-                                                                                                    options.output_filename,
-                                                                                                    dummy,
-                                                                                                    cv_inputs,
-                                                                                                    cv_outputs);
-            audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(engine.get());
+            model.frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
+                                                                                                          options.output_filename,
+                                                                                                          dummy,
+                                                                                                          cv_inputs,
+                                                                                                          cv_outputs);
+            model.audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(model.engine.get());
             break;
         }
 
         default:
+        {
+            // TODO: Return INIT_STATUS
             error_exit("No audio frontend selected.");
+        }
     }
 
-    auto audio_frontend_status = audio_frontend->init(frontend_config.get());
+    auto audio_frontend_status = model.audio_frontend->init(model.frontend_config.get());
     if (audio_frontend_status != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
+        // TODO: Return INIT_STATUS
         error_exit("Error initializing frontend, check logs for details.");
     }
 
@@ -529,59 +603,24 @@ int main(int argc, char* argv[])
     // Load Configuration //
     ////////////////////////////////////////////////////////////////////////////////
 
-    status = configurator->load_tracks();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    auto status = load_configuration(model, options);
+    if (status != INIT_STATUS::OK)
     {
-        error_exit("Failed to load tracks from Json config file");
-    }
-    status = configurator->load_midi();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-    {
-        error_exit("Failed to load MIDI mapping from Json config file");
-    }
-    status = configurator->load_cv_gate();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-    {
-        error_exit("Failed to load CV and Gate configuration");
-    }
-    status = configurator->load_initial_state();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-    {
-        error_exit("Failed to load initial processor states");
-    }
-
-    if (options.frontend_type == FrontendType::DUMMY ||
-        options.frontend_type == FrontendType::OFFLINE)
-    {
-        auto [status, events] = configurator->load_event_list();
-        if (status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
-        {
-            static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
-        }
-        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-        {
-            error_exit("Failed to load Event list from Json config file");
-        }
-    }
-    else
-    {
-        status = configurator->load_events();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-        {
-            error_exit("Failed to load Events from Json config file");
-        }
+        return {std::move(model), status};
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Set up Controller and Control Frontends //
     ////////////////////////////////////////////////////////////////////////////////
-    auto controller = std::make_unique<sushi::engine::Controller>(engine.get(),
-                                                                  midi_dispatcher.get(),
+    model.controller = std::make_unique<sushi::engine::Controller>(model.engine.get(),
+                                                                  model.midi_dispatcher.get(),
                                                                   audio_frontend.get());
 
+    // TODO: Parameter dump functionality should not be here!
     if (options.enable_parameter_dump)
     {
-        std::cout << sushi::generate_processor_parameter_document(controller.get());
+        std::cout << sushi::generate_processor_parameter_document(model.controller.get());
+        // TODO: Return INIT_STATUS
         std::exit(0);
     }
 
@@ -590,89 +629,182 @@ int main(int argc, char* argv[])
         options.frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
-        midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+        model.midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs,
+                                                                                       midi_outputs,
+                                                                                       model.midi_dispatcher.get());
 #elif SUSHI_BUILD_WITH_RT_MIDI
-        midi_frontend = std::make_unique<sushi::midi_frontend::RtMidiFrontend>(midi_inputs,
-                                                                               midi_outputs,
-                                                                               std::move(rt_midi_input_mappings),
-                                                                               std::move(rt_midi_output_mappings),
-                                                                               midi_dispatcher.get());
+        model.midi_frontend = std::make_unique<sushi::midi_frontend::RtMidiFrontend>(midi_inputs,
+                                                                                     midi_outputs,
+                                                                                     std::move(rt_midi_input_mappings),
+                                                                                     std::move(rt_midi_output_mappings),
+                                                                                     model.midi_dispatcher.get());
 #else
-        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs,
+                                                                                 midi_outputs,
+                                                                                 model.midi_dispatcher.get());
 #endif
         if (use_osc)
         {
             SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
             auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
-            osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
-                                                                                  controller.get(),
+            model.osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(model.engine.get(),
+                                                                                  model.controller.get(),
                                                                                   options.osc_server_port,
                                                                                   options.osc_send_port);
-            controller->set_osc_frontend(osc_frontend.get());
-            configurator->set_osc_frontend(osc_frontend.get());
+            model.controller->set_osc_frontend(model.osc_frontend.get());
+            model.configurator->set_osc_frontend(model.osc_frontend.get());
 
-            auto osc_status = osc_frontend->init();
+            auto osc_status = model.osc_frontend->init();
             if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
             {
+            // TODO: Return INIT_STATUS
                 error_exit("Failed to setup OSC frontend");
             }
 
-            status = configurator->load_osc();
-            if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-            {
+            auto status = model.configurator->load_osc();
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+        {
+            // TODO: Return INIT_STATUS
                 error_exit("Failed to load OSC echo specification from Json config file");
             }
         }
     }
     else
     {
-        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_dispatcher.get());
+        model.midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(model.midi_dispatcher.get());
     }
 
-    configurator.reset();
+    model.configurator.reset();
 
-    auto midi_ok = midi_frontend->init();
+    auto midi_ok = model.midi_frontend->init();
     if (!midi_ok)
     {
         error_exit("Failed to setup Midi frontend");
     }
-    midi_dispatcher->set_frontend(midi_frontend.get());
+    model.midi_dispatcher->set_frontend(model.midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    std::unique_ptr<sushi_rpc::GrpcServer> rpc_server;
     if (use_grpc)
     {
-        rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, controller.get());
+        model.rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, controller.get());
     }
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Start everything! //
-    ////////////////////////////////////////////////////////////////////////////////
+    return {std::move(model), INIT_STATUS::OK};
+}
+
+void start(SushiModel& model, SushiOptions& options)
+{
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     if (options.enable_timings)
     {
-        engine->performance_timer()->enable(true);
+        model.engine->performance_timer()->enable(true);
     }
 
-    audio_frontend->run();
-    event_dispatcher->run();
-    midi_frontend->run();
+    model.audio_frontend->run();
+    model.engine->event_dispatcher()->run();
+    model.midi_frontend->run();
 
     if (use_osc && (options.frontend_type == FrontendType::JACK ||
                     options.frontend_type == FrontendType::XENOMAI_RASPA ||
                     options.frontend_type == FrontendType::PORTAUDIO))
     {
-        osc_frontend->run();
+        model.osc_frontend->run();
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     if (use_grpc)
     {
         SUSHI_LOG_INFO("Starting gRPC server with address: {}", options.grpc_listening_address);
-        rpc_server->start();
+        model.rpc_server->start();
     }
 #endif
+}
+
+void exit(SushiModel& model, SushiOptions& options)
+{
+    model.audio_frontend->cleanup();
+    model.engine->event_dispatcher()->stop();
+
+    if (osc_frontend && (options.frontend_type == FrontendType::JACK ||
+                         options.frontend_type == FrontendType::XENOMAI_RASPA ||
+                         options.frontend_type == FrontendType::PORTAUDIO))
+    {
+        model.osc_frontend->stop();
+        model.midi_frontend->stop();
+    }
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    if (rpc_server)
+    {
+        model.rpc_server->stop();
+    }
+#endif
+}
+
+void act_on_init_status(INIT_STATUS init_status)
+{
+    switch (init_status)
+    {
+        case INIT_STATUS::FAILED_LOAD_HOST_CONFIG:
+            error_exit("Failed to load host configuration from config file"); break;
+        case INIT_STATUS::FAILED_LOAD_TRACKS:
+            error_exit("Failed to load tracks from Json config file"); break;
+        case INIT_STATUS::FAILED_LOAD_MIDI_MAPPING:
+            error_exit("Failed to load MIDI mapping from Json config file"); break;
+        case INIT_STATUS::FAILED_LOAD_CV_GATE:
+            error_exit("Failed to load CV and Gate configuration"); break;
+        case INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES:
+            error_exit("Failed to load initial processor states"); break;
+        case INIT_STATUS::FAILED_LOAD_EVENT_LIST:
+            error_exit("Failed to load Event list from Json config file"); break;
+        case INIT_STATUS::FAILED_LOAD_EVENTS:
+            error_exit("Failed to load Events from Json config file"); break;
+        case INIT_STATUS::OK:
+            break;
+    };
+}
+
+int main(int argc, char* argv[])
+{
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    SushiOptions options;
+
+    auto option_status = parse_options(argc, argv, options);
+    if (option_status == PARSE_STATUS::ERROR)
+    {
+        return 1;
+    }
+    else if (option_status == PARSE_STATUS::MISSING_ARGUMENTS)
+    {
+        return 2;
+    }
+    else if (option_status == PARSE_STATUS::EXIT)
+    {
+        return 0;
+    }
+
+    // TODO: Parameter dump and exit makes no sense outside of standalone Sushi!
+    //  Design and implement alternative solution. Future story?
+    if (options.enable_parameter_dump == false)
+    {
+        print_sushi_headline();
+    }
+
+    init_logger(options);
+
+    // TODO: move initialization into constructor, or still have init(...) pattern?
+
+    auto [model, init_status] = init(options);
+
+    act_on_init_status(init_status);
+
+    assert(init_status == INIT_STATUS::OK);
+
+    start(model, options);
 
     if (options.frontend_type != FrontendType::OFFLINE)
     {
@@ -681,27 +813,10 @@ int main(int argc, char* argv[])
         exit_notifier.wait(lock, exit_condition);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Cleanup before exiting! //
-    ////////////////////////////////////////////////////////////////////////////////
+    exit(model, options);
 
-    audio_frontend->cleanup();
-    event_dispatcher->stop();
-
-    if (osc_frontend && (options.frontend_type == FrontendType::JACK ||
-                         options.frontend_type == FrontendType::XENOMAI_RASPA ||
-                         options.frontend_type == FrontendType::PORTAUDIO))
-    {
-        osc_frontend->stop();
-        midi_frontend->stop();
-    }
-
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    if (rpc_server)
-    {
-        rpc_server->stop();
-    }
-#endif
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
     SUSHI_LOG_INFO("Sushi exiting normally!");
+
     return 0;
 }
