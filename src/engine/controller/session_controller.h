@@ -53,6 +53,14 @@ private:
     std::vector<ext::TrackState> _save_tracks() const;
     ext::PluginClass    _save_plugin(const sushi::Processor* plugin) const;
 
+    bool _check_state(const ext::SessionState& state) const;
+    void _restore_tracks(std::vector<ext::TrackState> tracks);
+    void _restore_plugin_states(std::vector<ext::TrackState> tracks);
+    void _restore_plugin(ext::PluginClass plugin, sushi::engine::Track* track);
+    void _restore_engine(ext::EngineState& state);
+    void _restore_midi(ext::MidiState& state);
+    void _restore_osc(ext::OscState& state);
+
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     engine::BaseEngine*              _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
