@@ -105,46 +105,8 @@ void print_version_and_build_info()
     std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
-int main(int argc, char* argv[])
+struct SushiOptions
 {
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
-    if (ret < 0)
-    {
-        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
-    }
-#endif
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Command Line arguments parsing
-    ////////////////////////////////////////////////////////////////////////////////
-
-    // option_parser accepts arguments excluding program name,
-    // so skip it if it is present
-    if (argc > 0)
-    {
-        argc--;
-        argv++;
-    }
-
-    optionparser::Stats cl_stats(usage, argc, argv);
-    std::vector<optionparser::Option> cl_options(cl_stats.options_max);
-    std::vector<optionparser::Option> cl_buffer(cl_stats.buffer_max);
-    optionparser::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
-
-    if (cl_parser.error())
-    {
-        return 1;
-    }
-    if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
-    {
-        optionparser::printUsage(fwrite, stdout, usage);
-        return 0;
-    }
-
     std::string input_filename;
     std::string output_filename;
 
@@ -176,73 +138,101 @@ int main(int argc, char* argv[])
     std::string base_plugin_path = std::filesystem::current_path();
     std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
     std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
+};
+
+int parse_options(int argc, char* argv[], SushiOptions& options)
+{
+    int status = 0;
+
+    // option_parser accepts arguments excluding program name,
+    // so skip it if it is present
+    if (argc > 0)
+    {
+        argc--;
+        argv++;
+    }
+
+    optionparser::Stats cl_stats(usage, argc, argv);
+    std::vector<optionparser::Option> cl_options(cl_stats.options_max);
+    std::vector<optionparser::Option> cl_buffer(cl_stats.buffer_max);
+    optionparser::Parser cl_parser(usage, argc, argv, &cl_options[0], &cl_buffer[0]);
+
+    if (cl_parser.error())
+    {
+        return 1;
+    }
+    if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
+    {
+        optionparser::printUsage(fwrite, stdout, usage);
+        return 2;
+    }
 
     for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
         switch (opt.index())
         {
-        case OPT_IDX_HELP:
-        case OPT_IDX_UNKNOWN:
-            // should be handled before arriving here
-            assert(false);
-            break;
+            case OPT_IDX_HELP:
+            case OPT_IDX_UNKNOWN:
+                // should be handled before arriving here
+                assert(false);
+                break;
 
-        case OPT_IDX_VERSION:
-            {
-                print_version_and_build_info();
-                std::exit(1);
-            }
-            break;
+            case OPT_IDX_VERSION:
+                {
+                    print_version_and_build_info();
+                    std::exit(1);
+                }
+                break;
 
-        case OPT_IDX_LOG_LEVEL:
-            log_level.assign(opt.arg);
-            break;
+            case OPT_IDX_LOG_LEVEL:
+                options.log_level.assign(opt.arg);
+                break;
 
-        case OPT_IDX_LOG_FILE:
-            log_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_LOG_FILE:
+                options.log_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_LOG_FLUSH_INTERVAL:
-            log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
-            enable_flush_interval = true;
-            break;
+            case OPT_IDX_LOG_FLUSH_INTERVAL:
+                options.log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
+                options.enable_flush_interval = true;
+                break;
 
-        case OPT_IDX_DUMP_PARAMETERS:
-            enable_parameter_dump = true;
-            break;
+            case OPT_IDX_DUMP_PARAMETERS:
+                options.enable_parameter_dump = true;
+                break;
 
-        case OPT_IDX_CONFIG_FILE:
-            config_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_CONFIG_FILE:
+                options.config_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_USE_OFFLINE:
-            frontend_type = FrontendType::OFFLINE;
-            break;
+            case OPT_IDX_USE_OFFLINE:
+                options.frontend_type = FrontendType::OFFLINE;
+                break;
 
-        case OPT_IDX_INPUT_FILE:
-            input_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_INPUT_FILE:
+                options.input_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_OUTPUT_FILE:
-            output_filename.assign(opt.arg);
-            break;
+            case OPT_IDX_OUTPUT_FILE:
+                options.output_filename.assign(opt.arg);
+                break;
 
-        case OPT_IDX_USE_DUMMY:
-            frontend_type = FrontendType::DUMMY;
-            break;
+            case OPT_IDX_USE_DUMMY:
+                options.frontend_type = FrontendType::DUMMY;
+                break;
 
-        case OPT_IDX_USE_PORTAUDIO:
-            frontend_type = FrontendType::PORTAUDIO;
-            break;
+            case OPT_IDX_USE_PORTAUDIO:
+                options.frontend_type = FrontendType::PORTAUDIO;
+                break;
 
-        case OPT_IDX_AUDIO_INPUT_DEVICE:
-            portaudio_input_device_id = atoi(opt.arg);
-            break;
+            case OPT_IDX_AUDIO_INPUT_DEVICE:
+                options.portaudio_input_device_id = atoi(opt.arg);
+                break;
 
-        case OPT_IDX_AUDIO_OUTPUT_DEVICE:
-            portaudio_output_device_id = atoi(opt.arg);
-            break;
+            case OPT_IDX_AUDIO_OUTPUT_DEVICE:
+                options.portaudio_output_device_id = atoi(opt.arg);
+                break;
 
         case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
             portaudio_suggested_input_latency = atof(opt.arg);
@@ -256,55 +246,55 @@ int main(int argc, char* argv[])
             enable_portaudio_devs_dump = true;
             break;
 
-        case OPT_IDX_USE_JACK:
-            frontend_type = FrontendType::JACK;
-            break;
+            case OPT_IDX_USE_JACK:
+                options.frontend_type = FrontendType::JACK;
+                break;
 
-        case OPT_IDX_CONNECT_PORTS:
-            connect_ports = true;
-            break;
+            case OPT_IDX_CONNECT_PORTS:
+                options.connect_ports = true;
+                break;
 
-        case OPT_IDX_JACK_CLIENT:
-            jack_client_name.assign(opt.arg);
-            break;
+            case OPT_IDX_JACK_CLIENT:
+                options.jack_client_name.assign(opt.arg);
+                break;
 
-        case OPT_IDX_JACK_SERVER:
-            jack_server_name.assign(opt.arg);
-            break;
+            case OPT_IDX_JACK_SERVER:
+                options.jack_server_name.assign(opt.arg);
+                break;
 
-        case OPT_IDX_USE_XENOMAI_RASPA:
-            frontend_type = FrontendType::XENOMAI_RASPA;
-            break;
+            case OPT_IDX_USE_XENOMAI_RASPA:
+                options.frontend_type = FrontendType::XENOMAI_RASPA;
+                break;
 
-        case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
-            debug_mode_switches = true;
-            break;
+            case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
+                options.debug_mode_switches = true;
+                break;
 
-        case OPT_IDX_MULTICORE_PROCESSING:
-            rt_cpu_cores = atoi(opt.arg);
-            break;
+            case OPT_IDX_MULTICORE_PROCESSING:
+                options.rt_cpu_cores = atoi(opt.arg);
+                break;
 
-        case OPT_IDX_TIMINGS_STATISTICS:
-            enable_timings = true;
-            break;
+            case OPT_IDX_TIMINGS_STATISTICS:
+                options.enable_timings = true;
+                break;
 
-        case OPT_IDX_OSC_RECEIVE_PORT:
-            osc_server_port = atoi(opt.arg);
-            break;
+            case OPT_IDX_OSC_RECEIVE_PORT:
+                options.osc_server_port = atoi(opt.arg);
+                break;
 
-        case OPT_IDX_OSC_SEND_PORT:
-            osc_send_port = atoi(opt.arg);
-            break;
+            case OPT_IDX_OSC_SEND_PORT:
+                options.osc_send_port = atoi(opt.arg);
+                break;
 
         case OPT_IDX_OSC_SEND_IP:
             osc_send_ip = opt.arg;
             break;
 
-        case OPT_IDX_GRPC_LISTEN_ADDRESS:
-            grpc_listening_address = opt.arg;
-            break;
+            case OPT_IDX_GRPC_LISTEN_ADDRESS:
+                options.grpc_listening_address = opt.arg;
+                break;
 
-        case OPT_IDX_NO_OSC:
+            case OPT_IDX_NO_OSC:
             use_osc = false;
             break;
 
@@ -322,33 +312,68 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_SENTRY_DSN:
             sentry_dsn = opt.arg;
-            break;
-
-        default:
-            SushiArg::print_error("Unhandled option '", opt, "' \n");
-            break;
+            break;default:
+                SushiArg::print_error("Unhandled option '", opt, "' \n");
+                break;
         }
     }
 
-    if (! (enable_parameter_dump || enable_portaudio_devs_dump) )
+    if (options.enable_parameter_dump == true)
     {
-        print_sushi_headline();
-    }
-    else
-    {
-        frontend_type = FrontendType::DUMMY;
+        options.frontend_type = FrontendType::DUMMY;
     }
 
-    if (output_filename.empty() && !input_filename.empty())
+    if (options.output_filename.empty() && !options.input_filename.empty())
     {
-        output_filename = input_filename + "_proc.wav";
+        options.output_filename = options.input_filename + "_proc.wav";
+    }
+
+    return status;
+}
+
+int main(int argc, char* argv[])
+{
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
+    if (ret < 0)
+    {
+        error_exit("Failed to initialize Xenomai process, err. code: " + std::to_string(ret));
+    }
+#endif
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Command Line arguments parsing
+    ////////////////////////////////////////////////////////////////////////////////
+
+    SushiOptions options;
+
+    // TODO: Make this status an enum!
+    int option_status = parse_options(argc, argv, options);
+    if (option_status == 1)
+    {
+        return 1;
+    }
+    else if (option_status == 2)
+    {
+        return 0;
+    }
+
+    if (options.enable_parameter_dump == false)
+    {
+        print_sushi_headline();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level,
-                                            enable_flush_interval, log_flush_interval,
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
+                                            "Logger",
+                                            options.log_level,
+                                            options.enable_flush_interval,
+                                            options.log_flush_interval,
                                             sentry_crash_handler_path, sentry_dsn);
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
@@ -371,14 +396,14 @@ int main(int argc, char* argv[])
 #endif
     }
 
-    if (frontend_type == FrontendType::XENOMAI_RASPA)
+    if (options.frontend_type == FrontendType::XENOMAI_RASPA)
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
-                                                               rt_cpu_cores,
-                                                               debug_mode_switches,
+                                                               options.rt_cpu_cores,
+                                                               options.debug_mode_switches,
                                                                nullptr);
     if (! base_plugin_path.empty())
     {
@@ -389,7 +414,7 @@ int main(int argc, char* argv[])
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
                                                                               midi_dispatcher.get(),
                                                                               engine->processor_container(),
-                                                                              config_filename);
+                                                                              options.config_filename);
 
     std::unique_ptr<sushi::midi_frontend::BaseMidiFrontend>                 midi_frontend;
     std::unique_ptr<sushi::control_frontend::OSCFrontend>                   osc_frontend;
@@ -397,14 +422,17 @@ int main(int argc, char* argv[])
     std::unique_ptr<sushi::audio_frontend::BaseAudioFrontendConfiguration>  frontend_config;
 
     auto [audio_config_status, audio_config] = configurator->load_audio_config();
+
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
-            error_exit("Error reading config file, invalid file path: " + config_filename);
+            error_exit("Error reading config file, invalid file path: " + options.config_filename);
         }
+
         error_exit("Error reading host config, check logs for details.");
     }
+
     auto status = configurator->load_host_config();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
@@ -428,14 +456,14 @@ int main(int argc, char* argv[])
     // Set up Audio Frontend //
     ////////////////////////////////////////////////////////////////////////////////
 
-    switch (frontend_type)
+    switch (options.frontend_type)
     {
         case FrontendType::JACK:
         {
             SUSHI_LOG_INFO("Setting up Jack audio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(jack_client_name,
-                                                                                                 jack_server_name,
-                                                                                                 connect_ports,
+            frontend_config = std::make_unique<sushi::audio_frontend::JackFrontendConfiguration>(options.jack_client_name,
+                                                                                                 options.jack_server_name,
+                                                                                                 options.connect_ports,
                                                                                                  cv_inputs,
                                                                                                  cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
@@ -445,8 +473,8 @@ int main(int argc, char* argv[])
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(portaudio_input_device_id,
-                                                                                                      portaudio_output_device_id,
+            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(options.portaudio_input_device_id,
+                                                                                                      options.portaudio_output_device_id,
                                                                                                       portaudio_suggested_input_latency,
                                                                                                       portaudio_suggested_output_latency,
                                                                                                       cv_inputs,
@@ -458,7 +486,7 @@ int main(int argc, char* argv[])
         case FrontendType::XENOMAI_RASPA:
         {
             SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(debug_mode_switches,
+            frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(options.debug_mode_switches,
                                                                                                          cv_inputs,
                                                                                                          cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(engine.get());
@@ -469,7 +497,7 @@ int main(int argc, char* argv[])
         case FrontendType::OFFLINE:
         {
             bool dummy = false;
-            if (frontend_type == FrontendType::DUMMY)
+            if (options.frontend_type == FrontendType::DUMMY)
             {
                 dummy = true;
                 SUSHI_LOG_INFO("Setting up dummy audio frontend");
@@ -478,8 +506,8 @@ int main(int argc, char* argv[])
             {
                 SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
-            frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(input_filename,
-                                                                                                    output_filename,
+            frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
+                                                                                                    options.output_filename,
                                                                                                     dummy,
                                                                                                     cv_inputs,
                                                                                                     cv_outputs);
@@ -522,7 +550,8 @@ int main(int argc, char* argv[])
         error_exit("Failed to load initial processor states");
     }
 
-    if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
+    if (options.frontend_type == FrontendType::DUMMY ||
+        options.frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator->load_event_list();
         if (status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -550,15 +579,15 @@ int main(int argc, char* argv[])
                                                                   midi_dispatcher.get(),
                                                                   audio_frontend.get());
 
-    if (enable_parameter_dump)
+    if (options.enable_parameter_dump)
     {
         std::cout << sushi::generate_processor_parameter_document(controller.get());
         std::exit(0);
     }
 
-    if (frontend_type == FrontendType::JACK
-        || frontend_type == FrontendType::XENOMAI_RASPA
-        || frontend_type == FrontendType::PORTAUDIO)
+    if (options.frontend_type == FrontendType::JACK ||
+        options.frontend_type == FrontendType::XENOMAI_RASPA ||
+        options.frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
@@ -571,14 +600,14 @@ int main(int argc, char* argv[])
 #else
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 #endif
-
         if (use_osc)
         {
             SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
             auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
             osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
                                                                                   controller.get(),
-                                                                                  oscpack_messenger);
+                                                                                  options.osc_server_port,
+                                                                                  options.osc_send_port);
             controller->set_osc_frontend(osc_frontend.get());
             configurator->set_osc_frontend(osc_frontend.get());
 
@@ -613,7 +642,7 @@ int main(int argc, char* argv[])
     std::unique_ptr<sushi_rpc::GrpcServer> rpc_server;
     if (use_grpc)
     {
-        rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, controller.get());
+        rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, controller.get());
     }
 #endif
 
@@ -621,7 +650,7 @@ int main(int argc, char* argv[])
     // Start everything! //
     ////////////////////////////////////////////////////////////////////////////////
 
-    if (enable_timings)
+    if (options.enable_timings)
     {
         engine->performance_timer()->enable(true);
     }
@@ -630,9 +659,9 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (use_osc && (frontend_type == FrontendType::JACK
-                 || frontend_type == FrontendType::XENOMAI_RASPA
-                 || frontend_type == FrontendType::PORTAUDIO))
+    if (use_osc && (options.frontend_type == FrontendType::JACK ||
+                    options.frontend_type == FrontendType::XENOMAI_RASPA ||
+                    options.frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->run();
     }
@@ -640,12 +669,12 @@ int main(int argc, char* argv[])
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     if (use_grpc)
     {
-        SUSHI_LOG_INFO("Starting gRPC server with address: {}", grpc_listening_address);
+        SUSHI_LOG_INFO("Starting gRPC server with address: {}", options.grpc_listening_address);
         rpc_server->start();
     }
 #endif
 
-    if (frontend_type != FrontendType::OFFLINE)
+    if (options.frontend_type != FrontendType::OFFLINE)
     {
         std::mutex m;
         std::unique_lock<std::mutex> lock(m);
@@ -659,9 +688,9 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (osc_frontend && (frontend_type == FrontendType::JACK
-                      || frontend_type == FrontendType::XENOMAI_RASPA
-                      || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend && (options.frontend_type == FrontendType::JACK ||
+                         options.frontend_type == FrontendType::XENOMAI_RASPA ||
+                         options.frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->stop();
         midi_frontend->stop();
