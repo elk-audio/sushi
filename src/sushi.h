@@ -80,9 +80,7 @@ enum class INIT_STATUS
     FAILED_OSC_FRONTEND_INITIALIZATION,
     FAILED_AUDIO_FRONTEND_MISSING,
     FAILED_AUDIO_FRONTEND_INITIALIZATION,
-    FAILED_MIDI_FRONTEND_INITIALIZATION,
-
-    DUMPING_PARAMETERS
+    FAILED_MIDI_FRONTEND_INITIALIZATION
 };
 
 std::string to_string(INIT_STATUS init_status);
@@ -142,6 +140,8 @@ public:
      * @return
      */
     int raspa_status() { return _raspa_status; }
+
+    engine::Controller* controller() { return _controller.get(); }
 
 private:
     void _init_logger(SushiOptions& options);

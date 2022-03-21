@@ -33,9 +33,9 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
     auto graph_controller = engine_controller->audio_graph_controller();
     auto param_controller = engine_controller->parameter_controller();
 
-    for(auto& track : graph_controller->get_all_tracks())
+    for (auto& track : graph_controller->get_all_tracks())
     {
-        for(auto& processor : graph_controller->get_track_processors(track.id).second)
+        for (auto& processor : graph_controller->get_track_processors(track.id).second)
         {
             rapidjson::Value processor_obj(rapidjson::kObjectType);
             processor_obj.AddMember(rapidjson::Value("name", allocator).Move(),
@@ -52,7 +52,7 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
 
             rapidjson::Value parameters(rapidjson::kArrayType);
 
-            for(auto& parameter : param_controller->get_processor_parameters(processor.id).second)
+            for (auto& parameter : param_controller->get_processor_parameters(processor.id).second)
             {
                 rapidjson::Value parameter_obj(rapidjson::kObjectType);
                 parameter_obj.AddMember(rapidjson::Value("name", allocator).Move(),
@@ -76,7 +76,7 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
         }
     }
 
-    document.AddMember(rapidjson::Value("plugins", allocator),processors.Move(), allocator);
+    document.AddMember(rapidjson::Value("plugins", allocator), processors.Move(), allocator);
 
     return document;
 }

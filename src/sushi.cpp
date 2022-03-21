@@ -64,8 +64,6 @@ std::string to_string(INIT_STATUS init_status)
             return "Error initializing frontend, check logs for details.";
         case INIT_STATUS::FAILED_MIDI_FRONTEND_INITIALIZATION:
             return "Failed to setup Midi frontend";
-        case INIT_STATUS::DUMPING_PARAMETERS:
-            return "";
         case INIT_STATUS::OK:
             return "Ok";
     };
@@ -352,13 +350,6 @@ INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, i
 INIT_STATUS Sushi::_set_up_control(SushiOptions& options, int midi_inputs, int midi_outputs)
 {
     _controller = std::make_unique<sushi::engine::Controller>(_engine.get(), _midi_dispatcher.get());
-
-    // TODO: Parameter dump functionality should not be here!
-    if (options.enable_parameter_dump)
-    {
-        std::cout << sushi::generate_processor_parameter_document(_controller.get());
-        return INIT_STATUS::DUMPING_PARAMETERS;
-    }
 
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||

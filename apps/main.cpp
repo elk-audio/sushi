@@ -295,15 +295,7 @@ int main(int argc, char* argv[])
     else if (option_status == PARSE_STATUS::MISSING_ARGUMENTS) return 2;
     else if (option_status == PARSE_STATUS::EXIT)              return 0;
 
-    // TODO: Parameter dump and exit makes no sense outside of standalone Sushi!
-    //  Design and implement alternative solution.
-    if (options.enable_parameter_dump == false)
-    {
-        print_sushi_headline();
-    }
-
     sushi::Sushi sushi;
-
     auto init_status = sushi.init(options);
 
     assert(init_status == INIT_STATUS::OK);
@@ -321,6 +313,17 @@ int main(int argc, char* argv[])
         }
 
         error_exit(message);
+    }
+
+    if (options.enable_parameter_dump)
+    {
+        std::cout << sushi::generate_processor_parameter_document(sushi.controller());
+        std::cout << "Parameter dump completed - exiting." << std::endl;
+        std::exit(0);
+    }
+    else
+    {
+        print_sushi_headline();
     }
 
     sushi.start(options);
