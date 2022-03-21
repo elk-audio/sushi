@@ -377,14 +377,37 @@ void init_logger(SushiOptions& options)
 enum class INIT_STATUS
 {
     OK,
-    FAILED_LOAD_HOST_CONFIG, // "Failed to load host configuration from config file"
-    FAILED_LOAD_TRACKS, // "Failed to load tracks from Json config file"
-    FAILED_LOAD_MIDI_MAPPING, // "Failed to load MIDI mapping from Json config file"
-    FAILED_LOAD_CV_GATE, // "Failed to load CV and Gate configuration"
-    FAILED_LOAD_PROCESSOR_STATES, // "Failed to load initial processor states"
-    FAILED_LOAD_EVENT_LIST, // "Failed to load Event list from Json config file";
-    FAILED_LOAD_EVENTS      //  "Failed to load Events from Json config file"
+    FAILED_LOAD_HOST_CONFIG,
+    FAILED_LOAD_TRACKS,
+    FAILED_LOAD_MIDI_MAPPING,
+    FAILED_LOAD_CV_GATE,
+    FAILED_LOAD_PROCESSOR_STATES,
+    FAILED_LOAD_EVENT_LIST,
+    FAILED_LOAD_EVENTS
 };
+
+std::string to_string(INIT_STATUS init_status)
+{
+    switch (init_status)
+    {
+        case INIT_STATUS::FAILED_LOAD_HOST_CONFIG:
+            return "Failed to load host configuration from config file";
+        case INIT_STATUS::FAILED_LOAD_TRACKS:
+            return "Failed to load tracks from Json config file";
+        case INIT_STATUS::FAILED_LOAD_MIDI_MAPPING:
+            return "Failed to load MIDI mapping from Json config file";
+        case INIT_STATUS::FAILED_LOAD_CV_GATE:
+            return "Failed to load CV and Gate configuration";
+        case INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES:
+            return "Failed to load initial processor states";
+        case INIT_STATUS::FAILED_LOAD_EVENT_LIST:
+            return "Failed to load Event list from Json config file";
+        case INIT_STATUS::FAILED_LOAD_EVENTS:
+            return "Failed to load Events from Json config file";
+        case INIT_STATUS::OK:
+            return "Ok";
+    };
+}
 
 INIT_STATUS load_configuration(SushiModel& model, SushiOptions& options)
 {
@@ -743,29 +766,6 @@ void exit(SushiModel& model, SushiOptions& options)
 #endif
 }
 
-void act_on_init_status(INIT_STATUS init_status)
-{
-    switch (init_status)
-    {
-        case INIT_STATUS::FAILED_LOAD_HOST_CONFIG:
-            error_exit("Failed to load host configuration from config file"); break;
-        case INIT_STATUS::FAILED_LOAD_TRACKS:
-            error_exit("Failed to load tracks from Json config file"); break;
-        case INIT_STATUS::FAILED_LOAD_MIDI_MAPPING:
-            error_exit("Failed to load MIDI mapping from Json config file"); break;
-        case INIT_STATUS::FAILED_LOAD_CV_GATE:
-            error_exit("Failed to load CV and Gate configuration"); break;
-        case INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES:
-            error_exit("Failed to load initial processor states"); break;
-        case INIT_STATUS::FAILED_LOAD_EVENT_LIST:
-            error_exit("Failed to load Event list from Json config file"); break;
-        case INIT_STATUS::FAILED_LOAD_EVENTS:
-            error_exit("Failed to load Events from Json config file"); break;
-        case INIT_STATUS::OK:
-            break;
-    };
-}
-
 int main(int argc, char* argv[])
 {
     signal(SIGINT, signal_handler);
@@ -774,18 +774,10 @@ int main(int argc, char* argv[])
     SushiOptions options;
 
     auto option_status = parse_options(argc, argv, options);
-    if (option_status == PARSE_STATUS::ERROR)
-    {
-        return 1;
-    }
-    else if (option_status == PARSE_STATUS::MISSING_ARGUMENTS)
-    {
-        return 2;
-    }
-    else if (option_status == PARSE_STATUS::EXIT)
-    {
-        return 0;
-    }
+
+    if (option_status == PARSE_STATUS::ERROR)                  return 1;
+    else if (option_status == PARSE_STATUS::MISSING_ARGUMENTS) return 2;
+    else if (option_status == PARSE_STATUS::EXIT)              return 0;
 
     // TODO: Parameter dump and exit makes no sense outside of standalone Sushi!
     //  Design and implement alternative solution. Future story?
@@ -797,12 +789,13 @@ int main(int argc, char* argv[])
     init_logger(options);
 
     // TODO: move initialization into constructor, or still have init(...) pattern?
-
     auto [model, init_status] = init(options);
 
-    act_on_init_status(init_status);
-
     assert(init_status == INIT_STATUS::OK);
+    if (init_status != INIT_STATUS::OK)
+    {
+        error_exit(to_string(init_status));
+    }
 
     start(model, options);
 
