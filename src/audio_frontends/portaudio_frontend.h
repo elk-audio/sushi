@@ -137,6 +137,10 @@ private:
                                    const PaStreamCallbackTimeInfo* time_info,
                                    PaStreamCallbackFlags status_flags);
 
+    void _copy_interleaved_audio(const float* input);
+
+    void _output_interleaved_audio(float* output);
+
     std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_his{0};
     int _num_total_input_channels{0};
     int _num_total_output_channels{0};
