@@ -84,7 +84,7 @@ constexpr int MAX_RT_PROCESSOR_ID = 100000;
 class AudioEngine : public BaseEngine
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(AudioEngine);
+    SUSHI_DECLARE_NON_COPYABLE(AudioEngine)
 
     /**
      * @brief Construct a new AudioEngine
@@ -647,7 +647,7 @@ private:
     ClipDetector _clip_detector;
 
     bool _master_limiter_enabled{false};
-    std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
+    std::vector<::dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 
 /**

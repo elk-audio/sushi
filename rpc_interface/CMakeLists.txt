@@ -43,5 +43,5 @@ target_include_directories(sushi_rpc PUBLIC include)
 target_include_directories(sushi_rpc PRIVATE ${SUSHI_RPC_INCLUDE_DIRS})
 target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
-target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
+target_compile_options(sushi_rpc PRIVATE -Wall -Wextra -fPIC)
 
