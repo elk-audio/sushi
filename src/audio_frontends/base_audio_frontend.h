@@ -90,6 +90,15 @@ public:
      */
     virtual void run() = 0;
 
+    /**
+     * @brief Pause a running frontend. If paused, any threads set up are still running and audio
+     *        data consumed, but the audio engine is not called and all audio outputs are silenced.
+     *        When toggling pause, the audio will be quickly ramped down and the function will block
+     *        until the change has taken effect.
+     * @param enabled If true enables pause, of false disables pause and calls the audio engine again
+     */
+     virtual void pause(bool enabled) = 0;
+
 protected:
     BaseAudioFrontendConfiguration* _config;
     engine::BaseEngine* _engine;

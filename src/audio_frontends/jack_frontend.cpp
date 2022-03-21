@@ -37,6 +37,16 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
+    try
+    {
+        _pause_notify = twine::RtConditionVariable::create_rt_condition_variable();
+    }
+    catch(const std::exception& e)
+    {
+        SUSHI_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
@@ -58,7 +68,6 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     return setup_client(jack_config->client_name, jack_config->server_name);
 }
 
-
 void JackFrontend::cleanup()
 {
     _engine->enable_realtime(false);
@@ -68,7 +77,6 @@ void JackFrontend::cleanup()
         _client = nullptr;
     }
 }
-
 
 void JackFrontend::run()
 {
@@ -84,6 +92,19 @@ void JackFrontend::run()
     }
 }
 
+void JackFrontend::pause(bool enabled)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    bool running = !_pause_manager.bypassed();
+    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+
+    // If pausing, return when engine has ramped down.
+    if (enabled == false && running)
+    {
+        _pause_notified = true;
+        _pause_notify->wait();
+    }
+}
 
 AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
                                                const std::string& server_name)
@@ -285,12 +306,19 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     {
         _start_frame = current_frames;
     }
+
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame - _start_frame);
+    }
+
+    if (_pause_notified == false && _pause_manager.should_process() == false)
+    {
+        _pause_notify->notify();
+        _pause_notified = true;
     }
     return 0;
 }
@@ -331,7 +359,8 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
     }
 }
 
-void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t framecount, Time timestamp, int64_t samplecount)
+void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t framecount,
+                                        Time timestamp, int64_t samplecount)
 {
     /* Copy jack buffer data to internal buffers */
     for (size_t i = 0; i < _input_ports.size(); ++i)
@@ -344,8 +373,18 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
         float* in_data = static_cast<float*>(jack_port_get_buffer(_cv_input_ports[i], framecount)) + start_frame;
         _in_controls.cv_values[i] = map_audio_to_cv(in_data[AUDIO_CHUNK_SIZE - 1]);
     }
+
     _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
+
+    if (_pause_manager.should_process())
+    {
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+    }
+
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
         float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], framecount)) + start_frame;

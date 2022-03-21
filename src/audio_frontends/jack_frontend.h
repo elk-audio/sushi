@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <jack/jack.h>
+#include "twine/twine.h"
 
 #include "base_audio_frontend.h"
 
@@ -107,6 +108,11 @@ public:
      */
     void run() override;
 
+    /**
+     * @brief Pause the frontend, ramping down audio and outputting silence.
+     */
+    void pause(bool enabled) override;
+
 private:
     /* Set up the jack client and associated ports */
     AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);
@@ -140,6 +146,10 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
     engine::ControlBuffer          _in_controls;
     engine::ControlBuffer          _out_controls;
+
+    BypassManager _pause_manager;
+    std::unique_ptr<twine::RtConditionVariable> _pause_notify;
+    std::atomic_bool _pause_notified{false};
 };
 
 }; // end namespace jack_frontend
@@ -168,6 +178,7 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
+    void pause([[maybe_unused]] bool enabled) {}
 };
 }; // end namespace jack_frontend
 }; // end namespace sushi

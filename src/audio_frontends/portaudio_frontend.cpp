@@ -33,6 +33,16 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 {
     auto portaudio_config = static_cast<PortAudioFrontendConfiguration*>(config);
 
+    try
+    {
+        _pause_notify = twine::RtConditionVariable::create_rt_condition_variable();
+    }
+    catch(const std::exception& e)
+    {
+        SUSHI_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+
     PaError err = Pa_Initialize();
     if (err != paNoError)
     {
@@ -169,6 +179,20 @@ void PortAudioFrontend::run()
     Pa_StartStream(_stream);
 }
 
+void PortAudioFrontend::pause(bool enabled)
+{
+    assert(twine::is_current_thread_realtime() == false);
+    bool running = !_pause_manager.bypassed();
+    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+
+    // If pausing, return when engine has ramped down.
+    if (enabled == false && running)
+    {
+        _pause_notified = true;
+        _pause_notify->wait();
+    }
+}
+
 AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudioFrontendConfiguration* config)
 {
     if (_input_device_info == nullptr)
@@ -274,7 +298,22 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         }
     }
     _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+    if (_pause_manager.should_process())
+    {
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+    }
+    else
+    {
+        if (_pause_notified == false)
+        {
+            _pause_notify->notify();
+            _pause_notified = true;
+        }
+    }
 
     // Interleave audio channels and update cv values
     for (int c = 0; c < _num_total_output_channels; c++)

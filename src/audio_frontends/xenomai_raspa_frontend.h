@@ -77,6 +77,11 @@ public:
      * @brief Activate the realtime frontend, currently blocking.
      */
     void run() override;
+
+    /**
+     * @brief Pause the frontend, ramping down audio and outputting silence.
+     */
+    void pause(bool enabled) override;
     
     /**
      * @brief Workaround for Xenomai process initialization, which should happen
@@ -100,6 +105,10 @@ private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
     std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_hist{0};
+
+    BypassManager _pause_manager;
+    std::unique_ptr<twine::RtConditionVariable> _pause_notify;
+    std::atomic_bool _pause_notified{false};
 };
 
 }; // end namespace audio_frontend
@@ -124,6 +133,7 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
+    void pause([[maybe_unused]] bool enabled) {}
 };
 
 }; // end namespace audio_frontend
