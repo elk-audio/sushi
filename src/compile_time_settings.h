@@ -24,6 +24,10 @@
 #include <string>
 #include <array>
 #include "generated/version.h"
+
+// For AUDIO_CHUNK_SIZE.
+#include "library/constants.h"
+
 #include "options.h"
 
 struct CompileTimeSettings

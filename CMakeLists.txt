@@ -465,6 +465,7 @@ set(SOURCE_FILES
     src/logging.cpp
     src/json_utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
+    src/sushi.cpp
     src/audio_frontends/offline_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp

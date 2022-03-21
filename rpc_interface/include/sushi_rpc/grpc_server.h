@@ -27,7 +27,7 @@
 
 /* Forward declare grpc and service classes so their definitions can be
  * kept completely separate from the rest of the Sushi codebase. The macro
- * conditions ensure compability with ubunut 20's 1.16 grpc version and the
+ * conditions ensure compatibility with ubuntu 20's 1.16 grpc version and the
  * 1.24 grpc version on Elk OS. */
 
 #if GOOGLE_PROTOBUF_VERSION > 3007001
@@ -39,7 +39,6 @@ namespace grpc {
     class ServerBuilder;
     class ServerCompletionQueue;
 }
-
 
 namespace sushi_rpc {
 
