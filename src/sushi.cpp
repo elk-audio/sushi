@@ -139,7 +139,7 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
     ////////////////////////////////////////////////////////////////////////////////
     // Load Configuration //
     ////////////////////////////////////////////////////////////////////////////////
-    auto configuration_status = _load_configuration(options);
+    auto configuration_status = _load_configuration(options, _audio_frontend.get());
     if (configuration_status != INIT_STATUS::OK)
     {
         return configuration_status;
@@ -215,7 +215,8 @@ void Sushi::_init_logger(SushiOptions& options)
     }
 }
 
-sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& options)
+sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& options,
+                                                     audio_frontend::BaseAudioFrontend* audio_frontend)
 {
     auto status = _configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -230,19 +231,22 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& option
     }
 
     status = _configurator->load_midi();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
+        status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         return INIT_STATUS::FAILED_LOAD_MIDI_MAPPING;
     }
 
     status = _configurator->load_cv_gate();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
+        status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         return INIT_STATUS::FAILED_LOAD_CV_GATE;
     }
 
     status = _configurator->load_initial_state();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
+        status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         return INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES;
     }
@@ -253,7 +257,7 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& option
         auto [status, events] = _configurator->load_event_list();
         if(status == jsonconfig::JsonConfigReturnStatus::OK)
         {
-            static_cast<sushi::audio_frontend::OfflineFrontend*>(_audio_frontend.get())->add_sequencer_events(events);
+            static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend)->add_sequencer_events(events);
         }
         else if (status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
@@ -263,7 +267,8 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& option
     else
     {
         status = _configurator->load_events();
-        if (status != jsonconfig::JsonConfigReturnStatus::OK && status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+        if (status != jsonconfig::JsonConfigReturnStatus::OK &&
+            status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             return INIT_STATUS::FAILED_LOAD_EVENTS;
         }

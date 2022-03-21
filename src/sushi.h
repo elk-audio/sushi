@@ -146,7 +146,8 @@ public:
 private:
     void _init_logger(SushiOptions& options);
 
-    INIT_STATUS _load_configuration(SushiOptions& options);
+    INIT_STATUS _load_configuration(SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
+
     INIT_STATUS _setup_audio_frontend(SushiOptions& options, int cv_inputs, int cv_outputs);
     INIT_STATUS _set_up_control(SushiOptions& options, int midi_inputs, int midi_outputs);
 
