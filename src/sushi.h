@@ -7,10 +7,10 @@
 *
 * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE.  See the GNU Affero General Public License for more details.
+* PURPOSE. See the GNU Affero General Public License for more details.
 *
 * You should have received a copy of the GNU Affero General Public License along with
-* SUSHI.  If not, see http://www.gnu.org/licenses/
+* SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
 /**
@@ -49,39 +49,6 @@
 #endif
 
 namespace sushi {
-//
-//namespace engine {
-//    class AudioEngine;
-//    class Controller;
-//}
-//
-//namespace midi_frontend {
-//    class BaseMidiFrontend;
-//}
-//
-//namespace control_frontend {
-//    class OSCFrontend;
-//}
-//
-//namespace audio_frontend {
-//    class BaseAudioFrontend;
-//}
-//
-//namespace audio_frontend {
-//    class BaseAudioFrontendConfiguration;
-//}
-//
-//namespace midi_dispatcher {
-//    class MidiDispatcher;
-//}
-//
-//namespace jsonconfig {
-//    class JsonConfigurator;
-//}
-//
-//namespace sushi_rpc {
-//    class GrpcServer;
-//}
 
 enum class FrontendType
 {
@@ -148,42 +115,57 @@ struct SushiOptions
 class Sushi
 {
 public:
-    Sushi() {}
+    Sushi() = default;
+    ~Sushi() = default;
 
-    ~Sushi() {}
-
-    INIT_STATUS load_configuration(SushiOptions& options);
-
+    /**
+     *
+     * @param options
+     * @return
+     */
     INIT_STATUS init(SushiOptions& options);
 
-    void init_logger(SushiOptions& options);
-
+    /**
+     *
+     * @param options
+     */
     void start(SushiOptions& options);
 
+    /**
+     *
+     * @param options
+     */
     void exit(SushiOptions& options);
 
-    // TODO: Make private, expose getters:
-
-    std::unique_ptr<engine::AudioEngine> engine {nullptr};
-
-    std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend {nullptr};
-    std::unique_ptr<control_frontend::OSCFrontend> osc_frontend {nullptr};
-    std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend {nullptr};
-    std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config {nullptr};
-
-    std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher {nullptr};
-
-    std::unique_ptr<jsonconfig::JsonConfigurator> configurator {nullptr};
-
-    std::unique_ptr<engine::Controller> controller {nullptr};
-
-    std::unique_ptr<sushi_rpc::GrpcServer> rpc_server {nullptr};
-
-    int raspa_status {0};
+    /**
+     *
+     * @return
+     */
+    int raspa_status() { return _raspa_status; }
 
 private:
+    void _init_logger(SushiOptions& options);
 
+    INIT_STATUS _load_configuration(SushiOptions& options);
+    INIT_STATUS _setup_audio_frontend(SushiOptions& options, int cv_inputs, int cv_outputs);
+    INIT_STATUS _set_up_control(SushiOptions& options, int midi_inputs, int midi_outputs);
 
+    std::unique_ptr<engine::AudioEngine> _engine {nullptr};
+
+    std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend {nullptr};
+    std::unique_ptr<control_frontend::OSCFrontend> _osc_frontend {nullptr};
+    std::unique_ptr<audio_frontend::BaseAudioFrontend> _audio_frontend {nullptr};
+    std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> _frontend_config {nullptr};
+
+    std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
+
+    std::unique_ptr<jsonconfig::JsonConfigurator> _configurator {nullptr};
+
+    std::unique_ptr<engine::Controller> _controller {nullptr};
+
+    std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+
+    int _raspa_status {0};
 };
 
 } // namespace Sushi

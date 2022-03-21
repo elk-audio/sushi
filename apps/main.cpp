@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -44,7 +44,12 @@ enum class PARSE_STATUS
 };
 
 bool exit_flag = false;
-bool exit_condition() {return exit_flag;}
+
+bool exit_condition()
+{
+    return exit_flag;
+}
+
 std::condition_variable exit_notifier;
 
 void signal_handler([[maybe_unused]] int sig)
@@ -291,20 +296,18 @@ int main(int argc, char* argv[])
     else if (option_status == PARSE_STATUS::EXIT)              return 0;
 
     // TODO: Parameter dump and exit makes no sense outside of standalone Sushi!
-    //  Design and implement alternative solution. Future story?
+    //  Design and implement alternative solution.
     if (options.enable_parameter_dump == false)
     {
         print_sushi_headline();
     }
 
-    sushi::Sushi model;
+    sushi::Sushi sushi;
 
-    model.init_logger(options);
-
-    // TODO: move initialization into constructor, or still have init(...) pattern?
-    auto init_status = model.init(options);
+    auto init_status = sushi.init(options);
 
     assert(init_status == INIT_STATUS::OK);
+
     if (init_status != INIT_STATUS::OK)
     {
         auto message = to_string(init_status);
@@ -314,13 +317,13 @@ int main(int argc, char* argv[])
         }
         else if (init_status == INIT_STATUS::FAILED_TWINE_INITIALIZATION)
         {
-            message.append(std::to_string(model.raspa_status));
+            message.append(std::to_string(sushi.raspa_status()));
         }
 
         error_exit(message);
     }
 
-    model.start(options);
+    sushi.start(options);
 
     if (options.frontend_type != FrontendType::OFFLINE)
     {
@@ -329,7 +332,7 @@ int main(int argc, char* argv[])
         exit_notifier.wait(lock, exit_condition);
     }
 
-    model.exit(options);
+    sushi.exit(options);
 
     SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
     SUSHI_LOG_INFO("Sushi exiting normally!");
