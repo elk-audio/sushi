@@ -64,14 +64,6 @@ void print_version_and_build_info()
 
 PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 {
-    // option_parser accepts arguments excluding program name,
-    // so skip it if it is present
-    if (argc > 0)
-    {
-        argc--;
-        argv++;
-    }
-
     optionparser::Stats cl_stats(usage, argc, argv);
     std::vector<optionparser::Option> cl_options(cl_stats.options_max);
     std::vector<optionparser::Option> cl_buffer(cl_stats.buffer_max);
@@ -88,7 +80,7 @@ PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
         return PARSE_STATUS::MISSING_ARGUMENTS;
     }
 
-    for (int i = 0; i<cl_parser.optionsCount(); i++)
+    for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
 

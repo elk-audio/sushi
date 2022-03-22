@@ -62,6 +62,14 @@ int main(int argc, char* argv[])
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
+    // option_parser accepts arguments excluding program name,
+    // so skip it if it is present.
+    if (argc > 0)
+    {
+        argc--;
+        argv++;
+    }
+
     SushiOptions options;
 
     auto option_status = parse_options(argc, argv, options);
