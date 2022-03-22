@@ -127,9 +127,13 @@ void XenomaiRaspaFrontend::pause(bool enabled)
     {
         _pause_notified = true;
         _pause_notify->wait();
+        _engine->enable_realtime(false);
+    }
+    else
+    {
+        _engine->enable_realtime(true);
     }
 }
-
 
 int XenomaiRaspaFrontend::global_init()
 {

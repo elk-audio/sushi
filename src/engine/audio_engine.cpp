@@ -353,14 +353,7 @@ void AudioEngine::enable_realtime(bool enabled)
     }
     else
     {
-        if (realtime())
-        {
-            auto event = RtEvent::make_stop_engine_event();
-            _send_control_event(event);
-        } else
-        {
-            _state.store(RealtimeState::STOPPED);
-        }
+        _state.store(RealtimeState::STOPPED);
     }
 }
 

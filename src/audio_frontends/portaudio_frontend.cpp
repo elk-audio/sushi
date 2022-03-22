@@ -190,6 +190,11 @@ void PortAudioFrontend::pause(bool enabled)
     {
         _pause_notified = true;
         _pause_notify->wait();
+        _engine->enable_realtime(false);
+    }
+    else
+    {
+        _engine->enable_realtime(true);
     }
 }
 
@@ -295,6 +300,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         {
             _pause_notify->notify();
             _pause_notified = true;
+            _engine->enable_realtime(false);
         }
     }
 

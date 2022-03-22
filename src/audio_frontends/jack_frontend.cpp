@@ -70,12 +70,12 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 
 void JackFrontend::cleanup()
 {
-    _engine->enable_realtime(false);
     if (_client)
     {
         jack_client_close(_client);
         _client = nullptr;
     }
+    _engine->enable_realtime(false);
 }
 
 void JackFrontend::run()
@@ -103,6 +103,11 @@ void JackFrontend::pause(bool enabled)
     {
         _pause_notified = true;
         _pause_notify->wait();
+        _engine->enable_realtime(false);
+    }
+    else
+    {
+        _engine->enable_realtime(true);
     }
 }
 
