@@ -26,6 +26,7 @@
 #include "engine/base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"
 #include "control_frontends/osc_frontend.h"
+#include "audio_frontends/base_audio_frontend.h"
 
 namespace sushi {
 namespace engine {
@@ -35,7 +36,8 @@ class SessionController : public ext::SessionController
 {
 public:
     SessionController(BaseEngine* engine,
-                      midi_dispatcher::MidiDispatcher* midi_dispatcher);
+                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                      audio_frontend::BaseAudioFrontend* audio_frontend);
 
     ~SessionController() override = default;
 
@@ -60,12 +62,14 @@ private:
     void _restore_engine(ext::EngineState& state);
     void _restore_midi(ext::MidiState& state);
     void _restore_osc(ext::OscState& state);
+    void _clear_all_tracks();
 
-    dispatcher::BaseEventDispatcher* _event_dispatcher;
-    engine::BaseEngine*              _engine;
-    midi_dispatcher::MidiDispatcher* _midi_dispatcher;
-    const BaseProcessorContainer*    _processors;
-    control_frontend::OSCFrontend*   _osc_frontend;
+    dispatcher::BaseEventDispatcher*    _event_dispatcher;
+    engine::BaseEngine*                 _engine;
+    midi_dispatcher::MidiDispatcher*    _midi_dispatcher;
+    audio_frontend::BaseAudioFrontend*  _audio_frontend;
+    const BaseProcessorContainer*       _processors;
+    control_frontend::OSCFrontend*      _osc_frontend;
 };
 
 } // namespace controller_impl

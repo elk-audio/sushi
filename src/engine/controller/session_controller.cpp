@@ -94,11 +94,13 @@ inline ext::MidiPCConnectionState to_external(const ::sushi::midi_dispatcher::PC
 
 
 SessionController::SessionController(BaseEngine* engine,
-                                     midi_dispatcher::MidiDispatcher* midi_dispatcher) : _event_dispatcher(engine->event_dispatcher()),
-                                                                                         _engine(engine),
-                                                                                         _midi_dispatcher(midi_dispatcher),
-                                                                                         _processors(engine->processor_container()),
-                                                                                         _osc_frontend(nullptr)
+                                     midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                                     audio_frontend::BaseAudioFrontend* audio_frontend) : _event_dispatcher(engine->event_dispatcher()),
+                                                                                          _engine(engine),
+                                                                                          _midi_dispatcher(midi_dispatcher),
+                                                                                          _audio_frontend(audio_frontend),
+                                                                                          _processors(engine->processor_container()),
+                                                                                          _osc_frontend(nullptr)
 {}
 
 void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
@@ -134,13 +136,22 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
     auto lambda = [&, state = std::move(new_session)] () -> int
     {
         bool realtime = _engine->realtime();
-        // Pause engine
-        // clear engine
+        if (realtime)
+        {
+            _audio_frontend->pause(true);
+        }
+        _clear_all_tracks();
         _restore_tracks(new_session->tracks);
         _restore_plugin_states(state->tracks);
         _restore_engine(new_session->engine_state);
         _restore_midi(new_session->midi_state);
         _restore_osc(new_session->osc_state);
+
+        if (realtime)
+        {
+            _audio_frontend->pause(false);
+        }
+        return EventStatus::HANDLED_OK;
     };
 
     auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
@@ -497,6 +508,20 @@ void SessionController::_restore_osc(ext::OscState& state)
     _osc_frontend->set_connect_from_all_parameters(state.enable_all_processor_outputs);
 }
 
+void SessionController::_clear_all_tracks()
+{
+    auto tracks = _processors->all_tracks();
+    for (const auto& track : tracks)
+    {
+        auto processors = _processors->processors_on_track(track->id());
+        for (const auto& processor : processors)
+        {
+            _engine->remove_plugin_from_track(processor->id(), track->id());
+            _engine->delete_plugin(processor->id());
+        }
+        _engine->delete_track(track->id());
+    }
+}
 
 
 } // namespace controller_impl

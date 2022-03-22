@@ -52,6 +52,10 @@ namespace control_frontend {
 class OSCFrontend;
 }
 
+namespace audio_frontend {
+class BaseAudioFrontend;
+}
+
 namespace engine {
 
 class BaseEngine;
@@ -59,7 +63,9 @@ class BaseEngine;
 class Controller : public ext::SushiControl, EventPoster
 {
 public:
-    Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
+    Controller(engine::BaseEngine* engine,
+               midi_dispatcher::MidiDispatcher* midi_dispatcher,
+               audio_frontend::BaseAudioFrontend* audio_frontend);
 
     ~Controller();
 
