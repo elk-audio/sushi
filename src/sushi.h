@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+* Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
 *
 * SUSHI is free software: you can redistribute it and/or modify it under the terms of
 * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -34,6 +34,7 @@
 #include "library/parameter_dump.h"
 #include "engine/audio_engine.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
+#include "audio_frontends/embedded_frontend.h"
 #include "control_frontends/osc_frontend.h"
 
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
@@ -57,6 +58,7 @@ enum class FrontendType
     JACK,
     PORTAUDIO,
     XENOMAI_RASPA,
+    EMBEDDED,
     NONE
 };
 

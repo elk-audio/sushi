@@ -467,9 +467,10 @@ set(SOURCE_FILES
     src/audio_frontends/base_audio_frontend.cpp
     src/sushi.cpp
     src/audio_frontends/offline_frontend.cpp
-    src/audio_frontends/jack_frontend.cpp
-    src/audio_frontends/portaudio_frontend.cpp
-    src/audio_frontends/portaudio_devices_dump.cpp
+    src/audio_frontends/embedded_frontend.cpp
+                      src/audio_frontends/jack_frontend.cpp
+                      src/audio_frontends/portaudio_frontend.cpp
+                  src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
@@ -500,40 +501,41 @@ set(SOURCE_FILES
     src/engine/controller/cv_gate_controller.cpp
     src/engine/controller/osc_controller.cpp
     src/engine/controller/session_controller.cpp
-    src/library/event.cpp
-    src/library/midi_decoder.cpp
-    src/library/midi_encoder.cpp
-    src/library/internal_plugin.cpp
-    src/library/performance_timer.cpp
-    src/library/parameter_dump.cpp
-    src/library/processor.cpp
-    src/library/processor_state.cpp
-    src/library/plugin_registry.cpp
-    src/library/internal_processor_factory.cpp
-    src/library/lv2/lv2_processor_factory.cpp
-    src/library/vst2x/vst2x_processor_factory.cpp
-    src/library/vst3x/vst3x_processor_factory.cpp
-    src/plugins/arpeggiator_plugin.cpp
-    src/plugins/control_to_cv_plugin.cpp
-    src/plugins/cv_to_control_plugin.cpp
-    src/plugins/gain_plugin.cpp
-    src/plugins/lfo_plugin.cpp
-    src/plugins/passthrough_plugin.cpp
-    src/plugins/equalizer_plugin.cpp
-    src/plugins/peak_meter_plugin.cpp
-    src/plugins/return_plugin.cpp
-    src/plugins/sample_player_plugin.cpp
-    src/plugins/sample_player_voice.cpp
-    src/plugins/sample_delay_plugin.cpp
-    src/plugins/send_plugin.cpp
-    src/plugins/send_return_factory.cpp
-    src/plugins/step_sequencer_plugin.cpp
-    src/plugins/transposer_plugin.cpp
-    src/plugins/wav_writer_plugin.cpp
-    src/plugins/mono_summing_plugin.cpp
-    src/plugins/stereo_mixer_plugin.cpp
-    src/audio_frontends/offline_frontend.cpp
-)
+                      src/library/event.cpp
+                      src/library/midi_decoder.cpp
+                      src/library/midi_encoder.cpp
+                      src/library/internal_plugin.cpp
+                      src/library/performance_timer.cpp
+                      src/library/parameter_dump.cpp
+                      src/library/processor.cpp
+                      src/library/processor_state.cpp
+                      src/library/plugin_registry.cpp
+                      src/library/internal_processor_factory.cpp
+                      src/library/lv2/lv2_processor_factory.cpp
+                      src/library/vst2x/vst2x_processor_factory.cpp
+                      src/library/vst3x/vst3x_processor_factory.cpp
+                      src/plugins/arpeggiator_plugin.cpp
+                      src/plugins/control_to_cv_plugin.cpp
+                      src/plugins/cv_to_control_plugin.cpp
+                      src/plugins/gain_plugin.cpp
+                      src/plugins/lfo_plugin.cpp
+                      src/plugins/passthrough_plugin.cpp
+                      src/plugins/equalizer_plugin.cpp
+                      src/plugins/peak_meter_plugin.cpp
+                      src/plugins/return_plugin.cpp
+                      src/plugins/sample_player_plugin.cpp
+                      src/plugins/sample_player_voice.cpp
+                      src/plugins/sample_delay_plugin.cpp
+                      src/plugins/send_plugin.cpp
+                      src/plugins/send_return_factory.cpp
+                      src/plugins/step_sequencer_plugin.cpp
+                      src/plugins/transposer_plugin.cpp
+                      src/plugins/wav_writer_plugin.cpp
+                      src/plugins/mono_summing_plugin.cpp
+                      src/plugins/stereo_mixer_plugin.cpp
+                      src/audio_frontends/offline_frontend.cpp
+                      src/audio_frontends/embedded_frontend.cpp
+        )
 
 add_executable(sushi MACOSX_BUNDLE
     "${SOURCE_FILES}"

@@ -40,7 +40,6 @@ constexpr int DUMMY_FRONTEND_CHANNELS = 10;
 
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-
     OfflineFrontendConfiguration(const std::string input_filename,
                                  const std::string output_filename,
                                  bool dummy_mode,

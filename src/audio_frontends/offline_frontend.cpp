@@ -272,7 +272,6 @@ void OfflineFrontend::pause(bool /*enabled*/)
     // Currently a no-op
 }
 
-
 } // end namespace audio_frontend
 
 } // end namespace sushi

@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+* Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
 *
 * SUSHI is free software: you can redistribute it and/or modify it under the terms of
 * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -90,6 +90,7 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
+    // TODO: JUCE Supports setting the sample rate dynamically - but Sushi requires it at compile time!
     _engine = std::make_unique<engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
                                                     options.rt_cpu_cores,
                                                     options.debug_mode_switches,
@@ -170,6 +171,7 @@ void Sushi::start(SushiOptions& options)
     _engine->event_dispatcher()->run();
     _midi_frontend->run();
 
+    // TODO: Add embedded?
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||
         options.frontend_type == FrontendType::PORTAUDIO)
@@ -188,6 +190,7 @@ void Sushi::exit(SushiOptions& options)
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
 
+    // TODO: Add embedded?
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||
         options.frontend_type == FrontendType::PORTAUDIO)
@@ -301,6 +304,7 @@ INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, i
                                                                                                        options.portaudio_output_device_id,
                                                                                                        cv_inputs,
                                                                                                        cv_outputs);
+
             _audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(_engine.get());
             break;
         }
@@ -311,15 +315,25 @@ INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, i
             _frontend_config = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontendConfiguration>(options.debug_mode_switches,
                                                                                                           cv_inputs,
                                                                                                           cv_outputs);
+
             _audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(_engine.get());
             break;
         }
+        case FrontendType::EMBEDDED:
+        {
+            SUSHI_LOG_INFO("Setting up embedded frontend");
+            _frontend_config = std::make_unique<sushi::audio_frontend::EmbeddedFrontendConfiguration>(cv_inputs,
+                                                                                                      cv_outputs);
 
+            _audio_frontend = std::make_unique<sushi::audio_frontend::EmbeddedFrontend>(_engine.get());
+            break;
+        }
         case FrontendType::DUMMY:
         case FrontendType::OFFLINE:
         {
             bool dummy = false;
-            if (options.frontend_type == FrontendType::DUMMY)
+
+            if (options.frontend_type != FrontendType::OFFLINE)
             {
                 dummy = true;
                 SUSHI_LOG_INFO("Setting up dummy audio frontend");
@@ -328,11 +342,13 @@ INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, i
             {
                 SUSHI_LOG_INFO("Setting up offline audio frontend");
             }
+
             _frontend_config = std::make_unique<sushi::audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
                                                                                                      options.output_filename,
                                                                                                      dummy,
                                                                                                      cv_inputs,
                                                                                                      cv_outputs);
+
             _audio_frontend = std::make_unique<sushi::audio_frontend::OfflineFrontend>(_engine.get());
             break;
         }
