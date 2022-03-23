@@ -332,4 +332,12 @@ TEST_F(InternalPluginTest, TestStateSaving)
     // Check that values are restored
     ASSERT_EQ(param_val, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     ASSERT_EQ(str_val, _module_under_test->property_value(descriptor->id()).second);
+
+    // Retrive the delete event and execute it
+    ASSERT_FALSE(_host_control._event_output.empty());
+    auto rt_delete_event = _host_control._event_output.pop();
+    auto delete_event = Event::from_rt_event(rt_delete_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(delete_event);
+    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+    delete delete_event;
 }

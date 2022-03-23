@@ -73,7 +73,7 @@ public:
     ~Vst2xMidiEventFIFO()
     {
         delete[] _midi_data;
-        delete[] _vst_events;
+        delete   _vst_events;
     }
 
     /**

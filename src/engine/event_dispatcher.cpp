@@ -41,6 +41,20 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
     register_poster(&_worker);
 }
 
+
+EventDispatcher::~EventDispatcher()
+{
+    if (_running)
+    {
+        stop();
+    }
+    while(_in_queue.empty() == false)
+    {
+        Event* event = _in_queue.pop();
+        delete event;
+    }
+}
+
 void EventDispatcher::post_event(Event* event)
 {
     _in_queue.push(event);
@@ -223,7 +237,7 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     return EventStatus::HANDLED_OK;
 }
 
-Event*EventDispatcher::_next_event()
+Event* EventDispatcher::_next_event()
 {
     Event* event = nullptr;
     if (!_waiting_list.empty())
