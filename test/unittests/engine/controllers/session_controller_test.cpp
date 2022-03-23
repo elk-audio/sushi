@@ -24,7 +24,7 @@ protected:
     SessionControllerTest() {}
     void SetUp()
     {
-        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, new EventDispatcherMockup());
+        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, false, new EventDispatcherMockup());
         _event_dispatcher_mockup = static_cast<EventDispatcherMockup*>(_audio_engine->event_dispatcher());
         _midi_dispatcher = std::make_unique<MidiDispatcher>(_event_dispatcher_mockup);
         _module_under_test = std::make_unique<SessionController>(_audio_engine.get(), _midi_dispatcher.get(), &_audio_frontend);
@@ -211,4 +211,104 @@ TEST_F(SessionControllerTest, TestSaveTracks)
     EXPECT_EQ(equalizer_plugin::EqualizerPlugin::static_uid(), processor.uid);
     EXPECT_EQ(ext::PluginType::INTERNAL, processor.type);
     EXPECT_EQ(3u, processor.state.parameters.size());
+}
+
+
+TEST_F(SessionControllerTest, TestSaveAndRestore)
+{
+    std::string TRACK_NAME = "track_1";
+    std::string PROCESSOR_NAME = "processor_1";
+    constexpr int MIDI_PORT = 1;
+    constexpr int PARAMETER_ID = 1;
+    constexpr int CC_ID = 15;
+    constexpr MidiChannel MIDI_CH = MidiChannel::CH_10;
+
+    auto [track_status, track_id] = _audio_engine->create_track(TRACK_NAME, 2);
+    ASSERT_EQ(EngineReturnStatus::OK, track_status);
+
+    auto [status, proc_id] = _audio_engine->create_processor({.uid = std::string(equalizer_plugin::EqualizerPlugin::static_uid()),
+                                                                     .path = "",
+                                                                     .type = PluginType::INTERNAL},
+                                                             PROCESSOR_NAME);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+    status = _audio_engine->add_plugin_to_track(proc_id, track_id);
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    // Make some midi connections
+    _midi_dispatcher->set_midi_inputs(2);
+    _midi_dispatcher->set_midi_outputs(1);
+    ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_raw_midi_to_track(MIDI_PORT, track_id));
+    ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_cc_to_parameter(MIDI_PORT, proc_id, PARAMETER_ID, CC_ID, 0, 1, false, MIDI_CH));
+    ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_pc_to_processor(MIDI_PORT, proc_id, MIDI_CH));
+
+    // Set some engine parameters
+    _audio_engine->set_audio_input_channels(8);
+    _audio_engine->set_audio_output_channels(6);
+    _audio_engine->set_cv_input_channels(0);
+    _audio_engine->set_cv_output_channels(2);
+    _audio_engine->set_sample_rate(TEST_SAMPLE_RATE);
+    _audio_engine->set_tempo(125);
+    _audio_engine->set_tempo_sync_mode(SyncMode::MIDI);
+    _audio_engine->set_transport_mode(PlayingMode::STOPPED);
+    _audio_engine->set_time_signature({6, 8 });
+    _audio_engine->enable_input_clip_detection(true);
+    _audio_engine->enable_master_limiter(true);
+
+    // Make some audio connections
+    ASSERT_EQ(EngineReturnStatus::OK, _audio_engine->connect_audio_input_channel(1, 1, track_id));
+    ASSERT_EQ(EngineReturnStatus::OK, _audio_engine->connect_audio_output_channel(2, 0, track_id));
+
+    // Save the state, clear all track and reload the state
+    auto session_state = _module_under_test->save_session();
+
+    _module_under_test->_clear_all_tracks();
+    ASSERT_TRUE(_audio_engine->processor_container()->all_tracks().empty());
+
+    auto controller_status = _module_under_test->restore_session(session_state);
+    // As the restore is done asynchronously, we need to execute the event manually
+
+    _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+
+    // Check that tracks and processors were restored correctly
+    auto processors = _audio_engine->processor_container();
+    ASSERT_EQ(ext::ControlStatus::OK, controller_status);
+    ASSERT_EQ(1, processors->all_tracks().size());
+    auto restored_track = processors->all_tracks().front();
+
+    ASSERT_EQ(1, processors->processors_on_track(restored_track->id()).size());
+    auto restored_plugin = processors->processors_on_track(restored_track->id()).front();
+
+    EXPECT_EQ(session_state.tracks.front().name, restored_track->name());
+    EXPECT_EQ(session_state.tracks.front().label, restored_track->label());
+    EXPECT_EQ(session_state.tracks.front().input_channels, restored_track->input_channels());
+    EXPECT_EQ(session_state.tracks.front().output_channels, restored_track->output_channels());
+    EXPECT_EQ(session_state.tracks.front().input_busses, restored_track->input_busses());
+    EXPECT_EQ(session_state.tracks.front().output_channels, restored_track->output_channels());
+    EXPECT_EQ(session_state.tracks.front().track_state.parameters[0].second, restored_track->parameter_value(0).second);
+
+    EXPECT_EQ(session_state.tracks.front().processors.front().name, restored_plugin->name());
+    EXPECT_EQ(session_state.tracks.front().processors.front().label, restored_plugin->label());
+    EXPECT_EQ(session_state.tracks.front().processors.front().state.parameters[0].second, restored_plugin->parameter_value(0).second);
+
+    ASSERT_EQ(1, _audio_engine->audio_input_connections().size());
+    ASSERT_EQ(1, _audio_engine->audio_output_connections().size());
+    auto connection = _audio_engine->audio_input_connections().front();
+    EXPECT_EQ(1, connection.engine_channel);
+    EXPECT_EQ(1, connection.track_channel);
+    EXPECT_EQ(restored_track->id(), connection.track);
+    connection = _audio_engine->audio_output_connections().front();
+    EXPECT_EQ(2, connection.engine_channel);
+    EXPECT_EQ(0, connection.track_channel);
+    EXPECT_EQ(restored_track->id(), connection.track);
+
+    EXPECT_EQ(TEST_SAMPLE_RATE, _audio_engine->sample_rate());
+    EXPECT_EQ(125, _audio_engine->transport()->current_tempo());
+    EXPECT_EQ(SyncMode::MIDI, _audio_engine->transport()->sync_mode());
+    EXPECT_EQ(PlayingMode::STOPPED, _audio_engine->transport()->playing_mode());
+    EXPECT_EQ(TimeSignature({6, 8}), _audio_engine->transport()->time_signature());
+
+    EXPECT_TRUE(_audio_engine->master_limiter());
+    EXPECT_TRUE(_audio_engine->input_clip_detection());
+    EXPECT_FALSE(_audio_engine->output_clip_detection());
+
 }

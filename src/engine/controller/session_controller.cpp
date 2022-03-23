@@ -141,11 +141,11 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
             _audio_frontend->pause(true);
         }
         _clear_all_tracks();
-        _restore_tracks(new_session->tracks);
+        _restore_tracks(state->tracks);
         _restore_plugin_states(state->tracks);
-        _restore_engine(new_session->engine_state);
-        _restore_midi(new_session->midi_state);
-        _restore_osc(new_session->osc_state);
+        _restore_engine(state->engine_state);
+        _restore_midi(state->midi_state);
+        //_restore_osc(state->osc_state);
 
         if (realtime)
         {
@@ -404,7 +404,7 @@ void SessionController::_restore_plugin(ext::PluginClass plugin, sushi::engine::
     if (status == EngineReturnStatus::OK && instance)
     {
         instance->set_label(plugin.label);
-        track->add(instance.get());
+        _engine->add_plugin_to_track(instance->id(), track->id());
     }
     SUSHI_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
 }
