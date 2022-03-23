@@ -423,12 +423,14 @@ void SessionController::_restore_engine(ext::EngineState& state)
     _engine->enable_output_clip_detection(state.output_clip_detection);
     _engine->enable_master_limiter(state.master_limiter);
 
+    [[maybe_unused]] EngineReturnStatus status;
+
     for (const auto& con : state.input_connections)
     {
         auto track = _processors->track(con.track);
         if (track)
         {
-            auto status = _engine->connect_audio_input_channel(con.engine_channel, con.track_channel, track->id());
+            status = _engine->connect_audio_input_channel(con.engine_channel, con.track_channel, track->id());
             SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect channel {} of track {} to engine channel {}",
                                con.track_channel, con.engine_channel, con.track);
         }
@@ -439,7 +441,7 @@ void SessionController::_restore_engine(ext::EngineState& state)
         auto track = _processors->track(con.track);
         if (track)
         {
-            auto status = _engine->connect_audio_output_channel(con.engine_channel, con.track_channel, track->id());
+            status = _engine->connect_audio_output_channel(con.engine_channel, con.track_channel, track->id());
             SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect engine channel {} from channel {} of track",
                                con.engine_channel, con.track_channel, con.track);
         }
@@ -448,12 +450,12 @@ void SessionController::_restore_engine(ext::EngineState& state)
 
 void SessionController::_restore_midi(ext::MidiState& state)
 {
+    [[maybe_unused]] midi_dispatcher::MidiDispatcherStatus status;
     for (const auto& con : state.kbd_input_connections)
     {
         auto track = _processors->track(con.track);
         if (track)
         {
-            midi_dispatcher::MidiDispatcherStatus status;
             if (con.raw_midi)
             {
                 status = _midi_dispatcher->connect_raw_midi_to_track(con.port, track->id(), int_from_ext_midi_channel(con.channel));
@@ -472,7 +474,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
         auto track = _processors->track(con.track);
         if (track)
         {
-            auto status = _midi_dispatcher->connect_track_to_output(con.port, track->id(), int_from_ext_midi_channel(con.channel));
+            status = _midi_dispatcher->connect_track_to_output(con.port, track->id(), int_from_ext_midi_channel(con.channel));
             SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi kbd from track {} to output", track->name());
         }
@@ -483,9 +485,9 @@ void SessionController::_restore_midi(ext::MidiState& state)
         auto processor = _processors->processor(con.processor);
         if (processor)
         {
-            auto status = _midi_dispatcher->connect_cc_to_parameter(con.port, processor->id(), con.parameter_id,
-                                                                    con.cc_number, con.min_range, con.max_range,
-                                                                    con.relative_mode, int_from_ext_midi_channel(con.channel));
+            status = _midi_dispatcher->connect_cc_to_parameter(con.port, processor->id(), con.parameter_id,
+                                                               con.cc_number, con.min_range, con.max_range,
+                                                               con.relative_mode, int_from_ext_midi_channel(con.channel));
             SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi cc to parameter {} of processor {}", con.parameter_id, processor->id());
         }
@@ -496,7 +498,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
         auto processor = _processors->processor(con.processor);
         if (processor)
         {
-            auto status = _midi_dispatcher->connect_pc_to_processor(con.port, processor->id(), int_from_ext_midi_channel(con.channel));
+            status = _midi_dispatcher->connect_pc_to_processor(con.port, processor->id(), int_from_ext_midi_channel(con.channel));
             SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect mid program change to processor {}", processor->name());
         }
@@ -522,7 +524,6 @@ void SessionController::_clear_all_tracks()
         _engine->delete_track(track->id());
     }
 }
-
 
 } // namespace controller_impl
 } // namespace engine
