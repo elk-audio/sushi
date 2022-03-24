@@ -186,15 +186,15 @@ void PortAudioFrontend::pause(bool enabled)
     _pause_manager.set_bypass(enabled, _engine->sample_rate());
 
     // If pausing, return when engine has ramped down.
-    if (enabled == false && running)
+    if (enabled && running)
     {
-        _pause_notified = true;
+        _pause_notified = false;
         _pause_notify->wait();
         _engine->enable_realtime(false);
     }
     else
     {
-        _engine->enable_realtime(true);
+        _engine->enable_realtime(enabled);
     }
 }
 

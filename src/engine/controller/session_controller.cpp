@@ -138,6 +138,7 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
         bool realtime = _engine->realtime();
         if (realtime)
         {
+            SUSHI_LOG_DEBUG("Pausing engine");
             _audio_frontend->pause(true);
         }
         _clear_all_tracks();
@@ -149,6 +150,7 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
 
         if (realtime)
         {
+            SUSHI_LOG_DEBUG("Un-Pausing engine");
             _audio_frontend->pause(false);
         }
         return EventStatus::HANDLED_OK;
