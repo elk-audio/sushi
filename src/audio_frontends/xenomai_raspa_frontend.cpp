@@ -163,7 +163,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     if (_pause_manager.should_process())
     {
         _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
-       if (_pause_manager.should_ramp())
+        if (_pause_manager.should_ramp())
         {
             _pause_manager.ramp_output(_out_buffer);
         }

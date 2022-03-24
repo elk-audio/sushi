@@ -262,6 +262,10 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     auto session_state = _module_under_test->save_session();
 
     _module_under_test->_clear_all_tracks();
+    _midi_dispatcher->disconnect_all_cc_from_processor(proc_id);
+    _midi_dispatcher->disconnect_raw_midi_from_track(MIDI_PORT, track_id, MidiChannel::OMNI);
+    _midi_dispatcher->disconnect_track_from_output(MIDI_PORT, track_id, MIDI_CH);
+
     ASSERT_TRUE(_audio_engine->processor_container()->all_tracks().empty());
 
     auto controller_status = _module_under_test->restore_session(session_state);
@@ -290,6 +294,7 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     EXPECT_EQ(session_state.tracks.front().processors.front().label, restored_plugin->label());
     EXPECT_EQ(session_state.tracks.front().processors.front().state.parameters[0].second, restored_plugin->parameter_value(0).second);
 
+    // Check that engine was restored correctly
     ASSERT_EQ(1, _audio_engine->audio_input_connections().size());
     ASSERT_EQ(1, _audio_engine->audio_output_connections().size());
     auto connection = _audio_engine->audio_input_connections().front();
@@ -311,4 +316,24 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     EXPECT_TRUE(_audio_engine->input_clip_detection());
     EXPECT_FALSE(_audio_engine->output_clip_detection());
 
+    // Check midi connections
+    auto kbd_in_routes = _midi_dispatcher->get_all_kb_input_connections();
+    ASSERT_EQ(1u, kbd_in_routes.size());
+    EXPECT_EQ(restored_track->id(), kbd_in_routes.front().input_connection.target);
+    EXPECT_TRUE(kbd_in_routes.front().raw_midi);
+    EXPECT_EQ(MIDI_PORT, kbd_in_routes.front().port);
+    EXPECT_EQ(MidiChannel::OMNI, kbd_in_routes.front().channel);
+
+    ASSERT_EQ(0u, _midi_dispatcher->get_all_kb_output_connections().size());
+
+    auto cc_routes = _midi_dispatcher->get_cc_input_connections_for_processor(restored_plugin->id());
+    ASSERT_EQ(1u, cc_routes.size());
+    EXPECT_EQ(MIDI_PORT, cc_routes.front().port);
+    EXPECT_EQ(CC_ID, cc_routes.front().cc);
+    EXPECT_EQ(MIDI_CH, cc_routes.front().channel);
+
+    auto pc_routes = _midi_dispatcher->get_pc_input_connections_for_processor(restored_plugin->id());
+    ASSERT_EQ(1u, pc_routes.size());
+    EXPECT_EQ(MIDI_PORT, pc_routes.front().port);
+    EXPECT_EQ(MIDI_CH, pc_routes.front().channel);
 }
