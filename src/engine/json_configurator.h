@@ -199,8 +199,6 @@ private:
      */
     bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
 
-    bool _load_section(JsonSection);
-
     JsonConfigReturnStatus _load_data();
 
     engine::BaseEngine* _engine;

@@ -224,7 +224,7 @@ void AlsaMidiFrontend::_poll_function()
     }
 }
 
-void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
+void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]Time timestamp)
 {
     snd_seq_event ev;
     snd_seq_ev_clear(&ev);

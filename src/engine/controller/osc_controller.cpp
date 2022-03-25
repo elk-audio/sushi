@@ -63,7 +63,7 @@ ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, 
 
         bool status = _osc_frontend->connect_from_parameter(processor->name(), parameter_descriptor->name());
 
-        if(status == false)
+        if (status == false)
         {
             return EventStatus::ERROR;
         }
@@ -97,7 +97,7 @@ ext::ControlStatus OscController::disable_output_for_parameter(int processor_id,
 
         bool status = _osc_frontend->disconnect_from_parameter(processor->name(), parameter_descriptor->name());
 
-        if(status == false)
+        if (status == false)
         {
             return EventStatus::ERROR;
         }

@@ -70,8 +70,8 @@ namespace osc
 {
 
 class ReceivedMessage;
-class MessageTerminator;
-class BeginMessage;
+struct MessageTerminator;
+struct BeginMessage;
 
 class OscPacketListener : public PacketListener
 {

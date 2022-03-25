@@ -469,23 +469,21 @@ void OscpackOscMessenger::_set_playing_mode(const oscpack::ReceivedMessage& m, v
 {
     oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
-    ext::PlayingMode mode;
+
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
 
     if (mode_str == "playing")
     {
-        mode = ext::PlayingMode::PLAYING;
+        controller->set_playing_mode(ext::PlayingMode::PLAYING);
     }
     else if (mode_str == "stopped")
     {
-        mode = ext::PlayingMode::STOPPED;
+        controller->set_playing_mode(ext::PlayingMode::STOPPED);
     }
     else
     {
         SUSHI_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
     }
-
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
-    controller->set_playing_mode(mode);
 
     SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
 }
@@ -494,27 +492,25 @@ void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m
 {
     oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
-    ext::SyncMode mode;
+
+    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
 
     if (mode_str == "internal")
     {
-        mode = ext::SyncMode::INTERNAL;
+        controller->set_sync_mode(ext::SyncMode::INTERNAL);
     }
     else if (mode_str == "ableton_link")
     {
-        mode = ext::SyncMode::LINK;
+        controller->set_sync_mode(ext::SyncMode::LINK);
     }
     else if (mode_str == "midi")
     {
-        mode = ext::SyncMode::MIDI;
+        controller->set_sync_mode(ext::SyncMode::MIDI);
     }
     else
     {
         SUSHI_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
     }
-
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
-    controller->set_sync_mode(mode);
 
     SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
 }
