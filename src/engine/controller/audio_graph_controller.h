@@ -52,7 +52,11 @@ public:
 
     std::pair<ext::ControlStatus, bool> get_processor_bypass_state(int processor_id) const override;
 
+    std::pair<ext::ControlStatus, ext::ProcessorState> get_processor_state(int processor_id) const override;
+
     ext::ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override;
+
+    ext::ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& state) override;
 
     ext::ControlStatus create_track(const std::string& name, int channels) override;
 

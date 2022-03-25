@@ -24,14 +24,6 @@
 #include <cmath>
 #include <algorithm>
 
-#ifdef __APPLE__
-static inline double exp10(double val)
-{
-    return pow(10.0, val);
-}
-
-#endif
-
 namespace dsp {
 namespace biquad {
 

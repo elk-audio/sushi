@@ -1,7 +1,9 @@
 #ifndef SUSHI_CONTROL_MOCKUP_H
 #define SUSHI_CONTROL_MOCKUP_H
 
+#ifndef __clang__
 #include <bits/stdc++.h>
+#endif
 
 #include "control_interface.h"
 
@@ -18,8 +20,8 @@ const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};
 const ProcessorInfo processor_2{1, "proc 2", "proc 2", 1 , 1};
 const std::vector<ProcessorInfo> processors{processor_1, processor_2};
 
-const TrackInfo track1{0,"track 1","track 1",0,0,0,0,{}};
-const TrackInfo track2{1,"track 2","track 2",1,1,1,1,{}};
+const TrackInfo track1{0, "track 1", "track 1", 0, 0, 0, 0, {}};
+const TrackInfo track2{1, "track 2", "track 2", 1, 1, 1, 1, {}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float                 DEFAULT_SAMPLERATE = 48000.0f;
@@ -84,9 +86,9 @@ public:
 class TransportControllerMockup : public TransportController, public TestableController
 {
 public:
-    float get_samplerate() const override {return DEFAULT_SAMPLERATE;};
+    float get_samplerate() const override {return DEFAULT_SAMPLERATE;}
 
-    PlayingMode get_playing_mode() const override {return DEFAULT_PLAYING_MODE;};
+    PlayingMode get_playing_mode() const override {return DEFAULT_PLAYING_MODE;}
 
     SyncMode get_sync_mode() const override {return DEFAULT_SYNC_MODE;}
 
@@ -298,11 +300,24 @@ public:
         return {_return_status, DEFAULT_BYPASS_STATE};
     }
 
+    std::pair<ControlStatus, ext::ProcessorState> get_processor_state(int /*processor_id*/) const override
+    {
+        return {_return_status, ext::ProcessorState()};
+    }
+
     ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
         _args_from_last_call["bypass enabled"] = std::to_string(bypass_enabled);
+        _recently_called = true;
+        return _return_status;
+    }
+
+    ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& /*state*/) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["processor id"] = std::to_string(processor_id);
         _recently_called = true;
         return _return_status;
     }

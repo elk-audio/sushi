@@ -29,7 +29,7 @@
 namespace sushi {
 namespace peak_meter_plugin {
 
-constexpr int MAX_METERED_CHANNELS = engine::TRACK_MAX_CHANNELS;
+constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
 
 class PeakMeterPlugin : public InternalPlugin
 {
@@ -74,8 +74,6 @@ private:
     float _sample_rate;
 
     std::array<ValueSmootherFilter<float>, MAX_METERED_CHANNELS> _smoothers;
-
-    std::array<float, MAX_METERED_CHANNELS> _smoothed{ {0.0f} };
 };
 
 }// namespace peak_meter_plugin

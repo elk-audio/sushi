@@ -31,6 +31,7 @@
 
 #include <cmath>
 
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
@@ -72,7 +73,7 @@ public:
     ~Vst2xMidiEventFIFO()
     {
         delete[] _midi_data;
-        delete[] _vst_events;
+        delete   _vst_events;
     }
 
     /**

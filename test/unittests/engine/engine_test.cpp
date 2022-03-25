@@ -283,13 +283,13 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     plugin_info.type = PluginType::INTERNAL;
 
     std::tie(status, id) = _module_under_test->create_processor(plugin_info, "");
-    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
+    ASSERT_EQ(EngineReturnStatus::ERROR, status);
 
     plugin_info.uid = "not_found";
     plugin_info.path = "";
     plugin_info.type = PluginType::VST2X;
     std::tie(status, id) = _module_under_test->create_processor(plugin_info, "dummyname");
-    ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN_UID, status);
+    ASSERT_NE(EngineReturnStatus::OK, status);
 
     status = _module_under_test->remove_plugin_from_track(ObjectId(345), left_track_id);
     ASSERT_EQ(EngineReturnStatus::INVALID_PLUGIN, status);

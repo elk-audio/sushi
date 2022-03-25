@@ -26,7 +26,7 @@ Sushi uses CMake as its build system. A generate script is also provided for con
 
 Make sure that Sushi is cloned with the `--recursive` flag to fetch all required submodules for building. Alternatively run `git submodule update --init --recursive` after cloning.
 
-Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 9 or higher.
+Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 10 or higher.
 
 ### Building for native Linux
 As all options are on by default, to build Sushi for a regular, non Elk Powered Linux distribution, the Xenomai options need to be turned off. In addition the Vst 2.x SDK needs to be provided.
@@ -75,16 +75,16 @@ Sushi carries most dependencies as submodules and will build and link with them 
 
       * For Sushi:
 
-          * liblilv-dev - at least version 0.24.2. Lilv is an official wrapper for LV2.
+          * liblilv-dev - at least version 0.24.4. Lilv is an official wrapper for LV2.
           * lilv-utils - at least version 0.24.5.
-          * lv2-dev - at least version 1.16.2. The main LV2 library.
+          * lv2-dev - at least version 1.18.2. The main LV2 library.
 
         The official Ubuntu repositories do not have these latest versions at the time of writing. The best source for them is instead the [KX Studio repositories, which you need to enable manually](https://kx.studio/Repositories).
 
       * For LV2 unit tests:
 
-          * lv2-examples - at least version 1.16.2.
-          * mda-lv2 - at least version 1.2.2 of [drobilla's port](http://drobilla.net/software/mda-lv2/) - not that from Mod Devices or others.
+          * lv2-examples - at least version 1.18.2.
+          * mda-lv2 - at least version 1.2.4 of [drobilla's port](http://drobilla.net/software/mda-lv2/) - not that from Mod Devices or others.
 
 ## License
 

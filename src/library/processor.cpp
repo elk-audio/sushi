@@ -189,6 +189,12 @@ EventId Processor::request_non_rt_task(AsyncWorkCallback callback)
     return event.async_work_event()->event_id();
 }
 
+void Processor::async_delete(RtDeletable* object)
+{
+    auto rt_event = RtEvent::make_delete_data_event(object);
+    output_event(rt_event);
+}
+
 std::string Processor::_make_unique_parameter_name(std::string name) const
 {
     auto unique_name = name.empty() ? "parameter" : name;

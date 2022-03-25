@@ -1,0 +1,47 @@
+R"(
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sushi Plugin Chain JSON Schema",
+  "description": "JSON Schema to validate processor state",
+  "type": "object",
+  "properties": {
+    "initial_state": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "processor_name": {
+            "type": "string"
+          },
+          "bypassed": {
+            "type": "boolean"
+          },
+          "program": {
+            "type": "integer"
+          },
+          "parameters": {
+            "type": "object",
+            "patternProperties": {
+              ".*": {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              }
+            }
+          },
+          "properties": {
+            "type": "object",
+            "patternProperties": {
+              ".*": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": ["processor"],
+        "additionalProperties": false
+      }
+    }
+  }
+}
+)"

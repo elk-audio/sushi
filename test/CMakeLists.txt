@@ -21,11 +21,27 @@ if (${WITH_VST2})
 
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
     # Suppress VST SDK warnings
+    set(VST2_COMPILE_FLAS -Wall -Wno-write-strings -Wno-narrowing)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(VST2_COMPILE_FLAS ${VST2_COMPILE_FLAGS} -Wno-stringop-truncation)
+    endif()
     set_target_properties(vst2_test_plugin PROPERTIES
-            COMPILE_FLAGS "-Wall -Wno-write-strings -Wno-narrowing -Wno-stringop-truncation"
+            COMPILE_FLAGS "${VST2_COMPILE_FLAGS}"
         )
     target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        set_target_properties(vst2_test_plugin PROPERTIES
+            BUNDLE true
+            BUNDLE_EXTENSION "vst"
+            XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
+            MACOSX_BUNDLE_BUNDLE_NAME "TestPlugin"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.ELK.TestPlugin"
+            MACOSX_BUNDLE_ICON_FILE ""
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+            MACOSX_BUNDLE_COPYRIGHT "ELK © 2016"
+        )
+    endif()
 endif()
 
 #####################################
@@ -86,6 +102,10 @@ if (${WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
 
+if (${WITH_PORTAUDIO})
+    set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
+endif()
+
 if (${WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loading_test.cpp
@@ -97,7 +117,11 @@ if (${WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
-set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp)
+set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/processor_state.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_processor_factory.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
+                                           ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp)
 
 if (${WITH_LV2})
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
@@ -113,6 +137,10 @@ target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ff
 
 if (${WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
+endif()
+
+if (${WITH_PORTAUDIO})
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
 if (${WITH_VST2})
@@ -135,7 +163,7 @@ endif()
 #  Include directories relative to test  #
 ##########################################
 
-set(INCLUDE_DIRS "${INCLUDE_DIRS}"
+set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  ${PROJECT_SOURCE_DIR}/test/unittests
                  ${PROJECT_SOURCE_DIR}/test/gtest/include)
 
@@ -149,6 +177,8 @@ set(TEST_LINK_LIBRARIES
     ${COMMON_LIBRARIES}
     gtest
     gtest_main
+    gmock
+    gmock_main
 )
 
 if (${WITH_VST2})
@@ -160,8 +190,9 @@ if (${WITH_VST3})
     add_dependencies(unit_tests adelay vst3_host)
 endif()
 
-if (${WITH_JACK})
-    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound)
+if (${WITH_ALSA_MIDI})
+    find_library(ALSA_LIB NAMES asound)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} ${ALSA_LIB})
 endif()
 
 if (${WITH_LV2})

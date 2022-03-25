@@ -26,8 +26,6 @@
 namespace sushi {
 namespace step_sequencer_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("step_seq");
-
 constexpr auto DEFAULT_NAME = "sushi.testing.step_sequencer";
 constexpr auto DEFAULT_LABEL = "Step Sequencer";
 
@@ -45,18 +43,21 @@ StepSequencerPlugin::StepSequencerPlugin(HostControl host_control) : InternalPlu
         std::string str_nr = std::to_string(i);
         _pitch_parameters[i] = register_int_parameter("pitch_" + str_nr, "Pitch " + str_nr, "semitone",
                                                       0, -24, 24,
+                                                      Direction::AUTOMATABLE,
                                                       new IntParameterPreProcessor(-24, 24));
 
-        _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, "", true);
-        _step_indicator_parameters[i] = register_bool_parameter("step_ind_" + str_nr, "Step Indication " + str_nr, "", true);
+        _step_parameters[i] = register_bool_parameter("step_" + str_nr, "Step " + str_nr, "",
+                                                      true, Direction::AUTOMATABLE);
+
+        _step_indicator_parameters[i] = register_bool_parameter("step_ind_" + str_nr, "Step Indication " + str_nr, "",
+                                                                true, Direction::AUTOMATABLE);
+
         assert(_pitch_parameters[i] && _step_indicator_parameters[i] && _step_indicator_parameters[i]);
     }
     for (auto& s : _sequence)
     {
         s = START_NOTE;
     }
-    _max_input_channels = 4;
-    _max_output_channels = 4;
 }
 
 ProcessorReturnCode StepSequencerPlugin::init(float sample_rate)

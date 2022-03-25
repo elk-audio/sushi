@@ -46,6 +46,7 @@
 #include "library/rt_event_fifo.h"
 #include "library/midi_encoder.h"
 #include "library/midi_decoder.h"
+#include "library/constants.h"
 
 #include "lv2_model.h"
 
@@ -53,7 +54,24 @@ namespace sushi {
 namespace lv2 {
 
 /* Should match the maximum reasonable number of channels of a plugin */
-constexpr int LV2_WRAPPER_MAX_N_CHANNELS = 8;
+constexpr int LV2_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
+
+/**
+ * @brief Wrapper around the global LilvWorld instance so that it can be used
+ *        with standard c++ smart pointers
+ */
+class LilvWorldWrapper
+{
+public:
+    ~LilvWorldWrapper();
+
+    bool create_world();
+
+    LilvWorld* world();
+
+private:
+    LilvWorld* _world{nullptr};
+};
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -66,7 +84,7 @@ public:
     /**
      * @brief Create a new Processor that wraps the plugin found in the given path.
      */
-    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, LilvWorld* world);
+    LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, std::shared_ptr<LilvWorldWrapper> world);
 
     virtual ~LV2_Wrapper() = default;
 
@@ -107,6 +125,8 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     static int worker_callback(void* data, EventId id)
     {
         reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);
@@ -140,14 +160,6 @@ private:
      */
     bool _register_parameters();
 
-    /**
-     * @brief For plugins that support stereo I/0 and not mono through SetSpeakerArrangements,
-     *        we can provide the plugin with a dual mono input/output instead.
-     *        Calling this sets up possible dual mono mode.
-     * @param speaker_arr_status True if the plugin supports the given speaker arrangement.
-     */
-    void _update_mono_mode(bool speaker_arr_status);
-
     void _fetch_plugin_name_and_label();
 
     void _map_audio_buffers(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer);
@@ -164,11 +176,12 @@ private:
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
 
     ChunkSampleBuffer _dummy_input{1};
+
     ChunkSampleBuffer _dummy_output{1};
 
-    bool _double_mono_input{false};
-
     std::string _plugin_path;
+
+    std::shared_ptr<LilvWorldWrapper> _world;
 
     BypassManager _bypass_manager{_bypassed};
 
@@ -202,8 +215,6 @@ private:
     static constexpr float _max_normalized{1.0f};
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
-
-    LilvWorld* _world{nullptr};
 };
 
 } // end namespace lv2

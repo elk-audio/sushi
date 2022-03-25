@@ -27,12 +27,10 @@ namespace dispatcher {
 
 constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
                                  RtSafeRtEventFifo* out_rt_queue) : _running{false},
-                                                                    _engine{engine},
                                                                     _in_rt_queue{in_rt_queue},
                                                                     _out_rt_queue{out_rt_queue},
                                                                     _worker{engine, this},
@@ -41,6 +39,20 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
     register_poster(&_worker);
+}
+
+
+EventDispatcher::~EventDispatcher()
+{
+    if (_running)
+    {
+        stop();
+    }
+    while(_in_queue.empty() == false)
+    {
+        Event* event = _in_queue.pop();
+        delete event;
+    }
 }
 
 void EventDispatcher::post_event(Event* event)
@@ -225,7 +237,7 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     return EventStatus::HANDLED_OK;
 }
 
-Event*EventDispatcher::_next_event()
+Event* EventDispatcher::_next_event()
 {
     Event* event = nullptr;
     if (!_waiting_list.empty())

@@ -20,6 +20,7 @@
 
 #include <fstream>
 
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
@@ -38,6 +39,51 @@ using namespace midi_dispatcher;
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
 constexpr int ERROR_DISPLAY_CHARS = 50;
+
+const char* section_name(JsonSection section)
+{
+    switch (section)
+    {
+        case JsonSection::HOST_CONFIG:  return "host_config";
+        case JsonSection::TRACKS:       return "tracks";
+        case JsonSection::MIDI:         return "midi";
+        case JsonSection::OSC:          return "osc";
+        case JsonSection::CV_GATE:      return "cv_control";
+        case JsonSection::EVENTS:       return "events";
+        case JsonSection::STATE:        return "initial_state";
+        default:                        return nullptr;
+    }
+}
+
+const char* section_schema(JsonSection section)
+{
+    switch(section)
+    {
+        case JsonSection::HOST_CONFIG:  return
+            #include "json_schemas/host_config_schema.json"
+            ;
+        case JsonSection::TRACKS:  return
+            #include "json_schemas/tracks_schema.json"
+            ;
+        case JsonSection::MIDI: return
+            #include "json_schemas/midi_schema.json"
+            ;
+        case JsonSection::OSC: return
+            #include "json_schemas/osc_schema.json"
+            ;
+        case JsonSection::CV_GATE: return
+            #include "json_schemas/cv_gate_schema.json"
+            ;
+        case JsonSection::EVENTS: return
+            #include "json_schemas/events_schema.json"
+            ;
+        case JsonSection::STATE: return
+            #include "json_schemas/state_schema.json"
+            ;
+        default:
+            return nullptr;
+    }
+}
 
 std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_config()
 {
@@ -63,6 +109,36 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
     if (host_config.HasMember("midi_outputs"))
     {
         audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
+    }
+
+    if (host_config.HasMember("rt_midi_input_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_input_mappings"].GetArray())
+        {
+            auto rt_midi_device = mapping["rt_midi_device"].GetInt();
+            auto sushi_midi_port = mapping["sushi_midi_port"].GetInt();
+            bool virtual_port = false;
+            if (mapping.HasMember("virtual_port"))
+            {
+                virtual_port = mapping["virtual_port"].GetBool();
+            }
+            audio_config.rt_midi_input_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+        }
+    }
+
+    if (host_config.HasMember("rt_midi_output_mappings"))
+    {
+        for (auto& mapping : host_config["rt_midi_output_mappings"].GetArray())
+        {
+            auto rt_midi_device = mapping["rt_midi_device"].GetInt();
+            auto sushi_midi_port = mapping["sushi_midi_port"].GetInt();
+            bool virtual_port = false;
+            if (mapping.HasMember("virtual_port"))
+            {
+                virtual_port = mapping["virtual_port"].GetBool();
+            }
+            audio_config.rt_midi_output_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+        }
     }
 
     return {JsonConfigReturnStatus::OK, audio_config};
@@ -537,6 +613,65 @@ JsonConfigurator::load_event_list()
     return std::make_pair(JsonConfigReturnStatus::OK, events);
 }
 
+JsonConfigReturnStatus JsonConfigurator::load_initial_state()
+{
+    SUSHI_LOG_DEBUG("Loading initial processor state");
+
+    auto [status, json_states] = _parse_section(JsonSection::STATE);
+    if(status != JsonConfigReturnStatus::OK)
+    {
+        return status;
+    }
+    for (auto& json_state : json_states.GetArray())
+    {
+        ProcessorState state;
+        auto processor = _processor_container->mutable_processor(json_state["processor"].GetString());
+        if (!processor)
+        {
+            SUSHI_LOG_WARNING("Invalid processor name: \"{}\"", json_state["processor"].GetString());
+            return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+        }
+
+        if (json_state.HasMember("bypassed"))
+        {
+            state.set_bypass(json_state["bypassed"].GetBool());
+        }
+        if (json_state.HasMember("program"))
+        {
+            state.set_program(json_state["program"].GetInt());
+        }
+        if (json_state.HasMember("parameters"))
+        {
+            for (const auto& parameter : json_state["parameters"].GetObject())
+            {
+                auto param = processor->parameter_from_name(parameter.name.GetString());
+                if (!param)
+                {
+                    SUSHI_LOG_WARNING("Invalid parameter name: \"{}\"", parameter.name.GetString());
+                    return JsonConfigReturnStatus::INVALID_PARAMETER;
+                }
+                state.add_parameter_change(param->id(), parameter.value.GetFloat());
+            }
+        }
+        if (json_state.HasMember("properties"))
+        {
+            for (const auto& property : json_state["properties"].GetObject())
+            {
+                auto param = processor->parameter_from_name(property.name.GetString());
+                if (!param)
+                {
+                    SUSHI_LOG_WARNING("Invalid property name: \"{}\"", property.name.GetString());
+                    return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+                }
+                state.add_property_change(param->id(), property.value.GetString());
+            }
+        }
+
+        processor->set_state(&state, false);
+    }
+    return JsonConfigReturnStatus::OK;
+}
+
 void JsonConfigurator::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 {
     _osc_frontend = osc_frontend;
@@ -558,59 +693,13 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         return {JsonConfigReturnStatus::INVALID_CONFIGURATION, _json_data};
     }
 
-    switch(section)
+    auto name = section_name(section);
+    if(_json_data.HasMember(name) == false)
     {
-        case JsonSection::HOST_CONFIG:
-            if(_json_data.HasMember("host_config") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have any Host Config definitions");
-                return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["host_config"]};
-
-        case JsonSection::TRACKS:
-            if(_json_data.HasMember("tracks") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have any Track definitions");
-                return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["tracks"]};
-
-        case JsonSection::MIDI:
-            if(_json_data.HasMember("midi") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have MIDI definitions");
-                return {JsonConfigReturnStatus::NO_MIDI_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["midi"]};
-
-        case JsonSection::OSC:
-            if(_json_data.HasMember("osc") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have OSC mapping definitions");
-                return {JsonConfigReturnStatus::NO_OSC_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["osc"]};
-
-        case JsonSection::CV_GATE:
-            if(_json_data.HasMember("cv_control") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have CV/Gate definitions");
-                return {JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["cv_control"]};
-
-        case JsonSection::EVENTS:
-            if(_json_data.HasMember("events") == false)
-            {
-                SUSHI_LOG_INFO("Config file does not have any Event definitions");
-                return {JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS, _json_data};
-            }
-            return {JsonConfigReturnStatus::OK, _json_data["events"]};
-
-        default:
-            return {JsonConfigReturnStatus::INVALID_CONFIGURATION, _json_data};
+        SUSHI_LOG_INFO("Config file does not have any \"{}\" definitions", name);
+        return {JsonConfigReturnStatus::NOT_DEFINED, _json_data};
     }
+    return {JsonConfigReturnStatus::OK, _json_data[name]};
 }
 
 JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &track_def)
@@ -738,8 +827,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
                 SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
             }
-            SUSHI_LOG_ERROR("Plugin Name {} in JSON config file already exists in engine", plugin_name);
-            return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
         status = _engine->add_plugin_to_track(plugin_id, track_id);
         if (status != EngineReturnStatus::OK)
@@ -792,7 +880,8 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     if (json_event["type"] == "property_change")
     {
         auto parameter = processor->parameter_from_name(data["property_name"].GetString());
-        if (parameter == nullptr)        {
+        if (parameter == nullptr)
+        {
             SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
@@ -824,44 +913,8 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
 
 bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSection section)
 {
-    const char* schema_char_array = nullptr;
-    switch(section)
-    {
-        case JsonSection::HOST_CONFIG:
-            schema_char_array =
-                #include "json_schemas/host_config_schema.json"
-                                                              ;
-            break;
-
-        case JsonSection::TRACKS:
-            schema_char_array =
-                #include "json_schemas/tracks_schema.json"
-                                                        ;
-            break;
-
-        case JsonSection::MIDI:
-            schema_char_array =
-                #include "json_schemas/midi_schema.json"
-                                                       ;
-            break;
-
-        case JsonSection::OSC:
-            schema_char_array =
-                #include "json_schemas/osc_schema.json"
-                                                      ;
-            break;
-
-        case JsonSection::CV_GATE:
-            schema_char_array =
-                #include "json_schemas/cv_gate_schema.json"
-                                                         ;
-            break;
-
-        case JsonSection::EVENTS:
-            schema_char_array =
-                #include "json_schemas/events_schema.json"
-                                                        ;
-    }
+    const char* schema_char_array = section_schema(section);
+    assert(schema_char_array);
 
     rapidjson::Document schema;
     schema.Parse(schema_char_array);

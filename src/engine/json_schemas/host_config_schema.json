@@ -18,6 +18,11 @@ R"(
           "minimum": 1000,
           "maximum": 192000
         },
+        "tempo":
+        {
+          "type" : "number",
+          "minimum": 1
+        },
         "time_signature" :
         {
           "type": "object",
@@ -30,9 +35,9 @@ R"(
             "denominator":
             {
               "type": "integer"
-            },
-            "required": ["numerator", "denominator"]
-          }
+            }
+          },
+          "required": ["numerator", "denominator"]
         },
         "playing_mode":
         {
@@ -82,9 +87,58 @@ R"(
         {
           "type": "integer",
           "minimum": 0
+        },
+        "rt_midi_input_mappings":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "rt_midi_device":
+              {
+                "type": "integer"
+              },
+              "sushi_midi_port":
+              {
+                "type": "integer"
+              },
+              "virtual_port":
+              {
+                "type": "boolean"
+              }
+            }
+          },
+          "required": ["rt_midi_device", "sushi_midi_port"]
+        },
+        "rt_midi_output_mappings":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "properties":
+            {
+              "rt_midi_device":
+              {
+                "type": "integer"
+              },
+              "sushi_midi_port":
+              {
+                "type": "integer"
+              },
+              "virtual_port":
+              {
+                "type": "boolean"
+              }
+            }
+          },
+          "required": ["rt_midi_device", "sushi_midi_port"]
         }
       },
-      "required": ["samplerate"]
+      "required": ["samplerate"],
+      "additionalProperties": false
     }
   },
   "required": ["host_config"]

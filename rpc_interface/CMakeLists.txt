@@ -2,7 +2,7 @@
 #  CMake packages  #
 ####################
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/rpc_interface/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
@@ -34,15 +34,17 @@ set(SUSHI_GRPC_SOURCES src/grpc_server.cpp
 
 set(SUSHI_RPC_INCLUDE_DIRS ${PROTO_SRC_DIR}
                            ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${CMAKE_SOURCE_DIR}/include
-                           ${CMAKE_SOURCE_DIR}/src )
+                           ${PROJECT_SOURCE_DIR}/include
+                           ${PROJECT_SOURCE_DIR}/src )
 
 add_library(sushi_rpc STATIC ${SUSHI_GRPC_SOURCES}
                              ${PROTO_SRCS}
                              ${GRPC_SRCS} )
 
+find_library(GPR_LIB NAMES gpr)
+
 target_include_directories(sushi_rpc PUBLIC include)
-target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf gpr)
+target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf ${GPR_LIB})
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
 

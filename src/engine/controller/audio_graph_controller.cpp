@@ -19,6 +19,7 @@
  */
 
 #include "audio_graph_controller.h"
+#include "library/processor_state.h"
 #include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
@@ -36,6 +37,20 @@ inline engine::PluginType to_internal(ext::PluginType type)
         case ext::PluginType::VST3X:      return engine::PluginType::VST3X;
         case ext::PluginType::LV2:        return engine::PluginType::LV2;
         default:                          return engine::PluginType::INTERNAL;
+    }
+}
+
+inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
+{
+    if (src->program.has_value()) dest->set_program(src->program.value());
+    if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
+    for (const auto& p : src->parameters)
+    {
+        dest->add_parameter_change(p.first, p.second);
+    }
+    for (const auto& p : src->properties)
+    {
+        dest->add_property_change(p.first, p.second);
     }
 }
 
@@ -169,6 +184,62 @@ std::pair<ext::ControlStatus, bool> AudioGraphController::get_processor_bypass_s
         return {ext::ControlStatus::OK, processor->bypassed()};
     }
     return {ext::ControlStatus::NOT_FOUND, false};
+}
+
+std::pair<ext::ControlStatus, ext::ProcessorState> AudioGraphController::get_processor_state(int processor_id) const
+{
+    SUSHI_LOG_DEBUG("get_processor_state called with processor {}", processor_id);
+    ext::ProcessorState state;
+    auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
+    if (processor)
+    {
+        state.bypassed = processor->bypassed();
+        if (processor->supports_programs())
+        {
+            state.program = processor->current_program();
+        }
+        auto params = processor->all_parameters();
+        for (const auto& param : params)
+        {
+            if (param->type() == sushi::ParameterType::STRING)
+            {
+                state.properties.push_back({static_cast<int>(param->id()), processor->property_value(param->id()).second});
+            }
+            else
+            {
+                state.parameters.push_back({static_cast<int>(param->id()), processor->parameter_value(param->id()).second});
+            }
+        }
+        return {ext::ControlStatus::OK, state};
+    }
+    return {ext::ControlStatus::NOT_FOUND, state};
+}
+
+ext::ControlStatus AudioGraphController::set_processor_state(int processor_id, const ext::ProcessorState& state)
+{
+    SUSHI_LOG_DEBUG("set_processor_state called with processor id {}", processor_id);
+    auto internal_state = std::make_unique<sushi::ProcessorState>();
+    to_internal(internal_state.get(), &state);
+
+    // Capture everything by copy, except internal_state which is captured by move.
+    auto lambda = [=, state = std::move(internal_state)] () -> int
+    {
+        bool realtime = _engine->realtime();
+
+        auto processor = _processors->mutable_processor(static_cast<ObjectId>(processor_id));
+        if (processor)
+        {
+            SUSHI_LOG_DEBUG("Setting state on processor {} with realtime {}", processor->name(), realtime? "enabled" : "disabled");
+            processor->set_state(state.get(), realtime);
+            return EventStatus::HANDLED_OK;
+        }
+        SUSHI_LOG_ERROR("Processor {} not found", processor_id);
+        return EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
 }
 
 ext::ControlStatus AudioGraphController::set_processor_bypass_state(int processor_id, bool bypass_enabled)
@@ -374,6 +445,7 @@ std::vector<int> AudioGraphController::_get_processor_ids(int track_id) const
     }
     return ids;
 }
+
 
 } // namespace controller_impl
 } // namespace engine

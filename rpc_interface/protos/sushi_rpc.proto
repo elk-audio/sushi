@@ -64,8 +64,10 @@ service AudioGraphController
     rpc GetProcessorId (GenericStringValue) returns (ProcessorIdentifier) {}
     rpc GetProcessorInfo (ProcessorIdentifier) returns (ProcessorInfo) {}
     rpc GetProcessorBypassState (ProcessorIdentifier) returns (GenericBoolValue) {}
+    rpc GetProcessorState (ProcessorIdentifier) returns (ProcessorState) {}
 
     rpc SetProcessorBypassState (ProcessorBypassStateSetRequest) returns (GenericVoidValue) {}
+    rpc SetProcessorState (ProcessorStateSetRequest) returns (GenericVoidValue) {}
 
     rpc CreateTrack (CreateTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMultibusTrack (CreateMultibusTrackRequest) returns (GenericVoidValue) {}
@@ -228,6 +230,18 @@ message GenericBoolValue
 message GenericStringValue
 {
     string value = 1;
+}
+
+message OptionalBoolValue
+{
+    bool has_value = 1;
+    bool value = 2;
+}
+
+message OptionalIntValue
+{
+    bool has_value = 1;
+    int32 value = 2;
 }
 
 /* Common types */
@@ -411,16 +425,30 @@ message ProcessorBypassStateSetRequest
     bool value = 2;
 }
 
+message ProcessorState
+{
+    OptionalIntValue        program_id = 1;
+    OptionalBoolValue       bypassed = 2;
+    repeated PropertyValue  properties = 3;
+    repeated ParameterValue parameters = 4;
+}
+
+message ProcessorStateSetRequest
+{
+    ProcessorIdentifier processor = 1;
+    ProcessorState state = 2;
+}
+
 message ParameterInfo
 {
-    int32  id = 1;
-    ParameterType  type = 2;
+    int32 id = 1;
+    ParameterType type = 2;
     string label = 3;
     string name = 4;
     string unit = 5;
-    bool   automatable = 6;
-    float  min_domain_value = 7;
-    float  max_domain_value = 8;
+    bool automatable = 6;
+    float min_domain_value = 7;
+    float max_domain_value = 8;
 }
 
 message ParameterInfoList

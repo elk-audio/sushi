@@ -6,7 +6,6 @@
 
 #include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
-#include "plugins/gain_plugin.h"
 
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
@@ -16,6 +15,7 @@ using namespace sushi;
 using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
+constexpr int TEST_CHANNEL_COUNT = 2;
 
 class TrackTest : public ::testing::Test
 {
@@ -28,50 +28,15 @@ protected:
     }
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
-    Track _module_under_test{_host_control.make_host_control_mockup(), 2, &_timer};
+    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer};
 };
-
-
-TEST_F(TrackTest, TestChannelManagement)
-{
-    DummyProcessor test_processor(_host_control.make_host_control_mockup());
-    test_processor.set_input_channels(2);
-    /* Add the test processor to a mono track and verify
-     * it is configured in mono config */
-    Track _module_under_test_mono(_host_control.make_host_control_mockup(), 1, &_timer);
-    _module_under_test_mono.set_input_channels(1);
-    _module_under_test_mono.add(&test_processor);
-    EXPECT_EQ(1, test_processor.input_channels());
-    EXPECT_EQ(1, test_processor.output_channels());
-
-    /* Put a stereo and then a mono-only plugin on a
-     * stereo track */
-    gain_plugin::GainPlugin gain_plugin(_host_control.make_host_control_mockup());
-    DummyMonoProcessor mono_processor(_host_control.make_host_control_mockup());
-    _module_under_test.set_output_channels(1);
-    _module_under_test.add(&gain_plugin);
-    _module_under_test.add(&mono_processor);
-
-    EXPECT_EQ(2, _module_under_test.input_channels());
-    EXPECT_EQ(1, _module_under_test.output_channels());
-    EXPECT_EQ(2, gain_plugin.input_channels());
-    EXPECT_EQ(1, gain_plugin.output_channels());
-    EXPECT_EQ(1, mono_processor.input_channels());
-    EXPECT_EQ(1, mono_processor.output_channels());
-
-    /* Set the input to mono and watch the plugins adapt */
-    _module_under_test.set_input_channels(1);
-    EXPECT_EQ(1, _module_under_test.input_channels());
-    EXPECT_EQ(1, gain_plugin.input_channels());
-    EXPECT_EQ(1, gain_plugin.output_channels());
-}
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
     Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
-    EXPECT_EQ(4, module_under_test.parameter_count());
+    EXPECT_EQ(5, module_under_test.parameter_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
 }
@@ -80,6 +45,7 @@ TEST_F(TrackTest, TestAddAndRemove)
 {
     DummyProcessor test_processor(_host_control.make_host_control_mockup());
     DummyProcessor test_processor_2(_host_control.make_host_control_mockup());
+
     // Add to back
     auto ok = _module_under_test.add(&test_processor);
     EXPECT_TRUE(ok);
@@ -120,6 +86,10 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     _module_under_test.add(&plugin);
 
     auto in_bus = _module_under_test.input_bus(0);
@@ -133,6 +103,10 @@ TEST_F(TrackTest, TestPanAndGain)
 {
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     _module_under_test.add(&plugin);
     auto gain_param = _module_under_test.parameter_from_name("gain");
     auto pan_param = _module_under_test.parameter_from_name("pan");
@@ -157,6 +131,36 @@ TEST_F(TrackTest, TestPanAndGain)
     EXPECT_GT(out.channel(RIGHT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
 }
 
+TEST_F(TrackTest, TestMute)
+{
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
+    _module_under_test.add(&plugin);
+    auto mute_param = _module_under_test.parameter_from_name("mute");
+    ASSERT_FALSE(mute_param == nullptr);
+
+    // Mute should be off by default
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    _module_under_test.render();
+    test_utils::assert_buffer_value(1.0f, _module_under_test.output_bus(0));
+
+    // Enable mute and run
+    auto mute_event = RtEvent::make_parameter_change_event(0, 0, mute_param->id(), 1.0);
+    _module_under_test.process_event(mute_event);
+    for (int i = 0; i <= TEST_SAMPLE_RATE / AUDIO_CHUNK_SIZE / (1000 / GAIN_SMOOTHING_TIME.count()); ++i)
+    {
+        test_utils::fill_sample_buffer(in_bus, 1.0f);
+        _module_under_test.render();
+        EXPECT_LT(_module_under_test.output_bus(0).channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0f);
+    }
+    EXPECT_LT(_module_under_test.output_bus(0).channel(0)[AUDIO_CHUNK_SIZE - 1], 0.1f);
+}
+
 TEST_F(TrackTest, TestEventProcessing)
 {
     ChunkSampleBuffer buffer(2);
@@ -164,6 +168,10 @@ TEST_F(TrackTest, TestEventProcessing)
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+
     plugin.set_event_output(&event_queue);
     _module_under_test.set_input_channels(2);
     _module_under_test.set_output_channels(2);
@@ -186,6 +194,9 @@ TEST_F(TrackTest, TestEventForwarding)
     ASSERT_TRUE(event_queue.empty());
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(TEST_CHANNEL_COUNT);
+    plugin.set_output_channels(TEST_CHANNEL_COUNT);
     plugin.set_event_output(&event_queue);
 
     _module_under_test.set_event_output(&event_queue);
@@ -204,6 +215,30 @@ TEST_F(TrackTest, TestEventForwarding)
     /* Assert that the processor id of the event is that of the track and
      * not the id set. */
     ASSERT_EQ(_module_under_test.id(), typed_event->processor_id());
+}
+
+TEST_F(TrackTest, TestSilenceUnusedChannels)
+{
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(1);
+    plugin.set_output_channels(1);
+
+    // Add a mono plugin to a stereo track.
+    _module_under_test.add(&plugin);
+
+    // Put some noise in the input buffer
+    auto in_bus = _module_under_test.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+
+    _module_under_test.render();
+    auto out = _module_under_test.output_bus(0);
+
+    auto left_channel = ChunkSampleBuffer::create_non_owning_buffer(out, LEFT_CHANNEL_INDEX, 1);
+    auto right_channel = ChunkSampleBuffer::create_non_owning_buffer(out, RIGHT_CHANNEL_INDEX, 1);
+    test_utils::assert_buffer_value(1.0f, left_channel);
+    test_utils::assert_buffer_value(0.0f, right_channel);
 }
 
 TEST(TestStandAloneFunctions, TesPanAndGainCalculation)

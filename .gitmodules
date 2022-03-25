@@ -17,3 +17,9 @@
 [submodule "third-party/vst3sdk"]
 	path = third-party/vst3sdk
 	url = https://github.com/steinbergmedia/vst3sdk.git
+[submodule "third-party/rtmidi"]
+	path = third-party/rtmidi
+	url = https://github.com/thestk/rtmidi.git
+[submodule "third-party/portaudio"]
+	path = third-party/portaudio
+	url = https://github.com/PortAudio/portaudio.git

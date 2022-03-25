@@ -6,6 +6,7 @@ New Features:
   * Sample delay internal plugin
   * Multi channel support in peak meter plugin
   * Timing and transport notifications
+  * Processor properties support
   * Master limiter
   * Updated VST SDK to v3.7.3
   * Updated Twine to v0.2.1
@@ -17,6 +18,7 @@ Fixes:
   * Track noise for tracks with no audio input
   * Bug where events outputted before the audio process callback were lost
   * Race condition in OSC path registration
+  * LV2 plugin load crash
 
 ## 0.11.0
 

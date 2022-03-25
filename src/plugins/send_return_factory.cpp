@@ -69,6 +69,7 @@ SendReturnFactory::new_instance(const engine::PluginInfo& plugin_info, HostContr
     else if (plugin_info.uid == "sushi.testing.return")
     {
         auto instance = std::make_shared<return_plugin::ReturnPlugin>(host_control, this);
+        std::scoped_lock<std::mutex> lock(_return_inst_lock);
         _return_instances.push_back(instance.get());
         processor = instance;
     }

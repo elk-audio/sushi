@@ -12,20 +12,13 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-#ifdef NDEBUG
-const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
-#else
-const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
-#endif
+const char PLUGIN_FILE[] = "../third-party/vst3sdk/VST3/adelay.vst3";
 const char PLUGIN_NAME[] = "ADelay";
-
-const char SYNTH_PLUGIN_FILE[] = "../VST3/mda-vst3.vst3";
-const char SYNTH_PLUGIN_NAME[] = "mda JX10";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 constexpr float TEST_SAMPLE_RATE = 48000;
-
+constexpr int   TEST_CHANNEL_COUNT = 2;
 
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
@@ -61,39 +54,36 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 class TestVst3xWrapper : public ::testing::Test
 {
 protected:
-    TestVst3xWrapper()
-    {
-    }
+    using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
+    TestVst3xWrapper() {}
 
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
         char* full_plugin_path = realpath(plugin_file, NULL);
-        SushiHostApplication host_app;
-        _module_under_test = new Vst3xWrapper(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
-                                              full_plugin_path,
-                                              plugin_name,
-                                              &host_app);
+        _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
+                                                            full_plugin_path,
+                                                            plugin_name,
+                                                            &_host_app);
         free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
         _module_under_test->set_event_output(&_event_queue);
+        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
     }
 
-    void TearDown()
-    {
-        delete _module_under_test;
-    }
+    SushiHostApplication _host_app;
     HostControlMockup _host_control;
-    Vst3xWrapper* _module_under_test;
+    std::unique_ptr<Vst3xWrapper> _module_under_test;
     RtSafeRtEventFifo _event_queue;
 };
 
 TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    ASSERT_TRUE(_module_under_test);
+    ASSERT_TRUE(_module_under_test.get());
     EXPECT_EQ("ADelay", _module_under_test->name());
 
     auto parameters = _module_under_test->all_parameters();
@@ -155,7 +145,7 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 
     // Manually call the event callback to send the update back to the
     // controller, as eventloop is not running
-    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    _module_under_test->parameter_update_callback(_module_under_test.get(), 0);
     EXPECT_TRUE(_module_under_test->bypassed());
 
     // Don't test actual bypass processing because the ADelay example
@@ -165,8 +155,6 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
 TEST_F(TestVst3xWrapper, TestEventForwarding)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtSafeRtEventFifo queue;
-    _module_under_test->set_event_output(&queue);
 
     Steinberg::Vst::Event note_on_event;
     note_on_event.type = Steinberg::Vst::Event::EventTypes::kNoteOnEvent;
@@ -186,21 +174,21 @@ TEST_F(TestVst3xWrapper, TestEventForwarding)
     _module_under_test->_process_data.outputEvents->addEvent(note_off_event);
     _module_under_test->_forward_events(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::NOTE_ON, event.type());
     ASSERT_EQ(5, event.sample_offset());
     ASSERT_EQ(46, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
 
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::NOTE_OFF, event.type());
     ASSERT_EQ(6, event.sample_offset());
     ASSERT_EQ(48, event.keyboard_event()->note());
     ASSERT_FLOAT_EQ(1.0f, event.keyboard_event()->velocity());
 
-    ASSERT_FALSE(queue.pop(event));
+    ASSERT_FALSE(_event_queue.pop(event));
 }
 
 TEST_F(TestVst3xWrapper, TestConfigurationChange)
@@ -239,7 +227,6 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    _module_under_test->set_enabled(true);
 
     auto [status, value] = _module_under_test->parameter_value(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);
@@ -249,7 +236,7 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
     _module_under_test->process_event(event);
     _module_under_test->process_audio(in_buffer, out_buffer);
     // Manually call the event callback to send the update back to the controller, as eventloop is not running
-    _module_under_test->parameter_update_callback(_module_under_test, 0);
+    _module_under_test->parameter_update_callback(_module_under_test.get(), 0);
 
     std::tie(status, value) = _module_under_test->parameter_value(DELAY_PARAM_ID);
     EXPECT_EQ(ProcessorReturnCode::OK, status);
@@ -264,9 +251,6 @@ TEST_F(TestVst3xWrapper, TestParameterHandling)
 TEST_F(TestVst3xWrapper, TestGateOutput)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo<10> queue;
-    _module_under_test->set_enabled(true);
-    _module_under_test->set_event_output(&queue);
 
     auto status = _module_under_test->connect_gate_from_processor(2, 0, 46);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -280,23 +264,20 @@ TEST_F(TestVst3xWrapper, TestGateOutput)
     _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
     _module_under_test->_forward_events(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::GATE_EVENT, event.type());
     ASSERT_EQ(0, event.sample_offset());
     ASSERT_EQ(2, event.gate_event()->gate_no());
     ASSERT_TRUE(event.gate_event()->value());
 
-    ASSERT_TRUE(queue.empty());
+    ASSERT_TRUE(_event_queue.empty());
 }
 
 TEST_F(TestVst3xWrapper, TestCVOutput)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
-    RtEventFifo<10> queue;
-    _module_under_test->set_enabled(true);
-    _module_under_test->set_event_output(&queue);
 
     auto status = _module_under_test->connect_cv_from_parameter(DELAY_PARAM_ID, 1);
     ASSERT_EQ(ProcessorReturnCode::OK, status);;
@@ -308,16 +289,63 @@ TEST_F(TestVst3xWrapper, TestCVOutput)
 
     _module_under_test->_forward_params(_module_under_test->_process_data);
 
-    ASSERT_FALSE(queue.empty());
+    ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
-    ASSERT_TRUE(queue.pop(event));
+    ASSERT_TRUE(_event_queue.pop(event));
     ASSERT_EQ(RtEventType::CV_EVENT, event.type());
     ASSERT_EQ(0, event.sample_offset());
     ASSERT_EQ(1, event.cv_event()->cv_id());
     ASSERT_FLOAT_EQ(0.75f, event.cv_event()->value());
 
-    ASSERT_TRUE(queue.empty());
+    ASSERT_TRUE(_event_queue.empty());
 }
+
+TEST_F(TestVst3xWrapper, TestStateHandling)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+
+    ProcessorState state;
+    state.set_bypass(true);
+    state.set_program(2);
+    state.add_parameter_change(desc->id(), 0.88);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.88f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_TRUE(_module_under_test->bypassed());
+
+    // Test setting state with realtime running
+    state.set_bypass(false);
+    state.set_program(1);
+    state.add_parameter_change(desc->id(), 0.44);
+
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event.get());
+    _module_under_test->process_event(event->to_rt_event(0));
+    _module_under_test->process_audio(buffer, buffer);
+
+    // Check that new values are set
+    EXPECT_FLOAT_EQ(0.44f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Retrive the delete event and execute it to delete the RtState object
+    ASSERT_FALSE(_event_queue.empty());
+    RtEvent rt_event;
+    _event_queue.pop(rt_event);
+    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(delete_event);
+    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+    delete delete_event;
+}
+
 
 class TestVst3xUtils : public ::testing::Test
 {

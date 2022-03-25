@@ -113,6 +113,8 @@ public:
 
     ProcessorReturnCode set_program(int program) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     static void program_change_callback(void* arg, Event* event, int status)
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);
@@ -162,8 +164,6 @@ private:
 
     inline void _add_parameter_change(Steinberg::Vst::ParamID id, float value, int sample_offset);
 
-    bool _sync_controller_to_processor();
-
     bool _sync_processor_to_controller();
 
     void _program_change_callback(Event* event, int status);
@@ -189,6 +189,8 @@ private:
     int _main_program_list_id;
     int _program_count{0};
     int _current_program{0};
+
+    bool _notify_parameter_change{false};
 
     BypassManager _bypass_manager{_bypassed};
 

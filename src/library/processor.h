@@ -31,6 +31,7 @@
 #include "library/rt_event_pipe.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
+#include "processor_state.h"
 #include "engine/host_control.h"
 
 namespace sushi {
@@ -78,12 +79,13 @@ public:
 
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
+     *        Called from an audio processing thread.
      * @param event Event to process.
      */
     virtual void process_event(const RtEvent& event) = 0;
 
     /**
-     * @brief Process a chunk of audio.
+     * @brief Process a chunk of audio. Called from an audio processing thread.
      * @param in_buffer Input SampleBuffer
      * @param out_buffer Output SampleBuffer
      */
@@ -362,6 +364,25 @@ public:
         return _on_track;
     }
 
+    /**
+     * @brief  Set the complete state of the Processor (bypass state, program, parameters)
+     *         according to the supplied state object.
+     * @param state The state object to apply to the Processor
+     * @param realtime_running If true the Processor needs to take realtime data access
+     *        concerns into account when applying the state.
+     * @return
+     */
+    virtual ProcessorReturnCode set_state(ProcessorState* /*state*/, bool /*realtime_running*/)
+    {
+        return ProcessorReturnCode::UNSUPPORTED_OPERATION;
+    }
+
+    virtual ProcessorState save_state(bool /*realtime_running*/) const
+    {
+        return ProcessorState();
+    }
+
+
 protected:
 
     /**
@@ -423,7 +444,7 @@ protected:
     void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
 
     /**
-     * @breif Called from the audio callback to request work to be done in another,
+     * @brief Called from the audio callback to request work to be done in another,
      *        non-realtime thread.
      * @param callback The callback to call in the non realtime thread. The return
      *        value from the callback will be communicated back to the plugin in the
@@ -431,6 +452,12 @@ protected:
      * @return An EventId that can be used to identify the particular request.
      */
     EventId request_non_rt_task(AsyncWorkCallback callback);
+
+    /**
+     * @brief Called from a realtime thread to asynchronously delete an object outside the rt tread
+     * @param object The object to delete.
+     */
+    void async_delete(RtDeletable* object);
 
     /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An

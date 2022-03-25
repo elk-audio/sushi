@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Abstract interface for external control of sushi over rpc, osc or similar
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_CONTROL_INTERFACE_H
@@ -130,6 +130,14 @@ struct TrackInfo
     int         output_channels;
     int         output_busses;
     std::vector<int> processors;
+};
+
+struct ProcessorState
+{
+    std::optional<bool> bypassed;
+    std::optional<int>  program;
+    std::vector<std::pair<int, float>> parameters;
+    std::vector<std::pair<int, std::string>> properties;
 };
 
 struct SushiBuildInfo
@@ -322,8 +330,10 @@ public:
     virtual std::pair<ControlStatus, int>                         get_processor_id(const std::string& processor_name) const = 0;
     virtual std::pair<ControlStatus, ProcessorInfo>               get_processor_info(int processor_id) const = 0;
     virtual std::pair<ControlStatus, bool>                        get_processor_bypass_state(int processor_id) const = 0;
+    virtual std::pair<ControlStatus, ProcessorState>              get_processor_state(int processor_id) const = 0;
 
     virtual ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
+    virtual ControlStatus set_processor_state(int processor_id, const ProcessorState& state) = 0;
 
     virtual ControlStatus create_track(const std::string& name, int channels) = 0;
     virtual ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
@@ -562,8 +572,6 @@ private:
     AudioRoutingController*     _audio_routing_controller;
     CvGateController*           _cv_gate_controller;
     OscController*              _osc_controller;
-    //std::unique_ptr<NotificationController>    _notification_controller;
-
 };
 
 } // ext

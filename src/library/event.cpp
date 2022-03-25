@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,19 +15,28 @@
 
 /**
  * @brief Main event class used for communication across modules outside the rt part
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+
+#include <cassert>
+
+#include "twine/twine.h"
 
 #include "library/event.h"
 #include "engine/base_engine.h"
 #include "logging.h"
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event");
+#include "types.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
 namespace sushi {
+
+RtDeletable::~RtDeletable()
+{
+    assert(twine::is_current_thread_realtime() == false);
+}
 
 Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
@@ -167,6 +176,12 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                                             ClippingNotificationEvent::ClipChannelType::OUTPUT;
             return new ClippingNotificationEvent(typed_ev->channel(), channel_type, timestamp);
         }
+        case RtEventType::DELETE:
+        {
+            auto typed_ev = rt_event.delete_data_event();
+            return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
+        }
+
         default:
             return nullptr;
 
@@ -224,6 +239,20 @@ RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/) const
     return RtEvent::make_bypass_processor_event(this->processor_id(), this->bypass_enabled());
 }
 
+RtEvent RtStateEvent::to_rt_event(int /*sample_offset*/) const
+{
+    // If this is null, then this object has been converted to an RtEvent before, which would imply a larger bug
+    assert(_state);
+    return RtEvent::make_set_rt_state_event(_processor_id, _state.release());
+}
+
+RtStateEvent::RtStateEvent(ObjectId processor_id, std::unique_ptr<RtState> state, Time timestamp) : Event(timestamp),
+                                                                                                    _processor_id(processor_id),
+                                                                                                    _state(std::move(state))
+{}
+
+RtStateEvent::~RtStateEvent() = default;
+
 RtEvent DataPropertyEvent::to_rt_event(int sample_offset) const
 {
     return RtEvent::make_data_property_change_event(_processor_id, sample_offset, _property_id, _blob_value);
@@ -235,7 +264,7 @@ RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
      * Hence copy the string to a heap allocation that will outlive the event.
      * The string should be taken back to the non-rt domain and deleted there. This is handled
      * automatically by InternalPlugins process_event() function */
-    auto heap_string = new std::string(_string_value);
+    auto heap_string = new RtDeletableWrapper<std::string>(_string_value);
     return RtEvent::make_string_property_change_event(_processor_id, sample_offset, _property_id, heap_string);
 }
 
@@ -253,6 +282,12 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
 Event* AsynchronousBlobDeleteEvent::execute()
 {
     delete(_data.data);
+    return nullptr;
+}
+
+Event* AsynchronousDeleteEvent::execute()
+{
+    delete _data;
     return nullptr;
 }
 

@@ -51,15 +51,41 @@ struct TimeSignature
     int denominator;
 };
 
-inline bool operator==(const TimeSignature& rhs, const TimeSignature& lhs)
+inline bool operator==(const TimeSignature& lhs, const TimeSignature& rhs)
 {
-    return (rhs.denominator == lhs.denominator && rhs.numerator == lhs.numerator);
+    return (lhs.denominator == rhs.denominator && lhs.numerator == rhs.numerator);
 }
 
-inline bool operator!=(const TimeSignature& rhs, const TimeSignature& lhs)
+inline bool operator!=(const TimeSignature& lhs, const TimeSignature& rhs)
 {
-    return ! (rhs == lhs);
+    return ! (lhs == rhs);
 }
+
+/**
+ * @brief baseclass for objects that can returned from a realtime thread for destruction
+ */
+class RtDeletable
+{
+public:
+    virtual ~RtDeletable();
+};
+
+/**
+ * @brief Wrapper for using  native and standard library types with RtDeletable
+ */
+template <typename T>
+struct RtDeletableWrapper : public RtDeletable
+{
+public:
+    RtDeletableWrapper(T data) : _data(data) {}
+    ~RtDeletableWrapper() = default;
+
+    T& data() {return _data;}
+    const T& data() const {return _data;}
+
+private:
+    T _data;
+};
 
 } // namespace sushi
 

@@ -187,14 +187,18 @@ MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input
     std::scoped_lock lock(_cc_routes_lock);
 
     auto connections = _cc_routes.find(midi_input);
-    auto& connection_vector = connections->second[cc_no][channel];
-    auto erase_iterator = std::remove_if(connection_vector.begin(),
-                                         connection_vector.end(),
-                                         [&](const auto& c) {
-        return c.target == processor_id;
-    });
+    if (connections != _cc_routes.end())
+    {
+        auto& connection_vector = connections->second[cc_no][channel];
+        auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                             connection_vector.end(),
+                                             [&](const auto& c)
+                                             {
+                                                 return c.target == processor_id;
+                                             });
 
-    connection_vector.erase(erase_iterator, connection_vector.end());
+        connection_vector.erase(erase_iterator, connection_vector.end());
+    }
 
     SUSHI_LOG_INFO("Disconnected "
                    "(cc number \"{}\") from processor ID \"{}\"", cc_no, processor_id);
@@ -275,14 +279,18 @@ MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input
     std::scoped_lock lock(_pc_routes_lock);
 
     auto connections = _pc_routes.find(midi_input);
-    auto& connection_vector = connections->second[channel];
-    auto erase_iterator = std::remove_if(connection_vector.begin(),
-                                         connection_vector.end(),
-                                         [&](const auto& c) {
-                                             return c.target == processor_id;
-                                         });
+    if (connections != _pc_routes.end())
+    {
+        auto& connection_vector = connections->second[channel];
+        auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                             connection_vector.end(),
+                                             [&](const auto& c)
+                                             {
+                                                 return c.target == processor_id;
+                                             });
 
-    connection_vector.erase(erase_iterator, connection_vector.end());
+        connection_vector.erase(erase_iterator, connection_vector.end());
+    }
 
     SUSHI_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
@@ -358,14 +366,18 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
     std::scoped_lock lock(_kb_routes_in_lock);
 
     auto connections = _kb_routes_in.find(midi_input); // All connections for the midi_input
-    auto& connection_vector = connections->second[channel];
-    auto erase_iterator = std::remove_if(connection_vector.begin(),
-                                         connection_vector.end(),
-                                         [&](const auto& c) {
-                                             return c.target == track_id;
-                                         });
+    if (connections != _kb_routes_in.end())
+    {
+        auto& connection_vector = connections->second[channel];
+        auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                             connection_vector.end(),
+                                             [&](const auto& c)
+                                             {
+                                                 return c.target == track_id;
+                                             });
 
-    connection_vector.erase(erase_iterator, connection_vector.end());
+        connection_vector.erase(erase_iterator, connection_vector.end());
+    }
 
     SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
@@ -452,14 +464,18 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
     std::scoped_lock lock(_raw_routes_in_lock);
 
     auto connections = _raw_routes_in.find(midi_input); // All connections for the midi_input
-    auto& connection_vector = connections->second[channel];
-    auto erase_iterator = std::remove_if(connection_vector.begin(),
-                                         connection_vector.end(),
-                                         [&](const auto& c) {
-                                             return c.target == track_id;
-                                         });
+    if (connections != _raw_routes_in.end())
+    {
+        auto& connection_vector = connections->second[channel];
+        auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                             connection_vector.end(),
+                                             [&](const auto& c)
+                                             {
+                                                 return c.target == track_id;
+                                             });
 
-    connection_vector.erase(erase_iterator, connection_vector.end());
+        connection_vector.erase(erase_iterator, connection_vector.end());
+    }
 
     SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
@@ -509,14 +525,18 @@ MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_outpu
     std::scoped_lock lock(_kb_routes_out_lock);
 
     auto connections = _kb_routes_out.find(track_id);
-    auto& connection_vector = connections->second;
-    auto erase_iterator = std::remove_if(connection_vector.begin(),
-                                         connection_vector.end(),
-                                         [&](const auto& c) {
-                                             return (c.channel == channel) && (c.output == midi_output);
-                                         });
+    if (connections != _kb_routes_out.end())
+    {
+        auto& connection_vector = connections->second;
+        auto erase_iterator = std::remove_if(connection_vector.begin(),
+                                             connection_vector.end(),
+                                             [&](const auto& c)
+                                             {
+                                                 return (c.channel == channel) && (c.output == midi_output);
+                                             });
 
-    connection_vector.erase(erase_iterator, connection_vector.end());
+        connection_vector.erase(erase_iterator, connection_vector.end());
+    }
 
     SUSHI_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;

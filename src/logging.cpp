@@ -18,6 +18,7 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <array>
 #include <map>
 #include <algorithm>
 

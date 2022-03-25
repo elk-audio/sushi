@@ -15,12 +15,13 @@
 
 /**
  * @brief Main entry point to Sushi
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <vector>
 #include <iostream>
 #include <csignal>
+#include <optional>
 #include <condition_variable>
 
 #include "twine/src/twine_internal.h"
@@ -30,9 +31,9 @@
 #include "audio_frontends/offline_frontend.h"
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
+#include "audio_frontends/portaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
-#include "control_frontends/alsa_midi_frontend.h"
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
@@ -40,11 +41,20 @@
 #include "sushi_rpc/grpc_server.h"
 #endif
 
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
+#include "control_frontends/alsa_midi_frontend.h"
+#endif
+
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+#include "control_frontends/rt_midi_frontend.h"
+#endif
+
 enum class FrontendType
 {
     OFFLINE,
     DUMMY,
     JACK,
+    PORTAUDIO,
     XENOMAI_RASPA,
     NONE
 };
@@ -61,7 +71,7 @@ void signal_handler([[maybe_unused]] int sig)
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Copyright 2017-2020 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
@@ -141,6 +151,8 @@ int main(int argc, char* argv[])
     std::string jack_server_name = std::string("");
     int osc_server_port = CompileTimeSettings::osc_server_port;
     int osc_send_port = CompileTimeSettings::osc_send_port;
+    std::optional<int> portaudio_input_device_id = std::nullopt;
+    std::optional<int> portaudio_output_device_id = std::nullopt;
     std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -204,6 +216,18 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_USE_DUMMY:
             frontend_type = FrontendType::DUMMY;
+            break;
+
+        case OPT_IDX_USE_PORTAUDIO:
+            frontend_type = FrontendType::PORTAUDIO;
+            break;
+
+        case OPT_IDX_AUDIO_INPUT_DEVICE:
+            portaudio_input_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_AUDIO_OUTPUT_DEVICE:
+            portaudio_output_device_id = atoi(opt.arg);
             break;
 
         case OPT_IDX_USE_JACK:
@@ -289,7 +313,11 @@ int main(int argc, char* argv[])
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default, rt_cpu_cores);
+
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
+                                                               rt_cpu_cores,
+                                                               debug_mode_switches,
+                                                               nullptr);
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
@@ -316,6 +344,11 @@ int main(int argc, char* argv[])
     int midi_inputs = audio_config.midi_inputs.value_or(1);
     int midi_outputs = audio_config.midi_outputs.value_or(1);
 
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+    auto rt_midi_input_mappings = audio_config.rt_midi_input_mappings;
+    auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
+#endif
+
     midi_dispatcher->set_midi_inputs(midi_inputs);
     midi_dispatcher->set_midi_outputs(midi_outputs);
 
@@ -334,6 +367,17 @@ int main(int argc, char* argv[])
                                                                                                  cv_inputs,
                                                                                                  cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::JackFrontend>(engine.get());
+            break;
+        }
+
+        case FrontendType::PORTAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up PortAudio frontend");
+            frontend_config = std::make_unique<sushi::audio_frontend::PortAudioFrontendConfiguration>(portaudio_input_device_id,
+                                                                                                      portaudio_output_device_id,
+                                                                                                      cv_inputs,
+                                                                                                      cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
             break;
         }
 
@@ -394,14 +438,19 @@ int main(int argc, char* argv[])
         error_exit("Failed to load tracks from Json config file");
     }
     status = configurator->load_midi();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_MIDI_DEFINITIONS)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         error_exit("Failed to load MIDI mapping from Json config file");
     }
     status = configurator->load_cv_gate();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_CV_GATE_DEFINITIONS)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         error_exit("Failed to load CV and Gate configuration");
+    }
+    status = configurator->load_initial_state();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        error_exit("Failed to load initial processor states");
     }
 
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
@@ -411,7 +460,7 @@ int main(int argc, char* argv[])
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
         }
-        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        else if (status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load Event list from Json config file");
         }
@@ -419,7 +468,7 @@ int main(int argc, char* argv[])
     else
     {
         status = configurator->load_events();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_EVENTS_DEFINITIONS)
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load Events from Json config file");
         }
@@ -436,9 +485,21 @@ int main(int argc, char* argv[])
         error_exit("");
     }
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
         midi_frontend = std::make_unique<sushi::midi_frontend::AlsaMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+#elif SUSHI_BUILD_WITH_RT_MIDI
+        midi_frontend = std::make_unique<sushi::midi_frontend::RtMidiFrontend>(midi_inputs,
+                                                                               midi_outputs,
+                                                                               std::move(rt_midi_input_mappings),
+                                                                               std::move(rt_midi_output_mappings),
+                                                                               midi_dispatcher.get());
+#else
+        midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
+#endif
         osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
                                                                               controller.get(),
                                                                               osc_server_port,
@@ -453,7 +514,7 @@ int main(int argc, char* argv[])
         }
 
         status = configurator->load_osc();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NO_OSC_DEFINITIONS)
+        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
             error_exit("Failed to load OSC echo specification from Json config file");
         }
@@ -489,7 +550,9 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
         osc_frontend->run();
     }
@@ -513,7 +576,9 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (frontend_type == FrontendType::JACK || frontend_type == FrontendType::XENOMAI_RASPA)
+    if (frontend_type == FrontendType::JACK
+        || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::PORTAUDIO)
     {
         osc_frontend->stop();
         midi_frontend->stop();

@@ -27,10 +27,11 @@
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
+#include "library/constants.h"
 
 namespace sushi {
 
-constexpr int DEFAULT_CHANNELS = 2;
+constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
 /**
  * @brief internal base class for processors that keeps track of all host-related
@@ -57,6 +58,8 @@ public:
 
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
+    ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
     /**
      * @brief Register a float typed parameter and return a pointer to a value
      *        storage object that will hold the value and set automatically when
@@ -67,6 +70,7 @@ public:
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to a FloatParameterValue object
      */
@@ -76,6 +80,7 @@ public:
                                                   float default_value,
                                                   float min_value,
                                                   float max_value,
+                                                  Direction automatable,
                                                   FloatParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -88,6 +93,7 @@ public:
      * @param default_value The default value the parameter should have
      * @param min_value The minimum value the parameter can have
      * @param max_value The maximum value the parameter can have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @param pre_proc An optional preprocessor object used to clip/scale the set value
      * @return Pointer to an IntParameterValue object
      */
@@ -97,6 +103,7 @@ public:
                                               int default_value,
                                               int min_value,
                                               int max_value,
+                                              Direction automatable,
                                               IntParameterPreProcessor* pre_proc = nullptr);
 
     /**
@@ -107,12 +114,14 @@ public:
      * @param label The display name of the parameter
      * @param unit The unit of the parameters display value
      * @param default_value The default value the parameter should have
+     * @param automatable Whether the parameter can be automated, or if not, that it then is output-only
      * @return Pointer to a BoolParameterValue object
      */
     BoolParameterValue* register_bool_parameter(const std::string& name,
                                                 const std::string& label,
                                                 const std::string& unit,
-                                                bool default_value);
+                                                bool default_value,
+                                                Direction automatable);
 
     /**
      * @brief Register a string property that can be updated through events. String
@@ -135,7 +144,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(FloatParameterValue*storage, float new_value);
+    void set_parameter_and_notify(FloatParameterValue* storage, float new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -143,7 +152,7 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(IntParameterValue*storage, int new_value);
+    void set_parameter_and_notify(IntParameterValue* storage, int new_value);
 
     /**
      * @brief Update the value of a parameter and send an event notifying
@@ -151,10 +160,10 @@ protected:
      * @param storage The ParameterValue to update
      * @param new_value The new value to use
      */
-    void set_parameter_and_notify(BoolParameterValue*storage, bool new_value);
+    void set_parameter_and_notify(BoolParameterValue* storage, bool new_value);
 
     /**
-     * @brief Pass opaque data to the realtime part of the plugin in a threadsafe manner
+     * @brief Pass opaque data to the realtime part of the plugin in a thread-safe manner
      *        The data will be passed as an RtEvent with type DATA_PROPERTY_CHANGE.
      * @param data The data to pass, memory management is the responsibility of the receiver.
      * @param id An identifier that will be used to populate the property_id field_of the RtEvent.
@@ -170,11 +179,12 @@ protected:
      */
     void send_property_to_realtime(ObjectId property_id, const std::string& value);
 
-
 private:
-    /* TODO - consider container type to use here. Deque has the very desirable property
-     * that iterators are never invalidated by adding to the containers.
-     * For arrays or std::vectors we need to know the maximum capacity for that to work. */
+    void _set_rt_state(const RtState* state);
+
+    /* TODO: Consider container type to use here. Deque has the very desirable property
+     *  that iterators are never invalidated by adding to the containers.
+     *  For arrays or std::vectors we need to know the maximum capacity for that to work. */
     std::deque<ParameterStorage> _parameter_values;
 
     mutable std::mutex _property_lock;

@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <fstream>
@@ -38,11 +38,24 @@ constexpr char TIMING_FILE_NAME[] = "timings.txt";
 constexpr int  TIMING_LOG_PRINT_INTERVAL = 15;
 
 constexpr int  MAX_TRACKS = 32;
-constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * TRACK_MAX_CHANNELS;
+constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * MAX_TRACK_CHANNELS;
 constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
 constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
+
+EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
+{
+    switch (processor_status)
+    {
+        case ProcessorReturnCode::OK:                       return EngineReturnStatus::OK;
+        case ProcessorReturnCode::ERROR:                    return EngineReturnStatus::ERROR;
+        case ProcessorReturnCode::PARAMETER_ERROR:          return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::PARAMETER_NOT_FOUND:      return EngineReturnStatus::INVALID_PARAMETER;
+        case ProcessorReturnCode::UNSUPPORTED_OPERATION:    return EngineReturnStatus::INVALID_PLUGIN_TYPE;
+        default:                                            return EngineReturnStatus::ERROR;
+    }
+}
 
 
 void ClipDetector::set_sample_rate(float samplerate)
@@ -80,14 +93,15 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
+                         bool debug_mode_sw,
                          dispatcher::BaseEventDispatcher* event_dispatcher) : BaseEngine::BaseEngine(sample_rate),
-                                             _audio_graph(rt_cpu_cores, MAX_TRACKS),
-                                             _audio_in_connections(MAX_AUDIO_CONNECTIONS),
-                                             _audio_out_connections(MAX_AUDIO_CONNECTIONS),
-                                             _transport(sample_rate, &_main_out_queue),
-                                             _clip_detector(sample_rate)
+                                                          _audio_graph(rt_cpu_cores, MAX_TRACKS, debug_mode_sw),
+                                                          _audio_in_connections(MAX_AUDIO_CONNECTIONS),
+                                                          _audio_out_connections(MAX_AUDIO_CONNECTIONS),
+                                                          _transport(sample_rate, &_main_out_queue),
+                                                          _clip_detector(sample_rate)
 {
-    if(event_dispatcher == nullptr)
+    if (event_dispatcher == nullptr)
     {
         _event_dispatcher = std::make_unique<dispatcher::EventDispatcher>(this, &_main_out_queue, &_main_in_queue);
     }
@@ -95,7 +109,7 @@ AudioEngine::AudioEngine(float sample_rate,
     {
         _event_dispatcher.reset(event_dispatcher);
     }
-    _host_control = std::move(HostControl(_event_dispatcher.get(), &_transport));
+    _host_control = HostControl(_event_dispatcher.get(), &_transport);
 
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);
@@ -544,7 +558,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
                                                                            int input_busses,
                                                                            int output_busses)
 {
-    if(input_busses > TRACK_MAX_BUSSES && output_busses > TRACK_MAX_BUSSES)
+    if(input_busses > MAX_TRACK_BUSSES && output_busses > MAX_TRACK_BUSSES)
     {
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
@@ -610,6 +624,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id);
     }
+    track->set_enabled(false);
     _processors.remove_track(track->id());
     _deregister_processor(track.get());
     _event_dispatcher->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED,
@@ -625,8 +640,8 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
 
     if (processor_status != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to initialize processor {}", processor_name);
-        return {EngineReturnStatus::INVALID_PLUGIN_UID, ObjectId(0)};
+        SUSHI_LOG_ERROR("Failed to initialize processor {} with error {}", processor_name, static_cast<int>(processor_status));
+        return {to_engine_status(processor_status), ObjectId(0)};
     }
     EngineReturnStatus status = _register_processor(processor, processor_name);
     if(status != EngineReturnStatus::OK)
@@ -635,7 +650,6 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
         return {status, ObjectId(0)};
     }
 
-    processor->set_enabled(true);
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
@@ -685,6 +699,10 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
+    plugin->set_enabled(true);
+    plugin->set_input_channels(std::min(plugin->max_input_channels(), track->input_channels()));
+    plugin->set_output_channels(std::min(plugin->max_output_channels(), track->input_channels()));
+
     if (this->realtime())
     {
         // In realtime mode we need to handle this in the audio thread
@@ -718,7 +736,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
 
 EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, ObjectId track_id)
 {
-    auto plugin = _processors.processor(plugin_id);
+    auto plugin = _processors.mutable_processor(plugin_id);
     auto track = _processors.mutable_track(track_id);
     if (plugin == nullptr)
     {
@@ -745,6 +763,8 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
             return EngineReturnStatus::ERROR;
         }
     }
+
+    plugin->set_enabled(false);
 
     bool removed = _processors.remove_from_track(plugin_id, track_id);
     if (removed)
@@ -794,6 +814,8 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
 EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std::shared_ptr<Track> track)
 {
     track->init(_sample_rate);
+    track->set_enabled(true);
+
     auto status = _register_processor(track, name);
     if (status != EngineReturnStatus::OK)
     {
