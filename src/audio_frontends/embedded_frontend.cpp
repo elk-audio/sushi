@@ -88,16 +88,18 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
         return;
     }
 
-//    for (int c = 0; c < channel_count; ++c)
-//    {
-//        const float* in_src = array_of_read_pointers[c];
-//        for (int s = 0; s < sample_count; ++s)
-//        {
-//            float* in_dst = _in_buffer.channel(c); // In Ruben's code this was inside the for loop, can't see why.
-//            in_dst[s] = in_src[s * channel_count];
-//        }
-//    }
     _in_buffer.clear();
+    for (int c = 0; c < channel_count; ++c)
+    {
+        const float* in_src = array_of_read_pointers[c];
+
+        float* in_dst = _in_buffer.channel(c); // In Ruben's code this was inside the for loop, can't see why.
+
+        for (int s = 0; s < sample_count; ++s)
+        {
+            in_dst[s] = in_src[s];
+        }
+    }
 
     // TODO: Deal with CV!
 
@@ -117,10 +119,11 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
     {
         float* out_dst = array_of_write_pointers[c];
 
+        const float* out_src = _out_buffer.channel(c); // TODO: in Ruben's code this was inside the for loop, can't see why.
+
         for (int s = 0; s < sample_count; ++s)
         {
-            const float* out_src = _out_buffer.channel(c); // TODO: in Ruben's code this was inside the for loop, can't see why.
-            out_dst[s * channel_count] = out_src[s];
+            out_dst[s] = out_src[s];
         }
     }
 }
