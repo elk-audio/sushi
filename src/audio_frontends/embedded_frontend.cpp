@@ -18,9 +18,7 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <cmath>
-#include <cstring>
-#include <random>
+#include <iostream>
 
 #include "logging.h"
 #include "embedded_frontend.h"
@@ -64,17 +62,67 @@ AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* confi
 
 void EmbeddedFrontend::cleanup()
 {
+    _engine->enable_realtime(false);
+
     // TODO: FILL
 }
 
 void EmbeddedFrontend::run()
 {
+    _engine->enable_realtime(true);
+    _start_time = twine::current_rt_time();
+
     // TODO: FILL
 }
 
-void EmbeddedFrontend::_process_events(Time end_time)
+void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
+                                     float** array_of_write_pointers,
+                                     int channel_count, // TODO: channel count should be static, set in init, no?
+                                     int sample_count)
 {
-    // TODO: FILL
+    // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded!
+    if (sample_count != AUDIO_CHUNK_SIZE)
+    {
+        assert(sample_count == AUDIO_CHUNK_SIZE);
+        std::cout << "sample_count != AUDIO_CHUNK_SIZE, in embedded frontend." << std::endl;
+        return;
+    }
+
+//    for (int c = 0; c < channel_count; ++c)
+//    {
+//        const float* in_src = array_of_read_pointers[c];
+//        for (int s = 0; s < sample_count; ++s)
+//        {
+//            float* in_dst = _in_buffer.channel(c); // In Ruben's code this was inside the for loop, can't see why.
+//            in_dst[s] = in_src[s * channel_count];
+//        }
+//    }
+    _in_buffer.clear();
+
+    // TODO: Deal with CV!
+
+    // TODO: Do I need to COPY the buffers, can't I just use the raw pointers!?
+
+    auto timestamp = std::chrono::duration_cast<Time>(twine::current_rt_time() - _start_time);
+
+    _out_buffer.clear();
+    _engine->process_chunk(&_in_buffer,
+                           &_out_buffer,
+                           &_in_controls,
+                           &_out_controls,
+                           timestamp,
+                           sample_count);
+
+    for (int c = 0; c < channel_count; ++c)
+    {
+        float* out_dst = array_of_write_pointers[c];
+
+        for (int s = 0; s < sample_count; ++s)
+        {
+            const float* out_src = _out_buffer.channel(c); // TODO: in Ruben's code this was inside the for loop, can't see why.
+            out_dst[s * channel_count] = out_src[s];
+        }
+    }
 }
 
 } // end namespace audio_frontend

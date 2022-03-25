@@ -145,6 +145,15 @@ public:
 
     engine::Controller* controller() { return _controller.get(); }
 
+    /**
+     * Exposing audio frontend for the context where Sushi is embedded in another audio host.
+     * @return
+     */
+    audio_frontend::EmbeddedFrontend* audio_frontend()
+    {
+        return static_cast<audio_frontend::EmbeddedFrontend*>(_audio_frontend.get());
+    }
+
 private:
     void _init_logger(SushiOptions& options);
 

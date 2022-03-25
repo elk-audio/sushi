@@ -35,6 +35,8 @@ namespace sushi {
 
 namespace audio_frontend {
 
+using TimePoint = std::chrono::nanoseconds;
+
 constexpr int EMBEDDED_FRONTEND_CHANNELS = 2;
 
 struct EmbeddedFrontendConfiguration : public BaseAudioFrontendConfiguration
@@ -53,7 +55,7 @@ class EmbeddedFrontend : public BaseAudioFrontend
 public:
     EmbeddedFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
     {
-        _buffer.clear();
+
     }
 
     virtual ~EmbeddedFrontend()
@@ -67,12 +69,19 @@ public:
 
     void run() override;
 
+    void process_audio(const float** array_of_read_pointers,
+                       float** array_of_write_pointers,
+                       int channel_count,
+                       int sample_count);
+
 private:
-    void _process_events(Time end_time);
+    ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer {EMBEDDED_FRONTEND_CHANNELS};
+    engine::ControlBuffer _in_controls;
+    engine::ControlBuffer _out_controls;
 
-    std::vector<Event*> _event_queue;
+    TimePoint _start_time;
 };
 
 } // end namespace audio_frontend
