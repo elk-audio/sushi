@@ -272,43 +272,6 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
     _module_under_test->process(&event);
 }
 
-TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
-{
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track_1"), "siif",
-                                                 OscMethodType::SEND_KEYBOARD_NOTE_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track_1"), "sif",
-                                                 OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/track_1"), "i",
-                                                 OscMethodType::SEND_BYPASS_STATE_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track_1/param_1"), "f",
-                                                 OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track_1/param_2"), "f",
-                                                 OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track_1/param_3"), "f",
-                                                 OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
-
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/property/track_1/property_1"), "s",
-                                                 OscMethodType::SEND_PROPERTY_CHANGE_EVENT, _)).Times(1);
-
-
-    // As this in only done in response to events, test the event handling at the same time
-    ObjectId track_id = 0;
-
-    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_CREATED, track_id, 0, IMMEDIATE_PROCESS);
-    _module_under_test->process(&event);
-
-    EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(7);
-
-    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED, track_id, 0, IMMEDIATE_PROCESS);
-
-    _module_under_test->process(&event);
-}
-
 TEST_F(TestOSCFrontend, TestSendParameterChange)
 {
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/sampler/volume"), "f",

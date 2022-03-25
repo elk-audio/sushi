@@ -66,7 +66,7 @@ bool OscpackOscMessenger::init()
     {
         _transmit_socket = std::make_unique<UdpTransmitSocket>(IpEndpointName(_send_ip.c_str(), _send_port));
     }
-    catch (osc::Exception& e)
+    catch (oscpack::Exception& e)
     {
         status = false;
         SUSHI_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
@@ -80,7 +80,7 @@ bool OscpackOscMessenger::init()
         _receive_socket = std::make_unique<UdpListeningReceiveSocket>(IpEndpointName(IpEndpointName::ANY_ADDRESS, _receive_port),
                                                                       this);
     }
-    catch (osc::Exception& e)
+    catch (oscpack::Exception& e)
     {
         status = false;
         SUSHI_LOG_ERROR("OSC receiver failed instantiating for port {}, with message: ",
