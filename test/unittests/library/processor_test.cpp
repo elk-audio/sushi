@@ -276,7 +276,7 @@ TEST_F(TestBypassManager, TestCrossfade)
     for (int i = 0; i < chunks_in_ramp - 1; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 2.0f);
-        _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2)    ;
+        _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2);
     }
 
     // We should now have ramped down to 1 (value of bypass buffer)
