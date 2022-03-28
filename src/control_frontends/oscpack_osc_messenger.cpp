@@ -119,7 +119,7 @@ void* OscpackOscMessenger::add_method(const char* address_pattern,
 
     if (iterator != _registered_messages.end())
     {
-        return (void*)-1;
+        return reinterpret_cast<void*>(-1);
     }
 
     auto limit = std::numeric_limits<OSC_CALLBACK_HANDLE>::max();
