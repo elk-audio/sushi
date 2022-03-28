@@ -122,16 +122,12 @@ void* OscpackOscMessenger::add_method(const char* address_pattern,
         return reinterpret_cast<void*>(-1);
     }
 
-    auto limit = std::numeric_limits<OSC_CALLBACK_HANDLE>::max();
-
-    if (_last_generated_handle == limit)
-    {
-        _last_generated_handle = 0;
-        SUSHI_LOG_ERROR("OSCPACK messenger ran out of callback ID's.");
-    }
-
     MessageRegistration reg;
-    reg.callback_data = (char*)callback_data;
+
+    // Casting away const to address OSC library API incompatibilities.
+    // It is later used unchanged.
+    reg.callback_data = const_cast<void*>(callback_data);
+
     reg.type = type;
     reg.handle = _last_generated_handle;
 
@@ -139,7 +135,7 @@ void* OscpackOscMessenger::add_method(const char* address_pattern,
 
     _last_generated_handle++;
 
-    auto to_return = (void*)reg.handle;
+    auto to_return = reinterpret_cast<void*>(reg.handle);
     assert(sizeof(void*) == sizeof(OSC_CALLBACK_HANDLE));
     return to_return;
 }

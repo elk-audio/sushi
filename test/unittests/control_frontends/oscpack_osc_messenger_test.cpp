@@ -119,13 +119,6 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
     // Calling delete_method with the returned ID should work:
     _module_under_test->delete_method(id_1);
     EXPECT_EQ(_module_under_test->_registered_messages.size(), 1);
-
-    // Testing also the ID wrapping logic on overflow.
-    _module_under_test->_last_generated_handle = std::numeric_limits<OSC_CALLBACK_HANDLE>::max();
-    auto id_4 = _module_under_test->add_method("/engine/set_tempo",
-                                               "f", sushi::osc::OscMethodType::SET_TEMPO,
-                                               &connection);
-    EXPECT_EQ(reinterpret_cast<OSC_CALLBACK_HANDLE>(id_4), 0);
 }
 
 TEST_F(TestOscpackOscMessenger, TestSendParameterChange)
