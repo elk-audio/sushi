@@ -177,7 +177,7 @@ void EventDispatcher::_event_loop()
             }
             if (status == EventStatus::QUEUED_HANDLING)
             {
-                /* Event has not finished processing, so dont call comp cb or delete it */
+                /* Event has not finished processing, so don't call comp cb or delete it */
                 continue;
             }
             if (event->completion_cb() != nullptr)

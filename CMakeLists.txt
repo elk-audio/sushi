@@ -366,6 +366,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/audio_frontends/portaudio_frontend.cpp
                       src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
+                      src/control_frontends/oscpack_osc_messenger.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
@@ -438,6 +439,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/control_frontends/base_control_frontend.h
                         src/control_frontends/osc_frontend.h
                         src/control_frontends/osc_utils.h
+                        src/control_frontends/oscpack_osc_messenger.h
                         src/control_frontends/base_midi_frontend.h
                         src/dsp_library/envelopes.h
                         src/dsp_library/sample_wrapper.h
@@ -540,27 +542,22 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #################################
 
 # Common libraries between all builds, and safe to be included in test targets
-find_path(LIBLO_INCLUDE_DIRS NAMES "lo/lo.h")
-find_library(LIBLO_LIBRARIES NAMES lo)
-message("Found path: ${LIBO_INCLUDE_DIRS} and lib: ${LIBLO_LIBRARIES}")
-
 find_path(SNDFILE_INCLUDE_DIR NAMES "sndfile.h")
 find_library(SNDFILE_LIBRARIES NAMES sndfile)
 message("Found path: ${SNDFILE_INCLUDE_DIR} and lib: ${SNDFILE_LIBRARIES}")
 
 set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
-    ${LIBLO_INCLUDE_DIRS}
     ${SNDFILE_INCLUDE_DIR}
 )
 
 set(COMMON_LIBRARIES
-    ${LIBLO_LIBRARIES}
     ${SNDFILE_LIBRARIES}
     pthread
     dl
     fifo
     spdlog::spdlog
+    oscpack
     ${TWINE_LIB}
 )
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

@@ -5,6 +5,8 @@
 #include <bits/stdc++.h>
 #endif
 
+#include <unordered_map>
+
 #include "control_interface.h"
 
 namespace sushi {

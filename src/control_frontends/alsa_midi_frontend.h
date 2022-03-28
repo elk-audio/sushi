@@ -50,7 +50,7 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, MidiDataByte data, Time timestamp) override;
+    void send_midi(int input, MidiDataByte data, [[maybe_unused]]Time timestamp) override;
 
 private:
 
