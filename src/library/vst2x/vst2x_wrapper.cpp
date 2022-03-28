@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 2.x plugins.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "twine/twine.h"
@@ -27,7 +27,6 @@
 namespace {
 
 constexpr int VST_STRING_BUFFER_SIZE = 256;
-constexpr int FULL_BANK = 0;
 constexpr int SINGLE_PROGRAM = 1;
 
 static char canDoBypass[] = "bypass";
