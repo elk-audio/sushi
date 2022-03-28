@@ -50,11 +50,11 @@ struct LightKey
 bool operator<(const std::pair<std::string, std::string>& fat, const LightKey& light);
 bool operator<(const LightKey& light, const std::pair<std::string, std::string>& fat);
 
-// TODO: This is the max buffer size hard-coded in the OscPack-sockets.
-//   Weird that it's not 4096 - is it a typo?
-//   It's not exposed, or I'd have fetched it and used it directly.
-//   The max packet size of UDP/IPv4 is 65507 IIRC - we could eventually fork OscPack to support that.
-constexpr size_t OSC_OUTPUT_BUFFER_SIZE = 4098;
+// In OscPack they have an incoming packet size max of 4098.
+// But that's already allocated when we receive it - they seem to not enforce any size for
+// sending.
+// 1512 is the common default MTU - UDP headers are 8 bytes fixed size, giving he below.
+constexpr size_t OSC_OUTPUT_BUFFER_SIZE = 1504;
 
 // We need to be able to cast between OSC_CALLBACK_HANDLE, and void*, to keep the API in BaseOscMessenger consistent.
 // If we are OK with breaking the API compatibility with Liblo, we can just change the API to directly expose uint64_t.
