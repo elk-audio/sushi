@@ -33,7 +33,7 @@ namespace controller_impl {
 class ProgramController : public ext::ProgramController
 {
 public:
-    ProgramController(BaseEngine* engine);
+    explicit ProgramController(BaseEngine* engine);
 
     ~ProgramController() override = default;
 

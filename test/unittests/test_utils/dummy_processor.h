@@ -8,7 +8,7 @@ using namespace sushi;
 class DummyProcessor : public Processor
 {
 public:
-    DummyProcessor(HostControl host_control) : Processor(host_control)
+    explicit DummyProcessor(HostControl host_control) : Processor(host_control)
     {
         _max_input_channels = 2;
         _max_output_channels = 2;
@@ -34,7 +34,7 @@ public:
 class DummyMonoProcessor : public DummyProcessor
 {
 public:
-    DummyMonoProcessor(HostControl host_control) :DummyProcessor(host_control)
+    explicit DummyMonoProcessor(HostControl host_control) :DummyProcessor(host_control)
     {
         _max_input_channels = 1;
         _max_output_channels = 1;

@@ -60,7 +60,7 @@ class Controller : public ext::SushiControl, EventPoster
 public:
     Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher);
 
-    ~Controller();
+    ~Controller() override;
 
     ext::ControlStatus subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
 

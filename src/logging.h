@@ -64,9 +64,9 @@ enum SUSHI_LOG_ERROR_CODE
 //#define SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 
 /* Use this macro  at the top of a source file to declare a local logger */
-#define SUSHI_GET_LOGGER_WITH_MODULE_NAME(prefix) constexpr char local_log_prefix[] = "[" prefix "] " ;
+#define SUSHI_GET_LOGGER_WITH_MODULE_NAME(prefix) constexpr char local_log_prefix[] = "[" prefix "] "
 
-#define SUSHI_GET_LOGGER constexpr char local_log_prefix[] = "";
+#define SUSHI_GET_LOGGER constexpr char local_log_prefix[] = ""
 
 /*
  * Use these macros to log messages. Use cppformat style, ie:
@@ -88,7 +88,7 @@ enum SUSHI_LOG_ERROR_CODE
 #ifdef SUSHI_ENABLE_DEBUG_FILE_AND_LINE_NUM
 #define SUSHI_LOG_DEBUG_IF(condition, msg, ...) if (condition) { elk::Logger::logger_instance->debug_if(condition, "{}" msg " - [@{} #{}]", ##__VA_ARGS__, __FILE__ , __LINE__); }
 #else
-#define SUSHI_LOG_DEBUG_IF(condition, msg, ...)    if (condition) { elk::Logger::logger_instance->debug(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__);}
+#define SUSHI_LOG_DEBUG_IF(condition, msg, ...)    if (condition) { elk::Logger::logger_instance->debug(condition, "{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #endif
 #define SUSHI_LOG_INFO_IF(condition, msg, ...)     if (condition) { elk::Logger::logger_instance->info("{}" msg, local_log_prefix, ##__VA_ARGS__); }
 #define SUSHI_LOG_WARNING_IF(condition, msg, ...)  if (condition) { elk::Logger::logger_instance->warn("{}" msg, local_log_prefix, ##__VA_ARGS__); }

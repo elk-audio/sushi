@@ -809,8 +809,8 @@ std::vector<CCInputConnection> MidiDispatcher::_get_cc_input_connections(std::op
                 auto& connections = cc_channel_matrix[cc_i][channel_i];
                 for (auto connection = connections.begin(); connection != connections.end(); ++connection)
                 {
-                    if(!processor_id_filter.has_value() ||
-                       processor_id_filter == connection->target)
+                    if (!processor_id_filter.has_value() ||
+                        processor_id_filter == connection->target)
                     {
                         CCInputConnection conn;
                         conn.input_connection = *(connection.base());
@@ -840,8 +840,8 @@ std::vector<PCInputConnection> MidiDispatcher::_get_pc_input_connections(std::op
         {
             for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
             {
-                if(!processor_id_filter.has_value() ||
-                   processor_id_filter == connection->target)
+                if (!processor_id_filter.has_value() ||
+                    processor_id_filter == connection->target)
                 {
                     PCInputConnection conn;
                     conn.processor_id = connection->target;

@@ -475,7 +475,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
 
     count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
 
-    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id);
+    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
     return count > 0;
 }
 
@@ -537,7 +537,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 }
                 SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", info.name);
             }
-            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
+            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor())
             break;
         }
 
@@ -556,7 +556,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 }
                 SUSHI_LOG_INFO("Connected OSC callbacks to track {}", info.name);
             }
-            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
+            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track())
             break;
         }
 

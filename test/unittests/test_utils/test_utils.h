@@ -24,7 +24,7 @@ inline void fill_sample_buffer(SampleBuffer <size> &buffer, float value)
     {
         std::fill(buffer.channel(ch), buffer.channel(ch) + size, value);
     }
-};
+}
 
 template <int size>
 inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)
@@ -36,7 +36,7 @@ inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)
             ASSERT_FLOAT_EQ(value, buffer.channel(ch)[i]);
         }
     }
-};
+}
 
 template <int size>
 inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer, float error_margin)
@@ -48,7 +48,7 @@ inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer, 
             ASSERT_NEAR(value, buffer.channel(ch)[i], error_margin);
         }
     }
-};
+}
 
 inline std::string get_data_dir_path()
 {
@@ -60,7 +60,7 @@ inline std::string get_data_dir_path()
     std::string test_config_file(test_data_dir);
     test_config_file.append("/");
     return test_config_file;
-};
+}
 
 template <int size>
 inline void compare_buffers(const float static_array[][size], ChunkSampleBuffer& buffer, int channels, float error_margin = 0.0001f)

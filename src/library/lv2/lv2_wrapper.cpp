@@ -80,7 +80,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
-    auto library_handle = _plugin_handle_from_URI(_plugin_path.c_str());
+    auto library_handle = _plugin_handle_from_URI(_plugin_path);
 
     if (library_handle == nullptr)
     {
@@ -198,7 +198,7 @@ std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatt
 {
     auto value_tuple = parameter_value_in_domain(parameter_id);
 
-    if(value_tuple.first == ProcessorReturnCode::OK)
+    if (value_tuple.first == ProcessorReturnCode::OK)
     {
         std::string parsed_value = std::to_string(value_tuple.second);
         return {ProcessorReturnCode::OK, parsed_value};
@@ -358,7 +358,7 @@ bool LV2_Wrapper::_register_parameters()
             assert(port_index == _pi); // This should only fail is the plugin's .ttl file is incorrect.
 
             const std::string name_as_string = lilv_node_as_string(name_node);
-            const std::string param_unit = "";
+            const std::string param_unit;
 
             auto direction = Direction::AUTOMATABLE;
 
@@ -433,7 +433,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
             SUSHI_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
-    else if(event.type() == RtEventType::SET_BYPASS)
+    else if (event.type() == RtEventType::SET_BYPASS)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
         _bypass_manager.set_bypass(bypassed, _model->sample_rate());
@@ -545,7 +545,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
-        if(_model->state_worker() != nullptr)
+        if (_model->state_worker() != nullptr)
         {
             _model->state_worker()->emit_responses(_model->plugin_instance());
         }
@@ -564,9 +564,9 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
 void LV2_Wrapper::_restore_state_callback(EventId)
 {
     /* Note that this doesn't handle multiple requests at once.
-     * Currently for the Pause functionality it is fine,
-     * but if extended to support other use it may note be. */
-    if(_model->state_to_set() != nullptr)
+     * Currently, for the Pause functionality it is fine,
+     * but if extended to support other use it may not be. */
+    if (_model->state_to_set() != nullptr)
     {
         auto feature_list = _model->host_feature_list();
 
@@ -669,7 +669,7 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
     {
         auto current_port = _model->get_port(p);
 
-        if(current_port->flow() == PortFlow::FLOW_OUTPUT)
+        if (current_port->flow() == PortFlow::FLOW_OUTPUT)
         {
             switch(current_port->type())
             {
@@ -864,7 +864,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                             keyboard_event_ptr->velocity());
             }
             default:
-                return MidiDataByte();
+                return {};
         }
     }
     else if (event.type() >= RtEventType::PITCH_BEND && event.type() <= RtEventType::MODULATION)
@@ -890,7 +890,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                          keyboard_common_event_ptr->value());
             }
             default:
-                return MidiDataByte();
+                return {};
         }
     }
     else if (event.type() == RtEventType::WRAPPED_MIDI_EVENT)
@@ -900,7 +900,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
     }
 
     assert(false); // All cases should have been catered for.
-    return MidiDataByte();
+    return {};
 }
 
 void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -932,7 +932,7 @@ void LV2_Wrapper::_pause_audio_processing()
 {
     _previous_play_state = _model->play_state();
 
-    if(_previous_play_state != PlayState::PAUSED)
+    if (_previous_play_state != PlayState::PAUSED)
     {
         _model->set_play_state(PlayState::PAUSED);
     }

@@ -20,7 +20,6 @@
 
 #include "event_dispatcher.h"
 #include "engine/base_engine.h"
-#include "logging.h"
 
 namespace sushi {
 namespace dispatcher {

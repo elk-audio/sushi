@@ -75,7 +75,7 @@ class PluginInstance
 public:
     SUSHI_DECLARE_NON_COPYABLE(PluginInstance);
 
-    PluginInstance(SushiHostApplication* host_app);
+    explicit PluginInstance(SushiHostApplication* host_app);
     ~PluginInstance();
 
     bool load_plugin(const std::string& plugin_path, const std::string& plugin_name);

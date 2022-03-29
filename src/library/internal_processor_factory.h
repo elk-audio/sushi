@@ -31,7 +31,7 @@ class InternalProcessorFactory : public BaseProcessorFactory
 public:
     InternalProcessorFactory();
 
-    virtual ~InternalProcessorFactory() = default;
+    ~InternalProcessorFactory() override = default;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
                                                                             HostControl& host_control,
@@ -48,6 +48,6 @@ private:
     std::unique_ptr<BaseProcessorFactory> _send_return_factory;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_INTERNAL_PROCESSOR_FACTORY_H

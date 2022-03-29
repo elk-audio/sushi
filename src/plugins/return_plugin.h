@@ -40,9 +40,9 @@ class ReturnPlugin : public InternalPlugin
 public:
     ReturnPlugin(HostControl host_control, SendReturnFactory* manager);
 
-    virtual ~ReturnPlugin();
+    ~ReturnPlugin() override;
 
-    int return_id() const {return _return_id;};
+    int return_id() const {return _return_id;}
 
     void send_audio(const ChunkSampleBuffer&, float gain);
 

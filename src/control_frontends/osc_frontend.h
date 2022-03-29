@@ -231,7 +231,7 @@ private:
     void* _reset_timing_statistics_ss_cb {nullptr};
 };
 
-}; // namespace control_frontend
-}; // namespace sushi
+} // namespace control_frontend
+} // namespace sushi
 
 #endif //SUSHI_OSC_FRONTEND_H_H

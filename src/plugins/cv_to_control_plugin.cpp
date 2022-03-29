@@ -90,7 +90,7 @@ void CvToControlPlugin::configure(float sample_rate)
 
 void CvToControlPlugin::process_event(const RtEvent& event)
 {
-    // Plugins listens to all channels
+    // Plugin listens to all channels
     if (event.type() == RtEventType::NOTE_ON || event.type() == RtEventType::NOTE_OFF)
     {
         _gate_events.push(event);

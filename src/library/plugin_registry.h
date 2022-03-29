@@ -49,6 +49,6 @@ private:
     std::unordered_map<engine::PluginType, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_PLUGIN_REGISTRY_H

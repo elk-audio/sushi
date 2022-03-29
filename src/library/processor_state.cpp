@@ -24,16 +24,6 @@ namespace sushi {
 
 ProcessorState::~ProcessorState() = default;
 
-std::vector<std::byte> ProcessorState::serialize() const
-{
-    return std::vector<std::byte>();
-}
-
-bool ProcessorState::deserialize(std::vector<std::byte>)
-{
-    return false;
-}
-
 void ProcessorState::set_program(int program_id)
 {
     _program = program_id;
@@ -103,4 +93,4 @@ const std::vector<std::pair<ObjectId, float>>& RtState::parameters() const
 {
     return _parameter_changes;
 }
-}; // end namespace sushi
+} // end namespace sushi

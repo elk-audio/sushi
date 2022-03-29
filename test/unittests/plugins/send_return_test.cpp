@@ -46,9 +46,8 @@ TEST(TestSendReturnFactory, TestFactoryCreation)
 class TestSendReturnPlugins : public ::testing::Test
 {
 protected:
-    TestSendReturnPlugins()
-    {
-    }
+    TestSendReturnPlugins() = default;
+
     void SetUp()
     {
         ASSERT_EQ(ProcessorReturnCode::OK, _send_instance.init(TEST_SAMPLERATE));

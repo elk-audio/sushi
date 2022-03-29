@@ -59,12 +59,12 @@ bool ProcessorContainer::remove_processor(ObjectId id)
     {
         std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
         [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
     }
     {
         std::scoped_lock<std::mutex> lock(_processors_by_name_lock);
         [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name());
+        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
     }
     return true;
 }
@@ -72,7 +72,7 @@ bool ProcessorContainer::remove_processor(ObjectId id)
 bool ProcessorContainer::remove_track(ObjectId track_id)
 {
     std::scoped_lock<std::mutex> lock(_processors_by_track_lock);
-    assert(_processors_by_track[track_id].size() == 0);
+    assert(_processors_by_track[track_id].empty());
     _processors_by_track.erase(track_id);
     return true;
 }

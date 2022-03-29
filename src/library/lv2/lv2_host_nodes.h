@@ -43,7 +43,7 @@ class HostNodes
 public:
     SUSHI_DECLARE_NON_COPYABLE(HostNodes);
 
-    HostNodes(LilvWorld* world)
+    explicit HostNodes(LilvWorld* world)
     {
         /* Cache URIs for concepts we'll use */
         this->atom_AtomPort = lilv_new_uri(world, LV2_ATOM__AtomPort);

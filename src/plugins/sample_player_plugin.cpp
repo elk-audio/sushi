@@ -110,7 +110,7 @@ void SamplePlayerPlugin::set_bypassed(bool bypassed)
 
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
-    delete _sample_buffer;
+    delete[] _sample_buffer;
 }
 
 void SamplePlayerPlugin::process_event(const RtEvent& event)
@@ -198,7 +198,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
 }
 
 
-void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer &out_buffer)
+void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer& out_buffer)
 {
     float gain = _volume_parameter->processed_value();
     float attack = _attack_parameter->processed_value();
@@ -240,10 +240,10 @@ void SamplePlayerPlugin::_all_notes_off()
     }
 }
 
-BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
+BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
 {
-    SNDFILE*    sample_file;
-    SF_INFO     soundfile_info = {};
+    SNDFILE* sample_file;
+    SF_INFO  soundfile_info = {};
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
     {
         SUSHI_LOG_ERROR("Failed to open sample file: {}", file_name);
@@ -267,10 +267,13 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
     }
 
     sf_close(sample_file);
+
     if (samples <= 0)
     {
+        delete[] sample_buffer;
         return {0, nullptr};
     }
+
     return BlobData{static_cast<int>(soundfile_info.frames * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
 
 }

@@ -36,7 +36,7 @@ Port* port_by_symbol(Model* model, const char* sym)
         auto port = model->get_port(i);
         const auto port_symbol = lilv_port_get_symbol(model->plugin_class(), port->lilv_port());
 
-        if (strcmp(lilv_node_as_string(port_symbol), sym) == false)
+        if (strcmp(lilv_node_as_string(port_symbol), sym) == 0)
         {
             return port;
         }

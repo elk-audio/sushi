@@ -23,7 +23,6 @@
 #include "plugins/transposer_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
-#include "logging.h"
 
 namespace sushi {
 namespace transposer_plugin {

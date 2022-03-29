@@ -63,7 +63,7 @@ public:
         _enabled = false;
     }
 
-    virtual ~Vst3xWrapper();
+    ~Vst3xWrapper() override;
 
     /**
      * @brief Entry point for parameter changes from the plugin editor.

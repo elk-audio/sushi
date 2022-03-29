@@ -149,7 +149,7 @@ void OscpackOscMessenger::delete_method(void* handle)
         auto method_int = reinterpret_cast<OSC_CALLBACK_HANDLE>(handle);
         if (id == method_int)
         {
-            itr = _registered_messages.erase(itr);
+            _registered_messages.erase(itr);
             break;
         }
         else

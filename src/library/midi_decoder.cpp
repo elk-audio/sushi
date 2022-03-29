@@ -18,7 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <cstddef>
 #include <cstdint>
 
 #include "library/midi_decoder.h"

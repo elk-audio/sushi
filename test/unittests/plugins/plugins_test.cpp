@@ -235,14 +235,15 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     ASSERT_TRUE(_fifo.pop(event));
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     EXPECT_EQ(_module_under_test->id(), event.processor_id());
-    /*  The rms and dB calculations are tested separately, just test that it a reasonable value */
+    /*  The rms and dB calculations are tested separately, just test that it is a reasonable value */
     EXPECT_GT(event.parameter_change_event()->value(), 0.5f);
 
     /* Set the rate parameter to minimum */
     auto rate_id = _module_under_test->parameter_from_name("update_rate")->id();
     _module_under_test->process_event(RtEvent::make_parameter_change_event(_module_under_test->id(),
                                                                            0, rate_id, 0.0f));
-    while (_fifo.pop(event)) {};
+    while (_fifo.pop(event)) {}
+
     ASSERT_TRUE(_fifo.empty());
     for (int i = 0; i <= no_of_process_calls * 5 ; ++i)
     {
@@ -414,7 +415,7 @@ TEST_F(TestWavWriterPlugin, TestProcess)
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Test Writing.
-    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false to immediately write
+    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false, to immediately write
     ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
 
     // Test end recording and close file

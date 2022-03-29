@@ -15,7 +15,7 @@ constexpr float TEST_SAMPLERATE = 48000;
 class TestArpeggiator : public ::testing::Test
 {
 protected:
-    TestArpeggiator() {}
+    TestArpeggiator() = default;
 
     void SetUp()
     {}
@@ -77,9 +77,8 @@ TEST_F(TestArpeggiator, TestHold)
 class TestArpeggiatorPlugin : public ::testing::Test
 {
 protected:
-    TestArpeggiatorPlugin()
-    {
-    }
+    TestArpeggiatorPlugin() = default;
+
     void SetUp()
     {
         _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));

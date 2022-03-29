@@ -268,6 +268,6 @@ void OfflineFrontend::_run_blocking()
 }
 
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi

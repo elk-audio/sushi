@@ -35,7 +35,7 @@ TEST_F(TestStepSequencerPlugin, TestOutput)
 
     ASSERT_TRUE(_fifo.empty());
     /* 1/8 notes at 120 bpm equals 4 notes/sec, @48000 results having an
-     * 8th note at 12000, so fast forward the time so directly before this time */
+     * 8th note at 12000, so fast-forward the time so directly before this time */
     _host_control._transport.set_time(std::chrono::microseconds(249'500), 11'990);
     _module_under_test.process_audio(buffer, buffer);
     RtEvent e;

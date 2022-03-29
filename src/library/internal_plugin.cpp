@@ -34,7 +34,7 @@ InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_contro
     _max_output_channels = DEFAULT_CHANNELS;
     _current_input_channels = DEFAULT_CHANNELS;
     _current_output_channels = DEFAULT_CHANNELS;
-};
+}
 
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
