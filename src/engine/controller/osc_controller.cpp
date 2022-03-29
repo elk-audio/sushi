@@ -27,6 +27,12 @@ namespace controller_impl {
 OscController::OscController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
 
+
+std::string OscController::get_send_ip() const
+{
+    return _osc_frontend->send_ip();
+}
+
 int OscController::get_send_port() const
 {
     return _osc_frontend->send_port();

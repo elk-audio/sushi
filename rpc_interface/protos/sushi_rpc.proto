@@ -180,6 +180,7 @@ service CvGateController
 
 service OscController
 {
+    rpc GetSendIP (GenericVoidValue) returns (GenericStringValue) {}
     rpc GetSendPort (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetReceivePort (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetEnabledParameterOutputs (GenericVoidValue) returns (OscParameterOutputList) {}

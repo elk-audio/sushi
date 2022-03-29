@@ -388,14 +388,19 @@ int OSCFrontend::process(Event* event)
     return EventStatus::HANDLED_OK;
 }
 
-int OSCFrontend::receive_port() const
+std::string OSCFrontend::send_ip() const
 {
-    return _osc->receive_port();
+    return _osc->send_ip();
 }
 
 int OSCFrontend::send_port() const
 {
     return _osc->send_port();
+}
+
+int OSCFrontend::receive_port() const
+{
+    return _osc->receive_port();
 }
 
 std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()

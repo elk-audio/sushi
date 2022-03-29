@@ -259,6 +259,7 @@ class OscControlService : public OscController::Service
 public:
     OscControlService(sushi::ext::SushiControl* controller) : _controller{controller->osc_controller()} {}
 
+    grpc::Status GetSendIP(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status GetSendPort(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
     grpc::Status GetReceivePort(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
     grpc::Status GetEnabledParameterOutputs(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::OscParameterOutputList* response) override;

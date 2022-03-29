@@ -104,14 +104,19 @@ public:
     virtual void send(const char* address_pattern, int payload) = 0;
     virtual void send(const char* address_pattern, float payload) = 0;
 
-    int receive_port() const
+    std::string send_ip() const
     {
-        return _receive_port;
+        return _send_ip;
     }
 
     int send_port() const
     {
         return _send_port;
+    }
+
+    int receive_port() const
+    {
+        return _receive_port;
     }
 
 protected:

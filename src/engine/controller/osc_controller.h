@@ -39,6 +39,8 @@ public:
 
     ~OscController() override = default;
 
+    std::string get_send_ip() const override;
+
     int get_send_port() const override;
 
     int get_receive_port() const override;

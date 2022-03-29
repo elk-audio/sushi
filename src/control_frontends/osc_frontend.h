@@ -163,9 +163,11 @@ public:
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
-    int receive_port() const;
+    std::string send_ip() const;
 
     int send_port() const;
+
+    int receive_port() const;
 
     bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
 
