@@ -72,10 +72,22 @@ std::string to_string(INIT_STATUS init_status)
     return "";
 }
 
+void init_logger(const SushiOptions& options)
+{
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
+                                            "Logger",
+                                            options.log_level,
+                                            options.enable_flush_interval,
+                                            options.log_flush_interval);
+
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
+    {
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+    }
+}
+
 sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
 {
-    _init_logger(options);
-
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     _raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (_raspa_status < 0)
@@ -204,20 +216,6 @@ void Sushi::exit(SushiOptions& options)
 #endif
 }
 
-void Sushi::_init_logger(SushiOptions& options)
-{
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
-                                            "Logger",
-                                            options.log_level,
-                                            options.enable_flush_interval,
-                                            options.log_flush_interval);
-
-    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
-    {
-        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
-    }
-}
-
 sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& options,
                                                      audio_frontend::BaseAudioFrontend* audio_frontend)
 {
@@ -258,7 +256,7 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& option
         options.frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = _configurator->load_event_list();
-        if(status == jsonconfig::JsonConfigReturnStatus::OK)
+        if (status == jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend)->add_sequencer_events(events);
         }

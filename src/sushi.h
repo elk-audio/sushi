@@ -112,6 +112,8 @@ struct SushiOptions
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 };
 
+void init_logger(const SushiOptions& options);
+
 class Sushi
 {
 public:
@@ -155,8 +157,6 @@ public:
     }
 
 private:
-    void _init_logger(SushiOptions& options);
-
     INIT_STATUS _load_configuration(SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
 
     INIT_STATUS _setup_audio_frontend(SushiOptions& options, int cv_inputs, int cv_outputs);
