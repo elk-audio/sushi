@@ -412,7 +412,8 @@ void PortAudioFrontend::_copy_interleaved_audio(const float* input)
     {
         if (c < _audio_input_channels)
         {
-            float* in_dst = _in_buffer.channel(c);
+            float* in_dst = _in_buffer.channel(c); // TODO: Cant's this be one line up!? Test!
+
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
                 in_dst[s] = input[s * _num_total_input_channels + c];
@@ -432,7 +433,8 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
     {
         if (c < _audio_output_channels)
         {
-            const float* out_src = _out_buffer.channel(c);
+            const float* out_src = _out_buffer.channel(c);  // TODO: Cant's this be one line up!? Test!
+
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
                 output[s * _num_total_output_channels + c] = out_src[s];
