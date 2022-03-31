@@ -77,7 +77,7 @@ void EmbeddedFrontend::run()
 
 void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
                                      float** array_of_write_pointers,
-                                     int channel_count, // TODO: channel count should be static, set in init, no?
+                                     int channel_count, // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
                                      int sample_count)
 {
     // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded!
@@ -101,9 +101,7 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
         }
     }
 
-    // TODO: Deal with CV!
-
-    // TODO: Do I need to COPY the buffers, can't I just use the raw pointers!?
+    // TODO: Deal also with CV!
 
     auto timestamp = std::chrono::duration_cast<Time>(twine::current_rt_time() - _start_time);
 
@@ -118,8 +116,7 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
     for (int c = 0; c < channel_count; ++c)
     {
         float* out_dst = array_of_write_pointers[c];
-
-        const float* out_src = _out_buffer.channel(c); // TODO: in Ruben's code this was inside the for loop, can't see why.
+        const float* out_src = _out_buffer.channel(c);
 
         for (int s = 0; s < sample_count; ++s)
         {

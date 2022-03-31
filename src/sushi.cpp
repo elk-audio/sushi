@@ -94,15 +94,13 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
     {
         return INIT_STATUS::FAILED_TWINE_INITIALIZATION;
     }
-#endif
 
-    // TODO: Why is this outside of the above ifdef?
     if (options.frontend_type == FrontendType::XENOMAI_RASPA)
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
+#endif
 
-    // TODO: JUCE Supports setting the sample rate dynamically - but Sushi requires it at compile time!
     _engine = std::make_unique<engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
                                                     options.rt_cpu_cores,
                                                     options.debug_mode_switches,
@@ -183,7 +181,6 @@ void Sushi::start(SushiOptions& options)
     _engine->event_dispatcher()->run();
     _midi_frontend->run();
 
-    // TODO: Add embedded?
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||
         options.frontend_type == FrontendType::PORTAUDIO)
@@ -202,7 +199,6 @@ void Sushi::exit(SushiOptions& options)
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
 
-    // TODO: Add embedded?
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||
         options.frontend_type == FrontendType::PORTAUDIO)
