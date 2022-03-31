@@ -135,8 +135,8 @@ void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBu
             return;
         }
 
-        auto buffer = ChunkSampleBuffer::create_non_owning_buffer(const_cast<ChunkSampleBuffer&>(in_buffer),
-                                                                  start_channel, channels);
+        const auto buffer = ChunkSampleBuffer::create_non_owning_buffer(const_cast<ChunkSampleBuffer&>(in_buffer),
+                                                                        start_channel, channels);
 
         // Ramp if bypass was recently toggled
         if (_bypass_manager.should_ramp())
