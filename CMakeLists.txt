@@ -589,9 +589,6 @@ target_link_libraries(sushi_library PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIB
 ####################################
 
 target_compile_features(sushi_library PUBLIC cxx_std_17)
-
-# TODO: I removed -fno-rtti, the JUCE GUI example uses it. Could fix later.
-target_compile_options(sushi_library PUBLIC -Wall -Wextra -fPIC -Wno-psabi -ffast-math)
 target_compile_definitions(sushi_library PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 
 #####################
