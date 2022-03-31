@@ -27,6 +27,12 @@ namespace controller_impl {
 OscController::OscController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
 
+
+std::string OscController::get_send_ip() const
+{
+    return _osc_frontend->send_ip();
+}
+
 int OscController::get_send_port() const
 {
     return _osc_frontend->send_port();
@@ -63,7 +69,7 @@ ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, 
 
         bool status = _osc_frontend->connect_from_parameter(processor->name(), parameter_descriptor->name());
 
-        if(status == false)
+        if (status == false)
         {
             return EventStatus::ERROR;
         }
@@ -97,7 +103,7 @@ ext::ControlStatus OscController::disable_output_for_parameter(int processor_id,
 
         bool status = _osc_frontend->disconnect_from_parameter(processor->name(), parameter_descriptor->name());
 
-        if(status == false)
+        if (status == false)
         {
             return EventStatus::ERROR;
         }

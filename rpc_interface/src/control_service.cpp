@@ -1890,6 +1890,13 @@ grpc::Status CvGateControlService::DisconnectAllGateOutputsFromProcessor(grpc::S
     return Service::DisconnectAllGateOutputsFromProcessor(context, request, response);
 }
 
+grpc::Status OscControlService::GetSendIP(grpc::ServerContext* /*context*/,
+                                          const sushi_rpc::GenericVoidValue* /*request*/,
+                                          sushi_rpc::GenericStringValue* response)
+{
+  response->set_value(_controller->get_send_ip());
+  return grpc::Status::OK;
+}
 
 grpc::Status OscControlService::GetSendPort(grpc::ServerContext* /*context*/,
                                             const sushi_rpc::GenericVoidValue* /*request*/,

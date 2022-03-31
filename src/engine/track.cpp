@@ -171,7 +171,7 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
 {
     /* For Tracks, process function is called from render() and the input audio data
      * should be copied to _input_buffer prior to this call.
-     * We alias the buffers so we can swap them cheaply, without copying the underlying
+     * We alias the buffers, so we can swap them cheaply, without copying the underlying
      * data, though we can't alias in since it is const, even though it points to
      * _input_buffer  */
     ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(_input_buffer);
@@ -229,7 +229,7 @@ void Track::process_event(const RtEvent& event)
 {
     if (is_keyboard_event(event))
     {
-        /* Keyboard events are cached so they can be passed on
+        /* Keyboard events are cached, so they can be passed on
          * to the next processor in the track */
         _kb_event_buffer.push(event);
     }

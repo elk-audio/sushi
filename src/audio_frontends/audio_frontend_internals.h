@@ -89,7 +89,7 @@ inline float ramp_cv_output(float* output, float current_value, float target_val
     return target_value;
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 
 #endif //SUSHI_AUDIO_FRONTEND_INTERNALS_H

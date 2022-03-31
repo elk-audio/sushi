@@ -588,6 +588,7 @@ class OscController
 public:
     virtual ~OscController() = default;
 
+    virtual std::string get_send_ip() const = 0;
     virtual int get_send_port() const = 0;
     virtual int get_receive_port() const = 0;
     virtual std::vector<std::string> get_enabled_parameter_outputs() const = 0;

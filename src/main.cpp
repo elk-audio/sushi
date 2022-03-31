@@ -34,6 +34,8 @@
 #include "audio_frontends/portaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
+#include "control_frontends/oscpack_osc_messenger.h"
+
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
@@ -144,16 +146,19 @@ int main(int argc, char* argv[])
     std::string input_filename;
     std::string output_filename;
 
-    std::string log_level = std::string(CompileTimeSettings::log_level_default);
-    std::string log_filename = std::string(CompileTimeSettings::log_filename_default);
-    std::string config_filename = std::string(CompileTimeSettings::json_filename_default);
-    std::string jack_client_name = std::string(CompileTimeSettings::jack_client_name_default);
+    std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
+    std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
+    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
+    std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
-    int osc_server_port = CompileTimeSettings::osc_server_port;
-    int osc_send_port = CompileTimeSettings::osc_send_port;
+    int osc_server_port = SUSHI_OSC_SERVER_PORT_DEFAULT;
+    int osc_send_port = SUSHI_OSC_SEND_PORT_DEFAULT;
+    auto osc_send_ip = SUSHI_OSC_SEND_IP_DEFAULT;
+
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
-    std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
+
+    std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
     bool debug_mode_switches = false;
@@ -270,6 +275,10 @@ int main(int argc, char* argv[])
             osc_send_port = atoi(opt.arg);
             break;
 
+        case OPT_IDX_OSC_SEND_IP:
+            osc_send_ip = opt.arg;
+            break;
+
         case OPT_IDX_GRPC_LISTEN_ADDRESS:
             grpc_listening_address = opt.arg;
             break;
@@ -314,7 +323,7 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                                rt_cpu_cores,
                                                                debug_mode_switches,
                                                                nullptr);
@@ -502,10 +511,12 @@ int main(int argc, char* argv[])
 #else
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 #endif
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
-                                                                              controller.get(),
-                                                                              osc_server_port,
-                                                                              osc_send_port);
+
+        SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
+
+        auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
+
+        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), oscpack_messenger);
         controller->set_osc_frontend(osc_frontend.get());
         configurator->set_osc_frontend(osc_frontend.get());
 
