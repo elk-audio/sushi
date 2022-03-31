@@ -81,6 +81,7 @@ set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
+option(BUILD_STANDALONE_APP "Build standalone Sushi executable" ON)
 
 if (APPLE)
     # macOS defaults
@@ -597,8 +598,9 @@ target_compile_definitions(sushi_library PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=
 #  Sub projects     #
 #####################
 
-# TODO: Make this optional.
-add_subdirectory(apps)
+if (${BUILD_STANDALONE_APP})
+    add_subdirectory(apps)
+endif()
 
 ######################
 #  Tests subproject  #
