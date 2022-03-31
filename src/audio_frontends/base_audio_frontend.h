@@ -74,11 +74,7 @@ public:
      * @return AudioFrontendInitStatus::OK in case of success,
      *         or different error code otherwise.
      */
-    virtual AudioFrontendStatus init(BaseAudioFrontendConfiguration* config)
-    {
-        _config = config;
-        return AudioFrontendStatus::OK;
-    };
+    virtual AudioFrontendStatus init(BaseAudioFrontendConfiguration* config);
 
     /**
      * @brief Free resources allocated during init. stops the frontend if currently running.
@@ -102,6 +98,10 @@ public:
 protected:
     BaseAudioFrontendConfiguration* _config;
     engine::BaseEngine* _engine;
+
+    BypassManager _pause_manager;
+    std::unique_ptr<twine::RtConditionVariable> _pause_notify;
+    std::atomic_bool _pause_notified{false};
 };
 
 

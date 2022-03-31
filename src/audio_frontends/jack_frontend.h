@@ -146,10 +146,6 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _out_buffer{MAX_FRONTEND_CHANNELS};
     engine::ControlBuffer          _in_controls;
     engine::ControlBuffer          _out_controls;
-
-    BypassManager _pause_manager;
-    std::unique_ptr<twine::RtConditionVariable> _pause_notify;
-    std::atomic_bool _pause_notified{false};
 };
 
 }; // end namespace jack_frontend

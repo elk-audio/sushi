@@ -50,16 +50,6 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return ret_code;
     }
 
-    try
-    {
-        _pause_notify = twine::RtConditionVariable::create_rt_condition_variable();
-    }
-    catch(const std::exception& e)
-    {
-        SUSHI_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
-    }
-
     auto raspa_config = static_cast<const XenomaiRaspaFrontendConfiguration*>(_config);
 
     unsigned int debug_flags = 0;
