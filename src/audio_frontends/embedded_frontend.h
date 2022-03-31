@@ -37,6 +37,8 @@ namespace audio_frontend {
 
 using TimePoint = std::chrono::nanoseconds;
 
+// TODO:
+//   Hard-coding the number of channels for now.
 constexpr int EMBEDDED_FRONTEND_CHANNELS = 2;
 
 struct EmbeddedFrontendConfiguration : public BaseAudioFrontendConfiguration
@@ -63,12 +65,34 @@ public:
         cleanup();
     }
 
+    /**
+     * @brief Initialize frontend with the given configuration.
+     *        If anything can go wrong during initialization, partially allocated
+     *        resources should be freed by calling cleanup().
+     *
+     * @param config Should be an object of the proper derived configuration class.
+     * @return AudioFrontendInitStatus::OK in case of success,
+     *         or different error code otherwise.
+     */
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
+    /**
+     * @brief Free resources allocated during init. stops the frontend if currently running.
+     */
     void cleanup() override;
 
+    /**
+     * @brief Run engine main loop.
+     */
     void run() override;
 
+    /**
+     * Method to invoke from the host's audio callback.
+     * @param array_of_read_pointers
+     * @param array_of_write_pointers
+     * @param channel_count
+     * @param sample_count
+     */
     void process_audio(const float** array_of_read_pointers,
                        float** array_of_write_pointers,
                        int channel_count,

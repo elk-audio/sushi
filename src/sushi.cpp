@@ -66,10 +66,10 @@ std::string to_string(INIT_STATUS init_status)
             return "Failed to setup Midi frontend";
         case INIT_STATUS::OK:
             return "Ok";
-    };
-
-    assert(false);
-    return "";
+        default:
+            assert(false);
+            return "";
+    }
 }
 
 void init_logger(const SushiOptions& options)
@@ -86,7 +86,11 @@ void init_logger(const SushiOptions& options)
     }
 }
 
-sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
+///////////////////////////////////////////
+// Sushi methods                         //
+///////////////////////////////////////////
+
+sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
 {
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     _raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
@@ -135,9 +139,9 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
     _midi_dispatcher->set_midi_inputs(midi_inputs);
     _midi_dispatcher->set_midi_outputs(midi_outputs);
 
-    ////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////
     // Set up Audio Frontend //
-    ////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////
     int cv_inputs = audio_config.cv_inputs.value_or(0);
     int cv_outputs = audio_config.cv_outputs.value_or(0);
 
@@ -147,18 +151,18 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
         return audio_frontend_status;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////
     // Load Configuration //
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////
     auto configuration_status = _load_configuration(options, _audio_frontend.get());
     if (configuration_status != INIT_STATUS::OK)
     {
         return configuration_status;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////
     // Set up Controller and Control Frontends //
-    ////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////
     auto control_status = _set_up_control(options, midi_inputs, midi_outputs);
     if (control_status != INIT_STATUS::OK)
     {
@@ -170,7 +174,7 @@ sushi::INIT_STATUS sushi::Sushi::init(sushi::SushiOptions& options)
     return INIT_STATUS::OK;
 }
 
-void Sushi::start(SushiOptions& options)
+void Sushi::start(const SushiOptions& options)
 {
     if (options.enable_timings)
     {
@@ -194,7 +198,7 @@ void Sushi::start(SushiOptions& options)
 #endif
 }
 
-void Sushi::exit(SushiOptions& options)
+void Sushi::exit(const SushiOptions& options)
 {
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
@@ -212,7 +216,7 @@ void Sushi::exit(SushiOptions& options)
 #endif
 }
 
-sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& options,
+sushi::INIT_STATUS sushi::Sushi::_load_configuration(const sushi::SushiOptions& options,
                                                      audio_frontend::BaseAudioFrontend* audio_frontend)
 {
     auto status = _configurator->load_host_config();
@@ -274,7 +278,7 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(sushi::SushiOptions& option
     return INIT_STATUS::OK;
 }
 
-INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, int cv_outputs)
+INIT_STATUS Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs)
 {
     switch (options.frontend_type)
     {
@@ -362,7 +366,7 @@ INIT_STATUS Sushi::_setup_audio_frontend(SushiOptions& options, int cv_inputs, i
     return INIT_STATUS::OK;
 }
 
-INIT_STATUS Sushi::_set_up_control(SushiOptions& options, int midi_inputs, int midi_outputs)
+INIT_STATUS Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs)
 {
     _controller = std::make_unique<sushi::engine::Controller>(_engine.get(), _midi_dispatcher.get());
 

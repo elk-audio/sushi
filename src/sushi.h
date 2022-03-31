@@ -87,6 +87,9 @@ enum class INIT_STATUS
 
 std::string to_string(INIT_STATUS init_status);
 
+/**
+ * Collects all options for instantiating Sushi in one place.
+ */
 struct SushiOptions
 {
     std::string input_filename;
@@ -112,6 +115,10 @@ struct SushiOptions
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 };
 
+/**
+ * This should be called only once in the lifetime of the embedding binary - or it will fail.
+ * @param options
+ */
 void init_logger(const SushiOptions& options);
 
 class Sushi
@@ -121,30 +128,34 @@ public:
     ~Sushi() = default;
 
     /**
-     *
-     * @param options
-     * @return
+     * Initializes the class.
+     * @param options options for Sushi instance
+     * @return The success or failure of the init process.
      */
-    INIT_STATUS init(SushiOptions& options);
+    INIT_STATUS init(const SushiOptions& options);
 
     /**
-     *
+     * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
      * @param options
      */
-    void start(SushiOptions& options);
+    void start(const SushiOptions& options);
 
     /**
-     *
+     * Stops the Sushi instance from running.
      * @param options
      */
-    void exit(SushiOptions& options);
+//  TODO: Currently, once called, the instance will crash if is you subsequently again invoke start(...).
+    void exit(const SushiOptions& options);
 
     /**
-     *
+     * Only needed if the raspa frontend is used, to check on its initialization status.
      * @return
      */
     int raspa_status() { return _raspa_status; }
 
+    /**
+     * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
+     */
     engine::Controller* controller() { return _controller.get(); }
 
     /**
@@ -157,10 +168,10 @@ public:
     }
 
 private:
-    INIT_STATUS _load_configuration(SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
+    INIT_STATUS _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
 
-    INIT_STATUS _setup_audio_frontend(SushiOptions& options, int cv_inputs, int cv_outputs);
-    INIT_STATUS _set_up_control(SushiOptions& options, int midi_inputs, int midi_outputs);
+    INIT_STATUS _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
+    INIT_STATUS _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
 

@@ -63,28 +63,33 @@ AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* confi
 void EmbeddedFrontend::cleanup()
 {
     _engine->enable_realtime(false);
-
-    // TODO: FILL
 }
 
 void EmbeddedFrontend::run()
 {
     _engine->enable_realtime(true);
     _start_time = twine::current_rt_time();
-
-    // TODO: FILL
 }
 
 void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
                                      float** array_of_write_pointers,
-                                     int channel_count, // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
+// TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
+//  Also, in JUCE there seems to be support for having different numbers of input and output channels.
+                                     int channel_count,
                                      int sample_count)
 {
-    // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded!
+    // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
     if (sample_count != AUDIO_CHUNK_SIZE)
     {
-        assert(sample_count == AUDIO_CHUNK_SIZE);
+        assert(false);
         std::cout << "sample_count != AUDIO_CHUNK_SIZE, in embedded frontend." << std::endl;
+        return;
+    }
+
+    if (channel_count != EMBEDDED_FRONTEND_CHANNELS)
+    {
+        assert(false);
+        std::cout << "Channel count passed is different to EMBEDDED_FRONTEND_CHANNELS, in embedded frontend." << std::endl;
         return;
     }
 
@@ -101,8 +106,11 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
         }
     }
 
-    // TODO: Deal also with CV!
+    // TODO: Deal also with MIDI.
 
+    // TODO: Deal also with CV.
+
+    // TODO: This doesn't seem to work as expected - The LV2 metro plugin isn't working with this frontend.
     auto timestamp = std::chrono::duration_cast<Time>(twine::current_rt_time() - _start_time);
 
     _out_buffer.clear();

@@ -14,7 +14,7 @@
 */
 
 /**
-* @brief Tools for configuring Sushi if it is embedded in a standalone host.
+* @brief Tools for Sushi if it is embedded in a standalone host.
 * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
 */
 
