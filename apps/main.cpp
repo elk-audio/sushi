@@ -62,6 +62,8 @@ int main(int argc, char* argv[])
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
+    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
+
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present.
     if (argc > 0)
@@ -73,9 +75,9 @@ int main(int argc, char* argv[])
     SushiOptions options;
 
     auto option_status = parse_options(argc, argv, options);
-    if (option_status == PARSE_STATUS::ERROR)                  return 1;
-    else if (option_status == PARSE_STATUS::MISSING_ARGUMENTS) return 2;
-    else if (option_status == PARSE_STATUS::EXIT)              return 0;
+    if (option_status == ParseStatus::ERROR)                  return 1;
+    else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
+    else if (option_status == ParseStatus::EXIT)              return 0;
 
     sushi::Sushi sushi;
     auto init_status = sushi.init(options);
@@ -119,7 +121,6 @@ int main(int argc, char* argv[])
 
     sushi.exit(options);
 
-    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
     SUSHI_LOG_INFO("Sushi exiting normally!");
 
     return 0;

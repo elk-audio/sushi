@@ -25,7 +25,7 @@
 
 namespace sushi {
 
-enum class PARSE_STATUS
+enum class ParseStatus
 {
     OK,
     ERROR,
@@ -62,7 +62,7 @@ void print_version_and_build_info()
     std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
-PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
+ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 {
     optionparser::Stats cl_stats(usage, argc, argv);
     std::vector<optionparser::Option> cl_options(cl_stats.options_max);
@@ -71,13 +71,13 @@ PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 
     if (cl_parser.error())
     {
-        return PARSE_STATUS::ERROR;
+        return ParseStatus::ERROR;
     }
 
     if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
     {
         optionparser::printUsage(fwrite, stdout, usage);
-        return PARSE_STATUS::MISSING_ARGUMENTS;
+        return ParseStatus::MISSING_ARGUMENTS;
     }
 
     for (int i = 0; i < cl_parser.optionsCount(); i++)
@@ -95,7 +95,7 @@ PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
             case OPT_IDX_VERSION:
                 {
                     print_version_and_build_info();
-                    return PARSE_STATUS::EXIT;
+                    return ParseStatus::EXIT;
                 }
                 break;
 
@@ -208,7 +208,7 @@ PARSE_STATUS parse_options(int argc, char* argv[], sushi::SushiOptions& options)
         options.output_filename = options.input_filename + "_proc.wav";
     }
 
-    return PARSE_STATUS::OK;
+    return ParseStatus::OK;
 }
 
 } // namespace Sushi
