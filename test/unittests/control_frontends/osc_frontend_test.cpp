@@ -511,6 +511,31 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
     _module_under_test->process(&event); // But this should - the one expected.
 }
 
+TEST_F(TestOSCFrontend, TestStateHandling)
+{
+    _module_under_test->set_connect_from_all_parameters(true);
+    _module_under_test->connect_from_all_parameters();
+
+    auto state = _module_under_test->save_state();
+
+    EXPECT_TRUE(state.auto_enable_outputs());
+
+    auto outputs = state.enabled_outputs();
+    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ("processor", outputs.front().first);
+    auto params = outputs.front().second;
+    ASSERT_EQ(1, params.size());
+    EXPECT_EQ(0, params.front());
+
+    _module_under_test->disconnect_from_all_parameters();
+    ASSERT_EQ(0, _module_under_test->get_enabled_parameter_outputs().size());
+
+    _module_under_test->set_state(state);
+    auto output_paths = _module_under_test->get_enabled_parameter_outputs();
+    ASSERT_EQ(1, output_paths.size());
+    EXPECT_EQ("/parameter/processor/param_1", output_paths.front());
+}
+
 TEST(TestOSCFrontendInternal, TestMakeSafePath)
 {
     EXPECT_EQ("s_p_a_c_e_", make_safe_path("s p a c e "));
