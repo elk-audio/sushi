@@ -105,9 +105,11 @@ sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
     }
 #endif
 
+    _options = options;
+
     _engine = std::make_unique<engine::AudioEngine>(CompileTimeSettings::sample_rate_default,
-                                                    options.rt_cpu_cores,
-                                                    options.debug_mode_switches,
+                                                    _options.rt_cpu_cores,
+                                                    _options.debug_mode_switches,
                                                     nullptr);
 
     _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
@@ -115,7 +117,7 @@ sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
     _configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(_engine.get(),
                                                                           _midi_dispatcher.get(),
                                                                           _engine->processor_container(),
-                                                                          options.config_filename);
+                                                                          _options.config_filename);
 
     auto [audio_config_status, audio_config] = _configurator->load_audio_config();
     if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -174,9 +176,9 @@ sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
     return InitStatus::OK;
 }
 
-void Sushi::start(const SushiOptions& options)
+void Sushi::start()
 {
-    if (options.enable_timings)
+    if (_options.enable_timings)
     {
         _engine->performance_timer()->enable(true);
     }
@@ -185,27 +187,27 @@ void Sushi::start(const SushiOptions& options)
     _engine->event_dispatcher()->run();
     _midi_frontend->run();
 
-    if (options.frontend_type == FrontendType::JACK ||
-        options.frontend_type == FrontendType::XENOMAI_RASPA ||
-        options.frontend_type == FrontendType::PORTAUDIO)
+    if (_options.frontend_type == FrontendType::JACK ||
+        _options.frontend_type == FrontendType::XENOMAI_RASPA ||
+        _options.frontend_type == FrontendType::PORTAUDIO)
     {
         _osc_frontend->run();
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    SUSHI_LOG_INFO("Starting gRPC server with address: {}", options.grpc_listening_address);
+    SUSHI_LOG_INFO("Starting gRPC server with address: {}", _options.grpc_listening_address);
     _rpc_server->start();
 #endif
 }
 
-void Sushi::exit(const SushiOptions& options)
+void Sushi::exit()
 {
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
 
-    if (options.frontend_type == FrontendType::JACK ||
-        options.frontend_type == FrontendType::XENOMAI_RASPA ||
-        options.frontend_type == FrontendType::PORTAUDIO)
+    if (_options.frontend_type == FrontendType::JACK ||
+        _options.frontend_type == FrontendType::XENOMAI_RASPA ||
+        _options.frontend_type == FrontendType::PORTAUDIO)
     {
         _osc_frontend->stop();
         _midi_frontend->stop();

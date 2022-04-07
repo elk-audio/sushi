@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
         print_sushi_headline();
     }
 
-    sushi.start(options);
+    sushi.start();
 
     if (options.frontend_type != FrontendType::OFFLINE)
     {
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
         exit_notifier.wait(lock, exit_condition);
     }
 
-    sushi.exit(options);
+    sushi.exit();
 
     SUSHI_LOG_INFO("Sushi exiting normally!");
 

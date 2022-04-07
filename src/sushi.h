@@ -136,16 +136,14 @@ public:
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
-     * @param options
      */
-    void start(const SushiOptions& options);
+    void start();
 
     /**
      * Stops the Sushi instance from running.
-     * @param options
      */
 //  TODO: Currently, once called, the instance will crash if is you subsequently again invoke start(...).
-    void exit(const SushiOptions& options);
+    void exit();
 
     /**
      * Only needed if the raspa frontend is used, to check on its initialization status.
@@ -168,10 +166,10 @@ public:
     }
 
 private:
-InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
+    InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
 
-InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
-InitStatus _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
+    InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
+    InitStatus _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
 
@@ -189,6 +187,8 @@ InitStatus _set_up_control(const SushiOptions& options, int midi_inputs, int mid
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
 
     int _raspa_status {0};
+
+    SushiOptions _options;
 };
 
 } // namespace Sushi
