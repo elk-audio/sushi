@@ -30,41 +30,41 @@ namespace sushi
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi");
 
-std::string to_string(INIT_STATUS init_status)
+std::string to_string(InitStatus init_status)
 {
     switch (init_status)
     {
-        case INIT_STATUS::FAILED_LOAD_HOST_CONFIG:
+        case InitStatus::FAILED_LOAD_HOST_CONFIG:
             return "Failed to load host configuration from config file";
-        case INIT_STATUS::FAILED_INVALID_CONFIGURATION_FILE:
+        case InitStatus::FAILED_INVALID_CONFIGURATION_FILE:
             return "Error reading host config, check logs for details.";
-        case INIT_STATUS::FAILED_LOAD_TRACKS:
+        case InitStatus::FAILED_LOAD_TRACKS:
             return "Failed to load tracks from Json config file";
-        case INIT_STATUS::FAILED_LOAD_MIDI_MAPPING:
+        case InitStatus::FAILED_LOAD_MIDI_MAPPING:
             return "Failed to load MIDI mapping from Json config file";
-        case INIT_STATUS::FAILED_LOAD_CV_GATE:
+        case InitStatus::FAILED_LOAD_CV_GATE:
             return "Failed to load CV and Gate configuration";
-        case INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES:
+        case InitStatus::FAILED_LOAD_PROCESSOR_STATES:
             return "Failed to load initial processor states";
-        case INIT_STATUS::FAILED_LOAD_EVENT_LIST:
+        case InitStatus::FAILED_LOAD_EVENT_LIST:
             return "Failed to load Event list from Json config file";
-        case INIT_STATUS::FAILED_LOAD_EVENTS:
+        case InitStatus::FAILED_LOAD_EVENTS:
             return "Failed to load Events from Json config file";
-        case INIT_STATUS::FAILED_LOAD_OSC:
+        case InitStatus::FAILED_LOAD_OSC:
             return "Failed to load OSC echo specification from Json config file";
-        case INIT_STATUS::FAILED_OSC_FRONTEND_INITIALIZATION:
+        case InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION:
             return "Failed to setup OSC frontend";
-        case INIT_STATUS::FAILED_INVALID_FILE_PATH:
+        case InitStatus::FAILED_INVALID_FILE_PATH:
             return "Error reading config file, invalid file path: ";
-        case INIT_STATUS::FAILED_TWINE_INITIALIZATION:
+        case InitStatus::FAILED_XENOMAI_INITIALIZATION:
             return "Failed to initialize Xenomai process, err. code: ";
-        case INIT_STATUS::FAILED_AUDIO_FRONTEND_MISSING:
+        case InitStatus::FAILED_AUDIO_FRONTEND_MISSING:
             return "No audio frontend selected";
-        case INIT_STATUS::FAILED_AUDIO_FRONTEND_INITIALIZATION:
+        case InitStatus::FAILED_AUDIO_FRONTEND_INITIALIZATION:
             return "Error initializing frontend, check logs for details.";
-        case INIT_STATUS::FAILED_MIDI_FRONTEND_INITIALIZATION:
+        case InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION:
             return "Failed to setup Midi frontend";
-        case INIT_STATUS::OK:
+        case InitStatus::OK:
             return "Ok";
         default:
             assert(false);
@@ -90,13 +90,13 @@ void init_logger(const SushiOptions& options)
 // Sushi methods                         //
 ///////////////////////////////////////////
 
-sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
+sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
 {
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     _raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (_raspa_status < 0)
     {
-        return INIT_STATUS::FAILED_TWINE_INITIALIZATION;
+        return INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
     }
 
     if (options.frontend_type == FrontendType::XENOMAI_RASPA)
@@ -122,10 +122,10 @@ sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
     {
         if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
-            return INIT_STATUS::FAILED_INVALID_FILE_PATH;
+            return InitStatus::FAILED_INVALID_FILE_PATH;
         }
 
-        return INIT_STATUS::FAILED_INVALID_CONFIGURATION_FILE;
+        return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
     }
 
     int midi_inputs = audio_config.midi_inputs.value_or(1);
@@ -146,7 +146,7 @@ sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
     int cv_outputs = audio_config.cv_outputs.value_or(0);
 
     auto audio_frontend_status = _setup_audio_frontend(options, cv_inputs, cv_outputs);
-    if (audio_frontend_status != INIT_STATUS::OK)
+    if (audio_frontend_status != InitStatus::OK)
     {
         return audio_frontend_status;
     }
@@ -155,7 +155,7 @@ sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
     // Load Configuration //
     ////////////////////////
     auto configuration_status = _load_configuration(options, _audio_frontend.get());
-    if (configuration_status != INIT_STATUS::OK)
+    if (configuration_status != InitStatus::OK)
     {
         return configuration_status;
     }
@@ -164,14 +164,14 @@ sushi::INIT_STATUS sushi::Sushi::init(const sushi::SushiOptions& options)
     // Set up Controller and Control Frontends //
     /////////////////////////////////////////////
     auto control_status = _set_up_control(options, midi_inputs, midi_outputs);
-    if (control_status != INIT_STATUS::OK)
+    if (control_status != InitStatus::OK)
     {
         return control_status;
     }
 
     _configurator.reset();
 
-    return INIT_STATUS::OK;
+    return InitStatus::OK;
 }
 
 void Sushi::start(const SushiOptions& options)
@@ -216,40 +216,40 @@ void Sushi::exit(const SushiOptions& options)
 #endif
 }
 
-sushi::INIT_STATUS sushi::Sushi::_load_configuration(const sushi::SushiOptions& options,
+sushi::InitStatus sushi::Sushi::_load_configuration(const sushi::SushiOptions& options,
                                                      audio_frontend::BaseAudioFrontend* audio_frontend)
 {
     auto status = _configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        return INIT_STATUS::FAILED_LOAD_HOST_CONFIG;
+        return InitStatus::FAILED_LOAD_HOST_CONFIG;
     }
 
     status = _configurator->load_tracks();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        return INIT_STATUS::FAILED_LOAD_TRACKS;
+        return InitStatus::FAILED_LOAD_TRACKS;
     }
 
     status = _configurator->load_midi();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return INIT_STATUS::FAILED_LOAD_MIDI_MAPPING;
+        return InitStatus::FAILED_LOAD_MIDI_MAPPING;
     }
 
     status = _configurator->load_cv_gate();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return INIT_STATUS::FAILED_LOAD_CV_GATE;
+        return InitStatus::FAILED_LOAD_CV_GATE;
     }
 
     status = _configurator->load_initial_state();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return INIT_STATUS::FAILED_LOAD_PROCESSOR_STATES;
+        return InitStatus::FAILED_LOAD_PROCESSOR_STATES;
     }
 
     if (options.frontend_type == FrontendType::DUMMY ||
@@ -262,7 +262,7 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(const sushi::SushiOptions& 
         }
         else if (status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
-            return INIT_STATUS::FAILED_LOAD_EVENT_LIST;
+            return InitStatus::FAILED_LOAD_EVENT_LIST;
         }
     }
     else
@@ -271,14 +271,14 @@ sushi::INIT_STATUS sushi::Sushi::_load_configuration(const sushi::SushiOptions& 
         if (status != jsonconfig::JsonConfigReturnStatus::OK &&
             status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
-            return INIT_STATUS::FAILED_LOAD_EVENTS;
+            return InitStatus::FAILED_LOAD_EVENTS;
         }
     }
 
-    return INIT_STATUS::OK;
+    return InitStatus::OK;
 }
 
-INIT_STATUS Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs)
+InitStatus Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs)
 {
     switch (options.frontend_type)
     {
@@ -353,20 +353,20 @@ INIT_STATUS Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inp
 
         default:
         {
-            return INIT_STATUS::FAILED_AUDIO_FRONTEND_MISSING;
+            return InitStatus::FAILED_AUDIO_FRONTEND_MISSING;
         }
     }
 
     auto audio_frontend_status = _audio_frontend->init(_frontend_config.get());
     if (audio_frontend_status != sushi::audio_frontend::AudioFrontendStatus::OK)
     {
-        return INIT_STATUS::FAILED_AUDIO_FRONTEND_INITIALIZATION;
+        return InitStatus::FAILED_AUDIO_FRONTEND_INITIALIZATION;
     }
 
-    return INIT_STATUS::OK;
+    return InitStatus::OK;
 }
 
-INIT_STATUS Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs)
+InitStatus Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs)
 {
     _controller = std::make_unique<sushi::engine::Controller>(_engine.get(), _midi_dispatcher.get());
 
@@ -401,14 +401,14 @@ INIT_STATUS Sushi::_set_up_control(const SushiOptions& options, int midi_inputs,
         auto osc_status = _osc_frontend->init();
         if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
         {
-            return INIT_STATUS::FAILED_OSC_FRONTEND_INITIALIZATION;
+            return InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION;
         }
 
         auto status = _configurator->load_osc();
         if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
             status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
-            return INIT_STATUS::FAILED_LOAD_OSC;
+            return InitStatus::FAILED_LOAD_OSC;
         }
     }
     else
@@ -419,7 +419,7 @@ INIT_STATUS Sushi::_set_up_control(const SushiOptions& options, int midi_inputs,
     auto midi_ok = _midi_frontend->init();
     if (!midi_ok)
     {
-        return INIT_STATUS::FAILED_MIDI_FRONTEND_INITIALIZATION;
+        return InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION;
     }
     _midi_dispatcher->set_frontend(_midi_frontend.get());
 
@@ -427,7 +427,7 @@ INIT_STATUS Sushi::_set_up_control(const SushiOptions& options, int midi_inputs,
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _controller.get());
 #endif
 
-    return INIT_STATUS::OK;
+    return InitStatus::OK;
 }
 
 } // namespace Sushi

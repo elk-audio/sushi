@@ -62,7 +62,7 @@ enum class FrontendType
     NONE
 };
 
-enum class INIT_STATUS
+enum class InitStatus
 {
     OK,
 
@@ -78,14 +78,14 @@ enum class INIT_STATUS
     FAILED_LOAD_EVENTS,
     FAILED_LOAD_OSC,
 
-    FAILED_TWINE_INITIALIZATION,
+    FAILED_XENOMAI_INITIALIZATION,
     FAILED_OSC_FRONTEND_INITIALIZATION,
     FAILED_AUDIO_FRONTEND_MISSING,
     FAILED_AUDIO_FRONTEND_INITIALIZATION,
     FAILED_MIDI_FRONTEND_INITIALIZATION
 };
 
-std::string to_string(INIT_STATUS init_status);
+std::string to_string(InitStatus init_status);
 
 /**
  * Collects all options for instantiating Sushi in one place.
@@ -132,7 +132,7 @@ public:
      * @param options options for Sushi instance
      * @return The success or failure of the init process.
      */
-    INIT_STATUS init(const SushiOptions& options);
+    InitStatus init(const SushiOptions& options);
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
@@ -168,10 +168,10 @@ public:
     }
 
 private:
-    INIT_STATUS _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
+InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
 
-    INIT_STATUS _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
-    INIT_STATUS _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
+InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
+InitStatus _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
 

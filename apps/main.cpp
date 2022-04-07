@@ -82,16 +82,16 @@ int main(int argc, char* argv[])
     sushi::Sushi sushi;
     auto init_status = sushi.init(options);
 
-    assert(init_status == INIT_STATUS::OK);
+    assert(init_status == InitStatus::OK);
 
-    if (init_status != INIT_STATUS::OK)
+    if (init_status != InitStatus::OK)
     {
         auto message = to_string(init_status);
-        if (init_status == INIT_STATUS::FAILED_INVALID_FILE_PATH)
+        if (init_status == InitStatus::FAILED_INVALID_FILE_PATH)
         {
             message.append(options.config_filename);
         }
-        else if (init_status == INIT_STATUS::FAILED_TWINE_INITIALIZATION)
+        else if (init_status == InitStatus::FAILED_XENOMAI_INITIALIZATION)
         {
             message.append(std::to_string(sushi.raspa_status()));
         }
