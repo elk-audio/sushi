@@ -320,16 +320,16 @@ bool OSCFrontend::connect_to_parameters_and_properties(const std::string& proces
 
 bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name, int processor_id)
 {
-    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
-    if (parameters_status != ext::ControlStatus::OK)
+    auto processor = _processor_container->processor(processor_name);
+    if (processor)
     {
-        return false;
-    }
-    for (auto& param : parameters)
-    {
-        if (param.type == ext::ParameterType::FLOAT || param.type == ext::ParameterType::INT || param.type == ext::ParameterType::BOOL)
+        for (auto& param: processor->all_parameters())
         {
-            connect_from_parameter(processor_name, param.name);
+            auto type = param->type();
+            if (type == ParameterType::FLOAT || type == ParameterType::INT || type == ParameterType::BOOL)
+            {
+                _connect_from_parameter(processor_name, param->name(), processor_id, param->id());
+            }
         }
     }
     return true;
