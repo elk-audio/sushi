@@ -30,12 +30,40 @@ namespace control_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
+bool OscState::auto_enable_outputs() const
+{
+    return _auto_enable_outputs;
+}
+
+void OscState::set_auto_enable_outputs(bool value)
+{
+    _auto_enable_outputs = value;
+}
+
+const std::vector<std::pair<std::string, std::vector<ObjectId>>>& OscState::enabled_outputs() const
+{
+    return _enabled_outputs;
+}
+
+void OscState::add_enabled_outputs(const std::string& processor_name,
+                                   const std::vector<ObjectId>& enabled_parameters)
+{
+    _enabled_outputs.emplace_back(processor_name, enabled_parameters);
+}
+
+void OscState::add_enabled_outputs(std::string&& processor_name,
+                                   std::vector<ObjectId>&& enabled_parameters)
+{
+    _enabled_outputs.emplace_back(processor_name, enabled_parameters);
+}
+
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          ext::SushiControl* controller,
                          osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
                                           _controller(controller),
                                           _graph_controller(controller->audio_graph_controller()),
                                           _param_controller(controller->parameter_controller()),
+                                          _processor_container(_engine->processor_container()),
                                           _osc(osc_interface)
 {}
 
@@ -131,6 +159,18 @@ OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_na
     return connection;
 }
 
+void OSCFrontend::_connect_from_parameter(const std::string& processor_name,
+                                          const std::string& parameter_name,
+                                          ObjectId processor_id,
+                                          ObjectId parameter_id)
+{
+    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
+
+    _outgoing_connections[processor_id][parameter_id] = id_string;
+
+    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
+}
+
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
     auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
@@ -143,11 +183,7 @@ bool OSCFrontend::connect_from_parameter(const std::string& processor_name, cons
     {
         return false;
     }
-    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
-
-    _outgoing_connections[processor_id][parameter_id] = id_string;
-
-    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    _connect_from_parameter(processor_name, parameter_name, processor_id, parameter_id);
     return true;
 }
 
@@ -407,15 +443,75 @@ std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
 {
     auto outputs = std::vector<std::string>();
 
-    for (const auto& connectionPair : _outgoing_connections)
+    for (const auto& connection_pair : _outgoing_connections)
     {
-        for (const auto& connection : connectionPair.second)
+        for (const auto& connection : connection_pair.second)
         {
             outputs.push_back(connection.second);
         }
     }
 
     return outputs;
+}
+
+OscState OSCFrontend::save_state() const
+{
+    OscState state;
+    state.set_auto_enable_outputs(_connect_from_all_parameters);
+
+    /* Only the outgoing connections are saved as those can be configured manually,
+     * incoming osc messages are always connected to all parameters of all processors */
+    for (const auto& connection_pair : _outgoing_connections)
+    {
+        std::vector<ObjectId> enabled_params;
+        for (const auto& connection : connection_pair.second)
+        {
+            enabled_params.push_back(connection.first);
+        }
+        if (enabled_params.size() > 0)
+        {
+            auto processor = _processor_container->processor(connection_pair.first);
+            if (processor)
+            {
+                state.add_enabled_outputs(std::string(processor->name()), std::move(enabled_params));
+            }
+            SUSHI_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state");
+        }
+    }
+
+    return state;
+}
+
+void OSCFrontend::set_state(const OscState& state)
+{
+    _outgoing_connections.clear();
+    _skip_outputs.clear();
+
+    _connect_from_all_parameters = state.auto_enable_outputs();
+
+    for (auto connections : state.enabled_outputs())
+    {
+        auto processor = _processor_container->processor(connections.first);
+        if (!processor)
+        {
+            SUSHI_LOG_ERROR("Processor {} not found when restoring outgoing connections from state");
+            continue;
+        }
+        for (auto param_id : connections.second)
+        {
+            auto param_info = processor->parameter_from_id(param_id);
+            if (param_info)
+            {
+                _connect_from_parameter(connections.first, param_info->name(), processor->id(), param_id);
+            }
+        }
+        if (_connect_from_all_parameters)
+        {
+            /* This is so that when we later receive an asynchronous PROCESSOR_ADDED event, we
+             * should not add all parameter from this plugin. */
+            _skip_outputs[processor->id()] = true;
+        }
+    }
 }
 
 void OSCFrontend::_setup_engine_control()
@@ -531,11 +627,12 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 connect_to_bypass_state(info.name);
                 connect_to_program_change(info.name);
                 connect_to_parameters_and_properties(info.name, event->processor());
-                if(_connect_from_all_parameters)
+                if(_connect_from_all_parameters && _skip_outputs.count(info.id) == 0)
                 {
                     connect_from_processor_parameters(info.name, event->processor());
+                    SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", info.name);
                 }
-                SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", info.name);
+                _skip_outputs.erase(info.id);
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
             break;
@@ -550,11 +647,12 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 connect_kb_to_track(info.name);
                 connect_to_bypass_state(info.name);
                 connect_to_parameters_and_properties(info.name, event->track());
-                if(_connect_from_all_parameters)
+                if(_connect_from_all_parameters && _skip_outputs.count(info.id) == 0)
                 {
                     connect_from_processor_parameters(info.name, event->processor());
+                    SUSHI_LOG_INFO("Connected OSC callbacks to track {}", info.name);
                 }
-                SUSHI_LOG_INFO("Connected OSC callbacks to track {}", info.name);
+                _skip_outputs.erase(info.id);
             }
             SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
             break;
@@ -589,4 +687,4 @@ std::string osc::make_safe_path(std::string name)
     return name;
 }
 
-}
+} // namespace sushi

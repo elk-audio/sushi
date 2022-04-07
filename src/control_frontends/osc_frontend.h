@@ -42,6 +42,27 @@ namespace control_frontend {
 
 class OSCFrontend;
 
+class OscState
+{
+public:
+
+    bool auto_enable_outputs() const;
+
+    void set_auto_enable_outputs(bool value);
+
+    const std::vector<std::pair<std::string, std::vector<ObjectId>>>& enabled_outputs() const;
+
+    void add_enabled_outputs(const std::string& processor_name,
+                             const std::vector<ObjectId>& enabled_parameters);
+
+    void add_enabled_outputs(std::string&& processor_name,
+                             std::vector<ObjectId>&& enabled_parameters);
+
+private:
+    bool _auto_enable_outputs;
+    std::vector<std::pair<std::string, std::vector<ObjectId>>> _enabled_outputs;
+};
+
 struct OscConnection
 {
     ObjectId           processor;
@@ -173,6 +194,10 @@ public:
 
     void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
 
+    OscState save_state() const;
+
+    void set_state(const OscState& state);
+
 private:
     OscConnection* _connect_to_parameter(const std::string& processor_name,
                                          const std::string& parameter_name,
@@ -183,6 +208,11 @@ private:
                                         const std::string& property_name,
                                         ObjectId processor_id,
                                         ObjectId property_id);
+
+    void _connect_from_parameter(const std::string& processor_name,
+                                 const std::string& parameter_name,
+                                 ObjectId processor_id,
+                                 ObjectId parameter_id);
 
     void _completion_callback(Event* event, int return_status) override;
 
@@ -215,12 +245,15 @@ private:
     sushi::ext::AudioGraphController* _graph_controller {nullptr};
     sushi::ext::ParameterController*  _param_controller {nullptr};
 
+    const engine::BaseProcessorContainer* _processor_container;
+
     std::unique_ptr<osc::BaseOscMessenger> _osc {nullptr};
 
-    /* Currently, only stored here so they can be deleted */
     std::vector<std::unique_ptr<OscConnection>> _connections;
 
     std::map<ObjectId, std::map<ObjectId, std::string>> _outgoing_connections;
+
+    std::map<ObjectId, bool> _skip_outputs;
 
     void* _set_tempo_cp {nullptr};
     void* _set_time_signature_cb {nullptr};
