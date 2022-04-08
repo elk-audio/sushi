@@ -92,6 +92,23 @@ inline ext::MidiPCConnectionState to_external(const ::sushi::midi_dispatcher::PC
     return ext_con;
 }
 
+inline void to_internal(sushi::control_frontend::OscState& dest, const ext::OscState& src)
+{
+    dest.set_auto_enable_outputs(src.enable_all_processor_outputs);
+    for (const auto& output : src.enabled_processor_outputs)
+    {
+        dest.add_enabled_outputs(std::string(output.processor), {output.parameter_ids.begin(), output.parameter_ids.end()});
+    }
+}
+
+inline void to_external(ext::OscState& dest, const sushi::control_frontend::OscState& src)
+{
+    dest.enable_all_processor_outputs = src.auto_enable_outputs();
+    for (const auto& output : src.enabled_outputs())
+    {
+        dest.enabled_processor_outputs.push_back({output.first, {output.second.begin(), output.second.end()}});
+    }
+}
 
 SessionController::SessionController(BaseEngine* engine,
                                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
@@ -146,7 +163,7 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
         _restore_plugin_states(state->tracks);
         _restore_engine(state->engine_state);
         _restore_midi(state->midi_state);
-        //_restore_osc(state->osc_state);
+        _restore_osc(state->osc_state);
 
         if (realtime)
         {
@@ -178,7 +195,10 @@ ext::SushiBuildInfo SessionController::_save_build_info() const
 
 ext::OscState SessionController::_save_osc_state() const
 {
-    return ext::OscState();
+    ext::OscState ext_state;
+    auto state = _osc_frontend->save_state();
+    to_external(ext_state, state);
+    return ext_state;
 }
 
 ext::MidiState SessionController::_save_midi_state() const
@@ -509,7 +529,9 @@ void SessionController::_restore_midi(ext::MidiState& state)
 
 void SessionController::_restore_osc(ext::OscState& state)
 {
-    _osc_frontend->set_connect_from_all_parameters(state.enable_all_processor_outputs);
+    sushi::control_frontend::OscState internal_state;
+    to_internal(internal_state, state);
+    _osc_frontend->set_state(internal_state);
 }
 
 void SessionController::_clear_all_tracks()
