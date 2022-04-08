@@ -21,17 +21,16 @@
 #include <iostream>
 #include <csignal>
 
-#include <condition_variable>
-#include <filesystem>
-
-#include "logging.h"
-
 #include "include/sushi/sushi.h"
 
 #include "include/sushi/sushi_standalone_host.h"
 
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
+
+#include <condition_variable>
+
+#include "logging.h"
 
 using namespace sushi;
 

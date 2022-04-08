@@ -24,32 +24,49 @@
 #include <cassert>
 #include <memory>
 #include <chrono>
+#include <optional>
 
 #include "compile_time_settings.h"
 
-#include "engine/json_configurator.h"
-#include "audio_frontends/offline_frontend.h"
-#include "audio_frontends/jack_frontend.h"
-#include "audio_frontends/portaudio_frontend.h"
-#include "library/parameter_dump.h"
-#include "engine/audio_engine.h"
-#include "audio_frontends/xenomai_raspa_frontend.h"
-#include "audio_frontends/embedded_frontend.h"
-#include "control_frontends/osc_frontend.h"
-
-#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
-#include "control_frontends/alsa_midi_frontend.h"
-#endif
-
-#ifdef SUSHI_BUILD_WITH_RT_MIDI
-#include "control_frontends/rt_midi_frontend.h"
-#endif
-
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-#include "sushi_rpc/grpc_server.h"
-#endif
+namespace sushi_rpc {
+class GrpcServer;
+}
 
 namespace sushi {
+
+namespace engine {
+class JsonConfigurator;
+class AudioEngine;
+class Controller;
+}
+
+namespace audio_frontend {
+class BaseAudioFrontendConfiguration;
+class BaseAudioFrontend;
+class XenomaiRaspaFrontend;
+class PortAudioFrontend;
+class OfflineFrontend;
+class JackFrontend;
+class EmbeddedFrontend;
+}
+
+namespace midi_frontend {
+class BaseMidiFrontend;
+}
+
+namespace midi_dispatcher {
+class MidiDispatcher;
+}
+
+namespace control_frontend {
+class OSCFrontend;
+class AlsaMidiFrontend;
+class RtMidiFrontend;
+}
+
+namespace jsonconfig {
+class JsonConfigurator;
+}
 
 enum class FrontendType
 {
@@ -124,8 +141,8 @@ void init_logger(const SushiOptions& options);
 class Sushi
 {
 public:
-    Sushi() = default;
-    ~Sushi() = default;
+    Sushi();
+    ~Sushi();
 
     /**
      * Initializes the class.

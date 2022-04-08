@@ -21,6 +21,8 @@
 #ifndef SUSHI_STANDALONE_HOST_H
 #define SUSHI_STANDALONE_HOST_H
 
+#include <vector>
+
 #include "sushi.h"
 
 namespace sushi {

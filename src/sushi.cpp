@@ -20,10 +20,34 @@
 
 #include <iostream>
 
-#include "twine/src/twine_internal.h"
 #include "logging.h"
 
 #include "include/sushi/sushi.h"
+
+#include "engine/json_configurator.h"
+#include "engine/audio_engine.h"
+
+#include "audio_frontends/offline_frontend.h"
+#include "audio_frontends/jack_frontend.h"
+#include "audio_frontends/portaudio_frontend.h"
+#include "audio_frontends/xenomai_raspa_frontend.h"
+#include "audio_frontends/embedded_frontend.h"
+
+#include "control_frontends/osc_frontend.h"
+
+#ifdef SUSHI_BUILD_WITH_ALSA_MIDI
+#include "control_frontends/alsa_midi_frontend.h"
+#endif
+
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+#include "control_frontends/rt_midi_frontend.h"
+#endif
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#include "sushi_rpc/grpc_server.h"
+#endif
+
+#include "control_frontends/oscpack_osc_messenger.h"
 
 namespace sushi
 {
@@ -89,6 +113,9 @@ void init_logger(const SushiOptions& options)
 ///////////////////////////////////////////
 // Sushi methods                         //
 ///////////////////////////////////////////
+
+Sushi::Sushi() = default;
+Sushi::~Sushi() = default;
 
 sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
 {
