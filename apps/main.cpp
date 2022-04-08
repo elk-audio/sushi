@@ -26,15 +26,16 @@
 
 #include "logging.h"
 
-#include "engine/json_configurator.h"
+#include "include/sushi/sushi.h"
+
+#include "include/sushi/sushi_standalone_host.h"
 
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
-#include "sushi.h"
-#include "sushi_standalone_host.h"
-
 using namespace sushi;
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
 bool exit_flag = false;
 
@@ -61,8 +62,6 @@ int main(int argc, char* argv[])
 {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
-
-    SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present.

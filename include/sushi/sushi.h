@@ -154,16 +154,13 @@ public:
     /**
      * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
      */
-    engine::Controller* controller() { return _controller.get(); }
+    engine::Controller* controller();
 
     /**
      * Exposing audio frontend for the context where Sushi is embedded in another audio host.
      * @return
      */
-    audio_frontend::EmbeddedFrontend* audio_frontend()
-    {
-        return static_cast<audio_frontend::EmbeddedFrontend*>(_audio_frontend.get());
-    }
+    audio_frontend::EmbeddedFrontend* audio_frontend();
 
 private:
     InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);

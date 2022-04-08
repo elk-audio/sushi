@@ -577,6 +577,7 @@ set(COMMON_LIBRARIES
     oscpack
     ${TWINE_LIB}
 )
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()

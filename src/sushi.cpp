@@ -23,7 +23,7 @@
 #include "twine/src/twine_internal.h"
 #include "logging.h"
 
-#include "sushi.h"
+#include "include/sushi/sushi.h"
 
 namespace sushi
 {
@@ -216,6 +216,16 @@ void Sushi::exit()
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server->stop();
 #endif
+}
+
+audio_frontend::EmbeddedFrontend* Sushi::audio_frontend()
+{
+    return static_cast<audio_frontend::EmbeddedFrontend*>(_audio_frontend.get());
+}
+
+engine::Controller* Sushi::controller()
+{
+    return _controller.get();
 }
 
 sushi::InitStatus sushi::Sushi::_load_configuration(const sushi::SushiOptions& options,
