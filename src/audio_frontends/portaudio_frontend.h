@@ -217,8 +217,8 @@ private:
     engine::ControlBuffer _out_controls;
 };
 
-} // end namespace audio_frontend
-} // end namespace sushi
+}; // end namespace audio_frontend
+}; // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_PORTAUDIO
 

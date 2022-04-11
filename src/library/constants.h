@@ -26,7 +26,7 @@
 #include <chrono>
 
 /* The number of samples to process in one chunk. It is defined as a
-compile-time constant to give more room for optimizations */
+compile time constant to give more room for optimizations */
 #ifdef SUSHI_CUSTOM_AUDIO_CHUNK_SIZE
 constexpr int AUDIO_CHUNK_SIZE = SUSHI_CUSTOM_AUDIO_CHUNK_SIZE;
 #else

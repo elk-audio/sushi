@@ -38,7 +38,7 @@ class ProcessorContainer : public BaseProcessorContainer
 {
 public:
     ProcessorContainer() = default;
-    SUSHI_DECLARE_NON_COPYABLE(ProcessorContainer)
+    SUSHI_DECLARE_NON_COPYABLE(ProcessorContainer);
 
     /**
      * @brief Add a processor to the container
