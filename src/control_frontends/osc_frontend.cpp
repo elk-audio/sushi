@@ -375,37 +375,16 @@ void OSCFrontend::connect_to_all()
 
 void OSCFrontend::connect_from_all_parameters()
 {
-    auto tracks = _graph_controller->get_all_tracks();
-    for (auto& track : tracks)
+    auto processors = _processor_container->all_processors();
+    for (auto& processor : processors)
     {
-        connect_from_processor_parameters(track.name, track.id);
-        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
-        if (processors_status != ext::ControlStatus::OK)
-        {
-            return;
-        }
-        for (auto& processor : processors)
-        {
-            connect_from_processor_parameters(processor.name, processor.id);
-        }
+        connect_from_processor_parameters(processor->name(), processor->id());
     }
 }
 
 void OSCFrontend::disconnect_from_all_parameters()
 {
-    auto tracks = _graph_controller->get_all_tracks();
-    for (auto& track : tracks)
-    {
-        disconnect_from_processor_parameters(track.name, track.id);
-        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
-        if (processors_status == ext::ControlStatus::OK)
-        {
-            for (auto& processor : processors)
-            {
-                disconnect_from_processor_parameters(processor.name, processor.id);
-            }
-        }
-    }
+    _outgoing_connections.clear();
 }
 
 int OSCFrontend::process(Event* event)
