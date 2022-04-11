@@ -14,6 +14,8 @@
 #include "test_utils/mock_osc_interface.h"
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
+#include "test_utils/mock_processor_container.h"
+#include "test_utils/host_control_mockup.h"
 
 #include "control_frontends/osc_frontend.cpp"
 
@@ -69,10 +71,27 @@ protected:
         EXPECT_CALL(*_mock_osc_interface, run()).Times(1);
 
         _module_under_test = std::make_unique<OSCFrontend>(&_mock_engine, &_mock_controller, _mock_osc_interface);
+        _test_processor = std::make_shared<DummyProcessor>(_host_control_mockup.make_host_control_mockup());
+        _test_track = std::make_shared<Track>(_host_control_mockup.make_host_control_mockup(), 2, nullptr);
+        _test_track->set_name("track");
+        _test_processor->set_name("processor");
 
         ASSERT_EQ(ControlFrontendStatus::OK, _module_under_test->init());
 
+        // Inject the mock container
+        _module_under_test->_processor_container = &_mock_processor_container;
         _module_under_test->run();
+
+        // Set up default returns for mock processor container
+        ON_CALL(_mock_processor_container, all_processors()).WillByDefault(Return(std::vector<std::shared_ptr<const Processor>>({_test_track, _test_processor})));
+        ON_CALL(_mock_processor_container, all_tracks()).WillByDefault(Return(std::vector<std::shared_ptr<const Track>>({_test_track})));
+        ON_CALL(_mock_processor_container, processors_on_track(_test_track->id())).WillByDefault(Return(std::vector<std::shared_ptr<const Processor>>({_test_processor})));
+        ON_CALL(_mock_processor_container, track(::testing::A<const std::string&>())).WillByDefault(Return(_test_track));
+        ON_CALL(_mock_processor_container, track(::testing::A<ObjectId>())).WillByDefault(Return(_test_track));
+        ON_CALL(_mock_processor_container, processor(_test_track->name())).WillByDefault(Return(_test_track));
+        ON_CALL(_mock_processor_container, processor(_test_track->id())).WillByDefault(Return(_test_track));
+        ON_CALL(_mock_processor_container, processor(_test_processor->name())).WillByDefault(Return(_test_processor));
+        ON_CALL(_mock_processor_container, processor(_test_processor->id())).WillByDefault(Return(_test_processor));
     }
 
     void TearDown()
@@ -84,12 +103,17 @@ protected:
         _module_under_test->stop();
     }
 
+    ::testing::NiceMock<MockProcessorContainer>  _mock_processor_container;
     MockOscInterface* _mock_osc_interface {nullptr};
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
     sushi::ext::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;
+
+    HostControlMockup _host_control_mockup;
+    std::shared_ptr<Processor> _test_processor;
+    std::shared_ptr<Track> _test_track;
 };
 
 TEST_F(TestOSCFrontend, TestFailedInit)
@@ -192,7 +216,7 @@ TEST_F(TestOSCFrontend, TestConnectFromAllParameters)
 
     auto enabled_outputs_full = _module_under_test->get_enabled_parameter_outputs();
 
-    EXPECT_EQ(enabled_outputs_full.size(), 1);
+    EXPECT_EQ(enabled_outputs_full.size(), 5);
 
     _module_under_test->disconnect_from_all_parameters();
 
