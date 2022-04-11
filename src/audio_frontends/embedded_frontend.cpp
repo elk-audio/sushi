@@ -71,14 +71,16 @@ void EmbeddedFrontend::run()
     _start_time = twine::current_rt_time();
 }
 
-void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
-                                     float** array_of_write_pointers,
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  Also, in JUCE there seems to be support for having different numbers of input and output channels.
+void EmbeddedFrontend::process_audio(ChunkSampleBuffer* in_buffer,
+                                     ChunkSampleBuffer* out_buffer,
                                      int channel_count,
                                      int sample_count)
 {
+
     // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
+    //   These tests should really not be in process_audio, right?
     if (sample_count != AUDIO_CHUNK_SIZE)
     {
         assert(false);
@@ -93,19 +95,6 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
         return;
     }
 
-    _in_buffer.clear();
-    for (int c = 0; c < channel_count; ++c)
-    {
-        const float* in_src = array_of_read_pointers[c];
-
-        float* in_dst = _in_buffer.channel(c); // In Ruben's code this was inside the for loop, can't see why.
-
-        for (int s = 0; s < sample_count; ++s)
-        {
-            in_dst[s] = in_src[s];
-        }
-    }
-
     // TODO: Deal also with MIDI.
 
     // TODO: Deal also with CV.
@@ -113,24 +102,14 @@ void EmbeddedFrontend::process_audio(const float** array_of_read_pointers,
     // TODO: This doesn't seem to work as expected - The LV2 metro plugin isn't working with this frontend.
     auto timestamp = std::chrono::duration_cast<Time>(twine::current_rt_time() - _start_time);
 
-    _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer,
-                           &_out_buffer,
+    out_buffer->clear();
+
+    _engine->process_chunk(in_buffer,
+                           out_buffer,
                            &_in_controls,
                            &_out_controls,
                            timestamp,
                            sample_count);
-
-    for (int c = 0; c < channel_count; ++c)
-    {
-        float* out_dst = array_of_write_pointers[c];
-        const float* out_src = _out_buffer.channel(c);
-
-        for (int s = 0; s < sample_count; ++s)
-        {
-            out_dst[s] = out_src[s];
-        }
-    }
 }
 
 } // end namespace audio_frontend

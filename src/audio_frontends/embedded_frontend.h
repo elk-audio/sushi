@@ -55,10 +55,7 @@ struct EmbeddedFrontendConfiguration : public BaseAudioFrontendConfiguration
 class EmbeddedFrontend : public BaseAudioFrontend
 {
 public:
-    EmbeddedFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
-    {
-
-    }
+    EmbeddedFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     virtual ~EmbeddedFrontend()
     {
@@ -86,22 +83,23 @@ public:
      */
     void run() override;
 
+    // TODO: Currently the buffers are pointers as that's what's used and expected inside sushi.
+    //  - I'd rather they are references, otherwise the API communicates the
+    //  assumption they CAN be nullptr.
+
     /**
      * Method to invoke from the host's audio callback.
-     * @param array_of_read_pointers
-     * @param array_of_write_pointers
+     * @param input buffer
+     * @param output buffer
      * @param channel_count
      * @param sample_count
      */
-    void process_audio(const float** array_of_read_pointers,
-                       float** array_of_write_pointers,
+     void process_audio(ChunkSampleBuffer* in_buffer, // Not const, because process_chunk expects this as a raw pointer.
+                        ChunkSampleBuffer* out_buffer,
                        int channel_count,
                        int sample_count);
 
 private:
-    ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};
-
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
 
