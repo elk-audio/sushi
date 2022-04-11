@@ -196,8 +196,11 @@ ext::SushiBuildInfo SessionController::_save_build_info() const
 ext::OscState SessionController::_save_osc_state() const
 {
     ext::OscState ext_state;
-    auto state = _osc_frontend->save_state();
-    to_external(ext_state, state);
+    if (_osc_frontend)
+    {
+        auto state = _osc_frontend->save_state();
+        to_external(ext_state, state);
+    }
     return ext_state;
 }
 
@@ -529,9 +532,12 @@ void SessionController::_restore_midi(ext::MidiState& state)
 
 void SessionController::_restore_osc(ext::OscState& state)
 {
-    sushi::control_frontend::OscState internal_state;
-    to_internal(internal_state, state);
-    _osc_frontend->set_state(internal_state);
+    if (_osc_frontend)
+    {
+        sushi::control_frontend::OscState internal_state;
+        to_internal(internal_state, state);
+        _osc_frontend->set_state(internal_state);
+    }
 }
 
 void SessionController::_clear_all_tracks()
