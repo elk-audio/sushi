@@ -20,7 +20,7 @@ set(SUSHI_VERSION_MAJOR 1)
 set(SUSHI_VERSION_MINOR 0)
 set(SUSHI_VERSION_REVISION 0)
 
-project(sushi
+project(sushi_library
     DESCRIPTION "Headless plugin host for Elk Audio OS"
     HOMEPAGE_URL "https://github.com/elk-audio/sushi"
     LANGUAGES CXX
@@ -546,7 +546,7 @@ add_executable(sushi MACOSX_BUNDLE
     "${MIDI_SOURCES}"
 )
 
-set_target_properties(sushi_library PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 #########################
 #  Include Directories  #
@@ -582,15 +582,19 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL 
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
 
-target_include_directories(sushi_library PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(sushi_library PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_features(sushi_library PUBLIC cxx_std_17)
-target_compile_definitions(sushi_library PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+# This library is currently designed ONLY to be linked statically as a subproject,
+# not installed and link from a system-wide location.
+# As such, this script has no installation option.
+
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 
 #####################
 #  Sub projects     #
