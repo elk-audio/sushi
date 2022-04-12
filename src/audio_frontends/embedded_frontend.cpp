@@ -63,12 +63,12 @@ AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* confi
 void EmbeddedFrontend::cleanup()
 {
     _engine->enable_realtime(false);
+    _start_time_set = false; // TODO: More of a placeholder/reminder, to fix this when implementing "Pause".
 }
 
 void EmbeddedFrontend::run()
 {
     _engine->enable_realtime(true);
-    _start_time = twine::current_rt_time();
 }
 
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
@@ -78,6 +78,10 @@ void EmbeddedFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                      int channel_count,
                                      int sample_count)
 {
+    if (!_start_time_set)
+    {
+        _start_time = twine::current_rt_time();
+    }
 
     // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
     //   These tests should really not be in process_audio, right?

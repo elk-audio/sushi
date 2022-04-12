@@ -104,6 +104,7 @@ private:
     engine::ControlBuffer _out_controls;
 
     TimePoint _start_time;
+    bool _start_time_set {false};
 };
 
 } // end namespace audio_frontend
