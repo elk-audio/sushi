@@ -206,15 +206,10 @@ bool OSCFrontend::disconnect_from_parameter(const std::string& processor_name, c
 }
 
 std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
+                                                                                 ObjectId processor_id,
                                                                                  const std::string& osc_path_prefix)
 {
-    std::string osc_path = osc_path_prefix;
-    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
-    if (processor_status != ext::ControlStatus::OK)
-    {
-        return {nullptr, ""};
-    }
-    osc_path = osc_path + osc::make_safe_path(processor_name);
+    std::string osc_path = osc_path_prefix + osc::make_safe_path(processor_name);
     auto connection = new OscConnection;
     connection->processor = processor_id;
     connection->parameter = 0;
@@ -223,7 +218,7 @@ std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection
     return {connection, osc_path};
 }
 
-OscConnection* OSCFrontend::connect_to_bypass_state(const std::string& processor_name)
+OscConnection* OSCFrontend::_connect_to_bypass_state(const Processor* processor)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -231,7 +226,7 @@ OscConnection* OSCFrontend::connect_to_bypass_state(const std::string& processor
         return nullptr;
     }
 
-    auto [connection, osc_path] = _create_processor_connection(processor_name, "/bypass/");
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/bypass/");
     if (connection == nullptr)
     {
         return nullptr;
@@ -244,7 +239,7 @@ OscConnection* OSCFrontend::connect_to_bypass_state(const std::string& processor
     return connection;
 }
 
-OscConnection* OSCFrontend::connect_kb_to_track(const std::string& track_name)
+OscConnection* OSCFrontend::_connect_kb_to_track(const Processor* processor)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -252,7 +247,7 @@ OscConnection* OSCFrontend::connect_kb_to_track(const std::string& track_name)
         return nullptr;
     }
 
-    auto [connection, osc_path] = _create_processor_connection(track_name, "/keyboard_event/");
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/keyboard_event/");
     if (connection == nullptr)
     {
         return nullptr;
@@ -271,7 +266,7 @@ OscConnection* OSCFrontend::connect_kb_to_track(const std::string& track_name)
     return connection;
 }
 
-OscConnection* OSCFrontend::connect_to_program_change(const std::string& processor_name)
+OscConnection* OSCFrontend::_connect_to_program_change(const Processor* processor)
 {
     assert(_osc_initialized);
     if (_osc_initialized == false)
@@ -279,7 +274,7 @@ OscConnection* OSCFrontend::connect_to_program_change(const std::string& process
         return nullptr;
     }
 
-    auto [connection, osc_path] = _create_processor_connection(processor_name, "/program/");
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/program/");
     if (connection == nullptr)
     {
         return nullptr;
@@ -291,31 +286,21 @@ OscConnection* OSCFrontend::connect_to_program_change(const std::string& process
     return connection;
 }
 
-bool OSCFrontend::connect_to_parameters_and_properties(const std::string& processor_name, int processor_id)
+void OSCFrontend::_connect_to_parameters_and_properties(const Processor* processor)
 {
-    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
-    if (parameters_status == ext::ControlStatus::OK)
+    auto parameters = processor->all_parameters();
+    for (auto& param : parameters)
     {
-        for (auto& param : parameters)
+        auto type = param->type();
+        if (type == ParameterType::FLOAT || type == ParameterType::INT || type == ParameterType::BOOL)
         {
-            _connect_to_parameter(processor_name, param.name, processor_id, param.id);
+            _connect_to_parameter(processor->name(), param->name(), processor->id(), param->id());
+        }
+        else if (type == ParameterType::STRING)
+        {
+            _connect_to_property(processor->name(), param->name(), processor->id(), param->id());
         }
     }
-    else
-    {
-        SUSHI_LOG_WARNING("Failed to get parameters for processor \"{}\"", processor_name);
-        return false;
-    }
-
-    auto [properties_status, properties] = _param_controller->get_processor_properties(processor_id);
-    if (properties_status == ext::ControlStatus::OK)
-    {
-        for (auto& property : properties)
-        {
-            _connect_to_property(processor_name, property.name, processor_id, property.id);
-        }
-    }
-    return true;
 }
 
 bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name, int processor_id)
@@ -333,44 +318,6 @@ bool OSCFrontend::connect_from_processor_parameters(const std::string& processor
         }
     }
     return true;
-}
-
-bool OSCFrontend::disconnect_from_processor_parameters(const std::string& processor_name, int processor_id)
-{
-    auto [parameters_status, parameters] = _param_controller->get_processor_parameters(processor_id);
-    if (parameters_status != ext::ControlStatus::OK)
-    {
-        return false;
-    }
-    for (auto& param : parameters)
-    {
-        disconnect_from_parameter(processor_name, param.name);
-    }
-    return true;
-}
-
-void OSCFrontend::connect_to_all()
-{
-    auto tracks = _graph_controller->get_all_tracks();
-    for (auto& track : tracks)
-    {
-        connect_to_parameters_and_properties(track.name, track.id);
-        auto [processors_status, processors] = _graph_controller->get_track_processors(track.id);
-        if (processors_status != ext::ControlStatus::OK)
-        {
-            return;
-        }
-        for (auto& processor : processors)
-        {
-            connect_to_parameters_and_properties(processor.name, processor.id);
-            if (processor.program_count > 0)
-            {
-                connect_to_program_change(processor.name);
-            }
-            connect_to_bypass_state(processor.name);
-        }
-        connect_kb_to_track(track.name);
-    }
 }
 
 void OSCFrontend::connect_from_all_parameters()
@@ -600,40 +547,40 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
         case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
         {
             SUSHI_LOG_DEBUG("Received a PROCESSOR_CREATED notification for processor {}", event->processor());
-            auto [status, info] = _graph_controller->get_processor_info(event->processor());
-            if (status == ext::ControlStatus::OK)
+            auto processor = _processor_container->processor(event->processor());
+            if (processor)
             {
-                connect_to_bypass_state(info.name);
-                connect_to_program_change(info.name);
-                connect_to_parameters_and_properties(info.name, event->processor());
-                if(_connect_from_all_parameters && _skip_outputs.count(info.id) == 0)
+                _connect_to_bypass_state(processor.get());
+                _connect_to_program_change(processor.get());
+                _connect_to_parameters_and_properties(processor.get());
+                if(_connect_from_all_parameters && _skip_outputs.count(processor->id()) == false)
                 {
-                    connect_from_processor_parameters(info.name, event->processor());
-                    SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", info.name);
+                    connect_from_processor_parameters(processor->name(), event->processor());
+                    SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", processor->id());
                 }
-                _skip_outputs.erase(info.id);
+                _skip_outputs.erase(processor->id());
             }
-            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for processor {}", event->processor());
+            SUSHI_LOG_ERROR_IF(!processor , "Processor {} not found", event->processor());
             break;
         }
 
         case AudioGraphNotificationEvent::Action::TRACK_CREATED:
         {
             SUSHI_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
-            auto [status, info] = _graph_controller->get_track_info(event->track());
-            if (status == ext::ControlStatus::OK)
+            auto track = _processor_container->track(event->track());
+            if (track)
             {
-                connect_kb_to_track(info.name);
-                connect_to_bypass_state(info.name);
-                connect_to_parameters_and_properties(info.name, event->track());
-                if(_connect_from_all_parameters && _skip_outputs.count(info.id) == 0)
+                _connect_kb_to_track(track.get());
+                _connect_to_bypass_state(track.get());
+                _connect_to_parameters_and_properties(track.get());
+                if(_connect_from_all_parameters && _skip_outputs.count(track->id()) == false)
                 {
-                    connect_from_processor_parameters(info.name, event->processor());
-                    SUSHI_LOG_INFO("Connected OSC callbacks to track {}", info.name);
+                    connect_from_processor_parameters(track->name(), event->processor());
+                    SUSHI_LOG_INFO("Connected OSC callbacks to track {}", track->name());
                 }
-                _skip_outputs.erase(info.id);
+                _skip_outputs.erase(track->id());
             }
-            SUSHI_LOG_ERROR_IF(status != ext::ControlStatus::OK, "Failed to get info for track {}", event->track());
+            SUSHI_LOG_ERROR_IF(!track, "Track {} not found", event->track());
             break;
         }
 
@@ -651,6 +598,8 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
 }
+
+
 
 } // namespace control_frontend
 

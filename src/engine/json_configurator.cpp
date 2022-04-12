@@ -440,12 +440,10 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         bool enabled = osc_config["enable_all_processor_outputs"].GetBool();
         if (enabled)
         {
-            _osc_frontend->connect_from_all_parameters();
             _osc_frontend->set_connect_from_all_parameters(true);
         }
         else // While the current default is off, it may not always be, so why not have this wired up.
         {
-            _osc_frontend->disconnect_from_all_parameters();
             _osc_frontend->set_connect_from_all_parameters(false);
         }
         SUSHI_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
