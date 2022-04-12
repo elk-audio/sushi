@@ -80,6 +80,7 @@ void EmbeddedFrontend::process_audio(ChunkSampleBuffer* in_buffer,
 {
     if (!_start_time_set)
     {
+        _start_time_set = true;
         _start_time = twine::current_rt_time();
     }
 
