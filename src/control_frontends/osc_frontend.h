@@ -109,7 +109,7 @@ public:
      * @param processor_id The id of the processor to connect.
      * @return Bool of whether connection succeeded.
      */
-    bool connect_from_processor_parameters(const std::string& processor_name, int processor_id);
+    bool connect_from_processor_parameters(const std::string& processor_name);
 
     /**
      * @brief Register OSC callbacks for all parameters of all plugins.

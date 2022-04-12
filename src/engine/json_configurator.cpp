@@ -454,12 +454,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         for (const auto& osc_out : osc_config["enabled_processor_outputs"].GetArray())
         {
             auto processor_name = osc_out["processor"].GetString();
-            auto processor = _processor_container->processor(processor_name);
-            bool res = false;
-            if (processor != nullptr)
-            {
-                res = _osc_frontend->connect_from_processor_parameters(processor_name, processor->id());
-            }
+            auto res = _osc_frontend->connect_from_processor_parameters(processor_name);
             if (res != true)
             {
                 SUSHI_LOG_ERROR("Failed to enable osc parameter output on processor {}", processor_name);

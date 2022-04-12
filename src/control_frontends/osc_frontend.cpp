@@ -173,36 +173,32 @@ void OSCFrontend::_connect_from_parameter(const std::string& processor_name,
 
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
-    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
-    if (processor_status != ext::ControlStatus::OK)
+    auto processor = _processor_container->processor(processor_name);
+    if (processor)
     {
-        return false;
+        auto parameter = processor->parameter_from_name(parameter_name);
+        if (parameter)
+        {
+            _connect_from_parameter(processor_name, parameter_name, processor->id(), parameter->id());
+            return true;
+        }
     }
-    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
-    if (parameter_status != ext::ControlStatus::OK)
-    {
-        return false;
-    }
-    _connect_from_parameter(processor_name, parameter_name, processor_id, parameter_id);
-    return true;
+    return false;
 }
 
 bool OSCFrontend::disconnect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
 {
-    auto [processor_status, processor_id] = _graph_controller->get_processor_id(processor_name);
-    if (processor_status != ext::ControlStatus::OK)
+    auto processor = _processor_container->processor(processor_name);
+    if (processor)
     {
-        return false;
+        auto parameter = processor->parameter_from_name(parameter_name);
+        if (parameter)
+        {
+            _outgoing_connections[processor->id()].erase(parameter->id());
+            return true;
+        }
     }
-    auto [parameter_status, parameter_id] = _param_controller->get_parameter_id(processor_id, parameter_name);
-    if (parameter_status != ext::ControlStatus::OK)
-    {
-        return false;
-    }
-
-    _outgoing_connections[processor_id].erase(parameter_id);
-
-    return true;
+    return false;
 }
 
 std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
@@ -303,7 +299,7 @@ void OSCFrontend::_connect_to_parameters_and_properties(const Processor* process
     }
 }
 
-bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name, int processor_id)
+bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name)
 {
     auto processor = _processor_container->processor(processor_name);
     if (processor)
@@ -313,7 +309,7 @@ bool OSCFrontend::connect_from_processor_parameters(const std::string& processor
             auto type = param->type();
             if (type == ParameterType::FLOAT || type == ParameterType::INT || type == ParameterType::BOOL)
             {
-                _connect_from_parameter(processor_name, param->name(), processor_id, param->id());
+                _connect_from_parameter(processor_name, param->name(), processor->id(), param->id());
             }
         }
     }
@@ -325,7 +321,7 @@ void OSCFrontend::connect_from_all_parameters()
     auto processors = _processor_container->all_processors();
     for (auto& processor : processors)
     {
-        connect_from_processor_parameters(processor->name(), processor->id());
+        connect_from_processor_parameters(processor->name());
     }
 }
 
@@ -555,7 +551,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 _connect_to_parameters_and_properties(processor.get());
                 if(_connect_from_all_parameters && _skip_outputs.count(processor->id()) == false)
                 {
-                    connect_from_processor_parameters(processor->name(), event->processor());
+                    connect_from_processor_parameters(processor->name());
                     SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", processor->id());
                 }
                 _skip_outputs.erase(processor->id());
@@ -575,7 +571,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 _connect_to_parameters_and_properties(track.get());
                 if(_connect_from_all_parameters && _skip_outputs.count(track->id()) == false)
                 {
-                    connect_from_processor_parameters(track->name(), event->processor());
+                    connect_from_processor_parameters(track->name());
                     SUSHI_LOG_INFO("Connected OSC callbacks to track {}", track->name());
                 }
                 _skip_outputs.erase(track->id());
@@ -598,7 +594,6 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
 }
-
 
 
 } // namespace control_frontend
