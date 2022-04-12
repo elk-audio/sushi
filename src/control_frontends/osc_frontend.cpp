@@ -67,23 +67,6 @@ OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                                           _osc(osc_interface)
 {}
 
-ControlFrontendStatus OSCFrontend::init()
-{
-    bool status = _osc->init();
-
-    if (status == false)
-    {
-        return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
-    }
-
-    _setup_engine_control();
-    _osc_initialized = true;
-    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
-    _event_dispatcher->subscribe_to_engine_notifications(this);
-
-    return ControlFrontendStatus::OK;
-}
-
 OSCFrontend::~OSCFrontend()
 {
     if (_running)
@@ -107,68 +90,21 @@ OSCFrontend::~OSCFrontend()
     }
 }
 
-OscConnection* OSCFrontend::_connect_to_parameter(const std::string& processor_name,
-                                                  const std::string& parameter_name,
-                                                  ObjectId processor_id,
-                                                  ObjectId parameter_id)
+ControlFrontendStatus OSCFrontend::init()
 {
-    assert(_osc_initialized);
-    if (_osc_initialized == false)
+    bool status = _osc->init();
+
+    if (status == false)
     {
-        return nullptr;
+        return ControlFrontendStatus::INTERFACE_UNAVAILABLE;
     }
 
-    std::string osc_path = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
-    auto connection = new OscConnection;
-    connection->processor = processor_id;
-    connection->parameter = parameter_id;
-    connection->instance = this;
-    connection->controller = _controller;
+    _setup_engine_control();
+    _osc_initialized = true;
+    _event_dispatcher->subscribe_to_parameter_change_notifications(this);
+    _event_dispatcher->subscribe_to_engine_notifications(this);
 
-    auto cb = _osc->add_method(osc_path.c_str(), "f", osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT, connection);
-    connection->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
-
-    return connection;
-}
-
-OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_name,
-                                                 const std::string& property_name,
-                                                 ObjectId processor_id,
-                                                 ObjectId property_id)
-{
-    assert(_osc_initialized);
-    if (_osc_initialized == false)
-    {
-        return nullptr;
-    }
-
-    std::string osc_path = "/property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
-    auto connection = new OscConnection;
-    connection->processor = processor_id;
-    connection->parameter = property_id;
-    connection->instance = this;
-    connection->controller = _controller;
-
-    auto cb = _osc->add_method(osc_path.c_str(), "s", osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT, connection);
-    connection->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
-
-    return connection;
-}
-
-void OSCFrontend::_connect_from_parameter(const std::string& processor_name,
-                                          const std::string& parameter_name,
-                                          ObjectId processor_id,
-                                          ObjectId parameter_id)
-{
-    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
-
-    _outgoing_connections[processor_id][parameter_id] = id_string;
-
-    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    return ControlFrontendStatus::OK;
 }
 
 bool OSCFrontend::connect_from_parameter(const std::string& processor_name, const std::string& parameter_name)
@@ -199,104 +135,6 @@ bool OSCFrontend::disconnect_from_parameter(const std::string& processor_name, c
         }
     }
     return false;
-}
-
-std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
-                                                                                 ObjectId processor_id,
-                                                                                 const std::string& osc_path_prefix)
-{
-    std::string osc_path = osc_path_prefix + osc::make_safe_path(processor_name);
-    auto connection = new OscConnection;
-    connection->processor = processor_id;
-    connection->parameter = 0;
-    connection->instance = this;
-    connection->controller = _controller;
-    return {connection, osc_path};
-}
-
-OscConnection* OSCFrontend::_connect_to_bypass_state(const Processor* processor)
-{
-    assert(_osc_initialized);
-    if (_osc_initialized == false)
-    {
-        return nullptr;
-    }
-
-    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/bypass/");
-    if (connection == nullptr)
-    {
-        return nullptr;
-    }
-
-    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_BYPASS_STATE_EVENT, connection);
-    connection->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
-    return connection;
-}
-
-OscConnection* OSCFrontend::_connect_kb_to_track(const Processor* processor)
-{
-    assert(_osc_initialized);
-    if (_osc_initialized == false)
-    {
-        return nullptr;
-    }
-
-    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/keyboard_event/");
-    if (connection == nullptr)
-    {
-        return nullptr;
-    }
-
-    auto cb = _osc->add_method(osc_path.c_str(), "siif", osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT, connection);
-    connection->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(connection));
-
-    auto dupl_conn = new OscConnection(*connection);
-    cb = _osc->add_method(osc_path.c_str(), "sif", osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, connection);
-    dupl_conn->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
-
-    return connection;
-}
-
-OscConnection* OSCFrontend::_connect_to_program_change(const Processor* processor)
-{
-    assert(_osc_initialized);
-    if (_osc_initialized == false)
-    {
-        return nullptr;
-    }
-
-    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/program/");
-    if (connection == nullptr)
-    {
-        return nullptr;
-    }
-    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT, connection);
-    connection->callback = cb;
-    _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
-    return connection;
-}
-
-void OSCFrontend::_connect_to_parameters_and_properties(const Processor* processor)
-{
-    auto parameters = processor->all_parameters();
-    for (auto& param : parameters)
-    {
-        auto type = param->type();
-        if (type == ParameterType::FLOAT || type == ParameterType::INT || type == ParameterType::BOOL)
-        {
-            _connect_to_parameter(processor->name(), param->name(), processor->id(), param->id());
-        }
-        else if (type == ParameterType::STRING)
-        {
-            _connect_to_property(processor->name(), param->name(), processor->id(), param->id());
-        }
-    }
 }
 
 bool OSCFrontend::connect_from_processor_parameters(const std::string& processor_name)
@@ -330,6 +168,21 @@ void OSCFrontend::disconnect_from_all_parameters()
     _outgoing_connections.clear();
 }
 
+std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
+{
+    auto outputs = std::vector<std::string>();
+
+    for (const auto& connection_pair : _outgoing_connections)
+    {
+        for (const auto& connection : connection_pair.second)
+        {
+            outputs.push_back(connection.second);
+        }
+    }
+
+    return outputs;
+}
+
 int OSCFrontend::process(Event* event)
 {
     assert(_osc_initialized);
@@ -359,21 +212,6 @@ int OSCFrontend::send_port() const
 int OSCFrontend::receive_port() const
 {
     return _osc->receive_port();
-}
-
-std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
-{
-    auto outputs = std::vector<std::string>();
-
-    for (const auto& connection_pair : _outgoing_connections)
-    {
-        for (const auto& connection : connection_pair.second)
-        {
-            outputs.push_back(connection.second);
-        }
-    }
-
-    return outputs;
 }
 
 OscState OSCFrontend::save_state() const
@@ -432,6 +270,173 @@ void OSCFrontend::set_state(const OscState& state)
             /* This is so that when we later receive an asynchronous PROCESSOR_ADDED event, we
              * should not add all parameter from this plugin. */
             _skip_outputs[processor->id()] = true;
+        }
+    }
+}
+
+void OSCFrontend::_connect_from_parameter(const std::string& processor_name,
+                                          const std::string& parameter_name,
+                                          ObjectId processor_id,
+                                          ObjectId parameter_id)
+{
+    std::string id_string = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
+
+    _outgoing_connections[processor_id][parameter_id] = id_string;
+
+    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
+}
+
+
+
+
+std::pair<OscConnection*, std::string> OSCFrontend::_create_processor_connection(const std::string& processor_name,
+                                                                                 ObjectId processor_id,
+                                                                                 const std::string& osc_path_prefix)
+{
+    std::string osc_path = osc_path_prefix + osc::make_safe_path(processor_name);
+    auto connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = 0;
+    connection->instance = this;
+    connection->controller = _controller;
+    return {connection, osc_path};
+}
+
+
+OscConnection* OSCFrontend::_connect_kb_to_track(const Processor* processor)
+{
+    assert(_osc_initialized);
+    if (_osc_initialized == false)
+    {
+        return nullptr;
+    }
+
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/keyboard_event/");
+    if (connection == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto cb = _osc->add_method(osc_path.c_str(), "siif", osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT, connection);
+    connection->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+
+    auto dupl_conn = new OscConnection(*connection);
+    cb = _osc->add_method(osc_path.c_str(), "sif", osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, connection);
+    dupl_conn->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+
+    return connection;
+}
+
+OscConnection* OSCFrontend::_connect_to_bypass_state(const Processor* processor)
+{
+    assert(_osc_initialized);
+    if (_osc_initialized == false)
+    {
+        return nullptr;
+    }
+
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/bypass/");
+    if (connection == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_BYPASS_STATE_EVENT, connection);
+    connection->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    return connection;
+}
+
+OscConnection* OSCFrontend::_connect_to_program_change(const Processor* processor)
+{
+    assert(_osc_initialized);
+    if (_osc_initialized == false)
+    {
+        return nullptr;
+    }
+
+    auto [connection, osc_path] = _create_processor_connection(processor->name(), processor->id(), "/program/");
+    if (connection == nullptr)
+    {
+        return nullptr;
+    }
+    auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT, connection);
+    connection->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    return connection;
+}
+
+OscConnection* OSCFrontend::_connect_to_parameter(const std::string& processor_name,
+                                                  const std::string& parameter_name,
+                                                  ObjectId processor_id,
+                                                  ObjectId parameter_id)
+{
+    assert(_osc_initialized);
+    if (_osc_initialized == false)
+    {
+        return nullptr;
+    }
+
+    std::string osc_path = "/parameter/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(parameter_name);
+    auto connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = parameter_id;
+    connection->instance = this;
+    connection->controller = _controller;
+
+    auto cb = _osc->add_method(osc_path.c_str(), "f", osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT, connection);
+    connection->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+
+    return connection;
+}
+
+OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_name,
+                                                 const std::string& property_name,
+                                                 ObjectId processor_id,
+                                                 ObjectId property_id)
+{
+    assert(_osc_initialized);
+    if (_osc_initialized == false)
+    {
+        return nullptr;
+    }
+
+    std::string osc_path = "/property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
+    auto connection = new OscConnection;
+    connection->processor = processor_id;
+    connection->parameter = property_id;
+    connection->instance = this;
+    connection->controller = _controller;
+
+    auto cb = _osc->add_method(osc_path.c_str(), "s", osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT, connection);
+    connection->callback = cb;
+    _connections.push_back(std::unique_ptr<OscConnection>(connection));
+    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+
+    return connection;
+}
+
+
+void OSCFrontend::_connect_to_parameters_and_properties(const Processor* processor)
+{
+    auto parameters = processor->all_parameters();
+    for (auto& param : parameters)
+    {
+        auto type = param->type();
+        if (type == ParameterType::FLOAT || type == ParameterType::INT || type == ParameterType::BOOL)
+        {
+            _connect_to_parameter(processor->name(), param->name(), processor->id(), param->id());
+        }
+        else if (type == ParameterType::STRING)
+        {
+            _connect_to_property(processor->name(), param->name(), processor->id(), param->id());
         }
     }
 }

@@ -81,6 +81,7 @@ public:
 
     ~OSCFrontend();
 
+    ControlFrontendStatus init() override;
 
     /**
      * @brief Output changes from the given parameter of the given
@@ -129,8 +130,6 @@ public:
     void run() override {_start_server();}
 
     void stop() override {_stop_server();}
-
-    ControlFrontendStatus init() override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
