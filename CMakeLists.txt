@@ -1,4 +1,3 @@
-# .. range syntax from: https://cliutils.gitlab.io/modern-cmake/chapters/basics.html
 cmake_minimum_required(VERSION 3.8..3.23)
 
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
@@ -588,10 +587,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
-
-# This library is currently designed ONLY to be linked statically as a subproject,
-# not installed and link from a system-wide location.
-# As such, this script has no installation option.
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_compile_definitions(${PROJECT_NAME} PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
