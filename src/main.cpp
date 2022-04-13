@@ -437,7 +437,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
 
     auto status = configurator->load_host_config();
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         error_exit("Failed to load host configuration from config file");
     }
@@ -465,7 +465,7 @@ int main(int argc, char* argv[])
     if (frontend_type == FrontendType::DUMMY || frontend_type == FrontendType::OFFLINE)
     {
         auto [status, events] = configurator->load_event_list();
-        if(status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
+        if (status == sushi::jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend.get())->add_sequencer_events(events);
         }

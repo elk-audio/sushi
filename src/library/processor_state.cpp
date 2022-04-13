@@ -23,17 +23,6 @@
 namespace sushi {
 
 ProcessorState::~ProcessorState() = default;
-
-std::vector<std::byte> ProcessorState::serialize() const
-{
-    return std::vector<std::byte>();
-}
-
-bool ProcessorState::deserialize(std::vector<std::byte>)
-{
-    return false;
-}
-
 bool ProcessorState::has_binary_data() const
 {
     return !_binary_data.empty();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief OSC runtime control frontend
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <algorithm>
@@ -498,7 +498,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
 
     count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
 
-    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id);
+    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
     return count > 0;
 }
 
@@ -561,7 +561,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 }
                 _skip_outputs.erase(processor->id());
             }
-            SUSHI_LOG_ERROR_IF(!processor , "Processor {} not found", event->processor());
+            SUSHI_LOG_ERROR_IF(!processor , "Processor {} not found", event->processor())
             break;
         }
 
@@ -581,7 +581,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 }
                 _skip_outputs.erase(track->id());
             }
-            SUSHI_LOG_ERROR_IF(!track, "Track {} not found", event->track());
+            SUSHI_LOG_ERROR_IF(!track, "Track {} not found", event->track())
             break;
         }
 

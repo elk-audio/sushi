@@ -52,13 +52,13 @@ public:
 
     static bool has_range(Model* model, const LilvNode* subject, const char* range_uri);
 
-    Model* model;
-    ControlType type;
-    LilvNode* node;
-    LilvNode* symbol;
-    LilvNode* label;
-    LV2_URID property; // Iff type == PROPERTY
-    int index; // Iff type == PORT
+    Model* model {nullptr};
+    ControlType type{ControlType::PORT};
+    LilvNode* node {nullptr};
+    LilvNode* symbol {nullptr};
+    LilvNode* label {nullptr};
+    LV2_URID property {0}; // Iff type == PROPERTY
+    int index {0}; // Iff type == PORT
     LilvNode* group {nullptr}; // Port/control group, or NULL
 
     std::vector<ScalePoint> scale_points;
@@ -67,15 +67,15 @@ public:
     LilvNode* max;
     LilvNode* def;
 
-    bool is_toggle;
-    bool is_integer;
-    bool is_enumeration;
-    bool is_logarithmic;
-    bool is_writable; // Writable (input)
-    bool is_readable; // Readable (output)
+    bool is_toggle {false};
+    bool is_integer {false};
+    bool is_enumeration {false};
+    bool is_logarithmic {false};
+    bool is_writable {false}; // Writable (input)
+    bool is_readable {false}; // Readable (output)
 
 private:
-    ControlID() {}
+    explicit ControlID() = default;
 };
 
 } // end namespace lv2

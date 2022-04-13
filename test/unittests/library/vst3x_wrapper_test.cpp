@@ -38,7 +38,7 @@ TEST(TestVst3xPluginInstance, TestLoadPlugin)
 /* Test that nothing breaks if the plugin is not found */
 TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
-    /* Non existing library */
+    /* Non-existing library */
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
@@ -280,7 +280,7 @@ TEST_F(TestVst3xWrapper, TestCVOutput)
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
 
     auto status = _module_under_test->connect_cv_from_parameter(DELAY_PARAM_ID, 1);
-    ASSERT_EQ(ProcessorReturnCode::OK, status);;
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     int index_unused;
     auto param_queue = _module_under_test->_process_data.outputParameterChanges->addParameterData(DELAY_PARAM_ID, index_unused);

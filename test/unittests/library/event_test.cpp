@@ -40,7 +40,7 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_TRUE(note_at_event.is_keyboard_event());
     EXPECT_TRUE(note_at_event.maps_to_rt_event());
     rt_event = note_at_event.to_rt_event(5);
-    EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());;
+    EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());
 
     auto pitchbend_event = KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, 2, 3, 0.5f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(pitchbend_event.is_keyboard_event());
@@ -108,7 +108,7 @@ TEST(EventTest, TestToRtEvent)
 TEST(EventTest, TestFromRtEvent)
 {
     auto note_on_event = RtEvent::make_note_on_event(2, 0, 1, 48, 1.0f);
-    Event* event = Event::from_rt_event(note_on_event, IMMEDIATE_PROCESS);
+    auto event = Event::from_rt_event(note_on_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());

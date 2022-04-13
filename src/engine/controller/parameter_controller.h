@@ -33,7 +33,7 @@ namespace controller_impl {
 class ParameterController : public ext::ParameterController
 {
 public:
-    ParameterController(BaseEngine* engine);
+    explicit ParameterController(BaseEngine* engine);
 
     std::pair<ext::ControlStatus, std::vector<ext::ParameterInfo>> get_processor_parameters(int processor_id) const override;
 

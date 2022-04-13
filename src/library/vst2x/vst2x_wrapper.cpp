@@ -28,9 +28,7 @@ namespace {
 
 constexpr int VST_STRING_BUFFER_SIZE = 256;
 constexpr int SINGLE_PROGRAM = 1;
-
-static char canDoBypass[] = "bypass";
-
+char canDoBypass[] = "bypass";
 
 } // anonymous namespace
 
@@ -71,7 +69,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     // Check plugin's magic number
     // If incorrect, then the file either was not loaded properly, is not a
     // real VST2 plugin, or is otherwise corrupt.
-    if(_plugin_handle->magic != kEffectMagic)
+    if (_plugin_handle->magic != kEffectMagic)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_LOAD_ERROR;
@@ -99,9 +97,9 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _max_output_channels = _plugin_handle->numOutputs;
 
     // Initialize internal plugin
-    _vst_dispatcher(effOpen, 0, 0, 0, 0);
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
-    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);
+    _vst_dispatcher(effOpen, 0, 0, nullptr, 0);
+    _vst_dispatcher(effSetSampleRate, 0, 0, nullptr, _sample_rate);
+    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, nullptr, 0);
 
     // Register internal parameters
     if (!_register_parameters())
@@ -123,26 +121,25 @@ void Vst2xWrapper::configure(float sample_rate)
     {
         set_enabled(false);
     }
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
+    _vst_dispatcher(effSetSampleRate, 0, 0, nullptr, _sample_rate);
     if (reset_enabled)
     {
         set_enabled(true);
     }
-    return;
 }
 
 void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 
@@ -151,13 +148,13 @@ void Vst2xWrapper::set_enabled(bool enabled)
     Processor::set_enabled(enabled);
     if (enabled)
     {
-        _vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
-        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effMainsChanged, 0, 1, nullptr, 0.0f);
+        _vst_dispatcher(effStartProcess, 0, 0, nullptr, 0.0f);
     }
     else
     {
-        _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
-        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effMainsChanged, 0, 0, nullptr, 0.0f);
+        _vst_dispatcher(effStopProcess, 0, 0, nullptr, 0.0f);
     }
 }
 
@@ -212,9 +209,9 @@ std::string Vst2xWrapper::current_program_name() const
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
         buffer[VST_STRING_BUFFER_SIZE-1] = 0;
-        return std::string(buffer);
+        return {buffer};
     }
-    return "";
+    return {};
 }
 
 std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int program) const
@@ -241,7 +238,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_progr
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
         buffer[VST_STRING_BUFFER_SIZE-1] = 0;
-        programs.push_back(buffer);
+        programs.emplace_back(buffer);
     }
     return {ProcessorReturnCode::OK, programs};
 }

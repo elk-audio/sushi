@@ -110,7 +110,7 @@ TEST_F(TestOfflineFrontend, TestMonoMode)
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 
-    // Process with the dummy bypass engine and make check this doesnt crash
+    // Process with the dummy bypass engine and make check this doesn't crash
     _module_under_test->run();
 }
 

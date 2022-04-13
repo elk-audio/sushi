@@ -24,7 +24,6 @@
 
 #include "library/event.h"
 #include "engine/base_engine.h"
-#include "logging.h"
 #include "types.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
@@ -261,7 +260,7 @@ RtEvent DataPropertyEvent::to_rt_event(int sample_offset) const
 RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
 {
     /* std::string is a too large and complex type to be copied by value into an RtEvent.
-     * Hence copy the string to a heap allocation that will outlive the event.
+     * Instead, copy the string to a heap allocation that will outlive the event.
      * The string should be taken back to the non-rt domain and deleted there. This is handled
      * automatically by InternalPlugins process_event() function */
     auto heap_string = new RtDeletableWrapper<std::string>(_string_value);

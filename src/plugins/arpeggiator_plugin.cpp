@@ -21,7 +21,6 @@
 #include <algorithm>
 
 #include "plugins/arpeggiator_plugin.h"
-#include "logging.h"
 
 namespace sushi {
 namespace arpeggiator_plugin {

@@ -78,7 +78,7 @@ struct SushiArg : public optionparser::Arg
     {
         char* endptr = 0;
         if (option.arg != 0 && strtol(option.arg, &endptr, 10))
-        {};
+        {}
 
         if (endptr != option.arg && *endptr == 0)
         {

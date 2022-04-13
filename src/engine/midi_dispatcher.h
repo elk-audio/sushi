@@ -133,7 +133,7 @@ public:
     /**
      * @brief Returns the number of midi input ports.
      */
-    int get_midi_inputs()
+    int get_midi_inputs() const
     {
         return _midi_inputs;
     }
@@ -151,7 +151,7 @@ public:
     /**
      * @brief Returns the number of midi output ports.
      */
-    int get_midi_outputs()
+    int get_midi_outputs() const
     {
         return _midi_outputs;
     }

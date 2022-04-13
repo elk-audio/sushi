@@ -273,6 +273,6 @@ void OfflineFrontend::pause(bool /*enabled*/)
 }
 
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi

@@ -30,9 +30,9 @@ namespace passthrough_plugin {
 class PassthroughPlugin : public InternalPlugin, public UidHelper<PassthroughPlugin>
 {
 public:
-    PassthroughPlugin(HostControl host_control);
+    explicit PassthroughPlugin(HostControl host_control);
 
-    ~PassthroughPlugin();
+    ~PassthroughPlugin() override;
 
     void process_event(const RtEvent& event) override
     {

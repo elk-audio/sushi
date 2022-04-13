@@ -44,6 +44,6 @@ public:
                                                                                     float sample_rate) = 0;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_BASE_PROCESSOR_FACTORY_H

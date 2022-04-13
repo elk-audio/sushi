@@ -191,7 +191,7 @@ std::pair<ext::ControlStatus, std::string> ParameterController::get_parameter_va
             return {ext::ControlStatus::OK, value};
         }
     }
-    return {ext::ControlStatus::NOT_FOUND, 0};
+    return {ext::ControlStatus::NOT_FOUND, ""};
 }
 
 std::pair<ext::ControlStatus, std::string> ParameterController::get_property_value(int processor_id, int property_id) const
@@ -206,7 +206,7 @@ std::pair<ext::ControlStatus, std::string> ParameterController::get_property_val
             return {ext::ControlStatus::OK, value};
         }
     }
-    return {ext::ControlStatus::NOT_FOUND, 0};
+    return {ext::ControlStatus::NOT_FOUND, ""};
 }
 
 ext::ControlStatus ParameterController::set_parameter_value(int processor_id, int parameter_id, float value)

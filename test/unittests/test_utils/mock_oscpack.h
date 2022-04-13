@@ -24,23 +24,23 @@ public:
     static constexpr const char* ANY_ADDRESS = ""; // Unused - just a placeholder for mocking.
 
     IpEndpointName(const char* /*addressName*/, int /*port_*/ = 1234) {}
-    virtual ~IpEndpointName() {}
+    virtual ~IpEndpointName() = default;
 };
 
 class PacketListener
 {
 public:
-    PacketListener() {}
-    virtual ~PacketListener() {}
+    PacketListener() = default;
+    virtual ~PacketListener() = default;
 };
 
 class UdpTransmitSocket
 {
 public:
-    UdpTransmitSocket() {}
-    UdpTransmitSocket(const IpEndpointName& /*remoteEndpoint*/) {}
+    UdpTransmitSocket() = default;
+    explicit UdpTransmitSocket(const IpEndpointName& /*remoteEndpoint*/) {}
 
-    virtual ~UdpTransmitSocket() {}
+    virtual ~UdpTransmitSocket() = default;
 
     MOCK_METHOD(void,
                 Send,
@@ -51,9 +51,9 @@ public:
 class UdpListeningReceiveSocket
 {
 public:
-    UdpListeningReceiveSocket() {}
+    UdpListeningReceiveSocket() = default;
     UdpListeningReceiveSocket(const IpEndpointName& /*remoteEndpoint*/, PacketListener* /*listener*/) {}
-    virtual ~UdpListeningReceiveSocket() {}
+    virtual ~UdpListeningReceiveSocket() = default;
 
     MOCK_METHOD(void,
                 Run,
@@ -76,8 +76,8 @@ struct BeginMessage;
 class OscPacketListener : public PacketListener
 {
 public:
-    OscPacketListener() {}
-    virtual ~OscPacketListener() {}
+    OscPacketListener() = default;
+    virtual ~OscPacketListener() = default;
 
 protected:
     virtual void ProcessMessage(const osc::ReceivedMessage& /*m*/, const IpEndpointName& /*remoteEndpoint*/) = 0;

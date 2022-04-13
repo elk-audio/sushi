@@ -310,7 +310,7 @@ TEST_F(TestLv2Wrapper, TestSynchronousStateAndWorkerThreads)
     _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
-    if(AUDIO_CHUNK_SIZE == 64)
+    if (AUDIO_CHUNK_SIZE == 64)
     {
         // Increment channels to 2 when supporting stereo loading of mono plugins.
         test_utils::compare_buffers(LV2_SAMPLER_EXPECTED_OUT_NOTE_OFF, out_buffer, 1, 0.0001f);

@@ -27,12 +27,12 @@ namespace controller_impl {
 
 SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inputs}, _audio_outputs{outputs}
 {
-    for(auto& option : _cts.enabled_build_options)
+    for(auto& option : CompileTimeSettings::enabled_build_options)
     {
-        _build_options.push_back(option);
+        _build_options.emplace_back(option);
     }
 
-    _build_info.version = _cts.sushi_version;
+    _build_info.version = CompileTimeSettings::sushi_version;
     _build_info.build_options = _build_options;
     _build_info.audio_buffer_size = AUDIO_CHUNK_SIZE;
     _build_info.commit_hash = SUSHI_GIT_COMMIT_HASH;
@@ -41,7 +41,7 @@ SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inpu
 
 std::string SystemController::get_sushi_version() const
 {
-    return std::string(_cts.sushi_version);
+    return {CompileTimeSettings::sushi_version};
 }
 
 ext::SushiBuildInfo SystemController::get_sushi_build_info() const

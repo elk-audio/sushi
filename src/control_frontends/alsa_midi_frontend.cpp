@@ -174,7 +174,7 @@ void AlsaMidiFrontend::run()
         _running = true;
         _worker = std::thread(&AlsaMidiFrontend::_poll_function, this);
     }
-    SUSHI_LOG_INFO_IF(_inputs == 0, "No of midi inputs is 0, not starting read thread");
+    SUSHI_LOG_INFO_IF(_inputs == 0, "No of midi inputs is 0, not starting read thread")
 }
 
 void AlsaMidiFrontend::stop()
@@ -188,7 +188,7 @@ void AlsaMidiFrontend::stop()
 
 void AlsaMidiFrontend::_poll_function()
 {
-    nfds_t descr_count = static_cast<nfds_t>(snd_seq_poll_descriptors_count(_seq_handle, POLLIN));
+    auto descr_count = static_cast<nfds_t>(snd_seq_poll_descriptors_count(_seq_handle, POLLIN));
     auto descriptors = std::make_unique<pollfd[]>(descr_count);
     snd_seq_poll_descriptors(_seq_handle, descriptors.get(), static_cast<unsigned int>(descr_count), POLLIN);
     while (_running)
@@ -216,7 +216,7 @@ void AlsaMidiFrontend::_poll_function()
 
                         }
                     }
-                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count));
+                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
                 }
                 snd_seq_free_event(ev);
             }
@@ -230,7 +230,7 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]
     snd_seq_ev_clear(&ev);
     [[maybe_unused]] auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
 
-    SUSHI_LOG_INFO_IF(bytes <= 0, "Failed to encode event: {} {}", strerror(-bytes), ev.type);
+    SUSHI_LOG_INFO_IF(bytes <= 0, "Failed to encode event: {} {}", strerror(-bytes), ev.type)
 
     snd_seq_ev_set_source(&ev, _output_midi_ports[output]);
     snd_seq_ev_set_subs(&ev);
@@ -239,7 +239,7 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]
     bytes = snd_seq_event_output(_seq_handle, &ev);
     snd_seq_drain_output(_seq_handle);
 
-    SUSHI_LOG_WARNING_IF(bytes <= 0, "Event output returned: {}, type {}", strerror(-bytes), ev.type);
+    SUSHI_LOG_WARNING_IF(bytes <= 0, "Event output returned: {}, type {}", strerror(-bytes), ev.type)
 }
 
 bool AlsaMidiFrontend::_init_time()

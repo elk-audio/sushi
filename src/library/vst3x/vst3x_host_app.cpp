@@ -18,8 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <cstring>
-
 #include "pluginterfaces/base/ustring.h"
 #include "public.sdk/source/vst/utility/stringconvert.h"
 #include "base/source/fobject.h"
@@ -73,7 +71,7 @@ public:
     SUSHI_DECLARE_NON_COPYABLE(ConnectionProxy);
 
     explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* src_connection) : _source_connection(src_connection) {}
-    ~ConnectionProxy() = default;
+    ~ConnectionProxy() override = default;
 
     Steinberg::tresult connect(Steinberg::Vst::IConnectionPoint* other) override;
     Steinberg::tresult disconnect(Steinberg::Vst::IConnectionPoint* other) override;
