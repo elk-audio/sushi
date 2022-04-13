@@ -606,11 +606,8 @@ ProcessorState Vst3xWrapper::save_state() const
     Steinberg::MemoryStream stream;
     if (_instance.component()->getState (&stream) == Steinberg::kResultTrue)
     {
-        // stream will give up ownership of the data that we can then wrap in a
-        // vector without copying, the vector can then be moved into state
-        // without copying the underlying buffer further
         auto data_size = stream.getSize();
-        auto data = reinterpret_cast<std::byte*>(stream.detachData());
+        auto data = reinterpret_cast<std::byte*>(stream.getData());
         state.set_binary_data(std::vector<std::byte>(data, data + data_size));
     }
     else
