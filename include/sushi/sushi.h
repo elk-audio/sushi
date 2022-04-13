@@ -163,12 +163,6 @@ public:
     void exit();
 
     /**
-     * Only needed if the raspa frontend is used, to check on its initialization status.
-     * @return
-     */
-    int raspa_status() { return _raspa_status; }
-
-    /**
      * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
      */
     engine::Controller* controller();
@@ -199,8 +193,6 @@ private:
     std::unique_ptr<engine::Controller> _controller {nullptr};
 
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
-
-    int _raspa_status {0};
 
     SushiOptions _options;
 };

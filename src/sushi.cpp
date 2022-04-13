@@ -120,8 +120,8 @@ Sushi::~Sushi() = default;
 sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
 {
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    _raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
-    if (_raspa_status < 0)
+    auto raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
+    if (raspa_status < 0)
     {
         return INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
     }
