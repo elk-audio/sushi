@@ -14,12 +14,12 @@
 */
 
 /**
-* @brief Tools for Sushi if it is embedded in a standalone host.
+* @brief Tools for Sushi if it is enclosed in a standalone host.
 * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
 */
 
-#ifndef SUSHI_STANDALONE_HOST_H
-#define SUSHI_STANDALONE_HOST_H
+#ifndef SUSHI_TERMINAL_UTILITIES_H
+#define SUSHI_TERMINAL_UTILITIES_H
 
 #include <vector>
 
@@ -215,4 +215,4 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 
 } // namespace Sushi
 
-#endif // SUSHI_STANDALONE_HOST_H
+#endif // SUSHI_TERMINAL_UTILITIES_H

@@ -23,7 +23,7 @@
 
 #include "include/sushi/sushi.h"
 
-#include "include/sushi/sushi_standalone_host.h"
+#include "include/sushi/terminal_utilities.h"
 
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
