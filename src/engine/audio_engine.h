@@ -53,7 +53,7 @@ namespace engine {
 class ClipDetector
 {
 public:
-    ClipDetector(float sample_rate)
+    explicit ClipDetector(float sample_rate)
     {
         this->set_sample_rate(sample_rate);
     }
@@ -73,7 +73,7 @@ public:
 
 private:
 
-    unsigned int _interval;
+    unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
 };
@@ -102,7 +102,7 @@ public:
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
-     ~AudioEngine();
+     ~AudioEngine() override;
 
     /**
      * @brief Configure the Engine with a new samplerate.
@@ -294,14 +294,14 @@ public:
      * @param in_controls input control voltage and gate data
      * @param out_controls output control voltage and gate data
      * @param timestamp Current time in microseconds
-     * @param samplecount Current number of samples processed
+     * @param sample_count Current number of samples processed
      */
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                        SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                        ControlBuffer* in_controls,
                        ControlBuffer* out_controls,
                        Time timestamp,
-                       int64_t samplecount) override;
+                       int64_t sample_count) override;
 
     /**
      * @brief Inform the engine of the current system latency

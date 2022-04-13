@@ -84,7 +84,7 @@ public:
                                                 _processor_container(processor_container),
                                                 _document_path(path) {}
 
-    ~JsonConfigurator() {}
+    ~JsonConfigurator() = default;
 
     /**
      * @brief Reads the json config, and returns all audio frontend configuration options
@@ -197,7 +197,7 @@ private:
      * @param section JsonSection to denote which json section is to be validated.
      * @return true if json follows schema, false otherwise
      */
-    bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
+    static bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
 
     JsonConfigReturnStatus _load_data();
 

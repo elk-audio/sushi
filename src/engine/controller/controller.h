@@ -67,7 +67,7 @@ public:
                midi_dispatcher::MidiDispatcher* midi_dispatcher,
                audio_frontend::BaseAudioFrontend* audio_frontend);
 
-    ~Controller();
+    ~Controller() override;
 
     ext::ControlStatus subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
 

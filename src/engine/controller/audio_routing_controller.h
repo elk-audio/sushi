@@ -32,8 +32,8 @@ namespace controller_impl {
 class AudioRoutingController : public ext::AudioRoutingController
 {
 public:
-    AudioRoutingController(BaseEngine* engine) : _engine(engine),
-                                                 _event_dispatcher(engine->event_dispatcher()) {}
+    explicit AudioRoutingController(BaseEngine* engine) : _engine(engine),
+                                                          _event_dispatcher(engine->event_dispatcher()) {}
 
     ~AudioRoutingController() override = default;
 

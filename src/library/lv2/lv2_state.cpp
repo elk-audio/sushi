@@ -52,7 +52,7 @@ int State::number_of_programs()
     return _program_names.size();
 }
 
-int State::current_program_index()
+int State::current_program_index() const
 {
     return _current_program_index;
 }
@@ -139,7 +139,7 @@ void State::_load_programs(PresetSink sink, void* data)
            continue;
        }
 
-       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, NULL);
+       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, nullptr);
 
        if (labels)
        {
@@ -193,7 +193,7 @@ void State::apply_state(LilvState* state, bool delete_after_use)
     }
 }
 
-bool State::apply_program(const int program_index)
+bool State::apply_program(int program_index)
 {
     if (program_index < number_of_programs())
     {

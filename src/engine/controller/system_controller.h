@@ -33,7 +33,7 @@ class SystemController : public ext::SystemController
 public:
     SystemController(int inputs, int outputs);
 
-    ~SystemController() = default;
+    ~SystemController() override = default;
 
     std::string get_sushi_version() const override;
 
@@ -44,8 +44,6 @@ public:
     int get_output_audio_channel_count() const override;
 
 private:
-    CompileTimeSettings _cts;
-
     std::vector<std::string> _build_options;
     ext::SushiBuildInfo _build_info;
 

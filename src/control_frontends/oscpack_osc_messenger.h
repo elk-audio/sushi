@@ -121,7 +121,7 @@ private:
     struct MessageRegistration
     {
         void* callback_data {nullptr};
-        OscMethodType type;
+        OscMethodType type {OscMethodType::NONE};
         OSC_CALLBACK_HANDLE handle {0};
     };
 

@@ -86,7 +86,7 @@ public:
      */
     LV2_Wrapper(HostControl host_control, const std::string& lv2_plugin_uri, std::shared_ptr<LilvWorldWrapper> world);
 
-    virtual ~LV2_Wrapper() = default;
+    ~LV2_Wrapper() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -171,7 +171,7 @@ private:
     void _deliver_inputs_to_plugin();
     void _deliver_outputs_from_plugin(bool send_ui_updates);
 
-    MidiDataByte _convert_event_to_midi_buffer(RtEvent& event);
+    static MidiDataByte _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();
     void _process_midi_input(Port* port);
     void _process_midi_output(Port* port);
@@ -196,10 +196,10 @@ private:
     // process_audio(...).
     RtSafeRtEventFifo _incoming_event_queue;
 
-    std::unique_ptr<Model> _model{nullptr};
+    std::unique_ptr<Model> _model {nullptr};
 
     // These are not used for other than the Unit tests,
-    // to simulate how the wrapper behaves if multi-threaded.
+    // to simulate how the wrapper behaves if multithreaded.
     PlayState _previous_play_state {PlayState::PAUSED};
     void _pause_audio_processing();
     void _resume_audio_processing();
@@ -207,12 +207,12 @@ private:
     // TODO: These are duplicated in ParameterPreProcessor, used for internal plugins.
     // Eventually LV2 can instead use the same parameter processing subsystem:
     // It has a field units:unit for instantiating an appropriate PreProcessor.
-    float _to_domain(float value_normalized, float min_domain, float max_domain) const
+    static float _to_domain(float value_normalized, float min_domain, float max_domain)
     {
         return max_domain + (min_domain - max_domain) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
     }
 
-    float _to_normalized(float value, float min_domain, float max_domain) const
+    static float _to_normalized(float value, float min_domain, float max_domain)
     {
         return _max_normalized + (_min_normalized - _max_normalized) / (min_domain - max_domain) * (value - max_domain);
     }

@@ -22,7 +22,6 @@
 #include "twine/src/twine_internal.h"
 
 #include "audio_graph.h"
-#include "logging.h"
 
 namespace sushi {
 namespace engine {

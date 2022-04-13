@@ -49,7 +49,7 @@ TEST_F(TestJackFrontend, TestOperation)
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 
-    /* Can't call run directly cause that will freeze the test due to the sleep() call*/
+    /* Can't call run directly because that will freeze the test due to the sleep() call*/
     jack_activate(_module_under_test->_client);
 
     ASSERT_TRUE(_engine.process_called);

@@ -148,8 +148,8 @@ private:
     engine::ControlBuffer          _out_controls;
 };
 
-}; // end namespace jack_frontend
-}; // end namespace sushi
+} // end namespace jack_frontend
+} // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_JACK
 #ifndef SUSHI_BUILD_WITH_JACK

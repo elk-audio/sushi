@@ -69,7 +69,7 @@ public:
 
     explicit InternalPlugin(HostControl host_control);
 
-    virtual ~InternalPlugin() = default;
+    ~InternalPlugin() override = default;
 
     void process_event(const RtEvent& event) override;
 

@@ -63,4 +63,4 @@ PluginRegistry::new_instance(const PluginInfo& plugin_info,
     return _factories[plugin_info.type]->new_instance(plugin_info, host_control, sample_rate);
 }
 
-}; // end namespace sushi
+} // end namespace sushi

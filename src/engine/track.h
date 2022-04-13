@@ -60,7 +60,7 @@ public:
      */
     Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer);
 
-    ~Track() = default;
+    ~Track() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -199,4 +199,4 @@ private:
 
 
 
-#endif //SUSHI_PLUGIN_CHAIN_H
+#endif // SUSHI_TRACK_H

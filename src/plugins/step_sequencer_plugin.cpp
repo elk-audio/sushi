@@ -21,7 +21,6 @@
 #include <algorithm>
 
 #include "plugins/step_sequencer_plugin.h"
-#include "logging.h"
 
 namespace sushi {
 namespace step_sequencer_plugin {

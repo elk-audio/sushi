@@ -18,10 +18,6 @@
 * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
 */
 
-#include <thread>
-
-#include "logging.h"
-
 #include "library/midi_encoder.h"
 #include "control_frontends/base_control_frontend.h"
 

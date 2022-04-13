@@ -32,7 +32,7 @@ class InternalProcessorFactory : public BaseProcessorFactory
 public:
     InternalProcessorFactory();
 
-    ~InternalProcessorFactory();
+    ~InternalProcessorFactory() override;
 
     std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo &plugin_info,
                                                                             HostControl& host_control,
@@ -53,6 +53,6 @@ private:
     std::unordered_map<std::string_view, std::unique_ptr<BaseInternalPlugFactory>> _internal_plugin_factories;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_INTERNAL_PROCESSOR_FACTORY_H

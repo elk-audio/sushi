@@ -36,9 +36,6 @@ class ProcessorState
 public:
     virtual ~ProcessorState();
 
-    virtual std::vector<std::byte> serialize() const;
-
-    bool deserialize(std::vector<std::byte>);
 
     /**
      * @brief  Check if the state contains opaque binary data from a plugin
@@ -133,7 +130,7 @@ public:
     RtState();
     RtState(const ProcessorState& state);
 
-    virtual ~RtState();
+    ~RtState() override;
 
     /**
      * @brief Set the bypass state.
@@ -165,6 +162,6 @@ protected:
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_PROCESSOR_STATE_H

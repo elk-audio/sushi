@@ -48,7 +48,7 @@ public:
 
     void process_event(const RtEvent& event) override ;
 
-    void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
 
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
@@ -57,7 +57,7 @@ public:
 private:
     void _all_notes_off();
 
-    BlobData _load_sample_file(const std::string &file_name);
+    BlobData _load_sample_file(const std::string& file_name);
 
     float*  _sample_buffer{nullptr};
     float   _dummy_sample{0.0f};

@@ -162,7 +162,7 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
         update = true;
         if (send_only_peaks)
         {
-            update = update && _peak_hysteresis;
+            update = _peak_hysteresis;
         }
     }
 

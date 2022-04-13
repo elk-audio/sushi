@@ -35,9 +35,9 @@ constexpr int MAX_DELAY = 48000;
 class SampleDelayPlugin : public InternalPlugin, public UidHelper<SampleDelayPlugin>
 {
 public:
-    SampleDelayPlugin(HostControl host_control);
+    explicit SampleDelayPlugin(HostControl host_control);
 
-    virtual ~SampleDelayPlugin() = default;
+    ~SampleDelayPlugin() override = default;
 
     void set_input_channels(int channels) override;
 

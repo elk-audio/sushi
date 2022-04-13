@@ -25,7 +25,7 @@
 #include "control_notifications.h"
 #include "controller_common.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller")
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi {
 namespace engine {

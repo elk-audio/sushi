@@ -20,7 +20,6 @@
  */
 
 #include <algorithm>
-#include <cmath>
 
 #include "plugins/control_to_cv_plugin.h"
 

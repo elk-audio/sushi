@@ -107,8 +107,8 @@ private:
     std::vector<Event*> _event_queue;
 };
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_OFFLINE_FRONTEND_H

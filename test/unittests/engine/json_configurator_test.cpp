@@ -448,7 +448,7 @@ TEST(TestSchemaValidation, TestSchemaMetaValidation)
 
     const char* meta_schema_char =
         #include "test_utils/meta_schema_v4.json"
-        ;;
+        ;
 
     rapidjson::Document meta_schema;
     meta_schema.Parse(meta_schema_char);
