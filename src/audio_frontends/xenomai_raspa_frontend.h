@@ -79,11 +79,6 @@ public:
     void run() override;
 
     /**
-     * @brief Pause the frontend, ramping down audio and outputting silence.
-     */
-    void pause(bool enabled) override;
-    
-    /**
      * @brief Workaround for Xenomai process initialization, which should happen
      *        as the _first_ thing in main() before everything else.
      *

@@ -108,11 +108,6 @@ public:
      */
     void run() override;
 
-    /**
-     * @brief Pause the frontend, ramping down audio and outputting silence.
-     */
-    void pause(bool enabled) override;
-
 private:
     /* Set up the jack client and associated ports */
     AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);

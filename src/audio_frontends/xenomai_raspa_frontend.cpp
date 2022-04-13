@@ -106,25 +106,6 @@ void XenomaiRaspaFrontend::run()
     raspa_start_realtime();
 }
 
-void XenomaiRaspaFrontend::pause(bool enabled)
-{
-    assert(twine::is_current_thread_realtime() == false);
-    bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(enabled, _engine->sample_rate());
-
-    // If pausing, return when engine has ramped down.
-    if (enabled && running)
-    {
-        _pause_notified = false;
-        _pause_notify->wait();
-        _engine->enable_realtime(false);
-    }
-    else
-    {
-        _engine->enable_realtime(enabled);
-    }
-}
-
 int XenomaiRaspaFrontend::global_init()
 {
     auto status = raspa_init();

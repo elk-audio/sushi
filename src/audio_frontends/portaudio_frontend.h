@@ -107,11 +107,6 @@ public:
      */
     void run() override;
 
-    /**
-     * @brief Pause the frontend, ramping down audio and outputting silence.
-     */
-    void pause(bool enabled) override;
-
 private:
     AudioFrontendStatus _configure_audio_channels(const PortAudioFrontendConfiguration* config);
 

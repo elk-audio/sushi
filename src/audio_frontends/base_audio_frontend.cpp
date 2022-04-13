@@ -39,7 +39,28 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     return AudioFrontendStatus::OK;
-};
+}
+
+void BaseAudioFrontend::pause(bool enabled)
+{
+    /* This default implementation is for realtime frontends that must remember to call
+     * _pause_notify->notify() in the audio callback when un-pausing */
+    assert(twine::is_current_thread_realtime() == false);
+    bool running = !_pause_manager.bypassed();
+    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+
+    // If pausing, return when engine has ramped down.
+    if (enabled && running)
+    {
+        _pause_notified = false;
+        _pause_notify->wait();
+        _engine->enable_realtime(false);
+    }
+    else
+    {
+        _engine->enable_realtime(enabled);
+    }
+}
 
 }; // end namespace audio_frontend
 }; // end namespace sushi

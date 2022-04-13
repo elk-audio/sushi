@@ -93,7 +93,7 @@ public:
      *        until the change has taken effect.
      * @param enabled If true enables pause, of false disables pause and calls the audio engine again
      */
-     virtual void pause(bool enabled) = 0;
+     virtual void pause(bool enabled);
 
 protected:
     BaseAudioFrontendConfiguration* _config;

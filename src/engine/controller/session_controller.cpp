@@ -431,7 +431,10 @@ void SessionController::_restore_plugin(ext::PluginClass plugin, sushi::engine::
         instance->set_label(plugin.label);
         _engine->add_plugin_to_track(instance->id(), track->id());
     }
-    SUSHI_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
+    else
+    {
+        SUSHI_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
+    }
 }
 
 void SessionController::_restore_engine(ext::EngineState& state)

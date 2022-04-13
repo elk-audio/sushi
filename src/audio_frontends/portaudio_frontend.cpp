@@ -175,25 +175,6 @@ void PortAudioFrontend::run()
     Pa_StartStream(_stream);
 }
 
-void PortAudioFrontend::pause(bool enabled)
-{
-    assert(twine::is_current_thread_realtime() == false);
-    bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(enabled, _engine->sample_rate());
-
-    // If pausing, return when engine has ramped down.
-    if (enabled && running)
-    {
-        _pause_notified = false;
-        _pause_notify->wait();
-        _engine->enable_realtime(false);
-    }
-    else
-    {
-        _engine->enable_realtime(enabled);
-    }
-}
-
 AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudioFrontendConfiguration* config)
 {
     if (_input_device_info == nullptr)
