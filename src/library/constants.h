@@ -51,7 +51,7 @@ constexpr int SUSHI_PPQN_TICK = 24;
  * In order to make a class moveable though still non-copyable,
  * implement a move constructor and move assignment operator. Default
  * copy constructor will then not be generated. Usage of this macro is
- * in this case not neccesary to make the class non-copyable. But can
+ * in this case not necessary to make the class non-copyable. But can
  * still be used for clarity.
  */
 #define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
