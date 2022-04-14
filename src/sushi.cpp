@@ -31,7 +31,7 @@
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/portaudio_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
-#include "audio_frontends/embedded_frontend.h"
+#include "audio_frontends/passive_frontend.h"
 
 #include "control_frontends/osc_frontend.h"
 
@@ -245,9 +245,9 @@ void Sushi::exit()
 #endif
 }
 
-audio_frontend::EmbeddedFrontend* Sushi::audio_frontend()
+audio_frontend::PassiveFrontend* Sushi::audio_frontend()
 {
-    return static_cast<audio_frontend::EmbeddedFrontend*>(_audio_frontend.get());
+    return static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get());
 }
 
 engine::Controller* Sushi::controller()
@@ -356,13 +356,13 @@ InitStatus Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inpu
             _audio_frontend = std::make_unique<sushi::audio_frontend::XenomaiRaspaFrontend>(_engine.get());
             break;
         }
-        case FrontendType::EMBEDDED:
+        case FrontendType::PASSIVE:
         {
-            SUSHI_LOG_INFO("Setting up embedded frontend");
-            _frontend_config = std::make_unique<sushi::audio_frontend::EmbeddedFrontendConfiguration>(cv_inputs,
+            SUSHI_LOG_INFO("Setting up passive frontend");
+            _frontend_config = std::make_unique<sushi::audio_frontend::PassiveFrontendConfiguration>(cv_inputs,
                                                                                                       cv_outputs);
 
-            _audio_frontend = std::make_unique<sushi::audio_frontend::EmbeddedFrontend>(_engine.get());
+            _audio_frontend = std::make_unique<sushi::audio_frontend::PassiveFrontend>(_engine.get());
             break;
         }
         case FrontendType::DUMMY:

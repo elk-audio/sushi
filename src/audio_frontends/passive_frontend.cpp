@@ -14,21 +14,21 @@
  */
 
 /**
- * @brief Embedded frontend to process audio from a callback through a host application.
+ * @brief Passive frontend to process audio from a callback through a host application.
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <iostream>
 
 #include "logging.h"
-#include "embedded_frontend.h"
+#include "passive_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("embedded audio frontend");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive audio frontend");
 
-AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* config)
+AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto ret_code = BaseAudioFrontend::init(config);
     if (ret_code != AudioFrontendStatus::OK)
@@ -36,22 +36,22 @@ AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* confi
         return ret_code;
     }
 
-    auto embedded_config = static_cast<EmbeddedFrontendConfiguration*>(_config);
+    auto frontend_config = static_cast<PassiveFrontendConfiguration*>(_config);
 
-    _engine->set_audio_input_channels(EMBEDDED_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(EMBEDDED_FRONTEND_CHANNELS);
+    _engine->set_audio_input_channels(PASSIVE_FRONTEND_CHANNELS);
+    _engine->set_audio_output_channels(PASSIVE_FRONTEND_CHANNELS);
 
-    auto status = _engine->set_cv_input_channels(embedded_config->cv_inputs);
+    auto status = _engine->set_cv_input_channels(frontend_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv inputs failed", embedded_config->cv_inputs);
+        SUSHI_LOG_ERROR("Setting {} cv inputs failed", frontend_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    status = _engine->set_cv_output_channels(embedded_config->cv_outputs);
+    status = _engine->set_cv_output_channels(frontend_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv outputs failed", embedded_config->cv_outputs);
+        SUSHI_LOG_ERROR("Setting {} cv outputs failed", frontend_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -60,23 +60,23 @@ AudioFrontendStatus EmbeddedFrontend::init(BaseAudioFrontendConfiguration* confi
     return ret_code;
 }
 
-void EmbeddedFrontend::cleanup()
+void PassiveFrontend::cleanup()
 {
     _engine->enable_realtime(false);
     _start_time_set = false; // TODO: More of a placeholder/reminder, to fix this when implementing "Pause".
 }
 
-void EmbeddedFrontend::run()
+void PassiveFrontend::run()
 {
     _engine->enable_realtime(true);
 }
 
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  Also, in JUCE there seems to be support for having different numbers of input and output channels.
-void EmbeddedFrontend::process_audio(ChunkSampleBuffer* in_buffer,
-                                     ChunkSampleBuffer* out_buffer,
-                                     int channel_count,
-                                     int sample_count)
+void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
+                                    ChunkSampleBuffer* out_buffer,
+                                    int channel_count,
+                                    int sample_count)
 {
     if (!_start_time_set)
     {
@@ -89,14 +89,14 @@ void EmbeddedFrontend::process_audio(ChunkSampleBuffer* in_buffer,
     if (sample_count != AUDIO_CHUNK_SIZE)
     {
         assert(false);
-        std::cout << "sample_count != AUDIO_CHUNK_SIZE, in embedded frontend." << std::endl;
+        std::cout << "sample_count != AUDIO_CHUNK_SIZE, in passive frontend." << std::endl;
         return;
     }
 
-    if (channel_count != EMBEDDED_FRONTEND_CHANNELS)
+    if (channel_count != PASSIVE_FRONTEND_CHANNELS)
     {
         assert(false);
-        std::cout << "Channel count passed is different to EMBEDDED_FRONTEND_CHANNELS, in embedded frontend." << std::endl;
+        std::cout << "Channel count passed is different to PASSIVE_FRONTEND_CHANNELS, in passive frontend." << std::endl;
         return;
     }
 

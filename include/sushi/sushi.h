@@ -47,7 +47,7 @@ class XenomaiRaspaFrontend;
 class PortAudioFrontend;
 class OfflineFrontend;
 class JackFrontend;
-class EmbeddedFrontend;
+class PassiveFrontend;
 }
 
 namespace midi_frontend {
@@ -75,7 +75,7 @@ enum class FrontendType
     JACK,
     PORTAUDIO,
     XENOMAI_RASPA,
-    EMBEDDED,
+    PASSIVE,
     NONE
 };
 
@@ -171,7 +171,7 @@ public:
      * Exposing audio frontend for the context where Sushi is embedded in another audio host.
      * @return
      */
-    audio_frontend::EmbeddedFrontend* audio_frontend();
+    audio_frontend::PassiveFrontend* audio_frontend();
 
 private:
     InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);

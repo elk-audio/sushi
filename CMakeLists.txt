@@ -467,7 +467,7 @@ set(SOURCE_FILES
     src/audio_frontends/base_audio_frontend.cpp
     src/sushi.cpp
     src/audio_frontends/offline_frontend.cpp
-    src/audio_frontends/embedded_frontend.cpp
+    src/audio_frontends/passive_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
                       src/audio_frontends/portaudio_frontend.cpp
                   src/audio_frontends/portaudio_devices_dump.cpp
@@ -534,7 +534,7 @@ set(SOURCE_FILES
                       src/plugins/mono_summing_plugin.cpp
                       src/plugins/stereo_mixer_plugin.cpp
                       src/audio_frontends/offline_frontend.cpp
-                      src/audio_frontends/embedded_frontend.cpp
+                      src/audio_frontends/passive_frontend.cpp
         )
 
 add_executable(sushi MACOSX_BUNDLE

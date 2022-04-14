@@ -14,12 +14,12 @@
  */
 
  /**
- * @brief Embedded frontend to process audio from a callback through a host application.
+ * @brief Passive frontend to process audio from a callback through a host application.
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_EMBEDDED_FRONTEND_H
-#define SUSHI_EMBEDDED_FRONTEND_H
+#ifndef SUSHI_PASSIVE_FRONTEND_H
+#define SUSHI_PASSIVE_FRONTEND_H
 
 #include <string>
 #include <vector>
@@ -39,25 +39,25 @@ using TimePoint = std::chrono::nanoseconds;
 
 // TODO:
 //   Hard-coding the number of channels for now.
-constexpr int EMBEDDED_FRONTEND_CHANNELS = 2;
+constexpr int PASSIVE_FRONTEND_CHANNELS = 2;
 
-struct EmbeddedFrontendConfiguration : public BaseAudioFrontendConfiguration
+struct PassiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     // TODO: Debug mode switches?
-    EmbeddedFrontendConfiguration(int cv_inputs,
-                                  int cv_outputs) :
+    PassiveFrontendConfiguration(int cv_inputs,
+                                 int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs)
     {}
 
-    virtual ~EmbeddedFrontendConfiguration() = default;
+    virtual ~PassiveFrontendConfiguration() = default;
 };
 
-class EmbeddedFrontend : public BaseAudioFrontend
+class PassiveFrontend : public BaseAudioFrontend
 {
 public:
-    EmbeddedFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+PassiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
-    virtual ~EmbeddedFrontend()
+    virtual ~PassiveFrontend()
     {
         cleanup();
     }
@@ -111,4 +111,4 @@ private:
 
 } // end namespace sushi
 
-#endif //SUSHI_EMBEDDED_FRONTEND_H
+#endif //SUSHI_PASSIVE_FRONTEND_H
