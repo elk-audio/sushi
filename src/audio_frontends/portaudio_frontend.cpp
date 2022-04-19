@@ -254,7 +254,10 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   [[maybe_unused]]PaStreamCallbackFlags status_flags)
 {
     // TODO: Print warning in case of under/overflow using the status_flags when we have rt-safe logging
-    SUSHI_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected output underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputOverflow, "Detected output overflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputUnderflow, "Detected input underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputOverflow, "Detected input overflow in portaudio");
 
     assert(frame_count == AUDIO_CHUNK_SIZE);
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
