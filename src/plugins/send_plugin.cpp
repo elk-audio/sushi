@@ -97,7 +97,7 @@ ProcessorReturnCode SendPlugin::init(float sample_rate)
 void SendPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
-    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate);
+    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
 }
 
 void SendPlugin::process_event(const RtEvent& event)
