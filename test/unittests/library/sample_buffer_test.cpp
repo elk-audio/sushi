@@ -89,6 +89,22 @@ TEST(TestSampleBuffer, TestNonOwningBuffer)
     EXPECT_FLOAT_EQ(2.0f, *test_buffer.channel(1));
 }
 
+TEST(TestSampleBuffer, TestCreateFromRawPointer)
+{
+    std::array<float, 2 * AUDIO_CHUNK_SIZE> raw_data;
+    std::fill(raw_data.begin(), raw_data.begin() + AUDIO_CHUNK_SIZE, 2.0f);
+    std::fill(raw_data.begin() + AUDIO_CHUNK_SIZE, raw_data.end(), 4.0f);
+
+    auto test_buffer = SampleBuffer<AUDIO_CHUNK_SIZE>::create_from_raw_pointer(raw_data.data(), 0, 2);
+    EXPECT_EQ(2, test_buffer.channel_count());
+    EXPECT_FLOAT_EQ(2.0, test_buffer.channel(0)[0]);
+    EXPECT_FLOAT_EQ(4.0, test_buffer.channel(1)[0]);
+
+    test_buffer = SampleBuffer<AUDIO_CHUNK_SIZE>::create_from_raw_pointer(raw_data.data(), 1, 1);
+    EXPECT_EQ(1, test_buffer.channel_count());
+    EXPECT_FLOAT_EQ(4.0, test_buffer.channel(0)[0]);
+}
+
 
 TEST(TestSampleBuffer, TestAssigningNonOwningBuffer)
 {
