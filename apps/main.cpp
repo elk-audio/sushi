@@ -77,6 +77,8 @@ int main(int argc, char* argv[])
     else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
     else if (option_status == ParseStatus::EXIT)              return 0;
 
+    sushi::init_logger(options);
+
     sushi::Sushi sushi;
     auto init_status = sushi.init(options);
 
