@@ -291,7 +291,7 @@ void Transport::_update_internals()
 void Transport::_update_internal_sync(int64_t samples)
 {
     // We cannot assume chunk size is an absolute multiple of samples for all buffer sizes.
-    auto chunks_passed = static_cast<double>(samples) / AUDIO_CHUNK_SIZE;
+    auto chunks_passed = static_cast<float>(samples) / AUDIO_CHUNK_SIZE;
 
     if (_playmode != _set_playmode)
     {
