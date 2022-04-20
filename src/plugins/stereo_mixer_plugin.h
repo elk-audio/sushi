@@ -28,14 +28,18 @@
 namespace sushi {
 namespace stereo_mixer_plugin {
 
-class StereoMixerPlugin : public InternalPlugin
+class StereoMixerPlugin : public InternalPlugin, public UidHelper<StereoMixerPlugin>
 {
 public:
     StereoMixerPlugin(HostControl host_control);
 
     ProcessorReturnCode init(float sample_rate) override;
+
     void configure(float sample_rate) override;
+
     void process_audio(const ChunkSampleBuffer& in_buffer,ChunkSampleBuffer& out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     FloatParameterValue* _ch1_pan;

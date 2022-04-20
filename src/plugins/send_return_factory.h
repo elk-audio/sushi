@@ -34,7 +34,7 @@ class SendReturnFactory : public BaseProcessorFactory
 public:
     SendReturnFactory();
 
-    virtual ~SendReturnFactory() = default;
+    ~SendReturnFactory() = default;
 
     send_plugin::SendPlugin* get_send();
 
@@ -43,7 +43,7 @@ public:
     void on_return_destruction(return_plugin::ReturnPlugin* instance);
 
     // From BaseProcessorFactory
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo &plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate) override;
 

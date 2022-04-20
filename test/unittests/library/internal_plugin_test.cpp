@@ -309,3 +309,35 @@ TEST_F(InternalPluginTest, TestRtStateHandling)
     static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
     delete delete_event;
 }
+
+TEST_F(InternalPluginTest, TestStateSaving)
+{
+    ChunkSampleBuffer buffer;
+    auto parameter = _module_under_test->register_float_parameter("param_1", "Param 1", "",
+                                                                  1.0f, 0.0f, 10.f,
+                                                                  Direction::AUTOMATABLE,
+                                                                  new FloatParameterPreProcessor(0.0f, 10.0f));
+    ASSERT_TRUE(parameter);
+    ObjectId param_id = parameter->descriptor()->id();
+    auto property = _module_under_test->register_property("str_1", "Str_1", "test");
+    ASSERT_TRUE(property);
+    auto descriptor = _module_under_test->parameter_from_name("str_1");
+    float param_val = _module_under_test->parameter_value(param_id).second;
+    std::string str_val = _module_under_test->property_value(descriptor->id()).second;
+
+    ProcessorState state = _module_under_test->save_state();
+
+    _module_under_test->set_property_value(descriptor->id(), "str_2");
+    auto rt_event = RtEvent::make_parameter_change_event(0, 0, param_id, 0.4);
+    _module_under_test->process_event(rt_event);
+
+    ASSERT_NE(param_val, _module_under_test->parameter_value(param_id).second);
+    ASSERT_NE(str_val, _module_under_test->property_value(descriptor->id()).second);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check that values are restored
+    ASSERT_EQ(param_val, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
+    ASSERT_EQ(str_val, _module_under_test->property_value(descriptor->id()).second);
+}

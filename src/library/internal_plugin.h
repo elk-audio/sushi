@@ -14,8 +14,8 @@
  */
 
 /**
- * @brief Internal plugin manager.
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief Internal plugin base class.
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_INTERNAL_PLUGIN_H
@@ -33,11 +33,36 @@ namespace sushi {
 
 constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
+class StringUid
+{
+public:
+    virtual std::string_view uid() const
+    {
+        return "";
+    }
+};
+
+/**
+ * @brief CRTP helper to avoid having to implement both a static function and
+ *        a virtual one to access the plugin string uid
+ *
+ *        Usage: Implement static_uid() and inherit from UidHelper<ClassName>
+ */
+template <typename T>
+class UidHelper : public virtual StringUid
+{
+public:
+    virtual std::string_view uid() const override
+    {
+        return T::static_uid();
+    }
+};
+
 /**
  * @brief internal base class for processors that keeps track of all host-related
  * configuration and provides basic parameter and event handling.
  */
-class InternalPlugin : public Processor
+class InternalPlugin : public Processor, public virtual StringUid
 {
 public:
     SUSHI_DECLARE_NON_COPYABLE(InternalPlugin)
@@ -59,6 +84,8 @@ public:
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
+    ProcessorState save_state() const override;
 
     /**
      * @brief Register a float typed parameter and return a pointer to a value
@@ -136,6 +163,8 @@ public:
     bool register_property(const std::string& name,
                            const std::string& label,
                            const std::string& default_value);
+
+    PluginInfo info() const override;
 
 protected:
     /**

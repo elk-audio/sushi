@@ -138,6 +138,7 @@ struct ProcessorState
     std::optional<int>  program;
     std::vector<std::pair<int, float>> parameters;
     std::vector<std::pair<int, std::string>> properties;
+    std::vector<std::byte> binary_data;
 };
 
 struct SushiBuildInfo
@@ -246,6 +247,110 @@ enum class TransportAction
     SYNC_MODE_CHANGED,
     TIME_SIGNATURE_CHANGED,
     TEMPO_CHANGED
+};
+
+struct MidiKbdConnectionState
+{
+    std::string track;
+    MidiChannel channel;
+    int         port;
+    bool        raw_midi;
+};
+
+struct MidiCCConnectionState
+{
+    std::string processor;
+    int         parameter_id;
+    MidiChannel channel;
+    int         port;
+    int         cc_number;
+    float       min_range;
+    float       max_range;
+    bool        relative_mode;
+};
+
+struct MidiPCConnectionState
+{
+    std::string processor;
+    MidiChannel channel;
+    int         port;
+};
+
+struct MidiState
+{
+    int inputs;
+    int outputs;
+    std::vector<MidiKbdConnectionState> kbd_input_connections;
+    std::vector<MidiKbdConnectionState> kbd_output_connections;
+    std::vector<MidiCCConnectionState> cc_connections;
+    std::vector<MidiPCConnectionState> pc_connections;
+};
+
+struct OscParameterState
+{
+    std::string processor;
+    std::vector<int> parameter_ids;
+};
+
+struct OscState
+{
+    bool enable_all_processor_outputs;
+    std::vector<OscParameterState> enabled_processor_outputs;
+};
+
+struct TrackAudioConnectionState
+{
+    std::string  track;
+    int          track_channel;
+    int          engine_channel;
+};
+
+struct EngineState
+{
+    float           sample_rate;
+    float           tempo;
+    PlayingMode     playing_mode;
+    SyncMode        sync_mode;
+    TimeSignature   time_signature;
+    bool            input_clip_detection;
+    bool            output_clip_detection;
+    bool            master_limiter;
+    int             used_audio_inputs;
+    int             used_audio_outputs;
+    std::vector<TrackAudioConnectionState> input_connections;
+    std::vector<TrackAudioConnectionState> output_connections;
+};
+
+struct PluginClass
+{
+    std::string     name;
+    std::string     label;
+    std::string     uid;
+    std::string     path;
+    PluginType      type;
+    ProcessorState  state;
+};
+
+struct TrackState
+{
+    std::string     name;
+    std::string     label;
+    int             input_channels;
+    int             output_channels;
+    int             input_busses;
+    int             output_busses;
+    ProcessorState  track_state;
+    std::vector<PluginClass>    processors;
+};
+
+struct SessionState
+{
+    SushiBuildInfo      sushi_info;
+    std::string         save_date;
+    OscState            osc_state;
+    MidiState           midi_state;
+    EngineState         engine_state;
+    std::vector<TrackState> tracks;
 };
 
 class SystemController
@@ -496,6 +601,15 @@ protected:
     OscController() = default;
 };
 
+class SessionController
+{
+public:
+    virtual ~SessionController() = default;
+
+    virtual SessionState save_session() const = 0;
+    virtual ControlStatus restore_session(const SessionState& state) = 0;
+};
+
 class ControlNotification
 {
 public:
@@ -535,6 +649,7 @@ public:
     AudioRoutingController* audio_routing_controller() {return _audio_routing_controller;}
     CvGateController*       cv_gate_controller() {return _cv_gate_controller;}
     OscController*          osc_controller() {return _osc_controller;}
+    SessionController*      session_controller() {return _session_controller;}
 
     virtual ControlStatus   subscribe_to_notifications(NotificationType type, ControlListener* listener) = 0;
 
@@ -549,17 +664,19 @@ protected:
                  MidiController*         midi_controller,
                  AudioRoutingController* audio_routing_controller,
                  CvGateController*       cv_gate_controller,
-                 OscController*          osc_controller) : _system_controller(system_controller),
-                                                           _transport_controller(transport_controller),
-                                                           _timing_controller(timing_controller),
-                                                           _keyboard_controller(keyboard_controller),
-                                                           _audio_graph_controller(audio_graph_controller),
-                                                           _program_controller(program_controller),
-                                                           _parameter_controller(parameter_controller),
-                                                           _midi_controller(midi_controller),
-                                                           _audio_routing_controller(audio_routing_controller),
-                                                           _cv_gate_controller(cv_gate_controller),
-                                                           _osc_controller(osc_controller) {}
+                 OscController*          osc_controller,
+                 SessionController*      session_controller) : _system_controller(system_controller),
+                                                               _transport_controller(transport_controller),
+                                                               _timing_controller(timing_controller),
+                                                               _keyboard_controller(keyboard_controller),
+                                                               _audio_graph_controller(audio_graph_controller),
+                                                               _program_controller(program_controller),
+                                                               _parameter_controller(parameter_controller),
+                                                               _midi_controller(midi_controller),
+                                                               _audio_routing_controller(audio_routing_controller),
+                                                               _cv_gate_controller(cv_gate_controller),
+                                                               _osc_controller(osc_controller),
+                                                               _session_controller(session_controller){}
 
 private:
     SystemController*           _system_controller;
@@ -573,6 +690,7 @@ private:
     AudioRoutingController*     _audio_routing_controller;
     CvGateController*           _cv_gate_controller;
     OscController*              _osc_controller;
+    SessionController*          _session_controller;
 };
 
 } // ext

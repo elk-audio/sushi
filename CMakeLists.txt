@@ -361,6 +361,7 @@ message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
 
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
+                      src/audio_frontends/base_audio_frontend.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
                       src/audio_frontends/portaudio_frontend.cpp
@@ -391,6 +392,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/controller/audio_routing_controller.cpp
                       src/engine/controller/cv_gate_controller.cpp
                       src/engine/controller/osc_controller.cpp
+                      src/engine/controller/session_controller.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp

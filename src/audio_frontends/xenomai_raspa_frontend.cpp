@@ -128,14 +128,29 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     {
         _in_controls.cv_values[i] = map_audio_to_cv(input[(_audio_input_channels + i + 1) * AUDIO_CHUNK_SIZE - 1] * CV_IN_CORR);
     }
+
     out_buffer.clear();
-    _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
-    raspa_set_gate_values(static_cast<uint32_t>(_out_controls.gate_values.to_ulong()));
-    /* Sika board outputs only positive cv */
-    for (int i = 0; i < _cv_output_channels; ++i)
+
+    if (_pause_manager.should_process())
     {
-        float* out_data = output + (_audio_output_channels + i) * AUDIO_CHUNK_SIZE;
-        _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], _out_controls.cv_values[i] * CV_OUT_CORR);
+        _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+       raspa_set_gate_values(static_cast<uint32_t>(_out_controls.gate_values.to_ulong()));
+        /* Sika board outputs only positive cv */
+        for (int i = 0; i < _cv_output_channels; ++i)
+        {
+            float* out_data = output + (_audio_output_channels + i) * AUDIO_CHUNK_SIZE;
+            _cv_output_hist[i] = ramp_cv_output(out_data, _cv_output_hist[i], _out_controls.cv_values[i] * CV_OUT_CORR);
+        }
+    }
+
+    if (_pause_notified == false && _pause_manager.should_process() == false)
+    {
+        _pause_notify->notify();
+        _pause_notified = true;
     }
 }
 

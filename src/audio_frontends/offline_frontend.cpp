@@ -267,6 +267,11 @@ void OfflineFrontend::_run_blocking()
     }
 }
 
+void OfflineFrontend::pause(bool /*enabled*/)
+{
+    // Currently a no-op
+}
+
 
 } // end namespace audio_frontend
 

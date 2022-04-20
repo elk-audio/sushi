@@ -58,15 +58,15 @@ void SendReturnFactory::on_return_destruction(return_plugin::ReturnPlugin* insta
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-SendReturnFactory::new_instance(const engine::PluginInfo& plugin_info, HostControl& host_control, float sample_rate)
+SendReturnFactory::new_instance(const PluginInfo& plugin_info, HostControl& host_control, float sample_rate)
 {
     std::shared_ptr<Processor> processor;
 
-    if (plugin_info.uid == "sushi.testing.send")
+    if (plugin_info.uid == send_plugin::SendPlugin::static_uid())
     {
         processor = std::make_shared<send_plugin::SendPlugin>(host_control, this);
     }
-    else if (plugin_info.uid == "sushi.testing.return")
+    else if (plugin_info.uid == return_plugin::ReturnPlugin::static_uid())
     {
         auto instance = std::make_shared<return_plugin::ReturnPlugin>(host_control, this);
         std::scoped_lock<std::mutex> lock(_return_inst_lock);

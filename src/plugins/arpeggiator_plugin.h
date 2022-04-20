@@ -70,7 +70,7 @@ private:
 };
 
 
-class ArpeggiatorPlugin : public InternalPlugin
+class ArpeggiatorPlugin : public InternalPlugin, public UidHelper<ArpeggiatorPlugin>
 {
 public:
     ArpeggiatorPlugin(HostControl host_control);
@@ -86,6 +86,8 @@ public:
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
+
+    static std::string_view static_uid();
 
 private:
     float                _sample_rate;
