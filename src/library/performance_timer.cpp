@@ -112,7 +112,7 @@ void PerformanceTimer::_update_timings()
     }
 }
 
-ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogPoint>& entries)
+ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogPoint>& entries) const
 {
     float min_value{100};
     float max_value{0};

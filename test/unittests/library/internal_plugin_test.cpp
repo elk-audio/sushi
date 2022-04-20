@@ -221,7 +221,7 @@ TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
     auto rt_event = event->to_rt_event(0);
     EXPECT_EQ(RtEventType::STRING_PROPERTY_CHANGE, rt_event.type());
 
-    // Pass the RtEvent to the plugin an verify that a delete event was generated in response
+    // Pass the RtEvent to the plugin, and verify that a delete event was generated in response
     _module_under_test->process_event(rt_event);
     RtEvent response_event;
     ASSERT_TRUE(_host_control._event_output.pop(response_event));

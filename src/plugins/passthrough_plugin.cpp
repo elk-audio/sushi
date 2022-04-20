@@ -18,9 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <algorithm>
-#include <cassert>
-
 #include "passthrough_plugin.h"
 
 namespace sushi {

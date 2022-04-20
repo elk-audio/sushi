@@ -312,9 +312,9 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
 
 void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
 {
-    /* Currently all we want to know is the output latency to a physical
+    /* Currently, all we want to know is the output latency to a physical
      * audio output.
-     * We also don't support individual latency compensation on ports so
+     * We also don't support individual latency compensation on ports, so
      * we get the maximum latency and pass that on to Sushi. */
     if (mode == JackPlaybackLatency)
     {
@@ -359,8 +359,8 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
     }
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_JACK
 #include "audio_frontends/jack_frontend.h"

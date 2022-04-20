@@ -32,9 +32,12 @@
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
-#define SUSHI_OSC_SERVER_PORT 24024
-#define SUSHI_OSC_SEND_PORT 24023
-#define SUSHI_GRPC_LISTENING_PORT "[::]:51051"
+#define SUSHI_OSC_SERVER_PORT_DEFAULT 24024
+#define SUSHI_OSC_SEND_PORT_DEFAULT 24023
+#define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
+#define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
+#define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
+#define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -77,7 +80,7 @@ struct SushiArg : public optionparser::Arg
     {
         char* endptr = 0;
         if (option.arg != 0 && strtol(option.arg, &endptr, 10))
-        {};
+        {}
 
         if (endptr != option.arg && *endptr == 0)
         {
@@ -126,6 +129,7 @@ enum OptionIndex
     OPT_IDX_TIMINGS_STATISTICS,
     OPT_IDX_OSC_RECEIVE_PORT,
     OPT_IDX_OSC_SEND_PORT,
+    OPT_IDX_OSC_SEND_IP,
     OPT_IDX_GRPC_LISTEN_ADDRESS
 };
 
@@ -346,7 +350,8 @@ const optionparser::Descriptor usage[] =
         "p",
         "osc-rcv-port",
         SushiArg::NonEmpty,
-        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SERVER_PORT) "]."
+        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SERVER_PORT_DEFAULT) "]."
     },
     {
         OPT_IDX_OSC_SEND_PORT,
@@ -354,7 +359,17 @@ const optionparser::Descriptor usage[] =
         "",
         "osc-send-port",
         SushiArg::NonEmpty,
-        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SEND_PORT) "]."
+        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SEND_PORT_DEFAULT) "]."
+    },
+    {
+        OPT_IDX_OSC_SEND_IP,
+        OPT_TYPE_UNUSED,
+        "",
+        "osc-send-ip",
+        SushiArg::NonEmpty,
+        "\t\t--osc-send-ip=<ip> \tIP to output OSC messages to [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SEND_IP_DEFAULT) "]."
     },
     {
         OPT_IDX_GRPC_LISTEN_ADDRESS,
@@ -362,7 +377,7 @@ const optionparser::Descriptor usage[] =
         "",
         "grpc-address",
         SushiArg::NonEmpty,
-        "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT "]."
+        "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT_DEFAULT "]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

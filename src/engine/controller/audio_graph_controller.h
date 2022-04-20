@@ -32,7 +32,7 @@ namespace controller_impl {
 class AudioGraphController : public ext::AudioGraphController
 {
 public:
-    AudioGraphController(BaseEngine* engine);
+    explicit AudioGraphController(BaseEngine* engine);
 
     ~AudioGraphController() override = default;
 

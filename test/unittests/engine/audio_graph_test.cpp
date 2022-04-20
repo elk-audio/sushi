@@ -1,16 +1,13 @@
-#include <algorithm>
 #include <thread>
 
 #include "gtest/gtest.h"
 
-#include "test_utils/test_utils.h"
 #include "engine/transport.h"
 
 #define private public
 #define protected public
 
 #include "engine/audio_graph.cpp"
-#include "test_utils/dummy_processor.h"
 #include "test_utils/host_control_mockup.h"
 
 constexpr float SAMPLE_RATE = 44000;

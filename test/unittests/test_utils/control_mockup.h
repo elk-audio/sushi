@@ -5,6 +5,8 @@
 #include <bits/stdc++.h>
 #endif
 
+#include <unordered_map>
+
 #include "control_interface.h"
 
 namespace sushi {
@@ -772,6 +774,8 @@ public:
 class OscControllerMockup : public OscController, public TestableController
 {
 public:
+    std::string get_send_ip() const override {return "";}
+
     int get_send_port() const override {return 0;}
 
     int get_receive_port() const override {return 0;}

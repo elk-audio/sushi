@@ -46,9 +46,8 @@ TEST(TestSendReturnFactory, TestFactoryCreation)
 class TestSendReturnPlugins : public ::testing::Test
 {
 protected:
-    TestSendReturnPlugins()
-    {
-    }
+    TestSendReturnPlugins() = default;
+
     void SetUp()
     {
         ASSERT_EQ(ProcessorReturnCode::OK, _send_instance.init(TEST_SAMPLERATE));
@@ -141,22 +140,82 @@ TEST_F(TestSendReturnPlugins, TestMultipleSends)
     test_utils::assert_buffer_value(2.0f, buffer_2);
 }
 
-TEST_F(TestSendReturnPlugins, TestMonoToStereoSend)
+TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
 {
-    ChunkSampleBuffer buffer_mono(1);
+    auto channel_count_param_id = _send_instance.parameter_from_name("channel_count")->id();
+    auto start_channel_param_id = _send_instance.parameter_from_name("start_channel")->id();
+    auto dest_channel_param_id = _send_instance.parameter_from_name("dest_channel")->id();
+
+
     ChunkSampleBuffer buffer_1(2);
     ChunkSampleBuffer buffer_2(2);
-    test_utils::fill_sample_buffer(buffer_mono, 1.0f);
+    test_utils::fill_sample_buffer(buffer_1, 1.0f);
 
-    _send_instance.set_input_channels(1);
-    _send_instance.set_output_channels(1);
+    _send_instance.set_input_channels(2);
+    _send_instance.set_output_channels(2);
     _send_instance._set_destination(&_return_instance);
-    _send_instance.process_audio(buffer_mono, buffer_mono);
 
-    // Swap manually and verify that signal is returned
+    // Send only 1 channel
+    auto event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
+                                                      1.0 / (MAX_TRACK_CHANNELS - 1));
+    _send_instance.process_event(event);
+    _send_instance.process_audio(buffer_1, buffer_1);
+
+    // Swap manually and verify that signal only the first channel was sent
     _return_instance._swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
-    test_utils::assert_buffer_value(1.0f, buffer_2);
+    EXPECT_FLOAT_EQ(1.0f, buffer_2.channel(0)[0]);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
+
+    // Set the destination channel to channel 1
+    event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
+                                                 1.0 / (MAX_TRACK_CHANNELS - 1));
+    _send_instance.process_event(event);
+    _send_instance.process_audio(buffer_1, buffer_1);
+
+    // Swap manually and verify that signal only the first channel was sent to channel 2
+    _return_instance._swap_buffers();
+    _return_instance.process_audio(buffer_1, buffer_2);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
+    EXPECT_FLOAT_EQ(1.0f, buffer_2.channel(1)[0]);
+
+    // Set a destination channel outside the range of the return plugin's channel range
+    event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id, 1.0);
+    _send_instance.process_event(event);
+    _send_instance.process_audio(buffer_1, buffer_1);
+
+    // Both return channels should be 0
+    _return_instance._swap_buffers();
+    _return_instance.process_audio(buffer_1, buffer_2);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
+
+    // Send both channels the send plugin to channels 3 & 4 of the return plugin
+    _return_instance.set_input_channels(4);
+    _return_instance.set_output_channels(4);
+
+    buffer_1.channel(0)[0] = 2.0;
+    buffer_1.channel(1)[0] = 3.0;
+    event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, start_channel_param_id, 0);
+    _send_instance.process_event(event);
+    event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
+                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+    _send_instance.process_event(event);
+    event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
+                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+    _send_instance.process_event(event);
+
+    _send_instance.process_audio(buffer_1, buffer_1);
+
+    buffer_1 = ChunkSampleBuffer(4);
+    buffer_2 = ChunkSampleBuffer(4);
+
+    _return_instance._swap_buffers();
+    _return_instance.process_audio(buffer_1, buffer_2);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
+    EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
+    EXPECT_FLOAT_EQ(2.0f, buffer_2.channel(2)[0]);
+    EXPECT_FLOAT_EQ(3.0f, buffer_2.channel(3)[0]);
 }
 
 TEST_F(TestSendReturnPlugins, TestRampedProcessing)
@@ -166,7 +225,7 @@ TEST_F(TestSendReturnPlugins, TestRampedProcessing)
     test_utils::fill_sample_buffer(buffer_1, 1.0f);
 
     // Test only ramping
-    _return_instance.send_audio_with_ramp(buffer_1, 2.0f, 0.0f);
+    _return_instance.send_audio_with_ramp(buffer_1, 0, 2.0f, 0.0f);
     _return_instance._swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_NEAR(2.0f, buffer_2.channel(0)[0], 0.01);

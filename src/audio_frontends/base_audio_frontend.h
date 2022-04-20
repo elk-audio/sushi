@@ -96,8 +96,8 @@ protected:
 };
 
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_BASE_AUDIO_FRONTEND_H

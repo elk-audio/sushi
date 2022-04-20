@@ -6,7 +6,7 @@
 
 namespace sushi {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("processor")
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("processor");
 
 Processor::~Processor()
 {
@@ -101,7 +101,7 @@ bool Processor::maybe_output_gate_event(int channel, int note, bool note_on)
     return true;
 }
 
-void Processor::bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
+void Processor::bypass_process(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
     if (_current_input_channels == 0)
     {
@@ -195,7 +195,7 @@ void Processor::async_delete(RtDeletable* object)
     output_event(rt_event);
 }
 
-std::string Processor::_make_unique_parameter_name(std::string name) const
+std::string Processor::_make_unique_parameter_name(const std::string& name) const
 {
     auto unique_name = name.empty() ? "parameter" : name;
     int index = 1;

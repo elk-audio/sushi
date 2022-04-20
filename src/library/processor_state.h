@@ -36,10 +36,6 @@ class ProcessorState
 public:
     virtual ~ProcessorState();
 
-    virtual std::vector<std::byte> serialize() const;
-
-    bool deserialize(std::vector<std::byte>);
-
     void set_program(int program_id);
 
     void set_bypass(bool enabled);
@@ -69,7 +65,7 @@ public:
     RtState();
     RtState(const ProcessorState& state);
 
-    virtual ~RtState();
+    ~RtState() override;
 
     void set_bypass(bool enabled);
 
@@ -84,6 +80,6 @@ protected:
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_PROCESSOR_STATE_H

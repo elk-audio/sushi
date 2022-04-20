@@ -212,7 +212,6 @@ public:
         buffer._own_buffer = false;
         buffer._channel_count = number_of_channels;
         buffer._buffer = data + size * start_channel;
-        buffer._buffer = data;
         return buffer;
     }
 

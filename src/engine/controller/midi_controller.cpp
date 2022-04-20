@@ -227,7 +227,7 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
     auto lambda = [=] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
-        if(!raw_midi)
+        if (!raw_midi)
         {
             status = _midi_dispatcher->connect_kb_to_track(port, track_id, int_channel);
         }
@@ -236,7 +236,7 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
             status = _midi_dispatcher->connect_raw_midi_to_track(port, track_id, int_channel);
         }
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -263,7 +263,7 @@ ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->connect_track_to_output(port, track_id, int_channel);
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -349,7 +349,7 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
     auto lambda = [=]() -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
-        if(!raw_midi)
+        if (!raw_midi)
         {
             status = _midi_dispatcher->disconnect_kb_from_track(port, // port maps to midi_input
                                                                 track_id,
@@ -362,7 +362,7 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
                                                                       int_channel);
         }
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -387,7 +387,7 @@ ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::Midi
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->disconnect_track_from_output(port, track_id, int_channel);
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }

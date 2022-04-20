@@ -160,7 +160,7 @@ void PortAudioFrontend::cleanup()
         SUSHI_LOG_INFO("Closing PortAudio stream");
         Pa_StopStream(_stream);
     }
-    else if(result != paNoError)
+    else if (result != paNoError)
     {
         SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
     }
@@ -269,9 +269,10 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         const float* in_src = static_cast<const float*>(input);
         if (c < _audio_input_channels)
         {
+            float* in_dst = _in_buffer.channel(c);
+
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                float* in_dst = _in_buffer.channel(c);
                 in_dst[s] = in_src[s * _num_total_input_channels + c];
             }
         }
@@ -290,9 +291,10 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
         float* out_dst = static_cast<float*>(output);
         if (c < _audio_output_channels)
         {
+            const float* out_src = _out_buffer.channel(c);
+
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                const float* out_src = _out_buffer.channel(c);
                 out_dst[s * _num_total_output_channels + c] = out_src[s];
             }
         }
@@ -306,8 +308,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     return 0;
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 #include "audio_frontends/portaudio_frontend.h"

@@ -56,7 +56,7 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     char char_buf[128] = {};
     Steinberg::UString128 str(wchar_buffer, 128);
     str.toAscii(char_buf, VST_NAME_BUFFER_SIZE);
-    return std::string(char_buf);
+    return {char_buf};
 }
 
 // Get all vst3 preset locations in the right priority order
@@ -69,7 +69,7 @@ std::vector<std::string> get_preset_locations()
     {
         locations.push_back(std::string(home_dir) + "/.vst3/presets/");
     }
-    SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
+    SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
     locations.emplace_back("/usr/share/vst3/presets/");
     locations.emplace_back("/usr/local/share/vst3/presets/");
     char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
@@ -87,13 +87,13 @@ std::vector<std::string> get_preset_locations()
             path_length = 0;
         }
     }
-    SUSHI_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory");
+    SUSHI_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory")
     return locations;
 }
 
 std::string extract_preset_name(const std::string& path)
 {
-    auto fname_pos = path.find_last_of("/") + 1;
+    auto fname_pos = path.find_last_of('/') + 1;
     return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
 }
 
@@ -302,7 +302,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
+    if (_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
     }
@@ -311,7 +311,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _fill_processing_context();
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
-        if(_bypass_parameter.supported == false && _bypass_manager.should_ramp())
+        if (_bypass_parameter.supported == false && _bypass_manager.should_ramp())
         {
             _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         }
@@ -365,12 +365,13 @@ void Vst3xWrapper::set_enabled(bool enabled)
 void Vst3xWrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    if(_bypass_parameter.supported)
+    if (_bypass_parameter.supported)
     {
         _host_control.post_event(new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                                           this->id(), _bypass_parameter.id, bypassed? 1.0f : 0, IMMEDIATE_PROCESS));
         _bypass_manager.set_bypass(bypassed, _sample_rate);
-    } else
+    }
+    else
     {
         _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
     }
@@ -534,7 +535,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         bool res = preset_file.restoreControllerState(_instance.controller());
         res &= preset_file.restoreComponentState(_instance.component());
         // Notify the processor of the update with an idle message. This was specific
-        // to Retrologue and not part of the Vst3 standard so we might remove it eventually
+        // to Retrologue and not part of the Vst3 standard, so we might remove it eventually
         Steinberg::Vst::HostMessage message;
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
@@ -638,10 +639,10 @@ bool Vst3xWrapper::_register_parameters()
         {
             /* Vst3 uses a model where parameters are indexed by an integer from 0 to
              * getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
-             * also has a 32 bit integer id which is arbitrarily assigned.
+             * also has a 32-bit integer id which is arbitrarily assigned.
              *
              * When doing real time parameter updates, the parameters must be accessed using this
-             * id and not its index. Hence the id in the registered ParameterDescriptors
+             * id and not its index. Hence, the id in the registered ParameterDescriptors
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
@@ -703,7 +704,7 @@ bool Vst3xWrapper::_register_parameters()
     }
 
     /* Steinberg decided not support standard midi, nor provide special events for common
-     * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
+     * controller (Pitch bend, mod wheel, etc.) instead these are exposed as regular
      * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
      * would be mapped to if the plugin was able to handle native midi.
      * So we query the plugin for this and if that's the case, store the id:s of these
@@ -959,7 +960,7 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
             {
                 if (maybe_output_cv_value(id, value) == false)
                 {
-                    float float_value = static_cast<float>(value);
+                    auto float_value = static_cast<float>(value);
                     auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
                     _parameter_update_queue.push({id, float_value});

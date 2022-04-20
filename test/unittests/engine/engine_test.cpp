@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <thread>
 
 #include "gtest/gtest.h"
@@ -14,7 +13,6 @@
 #include "library/internal_processor_factory.cpp"
 #include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
-#include "test_utils/host_control_mockup.h"
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
@@ -398,7 +396,7 @@ TEST_F(TestEngine, TestAudioConnections)
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(4);
     ControlBuffer control_buffer;
 
-    // Fill the channels with different values so we can differentiate channels
+    // Fill the channels with different values, so we can differentiate channels
     for (int i = 0; i < in_buffer.channel_count(); ++i)
     {
         auto channel_buffer = ChunkSampleBuffer::create_non_owning_buffer(in_buffer, i, 1);
@@ -501,6 +499,7 @@ TEST_F(TestEngine, TestCvRouting)
     // We should have a non-zero value in this slot
     ASSERT_NE(0.0f, out_controls.cv_values[1]);
 }
+
 TEST_F(TestEngine, TestGateRouting)
 {
     /* Build a cv/gate to midi to cv/gate chain and verify gate changes travel through it*/

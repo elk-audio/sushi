@@ -20,7 +20,6 @@
 
 #include "event_dispatcher.h"
 #include "engine/base_engine.h"
-#include "logging.h"
 
 namespace sushi {
 namespace dispatcher {
@@ -177,7 +176,7 @@ void EventDispatcher::_event_loop()
             }
             if (status == EventStatus::QUEUED_HANDLING)
             {
-                /* Event has not finished processing, so dont call comp cb or delete it */
+                /* Event has not finished processing, so don't call comp cb or delete it */
                 continue;
             }
             if (event->completion_cb() != nullptr)

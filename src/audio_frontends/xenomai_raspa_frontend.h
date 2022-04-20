@@ -126,8 +126,8 @@ public:
     void run() override {}
 };
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 
 #endif // SUSHI_BUILD_WITH_XENOMAI
 #endif // SUSHI_XENOMAI_RASPA_FRONTEND_H

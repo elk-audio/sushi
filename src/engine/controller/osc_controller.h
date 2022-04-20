@@ -33,11 +33,13 @@ namespace controller_impl {
 class OscController : public ext::OscController
 {
 public:
-    OscController(BaseEngine* engine);
+    explicit OscController(BaseEngine* engine);
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
     ~OscController() override = default;
+
+    std::string get_send_ip() const override;
 
     int get_send_port() const override;
 

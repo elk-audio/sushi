@@ -107,12 +107,12 @@ constexpr int ENGINE_TIMING_ID = -1;
 class BaseEngine
 {
 public:
-    BaseEngine(float sample_rate) : _sample_rate(sample_rate)
+    explicit BaseEngine(float sample_rate) : _sample_rate(sample_rate)
     {}
 
     virtual ~BaseEngine() = default;
 
-    float sample_rate()
+    float sample_rate() const
     {
         return _sample_rate;
     }
@@ -132,12 +132,12 @@ public:
         _audio_outputs = channels;
     }
 
-    int audio_input_channels()
+    int audio_input_channels() const
     {
         return _audio_inputs;
     }
 
-    int audio_output_channels()
+    int audio_output_channels() const
     {
         return _audio_outputs;
     }
@@ -185,12 +185,12 @@ public:
 
     virtual std::vector<AudioConnection> audio_input_connections()
     {
-        return std::vector<AudioConnection>();
+        return {};
     }
 
     virtual std::vector<AudioConnection> audio_output_connections()
     {
-        return std::vector<AudioConnection>();
+        return {};
     }
 
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,

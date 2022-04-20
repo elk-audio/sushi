@@ -46,7 +46,7 @@ void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>*
         SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
                          data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], callback_data->input_number, timestamp.count());
     }
-    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count));
+    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
 }
 
 RtMidiFrontend::RtMidiFrontend(int inputs,

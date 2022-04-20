@@ -36,18 +36,6 @@ struct CompileTimeSettings
 
     static constexpr auto audio_chunk_size = AUDIO_CHUNK_SIZE;
 
-    static constexpr auto sample_rate_default = SUSHI_SAMPLE_RATE_DEFAULT;
-
-    static constexpr auto log_level_default = SUSHI_LOG_LEVEL_DEFAULT;
-    static constexpr auto log_filename_default = SUSHI_LOG_FILENAME_DEFAULT;
-    static constexpr auto json_filename_default = SUSHI_JSON_FILENAME_DEFAULT;
-    static constexpr auto jack_client_name_default = SUSHI_JACK_CLIENT_NAME_DEFAULT;
-
-    static constexpr auto osc_server_port = SUSHI_OSC_SERVER_PORT;
-    static constexpr auto osc_send_port = SUSHI_OSC_SEND_PORT;
-
-    static constexpr auto grpc_listening_port = SUSHI_GRPC_LISTENING_PORT;
-
     static constexpr std::array enabled_build_options = {
 #ifdef SUSHI_BUILD_WITH_VST2
             "vst2",

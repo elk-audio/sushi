@@ -331,7 +331,7 @@ ext::ControlStatus AudioGraphController::move_processor_on_track(int processor_i
 
             [[maybe_unused]] auto replace_status = _engine->add_plugin_to_track(processor_id, source_track_id, position);
             SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
-                                 "Failed to replace processor {} on track {}", processor_id, source_track_id);
+                                 "Failed to replace processor {} on track {}", processor_id, source_track_id)
 
         }
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;

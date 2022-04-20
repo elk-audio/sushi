@@ -21,7 +21,6 @@
 #include <algorithm>
 
 #include "plugins/arpeggiator_plugin.h"
-#include "logging.h"
 
 namespace sushi {
 namespace arpeggiator_plugin {
@@ -31,7 +30,6 @@ constexpr auto DEFAULT_LABEL = "Arpeggiator";
 
 constexpr int MAX_ARP_NOTES = 8;
 constexpr int START_NOTE = 48;
-constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float MULTIPLIER_8TH_NOTE = 2.0f;
 constexpr int   OCTAVE = 12;
 
