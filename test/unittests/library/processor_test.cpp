@@ -177,7 +177,7 @@ TEST(TestProcessorUtils, TestSetBypassRampTime)
         chunks_in_10ms = 1;
     }
 
-    // ... Because chunks_to_rap returns a minimum of 1.
+    // ... Because chunks_to_ramp returns a minimum of 1.
     int to_ramp = chunks_to_ramp(TEST_SAMPLE_RATE);
 
     EXPECT_EQ(chunks_in_10ms, to_ramp);
