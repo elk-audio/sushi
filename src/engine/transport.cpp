@@ -246,7 +246,7 @@ void Transport::_update_internals()
 void Transport::_update_internal_sync(int64_t samples)
 {
     // We cannot assume chunk size is an absolute multiple of samples for all buffer sizes.
-    auto chunks_passed = static_cast<float>(samples) / AUDIO_CHUNK_SIZE;
+    auto chunks_passed = static_cast<double>(samples) / AUDIO_CHUNK_SIZE;
 
     if (_playmode != _set_playmode)
     {
@@ -256,7 +256,7 @@ void Transport::_update_internal_sync(int64_t samples)
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    _beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (_playmode != PlayingMode::STOPPED)
     {
         _current_bar_beat_count += chunks_passed * _beats_per_chunk;
