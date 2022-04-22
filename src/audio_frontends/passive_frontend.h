@@ -35,15 +35,12 @@ namespace sushi {
 
 namespace audio_frontend {
 
-using TimePoint = std::chrono::nanoseconds;
-
 // TODO:
 //   Hard-coding the number of channels for now.
 constexpr int PASSIVE_FRONTEND_CHANNELS = 2;
 
 struct PassiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    // TODO: Debug mode switches?
     PassiveFrontendConfiguration(int cv_inputs,
                                  int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs)
@@ -55,7 +52,7 @@ struct PassiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 class PassiveFrontend : public BaseAudioFrontend
 {
 public:
-PassiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    PassiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     virtual ~PassiveFrontend()
     {
@@ -93,18 +90,17 @@ PassiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
      * @param output buffer
      * @param channel_count
      * @param sample_count
+     * @param timestamp
      */
      void process_audio(ChunkSampleBuffer* in_buffer, // Not const, because process_chunk expects this as a raw pointer.
                         ChunkSampleBuffer* out_buffer,
                        int channel_count,
-                       int sample_count);
+                       int sample_count,
+                       Time timestamp);
 
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
-
-    TimePoint _start_time;
-    bool _start_time_set {false};
 };
 
 } // end namespace audio_frontend

@@ -35,6 +35,8 @@
 
 #include "control_frontends/osc_frontend.h"
 
+#include "control_frontends/passive_midi_frontend.h"
+
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
 #include "control_frontends/alsa_midi_frontend.h"
 #endif
@@ -196,6 +198,11 @@ void Sushi::exit()
 audio_frontend::PassiveFrontend* Sushi::audio_frontend()
 {
     return static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get());
+}
+
+midi_frontend::PassiveMidiFrontend* Sushi::midi_frontend()
+{
+    return static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get());
 }
 
 engine::Controller* Sushi::controller()
@@ -495,6 +502,12 @@ InitStatus Sushi::_set_up_control(const SushiOptions& options,
                 return InitStatus::FAILED_LOAD_OSC;
             }
         }
+    }
+    else if (options.frontend_type == FrontendType::PASSIVE)
+    {
+        _midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(midi_inputs,
+                                                                                     midi_outputs,
+                                                                                     _midi_dispatcher.get());
     }
     else
     {

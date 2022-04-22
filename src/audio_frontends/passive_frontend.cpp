@@ -63,7 +63,6 @@ AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config
 void PassiveFrontend::cleanup()
 {
     _engine->enable_realtime(false);
-    _start_time_set = false; // TODO: More of a placeholder/reminder, to fix this when implementing "Pause".
 }
 
 void PassiveFrontend::run()
@@ -76,14 +75,9 @@ void PassiveFrontend::run()
 void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                     ChunkSampleBuffer* out_buffer,
                                     int channel_count,
-                                    int sample_count)
+                                    int sample_count,
+                                    Time timestamp)
 {
-    if (!_start_time_set)
-    {
-        _start_time_set = true;
-        _start_time = twine::current_rt_time();
-    }
-
     // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
     //   These tests should really not be in process_audio, right?
     if (sample_count != AUDIO_CHUNK_SIZE)
@@ -103,9 +97,6 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
     // TODO: Deal also with MIDI.
 
     // TODO: Deal also with CV.
-
-    // TODO: This doesn't seem to work as expected - The LV2 metro plugin isn't working with this frontend.
-    auto timestamp = std::chrono::duration_cast<Time>(twine::current_rt_time() - _start_time);
 
     out_buffer->clear();
 

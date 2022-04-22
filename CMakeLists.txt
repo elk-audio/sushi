@@ -474,18 +474,18 @@ set(SOURCE_FILES
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
-    src/control_frontends/osc_frontend.cpp
-    src/dsp_library/biquad_filter.cpp
-    src/engine/audio_engine.cpp
-    src/engine/audio_graph.cpp
-    src/engine/event_dispatcher.cpp
-    src/engine/track.cpp
-    src/engine/midi_dispatcher.cpp
-    src/engine/json_configurator.cpp
-    src/engine/receiver.cpp
-    src/engine/event_timer.cpp
-    src/engine/transport.cpp
-    src/engine/parameter_manager.cpp
+    src/control_frontends/passive_midi_frontend.cpp
+                      src/control_frontends/osc_frontend.cpp
+                      src/dsp_library/biquad_filter.cpp
+                      src/engine/audio_engine.cpp
+                      src/engine/audio_graph.cpp
+                      src/engine/event_dispatcher.cpp
+                      src/engine/track.cpp
+                      src/engine/midi_dispatcher.cpp
+                      src/engine/json_configurator.cpp
+                      src/engine/receiver.cpp
+                      src/engine/event_timer.cpp
+                      src/engine/transport.cppsrc/engine/parameter_manager.cpp
     src/engine/processor_container.cpp
     src/engine/plugin_library.cpp
     src/engine/controller/controller.cpp

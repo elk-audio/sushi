@@ -52,6 +52,7 @@ class PassiveFrontend;
 
 namespace midi_frontend {
 class BaseMidiFrontend;
+class PassiveMidiFrontend;
 }
 
 namespace midi_dispatcher {
@@ -168,10 +169,16 @@ public:
     engine::Controller* controller();
 
     /**
-     * Exposing audio frontend for the context where Sushi is embedded in another audio host.
+     * Exposing audio frontend for the context where Sushi is embedded in another host.
      * @return
      */
     audio_frontend::PassiveFrontend* audio_frontend();
+
+    /**
+     * Exposing midi frontend for the context where Sushi is embedded in another host.
+     * @return
+     */
+    midi_frontend::PassiveMidiFrontend* midi_frontend();
 
     void set_sample_rate(float sample_rate);
 
