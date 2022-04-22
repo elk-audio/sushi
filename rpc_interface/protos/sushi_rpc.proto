@@ -795,7 +795,8 @@ message TrackState
     int32                   input_busses = 4;
     int32                   output_channels = 5;
     int32                   output_busses = 6;
-    repeated PluginClass    processors = 7;
+    ProcessorState          track_state = 7;
+    repeated PluginClass    processors = 8;
 }
 
 message SessionState
