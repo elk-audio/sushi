@@ -68,9 +68,9 @@ void PassiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time timest
                     data[0], data[1], data[2], data[3], input, timestamp.count());
 }
 
-void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]Time timestamp)
+void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
-
+    _callback(output, data, timestamp);
 }
 
 bool PassiveMidiFrontend::_init_time()

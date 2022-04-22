@@ -25,12 +25,15 @@
 #include <atomic>
 #include <vector>
 #include <map>
+#include <functional>
 
 #include "base_midi_frontend.h"
 #include "library/time.h"
 
 namespace sushi {
 namespace midi_frontend {
+
+using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
 
 class PassiveMidiFrontend : public BaseMidiFrontend
 {
@@ -49,6 +52,11 @@ public:
 
     void receive_midi(int input, MidiDataByte data, Time timestamp);
 
+    void set_callback(PassiveMidiCallback&& callback)
+    {
+        _callback = std::move(callback);
+    }
+
 private:
     bool _init_ports();
     bool _init_time();
@@ -61,6 +69,8 @@ private:
     int _queue {-1};
 
     Time _time_offset {0};
+
+    PassiveMidiCallback _callback;
 };
 
 } // end namespace midi_frontend
