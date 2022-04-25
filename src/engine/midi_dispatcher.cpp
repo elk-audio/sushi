@@ -572,7 +572,7 @@ std::vector<KbdOutputConnection> MidiDispatcher::get_all_kb_output_connections()
 
 MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_output)
 {
-    if (midi_output <= _enabled_clock_out.size())
+    if (static_cast<size_t>(midi_output) <= _enabled_clock_out.size())
     {
         _enabled_clock_out[midi_output] = enabled;
         return MidiDispatcherStatus::OK;
@@ -582,7 +582,7 @@ MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_ou
 
 bool MidiDispatcher::midi_clock_enabled(int midi_output)
 {
-    if (midi_output <= _enabled_clock_out.size())
+    if (static_cast<size_t>(midi_output) <= _enabled_clock_out.size())
     {
         return _enabled_clock_out[midi_output];
     }
@@ -972,14 +972,20 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
         case PlayingMode::PLAYING:
             for (int i = 0; i < _midi_outputs; ++i)
             {
-                _frontend->send_midi(i, midi::encode_start_message(), event->time());
+                if (_enabled_clock_out[i])
+                {
+                    _frontend->send_midi(i, midi::encode_start_message(), event->time());
+                }
             }
             break;
 
         case PlayingMode::STOPPED:
             for (int i = 0; i < _midi_outputs; ++i)
             {
-                _frontend->send_midi(i, midi::encode_stop_message(), event->time());
+                if (_enabled_clock_out[i])
+                {
+                    _frontend->send_midi(i, midi::encode_stop_message(), event->time());
+                }
             }
             break;
 
