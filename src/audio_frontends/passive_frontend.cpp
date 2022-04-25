@@ -71,13 +71,16 @@ void PassiveFrontend::run()
 }
 
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
-//  Also, in JUCE there seems to be support for having different numbers of input and output channels.
+//  In JUCE, the buffer size is always the same for in and out, with some unused,
+//  if they differ.
 void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                     ChunkSampleBuffer* out_buffer,
                                     int channel_count,
                                     int sample_count,
                                     Time timestamp)
 {
+    // TODO: Do we need to concern ourselves with multiple buses?
+
     // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
     //   These tests should really not be in process_audio, right?
     if (sample_count != AUDIO_CHUNK_SIZE)
@@ -107,7 +110,9 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                &_in_controls,
                                &_out_controls,
                                timestamp,
-                               sample_count);
+                               _processed_sample_count);
+
+    _processed_sample_count += sample_count;
 
         if (_pause_manager.should_ramp())
         {

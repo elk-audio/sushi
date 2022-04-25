@@ -101,6 +101,9 @@ public:
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
+
+    Time _start_time;
+    int64_t _processed_sample_count {0};
 };
 
 } // end namespace audio_frontend
