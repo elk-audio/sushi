@@ -538,7 +538,7 @@ EngineReturnStatus AudioEngine::send_rt_event(const RtEvent& event)
 EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
 {
     // This queue will only handle engine control events, not processor events
-    assert(event.type() >= RtEventType::STOP_ENGINE);
+    assert(is_engine_control_event(event));
     std::lock_guard<std::mutex> lock(_in_queue_lock);
     if (_control_queue_in.push(event))
     {
@@ -965,13 +965,6 @@ void AudioEngine::_process_internal_rt_events()
     {
         switch (event.type())
         {
-            case RtEventType::STOP_ENGINE:
-            {
-                auto typed_event = event.returnable_event();
-                _state.store(RealtimeState::STOPPING);
-                typed_event->set_handled(true);
-                break;
-            }
             case RtEventType::TEMPO:
             case RtEventType::TIME_SIGNATURE:
             case RtEventType::PLAYING_MODE:

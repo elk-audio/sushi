@@ -35,7 +35,7 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
         RtEvent event;
         while (_queue->pop(event))
         {
-            if (event.type() >= RtEventType::STOP_ENGINE)
+            if (is_returnable_event(event))
             {
                 auto typed_event = event.returnable_event();
                 if (typed_event->event_id() == id)

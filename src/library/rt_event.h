@@ -39,6 +39,12 @@ namespace sushi {
 #define SUSHI_EVENT_CACHE_ALIGNMENT 32
 #endif
 
+class RtEvent;
+inline bool is_keyboard_event(const RtEvent& event);
+inline bool is_engine_control_event(const RtEvent& event);
+inline bool is_returnable_event(const RtEvent& event);
+
+
 /**
  * List of realtime message types
  */
@@ -61,8 +67,8 @@ enum class RtEventType
     STRING_PROPERTY_CHANGE,
     SET_BYPASS,
     SET_STATE,
+    DELETE,
     /* Engine commands */
-    STOP_ENGINE,
     TEMPO,
     TIME_SIGNATURE,
     PLAYING_MODE,
@@ -85,7 +91,6 @@ enum class RtEventType
     REMOVE_GATE_CONNECTION,
     /* Delete object event */
     BLOB_DELETE,
-    DELETE,
     /* Synchronisation events */
     SYNC,
     /* Engine notification events */
@@ -694,13 +699,13 @@ public:
 
     const ReturnableRtEvent* returnable_event() const
     {
-        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        assert(is_returnable_event(*this));
         return &_returnable_event;
     }
 
     ReturnableRtEvent* returnable_event()
     {
-        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        assert(is_returnable_event(*this));
         return &_returnable_event;
     }
 
@@ -921,12 +926,6 @@ public:
     static RtEvent make_set_rt_state_event(ObjectId target, RtState* state)
     {
         ProcessorStateRtEvent typed_event(target, state);
-        return RtEvent(typed_event);
-    }
-
-    static RtEvent make_stop_engine_event()
-    {
-        ReturnableRtEvent typed_event(RtEventType::STOP_ENGINE, 0);
         return RtEvent(typed_event);
     }
 
@@ -1172,13 +1171,31 @@ static_assert(std::is_trivially_copyable<RtEvent>::value);
  * @param event The event to test
  * @return true if the event is a keyboard event, false otherwise.
  */
-static inline bool is_keyboard_event(const RtEvent event)
+inline bool is_keyboard_event(const RtEvent& event)
 {
-    if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::WRAPPED_MIDI_EVENT)
-    {
-        return true;
-    }
-    return false;
+    return event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::WRAPPED_MIDI_EVENT;
+}
+
+/**
+ * @brief Convenience function to encapsulate the logic to determine if an event is only for
+ *        internal engine control or if it can be passed to processor instances
+ * @param event The event to test
+ * @return true if the event is only for internal engine use.
+ */
+inline bool is_engine_control_event(const RtEvent& event)
+{
+    return event.type() >= RtEventType::TEMPO;
+}
+
+/**
+ * @brief Convenience function to encapsulate the logic to determine if the event is
+ *        returnable with a status code
+ * @param event The event to test
+ * @return true if the event can be converted to ReturnableRtEvent
+ */
+inline bool is_returnable_event(const RtEvent& event)
+{
+    return event.type() >= RtEventType::INSERT_PROCESSOR && event.type() <= RtEventType::REMOVE_GATE_CONNECTION;
 }
 
 } // namespace sushi
