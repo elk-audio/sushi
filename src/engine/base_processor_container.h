@@ -34,6 +34,8 @@ namespace engine {
 class BaseProcessorContainer
 {
 public:
+    virtual ~BaseProcessorContainer() = default;
+
     virtual bool add_processor(std::shared_ptr<Processor> track) = 0;
 
     virtual bool add_track(std::shared_ptr<Track> track) = 0;

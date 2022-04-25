@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Aux send plugin to send audio to a return plugin
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <string>
@@ -33,7 +33,7 @@ namespace send_plugin {
 constexpr auto PLUGIN_UID = "sushi.testing.send";
 constexpr auto DEFAULT_LABEL = "Send";
 constexpr auto DEFAULT_DEST = "No destination";
-constexpr auto DEST_PROPERTY_ID = 1;
+constexpr auto DEST_PROPERTY_ID = 4;
 
 SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                _manager(manager)
@@ -45,10 +45,21 @@ SendPlugin::SendPlugin(HostControl host_control, SendReturnFactory* manager) : I
                                                 Direction::AUTOMATABLE,
                                                 new dBToLinPreProcessor(-120.0f, 24.0f));
 
+    _channel_count_parameter  = register_int_parameter("channel_count", "Channel count", "",
+                                                       MAX_TRACK_CHANNELS, 0, MAX_TRACK_CHANNELS,
+                                                       Direction::AUTOMATABLE);
+    _start_channel_parameter  = register_int_parameter("start_channel", "Start channel", "",
+                                                       0, 0, MAX_TRACK_CHANNELS,
+                                                       Direction::AUTOMATABLE);
+    _dest_channel_parameter  = register_int_parameter("dest_channel", "Destination channel", "",
+                                                       0, 0, MAX_TRACK_CHANNELS,
+                                                       Direction::AUTOMATABLE);
+
     _gain_smoother.set_direct(_gain_parameter->processed_value());
 
     [[maybe_unused]] bool str_pr_ok = register_property("destination_name", "destination name", DEFAULT_DEST);
     assert(_gain_parameter && str_pr_ok);
+    assert(_channel_count_parameter && _start_channel_parameter && _dest_channel_parameter);
 }
 
 SendPlugin::~SendPlugin()
@@ -86,7 +97,7 @@ ProcessorReturnCode SendPlugin::init(float sample_rate)
 void SendPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
-    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate);
+    _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
 }
 
 void SendPlugin::process_event(const RtEvent& event)
@@ -115,19 +126,31 @@ void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBu
         float gain = _gain_parameter->processed_value();
         _gain_smoother.set(gain);
 
+        int dest_channel = _dest_channel_parameter->processed_value();
+        int start_channel = _start_channel_parameter->processed_value();
+        int channels = std::min(_channel_count_parameter->processed_value(), in_buffer.channel_count() - start_channel);
+
+        if (channels <= 0)
+        {
+            return;
+        }
+
+        const auto buffer = ChunkSampleBuffer::create_non_owning_buffer(const_cast<ChunkSampleBuffer&>(in_buffer),
+                                                                        start_channel, channels);
+
         // Ramp if bypass was recently toggled
         if (_bypass_manager.should_ramp())
         {
             auto [start, end] = _bypass_manager.get_ramp();
             start *= _gain_smoother.value();
             end *= _gain_smoother.next_value();
-            _destination->send_audio_with_ramp(in_buffer, start, end);
+            _destination->send_audio_with_ramp(buffer, dest_channel, start, end);
         }
 
         // Don't ramp, nominal case
         else if (_gain_smoother.stationary())
         {
-            _destination->send_audio(in_buffer, gain);
+            _destination->send_audio(buffer, dest_channel, gain);
         }
 
         // Ramp because send gain was recently changed
@@ -135,7 +158,7 @@ void SendPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBu
         {
             float start = _gain_smoother.value();
             float end = _gain_smoother.next_value();
-            _destination->send_audio_with_ramp(in_buffer, start, end);
+            _destination->send_audio_with_ramp(buffer, dest_channel, start, end);
         }
     }
 }

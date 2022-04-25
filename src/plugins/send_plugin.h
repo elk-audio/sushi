@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Aux send plugin to send audio to a return plugin
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_SEND_PLUGIN_H
@@ -72,6 +72,10 @@ private:
 
     FloatParameterValue*          _gain_parameter;
     ValueSmootherFilter<float>    _gain_smoother;
+
+    IntParameterValue*            _channel_count_parameter;
+    IntParameterValue*            _start_channel_parameter;
+    IntParameterValue*            _dest_channel_parameter;
 
     SendReturnFactory* _manager;
     BypassManager _bypass_manager;

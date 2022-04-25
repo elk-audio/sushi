@@ -81,24 +81,7 @@ public:
 
     ~OSCFrontend();
 
-    /**
-     * @brief Connect osc to the bypass state of a given processor.
-     *        The resulting osc path will be:
-     *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
-     *
-     * @param processor_name Name of the processor
-     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
-     */
-    OscConnection* connect_to_bypass_state(const std::string& processor_name);
-
-    /**
-     * @brief Connect program change messages to a specific processor.
-     *        The resulting osc path will be;
-     *        "/program/processor i (program_id)"
-     * @param processor_name Name of the processor
-     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
-     */
-    OscConnection* connect_to_program_change(const std::string& processor_name);
+    ControlFrontendStatus init() override;
 
     /**
      * @brief Output changes from the given parameter of the given
@@ -120,22 +103,6 @@ public:
     bool disconnect_from_parameter(const std::string& processor_name,
                                    const std::string& parameter_name);
 
-    /**
-     * @brief Connect keyboard messages to a given track.
-     *        The target osc path will be:
-     *        "/keyboard_event/track_name,sif(note_on/note_off, note_value, velocity)"
-     * @param track_name The track to send to
-     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
-     */
-    OscConnection* connect_kb_to_track(const std::string& track_name);
-
-    /**
-     * @brief Connect to control all parameters from a given processor.
-     * @param processor_name The name of the processor to connect.
-     * @param processor_id The id of the processor to connect.
-     * @return Bool of whether connection succeeded.
-     */
-    bool connect_to_parameters_and_properties(const std::string& processor_name, int processor_id);
 
     /**
      * @brief Enable OSC broadcasting of all parameters from a given processor.
@@ -143,20 +110,7 @@ public:
      * @param processor_id The id of the processor to connect.
      * @return Bool of whether connection succeeded.
      */
-    bool connect_from_processor_parameters(const std::string& processor_name, int processor_id);
-
-    /**
-     * @brief Disable OSC broadcasting of all parameters from a given processor.
-     * @param processor_name The name of the processor to connect.
-     * @param processor_id The id of the processor to connect.
-     * @return Bool of whether disconnection succeeded.
-     */
-    bool disconnect_from_processor_parameters(const std::string& processor_name, int processor_id);
-
-    /**
-     * @brief Register OSC callbacks for all midi kb and pc data to tracks and processors.
-     */
-    void connect_to_all();
+    bool connect_from_processor_parameters(const std::string& processor_name);
 
     /**
      * @brief Register OSC callbacks for all parameters of all plugins.
@@ -176,8 +130,6 @@ public:
     void run() override {_start_server();}
 
     void stop() override {_stop_server();}
-
-    ControlFrontendStatus init() override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
@@ -199,6 +151,42 @@ public:
     void set_state(const OscState& state);
 
 private:
+    /**
+     * @brief Connect to control all parameters from a given processor.
+     * @param processor The name of the processor to connect.
+     * @param processor_id The id of the processor to connect.
+     * @return Bool of whether connection succeeded.
+     */
+    void _connect_to_parameters_and_properties(const Processor* processor);
+
+    /**
+     * @brief Connect keyboard messages to a given track.
+     *        The target osc path will be:
+     *        "/keyboard_event/track_name,sif(note_on/note_off, note_value, velocity)"
+     * @param processor The track to send to
+     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
+     */
+    OscConnection* _connect_kb_to_track(const Processor* processor);
+
+    /**
+     * @brief Connect osc to the bypass state of a given processor.
+     *        The resulting osc path will be:
+     *        "/bypass/processor_name,i(enabled == 1, disabled == 0)"
+     *
+     * @param processor_name Name of the processor
+     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
+     */
+    OscConnection* _connect_to_bypass_state(const Processor* processor);
+
+    /**
+     * @brief Connect program change messages to a specific processor.
+     *        The resulting osc path will be;
+     *        "/program/processor i (program_id)"
+     * @param processor Name of the processor
+     * @return An OscConnection pointer, if one has been created - otherwise nullptr.
+     */
+    OscConnection* _connect_to_program_change(const Processor* processor);
+
     OscConnection* _connect_to_parameter(const std::string& processor_name,
                                          const std::string& parameter_name,
                                          ObjectId processor_id,
@@ -225,6 +213,7 @@ private:
     bool _remove_processor_connections(ObjectId processor_id);
 
     std::pair<OscConnection*, std::string> _create_processor_connection(const std::string& processor_name,
+                                                                        ObjectId processor_id,
                                                                         const std::string& osc_path_prefix);
 
     void _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
