@@ -89,13 +89,13 @@ public:
      * @param input buffer
      * @param output buffer
      * @param channel_count
-     * @param sample_count
+     * @param total_sample_count since start (timestamp)
      * @param timestamp
      */
      void process_audio(ChunkSampleBuffer* in_buffer, // Not const, because process_chunk expects this as a raw pointer.
                         ChunkSampleBuffer* out_buffer,
                        int channel_count,
-                       int sample_count,
+                       int total_sample_count,
                        Time timestamp);
 
 private:
@@ -103,7 +103,6 @@ private:
     engine::ControlBuffer _out_controls;
 
     Time _start_time;
-    int64_t _processed_sample_count {0};
 };
 
 } // end namespace audio_frontend

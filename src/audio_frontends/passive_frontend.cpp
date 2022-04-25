@@ -76,19 +76,10 @@ void PassiveFrontend::run()
 void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                     ChunkSampleBuffer* out_buffer,
                                     int channel_count,
-                                    int sample_count,
+                                    int total_sample_count,
                                     Time timestamp)
 {
     // TODO: Do we need to concern ourselves with multiple buses?
-
-    // TODO: Currently, while VST etc support dynamic buffer sizes, Sushi is hardcoded.
-    //   These tests should really not be in process_audio, right?
-    if (sample_count != AUDIO_CHUNK_SIZE)
-    {
-        assert(false);
-        std::cout << "sample_count != AUDIO_CHUNK_SIZE, in passive frontend." << std::endl;
-        return;
-    }
 
     if (channel_count != PASSIVE_FRONTEND_CHANNELS)
     {
@@ -110,9 +101,7 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
                                &_in_controls,
                                &_out_controls,
                                timestamp,
-                               _processed_sample_count);
-
-    _processed_sample_count += sample_count;
+                               total_sample_count);
 
         if (_pause_manager.should_ramp())
         {
