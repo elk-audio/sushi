@@ -214,6 +214,11 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     event = RtEvent::make_remove_gate_output_connection_event(gate_con);
     EXPECT_EQ(RtEventType::REMOVE_GATE_CONNECTION, event.type());
     EXPECT_TRUE(event.gate_connection_event()->output_connection());
+
+    event = RtEvent::make_timing_tick_event(29, 12);
+    EXPECT_EQ(RtEventType::TIMING_TICK, event.type());
+    EXPECT_EQ(29, event.timing_tick_event()->sample_offset());
+    EXPECT_EQ(12, event.timing_tick_event()->tick_count());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)

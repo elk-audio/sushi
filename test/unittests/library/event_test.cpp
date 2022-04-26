@@ -255,4 +255,13 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_TRUE(event->is_async_work_event());
     EXPECT_TRUE(event->process_asynchronously());
     delete event;
+
+    auto tick_event = RtEvent::make_timing_tick_event(14, 12);
+    event = Event::from_rt_event(tick_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto tick_not = static_cast<EngineTimingTickNotificationEvent*>(event);
+    EXPECT_TRUE(tick_not->is_timing_tick_notification());
+    EXPECT_EQ(12, tick_not->tick_count());
+    delete event;
 }

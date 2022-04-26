@@ -93,6 +93,7 @@ enum class RtEventType
     BLOB_DELETE,
     /* Synchronisation events */
     SYNC,
+    TIMING_TICK,
     /* Engine notification events */
     CLIP_NOTIFICATION,
 };
@@ -575,6 +576,19 @@ protected:
     SyncMode _mode;
 };
 
+/* RtEvent for sending transport timing ticks for tempo sync */
+class TimingTickRtEvent : public BaseRtEvent
+{
+public:
+    TimingTickRtEvent(int offset, int tick_count) : BaseRtEvent(RtEventType::TIMING_TICK, 0, offset),
+                                                    _tick_count(tick_count) {}
+
+    int tick_count() const {return _tick_count;}
+protected:
+    int _tick_count;
+};
+
+
 /* RtEvent for notifing the engine of audio clipping in the realtime */
 class ClipNotificationRtEvent : public BaseRtEvent
 {
@@ -823,6 +837,12 @@ public:
     {
         assert(_sync_mode_event.type() == RtEventType::SYNC_MODE);
         return &_sync_mode_event;
+    }
+
+    const TimingTickRtEvent* timing_tick_event() const
+    {
+        assert(_timing_tick_event.type() == RtEventType::TIMING_TICK);
+        return &_timing_tick_event;
     }
 
     const ClipNotificationRtEvent* clip_notification_event() const
@@ -1087,6 +1107,12 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_timing_tick_event(int offset, int tick_count)
+    {
+        TimingTickRtEvent typed_event(offset, tick_count);
+        return typed_event;
+    }
+
     static RtEvent make_clip_notification_event(int offset, int channel, ClipNotificationRtEvent::ClipChannelType type)
     {
         ClipNotificationRtEvent typed_event(offset, channel, type);
@@ -1127,6 +1153,7 @@ private:
     RtEvent(const SyncModeRtEvent& e)                   : _sync_mode_event(e) {}
     RtEvent(const ClipNotificationRtEvent& e)           : _clip_notification_event(e) {}
     RtEvent(const DeleteDataRtEvent& e)                 : _delete_data_event(e) {}
+    RtEvent(const TimingTickRtEvent& e)                 : _timing_tick_event(e) {}
     /* Data storage */
     union
     {
@@ -1157,6 +1184,7 @@ private:
         SyncModeRtEvent               _sync_mode_event;
         ClipNotificationRtEvent       _clip_notification_event;
         DeleteDataRtEvent             _delete_data_event;
+        TimingTickRtEvent             _timing_tick_event;
     };
 };
 
