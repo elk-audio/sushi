@@ -182,6 +182,8 @@ public:
 
     void set_sample_rate(float sample_rate);
 
+    engine::AudioEngine* audio_engine();
+
 private:
     InitStatus _configure_from_file();
     InitStatus _configure_with_defaults();

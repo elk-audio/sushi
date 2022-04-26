@@ -205,6 +205,11 @@ midi_frontend::PassiveMidiFrontend* Sushi::midi_frontend()
     return static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get());
 }
 
+engine::AudioEngine* Sushi::audio_engine()
+{
+    return _engine.get();
+}
+
 engine::Controller* Sushi::controller()
 {
     return _controller.get();
