@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,10 +21,6 @@
 #ifndef SUSHI_PASSIVE_MIDI_FRONTEND_H
 #define SUSHI_PASSIVE_MIDI_FRONTEND_H
 
-#include <thread>
-#include <atomic>
-#include <vector>
-#include <map>
 #include <functional>
 
 #include "base_midi_frontend.h"
@@ -33,12 +29,23 @@
 namespace sushi {
 namespace midi_frontend {
 
+/**
+ * @brief Callback signature for method to invoke to notify host of any new MIDI message received.
+ */
 using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
 
+/**
+ * @brief A frontend for MIDI messaging which is to be used when Sushi is included in a hosting audio app/plugin,
+ * as a library.
+ *
+ * The current implementation assumes this will only involve input over a single MIDI device, meaning support for
+ * multiple inputs and/or outputs is omitted.
+ *
+ */
 class PassiveMidiFrontend : public BaseMidiFrontend
 {
 public:
-    PassiveMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher);
+    PassiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher);
 
     ~PassiveMidiFrontend() override;
 
@@ -48,28 +55,25 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, MidiDataByte data, [[maybe_unused]]Time timestamp) override;
+    void send_midi(int output,
+                   MidiDataByte data,
+                   [[maybe_unused]]Time timestamp) override;
 
+    /**
+     * The embedding host uses this method to pass any incoming MIDI messages to Sushi.
+     * @param input Currently assumed to always be 0 since the frontend only supports a single input device.
+     * @param data
+     * @param timestamp
+     */
     void receive_midi(int input, MidiDataByte data, Time timestamp);
 
-    void set_callback(PassiveMidiCallback&& callback)
-    {
-        _callback = std::move(callback);
-    }
+    /**
+     * For passing a callback of type PassiveMidiCallback to the frontend.
+     * @param callback
+     */
+    void set_callback(PassiveMidiCallback&& callback);
 
 private:
-    bool _init_ports();
-    bool _init_time();
-
-    int _inputs;
-    int _outputs;
-    std::vector<int> _input_midi_ports;
-    std::vector<int> _output_midi_ports;
-    std::map<int, int> _port_to_input_map;
-    int _queue {-1};
-
-    Time _time_offset {0};
-
     PassiveMidiCallback _callback;
 };
 

@@ -34,10 +34,8 @@ namespace midi_frontend {
 constexpr auto ALSA_POLL_TIMEOUT = std::chrono::milliseconds(200);
 constexpr auto CLIENT_NAME = "Sushi";
 
-PassiveMidiFrontend::PassiveMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher)
-        : BaseMidiFrontend(dispatcher),
-          _inputs(inputs),
-          _outputs(outputs)
+PassiveMidiFrontend::PassiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
+        : BaseMidiFrontend(dispatcher)
 {}
 
 PassiveMidiFrontend::~PassiveMidiFrontend()
@@ -73,15 +71,9 @@ void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestam
     _callback(output, data, timestamp);
 }
 
-bool PassiveMidiFrontend::_init_time()
+void PassiveMidiFrontend::set_callback(PassiveMidiCallback&& callback)
 {
-    return true;
-}
-
-bool PassiveMidiFrontend::_init_ports()
-{
-
-    return true;
+    _callback = std::move(callback);
 }
 
 } // end namespace midi_frontend

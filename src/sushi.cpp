@@ -510,9 +510,7 @@ InitStatus Sushi::_set_up_control(const SushiOptions& options,
     }
     else if (options.frontend_type == FrontendType::PASSIVE)
     {
-        _midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(midi_inputs,
-                                                                                     midi_outputs,
-                                                                                     _midi_dispatcher.get());
+        _midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
     }
     else
     {
