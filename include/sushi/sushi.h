@@ -182,6 +182,11 @@ public:
 
     void set_sample_rate(float sample_rate);
 
+    /**
+     * Exposing audio engine for the context where Sushi is embedded in another host.
+     * Used for example to set Transport values.
+     * @return
+     */
     engine::AudioEngine* audio_engine();
 
 private:
