@@ -577,6 +577,7 @@ MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_ou
         _enabled_clock_out[midi_output] = enabled;
         return MidiDispatcherStatus::OK;
     }
+    SUSHI_LOG_ERROR("Failed to {} midi clock for port {}, no such port", enabled? "enable" : "disable", midi_output);
     return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
 }
 

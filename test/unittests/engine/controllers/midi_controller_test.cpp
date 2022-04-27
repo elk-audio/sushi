@@ -363,3 +363,18 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     _midi_dispatcher.send_midi(port, TEST_PRG_CH_CH7, IMMEDIATE_PROCESS);
     EXPECT_FALSE(_test_dispatcher->got_event());
 }
+
+TEST_F(MidiControllerEventTestFrontend, TestSettingClockOutput)
+{
+    int port = 0;
+    _midi_dispatcher.set_midi_outputs(1);
+    EXPECT_EQ(ext::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, port));
+    EXPECT_EQ(EventStatus::HANDLED_OK, _test_dispatcher->execute_engine_event(&_test_engine));
+
+    EXPECT_EQ(ext::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, 1234));
+    EXPECT_NE(EventStatus::HANDLED_OK, _test_dispatcher->execute_engine_event(&_test_engine));
+
+    _midi_dispatcher.enable_midi_clock(true, port);
+    EXPECT_TRUE(_midi_controller.get_midi_clock_output_enabled(port));
+    EXPECT_FALSE(_midi_controller.get_midi_clock_output_enabled(1234));
+}

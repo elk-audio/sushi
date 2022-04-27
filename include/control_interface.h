@@ -508,6 +508,9 @@ public:
     virtual std::pair<ControlStatus, std::vector<MidiCCConnection>> get_cc_input_connections_for_processor(int processor_id) const = 0;
     virtual std::pair<ControlStatus, std::vector<MidiPCConnection>> get_pc_input_connections_for_processor(int processor_id) const = 0;
 
+    virtual bool                           get_midi_clock_output_enabled(int port) const = 0;
+    virtual ControlStatus                  set_midi_clock_output_enabled(bool enabled, int port) = 0;
+
     virtual ControlStatus connect_kbd_input_to_track(int track_id, MidiChannel channel, int port, bool raw_midi) = 0;
     virtual ControlStatus connect_kbd_output_from_track(int track_id, MidiChannel channel, int port) = 0;
     virtual ControlStatus connect_cc_to_parameter(int processor_id, int parameter_id, MidiChannel channel, int port,

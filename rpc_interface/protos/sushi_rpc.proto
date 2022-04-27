@@ -119,6 +119,9 @@ service MidiController
     rpc GetCCInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiCCConnectionList) {}
     rpc GetPCInputConnectionsForProcessor (ProcessorIdentifier) returns (MidiPCConnectionList) {}
 
+    rpc GetMidiClockOutputEnabled (GenericIntValue) returns (GenericBoolValue) {}
+    rpc SetMidiClockOutputEnabled (MidiClockSetRequest) returns (GenericVoidValue) {}
+
     rpc ConnectKbdInputToTrack (MidiKbdConnection) returns (GenericVoidValue) {}
     rpc ConnectKbdOutputFromTrack (MidiKbdConnection) returns (GenericVoidValue) {}
     rpc ConnectCCToParameter (MidiCCConnection) returns (GenericVoidValue) {}
@@ -662,6 +665,12 @@ message MidiPCConnection
 message MidiPCConnectionList
 {
     repeated MidiPCConnection connections = 1;
+}
+
+message MidiClockSetRequest
+{
+    int32 port = 1;
+    bool  enabled = 2;
 }
 
 message OscParameterOutputList

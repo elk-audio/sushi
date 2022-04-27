@@ -1488,6 +1488,23 @@ grpc::Status MidiControlService::GetPCInputConnectionsForProcessor(grpc::ServerC
     }
 }
 
+
+grpc::Status MidiControlService::GetMidiClockOutputEnabled(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::GenericIntValue* request,
+                                                           sushi_rpc::GenericBoolValue* response)
+{
+    response->set_value(_midi_controller->get_midi_clock_output_enabled(request->value()));
+    return grpc::Status::OK;
+}
+
+grpc::Status MidiControlService::SetMidiClockOutputEnabled(grpc::ServerContext* /*context*/,
+                                                           const sushi_rpc::MidiClockSetRequest* request,
+                                                           sushi_rpc::GenericVoidValue* /*context*/)
+{
+    auto status = _midi_controller->set_midi_clock_output_enabled(request->enabled(), request->port());
+    return to_grpc_status(status);
+}
+
 grpc::Status MidiControlService::ConnectKbdInputToTrack(grpc::ServerContext* /*context*/,
                                                         const sushi_rpc::MidiKbdConnection* request,
                                                         sushi_rpc::GenericVoidValue* /*response*/)
