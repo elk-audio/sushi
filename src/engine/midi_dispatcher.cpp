@@ -572,7 +572,7 @@ std::vector<KbdOutputConnection> MidiDispatcher::get_all_kb_output_connections()
 
 MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_output)
 {
-    if (static_cast<size_t>(midi_output) <= _enabled_clock_out.size())
+    if (static_cast<size_t>(midi_output) < _enabled_clock_out.size())
     {
         _enabled_clock_out[midi_output] = enabled;
         return MidiDispatcherStatus::OK;
@@ -583,7 +583,7 @@ MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_ou
 
 bool MidiDispatcher::midi_clock_enabled(int midi_output)
 {
-    if (static_cast<size_t>(midi_output) <= _enabled_clock_out.size())
+    if (static_cast<size_t>(midi_output) < _enabled_clock_out.size())
     {
         return _enabled_clock_out[midi_output];
     }

@@ -144,6 +144,23 @@ R"(
             },
             "required": ["port", "channel", "cc_number", "plugin_name", "parameter_name", "min_range", "max_range"]
           }
+        },
+        "clock_output":
+        {
+          "type":"object",
+          "properties":
+          {
+            "enabled_ports" :
+            {
+              "type": "array",
+              "minimum": 0,
+              "items":
+              {
+                "type": "integer"
+              }
+            }
+          },
+          "required": ["enabled_ports"]
         }
       }
     }
