@@ -500,7 +500,7 @@ public:
     }
 
     /**
-     * @brief Print the current processor timings (in enabled) in the log
+     * @brief Print the current processor timings (if enabled) in the log
      */
     void update_timings() override;
 

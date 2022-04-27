@@ -293,17 +293,14 @@ sushi::InitStatus sushi::Sushi::_configure_with_defaults()
     int cv_inputs = 0;
     int cv_outputs = 0;
 
-    auto status = _setup_audio_frontend(_options, cv_inputs, cv_outputs);
-    if (status != InitStatus::OK)
-    {
-        return status;
-    }
+engine::Controller* Sushi::controller()
+{
+    return _controller.get();
+}
 
-    status = _set_up_control(_options, nullptr, midi_inputs, midi_outputs);
-    if (status != InitStatus::OK)
-    {
-        return status;
-    }
+audio_frontend::PassiveFrontend* Sushi::audio_frontend()
+{
+    return static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get());
 }
 
 sushi::InitStatus sushi::Sushi::_load_json_configuration(const sushi::SushiOptions& options,
@@ -311,7 +308,7 @@ sushi::InitStatus sushi::Sushi::_load_json_configuration(const sushi::SushiOptio
                                                          audio_frontend::BaseAudioFrontend* audio_frontend)
 {
     auto status = configurator->load_host_config();
-    if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         return InitStatus::FAILED_LOAD_HOST_CONFIG;
     }

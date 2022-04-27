@@ -206,7 +206,7 @@ public:
     double current_bar_start_beats() const {return _bar_start_beat_count;}
 
     /**
-     * @brief Query any playing state changes occuring during the current processing chunk.
+     * @brief Query any playing state changes occurring during the current processing chunk.
      *        For instance, if Transport is starting, during the first chunk, Transport
      *        will report playing() as true and current_state_change() as STARTING.
      *        Subsequent chunks Transport will report playing() as true and

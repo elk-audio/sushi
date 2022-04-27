@@ -19,7 +19,6 @@
  */
 
 #include <chrono>
-#include <cstdlib>
 
 #include "passive_midi_frontend.h"
 #include "library/midi_decoder.h"

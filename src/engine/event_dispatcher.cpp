@@ -180,14 +180,15 @@ void EventDispatcher::_event_loop()
         auto start_time = std::chrono::system_clock::now();
 
         // Handle incoming Events
-        while (Event* event = _next_event())
+        while (auto event = _next_event())
         {
             assert(event->receiver() < static_cast<int>(_posters.size()));
-            EventPoster* receiver = _posters[event->receiver()];
+            auto receiver = _posters[event->receiver()];
             int status = EventStatus::UNRECOGNIZED_RECEIVER;
+
             if (receiver != nullptr)
             {
-                status = _posters[event->receiver()]->process(event);
+                status = receiver->process(event);
             }
             if (status == EventStatus::QUEUED_HANDLING)
             {
