@@ -958,9 +958,13 @@ bool MidiDispatcher::_handle_engine_notification(const EngineNotificationEvent* 
     {
         return _handle_audio_graph_notification(static_cast<const AudioGraphNotificationEvent*>(event));
     }
-    else if(event->is_playing_mode_notification())
+    else if (event->is_playing_mode_notification())
     {
         return _handle_transport_notification(static_cast<const PlayingModeNotificationEvent*>(event));
+    }
+    else if (event->is_timing_tick_notification())
+    {
+        return _handle_tick_notification(static_cast<const EngineTimingTickNotificationEvent*>(event));
     }
     return false;
 }
@@ -974,6 +978,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
+                    SUSHI_LOG_DEBUG("Sending midi start message");
                     _frontend->send_midi(i, midi::encode_start_message(), event->time());
                 }
             }
@@ -984,6 +989,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
+                    SUSHI_LOG_DEBUG("Sending midi stop message");
                     _frontend->send_midi(i, midi::encode_stop_message(), event->time());
                 }
             }
@@ -991,6 +997,18 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
 
         default:
             break;
+    }
+    return EventStatus::HANDLED_OK;
+}
+
+bool MidiDispatcher::_handle_tick_notification(const EngineTimingTickNotificationEvent* event)
+{
+    for (int i = 0; i < _midi_outputs; ++i)
+    {
+        if (_enabled_clock_out[i])
+        {
+            _frontend->send_midi(i, midi::encode_timing_clock(), event->time());
+        }
     }
     return EventStatus::HANDLED_OK;
 }

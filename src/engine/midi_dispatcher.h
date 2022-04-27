@@ -366,10 +366,9 @@ public:
 private:
 
     bool _handle_engine_notification(const EngineNotificationEvent* event);
-
     bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
-
     bool _handle_transport_notification(const PlayingModeNotificationEvent* event);
+    bool _handle_tick_notification(const EngineTimingTickNotificationEvent* event);
 
     std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
     std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);

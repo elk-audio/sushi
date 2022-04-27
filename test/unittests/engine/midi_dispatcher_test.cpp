@@ -262,13 +262,16 @@ TEST_F(TestMidiDispatcher, TestTransportOutputs)
     auto start_event = PlayingModeNotificationEvent(PlayingMode::PLAYING, IMMEDIATE_PROCESS);
     auto stop_event = PlayingModeNotificationEvent(PlayingMode::STOPPED, IMMEDIATE_PROCESS);
     auto rec_event = PlayingModeNotificationEvent(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
+    auto tick_event = EngineTimingTickNotificationEvent(0, IMMEDIATE_PROCESS);
 
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_start_message(), _)).Times(1);
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_stop_message(), _)).Times(1);
+    EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_timing_clock(), _)).Times(1);
 
     _module_under_test.process(&start_event);
     _module_under_test.process(&stop_event);
     _module_under_test.process(&rec_event);
+    _module_under_test.process(&tick_event);
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)
