@@ -507,6 +507,12 @@ inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
         auto grpc_con = dest.mutable_pc_connections()->Add();
         to_grpc(*grpc_con, con);
     }
+
+    dest.mutable_enabled_clock_outputs()->Reserve(src.enabled_clock_outputs.size());
+    for (auto port : src.enabled_clock_outputs)
+    {
+        dest.mutable_enabled_clock_outputs()->Add(port);
+    }
 }
 
 inline void to_sushi_ext(sushi::ext::MidiState& dest, const sushi_rpc::MidiState& src)
@@ -536,6 +542,7 @@ inline void to_sushi_ext(sushi::ext::MidiState& dest, const sushi_rpc::MidiState
     {
         dest.pc_connections.push_back(to_sushi_ext(con));
     }
+    dest.enabled_clock_outputs = std::vector<int>(src.enabled_clock_outputs().begin(), src.enabled_clock_outputs().end());
 }
 
 inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::ext::TrackAudioConnectionState& src)

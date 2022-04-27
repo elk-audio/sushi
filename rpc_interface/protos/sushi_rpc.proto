@@ -749,6 +749,7 @@ message MidiState
     repeated MidiKbdConnectionState  kbd_output_connections = 4;
     repeated MidiCCConnectionState   cc_connections = 5;
     repeated MidiPCConnectionState   pc_connections = 6;
+    repeated int32 enabled_clock_outputs = 7;
 }
 
 message OscParameterState

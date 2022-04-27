@@ -284,6 +284,7 @@ struct MidiState
     std::vector<MidiKbdConnectionState> kbd_output_connections;
     std::vector<MidiCCConnectionState> cc_connections;
     std::vector<MidiPCConnectionState> pc_connections;
+    std::vector<int> enabled_clock_outputs;
 };
 
 struct OscParameterState
