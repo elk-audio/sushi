@@ -266,13 +266,22 @@ void Transport::_update_internal_sync(int64_t samples)
     _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
     if (_playmode != PlayingMode::STOPPED)
     {
-        _current_bar_beat_count += chunks_passed * _beats_per_chunk;
-        if (_current_bar_beat_count > _beats_per_bar)
+        if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
         {
-            _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
-            _bar_start_beat_count += _beats_per_bar;
+            _current_bar_beat_count = 0.0;
+            _beat_count = 0.0;
+            _bar_start_beat_count = 0.0;
         }
-        _beat_count += chunks_passed * _beats_per_chunk;
+        else
+        {
+            _current_bar_beat_count += chunks_passed * _beats_per_chunk;
+            if (_current_bar_beat_count > _beats_per_bar)
+            {
+                _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
+                _bar_start_beat_count += _beats_per_bar;
+            }
+            _beat_count += chunks_passed * _beats_per_chunk;
+        }
     }
     if (_tempo != _set_tempo)
     {
@@ -338,7 +347,7 @@ void Transport::_output_ppqn_ticks()
         if (fraction > 0)
         {
             /* If fraction is not positive, then there was a missed beat in an underrun */
-/*            offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)),
+            offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)),
                               AUDIO_CHUNK_SIZE - 1);
         }
 
