@@ -639,6 +639,7 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
     dest.set_output_channels(src.output_channels);
     dest.set_input_busses(src.input_busses);
     dest.set_output_busses(src.output_busses);
+    to_grpc(*dest.mutable_track_state(), src.track_state);
 
     dest.mutable_processors()->Reserve(src.processors.size());
     for (auto& proc : src.processors)
@@ -657,6 +658,7 @@ inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     dest.output_channels = src.output_channels();
     dest.input_busses = src.input_busses();
     dest.output_busses = src.output_busses();
+    to_sushi_ext(dest.track_state, src.track_state());
 
     dest.processors.reserve(src.processors_size());
     for (const auto& processor : src.processors())
