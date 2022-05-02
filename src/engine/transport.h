@@ -49,6 +49,12 @@ enum class PlayStateChange
 
 namespace engine {
 
+#if SUSHI_BUILD_WITH_ABLETON_LINK
+class SushiLink;
+#else
+using SushiLink = ::ableton::Link;
+#endif
+
 constexpr float DEFAULT_TEMPO = 120;
 
 class Transport
@@ -241,7 +247,7 @@ private:
 
     RtEventPipe*    _rt_event_dispatcher;
 
-    std::unique_ptr<ableton::Link>  _link_controller;
+    std::unique_ptr<SushiLink>  _link_controller;
 };
 
 } // namespace engine
