@@ -49,11 +49,7 @@ enum class PlayStateChange
 
 namespace engine {
 
-#if SUSHI_BUILD_WITH_ABLETON_LINK
 class SushiLink;
-#else
-using SushiLink = ::ableton::Link;
-#endif
 
 constexpr float DEFAULT_TEMPO = 120;
 

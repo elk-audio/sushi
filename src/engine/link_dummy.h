@@ -22,14 +22,14 @@
 
 #include <chrono>
 
-namespace ableton {
-class Link
+namespace sushi::engine {
+class SushiLink
 {
 public:
   using Clock = int;
   class SessionState;
 
-  explicit Link(double /*bpm*/) {}
+  explicit SushiLink(double /*bpm*/) {}
   bool isEnabled() const {return false;}
   void enable(bool /*bEnable*/) {}
   bool isStartStopSyncEnabled() const {return false;}
@@ -69,11 +69,11 @@ public:
                                           double /*beat*/, double /*quantum*/) {}
 
   private:
-    friend Link;
+    friend SushiLink;
   };
 private:
 };
-} // ableton
+} // end namespace sushi::engine
 
 
 #endif //SUSHI_LINK_DUMMY_H
