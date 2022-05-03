@@ -34,6 +34,14 @@ PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(
 
 PassthroughPlugin::~PassthroughPlugin() = default;
 
+void PassthroughPlugin::process_event(const RtEvent& event)
+{
+    if (is_keyboard_event(event))
+    {
+        output_event(event);
+    }
+}
+
 void PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     bypass_process(in_buffer, out_buffer);

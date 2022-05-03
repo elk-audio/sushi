@@ -34,10 +34,7 @@ public:
 
     ~PassthroughPlugin() override;
 
-    void process_event(const RtEvent& event) override
-    {
-        _event_queue.push(event);
-    };
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 

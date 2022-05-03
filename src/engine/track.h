@@ -39,6 +39,7 @@ namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int MAX_TRACK_BUSSES = MAX_TRACK_CHANNELS / 2;
+constexpr int KEYBOARD_EVENT_QUEUE_SIZE = 256;
 
 class Track : public InternalPlugin, public RtEventPipe
 {
@@ -191,7 +192,7 @@ private:
 
     performance::PerformanceTimer* _timer;
 
-    RtSafeRtEventFifo _kb_event_buffer;
+    RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
 
 } // namespace engine
