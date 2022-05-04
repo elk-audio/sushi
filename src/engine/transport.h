@@ -229,10 +229,10 @@ private:
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
-    double          _beats_per_bar;
-    float           _samplerate;
+    double          _beats_per_bar{0};
+    float           _samplerate{0};
 
-    double          _last_tick_sent;
+    double          _last_tick_sent{0};
 
     float           _tempo{DEFAULT_TEMPO};
     float           _set_tempo{_tempo};

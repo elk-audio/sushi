@@ -253,7 +253,7 @@ void Transport::_update_internal_sync(int64_t samples)
 {
     /* Assume that if there are missed callbacks, the numbers of samples
      * will still be a multiple of AUDIO_CHUNK_SIZE */
-    auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
+    auto chunks_passed = static_cast<double>(samples) / AUDIO_CHUNK_SIZE;
 
     if (_playmode != _set_playmode)
     {
@@ -263,26 +263,26 @@ void Transport::_update_internal_sync(int64_t samples)
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-    if (_playmode != PlayingMode::STOPPED)
+    double beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    _beats_per_chunk = beats_per_chunk;
+
+    if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
-        if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
-        {
-            _current_bar_beat_count = 0.0;
-            _beat_count = 0.0;
-            _bar_start_beat_count = 0.0;
-        }
-        else
-        {
-            _current_bar_beat_count += chunks_passed * _beats_per_chunk;
-            if (_current_bar_beat_count > _beats_per_bar)
-            {
-                _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
-                _bar_start_beat_count += _beats_per_bar;
-            }
-            _beat_count += chunks_passed * _beats_per_chunk;
-        }
+        _current_bar_beat_count = 0.0;
+        _beat_count = 0.0;
+        _bar_start_beat_count = 0.0;
     }
+    else if (_playmode != PlayingMode::STOPPED)
+    {
+        _current_bar_beat_count += chunks_passed * beats_per_chunk;
+        if (_current_bar_beat_count > _beats_per_bar)
+        {
+            _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
+            _bar_start_beat_count += _beats_per_bar;
+        }
+        _beat_count += chunks_passed * beats_per_chunk;
+    }
+
     if (_tempo != _set_tempo)
     {
         // Notify tempo change
