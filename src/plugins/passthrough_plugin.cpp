@@ -15,7 +15,7 @@
 
 /**
  * @brief Example unit gain plugin
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "passthrough_plugin.h"
@@ -34,27 +34,9 @@ PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(
 
 PassthroughPlugin::~PassthroughPlugin() = default;
 
-void PassthroughPlugin::process_event(const RtEvent& event)
-{
-    if (is_keyboard_event(event))
-    {
-        output_event(event);
-    }
-}
-
 void PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
-
-    /* Pass keyboard data/midi through */
-    while (!_event_queue.empty())
-    {
-        RtEvent event;
-        if (_event_queue.pop(event))
-        {
-            output_event(event);
-        }
-    }
 }
 
 std::string_view PassthroughPlugin::static_uid()

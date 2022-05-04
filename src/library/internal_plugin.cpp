@@ -139,53 +139,26 @@ void InternalPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
+        case RtEventType::NOTE_ON:
+        case RtEventType::NOTE_OFF:
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::MODULATION:
+        case RtEventType::WRAPPED_MIDI_EVENT:
+        {
+            /* The default behaviour is to pass keyboard events through unchanged */
+            output_event(event);
+            break;
+        }
+
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::BOOL_PARAMETER_CHANGE:
         {
             /* These are "managed events" where this function provides a default
              * implementation for handling these and setting parameter values */
-            auto typed_event = event.parameter_change_event();
-
-            if (typed_event->param_id() >= _parameter_values.size())
-            {
-                break;
-            }
-
-            auto storage = &_parameter_values[typed_event->param_id()];
-
-            switch (storage->type())
-            {
-                case ParameterType::FLOAT:
-                {
-                    auto parameter_value = storage->float_parameter_value();
-                    if (parameter_value->descriptor()->automatable())
-                    {
-                        parameter_value->set(typed_event->value());
-                    }
-                    break;
-                }
-                case ParameterType::INT:
-                {
-                    auto parameter_value = storage->int_parameter_value();
-                    if (parameter_value->descriptor()->automatable())
-                    {
-                        parameter_value->set(typed_event->value());
-                    }
-                    break;
-                }
-                case ParameterType::BOOL:
-                {
-                    auto parameter_value = storage->bool_parameter_value();
-                    if (parameter_value->descriptor()->automatable())
-                    {
-                        parameter_value->set(typed_event->value());
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
+            _handle_parameter_event(event.parameter_change_event());
             break;
         }
 
@@ -430,6 +403,47 @@ void InternalPlugin::_set_rt_state(const RtState* state)
     {
         auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
         this->process_event(event);
+    }
+}
+
+void InternalPlugin::_handle_parameter_event(const ParameterChangeRtEvent* event)
+{
+    if (event->param_id() < _parameter_values.size())
+    {
+        auto storage = &_parameter_values[event->param_id()];
+
+        switch (storage->type())
+        {
+            case ParameterType::FLOAT:
+            {
+                auto parameter_value = storage->float_parameter_value();
+                if (parameter_value->descriptor()->automatable())
+                {
+                    parameter_value->set(event->value());
+                }
+                break;
+            }
+            case ParameterType::INT:
+            {
+                auto parameter_value = storage->int_parameter_value();
+                if (parameter_value->descriptor()->automatable())
+                {
+                    parameter_value->set(event->value());
+                }
+                break;
+            }
+            case ParameterType::BOOL:
+            {
+                auto parameter_value = storage->bool_parameter_value();
+                if (parameter_value->descriptor()->automatable())
+                {
+                    parameter_value->set(event->value());
+                }
+                break;
+            }
+            default:
+                break;
+        }
     }
 }
 
