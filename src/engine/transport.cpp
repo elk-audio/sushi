@@ -48,7 +48,7 @@ constexpr float MAX_TEMPO = 1000.0;
  * @brief Custom realtime clock for Link
  *        It is necessary to compile Link with another Clock implementation than the standard one
  *        as calling clock_get_time() is not safe to do from a Xenomai thread. Instead we supply
- *        out own clock implementation based on twine which provides a threadsafe implementation
+ *        our own clock implementation based on twine, which provides a threadsafe implementation
  *        for calling from both xenomai and posix contexts.
  */
 class RtSafeClock
