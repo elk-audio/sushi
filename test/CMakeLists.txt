@@ -144,7 +144,7 @@ if (${WITH_PORTAUDIO})
 endif()
 
 if (${WITH_VST2})
-    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2)
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2 -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
 endif()
 
 if (${WITH_VST3})
