@@ -711,6 +711,13 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                             // TODO: Introduce latency compensation reporting to Sushi
                         }
                     }
+                    else
+                    {
+                        int parameter_id = p; // We use the index as ID.
+                        auto float_value = static_cast<float>(current_port->control_value());
+                        auto e = RtEvent::make_parameter_change_event(this->id(), 0, parameter_id, float_value);
+                        output_event(e);
+                    }
                     break;
                 case PortType::TYPE_EVENT:
                     _process_midi_output(current_port);
