@@ -714,8 +714,10 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                     else
                     {
                         int parameter_id = p; // We use the index as ID.
-                        auto float_value = static_cast<float>(current_port->control_value());
-                        auto e = RtEvent::make_parameter_change_event(this->id(), 0, parameter_id, float_value);
+                        float normalized_value = _to_normalized(current_port->control_value(),
+                                                                current_port->min(),
+                                                                current_port->max());
+                        auto e = RtEvent::make_parameter_change_event(this->id(), 0, parameter_id, normalized_value);
                         output_event(e);
                     }
                     break;
