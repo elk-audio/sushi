@@ -226,8 +226,8 @@ private:
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
 
-    int _control_output_refresh_interval{1600};
-    int _control_output_sample_count {0};
+    int _control_output_refresh_interval{0};
+    int _control_output_sample_count{0};
 };
 
 } // end namespace lv2
