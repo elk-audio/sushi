@@ -56,6 +56,8 @@ namespace lv2 {
 /* Should match the maximum reasonable number of channels of a plugin */
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 
+constexpr float CONTROL_OUTPUT_REFRESH_RATE = 30.0f;
+
 /**
  * @brief Wrapper around the global LilvWorld instance so that it can be used
  *        with standard c++ smart pointers
@@ -171,6 +173,8 @@ private:
     void _deliver_inputs_to_plugin();
     void _deliver_outputs_from_plugin(bool send_ui_updates);
 
+    bool _calculate_control_output_trigger();
+
     static MidiDataByte _convert_event_to_midi_buffer(RtEvent& event);
     void _flush_event_queue();
     void _process_midi_input(Port* port);
@@ -221,6 +225,9 @@ private:
     static constexpr float _max_normalized{1.0f};
 
     std::map<ObjectId, const ParameterDescriptor*> _parameters_by_lv2_id;
+
+    int _control_output_refresh_interval{1600};
+    int _control_output_sample_count {0};
 };
 
 } // end namespace lv2
