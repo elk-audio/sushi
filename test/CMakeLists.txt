@@ -211,6 +211,7 @@ add_test(unit_tests unit_tests)
 # tests can read it to access data files maintaining an independent out-of-source build
 
 add_custom_target(run_tests ALL
-                  export SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data
-                  COMMAND unit_tests)
+                  ${CMAKE_COMMAND}
+                  -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
+                  "$<TARGET_FILE:unit_tests>")
 add_dependencies(run_tests unit_tests)
