@@ -23,13 +23,12 @@
 #include "plugins/transposer_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
-#include "logging.h"
 
 namespace sushi {
 namespace transposer_plugin {
 
 
-constexpr auto DEFAULT_NAME = "sushi.testing.transposer";
+constexpr auto PLUGIN_UID = "sushi.testing.transposer";
 constexpr auto DEFAULT_LABEL = "Transposer";
 
 constexpr int MAX_NOTE = 127;
@@ -37,7 +36,7 @@ constexpr int MIN_NOTE = 0;
 
 TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _transpose_parameter = register_float_parameter("transpose",
                                                     "Transpose",
@@ -133,6 +132,11 @@ void TransposerPlugin::process_audio(const ChunkSampleBuffer&, ChunkSampleBuffer
         _queue.pop(e);
         output_event(e);
     }
+}
+
+std::string_view TransposerPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 }// namespace transposer_plugin

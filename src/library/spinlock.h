@@ -45,7 +45,7 @@ public:
         {
             /* Spin until flag is cleared. According to
              * https://geidav.wordpress.com/2016/03/23/test-and-set-spinlocks/
-             * this is better as is causes fewer cache invalidations */
+             * this is better as it causes fewer cache invalidations */
         }
         while (flag.exchange(true, std::memory_order_acquire))
         {}

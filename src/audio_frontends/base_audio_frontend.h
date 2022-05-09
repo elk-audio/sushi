@@ -74,11 +74,7 @@ public:
      * @return AudioFrontendInitStatus::OK in case of success,
      *         or different error code otherwise.
      */
-    virtual AudioFrontendStatus init(BaseAudioFrontendConfiguration* config)
-    {
-        _config = config;
-        return AudioFrontendStatus::OK;
-    };
+    virtual AudioFrontendStatus init(BaseAudioFrontendConfiguration* config);
 
     /**
      * @brief Free resources allocated during init. stops the frontend if currently running.
@@ -90,14 +86,27 @@ public:
      */
     virtual void run() = 0;
 
+    /**
+     * @brief Pause a running frontend. If paused, any threads set up are still running and audio
+     *        data consumed, but the audio engine is not called and all audio outputs are silenced.
+     *        When toggling pause, the audio will be quickly ramped down and the function will block
+     *        until the change has taken effect.
+     * @param enabled If true enables pause, of false disables pause and calls the audio engine again
+     */
+     virtual void pause(bool enabled);
+
 protected:
     BaseAudioFrontendConfiguration* _config;
     engine::BaseEngine* _engine;
+
+    BypassManager _pause_manager;
+    std::unique_ptr<twine::RtConditionVariable> _pause_notify;
+    std::atomic_bool _pause_notified{false};
 };
 
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_BASE_AUDIO_FRONTEND_H

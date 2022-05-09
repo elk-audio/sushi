@@ -23,6 +23,7 @@
 
 #include <array>
 #include <cstdint>
+#include <cstddef>
 
 namespace sushi {
 
@@ -77,8 +78,8 @@ template <typename T>
 struct RtDeletableWrapper : public RtDeletable
 {
 public:
-    RtDeletableWrapper(T data) : _data(data) {}
-    ~RtDeletableWrapper() = default;
+    explicit RtDeletableWrapper(T data) : _data(data) {}
+    ~RtDeletableWrapper() override = default;
 
     T& data() {return _data;}
     const T& data() const {return _data;}

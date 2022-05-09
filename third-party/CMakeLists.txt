@@ -2,6 +2,18 @@ add_subdirectory(fifo EXCLUDE_FROM_ALL)
 
 add_subdirectory(lv2_host)
 
+###########################
+# oscpack compile options #
+###########################
+
+set(BUILD_SHARED_LIBS OFF)
+set(OSC_LIB_ONLY ON)
+
+add_subdirectory(oscpack)
+
+# oscpack sets the -Wall flag, which is negated below, to suppress warnings.
+target_compile_options(oscpack PRIVATE "-Wno-all")
+
 ############################
 #  spdlog compile options  #
 ############################

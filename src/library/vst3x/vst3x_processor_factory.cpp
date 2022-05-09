@@ -40,7 +40,7 @@ Vst3xProcessorFactory::~Vst3xProcessorFactory() = default;
 Vst3xProcessorFactory::Vst3xProcessorFactory() : _host_app(std::make_unique<SushiHostApplication>())
 {}
 
-std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory::new_instance(const sushi::engine::PluginInfo& plugin_info,
+std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory::new_instance(const PluginInfo& plugin_info,
                                                                                                HostControl& host_control,
                                                                                                float sample_rate)
 {
@@ -58,7 +58,7 @@ class SushiHostApplication {};
 
 Vst3xProcessorFactory::Vst3xProcessorFactory() = default;
 
-std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory::new_instance([[maybe_unused]] const sushi::engine::PluginInfo& plugin_info,
+std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory::new_instance([[maybe_unused]] const PluginInfo& plugin_info,
                                                                                                [[maybe_unused]] HostControl& host_control,
                                                                                                [[maybe_unused]] float sample_rate)
 {

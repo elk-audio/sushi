@@ -24,6 +24,7 @@
 #include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
+#include "controller_common.h"
 
 namespace sushi {
 namespace engine {
@@ -32,7 +33,7 @@ namespace controller_impl {
 class AudioGraphController : public ext::AudioGraphController
 {
 public:
-    AudioGraphController(BaseEngine* engine);
+    explicit AudioGraphController(BaseEngine* engine);
 
     ~AudioGraphController() override = default;
 

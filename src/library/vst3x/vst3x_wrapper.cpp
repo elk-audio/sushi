@@ -56,7 +56,7 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     char char_buf[128] = {};
     Steinberg::UString128 str(wchar_buffer, 128);
     str.toAscii(char_buf, VST_NAME_BUFFER_SIZE);
-    return std::string(char_buf);
+    return {char_buf};
 }
 
 // Get all vst3 preset locations in the right priority order
@@ -69,7 +69,7 @@ std::vector<std::string> get_preset_locations()
     {
         locations.push_back(std::string(home_dir) + "/.vst3/presets/");
     }
-    SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory");
+    SUSHI_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
     locations.emplace_back("/usr/share/vst3/presets/");
     locations.emplace_back("/usr/local/share/vst3/presets/");
     char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
@@ -87,13 +87,13 @@ std::vector<std::string> get_preset_locations()
             path_length = 0;
         }
     }
-    SUSHI_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory");
+    SUSHI_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory")
     return locations;
 }
 
 std::string extract_preset_name(const std::string& path)
 {
-    auto fname_pos = path.find_last_of("/") + 1;
+    auto fname_pos = path.find_last_of('/') + 1;
     return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
 }
 
@@ -302,7 +302,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if(_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
+    if (_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
     }
@@ -311,7 +311,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _fill_processing_context();
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
-        if(_bypass_parameter.supported == false && _bypass_manager.should_ramp())
+        if (_bypass_parameter.supported == false && _bypass_manager.should_ramp())
         {
             _bypass_manager.crossfade_output(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         }
@@ -365,12 +365,13 @@ void Vst3xWrapper::set_enabled(bool enabled)
 void Vst3xWrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    if(_bypass_parameter.supported)
+    if (_bypass_parameter.supported)
     {
         _host_control.post_event(new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                                           this->id(), _bypass_parameter.id, bypassed? 1.0f : 0, IMMEDIATE_PROCESS));
         _bypass_manager.set_bypass(bypassed, _sample_rate);
-    } else
+    }
+    else
     {
         _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
     }
@@ -534,7 +535,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         bool res = preset_file.restoreControllerState(_instance.controller());
         res &= preset_file.restoreComponentState(_instance.component());
         // Notify the processor of the update with an idle message. This was specific
-        // to Retrologue and not part of the Vst3 standard so we might remove it eventually
+        // to Retrologue and not part of the Vst3 standard, so we might remove it eventually
         Steinberg::Vst::HostMessage message;
         message.setMessageID("idle");
         if (_instance.notify_processor(&message) == false)
@@ -556,6 +557,12 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
 
 ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime_running)
 {
+    if (state->has_binary_data())
+    {
+        _set_binary_state(state->binary_data());
+        return ProcessorReturnCode::OK;
+    }
+
     std::unique_ptr<RtState> rt_state;
     if (realtime_running)
     {
@@ -564,44 +571,12 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
 
     if (state->program().has_value())
     {
-        int id = state->program().value();
-        if (_internal_programs && _program_change_parameter.supported)
-        {
-            float normalised_id = id / static_cast<float>(_program_count);
-            _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
-            _current_program = id;
-            if (realtime_running)
-            {
-                rt_state->add_parameter_change(_program_change_parameter.id, normalised_id);
-            }
-            else
-            {
-                _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
-            }
-        }
-        else // file based programs
-        {
-            this->set_program(id);
-        }
+        _set_program_state(*state->program(), rt_state.get(), realtime_running);
     }
 
     if (state->bypassed().has_value())
     {
-        bool bypassed = state->bypassed().value();
-        _bypass_manager.set_bypass(bypassed, _sample_rate);
-        if (_bypass_parameter.supported)
-        {
-            float float_bypass = bypassed ? 1.0f : 0.0f;
-            _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
-            if (realtime_running)
-            {
-                rt_state->add_parameter_change(_bypass_parameter.id, float_bypass);
-            }
-            else
-            {
-                _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
-            }
-        }
+        _set_bypass_state(*state->bypassed(), rt_state.get(), realtime_running);
     }
 
     for (const auto& parameter : state->parameters())
@@ -624,6 +599,33 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
     return ProcessorReturnCode::OK;
 }
 
+
+ProcessorState Vst3xWrapper::save_state() const
+{
+    ProcessorState state;
+    Steinberg::MemoryStream stream;
+    if (_instance.component()->getState (&stream) == Steinberg::kResultTrue)
+    {
+        auto data_size = stream.getSize();
+        auto data = reinterpret_cast<std::byte*>(stream.getData());
+        state.set_binary_data(std::vector<std::byte>(data, data + data_size));
+    }
+    else
+    {
+        SUSHI_LOG_WARNING("Failed to get component state");
+    }
+    return state;
+}
+
+PluginInfo Vst3xWrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::VST3X;
+    info.uid  = _plugin_load_name;
+    info.path = _plugin_load_path;
+    return info;
+}
+
 bool Vst3xWrapper::_register_parameters()
 {
     int param_count = _instance.controller()->getParameterCount();
@@ -638,10 +640,10 @@ bool Vst3xWrapper::_register_parameters()
         {
             /* Vst3 uses a model where parameters are indexed by an integer from 0 to
              * getParameterCount() - 1 (just like Vst2.4). But in addition, each parameter
-             * also has a 32 bit integer id which is arbitrarily assigned.
+             * also has a 32-bit integer id which is arbitrarily assigned.
              *
              * When doing real time parameter updates, the parameters must be accessed using this
-             * id and not its index. Hence the id in the registered ParameterDescriptors
+             * id and not its index. Hence, the id in the registered ParameterDescriptors
              * store this id and not the index in the processor array like it does for the Vst2
              * wrapper and internal plugins. Hopefully that doesn't cause any issues. */
             auto param_name = to_ascii_str(info.title);
@@ -703,7 +705,7 @@ bool Vst3xWrapper::_register_parameters()
     }
 
     /* Steinberg decided not support standard midi, nor provide special events for common
-     * controller (Pitch bend, mod wheel, etc) instead these are exposed as regular
+     * controller (Pitch bend, mod wheel, etc.) instead these are exposed as regular
      * parameters, and we can query the plugin for what 'default' midi cc:s these parameters
      * would be mapped to if the plugin was able to handle native midi.
      * So we query the plugin for this and if that's the case, store the id:s of these
@@ -959,7 +961,7 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
             {
                 if (maybe_output_cv_value(id, value) == false)
                 {
-                    float float_value = static_cast<float>(value);
+                    auto float_value = static_cast<float>(value);
                     auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
                     _parameter_update_queue.push({id, float_value});
@@ -1046,6 +1048,65 @@ int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
         res |= _instance.controller()->setParamNormalized(update.id, update.value);
     }
     return res == Steinberg::kResultOk? EventStatus::HANDLED_OK : EventStatus::ERROR;
+}
+
+void Vst3xWrapper::_set_program_state(int program_id, RtState* rt_state, bool realtime_running)
+{
+    if (_internal_programs && _program_change_parameter.supported)
+    {
+        float normalised_id = program_id / static_cast<float>(_program_count);
+        _instance.controller()->setParamNormalized(_program_change_parameter.id, normalised_id);
+        _current_program = program_id;
+        if (realtime_running)
+        {
+            rt_state->add_parameter_change(_program_change_parameter.id, normalised_id);
+        }
+        else
+        {
+            _add_parameter_change(_program_change_parameter.id, normalised_id, 0);
+        }
+    }
+    else // file based programs
+    {
+        this->set_program(program_id);
+    }
+}
+
+void Vst3xWrapper::_set_bypass_state(bool bypassed, RtState* rt_state, bool realtime_running)
+{
+    _bypass_manager.set_bypass(bypassed, _sample_rate);
+    if (_bypass_parameter.supported)
+    {
+        float float_bypass = bypassed ? 1.0f : 0.0f;
+        _instance.controller()->setParamNormalized(_bypass_parameter.id, float_bypass);
+        if (realtime_running)
+        {
+            rt_state->add_parameter_change(_bypass_parameter.id, float_bypass);
+        }
+        else
+        {
+            _add_parameter_change(_bypass_parameter.id, float_bypass, 0);
+        }
+    }
+}
+
+void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
+{
+    /* A primer on Vst3 states:
+     * Component.setState() sets the state of the audio processing part (param values, etc)
+     * Controller.setComponentState() sets the Controllers own mirror of parameter values.
+     * Controller.setState() only sets the editors internal state and is not called in sushi
+     *
+     * State functions are always called from a non-rt thread according to
+     * https://developer.steinberg.help/display/VST/Frequently+Asked+Questions */
+
+    auto stream = Steinberg::MemoryStream(reinterpret_cast<void*>(state.data()), state.size());
+    [[maybe_unused]] auto res = _instance.controller()->setComponentState(&stream);
+    SUSHI_LOG_ERROR_IF(res != Steinberg::kResultOk, "Failed to set component state on controller ({})", res);
+
+    stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
+    res = _instance.component()->setState(&stream);
+    SUSHI_LOG_ERROR_IF(res != Steinberg::kResultOk, "Failed to set component state ({})", res);
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)

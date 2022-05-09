@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Aux return plugin to return audio from a Send Plugin
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_RETURN_PLUGIN_H
@@ -35,18 +35,18 @@ namespace send_plugin {class SendPlugin;}
 
 namespace return_plugin {
 
-class ReturnPlugin : public InternalPlugin
+class ReturnPlugin : public InternalPlugin, public UidHelper<ReturnPlugin>
 {
 public:
     ReturnPlugin(HostControl host_control, SendReturnFactory* manager);
 
-    virtual ~ReturnPlugin();
+    ~ReturnPlugin() override;
 
-    int return_id() const {return _return_id;};
+    int return_id() const {return _return_id;}
 
-    void send_audio(const ChunkSampleBuffer&, float gain);
+    void send_audio(const ChunkSampleBuffer& buffer, int start_channel, float gain);
 
-    void send_audio_with_ramp(const ChunkSampleBuffer&, float start_gain, float end_gain);
+    void send_audio_with_ramp(const ChunkSampleBuffer& buffer, int start_channel, float start_gain, float end_gain);
 
     void add_sender(send_plugin::SendPlugin* sender);
 
@@ -70,6 +70,8 @@ public:
     bool bypassed() const override;
 
     void set_bypassed(bool bypassed) override;
+
+    static std::string_view static_uid();
 
 private:
     void _channel_config(int channels);

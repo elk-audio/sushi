@@ -80,7 +80,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
 
-    auto library_handle = _plugin_handle_from_URI(_plugin_path.c_str());
+    auto library_handle = _plugin_handle_from_URI(_plugin_path);
 
     if (library_handle == nullptr)
     {
@@ -198,7 +198,7 @@ std::pair<ProcessorReturnCode, std::string> LV2_Wrapper::parameter_value_formatt
 {
     auto value_tuple = parameter_value_in_domain(parameter_id);
 
-    if(value_tuple.first == ProcessorReturnCode::OK)
+    if (value_tuple.first == ProcessorReturnCode::OK)
     {
         std::string parsed_value = std::to_string(value_tuple.second);
         return {ProcessorReturnCode::OK, parsed_value};
@@ -280,6 +280,12 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
 
 ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_running)
 {
+    if (state->has_binary_data())
+    {
+        _set_binary_state(state);
+        return ProcessorReturnCode::OK;
+    }
+
     std::unique_ptr<RtState> rt_state;
     if (realtime_running)
     {
@@ -341,6 +347,21 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_
     return ProcessorReturnCode::OK;
 }
 
+ProcessorState LV2_Wrapper::save_state() const
+{
+    ProcessorState state;
+    state.set_binary_data(_model->state()->save_binary_state());
+    return state;
+}
+
+PluginInfo LV2_Wrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::LV2;
+    info.path = _plugin_path;
+    return info;
+}
+
 bool LV2_Wrapper::_register_parameters()
 {
     bool param_inserted_ok = true;
@@ -358,7 +379,7 @@ bool LV2_Wrapper::_register_parameters()
             assert(port_index == _pi); // This should only fail is the plugin's .ttl file is incorrect.
 
             const std::string name_as_string = lilv_node_as_string(name_node);
-            const std::string param_unit = "";
+            const std::string param_unit;
 
             auto direction = Direction::AUTOMATABLE;
 
@@ -433,7 +454,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
             SUSHI_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
-    else if(event.type() == RtEventType::SET_BYPASS)
+    else if (event.type() == RtEventType::SET_BYPASS)
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
         _bypass_manager.set_bypass(bypassed, _model->sample_rate());
@@ -545,7 +566,7 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
         lilv_instance_run(_model->plugin_instance(), AUDIO_CHUNK_SIZE);
 
         /* Process any worker replies. */
-        if(_model->state_worker() != nullptr)
+        if (_model->state_worker() != nullptr)
         {
             _model->state_worker()->emit_responses(_model->plugin_instance());
         }
@@ -566,21 +587,27 @@ void LV2_Wrapper::_restore_state_callback(EventId)
     /* Note that this doesn't handle multiple requests at once.
      * Currently for the Pause functionality it is fine,
      * but if extended to support other use it may note be. */
-    if(_model->state_to_set() != nullptr)
+
+    auto [state_to_set, delete_after_use] = _model->state_to_set();
+    if (state_to_set)
     {
         auto feature_list = _model->host_feature_list();
 
-        lilv_state_restore(_model->state_to_set(),
+        lilv_state_restore(state_to_set,
                            _model->plugin_instance(),
                            set_port_value,
                            _model.get(),
                            0,
                            feature_list->data());
 
-        _model->set_state_to_set(nullptr);
-
+        _model->set_state_to_set(nullptr, false);
         _model->request_update();
         _model->set_play_state(PlayState::RUNNING);
+
+        if (delete_after_use)
+        {
+            lilv_free(state_to_set);
+        }
     }
 }
 
@@ -669,7 +696,7 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
     {
         auto current_port = _model->get_port(p);
 
-        if(current_port->flow() == PortFlow::FLOW_OUTPUT)
+        if (current_port->flow() == PortFlow::FLOW_OUTPUT)
         {
             switch(current_port->type())
             {
@@ -796,7 +823,7 @@ void LV2_Wrapper::_process_midi_input(Port* port)
                         (const uint8_t *) LV2_ATOM_BODY(_lv2_pos));
     }
 
-    auto urids = _model->urids();
+    auto& urids = _model->urids();
 
     if (_model->update_requested())
     {
@@ -864,7 +891,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                             keyboard_event_ptr->velocity());
             }
             default:
-                return MidiDataByte();
+                return {};
         }
     }
     else if (event.type() >= RtEventType::PITCH_BEND && event.type() <= RtEventType::MODULATION)
@@ -890,7 +917,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
                                                          keyboard_common_event_ptr->value());
             }
             default:
-                return MidiDataByte();
+                return {};
         }
     }
     else if (event.type() == RtEventType::WRAPPED_MIDI_EVENT)
@@ -900,7 +927,7 @@ MidiDataByte LV2_Wrapper::_convert_event_to_midi_buffer(RtEvent& event)
     }
 
     assert(false); // All cases should have been catered for.
-    return MidiDataByte();
+    return {};
 }
 
 void LV2_Wrapper::_map_audio_buffers(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -932,7 +959,7 @@ void LV2_Wrapper::_pause_audio_processing()
 {
     _previous_play_state = _model->play_state();
 
-    if(_previous_play_state != PlayState::PAUSED)
+    if (_previous_play_state != PlayState::PAUSED)
     {
         _model->set_play_state(PlayState::PAUSED);
     }
@@ -973,6 +1000,20 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
     }
 
     return plugin;
+}
+
+void LV2_Wrapper::_set_binary_state(ProcessorState* state)
+{
+    auto lilv_state = lilv_state_new_from_string(_world->world(),
+                                                 &_model->get_map(),
+                                                 reinterpret_cast<const char*>(state->binary_data().data()));
+
+    if (lilv_state)
+    {
+        auto state_handler = _model->state();
+        state_handler->apply_state(lilv_state, true);
+    }
+    SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }
 
 } // namespace lv2

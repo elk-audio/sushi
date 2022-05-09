@@ -5,6 +5,9 @@
 #define private public
 #define protected public
 
+#include <gmock/gmock.h>
+#include <gmock/gmock-actions.h>
+
 #include "engine/json_configurator.cpp"
 
 #undef private
@@ -14,6 +17,12 @@
 #include "engine/midi_dispatcher.h"
 #include "test_utils/test_utils.h"
 #include "test_utils/control_mockup.h"
+
+#include "test_utils/mock_osc_interface.h"
+
+using ::testing::Return;
+using ::testing::NiceMock;
+using ::testing::_;
 
 constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
@@ -120,12 +129,18 @@ TEST_F(TestJsonConfigurator, TestLoadOsc)
     // osc_frontend is only used in this test, so no need to keep in harness.
     constexpr int OSC_TEST_SERVER_PORT = 24024;
     constexpr int OSC_TEST_SEND_PORT = 24023;
-    OSCFrontend osc_frontend{&_engine,
-                              &_controller,
-                              OSC_TEST_SERVER_PORT,
-                              OSC_TEST_SEND_PORT};
+    constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
+
+    auto osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT,
+                                                        OSC_TEST_SEND_PORT,
+                                                        OSC_TEST_SEND_ADDRESS);
+
+    OSCFrontend osc_frontend{&_engine, &_controller, osc_interface};
 
     _module_under_test->set_osc_frontend(&osc_frontend);
+
+    EXPECT_CALL(*osc_interface, init()).Times(1).WillOnce(Return(true));
+
     ASSERT_EQ(ControlFrontendStatus::OK, osc_frontend.init());
 
     auto status = _module_under_test->load_tracks();
@@ -433,7 +448,7 @@ TEST(TestSchemaValidation, TestSchemaMetaValidation)
 
     const char* meta_schema_char =
         #include "test_utils/meta_schema_v4.json"
-        ;;
+        ;
 
     rapidjson::Document meta_schema;
     meta_schema.Parse(meta_schema_char);

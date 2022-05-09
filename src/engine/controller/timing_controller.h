@@ -32,7 +32,7 @@ namespace controller_impl {
 class TimingController : public ext::TimingController
 {
 public:
-    TimingController(BaseEngine* engine);
+    explicit TimingController(BaseEngine* engine);
 
     ~TimingController() override = default;
 

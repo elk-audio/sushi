@@ -28,32 +28,6 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-inline engine::PluginType to_internal(ext::PluginType type)
-{
-    switch (type)
-    {
-        case ext::PluginType::INTERNAL:   return engine::PluginType::INTERNAL;
-        case ext::PluginType::VST2X:      return engine::PluginType::VST2X;
-        case ext::PluginType::VST3X:      return engine::PluginType::VST3X;
-        case ext::PluginType::LV2:        return engine::PluginType::LV2;
-        default:                          return engine::PluginType::INTERNAL;
-    }
-}
-
-inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
-{
-    if (src->program.has_value()) dest->set_program(src->program.value());
-    if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
-    for (const auto& p : src->parameters)
-    {
-        dest->add_parameter_change(p.first, p.second);
-    }
-    for (const auto& p : src->properties)
-    {
-        dest->add_property_change(p.first, p.second);
-    }
-}
-
 inline ext::ProcessorInfo to_external(const Processor* proc)
 {
     return ext::ProcessorInfo{.id = static_cast<int>(proc->id()),
@@ -331,7 +305,7 @@ ext::ControlStatus AudioGraphController::move_processor_on_track(int processor_i
 
             [[maybe_unused]] auto replace_status = _engine->add_plugin_to_track(processor_id, source_track_id, position);
             SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
-                                 "Failed to replace processor {} on track {}", processor_id, source_track_id);
+                                 "Failed to replace processor {} on track {}", processor_id, source_track_id)
 
         }
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;

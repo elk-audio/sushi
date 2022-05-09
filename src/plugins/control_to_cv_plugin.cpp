@@ -20,22 +20,21 @@
  */
 
 #include <algorithm>
-#include <cmath>
 
 #include "plugins/control_to_cv_plugin.h"
 
 namespace sushi {
 namespace control_to_cv_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.control_to_cv";
+constexpr auto PLUGIN_UID = "sushi.testing.control_to_cv";
 constexpr auto DEFAULT_LABEL = "Keyboard control to CV adapter";
 constexpr int TUNE_RANGE = 24;
 constexpr float PITCH_BEND_RANGE = 12.0f;
 constexpr int SEND_CHANNEL = 0;
 
-ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) : InternalPlugin(host_control)
+ControlToCvPlugin::ControlToCvPlugin(HostControl host_control) :  InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
     _send_velocity_parameter = register_bool_parameter("send_velocity", "Send Velocity", "", false, Direction::AUTOMATABLE);
@@ -238,6 +237,11 @@ int ControlToCvPlugin::get_free_voice_id(int polyphony)
         }
     }
     return voice_id;
+}
+
+std::string_view ControlToCvPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 float pitch_to_cv(float value)

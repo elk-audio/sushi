@@ -237,7 +237,7 @@ void Transport::_update_internals()
 {
     assert(_samplerate > 0.0f);
     /* Time signatures are seen in relation to 4/4 and remapped to quarter notes
-     * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically and
+     * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically, and
      * they will play beatsynched with 4/4, i.e. not on triplets. */
     _beats_per_bar = 4.0f * static_cast<float>(_time_signature.numerator) /
                             static_cast<float>(_time_signature.denominator);
@@ -307,7 +307,7 @@ void Transport::_update_link_sync(Time timestamp)
     }
 
     /* Due to the nature of the Xenomai RT architecture we cannot commit changes to
-     * the session here as that would cause a mode switch. Instead all changes need
+     * the session here as that would cause a mode switch. Instead, all changes need
      * to be made from the non rt thread */
 }
 

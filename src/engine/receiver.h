@@ -33,7 +33,7 @@ namespace receiver {
 class AsynchronousEventReceiver
 {
 public:
-    AsynchronousEventReceiver(RtSafeRtEventFifo* queue) : _queue{queue} {}
+    explicit AsynchronousEventReceiver(RtSafeRtEventFifo* queue) : _queue{queue} {}
 
     /**
      * @brief Blocks the current thread while waiting for a response to a given event

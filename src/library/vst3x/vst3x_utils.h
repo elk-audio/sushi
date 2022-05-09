@@ -96,7 +96,7 @@ private:
     Steinberg::Vst::AudioBusBuffers _input_buffers;
     Steinberg::Vst::AudioBusBuffers _output_buffers;
     Steinberg::Vst::ProcessContext  _context;
-    /* Keep pointers to the implementations so we can call clear on them */
+    /* Keep pointers to the implementations, so we can call clear on them. */
     Steinberg::Vst::EventList* _in_events;
     Steinberg::Vst::EventList* _out_events;
     Steinberg::Vst::ParameterChanges* _in_parameters;

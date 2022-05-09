@@ -34,7 +34,7 @@ InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_contro
     _max_output_channels = DEFAULT_CHANNELS;
     _current_input_channels = DEFAULT_CHANNELS;
     _current_output_channels = DEFAULT_CHANNELS;
-};
+}
 
 FloatParameterValue* InternalPlugin::register_float_parameter(const std::string& id,
                                                               const std::string& label,
@@ -364,6 +364,46 @@ ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realti
         }
     }
     return ProcessorReturnCode::OK;
+}
+
+ProcessorState InternalPlugin::save_state() const
+{
+    ProcessorState state;
+    state.set_bypass(this->bypassed());
+    for (const auto& property : this->_property_values)
+    {
+        state.add_property_change(property.first, property.second);
+    }
+    for (const auto& parameter : _parameter_values)
+    {
+        switch (parameter.type())
+        {
+            case ParameterType::BOOL:
+                state.add_parameter_change(parameter.id(), parameter.bool_parameter_value()->normalized_value());
+                break;
+
+            case ParameterType::INT:
+                state.add_parameter_change(parameter.id(), parameter.int_parameter_value()->normalized_value());
+                break;
+
+            case ParameterType::FLOAT:
+                state.add_parameter_change(parameter.id(), parameter.float_parameter_value()->normalized_value());
+                break;
+
+            default:
+                break;
+        }
+    }
+    return state;
+}
+
+PluginInfo InternalPlugin::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::INTERNAL;
+    info.path = "";
+    info.uid = this->uid();
+    return info;
 }
 
 void InternalPlugin::send_data_to_realtime(BlobData data, int id)

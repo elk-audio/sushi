@@ -52,7 +52,7 @@ int State::number_of_programs()
     return _program_names.size();
 }
 
-int State::current_program_index()
+int State::current_program_index() const
 {
     return _current_program_index;
 }
@@ -94,6 +94,37 @@ void State::save(const char* dir)
     _model->set_save_dir(std::string(""));
 }
 
+std::vector<std::byte> State::save_binary_state()
+{
+    std::vector<std::byte> binary_state;
+
+    auto state = lilv_state_new_from_instance(
+            _model->plugin_class(), _model->plugin_instance(), &_model->get_map(),
+            nullptr, nullptr, nullptr, nullptr,
+            get_port_value, _model,
+            LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE, nullptr);
+
+    auto serial_state = lilv_state_to_string(_model->lilv_world(), &_model->get_map(),
+                                             &_model->get_unmap(), state, LV2_STATE_URI, nullptr);
+
+    if (serial_state)
+    {
+        // TODO: Investigate if it is safe to move data into the vector instead. It would save 1 copy but the data couldn't be de-allocated with lilv_free
+        int size = strlen(serial_state);
+        if (size > 0)
+        {
+            // We want to copy the string including the nullterminator to ease decoding later
+            binary_state.assign(reinterpret_cast<std::byte*>(serial_state),
+                                reinterpret_cast<std::byte*>(serial_state + size + 2));
+        }
+        lilv_free(serial_state);
+    }
+    SUSHI_LOG_ERROR_IF(serial_state == nullptr, "Failed to get state from plugin");
+
+    lilv_state_free(state);
+    return binary_state;
+}
+
 void State::_load_programs(PresetSink sink, void* data)
 {
    auto presets = lilv_plugin_get_related(_model->plugin_class(), _model->nodes()->pset_Preset);
@@ -108,7 +139,7 @@ void State::_load_programs(PresetSink sink, void* data)
            continue;
        }
 
-       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, NULL);
+       auto labels = lilv_world_find_nodes(_model->lilv_world(), preset, _model->nodes()->rdfs_label, nullptr);
 
        if (labels)
        {
@@ -138,7 +169,7 @@ void State::unload_programs()
     lilv_nodes_free(presets);
 }
 
-void State::apply_state(LilvState* state)
+void State::apply_state(LilvState* state, bool delete_after_use)
 {
     bool must_pause = !_model->safe_restore() && _model->play_state() == PlayState::RUNNING;
 
@@ -147,18 +178,22 @@ void State::apply_state(LilvState* state)
         if (must_pause)
         {
             _model->set_play_state(PlayState::PAUSE_REQUESTED);
-            _model->set_state_to_set(state);
+            _model->set_state_to_set(state, delete_after_use);
         }
         else
         {
             auto feature_list = _model->host_feature_list();
             lilv_state_restore(state, _model->plugin_instance(), set_port_value, _model, 0, feature_list->data());
             _model->request_update();
+            if (delete_after_use)
+            {
+                lilv_free(state);
+            }
         }
     }
 }
 
-bool State::apply_program(const int program_index)
+bool State::apply_program(int program_index)
 {
     if (program_index < number_of_programs())
     {
@@ -177,7 +212,7 @@ bool State::apply_program(const int program_index)
 void State::apply_program(const LilvNode* preset)
 {
     _set_preset(lilv_state_new_from_world(_model->lilv_world(), &_model->get_map(), preset));
-    apply_state(_preset);
+    apply_state(_preset, false);
 }
 
 void State::_set_preset(LilvState* new_preset)
@@ -262,7 +297,7 @@ void set_port_value(const char* port_symbol,
 
     float fvalue;
 
-    auto forge = model->forge();
+    const auto& forge = model->forge();
 
     if (type == forge.Float)
     {

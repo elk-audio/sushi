@@ -34,7 +34,7 @@ class BaseMidiFrontend
 public:
     explicit BaseMidiFrontend(midi_receiver::MidiReceiver* receiver) : _receiver(receiver) {}
 
-    virtual ~BaseMidiFrontend() {};
+    virtual ~BaseMidiFrontend() = default;
 
     virtual bool init() = 0;
 

@@ -53,7 +53,7 @@ namespace engine {
 class ClipDetector
 {
 public:
-    ClipDetector(float sample_rate)
+    explicit ClipDetector(float sample_rate)
     {
         this->set_sample_rate(sample_rate);
     }
@@ -73,7 +73,7 @@ public:
 
 private:
 
-    unsigned int _interval;
+    unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
 };
@@ -102,7 +102,7 @@ public:
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
-     ~AudioEngine();
+     ~AudioEngine() override;
 
     /**
      * @brief Configure the Engine with a new samplerate.
@@ -294,14 +294,14 @@ public:
      * @param in_controls input control voltage and gate data
      * @param out_controls output control voltage and gate data
      * @param timestamp Current time in microseconds
-     * @param samplecount Current number of samples processed
+     * @param sample_count Current number of samples processed
      */
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                        SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                        ControlBuffer* in_controls,
                        ControlBuffer* out_controls,
                        Time timestamp,
-                       int64_t samplecount) override;
+                       int64_t sample_count) override;
 
     /**
      * @brief Inform the engine of the current system latency
@@ -380,7 +380,7 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const engine::PluginInfo& plugin_info,
+    std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
                                                               const std::string& processor_name) override;
 
     /**
@@ -422,6 +422,15 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on audio inputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool input_clip_detection() const override
+    {
+        return _input_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable audio clip detection on engine outputs
      * @param enabled Enable if true, disable if false
      */
@@ -431,13 +440,32 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on outputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool output_clip_detection() const override
+    {
+        return _output_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable master limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
     void enable_master_limiter(bool enabled) override
     {
-        _master_limter_enabled = enabled;
+        _master_limiter_enabled = enabled;
     }
+
+    /**
+     * @brief Return the state of master limiter on outputs
+     * @param true if master limiter is enabled, false if disabled.
+     */
+    bool master_limiter() const override
+    {
+        return _master_limiter_enabled;
+    }
+
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
@@ -576,7 +604,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _master_limter_enabled{false};
+    bool _master_limiter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 

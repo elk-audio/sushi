@@ -29,7 +29,7 @@ namespace equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
 
-class EqualizerPlugin : public InternalPlugin
+class EqualizerPlugin : public InternalPlugin, public UidHelper<EqualizerPlugin>
 {
 public:
     EqualizerPlugin(HostControl hostControl);
@@ -43,6 +43,8 @@ public:
     void set_enabled(bool enabled) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     void _reset_filters();

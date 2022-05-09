@@ -21,6 +21,8 @@
 #ifndef SUSHI_LV2_STATE_H
 #define SUSHI_LV2_STATE_H
 
+#include <vector>
+
 #include "lv2/lv2plug.in/ns/ext/state/state.h"
 #include "library/constants.h"
 #include "lv2/state/state.h"
@@ -35,16 +37,18 @@ class State
 public:
     SUSHI_DECLARE_NON_COPYABLE(State);
 
-    State(Model* model);
+    explicit State(Model* model);
     ~State() = default;
 
     void save(const char *dir);
 
+    std::vector<std::byte> save_binary_state();
+
     void unload_programs();
 
-    void apply_state(LilvState* state);
+    void apply_state(LilvState* state, bool delete_after_use);
 
-    bool apply_program(const int program_index);
+    bool apply_program(int program_index);
 
     void apply_program(const LilvNode* preset);
 
@@ -58,7 +62,7 @@ public:
 
     int number_of_programs();
 
-    int current_program_index();
+    int current_program_index() const;
 
     std::string current_program_name();
 

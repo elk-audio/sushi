@@ -29,7 +29,7 @@
 
 namespace {
 /** These features have no data */
-static const LV2_Feature static_features[] = {
+const LV2_Feature static_features[] = {
         { LV2_STATE__loadDefaultState, nullptr },
         { LV2_BUF_SIZE__powerOf2BlockLength, nullptr },
         { LV2_BUF_SIZE__fixedBlockLength, nullptr },
@@ -78,7 +78,7 @@ Model::~Model()
             lilv_node_free(control.label);
 
             // This can optionally be null for some plugins.
-            if(control.group != nullptr)
+            if (control.group != nullptr)
             {
                 lilv_node_free(control.group);
             }
@@ -118,7 +118,7 @@ void Model::_initialize_host_feature_list()
             nullptr
     });
 
-    _feature_list = std::move(features);
+    _feature_list = features;
 }
 
 bool Model::_feature_is_supported(const std::string& uri)
@@ -208,7 +208,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     if (state != nullptr) // Apply loaded state to plugin instance if necessary
     {
-        _lv2_state->apply_state(state);
+        _lv2_state->apply_state(state, false);
         lilv_state_free(state);
     }
 
@@ -322,12 +322,12 @@ void Model::_create_controls(bool writable)
                                                   property))
         {
             // Find existing writable control
-            for (size_t i = 0; i < _controls.size(); ++i)
+            for (auto& control : _controls)
             {
-                if (lilv_node_equals(_controls[i].node, property))
+                if (lilv_node_equals(control.node, property))
                 {
                     found = true;
-                    _controls[i].is_readable = true;
+                    control.is_readable = true;
                     break;
                 }
             }
@@ -460,7 +460,7 @@ void Model::_initialize_safe_restore_feature()
 
     init_feature(&this->_features.safe_restore_feature,
                  LV2_STATE__threadSafeRestore,
-                 NULL);
+                 nullptr);
 }
 
 void Model::_initialize_options_feature()
@@ -472,7 +472,7 @@ void Model::_initialize_options_feature()
             { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_maxBlockLength, sizeof(int32_t), _urids.atom_Int, &_buffer_size },
             { LV2_OPTIONS_INSTANCE, 0, _urids.bufsz_sequenceSize, sizeof(int32_t), _urids.atom_Int, &_midi_buffer_size },
             { LV2_OPTIONS_INSTANCE, 0, _urids.ui_updateRate, sizeof(float), _urids.atom_Float, &_ui_update_hz },
-            { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, NULL }
+            { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, nullptr }
     };
 
     std::copy(std::begin(options), std::end(options), std::begin(_features.options));
@@ -524,12 +524,12 @@ const LilvPlugin* Model::plugin_class()
     return _plugin_class;
 }
 
-int Model::midi_buffer_size()
+int Model::midi_buffer_size() const
 {
     return _midi_buffer_size;
 }
 
-float Model::sample_rate()
+float Model::sample_rate() const
 {
     return _sample_rate;
 }
@@ -588,7 +588,7 @@ LV2_Atom_Forge& Model::forge()
     return _forge;
 }
 
-int Model::plugin_latency()
+int Model::plugin_latency() const
 {
     return _plugin_latency;
 }
@@ -603,7 +603,7 @@ void Model::set_control_input_index(int index)
     _control_input_index = index;
 }
 
-bool Model::update_requested()
+bool Model::update_requested() const
 {
     return _request_update;
 }
@@ -623,7 +623,7 @@ void Model::set_play_state(PlayState play_state)
     _play_state = play_state;
 }
 
-PlayState Model::play_state()
+PlayState Model::play_state() const
 {
     return _play_state;
 }
@@ -643,7 +643,7 @@ void Model::set_save_dir(const std::string& save_dir)
     _save_dir = save_dir;
 }
 
-bool Model::buf_size_set()
+bool Model::buf_size_set() const
 {
     return _buf_size_set;
 }
@@ -653,7 +653,7 @@ std::vector<ControlID>& Model::controls()
     return _controls;
 }
 
-uint32_t Model::position()
+uint32_t Model::position() const
 {
     return _position;
 }
@@ -663,7 +663,7 @@ void Model::set_position(uint32_t position)
     _position = position;
 }
 
-float Model::bpm()
+float Model::bpm() const
 {
     return _bpm;
 }
@@ -673,7 +673,7 @@ void Model::set_bpm(float bpm)
     _bpm = bpm;
 }
 
-bool Model::rolling()
+bool Model::rolling() const
 {
     return _rolling;
 }
@@ -683,22 +683,23 @@ void Model::set_rolling(bool rolling)
     _rolling = rolling;
 }
 
-LilvState* Model::state_to_set()
+std::pair<LilvState*, bool> Model::state_to_set()
 {
-    return _state_to_set;
+    return {_state_to_set, _delete_state_after_use};
 }
 
-void Model::set_state_to_set(LilvState* state_to_set)
+void Model::set_state_to_set(LilvState* state_to_set, bool delete_after_use)
 {
     _state_to_set = state_to_set;
+    _delete_state_after_use = delete_after_use;
 }
 
-int Model::input_audio_channel_count()
+int Model::input_audio_channel_count() const
 {
     return _input_audio_channel_count;
 }
 
-int Model::output_audio_channel_count()
+int Model::output_audio_channel_count() const
 {
     return _output_audio_channel_count;
 }

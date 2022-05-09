@@ -70,7 +70,7 @@ TEST_F(CvToControlPluginTest, TestMonophonicMode)
     EXPECT_EQ(RtEventType::NOTE_OFF, recv_event.type());
     EXPECT_EQ(60, recv_event.keyboard_event()->note());
 
-    // Now Send a gate low event and we should receive a note off with the new note
+    // Now Send a gate low event, and we should receive a note off with the new note
     event = RtEvent::make_note_off_event(0, 0, 0, 0, 1.0f);
     _module_under_test.process_event(event);
     _module_under_test.process_audio(_audio_buffer, _audio_buffer);

@@ -44,10 +44,11 @@ enum WavWriterStatus : int
     FAILURE
 };
 
-class WavWriterPlugin : public InternalPlugin
+class WavWriterPlugin : public InternalPlugin, public UidHelper<WavWriterPlugin>
 {
 public:
     explicit WavWriterPlugin(HostControl host_control);
+
     ~WavWriterPlugin();
 
     ProcessorReturnCode init(float sample_rate) override;
@@ -62,6 +63,8 @@ public:
     {
         return reinterpret_cast<WavWriterPlugin*>(data)->_non_rt_callback(id);
     }
+
+    static std::string_view static_uid();
 
 private:
     WavWriterStatus _start_recording();

@@ -61,7 +61,7 @@ public:
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
     }
 
-    virtual ~Vst2xWrapper();
+    ~Vst2xWrapper() override;
 
     /* Inherited from Processor */
     ProcessorReturnCode init(float sample_rate) override;
@@ -103,6 +103,10 @@ public:
     ProcessorReturnCode set_program(int program) override;
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
+
+    ProcessorState save_state() const override;
+
+    PluginInfo info() const override;
 
     /**
      * @brief Get the vst time information
@@ -172,6 +176,7 @@ private:
     ChunkSampleBuffer _dummy_output{1};
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
+    bool _has_binary_programs{false};
     int _number_of_programs{0};
 
     BypassManager _bypass_manager{_bypassed};

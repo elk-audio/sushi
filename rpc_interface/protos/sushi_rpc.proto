@@ -180,6 +180,7 @@ service CvGateController
 
 service OscController
 {
+    rpc GetSendIP (GenericVoidValue) returns (GenericStringValue) {}
     rpc GetSendPort (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetReceivePort (GenericVoidValue) returns (GenericIntValue) {}
     rpc GetEnabledParameterOutputs (GenericVoidValue) returns (OscParameterOutputList) {}
@@ -187,6 +188,12 @@ service OscController
     rpc DisableOutputForParameter (ParameterIdentifier) returns (GenericVoidValue) {}
     rpc EnableAllOutput (GenericVoidValue) returns (GenericVoidValue) {}
     rpc DisableAllOutput (GenericVoidValue) returns (GenericVoidValue) {}
+}
+
+service SessionController
+{
+    rpc SaveSession (GenericVoidValue) returns (SessionState) {}
+    rpc RestoreSession (SessionState) returns (GenericVoidValue) {}
 }
 
 service NotificationController
@@ -431,6 +438,7 @@ message ProcessorState
     OptionalBoolValue       bypassed = 2;
     repeated PropertyValue  properties = 3;
     repeated ParameterValue parameters = 4;
+    bytes                   binary_data = 5;
 }
 
 message ProcessorStateSetRequest
@@ -695,4 +703,108 @@ message ProcessorUpdate
     Action              action = 1;
     ProcessorIdentifier processor = 2;
     TrackIdentifier     parent_track = 3;
+}
+
+message MidiKbdConnectionState
+{
+    string       track = 1;
+    MidiChannel  channel = 2;
+    int32        port = 3;
+    bool         raw_midi = 7;
+}
+
+message MidiCCConnectionState
+{
+    string              processor = 1;
+    ParameterIdentifier parameter = 2;
+    MidiChannel         channel = 3;
+    int32               port = 4;
+    int32               cc_number = 5;
+    float               min_range = 6;
+    float               max_range = 7;
+    bool                relative_mode = 8;
+}
+
+message MidiPCConnectionState
+{
+    string       processor = 1;
+    MidiChannel  channel = 2;
+    int32        port = 3;
+}
+
+message MidiState
+{
+    int32    inputs = 1;
+    int32    outputs = 2;
+    repeated MidiKbdConnectionState  kbd_input_connections = 3;
+    repeated MidiKbdConnectionState  kbd_output_connections = 4;
+    repeated MidiCCConnectionState   cc_connections = 5;
+    repeated MidiPCConnectionState   pc_connections = 6;
+}
+
+message OscParameterState
+{
+    string processor = 1;
+    repeated int32 parameter_ids = 2;
+}
+
+message OscState
+{
+    bool                        enable_all_processor_outputs = 1;
+    repeated OscParameterState  enabled_processor_outputs = 2;
+}
+
+message TrackAudioConnectionState
+{
+    string    track = 1;
+    int32     track_channel = 2;
+    int32     engine_channel = 3;
+}
+
+message EngineState
+{
+    float          sample_rate = 1;
+    float          tempo = 2;
+    PlayingMode    playing_mode = 3;
+    SyncMode       sync_mode = 4;
+    TimeSignature  time_signature = 5;
+    bool           clip_detection_input = 6;
+    bool           clip_detection_output = 7;
+    bool           master_limiter = 8;
+    int32          used_audio_inputs = 9;
+    int32          used_audio_outputs = 10;
+    repeated TrackAudioConnectionState    input_connections = 11;
+    repeated TrackAudioConnectionState    output_connections = 12;
+}
+
+message PluginClass
+{
+    string          name = 1;
+    string          label = 2;
+    string          uid = 3;
+    string          path = 4;
+    PluginType      type = 5;
+    ProcessorState  state = 6;
+}
+
+message TrackState
+{
+    string                  name = 1;
+    string                  label = 2;
+    int32                   input_channels = 3;
+    int32                   input_busses = 4;
+    int32                   output_channels = 5;
+    int32                   output_busses = 6;
+    ProcessorState          track_state = 7;
+    repeated PluginClass    processors = 8;
+}
+
+message SessionState
+{
+    SushiBuildInfo          sushi_info = 1;
+    string                  save_date = 2;
+    OscState                osc_state = 3;
+    MidiState               midi_state = 4;
+    EngineState             engine_state = 5;
+    repeated TrackState     tracks = 6;
 }

@@ -25,12 +25,12 @@
 namespace sushi {
 namespace lfo_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.lfo";
+constexpr auto PLUGIN_UID = "sushi.testing.lfo";
 constexpr auto DEFAULT_LABEL = "Lfo";
 
 LfoPlugin::LfoPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _freq_parameter = register_float_parameter("freq", "Frequency", "Hz",
                                                1.0f, 0.001f, 10.0f, Direction::AUTOMATABLE);
@@ -59,6 +59,11 @@ void LfoPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuf
     bypass_process(in_buffer, out_buffer);
     _phase += _freq_parameter->processed_value() * M_PI / _buffers_per_second;
     this->set_parameter_and_notify(_out_parameter, (std::sin(_phase) + 1) * 0.5f);
+}
+
+std::string_view LfoPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 }// namespace lfo_plugin

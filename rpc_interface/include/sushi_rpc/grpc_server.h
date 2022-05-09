@@ -53,6 +53,7 @@ class ProgramControlService;
 class MidiControlService;
 class AudioRoutingControlService;
 class OscControlService;
+class SessionControlService;
 class NotificationControlService;
 
 constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::milliseconds(50);
@@ -85,6 +86,7 @@ private:
     std::unique_ptr<MidiControlService>             _midi_control_service;
     std::unique_ptr<AudioRoutingControlService>     _audio_routing_control_service;
     std::unique_ptr<OscControlService>              _osc_control_service;
+    std::unique_ptr<SessionControlService>          _session_control_service;
     std::unique_ptr<NotificationControlService>     _notification_control_service;
 
     std::unique_ptr<grpc::ServerBuilder>            _server_builder;

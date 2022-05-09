@@ -5,6 +5,8 @@
 #include <bits/stdc++.h>
 #endif
 
+#include <unordered_map>
+
 #include "control_interface.h"
 
 namespace sushi {
@@ -772,6 +774,8 @@ public:
 class OscControllerMockup : public OscController, public TestableController
 {
 public:
+    std::string get_send_ip() const override {return "";}
+
     int get_send_port() const override {return 0;}
 
     int get_receive_port() const override {return 0;}
@@ -802,6 +806,21 @@ public:
     }
 };
 
+class SessionControllerMockup : public SessionController, public TestableController
+{
+public:
+    ext::SessionState save_session() const override
+    {
+        return SessionState();
+    }
+
+    ext::ControlStatus restore_session(const ext::SessionState& /*state*/) override
+    {
+        return ControlStatus::UNSUPPORTED_OPERATION;
+    }
+};
+
+
 class ControlMockup : public SushiControl
 {
 public:
@@ -815,7 +834,8 @@ public:
                                    &_midi_controller_mockup,
                                    &_audio_routing_controller_mockup,
                                    &_cv_gate_controller_mockup,
-                                   &_osc_controller_mockup) {}
+                                   &_osc_controller_mockup,
+                                   &_session_controller_mockup) {}
 
     ControlStatus subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
     {
@@ -897,6 +917,11 @@ public:
         return &_osc_controller_mockup;
     }
 
+    SessionControllerMockup* session_controller_mockup()
+    {
+        return &_session_controller_mockup;
+    }
+
 private:
 
     SystemControllerMockup       _system_controller_mockup;
@@ -910,6 +935,7 @@ private:
     AudioRoutingControllerMockup _audio_routing_controller_mockup;
     CvGateControllerMockup       _cv_gate_controller_mockup;
     OscControllerMockup          _osc_controller_mockup;
+    SessionControllerMockup      _session_controller_mockup;
 
     std::vector<TestableController*> _controllers{&_system_controller_mockup,
                                                   &_transport_controller_mockup,
@@ -921,7 +947,8 @@ private:
                                                   &_midi_controller_mockup,
                                                   &_audio_routing_controller_mockup,
                                                   &_cv_gate_controller_mockup,
-                                                  &_osc_controller_mockup};
+                                                  &_osc_controller_mockup,
+                                                  &_session_controller_mockup};
 };
 
 } // ext

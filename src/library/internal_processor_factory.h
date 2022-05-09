@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -25,15 +25,16 @@
 namespace sushi {
 
 class BaseProcessorFactory;
+class BaseInternalPlugFactory;
 
 class InternalProcessorFactory : public BaseProcessorFactory
 {
 public:
     InternalProcessorFactory();
 
-    virtual ~InternalProcessorFactory() = default;
+    ~InternalProcessorFactory() override;
 
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo &plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate) override;
 private:
@@ -45,9 +46,13 @@ private:
      */
     std::shared_ptr<Processor> _create_internal_plugin(const std::string& uid, HostControl& host_control);
 
+    void _add(std::unique_ptr<BaseInternalPlugFactory> factory);
+
     std::unique_ptr<BaseProcessorFactory> _send_return_factory;
+
+    std::unordered_map<std::string_view, std::unique_ptr<BaseInternalPlugFactory>> _internal_plugin_factories;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_INTERNAL_PROCESSOR_FACTORY_H

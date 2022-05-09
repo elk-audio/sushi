@@ -23,7 +23,7 @@
 namespace sushi {
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
+PluginRegistry::new_instance(const PluginInfo& plugin_info,
                              sushi::HostControl& host_control,
                              float sample_rate)
 {
@@ -31,25 +31,25 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
     {
         switch (plugin_info.type)
         {
-            case engine::PluginType::INTERNAL:
+            case PluginType::INTERNAL:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<InternalProcessorFactory>();
                 _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
-            case engine::PluginType::VST2X:
+            case PluginType::VST2X:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<vst2::Vst2xProcessorFactory>();
                 _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
-            case engine::PluginType::VST3X:
+            case PluginType::VST3X:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<vst3::Vst3xProcessorFactory>();
                 _factories[plugin_info.type] = std::move(new_factory);
                 break;
             }
-            case engine::PluginType::LV2:
+            case PluginType::LV2:
             {
                 std::unique_ptr<BaseProcessorFactory> new_factory = std::make_unique<lv2::Lv2ProcessorFactory>();
                 _factories[plugin_info.type] = std::move(new_factory);
@@ -63,4 +63,4 @@ PluginRegistry::new_instance(const sushi::engine::PluginInfo& plugin_info,
     return _factories[plugin_info.type]->new_instance(plugin_info, host_control, sample_rate);
 }
 
-}; // end namespace sushi
+} // end namespace sushi

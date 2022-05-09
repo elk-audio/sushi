@@ -29,7 +29,7 @@ public:
   using Clock = int;
   class SessionState;
 
-  Link(double /*bpm*/) {}
+  explicit Link(double /*bpm*/) {}
   bool isEnabled() const {return false;}
   void enable(bool /*bEnable*/) {}
   bool isStartStopSyncEnabled() const {return false;}
@@ -46,14 +46,14 @@ public:
   void setStartStopCallback(Callback /*callback*/) {}
 
   Clock clock() const {return 0;}
-  SessionState captureAudioSessionState() const {return SessionState();}
-  void commitAudioSessionState(SessionState /*state*/) {};
-  SessionState captureAppSessionState() const {return SessionState();}
-  void commitAppSessionState(SessionState /*state*/) {};
+  SessionState captureAudioSessionState() const {return {};}
+  void commitAudioSessionState(SessionState /*state*/) {}
+  SessionState captureAppSessionState() const {return {};}
+  void commitAppSessionState(SessionState /*state*/) {}
   class SessionState
   {
   public:
-    SessionState() {}
+    SessionState() = default;
     double tempo() const {return 120;}
     void setTempo(double /*bpm*/, std::chrono::microseconds /*atTime*/) {}
     double beatAtTime(std::chrono::microseconds /*time*/, double /*quantum*/) const {return 0;}

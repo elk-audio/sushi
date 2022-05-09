@@ -18,20 +18,17 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <algorithm>
-#include <cassert>
-
 #include "passthrough_plugin.h"
 
 namespace sushi {
 namespace passthrough_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.passthrough";
+constexpr auto PLUGIN_UID = "sushi.testing.passthrough";
 constexpr auto DEFAULT_LABEL = "Passthrough";
 
 PassthroughPlugin::PassthroughPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 }
 
@@ -50,6 +47,11 @@ void PassthroughPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
             output_event(event);
         }
     }
+}
+
+std::string_view PassthroughPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 

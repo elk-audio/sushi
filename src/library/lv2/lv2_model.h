@@ -152,8 +152,8 @@ public:
 
     const LilvPlugin* plugin_class();
 
-    int midi_buffer_size();
-    float sample_rate();
+    int midi_buffer_size() const;
+    float sample_rate() const;
 
     Port* get_port(int index);
     void add_port(Port port);
@@ -171,43 +171,43 @@ public:
 
     LV2_Atom_Forge& forge();
 
-    int plugin_latency();
+    int plugin_latency() const;
     void set_plugin_latency(int latency);
 
     void set_control_input_index(int index);
 
-    bool update_requested();
+    bool update_requested() const;
     void request_update();
     void clear_update_request();
 
     State* state();
 
     void set_play_state(PlayState play_state);
-    PlayState play_state();
+    PlayState play_state() const;
 
     std::string temp_dir();
 
     std::string save_dir();
     void set_save_dir(const std::string& save_dir);
 
-    bool buf_size_set();
+    bool buf_size_set() const;
 
     std::vector<ControlID>& controls();
 
-    uint32_t position();
+    uint32_t position() const;
     void set_position(uint32_t position);
 
-    float bpm();
+    float bpm() const;
     void set_bpm(float bpm);
 
-    bool rolling();
+    bool rolling() const;
     void set_rolling(bool rolling);
 
-    LilvState* state_to_set();
-    void set_state_to_set(LilvState* state_to_set);
+    std::pair<LilvState*, bool> state_to_set();
+    void set_state_to_set(LilvState* state_to_set, bool delete_after_use);
 
-    int input_audio_channel_count();
-    int output_audio_channel_count();
+    int input_audio_channel_count() const;
+    int output_audio_channel_count() const;
 
     bool exit {false}; ///< True iff execution is finished
 
@@ -249,13 +249,13 @@ private:
     std::string _temp_dir;
     std::string _save_dir;
 
-    PlayState _play_state;
+    PlayState _play_state{PlayState::PAUSED};
 
     std::unique_ptr<State> _lv2_state;
 
     bool _request_update{false};
 
-    int _control_input_index;
+    int _control_input_index{0};
 
     int _plugin_latency{0};
 
@@ -264,12 +264,12 @@ private:
     LV2_URID_Map _map;
     LV2_URID_Unmap _unmap;
 
-    lv2_host::Symap* _symap;
+    lv2_host::Symap* _symap{nullptr};
     std::mutex _symap_lock;
 
     LV2_URIDs _urids;
 
-    float _sample_rate;
+    float _sample_rate{0};
 
     LV2_Wrapper* _wrapper{nullptr};
 
@@ -291,15 +291,16 @@ private:
     std::array<const LV2_Feature*, FEATURE_LIST_SIZE> _feature_list;
 
     uint32_t _position;
-    float _bpm;
-    bool _rolling;
+    float _bpm{0};
+    bool _rolling{false};
 
+    bool _delete_state_after_use{false};
     LilvState* _state_to_set{nullptr};
 
     int _input_audio_channel_count{0};
     int _output_audio_channel_count{0};
 
-    bool _safe_restore;
+    bool _safe_restore{false};
 
     std::unique_ptr<Worker> _state_worker;
     std::unique_ptr<Worker> _worker;

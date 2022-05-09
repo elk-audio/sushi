@@ -19,63 +19,11 @@
  */
 
 #include "midi_controller.h"
+#include "controller_common.h"
 
 #include "logging.h"
 
-
 namespace sushi {
-
-namespace ext {
-ext::MidiChannel midi_channel_from_int(int channel_int)
-{
-    switch (channel_int)
-    {
-        case 0:  return sushi::ext::MidiChannel::MIDI_CH_1;
-        case 1:  return sushi::ext::MidiChannel::MIDI_CH_2;
-        case 2:  return sushi::ext::MidiChannel::MIDI_CH_3;
-        case 3:  return sushi::ext::MidiChannel::MIDI_CH_4;
-        case 4:  return sushi::ext::MidiChannel::MIDI_CH_5;
-        case 5:  return sushi::ext::MidiChannel::MIDI_CH_6;
-        case 6:  return sushi::ext::MidiChannel::MIDI_CH_7;
-        case 7:  return sushi::ext::MidiChannel::MIDI_CH_8;
-        case 8:  return sushi::ext::MidiChannel::MIDI_CH_9;
-        case 9:  return sushi::ext::MidiChannel::MIDI_CH_10;
-        case 10: return sushi::ext::MidiChannel::MIDI_CH_11;
-        case 11: return sushi::ext::MidiChannel::MIDI_CH_12;
-        case 12: return sushi::ext::MidiChannel::MIDI_CH_13;
-        case 13: return sushi::ext::MidiChannel::MIDI_CH_14;
-        case 14: return sushi::ext::MidiChannel::MIDI_CH_15;
-        case 15: return sushi::ext::MidiChannel::MIDI_CH_16;
-        case 16: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
-        default: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
-    }
-}
-int int_from_midi_channel(ext::MidiChannel channel)
-{
-    switch (channel)
-    {
-        case sushi::ext::MidiChannel::MIDI_CH_1: return 0;
-        case sushi::ext::MidiChannel::MIDI_CH_2: return 1;
-        case sushi::ext::MidiChannel::MIDI_CH_3: return 2;
-        case sushi::ext::MidiChannel::MIDI_CH_4: return 3;
-        case sushi::ext::MidiChannel::MIDI_CH_5: return 4;
-        case sushi::ext::MidiChannel::MIDI_CH_6: return 5;
-        case sushi::ext::MidiChannel::MIDI_CH_7: return 6;
-        case sushi::ext::MidiChannel::MIDI_CH_8: return 7;
-        case sushi::ext::MidiChannel::MIDI_CH_9: return 8;
-        case sushi::ext::MidiChannel::MIDI_CH_10: return 9;
-        case sushi::ext::MidiChannel::MIDI_CH_11: return 10;
-        case sushi::ext::MidiChannel::MIDI_CH_12: return 11;
-        case sushi::ext::MidiChannel::MIDI_CH_13: return 12;
-        case sushi::ext::MidiChannel::MIDI_CH_14: return 13;
-        case sushi::ext::MidiChannel::MIDI_CH_15: return 14;
-        case sushi::ext::MidiChannel::MIDI_CH_16: return 15;
-        case sushi::ext::MidiChannel::MIDI_CH_OMNI: return 16;
-        default: return 16;
-    }
-}
-}
-
 namespace engine {
 namespace controller_impl {
 
@@ -88,7 +36,7 @@ ext::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConne
     ext_connection.min_range = connection.input_connection.min_range;
     ext_connection.max_range = connection.input_connection.max_range;
     ext_connection.relative_mode = connection.input_connection.relative;
-    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+    ext_connection.channel = to_external_midi_channel(connection.channel);
     ext_connection.port = connection.port;
     ext_connection.cc_number = connection.cc;
 
@@ -100,7 +48,7 @@ ext::MidiPCConnection populate_pc_connection(const midi_dispatcher::PCInputConne
     ext::MidiPCConnection ext_connection;
 
     ext_connection.processor_id = connection.processor_id;
-    ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+    ext_connection.channel = to_external_midi_channel(connection.channel);
     ext_connection.port = connection.port;
 
     return ext_connection;
@@ -131,7 +79,7 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_input_connection
         ext::MidiKbdConnection ext_connection;
         ext_connection.track_id = connection.input_connection.target;
         ext_connection.port = connection.port;
-        ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+        ext_connection.channel = to_external_midi_channel(connection.channel);
         ext_connection.raw_midi = connection.raw_midi;
         returns.push_back(ext_connection);
     }
@@ -149,7 +97,7 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_output_connectio
         ext::MidiKbdConnection ext_connection;
         ext_connection.track_id = connection.track_id;
         ext_connection.port = connection.port;
-        ext_connection.channel = ext::midi_channel_from_int(connection.channel);
+        ext_connection.channel = to_external_midi_channel(connection.channel);
         ext_connection.raw_midi = false;
         returns.push_back(ext_connection);
     }
@@ -222,12 +170,12 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
                                                               int port,
                                                               bool raw_midi)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
-        if(!raw_midi)
+        if (!raw_midi)
         {
             status = _midi_dispatcher->connect_kb_to_track(port, track_id, int_channel);
         }
@@ -236,7 +184,7 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
             status = _midi_dispatcher->connect_raw_midi_to_track(port, track_id, int_channel);
         }
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -256,14 +204,14 @@ ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
                                                                  ext::MidiChannel channel,
                                                                  int port)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->connect_track_to_output(port, track_id, int_channel);
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -287,7 +235,7 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
                                                            float max_range,
                                                            bool relative_mode)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
@@ -317,7 +265,7 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
 
 ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext::MidiChannel channel, int port)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
@@ -344,12 +292,12 @@ ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext
 
 ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiChannel channel, int port, bool raw_midi)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=]() -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
-        if(!raw_midi)
+        if (!raw_midi)
         {
             status = _midi_dispatcher->disconnect_kb_from_track(port, // port maps to midi_input
                                                                 track_id,
@@ -362,7 +310,7 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
                                                                       int_channel);
         }
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -380,14 +328,14 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
 
 ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::MidiChannel channel, int port)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->disconnect_track_from_output(port, track_id, int_channel);
 
-        if(status == midi_dispatcher::MidiDispatcherStatus::OK)
+        if (status == midi_dispatcher::MidiDispatcherStatus::OK)
         {
             return EventStatus::HANDLED_OK;
         }
@@ -404,7 +352,7 @@ ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::Midi
 
 ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChannel channel, int port, int cc_number)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {
@@ -430,7 +378,7 @@ ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChan
 
 ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChannel channel, int port)
 {
-    const int int_channel = ext::int_from_midi_channel(channel);
+    const int int_channel = int_from_ext_midi_channel(channel);
 
     auto lambda = [=] () -> int
     {

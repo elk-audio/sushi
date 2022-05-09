@@ -86,6 +86,8 @@ public:
 
     void run() override;
 
+    void pause(bool enabled) override;
+
 private:
     void _process_events(Time end_time);
     void _process_dummy();
@@ -105,8 +107,8 @@ private:
     std::vector<Event*> _event_queue;
 };
 
-}; // end namespace audio_frontend
+} // end namespace audio_frontend
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_OFFLINE_FRONTEND_H

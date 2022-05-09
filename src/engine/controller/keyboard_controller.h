@@ -32,7 +32,7 @@ namespace controller_impl {
 class KeyboardController : public ext::KeyboardController
 {
 public:
-    KeyboardController(BaseEngine* engine);
+    explicit KeyboardController(BaseEngine* engine);
 
     ~KeyboardController() override = default;
 

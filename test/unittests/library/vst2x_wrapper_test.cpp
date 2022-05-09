@@ -80,9 +80,6 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     EXPECT_EQ(2, _module_under_test->input_channels());
-    EXPECT_EQ(2, _module_under_test->output_channels());
-
-    _module_under_test->set_input_channels(1);
     _module_under_test->set_output_channels(1);
 
     EXPECT_EQ(1, _module_under_test->input_channels());
@@ -336,3 +333,17 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
     delete delete_event;
 }
+
+TEST_F(TestVst2xWrapper, TestStateSaving)
+{
+    SetUp(VST2_TEST_PLUGIN_PATH);
+
+    float parameter_value = _module_under_test->parameter_value(1).second;
+
+    auto state = _module_under_test->save_state();
+    EXPECT_FALSE(state.has_binary_data());
+    ASSERT_FALSE(state.parameters().empty());
+    EXPECT_FLOAT_EQ(parameter_value, state.parameters()[1].second);
+    EXPECT_TRUE(state.bypassed().has_value());
+}
+

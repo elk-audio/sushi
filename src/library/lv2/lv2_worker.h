@@ -33,7 +33,7 @@ struct Lv2FifoItem
     int size{0};
 
     // The zix ring buffer does not enforce a fixed block size.
-    // Instead it is 4096 bytes in total for the buffer.
+    // Instead, it is 4096 bytes in total for the buffer.
     // Each entry is a size uint, followed by as many bytes as defined in that.
     // So the safest thing would be 4096-4 really.
     std::array<std::byte, WORKER_REQUEST_SIZE> block;
@@ -44,7 +44,7 @@ using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, W
 class Worker
 {
 public:
-    Worker(Model* model);
+    explicit Worker(Model* model);
     ~Worker() = default;
 
     void init(const LV2_Worker_Interface* iface, bool threaded);
