@@ -147,7 +147,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_INFO("No output channels found not connecting to output device");
         SUSHI_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
-    SUSHI_LOG_INFO("Stream started using input latency {} and output latency {}", portaudio_config->suggested_input_latency, portaudio_config->suggested_output_latency);
+    SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", stream_info->inputLatency, stream_info->outputLatency);
 
     return AudioFrontendStatus::OK;
 }
