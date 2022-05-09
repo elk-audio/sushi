@@ -34,7 +34,7 @@ namespace control_to_cv_plugin {
 
 constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 
-class ControlToCvPlugin : public InternalPlugin
+class ControlToCvPlugin : public InternalPlugin, public UidHelper<ControlToCvPlugin>
 {
 public:
     ControlToCvPlugin(HostControl host_control);
@@ -48,6 +48,8 @@ public:
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& /*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
+
+    static std::string_view static_uid();
 
 private:
     struct ControlVoice

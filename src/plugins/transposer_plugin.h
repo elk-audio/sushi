@@ -28,7 +28,7 @@
 namespace sushi {
 namespace transposer_plugin {
 
-class TransposerPlugin : public InternalPlugin
+class TransposerPlugin : public InternalPlugin, public UidHelper<TransposerPlugin>
 {
 public:
     TransposerPlugin(HostControl host_control);
@@ -40,6 +40,8 @@ public:
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer&/*in_buffer*/, ChunkSampleBuffer& /*out_buffer*/) override;
+
+    static std::string_view static_uid();
 
 private:
     int _transpose_note(int note);

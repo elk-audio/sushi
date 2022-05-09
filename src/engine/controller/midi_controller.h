@@ -27,11 +27,6 @@
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {
-
-namespace ext {
-ext::MidiChannel midi_channel_from_int(int channel_int);
-}
-
 namespace engine {
 namespace controller_impl {
 

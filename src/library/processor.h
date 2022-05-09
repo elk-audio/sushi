@@ -50,6 +50,31 @@ enum class ProcessorReturnCode
     PLUGIN_INIT_ERROR,
 };
 
+enum class PluginType
+{
+    INTERNAL,
+    VST2X,
+    VST3X,
+    LV2
+};
+
+/**
+ * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
+ */
+struct PluginInfo
+{
+    std::string uid;
+    std::string path;
+    PluginType type;
+
+    bool operator == (const PluginInfo& other) const
+    {
+        return (uid == other.uid) &&
+               (path == other.path) &&
+               (type == other.type);
+    }
+};
+
 class Processor
 {
 public:
@@ -374,9 +399,14 @@ public:
         return ProcessorReturnCode::UNSUPPORTED_OPERATION;
     }
 
-    virtual ProcessorState save_state(bool /*realtime_running*/) const
+    virtual ProcessorState save_state() const
     {
         return {};
+    }
+
+    virtual PluginInfo info() const
+    {
+        return PluginInfo();
     }
 
 

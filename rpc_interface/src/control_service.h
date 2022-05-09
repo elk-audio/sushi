@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Sushi Control Service, gRPC service for external control of Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_SUSHICONTROLSERVICE_H
@@ -270,6 +270,18 @@ public:
 
 private:
     sushi::ext::OscController* _controller;
+};
+
+class SessionControlService : public SessionController::Service
+{
+public:
+    SessionControlService(sushi::ext::SushiControl* controller) : _controller{controller->session_controller()} {}
+
+    grpc::Status SaveSession(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::SessionState* response) override;
+    grpc::Status RestoreSession(grpc::ServerContext* context, const sushi_rpc::SessionState* request, sushi_rpc::GenericVoidValue* response) override;
+
+private:
+    sushi::ext::SessionController* _controller;
 };
 
 using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<

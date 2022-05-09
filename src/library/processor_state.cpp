@@ -23,6 +23,10 @@
 namespace sushi {
 
 ProcessorState::~ProcessorState() = default;
+bool ProcessorState::has_binary_data() const
+{
+    return !_binary_data.empty();
+}
 
 void ProcessorState::set_program(int program_id)
 {
@@ -44,12 +48,22 @@ void ProcessorState::add_property_change(ObjectId property_id, const std::string
     _property_changes.emplace_back(property_id, value);
 }
 
+void ProcessorState::set_binary_data(const std::vector<std::byte>& data)
+{
+    _binary_data = data;
+}
+
+void ProcessorState::set_binary_data(std::vector<std::byte>&& data)
+{
+    _binary_data = data;
+}
+
 std::optional<int> ProcessorState::program() const
 {
     return _program;
 }
 
-std::optional<int> ProcessorState::bypassed() const
+std::optional<bool> ProcessorState::bypassed() const
 {
     return _bypassed;
 }
@@ -63,6 +77,17 @@ const std::vector<std::pair<ObjectId, std::string>>& ProcessorState::properties(
 {
     return _property_changes;
 }
+
+const std::vector<std::byte>& ProcessorState::binary_data() const
+{
+    return _binary_data;
+}
+
+std::vector<std::byte>& ProcessorState::binary_data()
+{
+    return _binary_data;
+}
+
 
 RtState::RtState() = default;
 
@@ -93,4 +118,4 @@ const std::vector<std::pair<ObjectId, float>>& RtState::parameters() const
 {
     return _parameter_changes;
 }
-} // end namespace sushi
+}; // end namespace sushi

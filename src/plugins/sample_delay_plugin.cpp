@@ -23,14 +23,14 @@
 namespace sushi {
 namespace sample_delay_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.sample_delay";
+constexpr auto PLUGIN_UID = "sushi.testing.sample_delay";
 constexpr auto DEFAULT_LABEL = "Sample delay";
 
 SampleDelayPlugin::SampleDelayPlugin(HostControl host_control) : InternalPlugin(host_control),
                                                                  _write_idx(0),
                                                                  _read_idx(0)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _sample_delay = register_int_parameter("sample_delay", 
                                            "Sample delay", 
@@ -107,6 +107,11 @@ void SampleDelayPlugin::set_enabled(bool enabled)
     {
         _reset();
     }
+}
+
+std::string_view SampleDelayPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void SampleDelayPlugin::_reset()

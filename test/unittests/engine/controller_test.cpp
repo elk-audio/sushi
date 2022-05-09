@@ -4,6 +4,7 @@
 #include "engine/json_configurator.h"
 #include "engine/controller/controller.cpp"
 #include "test_utils/test_utils.h"
+#include "test_utils/audio_frontend_mockup.h"
 
 /* Currently testing Controller as a complete class
  * eventually we might want to test the individual
@@ -36,7 +37,7 @@ protected:
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());
 
-        _module_under_test = std::make_unique<Controller>(&_engine, &_midi_dispatcher);
+        _module_under_test = std::make_unique<Controller>(&_engine, &_midi_dispatcher, &_audio_frontend);
         ChunkSampleBuffer buffer(8);
         ControlBuffer ctrl_buffer;
         // Run once so that pending changes are executed
@@ -47,6 +48,7 @@ protected:
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
+    AudioFrontendMockup  _audio_frontend;
     jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _engine.processor_container(), _path};
     std::unique_ptr<ext::SushiControl> _module_under_test;
 };

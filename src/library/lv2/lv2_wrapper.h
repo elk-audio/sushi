@@ -127,6 +127,10 @@ public:
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
 
+    ProcessorState save_state() const override;
+
+    PluginInfo info() const override;
+
     static int worker_callback(void* data, EventId id)
     {
         reinterpret_cast<LV2_Wrapper*>(data)->_worker_callback(id);
@@ -171,6 +175,8 @@ private:
     void _flush_event_queue();
     void _process_midi_input(Port* port);
     void _process_midi_output(Port* port);
+
+    void _set_binary_state(ProcessorState* state);
 
     float* _process_inputs[LV2_WRAPPER_MAX_N_CHANNELS]{};
     float* _process_outputs[LV2_WRAPPER_MAX_N_CHANNELS]{};

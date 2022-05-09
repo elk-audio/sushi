@@ -27,14 +27,14 @@
 namespace sushi {
 namespace cv_to_control_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.cv_to_control";
+constexpr auto PLUGIN_UID = "sushi.testing.cv_to_control";
 constexpr auto DEFAULT_LABEL = "Cv to control adapter";
 constexpr int TUNE_RANGE = 24;
 constexpr float PITCH_BEND_RANGE = 12.0f;
 
 CvToControlPlugin::CvToControlPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _pitch_bend_mode_parameter = register_bool_parameter("pitch_bend_enabled", "Pitch bend enabled", "", false, Direction::AUTOMATABLE);
     _velocity_mode_parameter = register_bool_parameter("velocity_enabled", "Velocity enabled", "", false, Direction::AUTOMATABLE);
@@ -117,6 +117,12 @@ void CvToControlPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
     _send_deferred_events(channel);
     _process_cv_signals(polyphony, channel, tune, send_velocity, send_pitch_bend);
     _process_gate_changes(polyphony, channel, tune, send_velocity, send_pitch_bend);
+}
+
+
+std::string_view CvToControlPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void CvToControlPlugin::_send_deferred_events(int channel)

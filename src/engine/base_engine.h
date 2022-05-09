@@ -68,32 +68,6 @@ enum class EngineReturnStatus
     QUEUE_FULL
 };
 
-enum class PluginType
-{
-    INTERNAL,
-    VST2X,
-    VST3X,
-    LV2
-};
-
-/**
- * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
- */
-struct PluginInfo
-{
-    std::string uid;
-    std::string path;
-    PluginType type;
-
-    bool operator == (const PluginInfo& other) const
-    {
-        return (uid == other.uid) &&
-               (path == other.path) &&
-               (type == other.type);
-    }
-};
-
-
 enum class RealtimeState
 {
     STARTING,
@@ -146,13 +120,22 @@ public:
     {
         _cv_inputs = channels;
         return EngineReturnStatus::OK;
-
     }
 
     virtual EngineReturnStatus set_cv_output_channels(int channels)
     {
         _cv_outputs = channels;
         return EngineReturnStatus::OK;
+    }
+
+    int cv_input_channels() const
+    {
+        return _cv_inputs;
+    }
+
+    int cv_output_channels() const
+    {
+        return _cv_outputs;
     }
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
@@ -341,7 +324,13 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
+    virtual bool input_clip_detection() const {return false;}
+
+    virtual bool output_clip_detection() const {return false;}
+
     virtual void enable_master_limiter(bool /*enabled*/) {}
+
+    virtual bool master_limiter() const {return false;}
 
     virtual void update_timings() {}
 

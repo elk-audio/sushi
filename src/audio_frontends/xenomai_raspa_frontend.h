@@ -77,7 +77,7 @@ public:
      * @brief Activate the realtime frontend, currently blocking.
      */
     void run() override;
-    
+
     /**
      * @brief Workaround for Xenomai process initialization, which should happen
      *        as the _first_ thing in main() before everything else.
@@ -124,6 +124,7 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
+    void pause([[maybe_unused]] bool enabled) {}
 };
 
 } // end namespace audio_frontend

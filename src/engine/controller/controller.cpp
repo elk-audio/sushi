@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @Brief Controller object for external control of sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "controller.h"
@@ -30,31 +30,37 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 namespace sushi {
 namespace engine {
 
-Controller::Controller(engine::BaseEngine* engine, midi_dispatcher::MidiDispatcher* midi_dispatcher) : ext::SushiControl(&_system_controller_impl,
-                                                                       &_transport_controller_impl,
-                                                                       &_timing_controller_impl,
-                                                                       &_keyboard_controller_impl,
-                                                                       &_audio_graph_controller_impl,
-                                                                       &_program_controller_impl,
-                                                                       &_parameter_controller_impl,
-                                                                       &_midi_controller_impl,
-                                                                       &_audio_routing_controller_impl,
-                                                                       &_cv_gate_controller_impl,
-                                                                       &_osc_controller_impl),
-                                                     _system_controller_impl(engine->audio_input_channels(),
-                                                                             engine->audio_output_channels()),
-                                                     _transport_controller_impl(engine),
-                                                     _timing_controller_impl(engine),
-                                                     _keyboard_controller_impl(engine),
-                                                     _audio_graph_controller_impl(engine),
-                                                     _program_controller_impl(engine),
-                                                     _parameter_controller_impl(engine),
-                                                     _midi_controller_impl(engine,
-                                                                           midi_dispatcher),
-                                                     _audio_routing_controller_impl(engine),
-                                                     _cv_gate_controller_impl(engine),
-                                                     _osc_controller_impl(engine)
+using namespace controller_impl;
 
+Controller::Controller(engine::BaseEngine* engine,
+                       midi_dispatcher::MidiDispatcher* midi_dispatcher,
+                       audio_frontend::BaseAudioFrontend* audio_frontend) : ext::SushiControl(&_system_controller_impl,
+                                                                                              &_transport_controller_impl,
+                                                                                              &_timing_controller_impl,
+                                                                                              &_keyboard_controller_impl,
+                                                                                              &_audio_graph_controller_impl,
+                                                                                              &_program_controller_impl,
+                                                                                              &_parameter_controller_impl,
+                                                                                              &_midi_controller_impl,
+                                                                                              &_audio_routing_controller_impl,
+                                                                                              &_cv_gate_controller_impl,
+                                                                                              &_osc_controller_impl,
+                                                                                              &_session_controller_impl),
+                                                                         _system_controller_impl(engine->audio_input_channels(),
+                                                                                                 engine->audio_output_channels()),
+                                                                         _transport_controller_impl(engine),
+                                                                         _timing_controller_impl(engine),
+                                                                         _keyboard_controller_impl(engine),
+                                                                         _audio_graph_controller_impl(engine),
+                                                                         _program_controller_impl(engine),
+                                                                         _parameter_controller_impl(engine),
+                                                                         _midi_controller_impl(engine, midi_dispatcher),
+                                                                         _audio_routing_controller_impl(engine),
+                                                                         _cv_gate_controller_impl(engine),
+                                                                         _osc_controller_impl(engine),
+                                                                         _session_controller_impl(engine,
+                                                                                                  midi_dispatcher,
+                                                                                                  audio_frontend)
 {
     _event_dispatcher = engine->event_dispatcher();
     _processors = engine->processor_container();
@@ -248,6 +254,7 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
 void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 {
     _osc_controller_impl.set_osc_frontend(osc_frontend);
+    _session_controller_impl.set_osc_frontend(osc_frontend);
 }
 
 void Controller::_notify_timing_listeners(const EngineTimingNotificationEvent* event) const

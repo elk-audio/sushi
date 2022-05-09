@@ -280,6 +280,12 @@ ProcessorReturnCode LV2_Wrapper::set_program(int program)
 
 ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_running)
 {
+    if (state->has_binary_data())
+    {
+        _set_binary_state(state);
+        return ProcessorReturnCode::OK;
+    }
+
     std::unique_ptr<RtState> rt_state;
     if (realtime_running)
     {
@@ -339,6 +345,21 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_
     }
 
     return ProcessorReturnCode::OK;
+}
+
+ProcessorState LV2_Wrapper::save_state() const
+{
+    ProcessorState state;
+    state.set_binary_data(_model->state()->save_binary_state());
+    return state;
+}
+
+PluginInfo LV2_Wrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::LV2;
+    info.path = _plugin_path;
+    return info;
 }
 
 bool LV2_Wrapper::_register_parameters()
@@ -564,23 +585,29 @@ void LV2_Wrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
 void LV2_Wrapper::_restore_state_callback(EventId)
 {
     /* Note that this doesn't handle multiple requests at once.
-     * Currently, for the Pause functionality it is fine,
-     * but if extended to support other use it may not be. */
-    if (_model->state_to_set() != nullptr)
+     * Currently for the Pause functionality it is fine,
+     * but if extended to support other use it may note be. */
+
+    auto [state_to_set, delete_after_use] = _model->state_to_set();
+    if (state_to_set)
     {
         auto feature_list = _model->host_feature_list();
 
-        lilv_state_restore(_model->state_to_set(),
+        lilv_state_restore(state_to_set,
                            _model->plugin_instance(),
                            set_port_value,
                            _model.get(),
                            0,
                            feature_list->data());
 
-        _model->set_state_to_set(nullptr);
-
+        _model->set_state_to_set(nullptr, false);
         _model->request_update();
         _model->set_play_state(PlayState::RUNNING);
+
+        if (delete_after_use)
+        {
+            lilv_free(state_to_set);
+        }
     }
 }
 
@@ -796,7 +823,7 @@ void LV2_Wrapper::_process_midi_input(Port* port)
                         (const uint8_t *) LV2_ATOM_BODY(_lv2_pos));
     }
 
-    auto urids = _model->urids();
+    auto& urids = _model->urids();
 
     if (_model->update_requested())
     {
@@ -973,6 +1000,20 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
     }
 
     return plugin;
+}
+
+void LV2_Wrapper::_set_binary_state(ProcessorState* state)
+{
+    auto lilv_state = lilv_state_new_from_string(_world->world(),
+                                                 &_model->get_map(),
+                                                 reinterpret_cast<const char*>(state->binary_data().data()));
+
+    if (lilv_state)
+    {
+        auto state_handler = _model->state();
+        state_handler->apply_state(lilv_state, true);
+    }
+    SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }
 
 } // namespace lv2

@@ -86,6 +86,8 @@ public:
 
     void run() override;
 
+    void pause(bool enabled) override;
+
 private:
     void _process_events(Time end_time);
     void _process_dummy();

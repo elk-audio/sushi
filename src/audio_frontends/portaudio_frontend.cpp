@@ -33,6 +33,12 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 {
     auto portaudio_config = static_cast<PortAudioFrontendConfiguration*>(config);
 
+    auto ret_code = BaseAudioFrontend::init(config);
+    if (ret_code != AudioFrontendStatus::OK)
+    {
+        return ret_code;
+    }
+
     PaError err = Pa_Initialize();
     if (err != paNoError)
     {
@@ -264,49 +270,70 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
-    // Deinterleave audio channels and updated cv values
+    _out_buffer.clear();
+    if (_pause_manager.should_process())
+    {
+        _copy_interleaved_audio(static_cast<const float*>(input));
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+    }
+    else
+    {
+        if (_pause_notified == false)
+        {
+            _pause_notify->notify();
+            _pause_notified = true;
+            _engine->enable_realtime(false);
+        }
+    }
+
+    _output_interleaved_audio(static_cast<float*>(output));
+
+    _processed_sample_count += frame_count;
+    return 0;
+}
+
+void PortAudioFrontend::_copy_interleaved_audio(const float* input)
+{
     for (int c = 0; c < _num_total_input_channels; c++)
     {
-        const float* in_src = static_cast<const float*>(input);
         if (c < _audio_input_channels)
         {
             float* in_dst = _in_buffer.channel(c);
-
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                in_dst[s] = in_src[s * _num_total_input_channels + c];
+                in_dst[s] = input[s * _num_total_input_channels + c];
             }
         }
         else
         {
             int cc = c - _audio_input_channels;
-            _in_controls.cv_values[cc] = map_audio_to_cv(in_src[AUDIO_CHUNK_SIZE - 1]);
+            _in_controls.cv_values[cc] = map_audio_to_cv(input[AUDIO_CHUNK_SIZE - 1]);
         }
     }
-    _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+}
 
-    // Interleave audio channels and update cv values
+void PortAudioFrontend::_output_interleaved_audio(float* output)
+{
     for (int c = 0; c < _num_total_output_channels; c++)
     {
-        float* out_dst = static_cast<float*>(output);
         if (c < _audio_output_channels)
         {
             const float* out_src = _out_buffer.channel(c);
-
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                out_dst[s * _num_total_output_channels + c] = out_src[s];
+                output[s * _num_total_output_channels + c] = out_src[s];
             }
         }
         else
         {
             int cc = c - _audio_output_channels;
-            _cv_output_his[cc] = ramp_cv_output(out_dst, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
+            _cv_output_his[cc] = ramp_cv_output(output, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
         }
     }
-    _processed_sample_count += frame_count;
-    return 0;
 }
 
 } // end namespace audio_frontend
