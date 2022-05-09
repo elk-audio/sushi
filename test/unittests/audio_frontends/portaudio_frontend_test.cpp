@@ -53,6 +53,7 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
     PaDeviceInfo expected_info;
     expected_info.maxInputChannels = 2;
     expected_info.maxOutputChannels = 2;
+    PaStreamInfo stream_info;
     PortAudioFrontendConfiguration config(0, 1, 0.0f, 0.0f, 1, 1);
 
     EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillOnce(Return(init_value));
@@ -61,6 +62,7 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
     EXPECT_CALL(*mockPortAudio, Pa_GetDefaultOutputDevice);
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo(config.input_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo(config.output_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
+    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_module_under_test->_stream)).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 }
@@ -141,9 +143,12 @@ TEST_F(TestPortAudioFrontend, TestProcess)
     PaDeviceInfo device_info;
     device_info.maxInputChannels = 1;
     device_info.maxOutputChannels = 1;
+    PaStreamInfo stream_info;
+
 
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo).WillRepeatedly(Return(&device_info));
+    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_module_under_test->_stream)).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
     auto result = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, result);
 

@@ -121,7 +121,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    Time latency = std::chrono::microseconds(static_cast<int>(output_parameters.suggestedLatency * 1'000'000));
+    auto stream_info = Pa_GetStreamInfo(_stream);
+    Time latency = std::chrono::microseconds(static_cast<int>(stream_info->outputLatency * 1'000'000));
     _engine->set_output_latency(latency);
 
     _time_offset = Pa_GetStreamTime(_stream);
