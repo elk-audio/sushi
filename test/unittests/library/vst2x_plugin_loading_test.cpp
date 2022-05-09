@@ -35,11 +35,7 @@ protected:
 
 TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 {
-<<<<<<< HEAD
     char* full_again_path = realpath(VST2_TEST_PLUGIN_PATH, NULL);
-=======
-    char* full_again_path = realpath(PLUGIN_NAME, NULL);
->>>>>>> f/AUD-416_portaudio_improvements
 
     PluginInfo plugin_info;
     plugin_info.uid = "";
@@ -59,11 +55,7 @@ TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 TEST_F(TestVst2xPluginLoading, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
-<<<<<<< HEAD
     char* full_again_path = realpath(VST2_TEST_PLUGIN_PATH, NULL);
-=======
-    char* full_again_path = realpath(PLUGIN_NAME, NULL);
->>>>>>> f/AUD-416_portaudio_improvements
     auto library_handle = vst2::PluginLoader::get_library_handle_for_plugin(full_again_path);
     ASSERT_NE(nullptr, library_handle);
     free(full_again_path);
