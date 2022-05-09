@@ -270,7 +270,7 @@ const optionparser::Descriptor usage[] =
         "",
         "pa-suggested-input-latency",
         SushiArg::Optional,
-        "\t\t--pa-suggested-input-latency=<latency> \tInput latency to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+        "\t\t--pa-suggested-input-latency=<latency> \tInput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
     },
     {
         OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
@@ -278,7 +278,7 @@ const optionparser::Descriptor usage[] =
         "",
         "pa-suggested-output-latency",
         SushiArg::Optional,
-        "\t\t--pa-suggested-output-latency=<latency> \tOutput latency to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+        "\t\t--pa-suggested-output-latency=<latency> \tOutput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
     },
     {
         OPT_IDX_USE_JACK,
