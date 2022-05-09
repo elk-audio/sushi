@@ -80,6 +80,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     EXPECT_EQ(2, _module_under_test->input_channels());
+    _module_under_test->set_input_channels(1);
     _module_under_test->set_output_channels(1);
 
     EXPECT_EQ(1, _module_under_test->input_channels());
