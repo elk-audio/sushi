@@ -80,10 +80,12 @@ if (${BUILD_TWINE})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
     set(TWINE_LIB twine)
 else()
+    find_path(TWINE_PATH NAMES "twine/twine.h")
     find_library(TWINE_LIB
             NAMES twine
             PATHS /usr/lib /usr/local/lib
     )
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
 endif()
 

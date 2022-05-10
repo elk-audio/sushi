@@ -92,7 +92,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     input_parameters.device = input_device_id;
     input_parameters.channelCount = _audio_input_channels + _cv_input_channels;
     input_parameters.sampleFormat = paFloat32;
-    input_parameters.suggestedLatency = 0.0;
+    input_parameters.suggestedLatency = portaudio_config->suggested_input_latency;
     input_parameters.hostApiSpecificStreamInfo = nullptr;
 
     PaStreamParameters output_parameters;
@@ -100,7 +100,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     output_parameters.device = output_device_id;
     output_parameters.channelCount = _audio_output_channels + _cv_output_channels;
     output_parameters.sampleFormat = paFloat32;
-    output_parameters.suggestedLatency = 0.0;
+    output_parameters.suggestedLatency = portaudio_config->suggested_output_latency;
     output_parameters.hostApiSpecificStreamInfo = nullptr;
     // Setup samplerate
     double samplerate = _engine->sample_rate();
@@ -127,7 +127,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    Time latency = std::chrono::microseconds(static_cast<int>(output_parameters.suggestedLatency * 1'000'000));
+    auto stream_info = Pa_GetStreamInfo(_stream);
+    Time latency = std::chrono::microseconds(static_cast<int>(stream_info->outputLatency * 1'000'000));
     _engine->set_output_latency(latency);
 
     _time_offset = Pa_GetStreamTime(_stream);
@@ -135,7 +136,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     if (_audio_input_channels + _cv_input_channels > 0)
     {
-        SUSHI_LOG_DEBUG("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Input device has {} available channels", _input_device_info->maxInputChannels);
     }
     else
     {
@@ -148,8 +150,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     }
     else
     {
-        SUSHI_LOG_DEBUG("No output channels found not connecting to output device");
+        SUSHI_LOG_INFO("No output channels found not connecting to output device");
+        SUSHI_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
+    SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", stream_info->inputLatency, stream_info->outputLatency);
 
     return AudioFrontendStatus::OK;
 }
@@ -257,6 +261,11 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   [[maybe_unused]]PaStreamCallbackFlags status_flags)
 {
     // TODO: Print warning in case of under/overflow using the status_flags when we have rt-safe logging
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected output underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputOverflow, "Detected output overflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputUnderflow, "Detected input underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputOverflow, "Detected input overflow in portaudio");
+
     assert(frame_count == AUDIO_CHUNK_SIZE);
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);

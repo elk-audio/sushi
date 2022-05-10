@@ -36,6 +36,8 @@
 #define SUSHI_OSC_SEND_PORT_DEFAULT 24023
 #define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
 #define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
+#define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
+#define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -115,6 +117,8 @@ enum OptionIndex
     OPT_IDX_USE_PORTAUDIO,
     OPT_IDX_AUDIO_INPUT_DEVICE,
     OPT_IDX_AUDIO_OUTPUT_DEVICE,
+    OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
+    OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -250,7 +254,7 @@ const optionparser::Descriptor usage[] =
         "",
         "audio-input-device",
         SushiArg::Optional,
-        "\t\t--audio-input-device \tIndex of the device to use for audio input with portaudio frontend [default=system default]"
+        "\t\t--audio-input-device=<device id> \tIndex of the device to use for audio input with portaudio frontend [default=system default]"
     },
     {
         OPT_IDX_AUDIO_OUTPUT_DEVICE,
@@ -258,7 +262,23 @@ const optionparser::Descriptor usage[] =
         "",
         "audio-output-device",
         SushiArg::Optional,
-        "\t\t--audio-output-device \tIndex of the device to use for audio output with portaudio frontend [default=system default]"
+        "\t\t--audio-output-device=<device id> \tIndex of the device to use for audio output with portaudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
+        OPT_TYPE_UNUSED,
+        "",
+        "pa-suggested-input-latency",
+        SushiArg::Optional,
+        "\t\t--pa-suggested-input-latency=<latency> \tInput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+    },
+    {
+        OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
+        OPT_TYPE_UNUSED,
+        "",
+        "pa-suggested-output-latency",
+        SushiArg::Optional,
+        "\t\t--pa-suggested-output-latency=<latency> \tOutput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
     },
     {
         OPT_IDX_USE_JACK,
