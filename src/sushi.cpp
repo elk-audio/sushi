@@ -141,66 +141,14 @@ sushi::InitStatus sushi::Sushi::init(const sushi::SushiOptions& options)
 
     _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
 
-    _configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(_engine.get(),
-                                                                          _midi_dispatcher.get(),
-                                                                          _engine->processor_container(),
-                                                                          _options.config_filename);
-
-    auto [audio_config_status, audio_config] = _configurator->load_audio_config();
-    if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    if (_options.use_input_config_file)
     {
-        if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
-        {
-            return InitStatus::FAILED_INVALID_FILE_PATH;
-        }
-
-        return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
+        return _configure_from_file();
     }
-
-    int midi_inputs = audio_config.midi_inputs.value_or(1);
-    int midi_outputs = audio_config.midi_outputs.value_or(1);
-
-#ifdef SUSHI_BUILD_WITH_RT_MIDI
-    auto rt_midi_input_mappings = audio_config.rt_midi_input_mappings;
-    auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
-#endif
-
-    _midi_dispatcher->set_midi_inputs(midi_inputs);
-    _midi_dispatcher->set_midi_outputs(midi_outputs);
-
-    ///////////////////////////
-    // Set up Audio Frontend //
-    ///////////////////////////
-    int cv_inputs = audio_config.cv_inputs.value_or(0);
-    int cv_outputs = audio_config.cv_outputs.value_or(0);
-
-    auto audio_frontend_status = _setup_audio_frontend(options, cv_inputs, cv_outputs);
-    if (audio_frontend_status != InitStatus::OK)
+    else
     {
-        return audio_frontend_status;
+        return _configure_with_defaults();
     }
-
-    ////////////////////////
-    // Load Configuration //
-    ////////////////////////
-    auto configuration_status = _load_configuration(options, _audio_frontend.get());
-    if (configuration_status != InitStatus::OK)
-    {
-        return configuration_status;
-    }
-
-    /////////////////////////////////////////////
-    // Set up Controller and Control Frontends //
-    /////////////////////////////////////////////
-    auto control_status = _set_up_control(options, midi_inputs, midi_outputs);
-    if (control_status != InitStatus::OK)
-    {
-        return control_status;
-    }
-
-    _configurator.reset();
-
-    return InitStatus::OK;
 }
 
 void Sushi::start()
@@ -255,36 +203,128 @@ engine::Controller* Sushi::controller()
     return _controller.get();
 }
 
-sushi::InitStatus sushi::Sushi::_load_configuration(const sushi::SushiOptions& options,
-                                                     audio_frontend::BaseAudioFrontend* audio_frontend)
+void Sushi::set_sample_rate(float sample_rate)
 {
-    auto status = _configurator->load_host_config();
+    _engine->set_sample_rate(sample_rate);
+}
+
+InitStatus Sushi::_configure_from_file()
+{
+    auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(_engine.get(),
+                                                                              _midi_dispatcher.get(),
+                                                                              _engine->processor_container(),
+                                                                              _options.config_filename);
+
+    auto [audio_config_status, audio_config] =  configurator->load_audio_config();
+    if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
+        {
+            return InitStatus::FAILED_INVALID_FILE_PATH;
+        }
+
+        return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
+    }
+
+    int midi_inputs = audio_config.midi_inputs.value_or(1);
+    int midi_outputs = audio_config.midi_outputs.value_or(1);
+
+#ifdef SUSHI_BUILD_WITH_RT_MIDI
+    auto rt_midi_input_mappings = audio_config.rt_midi_input_mappings;
+    auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
+#endif
+
+    _midi_dispatcher->set_midi_inputs(midi_inputs);
+    _midi_dispatcher->set_midi_outputs(midi_outputs);
+
+    ///////////////////////////
+    // Set up Audio Frontend //
+    ///////////////////////////
+    int cv_inputs = audio_config.cv_inputs.value_or(0);
+    int cv_outputs = audio_config.cv_outputs.value_or(0);
+
+    auto audio_frontend_status = _setup_audio_frontend(_options, cv_inputs, cv_outputs);
+    if (audio_frontend_status != InitStatus::OK)
+    {
+        return audio_frontend_status;
+    }
+
+    ////////////////////////
+    // Load Configuration //
+    ////////////////////////
+    auto configuration_status = _load_json_configuration(_options, configurator.get(), _audio_frontend.get());
+    if (configuration_status != InitStatus::OK)
+    {
+        return configuration_status;
+    }
+
+    /////////////////////////////////////////////
+    // Set up Controller and Control Frontends //
+    /////////////////////////////////////////////
+    auto control_status = _set_up_control(_options, configurator.get(), midi_inputs, midi_outputs);
+    if (control_status != InitStatus::OK)
+    {
+        return control_status;
+    }
+
+    return InitStatus::OK;
+}
+
+sushi::InitStatus sushi::Sushi::_configure_with_defaults()
+{
+    int midi_inputs = 1;
+    int midi_outputs = 1;
+
+    _midi_dispatcher->set_midi_inputs(midi_inputs);
+    _midi_dispatcher->set_midi_outputs(midi_outputs);
+
+    int cv_inputs = 0;
+    int cv_outputs = 0;
+
+    auto status = _setup_audio_frontend(_options, cv_inputs, cv_outputs);
+    if (status != InitStatus::OK)
+    {
+        return status;
+    }
+
+    status = _set_up_control(_options, nullptr, midi_inputs, midi_outputs);
+    if (status != InitStatus::OK)
+    {
+        return status;
+    }
+}
+
+sushi::InitStatus sushi::Sushi::_load_json_configuration(const sushi::SushiOptions& options,
+                                                         sushi::jsonconfig::JsonConfigurator* configurator,
+                                                         audio_frontend::BaseAudioFrontend* audio_frontend)
+{
+    auto status = configurator->load_host_config();
     if(status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         return InitStatus::FAILED_LOAD_HOST_CONFIG;
     }
 
-    status = _configurator->load_tracks();
+    status = configurator->load_tracks();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
         return InitStatus::FAILED_LOAD_TRACKS;
     }
 
-    status = _configurator->load_midi();
+    status = configurator->load_midi();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         return InitStatus::FAILED_LOAD_MIDI_MAPPING;
     }
 
-    status = _configurator->load_cv_gate();
+    status = configurator->load_cv_gate();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
         return InitStatus::FAILED_LOAD_CV_GATE;
     }
 
-    status = _configurator->load_initial_state();
+    status = configurator->load_initial_state();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
         status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
@@ -294,7 +334,7 @@ sushi::InitStatus sushi::Sushi::_load_configuration(const sushi::SushiOptions& o
     if (options.frontend_type == FrontendType::DUMMY ||
         options.frontend_type == FrontendType::OFFLINE)
     {
-        auto [status, events] = _configurator->load_event_list();
+        auto [status, events] = configurator->load_event_list();
         if (status == jsonconfig::JsonConfigReturnStatus::OK)
         {
             static_cast<sushi::audio_frontend::OfflineFrontend*>(audio_frontend)->add_sequencer_events(events);
@@ -306,7 +346,7 @@ sushi::InitStatus sushi::Sushi::_load_configuration(const sushi::SushiOptions& o
     }
     else
     {
-        status = _configurator->load_events();
+        status = configurator->load_events();
         if (status != jsonconfig::JsonConfigReturnStatus::OK &&
             status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
@@ -360,7 +400,7 @@ InitStatus Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inpu
         {
             SUSHI_LOG_INFO("Setting up passive frontend");
             _frontend_config = std::make_unique<sushi::audio_frontend::PassiveFrontendConfiguration>(cv_inputs,
-                                                                                                      cv_outputs);
+                                                                                                     cv_outputs);
 
             _audio_frontend = std::make_unique<sushi::audio_frontend::PassiveFrontend>(_engine.get());
             break;
@@ -405,7 +445,9 @@ InitStatus Sushi::_setup_audio_frontend(const SushiOptions& options, int cv_inpu
     return InitStatus::OK;
 }
 
-InitStatus Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs)
+InitStatus Sushi::_set_up_control(const SushiOptions& options,
+                                  sushi::jsonconfig::JsonConfigurator* configurator,
+                                  int midi_inputs, int midi_outputs)
 {
     _controller = std::make_unique<sushi::engine::Controller>(_engine.get(), _midi_dispatcher.get());
 
@@ -435,7 +477,6 @@ InitStatus Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, 
                                                                                options.osc_send_port);
 
         _controller->set_osc_frontend(_osc_frontend.get());
-        _configurator->set_osc_frontend(_osc_frontend.get());
 
         auto osc_status = _osc_frontend->init();
         if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
@@ -443,11 +484,16 @@ InitStatus Sushi::_set_up_control(const SushiOptions& options, int midi_inputs, 
             return InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION;
         }
 
-        auto status = _configurator->load_osc();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
-            status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+        if (configurator)
         {
-            return InitStatus::FAILED_LOAD_OSC;
+            configurator->set_osc_frontend(_osc_frontend.get());
+
+            auto status = configurator->load_osc();
+            if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK &&
+                status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+            {
+                return InitStatus::FAILED_LOAD_OSC;
+            }
         }
     }
     else

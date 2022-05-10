@@ -109,12 +109,28 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
 
     out_buffer->clear();
 
-    _engine->process_chunk(in_buffer,
-                           out_buffer,
-                           &_in_controls,
-                           &_out_controls,
-                           timestamp,
-                           sample_count);
+    if (_pause_manager.should_process())
+    {
+        _engine->process_chunk(in_buffer,
+                               out_buffer,
+                               &_in_controls,
+                               &_out_controls,
+                               timestamp,
+                               sample_count);
+
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(*out_buffer);
+        }
+    }
+    else
+    {
+        if (_pause_notified == false && _pause_manager.should_process() == false)
+        {
+            _pause_notify->notify();
+            _pause_notified = true;
+        }
+    }
 }
 
 } // end namespace audio_frontend

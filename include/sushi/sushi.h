@@ -60,8 +60,6 @@ class MidiDispatcher;
 
 namespace control_frontend {
 class OSCFrontend;
-class AlsaMidiFrontend;
-class RtMidiFrontend;
 }
 
 namespace jsonconfig {
@@ -114,6 +112,8 @@ struct SushiOptions
 
     std::string log_level = std::string(CompileTimeSettings::log_level_default);
     std::string log_filename = std::string(CompileTimeSettings::log_filename_default);
+
+    bool use_input_config_file = true;
     std::string config_filename = std::string(CompileTimeSettings::json_filename_default);
     std::string jack_client_name = std::string(CompileTimeSettings::jack_client_name_default);
     std::string jack_server_name = std::string("");
@@ -173,11 +173,22 @@ public:
      */
     audio_frontend::PassiveFrontend* audio_frontend();
 
+    void set_sample_rate(float sample_rate);
+
 private:
-    InitStatus _load_configuration(const SushiOptions& options, audio_frontend::BaseAudioFrontend* audio_frontend);
+    InitStatus _configure_from_file();
+    InitStatus _configure_with_defaults();
+
+    static InitStatus _load_json_configuration(const SushiOptions& options,
+                                               sushi::jsonconfig::JsonConfigurator* configurator,
+                                               audio_frontend::BaseAudioFrontend* audio_frontend);
 
     InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
-    InitStatus _set_up_control(const SushiOptions& options, int midi_inputs, int midi_outputs);
+
+    InitStatus _set_up_control(const SushiOptions& options,
+                               sushi::jsonconfig::JsonConfigurator* configurator,
+                               int midi_inputs,
+                               int midi_outputs);
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
 
@@ -187,8 +198,6 @@ private:
     std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> _frontend_config {nullptr};
 
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
-
-    std::unique_ptr<jsonconfig::JsonConfigurator> _configurator {nullptr};
 
     std::unique_ptr<engine::Controller> _controller {nullptr};
 

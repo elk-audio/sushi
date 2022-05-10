@@ -33,7 +33,7 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     {
         _pause_notify = twine::RtConditionVariable::create_rt_condition_variable();
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
         SUSHI_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
         return AudioFrontendStatus::AUDIO_HW_ERROR;

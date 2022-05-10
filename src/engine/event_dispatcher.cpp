@@ -230,7 +230,7 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     }
 
     Time timestamp = _event_timer.real_time_from_sample_offset(rt_event.sample_offset());
-    Event* event = Event::from_rt_event(rt_event, timestamp);
+    auto event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
     {
         switch (rt_event.type())
