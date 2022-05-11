@@ -152,14 +152,13 @@ TEST_F(TestPortAudioFrontend, TestProcess)
     auto result = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, result);
 
-    constexpr int FRAME_SIZE = 64;
-    std::array<float, FRAME_SIZE> input_data{1.0f};
-    std::array<float, FRAME_SIZE> output_data{0.0f};
+    std::array<float, AUDIO_CHUNK_SIZE> input_data{1.0f};
+    std::array<float, AUDIO_CHUNK_SIZE> output_data{0.0f};
     PaStreamCallbackTimeInfo time_info;
     PaStreamCallbackFlags status_flags = 0;
     PortAudioFrontend::rt_process_callback(static_cast<void*>(input_data.data()),
                                            static_cast<void*>(output_data.data()),
-                                           FRAME_SIZE,
+                                           AUDIO_CHUNK_SIZE,
                                            &time_info,
                                            status_flags,
                                            static_cast<void*>(_module_under_test.get()));
