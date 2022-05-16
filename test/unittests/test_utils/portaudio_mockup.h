@@ -25,6 +25,7 @@ public:
                                          void *userData ));
     MOCK_METHOD(PaError, Pa_StartStream, (PaStream*));
     MOCK_METHOD(PaError, Pa_StopStream, (PaStream*));
+    MOCK_METHOD(const PaStreamInfo*, Pa_GetStreamInfo, (PaStream*));
 };
 
 MockPortAudio* mockPortAudio;
@@ -103,4 +104,9 @@ PaError Pa_StartStream(PaStream* stream)
 PaError Pa_StopStream(PaStream* stream)
 {
     return mockPortAudio->Pa_StopStream(stream);
+}
+
+const PaStreamInfo* Pa_GetStreamInfo(PaStream* stream)
+{
+    return mockPortAudio->Pa_GetStreamInfo(stream);
 }
