@@ -170,6 +170,14 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
             break;
         }
 
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::MODULATION:
+        case RtEventType::WRAPPED_MIDI_EVENT:
+            // Consume these events so they are not propagated
+            break;
+
         case RtEventType::DATA_PROPERTY_CHANGE:
         {
             // Kill all voices before swapping out the sample
