@@ -21,8 +21,15 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <mutex>
 
-#include "link_include.h"
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+#include "ableton/Link.hpp"
+#else //SUSHI_BUILD_WITH_ABLETON_LINK
+#include "link_dummy.h"
+#endif //SUSHI_BUILD_WITH_ABLETON_LINK
+
+#include "twine/twine.h"
 
 #include "library/rt_event.h"
 #include "library/constants.h"
@@ -34,6 +41,38 @@ namespace engine {
 
 constexpr float MIN_TEMPO = 20.0;
 constexpr float MAX_TEMPO = 1000.0;
+
+#if SUSHI_BUILD_WITH_ABLETON_LINK
+
+/**
+ * @brief Custom realtime clock for Link
+ *        It is necessary to compile Link with another Clock implementation than the standard one
+ *        as calling clock_get_time() is not safe to do from a Xenomai thread. Instead we supply
+ *        our own clock implementation based on twine, which provides a threadsafe implementation
+ *        for calling from both xenomai and posix contexts.
+ */
+class RtSafeClock
+{
+public:
+    [[nodiscard]] std::chrono::microseconds micros() const
+    {
+        auto time = twine::current_rt_time();
+        return std::chrono::microseconds(std::chrono::duration_cast<std::chrono::microseconds>(time));
+    }
+};
+
+/**
+ * @brief Wrapping Link with a custom clock
+ */
+class SushiLink : public ::ableton::BasicLink<RtSafeClock>
+{
+public:
+  using Clock = RtSafeClock;
+
+  explicit SushiLink(double bpm) : ::ableton::BasicLink<Clock>(bpm) { }
+};
+
+#endif
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
 
@@ -60,7 +99,7 @@ inline bool valid_time_signature(const TimeSignature& sig)
 Transport::Transport(float sample_rate,
                      RtEventPipe* rt_event_pipe) : _samplerate(sample_rate),
                                                    _rt_event_dispatcher(rt_event_pipe),
-                                                   _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
+                                                   _link_controller(std::make_unique<SushiLink>(DEFAULT_TEMPO))
 {
     _link_controller->setNumPeersCallback(peer_callback);
     _link_controller->setTempoCallback(tempo_callback);

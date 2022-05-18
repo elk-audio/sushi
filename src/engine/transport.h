@@ -49,6 +49,8 @@ enum class PlayStateChange
 
 namespace engine {
 
+class SushiLink;
+
 constexpr float DEFAULT_TEMPO = 120;
 
 class Transport
@@ -241,7 +243,7 @@ private:
 
     RtEventPipe*    _rt_event_dispatcher;
 
-    std::unique_ptr<ableton::Link>  _link_controller;
+    std::unique_ptr<SushiLink>  _link_controller;
 };
 
 } // namespace engine
