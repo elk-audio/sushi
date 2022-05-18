@@ -69,8 +69,6 @@ public:
 
     virtual void set_playing_mode(ext::PlayingMode mode) = 0;
 
-    virtual void set_sync_mode(ext::SyncMode sync_mode) = 0;
-
     virtual void set_beat_time(float beat_time) = 0;
 
     virtual void process_audio(int channel_count,
@@ -93,11 +91,9 @@ public:
 
     void set_tempo(float tempo) override;
 
-    void set_time_signature(sushi::ext::TimeSignature time_signature) override;
+    void set_time_signature(ext::TimeSignature time_signature) override;
 
-    void set_playing_mode(sushi::ext::PlayingMode mode) override;
-
-    void set_sync_mode(ext::SyncMode sync_mode) override;
+    void set_playing_mode(ext::PlayingMode mode) override;
 
     void set_beat_time(float beat_time) override;
 
@@ -151,6 +147,10 @@ private:
     bool _is_start_time_set {false};
 
     double _sample_rate {0};
+
+    float _tempo {0};
+    sushi::TimeSignature _time_signature {0, 0};
+    ext::PlayingMode _playing_mode {ext::PlayingMode::STOPPED};
 };
 
 } // namespace sushi

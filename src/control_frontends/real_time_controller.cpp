@@ -46,32 +46,43 @@ void RealTimeController::set_tempo(float tempo)
     // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
     //  We want Ableton Link to be disabled anyway when Sushi is passive!
     //  So that work is a separate story (AUD-460).
-    bool update_via_event = false;
-    _sushi->audio_engine()->transport()->set_tempo(tempo, update_via_event);
+    if (_tempo != tempo)
+    {
+        _sushi->audio_engine()->transport()->set_tempo(tempo,
+                                                       false); // update_via_event == false
+        _tempo = tempo;
+    }
 }
 
-void RealTimeController::set_time_signature(sushi::ext::TimeSignature time_signature)
+void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
 {
-    bool update_via_event = false;
     auto internal_time_signature = engine::to_internal(time_signature);
-    _sushi->audio_engine()->transport()->set_time_signature(internal_time_signature, update_via_event);
+
+    if (_time_signature != internal_time_signature)
+    {
+        _sushi->audio_engine()->transport()->set_time_signature(internal_time_signature,
+                                                                false); // update_via_event == false
+        _time_signature = internal_time_signature;
+    }
 }
 
-void RealTimeController::set_playing_mode(sushi::ext::PlayingMode mode)
+void RealTimeController::set_playing_mode(ext::PlayingMode mode)
 {
-    bool update_via_event = false;
     auto internal_playing_mode = engine::to_internal(mode);
-    _sushi->audio_engine()->transport()->set_playing_mode(internal_playing_mode, update_via_event);
-}
 
-void RealTimeController::set_sync_mode(ext::SyncMode sync_mode)
-{
-    // TODO AUD-426: populate once above are done.
+    if (_playing_mode != mode)
+    {
+        _sushi->audio_engine()->transport()->set_playing_mode(internal_playing_mode,
+                                                              false); // update_via_event == false
+        _playing_mode = mode;
+    }
 }
 
 void RealTimeController::set_beat_time(float beat_time)
 {
-    // TODO AUD-426: populate once above are done.
+    // TODO AUD-426:
+    //  RtController should be able to directly set the timeline beat count for the current buffer
+    //  so sync with the hosts timeline if sushi runs as a plugin in another host.
 }
 
 void RealTimeController::process_audio(int channel_count,
