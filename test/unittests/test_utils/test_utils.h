@@ -18,7 +18,7 @@ namespace test_utils {
 const float DECIBEL_ERROR = 0.01;
 
 template <int size>
-inline void fill_sample_buffer(SampleBuffer <size> &buffer, float value)
+inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
     {
@@ -39,7 +39,7 @@ inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)
 }
 
 template <int size>
-inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer, float error_margin)
+inline void assert_buffer_value(float value, const SampleBuffer<size>& buffer, float error_margin)
 {
     for (int ch = 0; ch < buffer.channel_count(); ++ch)
     {

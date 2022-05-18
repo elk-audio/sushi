@@ -49,8 +49,6 @@ private:
     MidiDataByte _transpose_midi(MidiDataByte midi_msg);
 
     FloatParameterValue* _transpose_parameter;
-
-    RtSafeRtEventFifo _queue;
 };
 
 }// namespace transposer_plugin

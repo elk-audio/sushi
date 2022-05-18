@@ -76,6 +76,8 @@ LV2_Wrapper::LV2_Wrapper(HostControl host_control,
 
 ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 {
+    _control_output_refresh_interval = static_cast<int>(std::round(sample_rate / CONTROL_OUTPUT_REFRESH_RATE));
+
     _model = std::make_unique<Model>(sample_rate, this, _world->world());
 
     _lv2_pos = reinterpret_cast<LV2_Atom*>(pos_buf);
@@ -711,6 +713,21 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
                             // TODO: Introduce latency compensation reporting to Sushi
                         }
                     }
+                    else
+                    {
+                        if (_calculate_control_output_trigger())
+                        {
+                            int parameter_id = p; // We use the index as ID.
+                            float normalized_value = _to_normalized(current_port->control_value(),
+                                                                    current_port->min(),
+                                                                    current_port->max());
+                            auto e = RtEvent::make_parameter_change_event(this->id(),
+                                                                          0,
+                                                                          parameter_id,
+                                                                          normalized_value);
+                            output_event(e);
+                        }
+                    }
                     break;
                 case PortType::TYPE_EVENT:
                     _process_midi_output(current_port);
@@ -722,6 +739,19 @@ void LV2_Wrapper::_deliver_outputs_from_plugin(bool /*send_ui_updates*/)
             }
         }
     }
+}
+
+bool LV2_Wrapper::_calculate_control_output_trigger()
+{
+    bool trigger = false;
+    _control_output_sample_count += AUDIO_CHUNK_SIZE;
+    if (_control_output_sample_count > _control_output_refresh_interval)
+    {
+        _control_output_sample_count -= _control_output_refresh_interval;
+        trigger = true;
+    }
+
+    return trigger;
 }
 
 void LV2_Wrapper::_process_midi_output(Port* port)

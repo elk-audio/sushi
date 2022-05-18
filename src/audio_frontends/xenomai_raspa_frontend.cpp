@@ -136,7 +136,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
         _engine->process_chunk(&in_buffer, &out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
         if (_pause_manager.should_ramp())
         {
-            _pause_manager.ramp_output(_out_buffer);
+            _pause_manager.ramp_output(out_buffer);
         }
        raspa_set_gate_values(static_cast<uint32_t>(_out_controls.gate_values.to_ulong()));
         /* Sika board outputs only positive cv */
