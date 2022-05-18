@@ -1,9 +1,13 @@
 #include "gtest/gtest.h"
 
 #include "test_utils/engine_mockup.h"
+#include "test_utils/mock_midi_frontend.h"
 
 #define private public
 #include "engine/midi_dispatcher.cpp"
+
+using ::testing::NiceMock;
+using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
@@ -118,7 +122,7 @@ protected:
 
     void SetUp()
     {
-        _module_under_test.set_frontend(&_test_frontend);
+        _module_under_test.set_frontend(&_mock_frontend);
     }
 
     void TearDown()
@@ -127,7 +131,7 @@ protected:
 
     EngineMockup _test_engine{48000};
     EventDispatcherMockup _test_dispatcher;
-    DummyMidiFrontend _test_frontend;
+    ::testing::NiceMock<MockMidiFrontend> _mock_frontend{nullptr};
     MidiDispatcher _module_under_test{&_test_dispatcher};
 };
 
@@ -196,14 +200,14 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     EXPECT_TRUE(output_connections.size()==0);
 
     KeyboardEvent event_ch12(KeyboardEvent::Subtype::NOTE_ON,
-                             5,
+                             track_id,
                              12,
                              48,
                              0.5f,
                              IMMEDIATE_PROCESS);
 
     KeyboardEvent event_ch5(KeyboardEvent::Subtype::NOTE_ON,
-                            1,
+                            track_id,
                             5,
                             48,
                             0.5f,
@@ -212,7 +216,6 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
     /* Send midi message without connections */
     auto status = _module_under_test.process(&event_ch12);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
 
     /* Connect track to output 1, channel 5 */
     _module_under_test.set_midi_outputs(3);
@@ -221,14 +224,10 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                                                           midi::MidiChannel::CH_5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 
+    /* Expect a midi output message */
+    EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_note_on(4, 48, 0.5f), _)).Times(1);
     status = _module_under_test.process(&event_ch5);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
-
-    // TODO/Q: This test fails when running tests in batch, but succeeds when run individually.
-    // I introduced it, as I thought it was missing by omission.
-    // But maybe there was a reason why sending midi out cannot be tested?
-    //EXPECT_TRUE(_test_frontend.midi_sent_on_input(1));
 
     output_connections = _module_under_test.get_all_kb_output_connections();
     EXPECT_TRUE(output_connections.size() == 1);
@@ -240,16 +239,39 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 
     status = _module_under_test.process(&event_ch5);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(1));
 
     status = _module_under_test.process(&event_ch12);
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(0));
-    EXPECT_FALSE(_test_frontend.midi_sent_on_input(1));
 
     output_connections = _module_under_test.get_all_kb_output_connections();
     EXPECT_TRUE(output_connections.size() == 0);
+}
+
+TEST_F(TestMidiDispatcher, TestTransportOutputs)
+{
+    _module_under_test.set_midi_outputs(2);
+    EXPECT_FALSE(_module_under_test.midi_clock_enabled(0));
+    EXPECT_FALSE(_module_under_test.midi_clock_enabled(1));
+    auto status = _module_under_test.enable_midi_clock(true, 1);
+    EXPECT_EQ(MidiDispatcherStatus::OK, status);
+    status = _module_under_test.enable_midi_clock(true, 123);
+    EXPECT_NE(MidiDispatcherStatus::OK, status);
+    EXPECT_FALSE(_module_under_test.midi_clock_enabled(0));
+    EXPECT_TRUE(_module_under_test.midi_clock_enabled(1));
+
+    auto start_event = PlayingModeNotificationEvent(PlayingMode::PLAYING, IMMEDIATE_PROCESS);
+    auto stop_event = PlayingModeNotificationEvent(PlayingMode::STOPPED, IMMEDIATE_PROCESS);
+    auto rec_event = PlayingModeNotificationEvent(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
+    auto tick_event = EngineTimingTickNotificationEvent(0, IMMEDIATE_PROCESS);
+
+    EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_start_message(), _)).Times(1);
+    EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_stop_message(), _)).Times(1);
+    EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_timing_clock(), _)).Times(1);
+
+    _module_under_test.process(&start_event);
+    _module_under_test.process(&stop_event);
+    _module_under_test.process(&rec_event);
+    _module_under_test.process(&tick_event);
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)

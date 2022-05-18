@@ -41,6 +41,8 @@ namespace engine {
 
 constexpr float MIN_TEMPO = 20.0;
 constexpr float MAX_TEMPO = 1000.0;
+constexpr float PPQN_FLOAT = SUSHI_PPQN_TICK;
+
 
 #if SUSHI_BUILD_WITH_ABLETON_LINK
 
@@ -133,6 +135,10 @@ void Transport::set_time(Time timestamp, int64_t samples)
             _update_link_sync(_time);
             break;
         }
+    }
+    if (_playmode != PlayingMode::STOPPED)
+    {
+        _output_ppqn_ticks();
     }
 }
 
@@ -295,17 +301,26 @@ void Transport::_update_internal_sync(int64_t samples)
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    _beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-    if (_playmode != PlayingMode::STOPPED)
+    double beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    _beats_per_chunk = beats_per_chunk;
+
+    if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
-        _current_bar_beat_count += chunks_passed * _beats_per_chunk;
+        _current_bar_beat_count = 0.0;
+        _beat_count = 0.0;
+        _bar_start_beat_count = 0.0;
+    }
+    else if (_playmode != PlayingMode::STOPPED)
+    {
+        _current_bar_beat_count += chunks_passed * beats_per_chunk;
         if (_current_bar_beat_count > _beats_per_bar)
         {
             _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
             _bar_start_beat_count += _beats_per_bar;
         }
-        _beat_count += chunks_passed * _beats_per_chunk;
+        _beat_count += chunks_passed * beats_per_chunk;
     }
+
     if (_tempo != _set_tempo)
     {
         // Notify tempo change
@@ -349,6 +364,37 @@ void Transport::_update_link_sync(Time timestamp)
      * to be made from the non rt thread */
 }
 
+void Transport::_output_ppqn_ticks()
+{
+    double beat = current_beats();
+    if (current_state_change() == PlayStateChange::STARTING)
+    {
+        _last_tick_sent = beat;
+    }
+
+    double last_beat_this_chunk = current_beats(AUDIO_CHUNK_SIZE);
+    double beat_period = last_beat_this_chunk - beat;
+    auto tick_this_chunk = std::min(PPQN_FLOAT * (last_beat_this_chunk - _last_tick_sent), 2.0);
+
+    while (tick_this_chunk >= 1.0)
+    {
+        double next_note_beat = _last_tick_sent + 1.0 / PPQN_FLOAT;
+        auto fraction = next_note_beat - beat - std::floor(next_note_beat - beat);
+        _last_tick_sent = next_note_beat;
+        int offset = 0;
+        if (fraction > 0)
+        {
+            /* If fraction is not positive, then there was a missed beat in an underrun */
+            offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)),
+                              AUDIO_CHUNK_SIZE - 1);
+        }
+
+        RtEvent tick = RtEvent::make_timing_tick_event(offset, 0);
+        _rt_event_dispatcher->send_event(tick);
+        tick_this_chunk = PPQN_FLOAT * (last_beat_this_chunk - _last_tick_sent);
+    }
+}
+
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 void Transport::_set_link_playing(bool playing)
 {
@@ -379,6 +425,7 @@ void Transport::_set_link_quantum(TimeSignature signature)
         _link_controller->commitAppSessionState(session);
     }
 }
+
 #else
 void Transport::_set_link_playing(bool /*playing*/) {}
 void Transport::_set_link_tempo(float /*tempo*/) {}

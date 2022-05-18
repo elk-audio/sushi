@@ -547,6 +547,16 @@ public:
         return {_return_status, std::vector<MidiPCConnection>()};
     }
 
+    bool get_midi_clock_output_enabled(int /*port*/) const override
+    {
+        return false;
+    }
+
+    ControlStatus set_midi_clock_output_enabled(bool /*enabled*/, int /*port*/) override
+    {
+        return _return_status;
+    }
+
     ControlStatus connect_kbd_input_to_track(int /*track_id*/, MidiChannel /*channel*/, int /*port*/, bool /*raw_midi*/) override
     {
         return _return_status;

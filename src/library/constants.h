@@ -42,6 +42,8 @@ constexpr int MAX_TRACK_CHANNELS = 16;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
+constexpr int SUSHI_PPQN_TICK = 24;
+
 /* Use in class declaration to disallow copying of this class.
  * Note that this marks copy constructor and assignment operator
  * as deleted and hence their r-value counterparts are not generated.

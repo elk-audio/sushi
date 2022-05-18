@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Utility functions for encoding raw midi data.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <cmath>
@@ -26,6 +26,7 @@
 namespace sushi {
 namespace midi {
 
+// Channel messages
 constexpr uint8_t NOTE_OFF_PREFIX   = 0b10000000;
 constexpr uint8_t NOTE_ON_PREFIX    = 0b10010000;
 constexpr uint8_t POLY_PRES_PREFIX  = 0b10100000;
@@ -33,6 +34,14 @@ constexpr uint8_t CTRL_CHANGE_PREFIX= 0b10110000;
 constexpr uint8_t CHAN_PRES_PREFIX  = 0b11010000;
 constexpr uint8_t PITCH_BEND_PREFIX = 0b11100000;
 constexpr uint8_t PGM_CHANGE_PREFIX = 0b11000000;
+
+// System real time messages
+constexpr uint8_t TIMING_CLOCK_PREFIX   = 0b11111000;
+constexpr uint8_t START_PREFIX          = 0b11111010;
+constexpr uint8_t CONTINUE_PREFIX       = 0b11111011;
+constexpr uint8_t STOP_PREFIX           = 0b11111100;
+constexpr uint8_t ACTIVE_SENSING_PREFIX = 0b11111110;
+constexpr uint8_t RESET_PREFIX          = 0b11111111;
 
 
 MidiDataByte encode_note_on(int channel, int note, float velocity)
@@ -104,6 +113,36 @@ MidiDataByte encode_program_change(int channel, int program)
     data[2] = 0;
     data[3] = 0;
     return data;
+}
+
+MidiDataByte encode_start_message()
+{
+    return {START_PREFIX, 0, 0, 0};
+}
+
+MidiDataByte encode_stop_message()
+{
+    return {STOP_PREFIX, 0, 0, 0};
+}
+
+MidiDataByte encode_continue_message()
+{
+    return {CONTINUE_PREFIX, 0, 0, 0};
+}
+
+MidiDataByte encode_timing_clock()
+{
+    return {TIMING_CLOCK_PREFIX, 0, 0, 0};
+}
+
+MidiDataByte encode_active_sensing()
+{
+    return {ACTIVE_SENSING_PREFIX, 0, 0, 0};
+}
+
+MidiDataByte encode_reset_message()
+{
+    return {RESET_PREFIX, 0, 0, 0};
 }
 
 

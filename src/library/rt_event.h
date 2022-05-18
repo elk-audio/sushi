@@ -39,6 +39,12 @@ namespace sushi {
 #define SUSHI_EVENT_CACHE_ALIGNMENT 32
 #endif
 
+class RtEvent;
+inline bool is_keyboard_event(const RtEvent& event);
+inline bool is_engine_control_event(const RtEvent& event);
+inline bool is_returnable_event(const RtEvent& event);
+
+
 /**
  * List of realtime message types
  */
@@ -61,8 +67,8 @@ enum class RtEventType
     STRING_PROPERTY_CHANGE,
     SET_BYPASS,
     SET_STATE,
+    DELETE,
     /* Engine commands */
-    STOP_ENGINE,
     TEMPO,
     TIME_SIGNATURE,
     PLAYING_MODE,
@@ -85,9 +91,9 @@ enum class RtEventType
     REMOVE_GATE_CONNECTION,
     /* Delete object event */
     BLOB_DELETE,
-    DELETE,
     /* Synchronisation events */
     SYNC,
+    TIMING_TICK,
     /* Engine notification events */
     CLIP_NOTIFICATION,
 };
@@ -570,6 +576,19 @@ protected:
     SyncMode _mode;
 };
 
+/* RtEvent for sending transport timing ticks for tempo sync */
+class TimingTickRtEvent : public BaseRtEvent
+{
+public:
+    TimingTickRtEvent(int offset, int tick_count) : BaseRtEvent(RtEventType::TIMING_TICK, 0, offset),
+                                                    _tick_count(tick_count) {}
+
+    int tick_count() const {return _tick_count;}
+protected:
+    int _tick_count;
+};
+
+
 /* RtEvent for notifing the engine of audio clipping in the realtime */
 class ClipNotificationRtEvent : public BaseRtEvent
 {
@@ -694,13 +713,13 @@ public:
 
     const ReturnableRtEvent* returnable_event() const
     {
-        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        assert(is_returnable_event(*this));
         return &_returnable_event;
     }
 
     ReturnableRtEvent* returnable_event()
     {
-        assert(_returnable_event.type() >= RtEventType::STOP_ENGINE);
+        assert(is_returnable_event(*this));
         return &_returnable_event;
     }
 
@@ -820,6 +839,12 @@ public:
         return &_sync_mode_event;
     }
 
+    const TimingTickRtEvent* timing_tick_event() const
+    {
+        assert(_timing_tick_event.type() == RtEventType::TIMING_TICK);
+        return &_timing_tick_event;
+    }
+
     const ClipNotificationRtEvent* clip_notification_event() const
     {
         assert(_clip_notification_event.type() == RtEventType::CLIP_NOTIFICATION);
@@ -921,12 +946,6 @@ public:
     static RtEvent make_set_rt_state_event(ObjectId target, RtState* state)
     {
         ProcessorStateRtEvent typed_event(target, state);
-        return RtEvent(typed_event);
-    }
-
-    static RtEvent make_stop_engine_event()
-    {
-        ReturnableRtEvent typed_event(RtEventType::STOP_ENGINE, 0);
         return RtEvent(typed_event);
     }
 
@@ -1088,6 +1107,12 @@ public:
         return typed_event;
     }
 
+    static RtEvent make_timing_tick_event(int offset, int tick_count)
+    {
+        TimingTickRtEvent typed_event(offset, tick_count);
+        return typed_event;
+    }
+
     static RtEvent make_clip_notification_event(int offset, int channel, ClipNotificationRtEvent::ClipChannelType type)
     {
         ClipNotificationRtEvent typed_event(offset, channel, type);
@@ -1128,6 +1153,7 @@ private:
     RtEvent(const SyncModeRtEvent& e)                   : _sync_mode_event(e) {}
     RtEvent(const ClipNotificationRtEvent& e)           : _clip_notification_event(e) {}
     RtEvent(const DeleteDataRtEvent& e)                 : _delete_data_event(e) {}
+    RtEvent(const TimingTickRtEvent& e)                 : _timing_tick_event(e) {}
     /* Data storage */
     union
     {
@@ -1158,6 +1184,7 @@ private:
         SyncModeRtEvent               _sync_mode_event;
         ClipNotificationRtEvent       _clip_notification_event;
         DeleteDataRtEvent             _delete_data_event;
+        TimingTickRtEvent             _timing_tick_event;
     };
 };
 
@@ -1172,13 +1199,31 @@ static_assert(std::is_trivially_copyable<RtEvent>::value);
  * @param event The event to test
  * @return true if the event is a keyboard event, false otherwise.
  */
-static inline bool is_keyboard_event(const RtEvent event)
+inline bool is_keyboard_event(const RtEvent& event)
 {
-    if (event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::WRAPPED_MIDI_EVENT)
-    {
-        return true;
-    }
-    return false;
+    return event.type() >= RtEventType::NOTE_ON && event.type() <= RtEventType::WRAPPED_MIDI_EVENT;
+}
+
+/**
+ * @brief Convenience function to encapsulate the logic to determine if an event is only for
+ *        internal engine control or if it can be passed to processor instances
+ * @param event The event to test
+ * @return true if the event is only for internal engine use.
+ */
+inline bool is_engine_control_event(const RtEvent& event)
+{
+    return event.type() >= RtEventType::TEMPO;
+}
+
+/**
+ * @brief Convenience function to encapsulate the logic to determine if the event is
+ *        returnable with a status code
+ * @param event The event to test
+ * @return true if the event can be converted to ReturnableRtEvent
+ */
+inline bool is_returnable_event(const RtEvent& event)
+{
+    return event.type() >= RtEventType::INSERT_PROCESSOR && event.type() <= RtEventType::REMOVE_GATE_CONNECTION;
 }
 
 } // namespace sushi

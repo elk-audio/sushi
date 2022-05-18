@@ -243,6 +243,13 @@ ext::MidiState SessionController::_save_midi_state() const
             state.pc_connections.push_back(to_external(con, processor->name()));
         }
     }
+    for (int port = 0; port < _midi_dispatcher->get_midi_outputs(); ++port)
+    {
+        if (_midi_dispatcher->midi_clock_enabled(port))
+        {
+            state.enabled_clock_outputs.push_back(port);
+        }
+    }
     return state;
 }
 
@@ -530,6 +537,15 @@ void SessionController::_restore_midi(ext::MidiState& state)
             SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect mid program change to processor {}", processor->name());
         }
+    }
+
+    for (int port = 0; port < _midi_dispatcher->get_midi_outputs(); ++port)
+    {
+        _midi_dispatcher->enable_midi_clock(false, port);
+    }
+    for (auto port : state.enabled_clock_outputs)
+    {
+        status = _midi_dispatcher->enable_midi_clock(true, port);
     }
 }
 

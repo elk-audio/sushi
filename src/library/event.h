@@ -459,6 +459,9 @@ public:
     /* Convertible to TimingNotification */
     virtual bool is_timing_notification() const {return false;}
 
+    /* Convertible to TimingTickNotification */
+    virtual bool is_timing_tick_notification() const {return false;}
+
 protected:
     EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
 };
@@ -578,6 +581,19 @@ public:
 
 private:
     performance::ProcessTimings _timings;
+};
+
+class EngineTimingTickNotificationEvent : public EngineNotificationEvent
+{
+public:
+    EngineTimingTickNotificationEvent(int tick_count, Time timestamp) : EngineNotificationEvent(timestamp),
+                                                                        _tick_count(tick_count) {}
+
+    bool is_timing_tick_notification() const override {return true;}
+    int tick_count() const {return _tick_count;}
+
+private:
+    int _tick_count;
 };
 
 class AsynchronousWorkEvent : public Event

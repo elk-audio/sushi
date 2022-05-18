@@ -204,6 +204,7 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(120, false);
     _host_control._transport.set_time_signature({3, 4}, false);
+    _host_control._transport.set_time(Time(0), 0);
     _host_control._transport.set_time(std::chrono::seconds(2), static_cast<int64_t>(TEST_SAMPLE_RATE) * 2);
 
     _module_under_test->_fill_processing_context();

@@ -188,7 +188,10 @@
                 "min_range": -24,
                 "max_range": 24
             }
-        ]
+        ],
+        "clock_output": {
+            "enabled_ports" : [0]
+        }
     },
     "osc" : {
         "enabled_processor_outputs" : [
