@@ -43,20 +43,25 @@ void RealTimeController::init()
 
 void RealTimeController::set_tempo(float tempo)
 {
-    // TODO AUD-426: Make RT safe.
-    _sushi->audio_engine()->set_tempo(tempo);
+    // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
+    //  We want Ableton Link to be disabled anyway when Sushi is passive!
+    //  So that work is a separate story (AUD-460).
+    bool update_via_event = false;
+    _sushi->audio_engine()->transport()->set_tempo(tempo, update_via_event);
 }
 
 void RealTimeController::set_time_signature(sushi::ext::TimeSignature time_signature)
 {
-    // TODO AUD-426: Make RT safe.
-    _sushi->audio_engine()->set_time_signature(engine::to_internal(time_signature));
+    bool update_via_event = false;
+    auto internal_time_signature = engine::to_internal(time_signature);
+    _sushi->audio_engine()->transport()->set_time_signature(internal_time_signature, update_via_event);
 }
 
 void RealTimeController::set_playing_mode(sushi::ext::PlayingMode mode)
 {
-    // TODO AUD-426: Make RT safe.
-    _sushi->audio_engine()->set_transport_mode(engine::to_internal(mode));
+    bool update_via_event = false;
+    auto internal_playing_mode = engine::to_internal(mode);
+    _sushi->audio_engine()->transport()->set_playing_mode(internal_playing_mode, update_via_event);
 }
 
 void RealTimeController::set_sync_mode(ext::SyncMode sync_mode)
