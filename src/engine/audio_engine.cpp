@@ -548,7 +548,7 @@ void AudioEngine::set_tempo_sync_mode(SyncMode mode)
     }
 }
 
-EngineReturnStatus AudioEngine::send_rt_event(const RtEvent& event)
+EngineReturnStatus AudioEngine::send_rt_event_to_processor(const RtEvent& event)
 {
     auto status = _main_in_queue.push(event);
     return status? EngineReturnStatus::OK : EngineReturnStatus::QUEUE_FULL;

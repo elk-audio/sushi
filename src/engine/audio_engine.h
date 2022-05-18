@@ -314,13 +314,13 @@ public:
     }
 
     /**
-     * @brief Set the tempo of the engine. Intended to be called from a non-thread.
+     * @brief Set the tempo of the engine. Intended to be called from a non-realtime thread.
      * @param tempo The new tempo in beats (quarter notes) per minute
      */
     void set_tempo(float tempo) override;
 
     /**
-     * @brief Set the time signature of the engine. Intended to be called from a non-thread.
+     * @brief Set the time signature of the engine. Intended to be called from a non-realtime thread.
      * @param signature A TimeSignature object describing the new time signature to use
      */
     void set_time_signature(TimeSignature signature) override;
@@ -328,7 +328,7 @@ public:
     /**
      * @brief Set the current transport mode, i.e stopped, playing, recording. This will be
      *        passed on to processors. Note stopped here means that audio is still running
-     *        but sequencers and similiar should be in a stopped state.
+     *        but sequencers and similar should be in a stopped state.
      *        Currently only STOPPED and PLAYING are implemented and default is PLAYING
      * @param mode A TransportMode mode with the current state
      */
@@ -352,12 +352,12 @@ public:
     }
 
     /**
-     * @brief Send an RtEvent directly to the realtime thread, should normally only be used
-     *        from an rt thread or in a context where the engine is not running in realtime mode
+     * @brief Send an RtEvent to a processor directly to the realtime thread. Should normally only be used
+     *        from an rt thread or in a context where the engine is not running in realtime mode.
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(const RtEvent& event) override;
+    EngineReturnStatus send_rt_event_to_processor(const RtEvent& event) override;
 
     /**
      * @brief Create an empty track

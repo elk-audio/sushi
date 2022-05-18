@@ -196,7 +196,7 @@ public:
 
     void set_base_plugin_path(const std::string& /*path*/) override {}
 
-    EngineReturnStatus send_rt_event(const RtEvent& /*event*/) override
+    EngineReturnStatus send_rt_event_to_processor(const RtEvent& /*event*/) override
     {
         got_rt_event = true;
         return EngineReturnStatus::OK;

@@ -260,7 +260,7 @@ public:
 
     virtual void set_base_plugin_path(const std::string& /*path*/) = 0;
 
-    virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
+    virtual EngineReturnStatus send_rt_event_to_processor(const RtEvent& /*event*/) = 0;
 
     virtual std::pair<EngineReturnStatus, ObjectId> create_track(const std::string & /*track_id*/,
                                                                  int /*channel_count*/)

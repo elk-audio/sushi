@@ -181,7 +181,7 @@ void OfflineFrontend::_process_events(Time end_time)
         {
             int offset = time_to_sample_offset(end_time, next_event->time(), _engine->sample_rate());
             auto rt_event = next_event->to_rt_event(offset);
-            _engine->send_rt_event(rt_event);
+            _engine->send_rt_event_to_processor(rt_event);
         }
         _event_queue.pop_back();
         delete next_event;
