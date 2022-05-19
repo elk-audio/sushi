@@ -46,6 +46,11 @@ namespace midi_frontend
     class PassiveMidiFrontend;
 }
 
+namespace engine
+{
+    class Transport;
+}
+
 namespace event_timer
 {
     class EventTimer;
@@ -63,14 +68,40 @@ public:
     RtController() = default;
     virtual ~RtController() = default;
 
+    /**
+     * @brief Set the tempo of the Sushi transport.
+     *        (can be called from a real-time context).
+     * @param tempo
+     */
     virtual void set_tempo(float tempo) = 0;
 
+    /**
+     * @brief Set the time signature of the Sushi transport.
+     *        (can be called from a real-time context).
+     * @param time_signature
+     */
     virtual void set_time_signature(ext::TimeSignature time_signature) = 0;
 
+    /**
+     * @brief Set the PlayingMode of the Sushi transport.
+     *        (can be called from a real-time context).
+     * @param mode
+     */
     virtual void set_playing_mode(ext::PlayingMode mode) = 0;
 
-    virtual void set_beat_time(float beat_time) = 0;
+    /**
+     * @brief Set the beat count of the Sushi transport.
+     *        (can be called from a real-time context).
+     * @param beat_time
+     */
+    virtual void set_beat_count(double beat_time) = 0;
 
+    /**
+     * @brief Method to invoke from the host's audio callback.
+     * @param channel_count
+     * @param sample_count
+     * @param timestamp
+     */
     virtual void process_audio(int channel_count,
                                int64_t sample_count,
                                Time timestamp) = 0;
@@ -95,17 +126,25 @@ public:
 
     void set_playing_mode(ext::PlayingMode mode) override;
 
-    void set_beat_time(float beat_time) override;
+    void set_beat_count(double beat_count) override;
 
     void process_audio(int channel_count,
                        int64_t sample_count,
                        Time timestamp) override;
 
-    // TODO: Also add methods for MIDI IO.
-
+    /**
+     * @brief Call to pass MIDI input to Sushi
+     * @param input Currently assumed to always be 0 since the frontend only supports a single input device.
+     * @param data MidiDataByte
+     * @param timestamp Sushi Time timestamp for message
+     */
     void receive_midi(int input, MidiDataByte data, Time timestamp);
 
-    // TODO AUD-426: Signpost what is and isn't RT SAFE! Or separate RT/NON-RT interfaces.
+    /**
+     * @brief Assign a callback which is invoked when a MIDI message is generated from inside Sushi.
+     *        (Not safe to call from a real-time context, and should only really be called once).
+     * @param callback
+     */
     void set_midi_callback(PassiveMidiCallback&& callback);
 
     ChunkSampleBuffer& in_buffer();
@@ -122,17 +161,28 @@ public:
     void set_sample_rate(double sample_rate);
     double sample_rate() const;
 
+    // TODO AUD-426: Should I still be exposing these? Really?
     void set_incoming_time(Time timestamp);
     void set_outgoing_time(Time timestamp);
 
     Time real_time_from_sample_offset(int offset);
     std::pair<bool, int> sample_offset_from_realtime(Time timestamp);
 
+    // TODO AUD-426: Avoid this duplication of PositionSource
+    enum class PositionSource
+    {
+        EXTERNAL,
+        CALCULATED
+    };
+
+    void set_position_source(PositionSource ps);
+
 private:
     Sushi* _sushi {nullptr};
 
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
+    sushi::engine::Transport* _transport {nullptr};
 
     ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
     ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};

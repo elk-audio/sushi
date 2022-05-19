@@ -62,8 +62,8 @@ public:
     /**
      * The embedding host uses this method to pass any incoming MIDI messages to Sushi.
      * @param input Currently assumed to always be 0 since the frontend only supports a single input device.
-     * @param data
-     * @param timestamp
+     * @param data MidiDataByte
+     * @param timestamp Sushi Time timestamp for message
      */
     void receive_midi(int input, MidiDataByte data, Time timestamp);
 

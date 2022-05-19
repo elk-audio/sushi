@@ -297,12 +297,13 @@ void Transport::_update_internal_sync(int64_t samples)
     {
         _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = _set_playmode;
-        // Notify new playing mode
+        // Notify of new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     double beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-    _beats_per_chunk = beats_per_chunk;
+
+_beats_per_chunk = beats_per_chunk;
 
     if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
@@ -323,7 +324,7 @@ void Transport::_update_internal_sync(int64_t samples)
 
     if (_tempo != _set_tempo)
     {
-        // Notify tempo change
+        // Notify of tempo change
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, _set_tempo));
         _tempo = _set_tempo;
     }
@@ -336,22 +337,25 @@ void Transport::_update_link_sync(Time timestamp)
     if (tempo != _set_tempo)
     {
         _set_tempo = tempo;
-        // Notify new tempo
+        // Notify of new tempo
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, tempo));
     }
     _tempo = tempo;
 
+    assert(_position_source == PositionSource::CALCULATED);
+
     if (session.isPlaying() != this->playing())
     {
-        auto new_playmode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
-        _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
-        _playmode = new_playmode;
-        _set_playmode = new_playmode;
-        // Notify new playing mode
+        auto new_playing_mode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
+        _state_change = new_playing_mode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = new_playing_mode;
+        _set_playmode = new_playing_mode;
+        // Notify of new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+
     if (session.isPlaying())
     {
         _beat_count = session.beatAtTime(timestamp, _beats_per_bar);

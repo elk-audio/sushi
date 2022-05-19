@@ -47,6 +47,12 @@ enum class PlayStateChange
     STOPPING,
 };
 
+enum class PositionSource
+{
+    EXTERNAL,
+    CALCULATED
+};
+
 namespace engine {
 
 class SushiLink;
@@ -206,6 +212,26 @@ public:
     double current_bar_start_beats() const {return _bar_start_beat_count;}
 
     /**
+     * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
+     *        using the set_beat_count method below.
+     * @param position_source Enum, EXTERNAL / CALCULATED
+     */
+    void set_position_source(PositionSource position_source) {_position_source = position_source;}
+
+    /**
+     * @brief Returns the position source setting.
+     * @return PositionSource enum
+     */
+    PositionSource position_source() {return _position_source;}
+
+    /**
+     * @brief Sets the beat count value. This is to be used alongside a position_source set to EXTERNAL,
+     *        or the set value will be overwritten by the internal calculation.
+     * @param beat_count double value
+     */
+    void set_beat_count(double beat_count) {_beat_count = beat_count;}
+
+    /**
      * @brief Query any playing state changes occurring during the current processing chunk.
      *        For instance, if Transport is starting, during the first chunk, Transport
      *        will report playing() as true and current_state_change() as STARTING.
@@ -246,7 +272,9 @@ private:
 
     RtEventPipe*    _rt_event_dispatcher;
 
-    std::unique_ptr<SushiLink>  _link_controller;
+    std::unique_ptr<SushiLink> _link_controller;
+
+    PositionSource _position_source {PositionSource::CALCULATED};
 };
 
 } // namespace engine

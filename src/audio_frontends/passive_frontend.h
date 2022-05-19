@@ -85,7 +85,7 @@ public:
     //  assumption they CAN be nullptr.
 
     /**
-     * Method to invoke from the host's audio callback.
+     * @brief Method to invoke from the host's audio callback.
      * @param input buffer
      * @param output buffer
      * @param channel_count

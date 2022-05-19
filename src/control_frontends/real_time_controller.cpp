@@ -26,10 +26,8 @@
 namespace sushi
 {
 
-RealTimeController::RealTimeController(Sushi* sushi)
+RealTimeController::RealTimeController(Sushi* sushi) : _sushi(sushi)
 {
-    _sushi = sushi;
-
     _event_timer = std::make_unique<event_timer::EventTimer>(SUSHI_SAMPLE_RATE_DEFAULT);
 }
 
@@ -39,6 +37,7 @@ void RealTimeController::init()
 {
     _audio_frontend = _sushi->audio_frontend();
     _midi_frontend = _sushi->midi_frontend();
+    _transport = _sushi->audio_engine()->transport();
 }
 
 void RealTimeController::set_tempo(float tempo)
@@ -48,8 +47,8 @@ void RealTimeController::set_tempo(float tempo)
     //  So that work is a separate story (AUD-460).
     if (_tempo != tempo)
     {
-        _sushi->audio_engine()->transport()->set_tempo(tempo,
-                                                       false); // update_via_event == false
+        _transport->set_tempo(tempo,
+                              false); // update_via_event
         _tempo = tempo;
     }
 }
@@ -60,8 +59,8 @@ void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
 
     if (_time_signature != internal_time_signature)
     {
-        _sushi->audio_engine()->transport()->set_time_signature(internal_time_signature,
-                                                                false); // update_via_event == false
+        _transport->set_time_signature(internal_time_signature,
+                                       false); // update_via_event
         _time_signature = internal_time_signature;
     }
 }
@@ -72,24 +71,33 @@ void RealTimeController::set_playing_mode(ext::PlayingMode mode)
 
     if (_playing_mode != mode)
     {
-        _sushi->audio_engine()->transport()->set_playing_mode(internal_playing_mode,
-                                                              false); // update_via_event == false
+        _transport->set_playing_mode(internal_playing_mode,
+                                     false); // update_via_event
         _playing_mode = mode;
     }
 }
 
-void RealTimeController::set_beat_time(float beat_time)
+void RealTimeController::set_beat_count(double beat_count)
 {
-    // TODO AUD-426:
-    //  RtController should be able to directly set the timeline beat count for the current buffer
-    //  so sync with the hosts timeline if sushi runs as a plugin in another host.
+    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
+    {
+        _transport->set_beat_count(beat_count);
+    }
+    else
+    {
+        assert(false);
+    }
 }
 
 void RealTimeController::process_audio(int channel_count,
                                        int64_t sample_count,
                                        Time timestamp)
 {
-    _audio_frontend->process_audio(&_in_buffer, &_out_buffer, channel_count, sample_count, timestamp);
+    _audio_frontend->process_audio(&_in_buffer,
+                                   &_out_buffer,
+                                   channel_count,
+                                   sample_count,
+                                   timestamp);
 }
 
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)
@@ -172,6 +180,18 @@ sushi::Time RealTimeController::timestamp_from_clock()
     auto timestamp = std::chrono::duration_cast<sushi::Time>(time - _start_time);
 
     return timestamp;
+}
+
+void RealTimeController::set_position_source(PositionSource ps)
+{
+    if (ps == sushi::RealTimeController::PositionSource::CALCULATED)
+    {
+        _transport->set_position_source(sushi::PositionSource::CALCULATED);
+    }
+    else
+    {
+        _transport->set_position_source(sushi::PositionSource::EXTERNAL);
+    }
 }
 
 } // namespace sushi
