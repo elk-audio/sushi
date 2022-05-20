@@ -475,7 +475,7 @@ set(SOURCE_FILES
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
     src/control_frontends/passive_midi_frontend.cpp
-                      src/control_frontends/real_time_controller.cpp
+                      src/control_frontends/passive_controller.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
