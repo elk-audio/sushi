@@ -44,14 +44,14 @@ public:
      *         lies further in the future, the function returns false and
      *         the returned offset is not valid.
      */
-    std::pair<bool, int>  sample_offset_from_realtime(Time timestamp);
+    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const;
 
     /**
      * @brief Convert a sample offset to real time.
      * @param offset Offset in samples
      * @return Timestamp
      */
-    Time real_time_from_sample_offset(int offset);
+    Time real_time_from_sample_offset(int offset) const;
 
     /**
      * @brief Set the samplerate of the converter.

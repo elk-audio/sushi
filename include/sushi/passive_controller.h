@@ -58,7 +58,7 @@ class PassiveController : public RtController
 
     void init(SushiOptions& options);
 
-    /// RrController methods.
+    /// RrController methods:
 
     void set_tempo(float tempo) override;
 
@@ -69,9 +69,7 @@ class PassiveController : public RtController
     void set_beat_count(double beat_count) override;
     void set_position_source(TransportPositionSource ps) override;
 
-    void process_audio(int channel_count,
-                       int64_t sample_count,
-                       Time timestamp) override;
+    void process_audio(int channel_count, Time timestamp) override;
 
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
 
@@ -80,28 +78,17 @@ class PassiveController : public RtController
     ChunkSampleBuffer& in_buffer() override;
     ChunkSampleBuffer& out_buffer() override;
 
-    /// RrController methods done.
+    /// PassiveController methods:
 
     void set_sample_rate(double sample_rate);
     double sample_rate() const;
 
     /// Timestamp calculation methods - for when the host doesn't provide this info:
+    sushi::Time calculate_timestamp_from_start();
+    void increment_samples_since_start(uint64_t amount, Time timestamp);
 
-    // TODO: Clean up the below API!
-
-    sushi::Time timestamp_from_clock(); // TODO: Why did I write this if it's unused?
-
-    sushi::Time timestamp_from_start() const;
-
-    uint64_t samples_since_start() const;
-    void increment_samples_since_start(uint64_t amount);
-
-    // TODO AUD-426: Should I still be exposing these? Really?
-    void set_incoming_time(Time timestamp);
-    void set_outgoing_time(Time timestamp);
-
-    Time real_time_from_sample_offset(int offset);
-    std::pair<bool, int> sample_offset_from_realtime(Time timestamp);
+    Time real_time_from_sample_offset(int offset) const;
+    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const;
 
 private:
     std::unique_ptr<sushi::Sushi> _sushi {nullptr};
@@ -110,14 +97,9 @@ private:
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};
 
-    // TODO AUD-426: Currently, this is an instance owned here - independent of Sushi's.
-    //   Since it may only be needed in the host plugin,
-    //   I didn't immediately expose Sushi's embedded instance.
     std::unique_ptr<event_timer::EventTimer> _event_timer;
-
     uint64_t _samples_since_start {0};
     TimePoint _start_time;
-    bool _is_start_time_set {false};
 
     double _sample_rate {0};
 

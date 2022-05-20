@@ -76,11 +76,9 @@ public:
     /**
      * @brief Method to invoke from the host's audio callback.
      * @param channel_count
-     * @param sample_count
      * @param timestamp
      */
     virtual void process_audio(int channel_count,
-                               int64_t sample_count,
                                Time timestamp) = 0;
 
     /**

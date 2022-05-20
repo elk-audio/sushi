@@ -42,7 +42,7 @@ EventTimer::EventTimer(float default_sample_rate) : _sample_rate{default_sample_
     assert(EventTimer::_incoming_chunk_time.is_lock_free());
 }
 
-std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
+std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp) const
 {
     auto diff = timestamp - _incoming_chunk_time.load();
     if (diff < _chunk_time)
@@ -56,7 +56,7 @@ std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
     }
 }
 
-Time EventTimer::real_time_from_sample_offset(int offset)
+Time EventTimer::real_time_from_sample_offset(int offset) const
 {
     return _outgoing_chunk_time + offset * _chunk_time / AUDIO_CHUNK_SIZE;
 }

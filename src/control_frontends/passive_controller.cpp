@@ -121,13 +121,9 @@ void PassiveController::set_position_source(TransportPositionSource ps)
     }
 }
 
-void PassiveController::process_audio(int channel_count,
-                                       int64_t sample_count,
-                                       Time timestamp)
+void PassiveController::process_audio(int channel_count, Time timestamp)
 {
-    _audio_frontend->process_audio(channel_count,
-                                   sample_count,
-                                   timestamp);
+    _audio_frontend->process_audio(channel_count, _samples_since_start, timestamp);
 }
 
 void PassiveController::receive_midi(int input, MidiDataByte data, Time timestamp)
@@ -164,55 +160,32 @@ double PassiveController::sample_rate() const
     return _sample_rate;
 }
 
-void PassiveController::set_incoming_time(Time timestamp)
-{
-    _event_timer->set_incoming_time(timestamp);
-}
-
-void PassiveController::set_outgoing_time(Time timestamp)
-{
-    _event_timer->set_outgoing_time(timestamp);
-}
-
-sushi::Time PassiveController::timestamp_from_start() const
+sushi::Time PassiveController::calculate_timestamp_from_start()
 {
     uint64_t micros = _samples_since_start * 1'000'000.0 / _sample_rate;
-    return std::chrono::microseconds(micros);
+
+    auto timestamp = std::chrono::microseconds(micros);
+
+    _event_timer->set_incoming_time(timestamp);
+
+    return timestamp;
 }
 
-uint64_t PassiveController::samples_since_start() const
+void PassiveController::increment_samples_since_start(uint64_t amount, Time timestamp)
 {
-    return _samples_since_start;
-}
+    _event_timer->set_outgoing_time(timestamp);
 
-void PassiveController::increment_samples_since_start(uint64_t amount)
-{
     _samples_since_start += amount;
 }
 
-Time PassiveController::real_time_from_sample_offset(int offset)
+Time PassiveController::real_time_from_sample_offset(int offset) const
 {
     return _event_timer->real_time_from_sample_offset(offset);
 }
 
-std::pair<bool, int> PassiveController::sample_offset_from_realtime(Time timestamp)
+std::pair<bool, int> PassiveController::sample_offset_from_realtime(Time timestamp) const
 {
     return _event_timer->sample_offset_from_realtime(timestamp);
-}
-
-sushi::Time PassiveController::timestamp_from_clock()
-{
-    auto time = std::chrono::steady_clock::now().time_since_epoch();
-
-    if (!_is_start_time_set)
-    {
-        _is_start_time_set = true;
-        _start_time = time;
-    }
-
-    auto timestamp = std::chrono::duration_cast<sushi::Time>(time - _start_time);
-
-    return timestamp;
 }
 
 } // namespace sushi
