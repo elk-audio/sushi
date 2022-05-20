@@ -109,13 +109,23 @@ void PassiveController::set_beat_count(double beat_count)
     }
 }
 
+void PassiveController::set_position_source(TransportPositionSource ps)
+{
+    if (ps == sushi::TransportPositionSource::CALCULATED)
+    {
+        _transport->set_position_source(sushi::PositionSource::CALCULATED);
+    }
+    else
+    {
+        _transport->set_position_source(sushi::PositionSource::EXTERNAL);
+    }
+}
+
 void PassiveController::process_audio(int channel_count,
                                        int64_t sample_count,
                                        Time timestamp)
 {
-    _audio_frontend->process_audio(&_in_buffer,
-                                   &_out_buffer,
-                                   channel_count,
+    _audio_frontend->process_audio(channel_count,
                                    sample_count,
                                    timestamp);
 }
@@ -132,12 +142,12 @@ void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
 
 ChunkSampleBuffer& PassiveController::in_buffer()
 {
-    return _in_buffer;
+    return _audio_frontend->in_buffer();
 }
 
 ChunkSampleBuffer& PassiveController::out_buffer()
 {
-    return _out_buffer;
+    return _audio_frontend->out_buffer();
 }
 
 void PassiveController::set_sample_rate(double sample_rate)
@@ -152,18 +162,6 @@ void PassiveController::set_sample_rate(double sample_rate)
 double PassiveController::sample_rate() const
 {
     return _sample_rate;
-}
-
-void PassiveController::set_position_source(PositionSource ps)
-{
-    if (ps == sushi::PassiveController::PositionSource::CALCULATED)
-    {
-        _transport->set_position_source(sushi::PositionSource::CALCULATED);
-    }
-    else
-    {
-        _transport->set_position_source(sushi::PositionSource::EXTERNAL);
-    }
 }
 
 void PassiveController::set_incoming_time(Time timestamp)

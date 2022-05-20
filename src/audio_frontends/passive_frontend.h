@@ -86,21 +86,23 @@ public:
 
     /**
      * @brief Method to invoke from the host's audio callback.
-     * @param input buffer
-     * @param output buffer
      * @param channel_count
      * @param total_sample_count since start (timestamp)
      * @param timestamp
      */
-     void process_audio(ChunkSampleBuffer* in_buffer, // Not const, because process_chunk expects this as a raw pointer.
-                        ChunkSampleBuffer* out_buffer,
-                       int channel_count,
+     void process_audio(int channel_count,
                        int total_sample_count,
                        Time timestamp);
+
+     ChunkSampleBuffer& in_buffer();
+     ChunkSampleBuffer& out_buffer();
 
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
+
+    ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};
 
     Time _start_time;
 };

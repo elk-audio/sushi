@@ -24,6 +24,12 @@
 namespace sushi
 {
 
+enum class TransportPositionSource
+{
+    EXTERNAL,
+    CALCULATED
+};
+
 using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
 
 class RtController
@@ -59,6 +65,13 @@ public:
      * @param beat_time
      */
     virtual void set_beat_count(double beat_time) = 0;
+
+    /**
+     * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
+     *        using the set_beat_count method below.
+     * @param TransportPositionSource Enum, EXTERNAL / CALCULATED
+     */
+    virtual void set_position_source(TransportPositionSource ps) = 0;
 
     /**
      * @brief Method to invoke from the host's audio callback.

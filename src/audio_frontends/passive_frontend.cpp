@@ -73,9 +73,7 @@ void PassiveFrontend::run()
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  In JUCE, the buffer size is always the same for in and out, with some unused,
 //  if they differ.
-void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
-                                    ChunkSampleBuffer* out_buffer,
-                                    int channel_count,
+void PassiveFrontend::process_audio(int channel_count,
                                     int total_sample_count,
                                     Time timestamp)
 {
@@ -92,12 +90,12 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
 
     // TODO: Deal also with CV.
 
-    out_buffer->clear();
+    _out_buffer.clear();
 
     if (_pause_manager.should_process())
     {
-        _engine->process_chunk(in_buffer,
-                               out_buffer,
+        _engine->process_chunk(&_in_buffer,
+                               &_out_buffer,
                                &_in_controls,
                                &_out_controls,
                                timestamp,
@@ -105,7 +103,7 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
 
         if (_pause_manager.should_ramp())
         {
-            _pause_manager.ramp_output(*out_buffer);
+            _pause_manager.ramp_output(_out_buffer);
         }
     }
     else
@@ -116,6 +114,16 @@ void PassiveFrontend::process_audio(ChunkSampleBuffer* in_buffer,
             _pause_notified = true;
         }
     }
+}
+
+ChunkSampleBuffer& PassiveFrontend::in_buffer()
+{
+    return _in_buffer;
+}
+
+ChunkSampleBuffer& PassiveFrontend::out_buffer()
+{
+    return _out_buffer;
 }
 
 } // end namespace audio_frontend

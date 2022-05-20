@@ -17,16 +17,6 @@
 #define PASSIVE_CONTROLLER_H
 
 #include "real_time_controller.h"
-
-#include "logging.h"
-
-// TODO AUD-426: Clean up, move to include/Sushi for some?
-#include "control_interface.h"
-
-#include "library/constants.h"
-#include "library/sample_buffer.h"
-#include "library/time.h"
-#include "library/types.h"
 #include "sushi.h"
 
 namespace
@@ -59,9 +49,6 @@ namespace event_timer
 class EventTimer;
 }
 
-// TODO AUD-426: Merge with MAX_FRONTEND_CHANNELS in base_audio_frontend, make part of public interface.
-constexpr int MAX_FRONTEND_CHANNELS = 8;
-
 class PassiveController : public RtController
 {
     public:
@@ -80,6 +67,7 @@ class PassiveController : public RtController
     void set_playing_mode(ext::PlayingMode mode) override;
 
     void set_beat_count(double beat_count) override;
+    void set_position_source(TransportPositionSource ps) override;
 
     void process_audio(int channel_count,
                        int64_t sample_count,
@@ -96,15 +84,6 @@ class PassiveController : public RtController
 
     void set_sample_rate(double sample_rate);
     double sample_rate() const;
-
-    // TODO AUD-426: Avoid this duplication of PositionSource
-    enum class PositionSource
-    {
-        EXTERNAL,
-        CALCULATED
-    };
-
-    void set_position_source(PositionSource ps);
 
     /// Timestamp calculation methods - for when the host doesn't provide this info:
 
@@ -130,9 +109,6 @@ private:
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};
-
-    ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};
 
     // TODO AUD-426: Currently, this is an instance owned here - independent of Sushi's.
     //   Since it may only be needed in the host plugin,
