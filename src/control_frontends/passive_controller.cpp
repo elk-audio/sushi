@@ -172,11 +172,11 @@ sushi::Time PassiveController::calculate_timestamp_from_start()
     return timestamp;
 }
 
-void PassiveController::increment_samples_since_start(uint64_t amount, Time timestamp)
+void PassiveController::increment_samples_since_start(uint64_t sample_count, Time timestamp)
 {
     _event_timer->set_outgoing_time(timestamp);
 
-    _samples_since_start += amount;
+    _samples_since_start += sample_count;
 }
 
 Time PassiveController::real_time_from_sample_offset(int offset) const

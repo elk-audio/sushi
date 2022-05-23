@@ -83,11 +83,36 @@ public:
     void set_sample_rate(double sample_rate);
     double sample_rate() const;
 
-    /// Timestamp calculation methods - for when the host doesn't provide this info:
+    /**
+     * @brief If the host doesn't provide a timestamp, this method can be used to calculate it,
+     *        based on the sample count from session start.
+     * @return The currently calculated Timestamp.
+     */
     sushi::Time calculate_timestamp_from_start();
-    void increment_samples_since_start(uint64_t amount, Time timestamp);
 
+    /**
+     * @brief Call this at the end of each ProcessBlock, to update the sample count and timestamp used for
+     *        time and sample offset calculations.
+     * @param sample_count
+     * @param timestamp
+     */
+    void increment_samples_since_start(uint64_t sample_count, Time timestamp);
+
+    /**
+     * @brief Useful for MIDI messaging, to get the timestamp for each MIDI message passed to Sushi.
+     * @param offset The sample offset for the MIDI message
+     * @return Session time value corresponding to the given sample offset.
+     */
     Time real_time_from_sample_offset(int offset) const;
+
+    /**
+     * @brief Useful for MIDI messaging, to convert a timestamp to a sample offset within the next chunk.
+     * @param timestamp Timestamp for which the sample offset is desired.
+     * @return If the timestamp falls withing the next chunk, the function
+     *         returns true and the offset in samples. If the timestamp
+     *         lies further in the future, the function returns false and
+     *         the returned offset is not valid.
+     */
     std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const;
 
 private:
