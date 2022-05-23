@@ -35,7 +35,7 @@ PassiveController::~PassiveController()
     _sushi->exit();
 }
 
-void PassiveController::init(SushiOptions& options)
+InitStatus PassiveController::init(SushiOptions& options)
 {
     _sushi = std::make_unique<sushi::Sushi>();
 
@@ -49,8 +49,7 @@ void PassiveController::init(SushiOptions& options)
 
     if (sushiInitStatus != sushi::InitStatus::OK)
     {
-        // TODO: Throw? Exit?
-        assert(false);
+        return sushiInitStatus;
     }
 
     _audio_frontend = _sushi->audio_frontend();
@@ -58,6 +57,8 @@ void PassiveController::init(SushiOptions& options)
     _transport = _sushi->audio_engine()->transport();
 
     _sushi->start();
+
+    return sushiInitStatus;
 }
 
 void PassiveController::set_tempo(float tempo)

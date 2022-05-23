@@ -51,12 +51,12 @@ class EventTimer;
 
 class PassiveController : public RtController
 {
-    public:
+public:
     PassiveController();
 
     ~PassiveController() override;
 
-    void init(SushiOptions& options);
+    InitStatus init(SushiOptions& options);
 
     /// RtController methods:
 
