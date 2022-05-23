@@ -49,6 +49,12 @@ namespace event_timer
 class EventTimer;
 }
 
+/**
+ * @brief When a host application embeds Sushi, i should use this class to instantiate Sushi, and interface with it.
+ *        PassiveController implements two primary API's for Sushi:
+ *        - The RtController API, which is for interacting with Sushi in a real-time context.
+ *        - The PassiveController specific methods for instantiating and configuring Sushi - all unsafe for real-time.
+ */
 class PassiveController : public RtController
 {
 public:
@@ -56,7 +62,12 @@ public:
 
     ~PassiveController() override;
 
+    /// PassiveController methods:
+
     InitStatus init(SushiOptions& options);
+
+    void set_sample_rate(double sample_rate);
+    double sample_rate() const;
 
     /// RtController methods:
 
@@ -71,49 +82,18 @@ public:
 
     void process_audio(int channel_count, Time timestamp) override;
 
-    void receive_midi(int input, MidiDataByte data, Time timestamp) override;
-
-    void set_midi_callback(PassiveMidiCallback&& callback) override;
-
     ChunkSampleBuffer& in_buffer() override;
     ChunkSampleBuffer& out_buffer() override;
 
-    /// PassiveController methods:
+    // For MIDI:
 
-    void set_sample_rate(double sample_rate);
-    double sample_rate() const;
+    void receive_midi(int input, MidiDataByte data, Time timestamp) override;
+    void set_midi_callback(PassiveMidiCallback&& callback) override;
 
-    /**
-     * @brief If the host doesn't provide a timestamp, this method can be used to calculate it,
-     *        based on the sample count from session start.
-     * @return The currently calculated Timestamp.
-     */
-    sushi::Time calculate_timestamp_from_start();
-
-    /**
-     * @brief Call this at the end of each ProcessBlock, to update the sample count and timestamp used for
-     *        time and sample offset calculations.
-     * @param sample_count
-     * @param timestamp
-     */
-    void increment_samples_since_start(uint64_t sample_count, Time timestamp);
-
-    /**
-     * @brief Useful for MIDI messaging, to get the timestamp for each MIDI message passed to Sushi.
-     * @param offset The sample offset for the MIDI message
-     * @return Session time value corresponding to the given sample offset.
-     */
-    Time real_time_from_sample_offset(int offset) const;
-
-    /**
-     * @brief Useful for MIDI messaging, to convert a timestamp to a sample offset within the next chunk.
-     * @param timestamp Timestamp for which the sample offset is desired.
-     * @return If the timestamp falls withing the next chunk, the function
-     *         returns true and the offset in samples. If the timestamp
-     *         lies further in the future, the function returns false and
-     *         the returned offset is not valid.
-     */
-    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const;
+    sushi::Time calculate_timestamp_from_start() override;
+    void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
+    Time real_time_from_sample_offset(int offset) const override;
+    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const override;
 
 private:
     std::unique_ptr<sushi::Sushi> _sushi {nullptr};

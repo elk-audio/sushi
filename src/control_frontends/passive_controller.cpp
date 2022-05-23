@@ -61,6 +61,20 @@ InitStatus PassiveController::init(SushiOptions& options)
     return sushiInitStatus;
 }
 
+void PassiveController::set_sample_rate(double sample_rate)
+{
+    _sample_rate = sample_rate;
+
+    _sushi->set_sample_rate(sample_rate);
+
+    _event_timer->set_sample_rate(sample_rate);
+}
+
+double PassiveController::sample_rate() const
+{
+    return _sample_rate;
+}
+
 void PassiveController::set_tempo(float tempo)
 {
     // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
@@ -127,16 +141,6 @@ void PassiveController::process_audio(int channel_count, Time timestamp)
     _audio_frontend->process_audio(channel_count, _samples_since_start, timestamp);
 }
 
-void PassiveController::receive_midi(int input, MidiDataByte data, Time timestamp)
-{
-    _midi_frontend->receive_midi(input, data, timestamp);
-}
-
-void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
-{
-    _midi_frontend->set_callback(std::move(callback));
-}
-
 ChunkSampleBuffer& PassiveController::in_buffer()
 {
     return _audio_frontend->in_buffer();
@@ -147,18 +151,14 @@ ChunkSampleBuffer& PassiveController::out_buffer()
     return _audio_frontend->out_buffer();
 }
 
-void PassiveController::set_sample_rate(double sample_rate)
+void PassiveController::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
-    _sample_rate = sample_rate;
-
-    _sushi->set_sample_rate(sample_rate);
-
-    _event_timer->set_sample_rate(sample_rate);
+    _midi_frontend->receive_midi(input, data, timestamp);
 }
 
-double PassiveController::sample_rate() const
+void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
 {
-    return _sample_rate;
+    _midi_frontend->set_callback(std::move(callback));
 }
 
 sushi::Time PassiveController::calculate_timestamp_from_start()
