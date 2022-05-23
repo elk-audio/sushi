@@ -58,7 +58,7 @@ class PassiveController : public RtController
 
     void init(SushiOptions& options);
 
-    /// RrController methods:
+    /// RtController methods:
 
     void set_tempo(float tempo) override;
 
