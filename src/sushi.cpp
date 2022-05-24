@@ -22,7 +22,7 @@
 
 #include "logging.h"
 
-#include "include/sushi/sushi.h"
+#include "sushi.h"
 
 #include "engine/json_configurator.h"
 #include "engine/audio_engine.h"
@@ -55,6 +55,20 @@ namespace sushi
 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi");
+
+void init_logger(const SushiOptions& options)
+{
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
+                                            "Logger",
+                                            options.log_level,
+                                            options.enable_flush_interval,
+                                            options.log_flush_interval);
+
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
+    {
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+    }
+}
 
 std::string to_string(InitStatus init_status)
 {
@@ -95,20 +109,6 @@ std::string to_string(InitStatus init_status)
         default:
             assert(false);
             return "";
-    }
-}
-
-void init_logger(const SushiOptions& options)
-{
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
-                                            "Logger",
-                                            options.log_level,
-                                            options.enable_flush_interval,
-                                            options.log_flush_interval);
-
-    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
-    {
-        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
 }
 
@@ -293,14 +293,22 @@ sushi::InitStatus sushi::Sushi::_configure_with_defaults()
     int cv_inputs = 0;
     int cv_outputs = 0;
 
-engine::Controller* Sushi::controller()
-{
-    return _controller.get();
+    status = _set_up_control(_options, nullptr, midi_inputs, midi_outputs);
+    if (status != InitStatus::OK) {
+        return status;
+    }
+
+    return InitStatus::OK;
 }
 
 audio_frontend::PassiveFrontend* Sushi::audio_frontend()
 {
     return static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get());
+}
+
+engine::Controller* Sushi::controller()
+{
+    return _controller.get();
 }
 
 sushi::InitStatus sushi::Sushi::_load_json_configuration(const sushi::SushiOptions& options,

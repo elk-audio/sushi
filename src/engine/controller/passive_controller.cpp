@@ -25,9 +25,11 @@
 namespace sushi
 {
 
-PassiveController::PassiveController()
+PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi)
 {
     _event_timer = std::make_unique<event_timer::EventTimer>(SUSHI_SAMPLE_RATE_DEFAULT);
+
+    _sushi = std::move(sushi);
 }
 
 PassiveController::~PassiveController()
@@ -37,8 +39,6 @@ PassiveController::~PassiveController()
 
 InitStatus PassiveController::init(SushiOptions& options)
 {
-    _sushi = std::make_unique<sushi::Sushi>();
-
     sushi::init_logger(options); // This can only be called once.
 
     // Overriding whatever frontend settings may or may not have been set.

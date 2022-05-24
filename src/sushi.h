@@ -26,6 +26,8 @@
 #include <chrono>
 #include <optional>
 
+#include "include/sushi/sushi_interface.h"
+
 #include "compile_time_settings.h"
 
 namespace sushi_rpc {
@@ -67,118 +69,55 @@ namespace jsonconfig {
 class JsonConfigurator;
 }
 
-enum class FrontendType
-{
-    OFFLINE,
-    DUMMY,
-    JACK,
-    PORTAUDIO,
-    XENOMAI_RASPA,
-    PASSIVE,
-    NONE
-};
-
-enum class InitStatus
-{
-    OK,
-
-    FAILED_INVALID_FILE_PATH,
-    FAILED_INVALID_CONFIGURATION_FILE,
-
-    FAILED_LOAD_HOST_CONFIG,
-    FAILED_LOAD_TRACKS,
-    FAILED_LOAD_MIDI_MAPPING,
-    FAILED_LOAD_CV_GATE,
-    FAILED_LOAD_PROCESSOR_STATES,
-    FAILED_LOAD_EVENT_LIST,
-    FAILED_LOAD_EVENTS,
-    FAILED_LOAD_OSC,
-
-    FAILED_XENOMAI_INITIALIZATION,
-    FAILED_OSC_FRONTEND_INITIALIZATION,
-    FAILED_AUDIO_FRONTEND_MISSING,
-    FAILED_AUDIO_FRONTEND_INITIALIZATION,
-    FAILED_MIDI_FRONTEND_INITIALIZATION
-};
-
-std::string to_string(InitStatus init_status);
-
-/**
- * Collects all options for instantiating Sushi in one place.
- */
-struct SushiOptions
-{
-    std::string input_filename;
-    std::string output_filename;
-
-    std::string log_level = std::string(CompileTimeSettings::log_level_default);
-    std::string log_filename = std::string(CompileTimeSettings::log_filename_default);
-
-    bool use_input_config_file = true;
-    std::string config_filename = std::string(CompileTimeSettings::json_filename_default);
-    std::string jack_client_name = std::string(CompileTimeSettings::jack_client_name_default);
-    std::string jack_server_name = std::string("");
-    int osc_server_port = CompileTimeSettings::osc_server_port;
-    int osc_send_port = CompileTimeSettings::osc_send_port;
-    std::optional<int> portaudio_input_device_id = std::nullopt;
-    std::optional<int> portaudio_output_device_id = std::nullopt;
-    std::string grpc_listening_address = CompileTimeSettings::grpc_listening_port;
-    FrontendType frontend_type = FrontendType::NONE;
-    bool connect_ports = false;
-    bool debug_mode_switches = false;
-    int  rt_cpu_cores = 1;
-    bool enable_timings = false;
-    bool enable_flush_interval = false;
-    bool enable_parameter_dump = false;
-    std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
-};
-
 /**
  * This should be called only once in the lifetime of the embedding binary - or it will fail.
  * @param options
  */
 void init_logger(const SushiOptions& options);
 
-class Sushi
+
+class Sushi : public AbstractSushi
 {
 public:
     Sushi();
-    ~Sushi();
+    ~Sushi() override;
 
     /**
      * Initializes the class.
      * @param options options for Sushi instance
      * @return The success or failure of the init process.
      */
-    InitStatus init(const SushiOptions& options);
+    InitStatus init(const SushiOptions& options) override;
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
      */
-    void start();
+    void start() override;
 
     /**
      * Stops the Sushi instance from running.
      */
 //  TODO: Currently, once called, the instance will crash if is you subsequently again invoke start(...).
-    void exit();
+    void exit() override;
 
     /**
      * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
      */
-    engine::Controller* controller();
+    engine::Controller* controller() override;
 
     /**
      * Exposing audio frontend for the context where Sushi is embedded in another host.
      * @return
      */
-    audio_frontend::PassiveFrontend* audio_frontend();
+    audio_frontend::PassiveFrontend* audio_frontend() override;
+
+    void set_sample_rate(float sample_rate) override;
 
     /**
      * Exposing midi frontend for the context where Sushi is embedded in another host.
      * @return
      */
-    midi_frontend::PassiveMidiFrontend* midi_frontend();
+    midi_frontend::PassiveMidiFrontend* midi_frontend() override;
 
     void set_sample_rate(float sample_rate);
 
@@ -187,7 +126,7 @@ public:
      * Used for example to set Transport values.
      * @return
      */
-    engine::AudioEngine* audio_engine();
+    engine::AudioEngine* audio_engine() override;
 
 private:
     InitStatus _configure_from_file();

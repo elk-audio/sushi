@@ -17,7 +17,7 @@
 #define PASSIVE_CONTROLLER_H
 
 #include "real_time_controller.h"
-#include "sushi.h"
+#include "sushi_interface.h"
 
 namespace
 {
@@ -58,7 +58,7 @@ class EventTimer;
 class PassiveController : public RtController
 {
 public:
-    PassiveController();
+    PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi);
 
     ~PassiveController() override;
 
@@ -104,7 +104,7 @@ public:
     std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const override;
 
 private:
-    std::unique_ptr<sushi::Sushi> _sushi {nullptr};
+    std::unique_ptr<sushi::AbstractSushi> _sushi {nullptr};
 
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};

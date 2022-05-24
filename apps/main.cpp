@@ -21,7 +21,7 @@
 #include <iostream>
 #include <csignal>
 
-#include "include/sushi/sushi.h"
+#include "sushi.h"
 
 #include "include/sushi/terminal_utilities.h"
 

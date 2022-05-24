@@ -475,7 +475,6 @@ set(SOURCE_FILES
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
     src/control_frontends/passive_midi_frontend.cpp
-                      src/control_frontends/passive_controller.cpp
                       src/control_frontends/osc_frontend.cpp
                       src/dsp_library/biquad_filter.cpp
                       src/engine/audio_engine.cpp
@@ -502,6 +501,7 @@ set(SOURCE_FILES
     src/engine/controller/cv_gate_controller.cpp
     src/engine/controller/osc_controller.cpp
     src/engine/controller/session_controller.cpp
+                      src/engine/controller/passive_controller.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
