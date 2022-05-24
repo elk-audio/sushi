@@ -56,7 +56,7 @@ public:
                 (),
                 (override));
 
-    MOCK_METHOD(engine::AudioEngine*,
+    MOCK_METHOD(engine::BaseEngine*,
                 audio_engine,
                 (),
                 (override));

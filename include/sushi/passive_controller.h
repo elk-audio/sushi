@@ -55,19 +55,21 @@ class EventTimer;
  *        - The RtController API, which is for interacting with Sushi in a real-time context.
  *        - The PassiveController specific methods for instantiating and configuring Sushi - all unsafe for real-time.
  */
-class PassiveController : public RtController
+class PassiveController : public SushiOwner,
+                          public RtController
 {
 public:
     PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi);
 
     ~PassiveController() override;
 
-    /// PassiveController methods:
+    /// SushiOwner methods:
+    /////////////////////////////////////////////////////////////
 
-    InitStatus init(SushiOptions& options);
+    InitStatus init(SushiOptions& options) override;
 
-    void set_sample_rate(double sample_rate);
-    double sample_rate() const;
+    void set_sample_rate(double sample_rate) override;
+    double sample_rate() const override;
 
     /// RtController methods:
     /////////////////////////////////////////////////////////////
@@ -104,8 +106,6 @@ public:
     std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const override;
 
 private:
-    std::unique_ptr<sushi::AbstractSushi> _sushi {nullptr};
-
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};

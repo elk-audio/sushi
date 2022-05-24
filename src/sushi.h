@@ -126,7 +126,7 @@ public:
      * Used for example to set Transport values.
      * @return
      */
-    engine::AudioEngine* audio_engine() override;
+    engine::BaseEngine* audio_engine() override;
 
 private:
     InitStatus _configure_from_file();

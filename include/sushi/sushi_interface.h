@@ -27,6 +27,7 @@
 #include <optional>
 
 #include "compile_time_settings.h"
+#include "engine/base_engine.h"
 
 namespace sushi {
 
@@ -133,14 +134,30 @@ public:
 
     virtual engine::Controller* controller() = 0;
 
-    virtual audio_frontend::PassiveFrontend* audio_frontend() = 0;
-
     virtual void set_sample_rate(float sample_rate) = 0;
+
+    virtual audio_frontend::PassiveFrontend* audio_frontend() = 0;
 
     virtual midi_frontend::PassiveMidiFrontend* midi_frontend() = 0;
 
-    virtual engine::AudioEngine* audio_engine() = 0;
+    virtual engine::BaseEngine* audio_engine() = 0;
 };
+
+class SushiOwner
+{
+public:
+    SushiOwner(std::unique_ptr<sushi::AbstractSushi>&& sushi) : _sushi(std::move(sushi)) {}
+    virtual ~SushiOwner() = default;
+
+    virtual InitStatus init(SushiOptions& options) = 0;
+
+    virtual void set_sample_rate(double sample_rate) = 0;
+    virtual double sample_rate() const = 0;
+
+protected:
+    std::unique_ptr<sushi::AbstractSushi> _sushi {nullptr};
+};
+
 
 } // namespace Sushi
 

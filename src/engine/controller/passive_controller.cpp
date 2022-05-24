@@ -25,11 +25,9 @@
 namespace sushi
 {
 
-PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi)
+PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi) : SushiOwner(std::move(sushi))
 {
     _event_timer = std::make_unique<event_timer::EventTimer>(SUSHI_SAMPLE_RATE_DEFAULT);
-
-    _sushi = std::move(sushi);
 }
 
 PassiveController::~PassiveController()
