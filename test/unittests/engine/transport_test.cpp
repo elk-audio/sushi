@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#define private public
+
 #include "engine/transport.cpp"
 #include "library/rt_event_fifo.h"
 
@@ -58,6 +60,12 @@ TEST_F(TestTransport, TestBasicQuerying)
     _module_under_test.set_time_signature({1, 0}, false);
     EXPECT_EQ(5, _module_under_test.time_signature().numerator);
     EXPECT_EQ(8, _module_under_test.time_signature().denominator);
+
+    _module_under_test.set_position_source(PositionSource::EXTERNAL);
+    EXPECT_EQ(PositionSource::EXTERNAL, _module_under_test.position_source());
+
+    _module_under_test.set_beat_count(1.5);
+    EXPECT_DOUBLE_EQ(1.5, _module_under_test._beat_count);
 }
 
 TEST_F(TestTransport, TestTimeline44Time)
@@ -94,6 +102,28 @@ TEST_F(TestTransport, TestTimeline44Time)
     _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
     EXPECT_DOUBLE_EQ(1.0, _module_under_test.current_bar_beats());
     EXPECT_DOUBLE_EQ(5.0, _module_under_test.current_beats());
+    EXPECT_DOUBLE_EQ(4.0, _module_under_test.current_bar_start_beats());
+}
+
+TEST_F(TestTransport, TestTimeline44TimeWithExternalPositionSource)
+{
+    constexpr int TEST_SAMPLERATE_X2 = 32768;
+    /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier,
+     * since bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
+     * a power of 2*/
+    _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
+    _module_under_test.set_time_signature({4, 4}, false);
+    _module_under_test.set_tempo(120, false);
+    _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
+
+    /* Test skipping internal beat_count_calculation */
+    _module_under_test.set_position_source(PositionSource::EXTERNAL);
+    _module_under_test.set_beat_count(5.1);
+    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
+
+    EXPECT_DOUBLE_EQ(1.1, _module_under_test.current_bar_beats());
+    EXPECT_DOUBLE_EQ(5.1, _module_under_test.current_beats());
     EXPECT_DOUBLE_EQ(4.0, _module_under_test.current_bar_start_beats());
 }
 

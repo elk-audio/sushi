@@ -41,6 +41,9 @@ public:
     RtController() = default;
     virtual ~RtController() = default;
 
+    /// For Transport:
+    /////////////////////////////////////////////////////////////
+
     /**
      * @brief Set the tempo of the Sushi transport.
      *        (can be called from a real-time context).
@@ -76,6 +79,9 @@ public:
      */
     virtual void set_position_source(TransportPositionSource ps) = 0;
 
+    /// For Audio:
+    /////////////////////////////////////////////////////////////
+
     /**
      * @brief Method to invoke from the host's audio callback.
      * @param channel_count
@@ -87,7 +93,8 @@ public:
     virtual ChunkSampleBuffer& in_buffer() = 0;
     virtual ChunkSampleBuffer& out_buffer() = 0;
 
-    // For MIDI:
+    /// For MIDI:
+    /////////////////////////////////////////////////////////////
 
     /**
      * @brief Call to pass MIDI input to Sushi

@@ -50,7 +50,7 @@ class EventTimer;
 }
 
 /**
- * @brief When a host application embeds Sushi, i should use this class to instantiate Sushi, and interface with it.
+ * @brief When a host application embeds Sushi, it should use this class to instantiate Sushi, and interface with it.
  *        PassiveController implements two primary API's for Sushi:
  *        - The RtController API, which is for interacting with Sushi in a real-time context.
  *        - The PassiveController specific methods for instantiating and configuring Sushi - all unsafe for real-time.
@@ -70,6 +70,10 @@ public:
     double sample_rate() const;
 
     /// RtController methods:
+    /////////////////////////////////////////////////////////////
+
+    /// For Transport:
+    /////////////////////////////////////////////////////////////
 
     void set_tempo(float tempo) override;
 
@@ -80,12 +84,16 @@ public:
     void set_beat_count(double beat_count) override;
     void set_position_source(TransportPositionSource ps) override;
 
+    /// For Audio:
+    /////////////////////////////////////////////////////////////
+
     void process_audio(int channel_count, Time timestamp) override;
 
     ChunkSampleBuffer& in_buffer() override;
     ChunkSampleBuffer& out_buffer() override;
 
-    // For MIDI:
+    /// For MIDI:
+    /////////////////////////////////////////////////////////////
 
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
     void set_midi_callback(PassiveMidiCallback&& callback) override;
