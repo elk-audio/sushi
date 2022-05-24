@@ -167,6 +167,7 @@ int main(int argc, char* argv[])
     bool enable_timings = false;
     bool enable_flush_interval = false;
     bool enable_parameter_dump = false;
+    bool use_osc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i = 0; i<cl_parser.optionsCount(); i++)
@@ -290,6 +291,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_GRPC_LISTEN_ADDRESS:
             grpc_listening_address = opt.arg;
+            break;
+
+        case OPT_IDX_NO_OSC:
+            use_osc = false;
             break;
 
         default:
@@ -523,24 +528,27 @@ int main(int argc, char* argv[])
         midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(midi_inputs, midi_outputs, midi_dispatcher.get());
 #endif
 
-        SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
-
-        auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
-
-        osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(), controller.get(), oscpack_messenger);
-        controller->set_osc_frontend(osc_frontend.get());
-        configurator->set_osc_frontend(osc_frontend.get());
-
-        auto osc_status = osc_frontend->init();
-        if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
+        if (use_osc)
         {
-            error_exit("Failed to setup OSC frontend");
-        }
+            SUSHI_LOG_INFO("Listening to OSC messages on port {}. Transmitting to port {}, on IP {}.", osc_server_port, osc_send_port, osc_send_ip);
+            auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(osc_server_port, osc_send_port, osc_send_ip);
+            osc_frontend = std::make_unique<sushi::control_frontend::OSCFrontend>(engine.get(),
+                                                                                  controller.get(),
+                                                                                  oscpack_messenger);
+            controller->set_osc_frontend(osc_frontend.get());
+            configurator->set_osc_frontend(osc_frontend.get());
 
-        status = configurator->load_osc();
-        if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
-        {
-            error_exit("Failed to load OSC echo specification from Json config file");
+            auto osc_status = osc_frontend->init();
+            if (osc_status != sushi::control_frontend::ControlFrontendStatus::OK)
+            {
+                error_exit("Failed to setup OSC frontend");
+            }
+
+            status = configurator->load_osc();
+            if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK && status != sushi::jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+            {
+                error_exit("Failed to load OSC echo specification from Json config file");
+            }
         }
     }
     else
@@ -574,9 +582,9 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (frontend_type == FrontendType::JACK
-        || frontend_type == FrontendType::XENOMAI_RASPA
-        || frontend_type == FrontendType::PORTAUDIO)
+    if (use_osc && (frontend_type == FrontendType::JACK
+                 || frontend_type == FrontendType::XENOMAI_RASPA
+                 || frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->run();
     }
@@ -600,9 +608,9 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (frontend_type == FrontendType::JACK
-        || frontend_type == FrontendType::XENOMAI_RASPA
-        || frontend_type == FrontendType::PORTAUDIO)
+    if (use_osc && (frontend_type == FrontendType::JACK
+                 || frontend_type == FrontendType::XENOMAI_RASPA
+                 || frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->stop();
         midi_frontend->stop();
