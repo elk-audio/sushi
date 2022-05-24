@@ -168,6 +168,7 @@ int main(int argc, char* argv[])
     bool enable_flush_interval = false;
     bool enable_parameter_dump = false;
     bool use_osc = true;
+    bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     for (int i = 0; i<cl_parser.optionsCount(); i++)
@@ -295,6 +296,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_NO_OSC:
             use_osc = false;
+            break;
+
+            case OPT_IDX_NO_GRPC:
+            use_grpc = false;
             break;
 
         default:
@@ -566,7 +571,11 @@ int main(int argc, char* argv[])
     midi_dispatcher->set_frontend(midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    auto rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, controller.get());
+    std::unique_ptr<sushi_rpc::GrpcServer> rpc_server;
+    if (use_grpc)
+    {
+        rpc_server = std::make_unique<sushi_rpc::GrpcServer>(grpc_listening_address, controller.get());
+    }
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -590,8 +599,11 @@ int main(int argc, char* argv[])
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    SUSHI_LOG_INFO("Starting gRPC server with address: {}", grpc_listening_address);
-    rpc_server->start();
+    if (use_grpc)
+    {
+        SUSHI_LOG_INFO("Starting gRPC server with address: {}", grpc_listening_address);
+        rpc_server->start();
+    }
 #endif
 
     if (frontend_type != FrontendType::OFFLINE)
@@ -608,16 +620,19 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (use_osc && (frontend_type == FrontendType::JACK
-                 || frontend_type == FrontendType::XENOMAI_RASPA
-                 || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend && (frontend_type == FrontendType::JACK
+                      || frontend_type == FrontendType::XENOMAI_RASPA
+                      || frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->stop();
         midi_frontend->stop();
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    rpc_server->stop();
+    if (rpc_server)
+    {
+        rpc_server->stop();
+    }
 #endif
 
     SUSHI_LOG_INFO("Sushi exiting normally!");

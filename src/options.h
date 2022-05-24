@@ -131,7 +131,8 @@ enum OptionIndex
     OPT_IDX_OSC_SEND_PORT,
     OPT_IDX_OSC_SEND_IP,
     OPT_IDX_GRPC_LISTEN_ADDRESS,
-    OPT_IDX_NO_OSC
+    OPT_IDX_NO_OSC,
+    OPT_IDX_NO_GRPC
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -387,6 +388,14 @@ const optionparser::Descriptor usage[] =
         "no-osc",
         SushiArg::Optional,
         "\t\t--no-osc \tDisable Open Sound Control completely"
+    },
+    {
+        OPT_IDX_NO_GRPC,
+        OPT_TYPE_DISABLED,
+        "",
+        "no-grpc",
+        SushiArg::Optional,
+        "\t\t--no-grpc \tDisable gRPC Control completely"
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
