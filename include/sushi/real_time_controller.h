@@ -69,8 +69,9 @@ public:
      * @brief Set the beat count of the Sushi transport.
      *        (can be called from a real-time context).
      * @param beat_time
+     * @return true if the count was set, false if PositionSource is not set to EXTERNAL
      */
-    virtual void set_beat_count(double beat_time) = 0;
+    virtual bool set_beat_count(double beat_time) = 0;
 
     /**
      * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set

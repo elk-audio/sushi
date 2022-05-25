@@ -52,8 +52,8 @@ class EventTimer;
 /**
  * @brief When a host application embeds Sushi, it should use this class to instantiate Sushi, and interface with it.
  *        PassiveController implements two primary API's for Sushi:
+ *        - The SushiOwner specific methods for instantiating and configuring Sushi - all unsafe for real-time.
  *        - The RtController API, which is for interacting with Sushi in a real-time context.
- *        - The PassiveController specific methods for instantiating and configuring Sushi - all unsafe for real-time.
  */
 class PassiveController : public SushiOwner,
                           public RtController
@@ -83,7 +83,7 @@ public:
 
     void set_playing_mode(ext::PlayingMode mode) override;
 
-    void set_beat_count(double beat_count) override;
+    bool set_beat_count(double beat_count) override;
     void set_position_source(TransportPositionSource ps) override;
 
     /// For Audio:

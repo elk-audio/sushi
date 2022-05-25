@@ -50,7 +50,9 @@ InitStatus PassiveController::init(SushiOptions& options)
         return sushiInitStatus;
     }
 
-    _audio_frontend = _sushi->audio_frontend();
+    auto frontend = _sushi->audio_frontend();
+
+    _audio_frontend = static_cast<audio_frontend::PassiveFrontend*>(frontend);
     _midi_frontend = _sushi->midi_frontend();
     _transport = _sushi->audio_engine()->transport();
 
@@ -110,16 +112,15 @@ void PassiveController::set_playing_mode(ext::PlayingMode mode)
     }
 }
 
-void PassiveController::set_beat_count(double beat_count)
+bool PassiveController::set_beat_count(double beat_count)
 {
     if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
     {
         _transport->set_beat_count(beat_count);
+        return true;
     }
-    else
-    {
-        assert(false);
-    }
+
+    return false;
 }
 
 void PassiveController::set_position_source(TransportPositionSource ps)

@@ -80,10 +80,6 @@ public:
      */
     void run() override;
 
-    // TODO: Currently the buffers are pointers as that's what's used and expected inside sushi.
-    //  - I'd rather they are references, otherwise the API communicates the
-    //  assumption they CAN be nullptr.
-
     /**
      * @brief Method to invoke from the host's audio callback.
      * @param channel_count

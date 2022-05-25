@@ -41,7 +41,7 @@ public:
                 (),
                 (override));
 
-    MOCK_METHOD(audio_frontend::PassiveFrontend*,
+    MOCK_METHOD(audio_frontend::BaseAudioFrontend*,
                 audio_frontend,
                 (),
                 (override));

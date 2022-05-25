@@ -195,9 +195,9 @@ void Sushi::exit()
 #endif
 }
 
-audio_frontend::PassiveFrontend* Sushi::audio_frontend()
+audio_frontend::BaseAudioFrontend* Sushi::audio_frontend()
 {
-    return static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get());
+    return _audio_frontend.get();
 }
 
 midi_frontend::PassiveMidiFrontend* Sushi::midi_frontend()

@@ -136,7 +136,7 @@ public:
 
     virtual void set_sample_rate(float sample_rate) = 0;
 
-    virtual audio_frontend::PassiveFrontend* audio_frontend() = 0;
+    virtual audio_frontend::BaseAudioFrontend* audio_frontend() = 0;
 
     virtual midi_frontend::PassiveMidiFrontend* midi_frontend() = 0;
 

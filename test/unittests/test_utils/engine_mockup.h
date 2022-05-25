@@ -168,8 +168,8 @@ private:
 class EngineMockup : public BaseEngine
 {
 public:
-    EngineMockup(float sample_rate) :
-        BaseEngine(sample_rate)
+    EngineMockup(float sample_rate) : BaseEngine(sample_rate),
+                                      _transport(sample_rate, &_rt_event_output)
     {}
 
     ~EngineMockup()
@@ -215,9 +215,52 @@ public:
     bool process_called{false};
     bool got_event{false};
     bool got_rt_event{false};
+
+    engine::Transport* transport() override
+    {
+        return &_transport;
+    }
+
 private:
-    EventDispatcherMockup       _event_dispatcher;
-    ProcessorContainerMockup    _processor_container;
+    EventDispatcherMockup _event_dispatcher;
+    ProcessorContainerMockup _processor_container;
+
+    Transport _transport;
+    RtEventFifo<10> _rt_event_output;
+};
+
+// TODO: Should this really be here, or is it too specific for the engine_mockup scope,
+//   thus needing its own file?
+class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
+{
+public:
+    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
+
+    virtual ~DummyMidiFrontend() {}
+
+    bool init() override {return true;}
+    void run()  override {}
+    void stop() override {}
+
+    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
+    {
+        _sent = true;
+        _input = input;
+    }
+
+    bool midi_sent_on_input(int input)
+    {
+        if (_sent && input == _input)
+        {
+            _sent = false;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    bool _sent{false};
+    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

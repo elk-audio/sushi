@@ -109,7 +109,7 @@ public:
      * Exposing audio frontend for the context where Sushi is embedded in another host.
      * @return
      */
-    audio_frontend::PassiveFrontend* audio_frontend() override;
+    audio_frontend::BaseAudioFrontend* audio_frontend() override;
 
     void set_sample_rate(float sample_rate) override;
 
