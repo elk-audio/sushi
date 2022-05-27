@@ -187,7 +187,7 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
 
     /* Test invalid number of channels */
-    std::tie(status, track_id) = _module_under_test->create_track("left", 3);
+    std::tie(status, track_id) = _module_under_test->create_track("left", MAX_TRACK_CHANNELS + 1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 

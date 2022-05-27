@@ -556,7 +556,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
         SUSHI_LOG_ERROR("Invalid number of busses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    auto track = std::make_shared<Track>(_host_control, input_busses, output_busses, &_process_timer);
+    auto track = std::make_shared<Track>(_host_control, input_busses, output_busses, &_process_timer, true);
     auto status = _register_new_track(name, track);
     if (status != EngineReturnStatus::OK)
     {
@@ -567,12 +567,15 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
 
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::string &name, int channel_count)
 {
-    if ((channel_count < 0 || channel_count > 2))
+    if ((channel_count < 0 || channel_count > MAX_TRACK_CHANNELS))
     {
         SUSHI_LOG_ERROR("Invalid number of channels for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer);
+    // Only mono and stereo track have a pan parameter
+    bool pan_control = channel_count <= 2;
+
+    auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer, pan_control);
     auto status = _register_new_track(name, track);
     if (status != EngineReturnStatus::OK)
     {

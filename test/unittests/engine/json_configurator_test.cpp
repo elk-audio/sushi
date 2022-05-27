@@ -189,12 +189,12 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     /* Create plugin track without processors */
     rapidjson::Document test_cfg;
     rapidjson::Value track(rapidjson::kObjectType);
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value name("track_without_plugins");
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
-    track.AddMember("mode", mode, test_cfg.GetAllocator());
+    track.AddMember("channels", channels, test_cfg.GetAllocator());
     track.AddMember("name", name, test_cfg.GetAllocator());
     track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     track.AddMember("outputs", outputs, test_cfg.GetAllocator());
@@ -202,7 +202,7 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
 
     /* Similar Plugin track but with same track id */
-    track["mode"] = "stereo";
+    track["channels"] = 2;
     ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_TRACK_NAME);
 
     /* Create valid plugin track with valid plugin */
@@ -276,12 +276,12 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
 
     /* Plugin track without plugin list defined is not ok, empty list defined is ok */
     rapidjson::Value example_track(rapidjson::kObjectType);
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value name("track_name");
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
-    example_track.AddMember("mode", mode, test_cfg.GetAllocator());
+    example_track.AddMember("channels", channels, test_cfg.GetAllocator());
     example_track.AddMember("name", name, test_cfg.GetAllocator());
     example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
@@ -291,9 +291,9 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* incorrect mode */
-    test_cfg["tracks"][0]["mode"] = "invalid_mode";
+    test_cfg["tracks"][0]["channels"] = -1;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
-    test_cfg["tracks"][0]["mode"] = "stereo";
+    test_cfg["tracks"][0]["channels"] = 2;
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
 }
 
@@ -306,12 +306,12 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
 
     rapidjson::Value example_track(rapidjson::kObjectType);
     rapidjson::Value track_name("track_name");
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     example_track.AddMember("name", track_name, test_cfg.GetAllocator());
-    example_track.AddMember("mode", mode, test_cfg.GetAllocator());
+    example_track.AddMember("channels", channels, test_cfg.GetAllocator());
     example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     example_track.AddMember("plugins", plugins, test_cfg.GetAllocator());

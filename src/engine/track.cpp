@@ -15,7 +15,7 @@
 
 /**
  * @brief Class to represent a mixer track with a chain of processors
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <cassert>

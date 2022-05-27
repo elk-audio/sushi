@@ -713,26 +713,16 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
     auto name = track_def["name"].GetString();
     EngineReturnStatus status = EngineReturnStatus::ERROR;
     ObjectId track_id;
-    if (track_def["mode"] == "mono")
+
+    if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
     {
-        std::tie(status, track_id) = _engine->create_track(name, 1);
+        std::tie(status, track_id) = _engine->create_multibus_track(name,
+                                                                    track_def["input_busses"].GetInt(),
+                                                                    track_def["output_busses"].GetInt());
     }
-    else if (track_def["mode"] == "stereo")
+    else if (track_def.HasMember("channels"))
     {
-        std::tie(status, track_id) = _engine->create_track(name, 2);
-    }
-    else if (track_def["mode"] == "multibus")
-    {
-        if (track_def.HasMember("input_busses") && track_def.HasMember("output_busses"))
-        {
-            std::tie(status, track_id) = _engine->create_multibus_track(name,
-                                                                        track_def["input_busses"].GetInt(),
-                                                                        track_def["output_busses"].GetInt());
-        }
-    }
-    else
-    {
-        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+        std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
     }
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)

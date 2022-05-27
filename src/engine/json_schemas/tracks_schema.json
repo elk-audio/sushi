@@ -20,9 +20,14 @@ R"(
             "type": "string",
             "minLength": 1
           },
-          "mode":
+          "multibus" :
           {
-            "enum": ["mono", "stereo", "multibus"]
+            "type" : "boolean"
+          },
+          "channels" :
+          {
+            "type": "integer",
+            "minimum" : 0
           },
           "input_busses" :
           {
@@ -221,7 +226,11 @@ R"(
             }
           }
         },
-        "required": ["name", "mode", "inputs", "outputs", "plugins"]
+        "anyOf": [{
+          "required": ["name", "channels", "inputs", "outputs", "plugins"]
+        }, {
+          "required": ["name", "multibus", "input_busses", "output_busses", "inputs", "outputs", "plugins"]
+        }]
       },
       "minItems": 1
     }
