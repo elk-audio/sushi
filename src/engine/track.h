@@ -51,7 +51,7 @@ public:
      * @param channels The number of channels in the track.
      *                 Note that even mono tracks have a stereo output bus
      */
-    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer);
+    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls = true);
 
     /**
      * @brief Create a track with a given number of stereo input and output busses
@@ -59,7 +59,7 @@ public:
      * @param input_buffers The number of input busses
      * @param output_buffers The number of output busses
      */
-    Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer);
+    Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer, bool pan_controls_per_bus = true);
 
     ~Track() override = default;
 
@@ -173,9 +173,18 @@ public:
     void send_event(const RtEvent& event) override;
 
 private:
-    void _common_init();
+    enum class PanMode
+    {
+        GAIN_ONLY,
+        PAN_AND_GAIN,
+        PAN_AND_GAIN_PER_BUS
+    };
+
+    void _common_init(PanMode mode);
     void _process_output_events();
-    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted);
+    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted);
+    void _apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted);
+    void _apply_gain(ChunkSampleBuffer& buffer, bool muted);
 
     std::vector<Processor*> _processors;
     ChunkSampleBuffer _input_buffer;
@@ -183,12 +192,12 @@ private:
 
     int _input_busses;
     int _output_busses;
+    PanMode _pan_mode;
 
     BoolParameterValue*                                _mute_parameter;
     std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _gain_parameters;
     std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _pan_parameters;
-    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_right;
-    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_left;
+    std::vector<std::array<ValueSmootherFilter<float>, 2>> _smoothers;
 
     performance::PerformanceTimer* _timer;
 

@@ -28,12 +28,12 @@ protected:
     }
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
-    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer};
+    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, true};
 };
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
-    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer);
+    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer, true);
     EXPECT_EQ(2, module_under_test.input_busses());
     EXPECT_EQ(2, module_under_test.output_busses());
     EXPECT_EQ(5, module_under_test.parameter_count());
@@ -129,6 +129,93 @@ TEST_F(TrackTest, TestPanAndGain)
      * that it had an effect. Exact values will be tested by the pan function */
     EXPECT_LT(out.channel(LEFT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
     EXPECT_GT(out.channel(RIGHT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
+}
+
+TEST_F(TrackTest, TestPanAndGainPerBus)
+{
+    Track multibus_track((_host_control.make_host_control_mockup()), 2, 2, &_timer, true);
+    multibus_track.init(TEST_SAMPLE_RATE);
+
+    auto gain_bus_0 = multibus_track.parameter_from_name("gain");
+    auto gain_bus_1 = multibus_track.parameter_from_name("gain_sub_1");
+    auto pan_bus_0 = multibus_track.parameter_from_name("pan");
+    auto pan_bus_1 = multibus_track.parameter_from_name("pan_sub_1");
+    ASSERT_TRUE(gain_bus_0);
+    ASSERT_TRUE(gain_bus_1);
+    ASSERT_TRUE(pan_bus_0);
+    ASSERT_TRUE(pan_bus_1);
+
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(multibus_track.input_channels());
+    plugin.set_output_channels(multibus_track.input_channels());
+
+    multibus_track.add(&plugin);
+
+    /* Pan hard right/left and volume up/down 6 dB */
+    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.875);
+    auto gain_ev_1 = RtEvent::make_parameter_change_event(0, 0, gain_bus_1->id(), 0.875);
+    auto pan_ev_0 = RtEvent::make_parameter_change_event(0, 0, pan_bus_0->id(), 1.0f);
+    auto pan_ev_1 = RtEvent::make_parameter_change_event(0, 0, pan_bus_1->id(), 0.0f);
+
+    auto in_bus = multibus_track.input_bus(0);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    in_bus = multibus_track.input_bus(1);
+    test_utils::fill_sample_buffer(in_bus, 1.0f);
+    multibus_track.process_event(gain_ev_0);
+    multibus_track.process_event(gain_ev_1);
+    multibus_track.process_event(pan_ev_0);
+    multibus_track.process_event(pan_ev_1);
+
+    multibus_track.render();
+    auto out = multibus_track.output_bus(0);
+
+    /* As volume changes will be smoothed, we won't get the exact result. Just verify
+     * that it had an effect. Exact values will be tested by the pan function */
+    EXPECT_LT(out.channel(LEFT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
+    EXPECT_GT(out.channel(RIGHT_CHANNEL_INDEX)[AUDIO_CHUNK_SIZE-1], 1.0f);
+    EXPECT_GT(out.channel(2)[AUDIO_CHUNK_SIZE-1], 1.0f);
+    EXPECT_LT(out.channel(3)[AUDIO_CHUNK_SIZE-1], 1.0f);
+}
+
+TEST_F(TrackTest, TestGainOnly)
+{
+    Track gain_only_track((_host_control.make_host_control_mockup()), 4, &_timer, false);
+    gain_only_track.init(TEST_SAMPLE_RATE);
+
+    auto gain_bus_0 = gain_only_track.parameter_from_name("gain");
+    EXPECT_FALSE(gain_only_track.parameter_from_name("pan"));
+    ASSERT_TRUE(gain_bus_0);
+
+    passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
+    plugin.init(44100);
+    plugin.set_enabled(true);
+    plugin.set_input_channels(gain_only_track.input_channels());
+    plugin.set_output_channels(gain_only_track.input_channels());
+
+    gain_only_track.add(&plugin);
+
+    /* Volume down 6 dB */
+    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.7917);
+    gain_only_track.process_event(gain_ev_0);
+
+    for (int i = 0; i < gain_only_track.max_input_channels(); ++i)
+    {
+        auto in_bus = gain_only_track.input_channel(i);
+        test_utils::fill_sample_buffer(in_bus, 1.0f);
+    }
+
+    gain_only_track.render();
+    auto out = gain_only_track.output_bus(0);
+
+    /* As volume changes will be smoothed, we won't get the exact result. Just verify
+     * that it had an effect. Exact values will be tested by the pan function */
+    for (int i = 0; i < gain_only_track.max_output_channels(); ++i)
+    {
+        auto in_bus = gain_only_track.output_channel(i);
+        EXPECT_LT(out.channel(0)[AUDIO_CHUNK_SIZE-1], 1.0f);
+    }
 }
 
 TEST_F(TrackTest, TestMute)

@@ -48,34 +48,34 @@ inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
 }
 
 Track::Track(HostControl host_control, int channels,
-             performance::PerformanceTimer* timer) : InternalPlugin(host_control),
-                                                     _input_buffer{std::max(channels, 2)},
-                                                     _output_buffer{std::max(channels, 2)},
-                                                     _input_busses{1},
-                                                     _output_busses{1},
-                                                     _timer{timer}
+             performance::PerformanceTimer* timer, bool pan_controls) : InternalPlugin(host_control),
+                                                                        _input_buffer{std::max(channels, 2)},
+                                                                        _output_buffer{std::max(channels, 2)},
+                                                                        _input_busses{1},
+                                                                        _output_busses{1},
+                                                                        _timer{timer}
     {
     _max_input_channels = channels;
     _max_output_channels = std::max(channels, 2);
     _current_input_channels = channels;
     _current_output_channels = channels;
-    _common_init();
+    _common_init((pan_controls && channels <= 2) ? PanMode::PAN_AND_GAIN : PanMode::GAIN_ONLY);
 }
 
 Track::Track(HostControl host_control, int input_busses, int output_busses,
-             performance::PerformanceTimer* timer) :  InternalPlugin(host_control),
-                                                      _input_buffer{std::max(input_busses, output_busses) * 2},
-                                                      _output_buffer{std::max(input_busses, output_busses) * 2},
-                                                      _input_busses{input_busses},
-                                                      _output_busses{output_busses},
-                                                      _timer{timer}
+             performance::PerformanceTimer* timer, bool pan_controls) :  InternalPlugin(host_control),
+                                                                         _input_buffer{std::max(input_busses, output_busses) * 2},
+                                                                         _output_buffer{std::max(input_busses, output_busses) * 2},
+                                                                         _input_busses{input_busses},
+                                                                         _output_busses{output_busses},
+                                                                         _timer{timer}
 {
     int channels = std::max(input_busses, output_busses) * 2;
     _max_input_channels = channels;
     _max_output_channels = channels;
     _current_input_channels = channels;
     _current_output_channels = channels;
-    _common_init();
+    _common_init(pan_controls? PanMode::PAN_AND_GAIN_PER_BUS : PanMode::GAIN_ONLY);
 }
 
 ProcessorReturnCode Track::init(float sample_rate)
@@ -86,13 +86,10 @@ ProcessorReturnCode Track::init(float sample_rate)
 
 void Track::configure(float sample_rate)
 {
-    for (auto& i : _pan_gain_smoothers_right)
+    for (auto& i : _smoothers)
     {
-        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
-    }
-    for (auto& i : _pan_gain_smoothers_left)
-    {
-        i.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i[LEFT_CHANNEL_INDEX].set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i[RIGHT_CHANNEL_INDEX].set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
 }
 
@@ -156,13 +153,22 @@ void Track::render()
 
     bool muted = _mute_parameter->processed_value();
 
-    for (int bus = 0; bus < _output_busses; ++bus)
+    switch (_pan_mode)
     {
-        auto buffer = ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
-        _apply_pan_and_gain(buffer, bus, muted);
-    }
-    _input_buffer.clear();
+        case PanMode::GAIN_ONLY:
+            _apply_gain(_output_buffer, muted);
+            break;
 
+        case PanMode::PAN_AND_GAIN:
+            _apply_pan_and_gain(_output_buffer, muted);
+            break;
+
+        case PanMode::PAN_AND_GAIN_PER_BUS:
+            _apply_pan_and_gain_per_bus(_output_buffer, muted);
+            break;
+    }
+
+    _input_buffer.clear();
     _timer->stop_timer_rt_safe(track_timestamp, this->id());
 }
 
@@ -259,43 +265,47 @@ void Track::send_event(const RtEvent& event)
     }
 }
 
-void Track::_common_init()
+void Track::_common_init(PanMode mode)
 {
     _processors.reserve(TRACK_MAX_PROCESSORS);
+    _pan_mode = mode;
 
     _gain_parameters.at(0) = register_float_parameter("gain", "Gain", "dB",
                                                       0.0f, -120.0f, 24.0f,
                                                       Direction::AUTOMATABLE,
                                                       new dBToLinPreProcessor(-120.0f, 24.0f));
+    _smoothers.emplace_back();
 
-    _pan_parameters.at(0) = register_float_parameter("pan", "Pan", "",
-                                                     0.0f, -1.0f, 1.0f,
-                                                     Direction::AUTOMATABLE,
-                                                     nullptr);
-
+    if (mode == PanMode::PAN_AND_GAIN || mode == PanMode::PAN_AND_GAIN_PER_BUS)
+    {
+        _pan_parameters.at(0) = register_float_parameter("pan", "Pan", "",
+                                                         0.0f, -1.0f, 1.0f,
+                                                         Direction::AUTOMATABLE,
+                                                         nullptr);
+    }
     _mute_parameter = register_bool_parameter("mute", "Mute", "", false, Direction::AUTOMATABLE);
 
-    for (int bus = 1 ; bus < _output_busses; ++bus)
+    if (mode == PanMode::PAN_AND_GAIN_PER_BUS)
     {
-        _gain_parameters.at(bus) = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB",
-                                                            0.0f, -120.0f, 24.0f,
-                                                            Direction::AUTOMATABLE,
-                                                            new dBToLinPreProcessor(-120.0f, 24.0f));
+        for (int bus = 1; bus < _output_busses; ++bus)
+        {
+            _gain_parameters.at(bus) = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB",
+                                                                0.0f, -120.0f, 24.0f,
+                                                                Direction::AUTOMATABLE,
+                                                                new dBToLinPreProcessor(-120.0f, 24.0f));
 
-        _pan_parameters.at(bus) = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "",
-                                                           0.0f, -1.0f, 1.0f,
-                                                           Direction::AUTOMATABLE,
-                                                           new FloatParameterPreProcessor(-1.0f, 1.0f));
+            _pan_parameters.at(bus) = register_float_parameter("pan_sub_" + std::to_string(bus), "Pan", "",
+                                                               0.0f, -1.0f, 1.0f,
+                                                               Direction::AUTOMATABLE,
+                                                               new FloatParameterPreProcessor(-1.0f, 1.0f));
+            _smoothers.emplace_back();
+        }
     }
 
-    for (auto& i : _pan_gain_smoothers_right)
+    for (auto& i : _smoothers)
     {
-        i.set_direct(DEFAULT_TRACK_GAIN);
-    }
-
-    for (auto& i : _pan_gain_smoothers_left)
-    {
-        i.set_direct(DEFAULT_TRACK_GAIN);
+        i[LEFT_CHANNEL_INDEX].set_direct(DEFAULT_TRACK_GAIN);
+        i[RIGHT_CHANNEL_INDEX].set_direct(DEFAULT_TRACK_GAIN);
     }
 }
 
@@ -351,13 +361,18 @@ void Track::_process_output_events()
     _kb_event_buffer.clear(); // Reset the read & write index to reuse the same memory area every time.
 }
 
-void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted)
+void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted)
 {
-    float gain = muted ? 0.0f : _gain_parameters[bus]->processed_value();
-    float pan = _pan_parameters[bus]->processed_value();
-    auto [left_gain, right_gain] = calc_l_r_gain(gain, pan);
-    _pan_gain_smoothers_left[bus].set(left_gain);
-    _pan_gain_smoothers_right[bus].set(right_gain);
+    assert(buffer.channel_count() <= 2);
+
+    float gain = muted ? 0.0f : _gain_parameters.front()->processed_value();
+    float pan = _pan_parameters.front()->processed_value();
+    auto[left_gain, right_gain] = calc_l_r_gain(gain, pan);
+
+    auto& left_smoother = _smoothers.front()[LEFT_CHANNEL_INDEX];
+    auto& right_smoother = _smoothers.front()[RIGHT_CHANNEL_INDEX];
+    left_smoother.set(left_gain);
+    right_smoother.set(right_gain);
 
     ChunkSampleBuffer left = ChunkSampleBuffer::create_non_owning_buffer(buffer, LEFT_CHANNEL_INDEX, 1);
     ChunkSampleBuffer right = ChunkSampleBuffer::create_non_owning_buffer(buffer, RIGHT_CHANNEL_INDEX, 1);
@@ -367,15 +382,62 @@ void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted)
         right.replace(left);
     }
 
-    if (_pan_gain_smoothers_left[bus].stationary() && _pan_gain_smoothers_right[bus].stationary())
+    if (left_smoother.stationary() && left_smoother.stationary())
     {
         left.apply_gain(left_gain);
         right.apply_gain(right_gain);
     }
-    else // value needs smoothing
+    else // Value needs smoothing
     {
-        left.ramp(_pan_gain_smoothers_left[bus].value(), _pan_gain_smoothers_left[bus].next_value());
-        right.ramp(_pan_gain_smoothers_right[bus].value(), _pan_gain_smoothers_right[bus].next_value());
+        left.ramp(left_smoother.value(), left_smoother.next_value());
+        right.ramp(right_smoother.value(), right_smoother.next_value());
+    }
+}
+
+void Track::_apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted)
+{
+    for (int bus = 0; bus < _output_busses; ++bus)
+    {
+        auto bus_buffer = ChunkSampleBuffer::create_non_owning_buffer(buffer, bus * 2, 2);
+        float gain = muted ? 0.0f : _gain_parameters[bus]->processed_value();
+        float pan = _pan_parameters[bus]->processed_value();
+        auto[left_gain, right_gain] = calc_l_r_gain(gain, pan);
+        auto& left_smoother = _smoothers[bus][LEFT_CHANNEL_INDEX];
+        auto& right_smoother = _smoothers[bus][RIGHT_CHANNEL_INDEX];
+
+        left_smoother.set(left_gain);
+        right_smoother.set(right_gain);
+
+        ChunkSampleBuffer left = ChunkSampleBuffer::create_non_owning_buffer(bus_buffer, LEFT_CHANNEL_INDEX, 1);
+        ChunkSampleBuffer right = ChunkSampleBuffer::create_non_owning_buffer(bus_buffer, RIGHT_CHANNEL_INDEX, 1);
+
+        if (left_smoother.stationary() && left_smoother.stationary())
+        {
+            left.apply_gain(left_gain);
+            right.apply_gain(right_gain);
+        }
+        else // Value needs smoothing
+        {
+            left.ramp(left_smoother.value(), left_smoother.next_value());
+            right.ramp(right_smoother.value(), right_smoother.next_value());
+        }
+    }
+}
+
+void Track::_apply_gain(ChunkSampleBuffer& buffer, bool muted)
+{
+    float gain = muted ? 0.0f : _gain_parameters.front()->processed_value();
+
+    auto& gain_smoother = _smoothers.front()[LEFT_CHANNEL_INDEX];
+    gain_smoother.set(gain);
+
+    if (gain_smoother.stationary())
+    {
+        buffer.apply_gain(gain);
+    }
+    else // Value needs smoothing
+    {
+        buffer.ramp(gain_smoother.value(), gain_smoother.next_value());
     }
 }
 
