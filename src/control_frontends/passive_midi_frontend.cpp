@@ -64,7 +64,15 @@ void PassiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time timest
 
 void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
-    _callback(output, data, timestamp);
+    if (_callback)
+    {
+        _callback(output, data, timestamp);
+    }
+    else
+    {
+        SUSHI_LOG_DEBUG("PassiveMidiFrontend::send_midi was invoked on a frontend instance which has no sending _callback. "
+                        "First pass one using set_callback.");
+    }
 }
 
 void PassiveMidiFrontend::set_callback(PassiveMidiCallback&& callback)
