@@ -207,8 +207,8 @@ TEST_F(SessionControllerTest, TestSaveTracks)
     EXPECT_EQ("", track.label);
     EXPECT_EQ(2, track.input_channels);
     EXPECT_EQ(2, track.output_channels);
-    EXPECT_EQ(1, track.input_busses);
-    EXPECT_EQ(1, track.output_busses);
+    EXPECT_EQ(1, track.input_buses);
+    EXPECT_EQ(1, track.output_buses);
     // Track has 3 parameters, gain, pan and mute. This is tested more thoroughly in the track tests
     EXPECT_EQ(3u, track.track_state.parameters.size());
 
@@ -296,7 +296,7 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     EXPECT_EQ(session_state.tracks.front().label, restored_track->label());
     EXPECT_EQ(session_state.tracks.front().input_channels, restored_track->input_channels());
     EXPECT_EQ(session_state.tracks.front().output_channels, restored_track->output_channels());
-    EXPECT_EQ(session_state.tracks.front().input_busses, restored_track->input_busses());
+    EXPECT_EQ(session_state.tracks.front().input_buses, restored_track->input_buses());
     EXPECT_EQ(session_state.tracks.front().output_channels, restored_track->output_channels());
     EXPECT_EQ(session_state.tracks.front().track_state.parameters[0].second, restored_track->parameter_value(0).second);
 

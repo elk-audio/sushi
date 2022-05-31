@@ -309,8 +309,8 @@ std::vector<ext::TrackState> SessionController::_save_tracks() const
         state.label = track->label();
         state.input_channels = track->input_channels();
         state.output_channels = track->output_channels();
-        state.input_busses = track->input_busses();
-        state.output_busses = track->output_busses();
+        state.input_buses = track->input_buses();
+        state.output_buses = track->output_buses();
 
         for (const auto& plugin : _processors->processors_on_track(track->id()))
         {
@@ -364,9 +364,9 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
         EngineReturnStatus status;
         ObjectId track_id;
 
-        if (track.input_busses > 1 || track.output_busses > 1)
+        if (track.input_buses > 1 || track.output_buses > 1)
         {
-            std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.input_busses, track.output_busses);
+            std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.input_buses, track.output_buses);
         }
         else
         {

@@ -58,8 +58,8 @@ public:
         _output_buffers.channelBuffers32 = _process_outputs;
         inputs = &_input_buffers;
         outputs = &_output_buffers;
-        numInputs = 1;  /* Note: number of busses, not channels */
-        numOutputs = 1; /* Note: number of busses, not channels */
+        numInputs = 1;  /* Note: number of buses, not channels */
+        numOutputs = 1; /* Note: number of buses, not channels */
         numSamples = AUDIO_CHUNK_SIZE;
         symbolicSampleSize = Steinberg::Vst::SymbolicSampleSizes::kSample32;
         processMode = Steinberg::Vst::ProcessModes::kRealtime;

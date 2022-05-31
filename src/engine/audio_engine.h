@@ -359,13 +359,13 @@ public:
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
-     * @param input_busses The number of input stereo pairs in the track.
-     * @param output_busses The number of output stereo pairs in the track.
+     * @param input_buses The number of input stereo pairs in the track.
+     * @param output_buses The number of output stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
     std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name,
-                                                                  int input_busses,
-                                                                  int output_busses) override;
+                                                                  int input_buses,
+                                                                  int output_buses) override;
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_id The unique name of the track to delete

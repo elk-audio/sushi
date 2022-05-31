@@ -143,9 +143,9 @@ private:
      */
     bool _register_parameters();
 
-    bool _setup_audio_busses();
+    bool _setup_audio_buses();
 
-    bool _setup_event_busses();
+    bool _setup_event_buses();
 
     bool _setup_channels();
 

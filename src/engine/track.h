@@ -38,7 +38,7 @@ namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
-constexpr int MAX_TRACK_BUSSES = MAX_TRACK_CHANNELS / 2;
+constexpr int MAX_TRACK_BUSES = MAX_TRACK_CHANNELS / 2;
 constexpr int KEYBOARD_EVENT_QUEUE_SIZE = 256;
 
 class Track : public InternalPlugin, public RtEventPipe
@@ -54,12 +54,12 @@ public:
     Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls = true);
 
     /**
-     * @brief Create a track with a given number of stereo input and output busses
-     *        Busses are an abstraction for busses*2 channels internally.
-     * @param input_buffers The number of input busses
-     * @param output_buffers The number of output busses
+     * @brief Create a track with a given number of stereo input and output buses
+     *        buses are an abstraction for buses*2 channels internally.
+     * @param input_buffers The number of input buses
+     * @param output_buffers The number of output buses
      */
-    Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer, bool pan_controls_per_bus = true);
+    Track(HostControl host_control, int input_buses, int output_buses, performance::PerformanceTimer* timer, bool pan_controls_per_bus = true);
 
     ~Track() override = default;
 
@@ -87,23 +87,23 @@ public:
 
     /**
      * @brief Return a SampleBuffer to an input bus
-     * @param bus The index of the bus, must not be greater than the number of busses configured
+     * @param bus The index of the bus, must not be greater than the number of buses configured
      * @return A non-owning SampleBuffer pointing to the given bus
      */
     ChunkSampleBuffer input_bus(int bus)
     {
-        assert(bus < _input_busses);
+        assert(bus < _input_buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_input_buffer, bus * 2, 2);
     }
 
     /**
     * @brief Return a SampleBuffer to an output bus
-    * @param bus The index of the bus, must not be greater than the number of busses configured
+    * @param bus The index of the bus, must not be greater than the number of buses configured
     * @return A non-owning SampleBuffer pointing to the given bus
     */
     ChunkSampleBuffer output_bus(int bus)
     {
-        assert(bus < _output_busses);
+        assert(bus < _output_buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
     }
 
@@ -130,21 +130,21 @@ public:
     }
 
     /**
-     * @brief Return the number of input busses of the track.
-     * @return The number of input busses on the track.
+     * @brief Return the number of input buses of the track.
+     * @return The number of input buses on the track.
      */
-    int input_busses() const
+    int input_buses() const
     {
-        return _input_busses;
+        return _input_buses;
     }
 
     /**
-     * @brief Return the number of input busses of the track.
-     * @return The number of input busses on the track.
+     * @brief Return the number of input buses of the track.
+     * @return The number of input buses on the track.
      */
-    int output_busses() const
+    int output_buses() const
     {
-        return _output_busses;
+        return _output_buses;
     }
 
     /**
@@ -190,13 +190,13 @@ private:
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    int _input_busses;
-    int _output_busses;
+    int _input_buses;
+    int _output_buses;
     PanMode _pan_mode;
 
     BoolParameterValue*                                _mute_parameter;
-    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _gain_parameters;
-    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _pan_parameters;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSES> _gain_parameters;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSES> _pan_parameters;
     std::vector<std::array<ValueSmootherFilter<float>, 2>> _smoothers;
 
     performance::PerformanceTimer* _timer;

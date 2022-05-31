@@ -73,33 +73,33 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ("main", tracks[0].name);
     EXPECT_EQ("", tracks[0].label);
     EXPECT_EQ(2, tracks[0].input_channels);
-    EXPECT_EQ(1, tracks[0].input_busses);
+    EXPECT_EQ(1, tracks[0].input_buses);
     EXPECT_EQ(2, tracks[0].output_channels);
-    EXPECT_EQ(1, tracks[0].output_busses);
+    EXPECT_EQ(1, tracks[0].output_buses);
     EXPECT_EQ(3u, tracks[0].processors.size());
 
     EXPECT_EQ("monotrack", tracks[1].name);
     EXPECT_EQ("", tracks[1].label);
     EXPECT_EQ(1, tracks[1].input_channels);
-    EXPECT_EQ(1, tracks[1].input_busses);
+    EXPECT_EQ(1, tracks[1].input_buses);
     EXPECT_EQ(2, tracks[1].output_channels);    // This should be 2 because it's connected to a stereo engine bus
-    EXPECT_EQ(1, tracks[1].output_busses);
+    EXPECT_EQ(1, tracks[1].output_buses);
     EXPECT_EQ(3u, tracks[1].processors.size());
 
     EXPECT_EQ("monobustrack", tracks[2].name);
     EXPECT_EQ("", tracks[2].label);
     EXPECT_EQ(1, tracks[2].input_channels);
-    EXPECT_EQ(1, tracks[2].input_busses);
+    EXPECT_EQ(1, tracks[2].input_buses);
     EXPECT_EQ(2, tracks[2].output_channels);
-    EXPECT_EQ(1, tracks[2].output_busses);
+    EXPECT_EQ(1, tracks[2].output_buses);
     EXPECT_EQ(0u, tracks[2].processors.size());
 
     EXPECT_EQ("multi", tracks[3].name);
     EXPECT_EQ("", tracks[3].label);
     EXPECT_EQ(4, tracks[3].input_channels);
-    EXPECT_EQ(2, tracks[3].input_busses);
+    EXPECT_EQ(2, tracks[3].input_buses);
     EXPECT_EQ(4, tracks[3].output_channels);
-    EXPECT_EQ(2, tracks[3].output_busses);
+    EXPECT_EQ(2, tracks[3].output_buses);
     EXPECT_EQ(0u, tracks[3].processors.size());
 }
 
@@ -135,9 +135,9 @@ TEST_F(ControllerTest, TestTrackControls)
     EXPECT_EQ("main", info.name);
     EXPECT_EQ("", info.label);
     EXPECT_EQ(2, info.input_channels);
-    EXPECT_EQ(1, info.input_busses);
+    EXPECT_EQ(1, info.input_buses);
     EXPECT_EQ(2, info.output_channels);
-    EXPECT_EQ(1, info.output_busses);
+    EXPECT_EQ(1, info.output_buses);
     EXPECT_EQ(3u, info.processors.size());
 
     auto [proc_status, processors] = graph_controller->get_track_processors(id);

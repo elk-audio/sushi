@@ -52,9 +52,9 @@ TEST_F(AudioGraphControllerTest, TestGettingProcessors)
     ASSERT_EQ(ext::ControlStatus::OK, track_status);
     EXPECT_EQ(_track_id, track.id);
     EXPECT_EQ(2, track.input_channels);
-    EXPECT_EQ(1, track.input_busses);
+    EXPECT_EQ(1, track.input_buses);
     EXPECT_EQ(2, track.output_channels);
-    EXPECT_EQ(1, track.output_busses);
+    EXPECT_EQ(1, track.output_buses);
     EXPECT_EQ("Track 1", track.name);
 
     auto [proc_status, track_proc] = _module_under_test->get_track_processors(_track_id);
@@ -110,8 +110,8 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     tracks = _audio_engine->processor_container()->all_tracks();
     ASSERT_EQ(3u, tracks.size());
     EXPECT_EQ("Track 3", tracks[2]->name());
-    EXPECT_EQ(2, tracks[2]->input_busses());
-    EXPECT_EQ(3, tracks[2]->output_busses());
+    EXPECT_EQ(2, tracks[2]->input_buses());
+    EXPECT_EQ(3, tracks[2]->output_buses());
 
     status = _module_under_test->delete_track(tracks[2]->id());
     ASSERT_EQ(ext::ControlStatus::OK, status);

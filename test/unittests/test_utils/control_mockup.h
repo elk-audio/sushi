@@ -333,12 +333,12 @@ public:
         return _return_status;
     }
 
-    ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override
+    ControlStatus create_multibus_track(const std::string& name, int input_buses, int output_buses) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
-        _args_from_last_call["input_busses"] = std::to_string(input_busses);
-        _args_from_last_call["output_busses"] = std::to_string(output_busses);
+        _args_from_last_call["input_buses"] = std::to_string(input_buses);
+        _args_from_last_call["output_buses"] = std::to_string(output_buses);
         _recently_called = true;
         return _return_status;
     }

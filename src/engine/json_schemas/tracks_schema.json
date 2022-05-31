@@ -29,12 +29,12 @@ R"(
             "type": "integer",
             "minimum" : 0
           },
-          "input_busses" :
+          "input_buses" :
           {
             "type": "integer",
             "minimum":  0
           },
-          "output_busses" :
+          "output_buses" :
           {
             "type": "integer",
             "minimum":  0
@@ -229,7 +229,7 @@ R"(
         "anyOf": [{
           "required": ["name", "channels", "inputs", "outputs", "plugins"]
         }, {
-          "required": ["name", "multibus", "input_busses", "output_busses", "inputs", "outputs", "plugins"]
+          "required": ["name", "multibus", "input_buses", "output_buses", "inputs", "outputs", "plugins"]
         }]
       },
       "minItems": 1

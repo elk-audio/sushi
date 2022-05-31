@@ -34,8 +34,8 @@ protected:
 TEST_F(TrackTest, TestMultibusSetup)
 {
     Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer, true);
-    EXPECT_EQ(2, module_under_test.input_busses());
-    EXPECT_EQ(2, module_under_test.output_busses());
+    EXPECT_EQ(2, module_under_test.input_buses());
+    EXPECT_EQ(2, module_under_test.output_buses());
     EXPECT_EQ(5, module_under_test.parameter_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
