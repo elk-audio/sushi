@@ -137,14 +137,14 @@ TEST_F(PassiveControllerTestFrontend, TestRtControllerTransportCalls)
     // Beat Count & Position Source (they interact):
     auto old_beat_count = _passive_controller->_transport->_beat_count;
     double new_beat_count = 14.5;
-    _passive_controller->set_beat_count(new_beat_count);
+    _passive_controller->set_current_beats(new_beat_count);
 
     EXPECT_NE(new_beat_count, old_beat_count);
     EXPECT_NE(new_beat_count, _passive_controller->_transport->_beat_count);
 
     _passive_controller->set_position_source(TransportPositionSource::EXTERNAL);
 
-    _passive_controller->set_beat_count(new_beat_count);
+    _passive_controller->set_current_beats(new_beat_count);
 
     EXPECT_DOUBLE_EQ(new_beat_count, _passive_controller->_transport->_beat_count);
 }

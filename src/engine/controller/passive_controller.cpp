@@ -25,7 +25,7 @@
 namespace sushi
 {
 
-PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi) : SushiOwner(std::move(sushi))
+PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi> sushi) : SushiOwner(std::move(sushi))
 {
     _event_timer = std::make_unique<event_timer::EventTimer>(SUSHI_SAMPLE_RATE_DEFAULT);
 }
@@ -112,11 +112,11 @@ void PassiveController::set_playing_mode(ext::PlayingMode mode)
     }
 }
 
-bool PassiveController::set_beat_count(double beat_count)
+bool PassiveController::set_current_beats(double beat_count)
 {
     if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
     {
-        _transport->set_beat_count(beat_count);
+        _transport->set_current_beats(beat_count);
         return true;
     }
 

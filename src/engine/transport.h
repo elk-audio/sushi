@@ -213,7 +213,7 @@ public:
 
     /**
      * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
-     *        using the set_beat_count method below.
+     *        using the set_current_beats method below.
      * @param position_source Enum, EXTERNAL / CALCULATED
      */
     void set_position_source(PositionSource position_source) {_position_source = position_source;}
@@ -229,7 +229,7 @@ public:
      *        or the set value will be overwritten by the internal calculation.
      * @param beat_count double value
      */
-    void set_beat_count(double beat_count) {_beat_count = beat_count;}
+    void set_current_beats(double beat_count) {_beat_count = beat_count;}
 
     /**
      * @brief Query any playing state changes occurring during the current processing chunk.

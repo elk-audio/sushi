@@ -59,7 +59,7 @@ class PassiveController : public SushiOwner,
                           public RtController
 {
 public:
-    PassiveController(std::unique_ptr<sushi::AbstractSushi>&& sushi);
+    PassiveController(std::unique_ptr<sushi::AbstractSushi> sushi);
 
     ~PassiveController() override;
 
@@ -83,7 +83,7 @@ public:
 
     void set_playing_mode(ext::PlayingMode mode) override;
 
-    bool set_beat_count(double beat_count) override;
+    bool set_current_beats(double beat_count) override;
     void set_position_source(TransportPositionSource ps) override;
 
     /// For Audio:

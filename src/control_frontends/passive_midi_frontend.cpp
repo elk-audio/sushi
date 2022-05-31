@@ -30,9 +30,6 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive midi");
 namespace sushi {
 namespace midi_frontend {
 
-constexpr auto ALSA_POLL_TIMEOUT = std::chrono::milliseconds(200);
-constexpr auto CLIENT_NAME = "Sushi";
-
 PassiveMidiFrontend::PassiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
 {}
