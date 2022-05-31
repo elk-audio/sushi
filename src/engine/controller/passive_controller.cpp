@@ -123,6 +123,17 @@ bool PassiveController::set_current_beats(double beat_count)
     return false;
 }
 
+bool PassiveController::set_current_bar_beats(double bar_beat_count)
+{
+    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
+    {
+        _transport->set_current_bar_beats(bar_beat_count);
+        return true;
+    }
+
+    return false;
+}
+
 void PassiveController::set_position_source(TransportPositionSource ps)
 {
     if (ps == sushi::TransportPositionSource::CALCULATED)

@@ -232,6 +232,13 @@ public:
     void set_current_beats(double beat_count) {_beat_count = beat_count;}
 
     /**
+     * @brief Sets the bar beat count value. This is to be used alongside a position_source set to EXTERNAL,
+     *        or the set value will be overwritten by the internal calculation.
+     * @param bar_beat_count
+     */
+    void set_current_bar_beats(double bar_beat_count) {_current_bar_beat_count = bar_beat_count;}
+
+    /**
      * @brief Query any playing state changes occurring during the current processing chunk.
      *        For instance, if Transport is starting, during the first chunk, Transport
      *        will report playing() as true and current_state_change() as STARTING.

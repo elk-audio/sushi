@@ -84,6 +84,9 @@ public:
     void set_playing_mode(ext::PlayingMode mode) override;
 
     bool set_current_beats(double beat_count) override;
+
+    bool set_current_bar_beats(double bar_beat_count) override;
+
     void set_position_source(TransportPositionSource ps) override;
 
     /// For Audio:

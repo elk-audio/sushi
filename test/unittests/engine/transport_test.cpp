@@ -120,6 +120,8 @@ TEST_F(TestTransport, TestTimeline44TimeWithExternalPositionSource)
     /* Test skipping internal beat_count_calculation */
     _module_under_test.set_position_source(PositionSource::EXTERNAL);
     _module_under_test.set_current_beats(5.1);
+    _module_under_test.set_current_bar_beats(1.1);
+    
     _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
 
     EXPECT_DOUBLE_EQ(1.1, _module_under_test.current_bar_beats());

@@ -74,6 +74,14 @@ public:
     virtual bool set_current_beats(double beat_time) = 0;
 
     /**
+     * @brief Set the bar beat count of the Sushi transport.
+     *        (can be called from a real-time context).
+     * @param bar_beat_count
+     * @return true if the bar beat time was set, false if PositionSource is not set to EXTERNAL
+     */
+    virtual bool set_current_bar_beats(double bar_beat_count) = 0;
+
+    /**
      * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
      *        using the set_current_beats method below.
      * @param TransportPositionSource Enum, EXTERNAL / CALCULATED
