@@ -547,16 +547,14 @@ EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
     return EngineReturnStatus::QUEUE_FULL;
 }
 
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name,
-                                                                           int input_buses,
-                                                                           int output_buses)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name, int bus_count)
 {
-    if (input_buses > MAX_TRACK_BUSES && output_buses > MAX_TRACK_BUSES)
+    if (bus_count > MAX_TRACK_BUSES)
     {
         SUSHI_LOG_ERROR("Invalid number of buses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    auto track = std::make_shared<Track>(_host_control, input_buses, output_buses, &_process_timer, true);
+    auto track = std::make_shared<Track>(_host_control, bus_count, &_process_timer);
     auto status = _register_new_track(name, track);
     if (status != EngineReturnStatus::OK)
     {

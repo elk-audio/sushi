@@ -30,8 +30,8 @@ protected:
     HostControlMockup             _hc;
     std::unique_ptr<AudioGraph>   _module_under_test;
     performance::PerformanceTimer _timer;
-    Track                         _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
-    Track                         _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+    Track _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+    Track _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
 };
 
 TEST_F(TestAudioGraph, TestSingleCoreOperation)

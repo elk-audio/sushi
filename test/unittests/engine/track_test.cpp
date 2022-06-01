@@ -16,7 +16,7 @@ using namespace engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 constexpr int TEST_CHANNEL_COUNT = 2;
-
+constexpr bool CREATE_PAN_CONTROLS = true;
 class TrackTest : public ::testing::Test
 {
 protected:
@@ -28,14 +28,13 @@ protected:
     }
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
-    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, true};
+    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, CREATE_PAN_CONTROLS};
 };
 
 TEST_F(TrackTest, TestMultibusSetup)
 {
-    Track module_under_test((_host_control.make_host_control_mockup()), 2, 2, &_timer, true);
-    EXPECT_EQ(2, module_under_test.input_buses());
-    EXPECT_EQ(2, module_under_test.output_buses());
+    Track module_under_test((_host_control.make_host_control_mockup()), 2, &_timer);
+    EXPECT_EQ(2, module_under_test.buses());
     EXPECT_EQ(5, module_under_test.parameter_count());
     EXPECT_EQ(2, module_under_test.input_bus(1).channel_count());
     EXPECT_EQ(2, module_under_test.output_bus(1).channel_count());
@@ -133,7 +132,7 @@ TEST_F(TrackTest, TestPanAndGain)
 
 TEST_F(TrackTest, TestPanAndGainPerBus)
 {
-    Track multibus_track((_host_control.make_host_control_mockup()), 2, 2, &_timer, true);
+    Track multibus_track((_host_control.make_host_control_mockup()), 2, &_timer);
     multibus_track.init(TEST_SAMPLE_RATE);
 
     auto gain_bus_0 = multibus_track.parameter_from_name("gain");

@@ -264,9 +264,7 @@ public:
         return {EngineReturnStatus::OK, 0};
     }
 
-    virtual std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string & /*track_id*/,
-                                                                          int /*input_buses*/,
-                                                                          int /*output_buses*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string&, int)
     {
         return {EngineReturnStatus::OK, 0};
     }

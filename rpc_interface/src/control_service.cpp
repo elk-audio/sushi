@@ -238,10 +238,8 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     dest.set_id(src.id);
     dest.set_label(src.label);
     dest.set_name(src.name);
-    dest.set_input_channels(src.input_channels);
-    dest.set_input_buses(src.input_buses);
-    dest.set_output_channels(src.output_channels);
-    dest.set_output_buses(src.output_buses);
+    dest.set_channels(src.channels);
+    dest.set_buses(src.buses);
     for (auto i : src.processors)
     {
         dest.mutable_processors()->Add()->set_id(i);
@@ -642,10 +640,8 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
 {
     dest.set_name(std::move(src.name));
     dest.set_label(std::move(src.label));
-    dest.set_input_channels(src.input_channels);
-    dest.set_output_channels(src.output_channels);
-    dest.set_input_buses(src.input_buses);
-    dest.set_output_buses(src.output_buses);
+    dest.set_channels(src.channels);
+    dest.set_buses(src.buses);
     to_grpc(*dest.mutable_track_state(), src.track_state);
 
     dest.mutable_processors()->Reserve(src.processors.size());
@@ -661,10 +657,8 @@ inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     sushi::ext::TrackState dest;
     dest.name = src.name();
     dest.label = src.label();
-    dest.input_channels = src.input_channels();
-    dest.output_channels = src.output_channels();
-    dest.input_buses = src.input_buses();
-    dest.output_buses = src.output_buses();
+    dest.channels = src.channels();
+    dest.buses = src.buses();
     to_sushi_ext(dest.track_state, src.track_state());
 
     dest.processors.reserve(src.processors_size());
@@ -1093,7 +1087,7 @@ grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* 
                                                            const sushi_rpc::CreateMultibusTrackRequest* request,
                                                            sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->create_multibus_track(request->name(), request->input_buses(), request->output_buses());
+    auto status = _controller->create_multibus_track(request->name(), request->buses());
     return to_grpc_status(status);
 }
 
