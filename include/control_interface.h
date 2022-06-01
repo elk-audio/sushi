@@ -120,14 +120,6 @@ struct ProgramInfo
     std::string name;
 };
 
-enum class TrackType
-{
-    REGULAR,
-    MULTIBUS,
-    MASTER_POST,
-    MASTER_PRE
-};
-
 struct TrackInfo
 {
     int         id;
